@@ -1,0 +1,7 @@
+# line-change-test.txt
+# Author: Jeff Cameron (cameron.jp@gmail.com)
+#
+# Just a test file, for Jeff Cameron to learn more about SVN branches and the
+# use of patch files for code reviews in Google Code.
+
+Adding a line
