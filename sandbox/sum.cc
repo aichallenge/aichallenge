@@ -10,26 +10,27 @@
 //
 // Author: Jeff Cameron (jeff@jpcameron.com)
 //
-// A collection of handy utility functions for dealing with strings.
+// Calculates sums. Given several lines of input on stdin, splits the lines
+// into numbers, takes the sum, and outputs a line with the sum.
 
-#ifndef TIC_TAC_TOE_ENGINE_STRING_UTIL_H_
-#define TIC_TAC_TOE_ENGINE_STRING_UTIL_H_
-
+#include <iostream>
+#include <stdlib.h>
 #include <string>
-#include <vector>
+#include "cpp_util/string_util.h"
 
-class StringUtil {
- public:
-  // Tokenizes a string s into tokens. Tokens are delimited by any of the
-  // characters in delimiters. Blank tokens are omitted.
-  static void Tokenize(const std::string& s,
-		       const std::string& delimiters,
-		       std::vector<std::string>& tokens);
-
-  // A more convenient way of calling the Tokenize() method.
-  static std::vector<std::string> Tokenize(
-      const std::string& s,
-      const std::string& delimiters = std::string(" "));
-};
-
-#endif
+int main(int argc, char *argv[]) {
+  while (std::cin.good()) {
+    std::string line;
+    getline(std::cin, line);
+    if (line.length() == 0) {
+      break;
+    }
+    std::vector<std::string> tokens = StringUtil::Tokenize(line);
+    int sum = 0;
+    for (unsigned int i = 0; i < tokens.size(); ++i) {
+      sum += atoi(tokens[i].c_str());
+    }
+    std::cout << sum << std::endl;
+  }
+  return 0;
+}

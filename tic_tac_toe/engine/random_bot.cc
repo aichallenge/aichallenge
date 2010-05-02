@@ -16,7 +16,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <vector>
-#include "tic_tac_toe/engine/string_util.h"
+#include "cpp_util/string_util.h"
 
 int main(int argc, char *argv[]) {
   int width;

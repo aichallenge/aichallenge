@@ -12,7 +12,7 @@
 //
 // Unit tests for the StringUtil class.
 
-#include "tic_tac_toe/engine/string_util.h"
+#include "cpp_util/string_util.h"
 #include "gtest/gtest.h"
 
 // Tests a typical case of the Tokenize method.

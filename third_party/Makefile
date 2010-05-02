@@ -10,21 +10,23 @@
 #
 # Author: Jeff Cameron (jeff@jpcameron.com)
 #
-# Makefile for the Tic-Tac-Toe contest engine.
+# Makefile for the entire AI contest project.
 
 CC=g++
-CPPFLAGS += -Wall -I../.. -I../../third_party/googletest/include
-VPATH = ../../third_party/googletest/make:../../cpp_util:../../sandbox
-TARGETS = engine random_bot unit_tests
+CPPFLAGS += -Wall -I.. -I../third_party/googletest/include
+VPATH = third_party/googletest/make:cpp_util:sandbox
+SUBDIRS = googletest/make
 
-all: $(TARGETS)
+all: subdirs
 
 clean:
-	rm -f *.o $(TARGETS) *_test
+	for dir in $(SUBDIRS); \
+	do \
+		$(MAKE) -C $$dir clean; \
+	done
 
-engine: engine.o grid.o sandbox.a cpp_util.a
+.PHONY: subdirs $(SUBDIRS)
+subdirs: $(SUBDIRS)
 
-random_bot: random_bot.o cpp_util.a
-
-unit_tests: grid.o grid_test.o gtest_main.a
-	$(CC) $(CPPFLAGS) -o $@ $^ -lpthread
+$(SUBDIRS):
+	$(MAKE) -C $@

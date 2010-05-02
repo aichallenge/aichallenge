@@ -10,21 +10,22 @@
 #
 # Author: Jeff Cameron (jeff@jpcameron.com)
 #
-# Makefile for the Tic-Tac-Toe contest engine.
+# Makefile for the security sandbox module.
 
 CC=g++
-CPPFLAGS += -Wall -I../.. -I../../third_party/googletest/include
-VPATH = ../../third_party/googletest/make:../../cpp_util:../../sandbox
-TARGETS = engine random_bot unit_tests
+CPPFLAGS += -Wall -I.. -I../third_party/googletest/include
+VPATH = ../third_party/googletest/make:../cpp_util
+TARGETS = sandbox.a sum unit_tests
 
 all: $(TARGETS)
 
 clean:
 	rm -f *.o $(TARGETS) *_test
 
-engine: engine.o grid.o sandbox.a cpp_util.a
+sandbox.a: sandbox.a(sandbox.o)
+	ranlib sandbox.a
 
-random_bot: random_bot.o cpp_util.a
-
-unit_tests: grid.o grid_test.o gtest_main.a
+unit_tests: gtest_main.a sandbox_test.o sandbox.a cpp_util.a
 	$(CC) $(CPPFLAGS) -o $@ $^ -lpthread
+
+sum: sum.o cpp_util.a

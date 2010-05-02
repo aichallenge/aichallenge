@@ -12,7 +12,7 @@
 //
 // Unit tests for the Sandbox class.
 
-#include "tic_tac_toe/engine/sandbox.h"
+#include "sandbox/sandbox.h"
 #include "gtest/gtest.h"
 
 // Tests the sandbox. This test has been commented out because it causes

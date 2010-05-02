@@ -10,7 +10,7 @@
 //
 // Author: Jeff Cameron (jeff@jpcameron.com)
 
-#include "tic_tac_toe/engine/sandbox.h"
+#include "sandbox/sandbox.h"
 #include <fcntl.h>
 #include <iostream>
 #include <sched.h>
@@ -19,7 +19,7 @@
 #include <string>
 #include <ctime>
 #include <vector>
-#include "tic_tac_toe/engine/string_util.h"
+#include "cpp_util/string_util.h"
 
 Sandbox::Sandbox(const std::string& command, bool trap_stderr) {
   child_stdin_ = -1;

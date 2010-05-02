@@ -14,9 +14,9 @@
 
 #include <iostream>
 #include <stdlib.h>
+#include "cpp_util/string_util.h"
+#include "sandbox/sandbox.h"
 #include "tic_tac_toe/engine/grid.h"
-#include "tic_tac_toe/engine/sandbox.h"
-#include "tic_tac_toe/engine/string_util.h"
 
 int main(int argc, char *argv[]) {
   Sandbox player_one("./random_bot");

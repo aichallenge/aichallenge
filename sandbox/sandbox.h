@@ -12,8 +12,8 @@
 //
 // The sandbox is a wrapper that can be used to invoke untrusted code securely.
 
-#ifndef TIC_TAC_TOE_ENGINE_SANDBOX_H_
-#define TIC_TAC_TOE_ENGINE_SANDBOX_H_
+#ifndef SANDBOX_SANDBOX_H_
+#define SANDBOX_SANDBOX_H_
 
 #include <string>
 

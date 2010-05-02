@@ -10,7 +10,7 @@
 //
 // Author: Jeff Cameron (jeff@jpcameron.com)
 
-#include "tic_tac_toe/engine/string_util.h"
+#include "cpp_util/string_util.h"
 
 void StringUtil::Tokenize(const std::string& s,
 			  const std::string& delimiters,
