@@ -10,51 +10,33 @@
 //
 // Author: Jeff Cameron (jeff@jpcameron.com)
 
-#include "tic_tac_toe/engine/grid.h"
+#include "go/engine/game.h"
 #include <iostream>
 #include <sstream>
 
-Grid::Grid() {
-  width_ = 3;
-  height_ = 3;
-  win_length_ = 3;
-  whose_turn_ = 1;
-  squares_ =
-    std::vector<std::vector<int> >(width_, std::vector<int>(height_, 0));
-  game_over_ = false;
-  winner_ = 0;
-  loser_ = 0;
-}
-
-Grid::Grid(int width, int height, int win_length) {
+Game::Game(int width, int height) {
   width_ = width;
   height_ = height;
-  win_length_ = win_length;
   whose_turn_ = 1;
-  squares_ =
-    std::vector<std::vector<int> >(width_, std::vector<int>(height_, 0));
+  grid_ = std::vector<std::vector<int> >(width_, std::vector<int>(height_, 0));
   game_over_ = false;
   winner_ = 0;
   loser_ = 0;
 }
 
-int Grid::WhoseTurn() const {
+int Game::WhoseTurn() const {
   return whose_turn_;
 }
 
-int Grid::Width() const {
+int Game::Width() const {
   return width_;
 }
 
-int Grid::Height() const {
+int Game::Height() const {
   return height_;
 }
 
-int Grid::WinLength() const {
-  return win_length_;
-}
-
-std::string Grid::ToString() const {
+std::string Game::ToString() const {
   std::stringstream s;
   s << width_ << " " << height_ << " " << win_length_ << std::endl;
   for (int y = 0; y < height_; ++y) {
@@ -66,7 +48,7 @@ std::string Grid::ToString() const {
   return s.str();
 }
 
-int Grid::MakeMove(int x, int y) {
+int Game::MakeMove(int x, int y) {
   if (!OnBoard(x, y)) {
     return -1;
   }
@@ -83,23 +65,23 @@ int Grid::MakeMove(int x, int y) {
   return 0;
 }
 
-bool Grid::GameOver() {
+bool Game::GameOver() {
   return game_over_;
 }
 
-int Grid::Winner() {
+int Game::Winner() {
   return winner_;
 }
 
-int Grid::Loser() {
+int Game::Loser() {
   return loser_;
 }
 
-bool Grid::OnBoard(int x, int y) {
+bool Game::OnBoard(int x, int y) {
   return x >= 0 && y >= 0 && x < width_ && y < height_;
 }
 
-void Grid::CheckGameOver() {
+void Game::CheckGameOver() {
   bool found_empty_space = false;
   for (int x = 0; x < width_; ++x) {
     for (int y = 0; y < height_; ++y) {
@@ -140,7 +122,7 @@ void Grid::CheckGameOver() {
   }
 }
 
-bool Grid::CheckWin(int x, int y, int dx, int dy, int depth, int player) {
+bool Game::CheckWin(int x, int y, int dx, int dy, int depth, int player) {
   if (depth == 0) {
     return true;
   }
