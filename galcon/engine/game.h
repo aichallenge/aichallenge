@@ -16,6 +16,9 @@
 #define GALCON_ENGINE_GAME_H_
 
 #include <string>
+#include <vector>
+#include "galcon/engine/fleet.h"
+#include "galcon/engine/planet.h"
 
 class Game {
  public:
@@ -23,35 +26,38 @@ class Game {
   // LoadMapFromFile function for a description of the map file format.
   Game(const std::string& map_filename);
 
-  // Returns the number of planets in the map.
+  // Returns the number of planets. Planets are numbered starting with 0.
   int NumPlanets() const;
 
-  // Returns the owner of the planet with the given number.
-  int Owner(int planet_id) const;
+  // Returns the planet with the given planet_id. There are NumPlanets()
+  // planets. They are numbered starting at 0.
+  const Planet& GetPlanet(int planet_id) const;
 
-  // Returns the number of ships in the given planet.
-  int NumShips(int planet_id) const;
+  // Returns the number of fleets.
+  int NumFleets() const;
 
-  // Returns the x- and y-coordinate of a given planet.
-  int PlanetX(int planet_id) const;
-  int PlanetY(int planet_id) const;
+  // Returns the fleet with the given fleet_id. Fleets are numbered starting
+  // with 0. There are NumFleets() fleets. fleet_id's are not consistent from
+  // one turn to the next.
+  const Fleet& GetFleet(int fleet_id) const;
+
+  // Writes a string which represents the current game state. This string
+  // conforms to the Point-in-Time format from the project Wiki.
+  std::string ToString() const;
 
  private:
+  // Parses a game state from a string.
+  void ParseGameState(const std::string& s);
+
   // Loads a map from a test file. The text file contains a description of the
-  // starting state of a game. One planet is specified per line. Each line
-  // contains the x- and y-coordinate of one planet, the player number that
-  // starts off owning the planet, and the number of ships originally in the
-  // planet. Any characters on a line beyond a '#' character should be
-  // ignored. The coordinates are real numbers, and need not be integers.
-  // The player number and number of ships must be integers. Fields are
-  // separated by space characters. Lines that do not appear to match the
-  // specified line format should be ignored. For example:
-  //
-  // # This is a sample map file, for the purpose of illustration.
-  // 0 0 1 34 # Player one home planet
-  // 7 7 2 34 # Player two home planet
-  // 3.14 2.71 0 15 # Neutral planet with real-numbere coordinates.
+  // starting state of a game. See the project wiki for a description of the
+  // file format. It should be called the Galcon Point-in-Time format.
   void LoadMapFromFile(const std::string& map_filename);
+
+  // Store all the planets and fleets. OMG we wouldn't wanna lose all the
+  // planets and fleets, would we!?
+  std::vector<Planet> planets_;
+  std::vector<Fleet> fleets_;
 };
 
 #endif

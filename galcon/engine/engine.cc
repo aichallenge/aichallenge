@@ -10,54 +10,8 @@
 //
 // Author: Jeff Cameron (jeff@jpcameron.com)
 //
-// Runs a game of Tic-Tac-Toe between two computer programs.
-
-#include <iostream>
-#include <stdlib.h>
-#include "cpp_util/string_util.h"
-#include "sandbox/sandbox.h"
-#include "tic_tac_toe/engine/grid.h"
+// Plays a game of Galcon between two computer programs.
 
 int main(int argc, char *argv[]) {
-  Sandbox player_one("./random_bot");
-  Sandbox player_two("./random_bot");
-  player_one.Init();
-  player_two.Init();
-  int blame = 0;
-  Grid grid(3, 3, 3);
-  while (!grid.GameOver()) {
-    std::cout << "grid.GameOver(): " << grid.GameOver() << std::endl;
-    Sandbox& player = grid.WhoseTurn() == 1 ? player_one : player_two;
-    player.Write(grid.ToString());
-    std::cout << grid.ToString();
-    std::string line;
-    int result = player.ReadLine(line, 1000);
-    if (result <= 0) {
-      blame = grid.WhoseTurn();
-      std::cout << "Didn't receive a response from player " << blame
-		<< std::endl;
-      break;
-    }
-    std::cout << "Received from player " << grid.WhoseTurn() << " ("
-	      << result << "): " << line << std::endl;
-    std::vector<std::string> tokens = StringUtil::Tokenize(line);
-    if (tokens.size() != 2) {
-      blame = grid.WhoseTurn();
-      break;
-    }
-    int x = atoi(tokens[0].c_str());
-    int y = atoi(tokens[1].c_str());
-    grid.MakeMove(x, y);
-  }
-  if (blame != 0) {
-    std::cout << "Player " << blame << " did something bad." << std::endl;
-    return 0;
-  }
-  std::cout << grid.ToString();
-  if (grid.Winner() == 0) {
-    std::cout << "Draw!" << std::endl;
-  } else {
-    std::cout << "Player " << grid.Winner() << " Wins!" << std::endl;
-  }
   return 0;
 }

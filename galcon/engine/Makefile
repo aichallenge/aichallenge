@@ -22,9 +22,6 @@ all: $(TARGETS)
 clean:
 	rm -f *.o $(TARGETS) *_test
 
-engine: engine.o game.o planet.o sandbox.a cpp_util.a
+engine: engine.o fleet.o game.o planet.o sandbox.a cpp_util.a
 
 random_bot: random_bot.o cpp_util.a
-
-unit_tests: grid.o grid_test.o gtest_main.a
-	$(CC) $(CPPFLAGS) -o $@ $^ -lpthread
