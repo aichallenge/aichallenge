@@ -19,6 +19,7 @@
 #include <vector>
 #include "galcon/engine/fleet.h"
 #include "galcon/engine/planet.h"
+#include "sandbox/sandbox.h"
 
 class Game {
  public:
@@ -44,6 +45,27 @@ class Game {
   // Writes a string which represents the current game state. This string
   // conforms to the Point-in-Time format from the project Wiki.
   std::string ToString() const;
+
+  // Returns the distance between two planets, rounded up to the next highest
+  // integer. This is the number of discrete time steps it takes to get between
+  // the two planets.
+  int Distance(int source_planet, int destination_planet) const;
+
+  // Executes one time step.
+  //   * Planet bonuses are added to non-neutral planets.
+  //   * Fleets are advanced towards their destinations.
+  //   * Fleets that arrive at their destination are dealt with.
+  void DoTimeStep();
+
+  // Issue an order. This function takes num_ships off the source_planet, puts
+  // them into a newly-created fleet, calculates the distance to the
+  // destination_planet, and sets the fleet's total trip time to that distance.
+  // On success, returns 0. If there is a problem, like if the order is illegal
+  // then returns -1.
+  int IssueOrder(int source_planet, int destination_planet, int num_ships);
+
+  // 
+  int ExtractOrders();
 
  private:
   // Parses a game state from a string.

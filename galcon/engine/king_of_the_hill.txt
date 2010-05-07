@@ -1,0 +1,5 @@
+# Simple map. It's composed of two home planets, with a valuable
+# high-production planet in between.
+P 0 0 1 30 2
+P 2 4 2 30 2
+P 1 2 0 0 5
