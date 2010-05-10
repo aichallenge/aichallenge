@@ -24,4 +24,7 @@ clean:
 
 engine: engine.o fleet.o game.o planet.o sandbox.a cpp_util.a
 
-random_bot: random_bot.o cpp_util.a
+random_bot: fleet.o game.o planet.o random_bot.o cpp_util.a
+
+unit_tests: fleet.o game.o game_test.o planet.o cpp_util.a gtest_main.a
+	$(CC) $(CPPFLAGS) -o $@ $^ -lpthread

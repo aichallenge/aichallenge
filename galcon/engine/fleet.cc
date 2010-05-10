@@ -50,10 +50,21 @@ int Fleet::TurnsRemaining() const {
   return turns_remaining_;
 }
 
+void Fleet::RemoveShips(int amount) {
+  num_ships_ -= amount;
+  if (num_ships_ < 0) {
+    num_ships_ = 0;
+  }
+}
+
 void Fleet::TimeStep() {
   if (turns_remaining_ > 0) {
     --turns_remaining_;
   } else {
     turns_remaining_ = 0;
   }
+}
+
+bool Fleet::operator<(const Fleet& f) const {
+  return num_ships_ < f.num_ships_;
 }

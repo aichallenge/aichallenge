@@ -12,48 +12,126 @@
 //
 // Plays a game of Galcon between two computer programs.
 
+#include <cstdio>
 #include <cstdlib>
 #include <iostream>
+#include <vector>
 #include "cpp_util/string_util.h"
 #include "galcon/engine/game.h"
 #include "sandbox/sandbox.h"
 
-int main(int argc, char *argv[]) {
-  if (argc != 4) {
-    std::cerr << "ERROR: you must give at least three command-line arguments"
-	      << std::endl
-	      << "USAGE: engine map_file_name player_one player_two"
-	      << std::endl;
-  }
-  std::string map_file_name = std::string(argv[1]);
-  std::string player_one_command = std::string(argv[2]);
-  std::string player_two_command = std::string(argv[3]);
-  Game g(map_file_name);
-  Sandbox player_one(player_one_command);
-  Sandbox player_two(player_two_command);
-  player_one.Init();
-  player_two.Init();
-  while (true) {
-    std::cout << g.ToString();
-    std::cout << "Awaiting your orders, colonel." << std::endl;
-    while (true) {
-      std::string line;
-      std::cin >> line;
-      if (line == "go" || line == "Go" || line == "GO") {
-	break;
-      }
-      std::vector<std::string> tokens = StringUtil::Tokenize(line, ",");
-      if (tokens.size() != 3) {
-	std::cerr << "Invalid order!" << std::endl;
-	exit(1);
-      }
-      g.IssueOrder(atoi(tokens[0].c_str()),
-		   atoi(tokens[1].c_str()),
-		   atoi(tokens[2].c_str()));
+void KillClients(std::vector<Sandbox*>& clients) {
+  for (unsigned int i = 0; i < clients.size(); ++i) {
+    if (clients[i] != NULL) {
+      clients[i]->Kill();
+      delete clients[i];
     }
-    g.DoTimeStep();
+    clients[i] = NULL;
   }
-  player_one.Kill();
-  player_two.Kill();
+}
+
+bool AllTrue(const std::vector<bool>& v) {
+  for (unsigned int i = 0; i < v.size(); ++i) {
+    if (!v[i]) {
+      return false;
+    }
+  }
+  return true;
+}
+
+int main(int argc, char *argv[]) {
+  // Check the command-line arguments.
+  if (argc < 6) {
+    std::cerr << "ERROR: you must give at least five command-line arguments"
+	      << std::endl << "USAGE: engine map_file_name max_turn_time "
+	      << "max_num_turns player_one player_two [more_players]"
+	      << std::endl;
+    exit(1);
+  }
+  // Initialize the game. Load the map.
+  std::string map_file_name = std::string(argv[1]);
+  int max_num_turns = atoi(argv[3]);
+  Game game(map_file_name, max_num_turns);
+  if (!game.Init()) {
+    std::cerr << "ERROR: failed to start game. map: "
+	      << map_file_name << std::endl;
+  }
+  long max_turn_time = atol(argv[2]);
+  // Start the client programs (players).
+  std::vector<Sandbox*> clients;
+  for (int i = 4; i < argc; ++i) {
+    std::string command(argv[i]);
+    Sandbox *client = new Sandbox(command);
+    if (!client->Init()) {
+      KillClients(clients);
+      std::cerr << "ERROR: failed to start client: " << command << std::endl;
+      exit(1);
+    }
+    clients.push_back(client);
+    std::cout << "Successfully invoked " << command
+	      << " pid: " << getpid() << std::endl;
+  }
+  // Enter the main game loop.
+  while (game.Winner() < 0) {
+    // Send the game state to the clients.
+    std::string game_state_string = game.ToString();
+    std::cout << "The game state: " << std::endl << game_state_string;
+    for (unsigned int i = 0; i < clients.size(); ++i) {
+      if (!clients[i]->IsAlive() || !game.IsAlive(i + 1)) {
+	continue;
+      }
+      int result = clients[i]->WriteLine(game.ToString(i + 1) + "go");
+      if (result < 0) {
+	std::cerr << "WARNING: failed to communicate with client: "
+		  << clients[i]->Command() << std::endl;
+	clients[i]->Kill();
+      }
+    }
+    // Get orders from the clients.
+    time_t start_time = clock();
+    std::vector<bool> client_done(clients.size(), false);
+    while (!AllTrue(client_done) &&
+	   (clock() - start_time) * 1000 / CLOCKS_PER_SEC <= max_turn_time) {
+      for (unsigned int i = 0; i < clients.size(); ++i) {
+	if (clients[i]->IsAlive() && !client_done[i]) {
+	  std::string order;
+	  int read_result = clients[i]->ReadLine(order);
+	  if (read_result > 0) {
+	    std::cout << "Player " << (i + 1) << ": " << order << std::endl;
+	    if (order == "go" || order == "GO" || order == "Go") {
+	      client_done[i] = true;
+	    } else {
+	      int order_result = game.IssueOrder(i + 1, order);
+	      if (order_result < 0) {
+		std::cerr << "Killed player " << (i + 1) << " due to "
+			  << "error while processing order: " << order
+			  << std::endl;
+		clients[i]->Kill();
+	      }
+	    }
+	  }
+	}
+      }
+      sleep(0);
+    }
+    // Drop players who didn't respond before the timeout cutoff.
+    for (unsigned int i = 0; i < clients.size(); ++i) {
+      if (clients[i]->IsAlive() && !client_done[i]) {
+	std::cerr << "Killing player " << (i + 1) << " for timing out."
+		  << std::endl;
+	clients[i]->Kill();
+	game.DropPlayer(i + 1);
+      }
+    }
+    game.DoTimeStep();
+  }
+  KillClients(clients);
+  if (game.Winner() > 0) {
+    std::cout << "Player " << game.Winner() << " Wins!" << std::endl;
+  } else {
+    std::cout << "Draw!" << std::endl;
+  }
+  std::cout << "Game playback string: " << game.GamePlaybackString()
+	    << std::endl;
   return 0;
 }

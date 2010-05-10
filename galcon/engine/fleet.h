@@ -23,13 +23,13 @@
 
 class Fleet {
  public:
-  // Initializes a planet.
+  // Initializes a fleet.
   Fleet(int owner,
 	int num_ships,
-	int source_planet,
-	int destination_planet,
-	int total_trip_length,
-	int turns_remaining);
+	int source_planet = -1,
+	int destination_planet = -1,
+	int total_trip_length = -1,
+	int turns_remaining = -1);
 
   // Accessors and simple modification functions. These should be mostly
   // self-explanatory.
@@ -39,10 +39,15 @@ class Fleet {
   int DestinationPlanet() const;
   int TotalTripLength() const;
   int TurnsRemaining() const;
+  void RemoveShips(int amount);
 
   // Subtracts one turn remaining. Call this function to make the fleet get
   // one turn closer to its destination.
   void TimeStep();
+
+  // A comparison operator so that vectors of fleets can be sorted according to
+  // their strength.
+  bool operator<(const Fleet& f) const;
 
  private:
   int owner_;

@@ -12,10 +12,30 @@
 //
 // Unit tests for the Sandbox class.
 
-#include "tic_tac_toe/engine/grid.h"
+#include "galcon/engine/game.h"
 #include <sstream>
 #include "gtest/gtest.h"
 
+// This scenario has two fleets of equal strength, owned by different players,
+// about to hit a single neutral planet with no ships occupying it. It's a
+// decent edge case to use for testing the battle resolution code. The target
+// planet should end up being neutral and occupied by no ships.
+TEST(GameTest, BattleResolutionDraw) {
+  std::stringstream map;
+  map << "P 0 0 1 19 2" << std::endl;
+  map << "P 2 4 2 19 2" << std::endl;
+  map << "P 1 2 0 0 5" << std::endl;
+  map << "F 1 15 0 2 3 1" << std::endl;
+  map << "F 2 15 1 2 3 1" << std::endl;
+  Game game(map.str(), 99, 1);
+  game.Init();
+  game.DoTimeStep();
+  const Planet& p = game.GetPlanet(2);
+  ASSERT_EQ(p.Owner(), 0);
+  ASSERT_EQ(p.NumShips(), 0);
+}
+
+/*
 // Tests the default constructor. It's supposed to make a standard 3x3 Tic Tac
 // Toe board.
 TEST(GridTest, DefaultConstructor) {
@@ -26,6 +46,7 @@ TEST(GridTest, DefaultConstructor) {
   ASSERT_EQ(g.GameOver(), false) << "Game should not be over right after "
                                  << "initialization.";
 }
+
 // Tests the custom constructor, which creates boards with arbitrary
 // dimensions.
 TEST(GridTest, CustomConstructor) {
@@ -134,3 +155,4 @@ TEST(GridTest, DrawDetection) {
   ASSERT_EQ(g.Winner(), 0);
   ASSERT_EQ(g.Loser(), 0);
 }
+*/
