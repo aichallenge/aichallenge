@@ -12,7 +12,7 @@
 //
 // Unit tests for the Sandbox class.
 
-#include "galcon/engine/game.h"
+#include "planet_wars/engine/game.h"
 #include <sstream>
 #include "gtest/gtest.h"
 

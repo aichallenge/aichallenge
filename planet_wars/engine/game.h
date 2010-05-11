@@ -12,13 +12,13 @@
 //
 // Stores the game state.
 
-#ifndef GALCON_ENGINE_GAME_H_
-#define GALCON_ENGINE_GAME_H_
+#ifndef PLANET_WARS_ENGINE_GAME_H_
+#define PLANET_WARS_ENGINE_GAME_H_
 
 #include <string>
 #include <vector>
-#include "galcon/engine/fleet.h"
-#include "galcon/engine/planet.h"
+#include "planet_wars/engine/fleet.h"
+#include "planet_wars/engine/planet.h"
 #include "sandbox/sandbox.h"
 
 class Game {
@@ -34,8 +34,8 @@ class Game {
   // coherent state.
   Game(const std::string& s, int max_game_length, int mode = 0);
 
-  // Initializes a game of Galcon. Loads the map data from the file specified
-  // in the constructor. Returns 1 on success, 0 on failure.
+  // Initializes a game of Planet Wars. Loads the map data from the file
+  // specified in the constructor. Returns 1 on success, 0 on failure.
   int Init();
 
   // Returns the number of planets. Planets are numbered starting with 0.
@@ -131,7 +131,7 @@ class Game {
 
   // Loads a map from a test file. The text file contains a description of the
   // starting state of a game. See the project wiki for a description of the
-  // file format. It should be called the Galcon Point-in-Time format. On
+  // file format. It should be called the Planet Wars Point-in-Time format. On
   // success, return 1. On failure, returns 0.
   int LoadMapFromFile(const std::string& map_filename);
 

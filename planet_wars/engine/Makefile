@@ -10,12 +10,12 @@
 #
 # Author: Jeff Cameron (jeff@jpcameron.com)
 #
-# Makefile for the Tic-Tac-Toe contest engine.
+# Makefile for the Planet Wars contest engine.
 
 CC=g++
 CPPFLAGS += -Wall -I../.. -I../../third_party/googletest/include
 VPATH = ../../third_party/googletest/make:../../cpp_util:../../sandbox
-TARGETS = engine random_bot unit_tests
+TARGETS = engine simple_bot unit_tests
 
 all: $(TARGETS)
 
@@ -24,7 +24,7 @@ clean:
 
 engine: engine.o fleet.o game.o planet.o sandbox.a cpp_util.a
 
-random_bot: fleet.o game.o planet.o random_bot.o cpp_util.a
+simple_bot: fleet.o game.o planet.o simple_bot.o cpp_util.a
 
 unit_tests: fleet.o game.o game_test.o planet.o cpp_util.a gtest_main.a
 	$(CC) $(CPPFLAGS) -o $@ $^ -lpthread

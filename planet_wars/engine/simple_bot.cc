@@ -10,17 +10,17 @@
 //
 // Author: Jeff Cameron (jeff@jpcameron.com)
 //
-// A basic Galcon bot which uses a very simple strategy. It sends one fleet at
-// a time from its strongest planet to the weakest planet that it doesn't own.
-// If it already has a fleet traveling between planets, it does nothing. The
-// amount of ships sent is half the number of ships available on the source
-// planet. The idea behind this strategy is to try to build more production
-// capacity as cheaply as possible, and eventually to erode opp's production
-// capacity as cheaply as possible.
+// A basic Planet Wars bot which uses a very simple strategy. It sends one
+// fleet at a time from its strongest planet to the weakest planet that it
+// doesn't own. If it already has a fleet traveling between planets, it does
+// nothing. The amount of ships sent is half the number of ships available on
+// the source planet. The idea behind this strategy is to try to build more
+// production capacity as cheaply as possible, and eventually to erode opp's
+// production capacity as cheaply as possible.
 
 #include <climits>
 #include <iostream>
-#include "galcon/engine/game.h"
+#include "planet_wars/engine/game.h"
 
 bool NumFleetsForPlayer(int player_id, const Game& game) {
   int num_fleets = 0;

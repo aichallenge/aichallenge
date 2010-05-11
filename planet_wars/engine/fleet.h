@@ -10,37 +10,52 @@
 //
 // Author: Jeff Cameron (jeff@jpcameron.com)
 //
-// Represents a planet. A planet has
+// Represents a fleet. A fleet has
 //   * an owner
 //   * a number of ships
-//   * a growth rate
-//   * a position (x, y)
+//   * a source planet
+//   * a destination
+//   * a total trip length
+//   * a number of turns remaining before arrival
 
-#ifndef GALCON_ENGINE_PLANET_H_
-#define GALCON_ENGINE_PLANET_H_
+#ifndef PLANET_WARS_ENGINE_FLEET_H_
+#define PLANET_WARS_ENGINE_FLEET_H_
 
-class Planet {
+class Fleet {
  public:
-  // Initializes a planet.
-  Planet(int owner, int num_ships, int growth_rate, double x, double y);
+  // Initializes a fleet.
+  Fleet(int owner,
+	int num_ships,
+	int source_planet = -1,
+	int destination_planet = -1,
+	int total_trip_length = -1,
+	int turns_remaining = -1);
 
   // Accessors and simple modification functions. These should be mostly
   // self-explanatory.
   int Owner() const;
   int NumShips() const;
-  int GrowthRate() const;
-  double X() const;
-  double Y() const;
-  void Owner(int new_owner);
-  void NumShips(int new_num_ships);
-  void AddShips(int amount);
+  int SourcePlanet() const;
+  int DestinationPlanet() const;
+  int TotalTripLength() const;
+  int TurnsRemaining() const;
   void RemoveShips(int amount);
+
+  // Subtracts one turn remaining. Call this function to make the fleet get
+  // one turn closer to its destination.
+  void TimeStep();
+
+  // A comparison operator so that vectors of fleets can be sorted according to
+  // their strength.
+  bool operator<(const Fleet& f) const;
 
  private:
   int owner_;
   int num_ships_;
-  int growth_rate_;
-  double x_, y_;
+  int source_planet_;
+  int destination_planet_;
+  int total_trip_length_;
+  int turns_remaining_;
 };
 
 #endif

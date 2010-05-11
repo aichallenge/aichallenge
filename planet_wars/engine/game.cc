@@ -10,7 +10,7 @@
 //
 // Author: Jeff Cameron (jeff@jpcameron.com)
 
-#include "galcon/engine/game.h"
+#include "planet_wars/engine/game.h"
 #include <algorithm>
 #include <cmath>
 #include <cstdlib>
@@ -20,8 +20,8 @@
 #include <set>
 #include <sstream>
 #include "cpp_util/string_util.h"
-#include "galcon/engine/fleet.h"
-#include "galcon/engine/planet.h"
+#include "planet_wars/engine/fleet.h"
+#include "planet_wars/engine/planet.h"
 
 Game::Game(const std::string& s, int max_game_length, int mode) {
   init_mode_ = mode;

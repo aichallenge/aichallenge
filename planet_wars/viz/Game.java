@@ -28,8 +28,8 @@ public class Game {
 	
     }
 
-    // Initializes a game of Galcon. Loads the map data from the file specified
-    // in the constructor. Returns 1 on success, 0 on failure.
+    // Initializes a game of Planet Wars. Loads the map data from the file
+    // specified in the constructor. Returns 1 on success, 0 on failure.
     public int Init() {
 	return 0;
     }
@@ -169,8 +169,8 @@ public class Game {
 
     // Loads a map from a test file. The text file contains a description of the
     // starting state of a game. See the project wiki for a description of the
-    // file format. It should be called the Galcon Point-in-Time format. On
-    // success, return 1. On failure, returns 0.
+    // file format. It should be called the Planet Wars Point-in-Time format.
+    // On success, return 1. On failure, returns 0.
     private int LoadMapFromFile(String map_filename) {
 	return 0;
     }

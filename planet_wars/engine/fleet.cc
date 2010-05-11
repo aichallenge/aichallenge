@@ -10,7 +10,7 @@
 //
 // Author: Jeff Cameron (jeff@jpcameron.com)
 
-#include "galcon/engine/fleet.h"
+#include "planet_wars/engine/fleet.h"
 
 Fleet::Fleet(int owner,
       int num_ships,

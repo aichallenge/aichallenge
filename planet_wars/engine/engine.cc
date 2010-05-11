@@ -10,14 +10,14 @@
 //
 // Author: Jeff Cameron (jeff@jpcameron.com)
 //
-// Plays a game of Galcon between two computer programs.
+// Plays a game of Planet Wars between two computer programs.
 
 #include <cstdio>
 #include <cstdlib>
 #include <iostream>
 #include <vector>
 #include "cpp_util/string_util.h"
-#include "galcon/engine/game.h"
+#include "planet_wars/engine/game.h"
 #include "sandbox/sandbox.h"
 
 void KillClients(std::vector<Sandbox*>& clients) {

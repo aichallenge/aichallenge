@@ -10,7 +10,7 @@
 //
 // Author: Jeff Cameron (jeff@jpcameron.com)
 
-#include "galcon/engine/planet.h"
+#include "planet_wars/engine/planet.h"
 
 Planet::Planet(int owner, int num_ships, int growth_rate, double x, double y) {
   owner_ = owner;
