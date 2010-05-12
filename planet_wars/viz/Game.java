@@ -25,13 +25,32 @@ public class Game {
     // always call Init() before the game object will be in any kind of
     // coherent state.
     public Game(String s, int maxGameLength, int mode) {
-	
+	initMode = mode;
+	switch (initMode) {
+	case 0:
+	    mapFilename = s;
+	    break;
+	case 1:
+	    mapData = s;
+	    break;
+	default:
+	    break;
+	}
+	this.maxGameLength = maxGameLength;
+	numTurns = 0;
     }
 
     // Initializes a game of Planet Wars. Loads the map data from the file
     // specified in the constructor. Returns 1 on success, 0 on failure.
     public int Init() {
-	return 0;
+	switch (init_mode) {
+	case 0:
+	    return LoadMapFromFile(mapFilename);
+	case 1:
+	    return ParseGameState(mapData);
+	default:
+	    return 0;
+	}
     }
 
     // Returns the number of planets. Planets are numbered starting with 0.
@@ -72,7 +91,17 @@ public class Game {
     // game state to individual players, so that they can always assume that they
     // are player number 1.
     public String PovRepresentation(int pov) {
-	return null;
+	String s = "";
+	for (Planet p : planets) {
+	    s += "P " + p.X() + " " + p.Y() + " " + PovSwitch(pov, p.Owner()) +
+		" " + p.NumShips() + " " + p.GrowthRate() + "\n";
+	}
+	for (Fleet f : fleets) {
+	    s += "F " + PovSwitch(pov, f.Owner()) + " " + f.NumShips() + " " +
+		f.SourcePlanet() + " " + f.DestinationPlanet() + " " +
+		f.TotalTripLength() + " " + f.TurnsRemaining() + "\n";
+	}
+	return s;
     }
 
     // Carries out the point-of-view switch operation, so that each player can
@@ -85,14 +114,21 @@ public class Game {
     // 4. Otherwise return player_id, since players other than 1 and pov are
     //    unaffected by the pov switch.
     public static int PovSwitch(int pov, int playerID) {
-	return 0;
+	if (pov < 0) return player_id;
+	if (player_id == pov) return 1;
+	if (player_id == 1) return pov;
+	return player_id;
     }
 
     // Returns the distance between two planets, rounded up to the next highest
     // integer. This is the number of discrete time steps it takes to get between
     // the two planets.
     public int Distance(int sourcePlanet, int destinationPlanet) {
-	return 0;
+	Planet source = planets.get(sourcePlanet);
+	Planet destination = planets.get(destinationPlanet);
+	double dx = source.X() - destination.X();
+	double dy = source.Y() - destination.Y();
+	return (int)Math.ceil(Math.sqrt(dx * dx + dy * dy));
     }
 
     // Executes one time step.
@@ -110,10 +146,30 @@ public class Game {
     // not, the offending player is kicked from the game. If the order was
     // carried out without any issue, and everything is peachy, then 0 is
     // returned. Otherwise, -1 is returned.
-    public int IssueOrder(int player_id,
-			  int source_planet,
-			  int destination_planet,
-			  int num_ships) {
+    public int IssueOrder(int playerID,
+			  int sourcePlanet,
+			  int destinationPlanet,
+			  int numShips) {
+	Planet source = planet.get(sourcePlanet);
+	if (source.Owner() != playerID || numShips > source.NumShips()) {
+	    DropPlayer(playerID);
+	    return -1;
+	}
+	source.RemoveShips(numShips);
+	int distance = Distance(sourcePlanet, destinationPlanet);
+	Fleet f = new Fleet(source.Owner(),
+			    numShips,
+			    sourcePlanet,
+			    destinationPlanet,
+			    distance,
+			    distance);
+	fleets.add(f);
+	char lastChar = gamePlayback.charAt(gamePlayback.length() - 1);
+	if (lastChar != ':' && lastChar != '|') {
+	    gamePlayback += ",";
+	}
+	gamePlayback += "" + sourcePlanet + "." + destinationPlanet + "." +
+	    numShips;
 	return 0;
     }
 
@@ -121,18 +177,39 @@ public class Game {
     // of the form "source_planet destination_planet num_ships". That is, three
     // integers separated by space characters.
     public int IssueOrder(int playerID, String order) {
-	return 0;
+	String[] tokens = order.split(" ");
+	if (tokens.length != 3) {
+	    return -1;
+	}
+	int sourcePlanet = Integer.parseInt(tokens[0]);
+	int destinationPlanet = Integer.parseInt(tokens[1]);
+	int numShips = Integer.parseInt(tokens[2]);
+	return IssueOrder(playerID, sourcePlanet, destinationPlanet, numShips);
     }
 
     // Kicks a player out of the game. This is used in cases where a player tries
     // to give an illegal order or runs over the time limit.
     public void DropPlayer(int playerID) {
-	
+	for (Planet p : planets) {
+	    if (p.Owner() == playerID) {
+		p.Owner(0);
+	    }
+	}
     }
 
     // Returns true if the named player owns at least one planet or fleet.
     // Otherwise, the player is deemed to be dead and false is returned.
     public boolean IsAlive(int player_id) {
+	for (Planet p : planets) {
+	    if (p.Owner() == playerID) {
+		return true;
+	    }
+	}
+	for (Fleet f : fleets) {
+	    if (f.Owner() == playerID) {
+		return true;
+	    }
+	}
 	return false;
     }
 
@@ -141,7 +218,16 @@ public class Game {
     // is left) then that player's number is returned. If there are no remaining
     // players, then the game is a draw and 0 is returned.
     public int Winner() {
-	return -1;
+	Set<Integer> remainingPlayers;
+	for (Planet p : planets) {
+	    remainingPlayers.add(p.Owner());
+	}
+	for (Fleet f : fleets) {
+	    remainingPlayers.add(f.Owner());
+	}
+	if (numTurns > maxGameLength) {
+	    
+	}
     }
 
     // Returns the game playback string. This is a complete record of the game,
