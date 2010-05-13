@@ -30,6 +30,7 @@ Sandbox::Sandbox(const std::string& command, bool trap_stderr) {
   child_stdout_buffer_ = "";
   child_stderr_buffer_ = "";
   trap_stderr_ = trap_stderr;
+  is_alive_ = false;
 }
 
 Sandbox::~Sandbox() {
@@ -82,11 +83,13 @@ int Sandbox::Init() {
       SetNonBlockingIO(child_stderr_);
     }
     delete argv;
+    is_alive_ = true;
     return 1;
   }
 }
 
 void Sandbox::Kill() {
+  is_alive_ = false;
   if (pid_ == 0) {
     return;
   }
@@ -97,7 +100,16 @@ void Sandbox::Kill() {
   } else if (child_pid == 0) {
     sleep(1);
     kill(pid_, SIGKILL);
+    exit(0);
   }
+}
+
+std::string Sandbox::Command() {
+  return command_;
+}
+
+bool Sandbox::IsAlive() {
+  return is_alive_;
 }
 
 int Sandbox::SetNonBlockingIO(int fd)

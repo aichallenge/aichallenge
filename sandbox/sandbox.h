@@ -37,6 +37,12 @@ class Sandbox {
   // Destroys the spawned process.
   void Kill();
 
+  // Returns true if the spawned process is thought to be alive. If something
+  // is known to be wrong with the process, then false is returned. Examples
+  // include if an IO function has failed or if the Kill() function has been
+  // called.
+  bool IsAlive();
+
   // Writes the given string to the stdin channel of the spawned process,
   // followed by a single newline character (\n). On success, returns the
   // number of bytes written. On error, -1 is returned.
@@ -73,6 +79,9 @@ class Sandbox {
   // same as the ReadLine method, except for stderr instead of stdout.
   int ReadErrorLine(std::string& buf);
 
+  // Returns the shell command used to initialize this sandbox.
+  std::string Command();
+
  private:
   // Sets a file descriptor to eb non-blocking.
   int SetNonBlockingIO(int file_descriptor);
@@ -96,6 +105,9 @@ class Sandbox {
 
   // Whether or not to trap the spawned program's stderr output.
   bool trap_stderr_;
+
+  // Keeps track of whether the spawned process is in good shape.
+  bool is_alive_;
 };
 
 #endif
