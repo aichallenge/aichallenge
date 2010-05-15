@@ -12,19 +12,23 @@
 //
 // Stores the game state.
 
+import java.io.*;
 import java.util.*;
 
 public class Game {
     // There are two modes:
     //   * If mode == 0, then s is interpreted as a filename, and the game is
     //     initialized by reading map data out of the named file.
-    //   * If mode == 1, then s is interpreted as a string that contains map data
-    //     directly. The string is parsed in the same way that the contents of
-    //     a map file would be.
+    //   * If mode == 1, then s is interpreted as a string that contains map
+    //     data directly. The string is parsed in the same way that the
+    //     contents of a map file would be.
     // This constructor does not actually initialize the game object. You must
     // always call Init() before the game object will be in any kind of
     // coherent state.
     public Game(String s, int maxGameLength, int mode) {
+	planets = new ArrayList<Planet>();
+	fleets = new ArrayList<Fleet>();
+	gamePlayback = "";
 	initMode = mode;
 	switch (initMode) {
 	case 0:
@@ -43,7 +47,7 @@ public class Game {
     // Initializes a game of Planet Wars. Loads the map data from the file
     // specified in the constructor. Returns 1 on success, 0 on failure.
     public int Init() {
-	switch (init_mode) {
+	switch (initMode) {
 	case 0:
 	    return LoadMapFromFile(mapFilename);
 	case 1:
@@ -114,10 +118,10 @@ public class Game {
     // 4. Otherwise return player_id, since players other than 1 and pov are
     //    unaffected by the pov switch.
     public static int PovSwitch(int pov, int playerID) {
-	if (pov < 0) return player_id;
-	if (player_id == pov) return 1;
-	if (player_id == 1) return pov;
-	return player_id;
+	if (pov < 0) return playerID;
+	if (playerID == pov) return 1;
+	if (playerID == 1) return pov;
+	return playerID;
     }
 
     // Returns the distance between two planets, rounded up to the next highest
@@ -150,7 +154,7 @@ public class Game {
 			  int sourcePlanet,
 			  int destinationPlanet,
 			  int numShips) {
-	Planet source = planet.get(sourcePlanet);
+	Planet source = planets.get(sourcePlanet);
 	if (source.Owner() != playerID || numShips > source.NumShips()) {
 	    DropPlayer(playerID);
 	    return -1;
@@ -199,7 +203,7 @@ public class Game {
 
     // Returns true if the named player owns at least one planet or fleet.
     // Otherwise, the player is deemed to be dead and false is returned.
-    public boolean IsAlive(int player_id) {
+    public boolean IsAlive(int playerID) {
 	for (Planet p : planets) {
 	    if (p.Owner() == playerID) {
 		return true;
@@ -218,7 +222,7 @@ public class Game {
     // is left) then that player's number is returned. If there are no remaining
     // players, then the game is a draw and 0 is returned.
     public int Winner() {
-	Set<Integer> remainingPlayers;
+	Set<Integer> remainingPlayers = new TreeSet<Integer>();
 	for (Planet p : planets) {
 	    remainingPlayers.add(p.Owner());
 	}
@@ -226,20 +230,50 @@ public class Game {
 	    remainingPlayers.add(f.Owner());
 	}
 	if (numTurns > maxGameLength) {
-	    
+	    int leadingPlayer = -1;
+	    int mostShips = -1;
+	    for (int playerID : remainingPlayers) {
+		int numShips = NumShips(playerID);
+		if (numShips == mostShips) {
+		    leadingPlayer = 0;
+		} else if (numShips > mostShips) {
+		    leadingPlayer = playerID;
+		    mostShips = numShips;
+		}
+	    }
+	    return leadingPlayer;
+	}
+	switch (remainingPlayers.size()) {
+	case 0:
+	    return 0;
+	case 1:
+	    return ((Integer)remainingPlayers.toArray()[0]).intValue();
+	default:
+	    return -1;
 	}
     }
 
     // Returns the game playback string. This is a complete record of the game,
     // and can be passed to a visualization program to playback the game.
     public String GamePlaybackString() {
-	return null;
+	return gamePlayback;
     }
 
     // Returns the number of ships that the current player has, either located
     // on planets or in flight.
-    public int NumShips(int player_id) {
-	return -1;
+    public int NumShips(int playerID) {
+	int numShips = 0;
+	for (Planet p : planets) {
+	    if (p.Owner() == playerID) {
+		numShips += p.NumShips();
+	    }
+	}
+	for (Fleet f : fleets) {
+	    if (f.Owner() == playerID) {
+		numShips += f.NumShips();
+	    }
+	}
+	return numShips;
     }
 
     // Renders the current state of the game as an image.
@@ -250,15 +284,83 @@ public class Game {
     // Parses a game state from a string. On success, returns 1. On failure,
     // returns 0.
     private int ParseGameState(String s) {
-	return 0;
+	planets.clear();
+	fleets.clear();
+	String[] lines = s.split("\n");
+	for (int i = 0; i < lines.length; ++i) {
+	    String line = lines[i];
+	    int commentBegin = line.indexOf('#');
+	    if (commentBegin >= 0) {
+		line = line.substring(0, commentBegin);
+	    }
+	    String[] tokens = line.split(" ");
+	    if (tokens.length == 0) {
+		continue;
+	    }
+	    if (tokens[0].equals("P")) {
+		if (tokens.length != 6) {
+		    return 0;
+		}
+		double x = Double.parseDouble(tokens[1]);
+		double y = Double.parseDouble(tokens[2]);
+		int owner = Integer.parseInt(tokens[3]);
+		int numShips = Integer.parseInt(tokens[4]);
+		int growthRate = Integer.parseInt(tokens[5]);
+		Planet p = new Planet(owner, numShips, growthRate, x, y);
+		planets.add(p);
+		if (gamePlayback.length() > 0) {
+		    gamePlayback += ":";
+		}
+		gamePlayback += "" + x + "," + y + "," + owner + "," +
+		    numShips + "," + growthRate;
+	    } else if (tokens[0].equals("F")) {
+		if (tokens.length != 7) {
+		    return 0;
+		}
+		int owner = Integer.parseInt(tokens[1]);
+		int numShips = Integer.parseInt(tokens[2]);
+		int source = Integer.parseInt(tokens[3]);
+		int destination = Integer.parseInt(tokens[4]);
+		int totalTripLength = Integer.parseInt(tokens[5]);
+		int turnsRemaining = Integer.parseInt(tokens[6]);
+		Fleet f = new Fleet(owner,
+				    numShips,
+				    source,
+				    destination,
+				    totalTripLength,
+				    turnsRemaining);
+		fleets.add(f);
+	    } else {
+		return 0;
+	    }
+	}
+	gamePlayback += "|";
+	return 1;
     }
 
-    // Loads a map from a test file. The text file contains a description of the
-    // starting state of a game. See the project wiki for a description of the
-    // file format. It should be called the Planet Wars Point-in-Time format.
-    // On success, return 1. On failure, returns 0.
-    private int LoadMapFromFile(String map_filename) {
-	return 0;
+    // Loads a map from a test file. The text file contains a description of
+    // the starting state of a game. See the project wiki for a description of
+    // the file format. It should be called the Planet Wars Point-in-Time
+    // format. On success, return 1. On failure, returns 0.
+    private int LoadMapFromFile(String mapFilename) {
+	String s = "";
+	BufferedReader in = null;
+	try {
+		in = new BufferedReader(new FileReader(mapFilename));
+		int c;
+		while ((c = in.read()) >= 0) {
+		    s += (char)c;
+		}
+	} catch (Exception e) {
+	    return 0;
+	} finally {
+	    try {
+		in.close();
+	    } catch (Exception e) {
+		// Fucked.
+	    }
+	}
+	return ParseGameState(s);
     }
 
     // Store all the planets and fleets. OMG we wouldn't wanna lose all the
@@ -276,8 +378,8 @@ public class Game {
     // See the constructor for details.
     private int initMode;
 
-    // This is the game playback string. It's a complete description of the game.
-    // It can be read by a visualization program to visualize the game.
+    // This is the game playback string. It's a complete description of the
+    // game. It can be read by a visualization program to visualize the game.
     private String gamePlayback;
 
     // The maximum length of the game in turns. After this many turns, the game
@@ -285,5 +387,4 @@ public class Game {
     // player with the most ships, then the game is a draw.
     private int maxGameLength;
     private int numTurns;
-    private boolean gameOver;
 }
