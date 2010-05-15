@@ -18,7 +18,7 @@
 //   * a total trip length
 //   * a number of turns remaining before arrival
 
-public class Fleet {
+public class Fleet implements Comparable {
     // Initializes a fleet.
     public Fleet(int owner,
 		 int numShips,
@@ -32,6 +32,17 @@ public class Fleet {
 	this.destinationPlanet = destinationPlanet;
 	this.totalTripLength = totalTripLength;
 	this.turnsRemaining = turnsRemaining;
+    }
+
+    // Initializes a fleet.
+    public Fleet(int owner,
+		 int numShips) {
+	this.owner = owner;
+	this.numShips = numShips;
+	this.sourcePlanet = -1;
+	this.destinationPlanet = -1;
+	this.totalTripLength = -1;
+	this.turnsRemaining = -1;
     }
 
     // Accessors and simple modification functions. These should be mostly
@@ -72,6 +83,12 @@ public class Fleet {
 	} else {
 	    turnsRemaining = 0;
 	}
+    }
+
+    @Override
+    public int compareTo(Object o) {
+	Fleet f = (Fleet)o;
+	return this.numShips - f.numShips;
     }
 
     private int owner;

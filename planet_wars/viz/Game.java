@@ -12,6 +12,8 @@
 //
 // Stores the game state.
 
+import java.awt.*;
+import java.awt.image.*;
 import java.io.*;
 import java.util.*;
 
@@ -92,8 +94,8 @@ public class Game {
     // Optionally, you may specify the pov (Point of View) parameter. The pov
     // parameter is a player number. If specified, the player numbers 1 and pov
     // will be swapped in the game state output. This is used when sending the
-    // game state to individual players, so that they can always assume that they
-    // are player number 1.
+    // game state to individual players, so that they can always assume that
+    // they are player number 1.
     public String PovRepresentation(int pov) {
 	String s = "";
 	for (Planet p : planets) {
@@ -113,8 +115,8 @@ public class Game {
     // 1. If pov < 0 then no pov switching is being used. Return player_id.
     // 2. If player_id == pov then return 1 so that each player thinks he is
     //    player number 1.
-    // 3. If player_id == 1 then return pov so that the real player 1 looks like
-    //    he is player number "pov".
+    // 3. If player_id == 1 then return pov so that the real player 1 looks
+    //    like he is player number "pov".
     // 4. Otherwise return player_id, since players other than 1 and pov are
     //    unaffected by the pov switch.
     public static int PovSwitch(int pov, int playerID) {
@@ -125,8 +127,8 @@ public class Game {
     }
 
     // Returns the distance between two planets, rounded up to the next highest
-    // integer. This is the number of discrete time steps it takes to get between
-    // the two planets.
+    // integer. This is the number of discrete time steps it takes to get
+    // between the two planets.
     public int Distance(int sourcePlanet, int destinationPlanet) {
 	Planet source = planets.get(sourcePlanet);
 	Planet destination = planets.get(destinationPlanet);
@@ -140,16 +142,123 @@ public class Game {
     //   * Fleets are advanced towards their destinations.
     //   * Fleets that arrive at their destination are dealt with.
     public void DoTimeStep() {
-	
+	// Add ships to each non-neutral planet according to its growth rate.
+	for (Planet p : planets) {
+	    if (p.Owner() > 0) {
+		p.AddShips(p.GrowthRate());
+	    }
+	}
+	// Advance all fleets by one time step. Collect the ones that are
+	// arriving at their destination planets this turn. Group them by
+	// destination and attacking player using the attackers map. For
+	// example, attackers[3][4] will store how many of player 4's ships
+	// are landing on planet 3 this turn.
+	ArrayList<Fleet> newFleets = new ArrayList<Fleet>();
+	Map<Integer, Map<Integer, Integer>> attackers =
+	    new TreeMap<Integer, Map<Integer, Integer>>();
+	for (Fleet f : fleets) {
+	    f.TimeStep();
+	    if (f.TurnsRemaining() == 0) {
+		int dest = f.DestinationPlanet();
+		int attacker = f.Owner();
+		if (!attackers.containsKey(dest)) {
+		    attackers.put(dest, new TreeMap<Integer, Integer>());
+		}
+		if (!attackers.get(dest).containsKey(attacker)) {
+		    attackers.get(dest).put(attacker, 0);
+		}
+		int existingAttackers = attackers.get(dest).get(attacker);
+		attackers.get(dest).put(attacker,
+					existingAttackers + f.NumShips());
+	    } else {
+		newFleets.add(f);
+	    }
+	}
+	fleets = newFleets;
+	// Resolve the status of each planet which is being attacked. This is
+	// non-trivial, since a planet can be attacked by many different
+	// players at once.
+	for (int i = 0; i < planets.size(); ++i) {
+	    if (!attackers.containsKey(i)) {
+		continue;
+	    }
+	    Planet p = planets.get(i);
+	    int defender = p.Owner();
+	    // Add the current owner's "attacking" ships to the defending
+	    // forces.
+	    if (attackers.get(i).containsKey(defender)) {
+		p.AddShips(attackers.get(i).get(defender));
+		attackers.get(i).remove(defender);
+	    }
+	    // Empty the attackers into a vector of fleets and sort them from
+	    // weakest to strongest.
+	    ArrayList<Fleet> enemyFleets = new ArrayList<Fleet>();
+	    int numEnemyShips = 0;
+	    for (Integer j : attackers.get(i).keySet()) {
+		int numAttackers = attackers.get(i).get(j);
+		enemyFleets.add(new Fleet(j, numAttackers));
+		numEnemyShips += numAttackers;
+	    }
+	    Collections.sort(enemyFleets);
+	    // Starting with the weakest attacker, the attackers take turns
+	    // chipping away the defending forces one by one until there are
+	    // either no more defenders or no more attackers.
+	    int whoseTurn = 0;
+	    while (p.NumShips() > 0 && numEnemyShips > 0) {
+		if (enemyFleets.get(whoseTurn).NumShips() > 0) {
+		    p.RemoveShips(1);
+		    enemyFleets.get(whoseTurn).RemoveShips(1);
+		    --numEnemyShips;
+		    if (enemyFleets.get(whoseTurn).NumShips() == 0) {
+			enemyFleets.remove(whoseTurn);
+			--whoseTurn;
+		    }
+		}
+		++whoseTurn;
+		if (whoseTurn >= enemyFleets.size()) {
+		    whoseTurn = 0;
+		}
+	    }
+	    // If there are no enemy fleets left, then the defender keeps
+	    // control of the planet. If there are any enemy fleets left, then
+	    // they battle it out to determine who gets control of the planet.
+	    // This is done by cycling through the attackers and subtracting
+	    // one ship at a time from each, until there is only one attacker
+	    // left. If the last attackers are all eliminated at the same time,
+	    // then the planet becomes neutral with zero ships occupying it.
+	    if (numEnemyShips > 0) {
+		p.Owner(0);
+		while (true) {
+		    for (int j = 0; j < enemyFleets.size(); ++j) {
+			enemyFleets.get(j).RemoveShips(1);
+			if (enemyFleets.get(j).NumShips() <= 0) {
+			    enemyFleets.remove(j);
+			    --j;
+			}
+		    }
+		    if (enemyFleets.size() == 0) {
+			break;
+		    }
+		    if (enemyFleets.size() == 1) {
+			p.Owner(enemyFleets.get(0).Owner());
+			p.NumShips(enemyFleets.get(0).NumShips());
+			break;
+		    }
+		}
+	    }
+	}
+	gamePlayback += ":";
+	// Check to see if the maximum number of turns has been reached.
+	++numTurns;
     }
 
-    // Issue an order. This function takes num_ships off the source_planet, puts
-    // them into a newly-created fleet, calculates the distance to the
-    // destination_planet, and sets the fleet's total trip time to that distance.
-    // Checks that the given player_id is allowed to give the given order. If
-    // not, the offending player is kicked from the game. If the order was
-    // carried out without any issue, and everything is peachy, then 0 is
-    // returned. Otherwise, -1 is returned.
+    // Issue an order. This function takes num_ships off the source_planet,
+    // puts them into a newly-created fleet, calculates the distance to the
+    // destination_planet, and sets the fleet's total trip time to that
+    // distance. Checks that the given player_id is allowed to give the given
+    // order. If not, the offending player is kicked from the game. If the
+    // order was carried out without any issue, and everything is peachy, then
+    // 0 is returned. Otherwise, -1 is returned.
     public int IssueOrder(int playerID,
 			  int sourcePlanet,
 			  int destinationPlanet,
@@ -191,8 +300,8 @@ public class Game {
 	return IssueOrder(playerID, sourcePlanet, destinationPlanet, numShips);
     }
 
-    // Kicks a player out of the game. This is used in cases where a player tries
-    // to give an illegal order or runs over the time limit.
+    // Kicks a player out of the game. This is used in cases where a player
+    // tries to give an illegal order or runs over the time limit.
     public void DropPlayer(int playerID) {
 	for (Planet p : planets) {
 	    if (p.Owner() == playerID) {
@@ -219,8 +328,8 @@ public class Game {
 
     // If the game is not yet over (ie: at least two players have planets or
     // fleets remaining), returns -1. If the game is over (ie: only one player
-    // is left) then that player's number is returned. If there are no remaining
-    // players, then the game is a draw and 0 is returned.
+    // is left) then that player's number is returned. If there are no
+    // remaining players, then the game is a draw and 0 is returned.
     public int Winner() {
 	Set<Integer> remainingPlayers = new TreeSet<Integer>();
 	for (Planet p : planets) {
@@ -277,8 +386,59 @@ public class Game {
     }
 
     // Renders the current state of the game as an image.
-    java.awt.Image Render() {
-	return null;
+    //
+    // The offset is a number between 0 and 1 that specifies how far we are
+    // past this game state, in units of time. As this parameter varies from
+    // 0 to 1, the fleets all move in the forward direction. This is used to
+    // fake smooth animation.
+    //
+    // On success, return an image. If something goes wrong, returns null.
+    BufferedImage Render(int width, int height, double offset) {
+	// Set up the graphics context.
+	BufferedImage image =
+	    new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+	Graphics2D graphics = image.createGraphics();
+	graphics.setBackground(Color.BLACK);
+	graphics.clearRect(0, 0, width, height);
+	// Set up the player colors.
+	ArrayList<Color> colors = new ArrayList<Color>();
+	colors.add(Color.DARK_GRAY);
+	colors.add(Color.RED);
+	colors.add(Color.BLUE);
+	colors.add(Color.WHITE);
+	colors.add(Color.YELLOW);
+	colors.add(Color.GREEN);
+	colors.add(Color.ORANGE);
+	colors.add(Color.PINK);
+	colors.add(Color.CYAN);
+	colors.add(Color.MAGENTA);
+	// Determine the dimensions of the viewport in game coordinates.
+	double top = Double.MAX_VALUE;
+	double left = Double.MAX_VALUE;
+	double right = Double.MIN_VALUE;
+	double bottom = Double.MIN_VALUE;
+	for (Planet p : planets) {
+	    if (p.X() < left) left = p.X();
+	    if (p.X() > right) right = p.X();
+	    if (p.Y() > bottom) bottom = p.Y();
+	    if (p.Y() < top) top = p.Y();
+	}
+	double xRange = right - left;
+	double yRange = bottom - top;
+	double paddingFactor = 0.1;
+	left -= xRange * paddingFactor;
+	right += xRange * paddingFactor;
+	top -= yRange * paddingFactor;
+	bottom += yRange * paddingFactor;
+	// Draw the planets.
+	for (Planet p : planets) {
+	    int x = (int)((p.X() - left) / (right - left) * width);
+	    int y = height - (int)((p.Y() - top) / (bottom - top) * height);
+	    int r = 10 * p.GrowthRate();
+	    graphics.setColor(colors.get(p.Owner()));
+	    graphics.fillOval(x - r / 2, y - r / 2, r, r);
+	}
+	return image;
     }
 
     // Parses a game state from a string. On success, returns 1. On failure,
@@ -292,6 +452,9 @@ public class Game {
 	    int commentBegin = line.indexOf('#');
 	    if (commentBegin >= 0) {
 		line = line.substring(0, commentBegin);
+	    }
+	    if (line.trim().length() == 0) {
+		continue;
 	    }
 	    String[] tokens = line.split(" ");
 	    if (tokens.length == 0) {

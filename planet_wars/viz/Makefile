@@ -12,7 +12,7 @@
 #
 # Makefile for the Tic-Tac-Toe contest engine.
 
-TARGETS = Game.class
+TARGETS = Game.class RenderMap.class
 
 all: $(TARGETS)
 
@@ -27,3 +27,6 @@ Game.class: Fleet.class Game.java Planet.class
 
 Planet.class: Planet.java
 	javac Planet.java
+
+RenderMap.class: RenderMap.java
+	javac RenderMap.java
