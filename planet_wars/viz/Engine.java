@@ -12,11 +12,14 @@
 //
 // Plays a game of Planet Wars between two computer programs.
 
+import java.io.*;
+import java.util.*;
+
 public class Engine {
     public static void KillClients(List<Process> clients) {
 	for (Process p : clients) {
 	    if (p != null) {
-		p.Kill();
+		p.destroy();
 	    }
 	}
     }
@@ -32,7 +35,7 @@ public class Engine {
 
     public static void main(String[] args) {
 	// Check the command-line arguments.
-	if (args.length < 6) {
+	if (args.length < 5) {
 	    System.err.println("ERROR: you must give at least five command-" +
 			       "line arguments.");
 	    System.err.println("USAGE: engine map_file_name max_turn_time " +
@@ -41,20 +44,25 @@ public class Engine {
 	    System.exit(1);
 	}
 	// Initialize the game. Load the map.
-	String mapFilename = args[1];
-	int maxNumTurns = Integer.parseInt(args[3]);
-	Game game(mapFilename, maxNumTurns);
-	if (!game.Init()) {
+	String mapFilename = args[0];
+	int maxNumTurns = Integer.parseInt(args[2]);
+	Game game = new Game(mapFilename, maxNumTurns, 0);
+	if (game.Init() == 0) {
 	    System.err.println("ERROR: failed to start game. map: " +
 			       mapFilename);
 	}
-	long max_turn_time = Integer.parseInt(args[2]);
+	long max_turn_time = Integer.parseInt(args[1]);
 	// Start the client programs (players).
 	List<Process> clients = new ArrayList<Process>();
-	for (int i = 4; i < args.length; ++i) {
+	for (int i = 3; i < args.length; ++i) {
 	    String command = args[i];
-	    Process client = Runtime.exec(command);
-	    if (!client.Init()) {
+	    Process client = null;
+	    try {
+		client = Runtime.getRuntime().exec(command);
+	    } catch (Exception e) {
+		client = null;
+	    }
+	    if (client == null) {
 		KillClients(clients);
 		System.err.println("ERROR: failed to start client: " +
 				   command);
@@ -68,63 +76,48 @@ public class Engine {
 	    System.out.println("The game state:");
 	    System.out.print(game);
 	    for (int i = 0; i < clients.size(); ++i) {
-		if (!clients.get(i).IsAlive() || !game.IsAlive(i + 1)) {
+		if (clients.get(i) == null || !game.IsAlive(i + 1)) {
 		    continue;
 		}
-		String message = game.toString(i + 1) + "go\n";
-		clients.get(i).getOutputStream().write(message.getBytes());
+		String message = game.PovRepresentation(i + 1) + "go\n";
+		try {
+		    OutputStream out = clients.get(i).getOutputStream();
+		    OutputStreamWriter writer = new OutputStreamWriter(out);
+		    writer.write(message, 0, message.length());
+		    writer.flush();
+		    
+		} catch (Exception e) {
+		    clients.set(i, null);
+		}
 	    }
 	    // Get orders from the clients.
-	    long startTime = System.currentTimeMillis();
-	    List<Boolean> clientDone = new ArrayList<Boolean>();
-	    for (int i = 0; i < clients.size(); ++i) {
-		clientDone.add(false);
-	    }
-	    while (!AllTrue(clientDone) &&
-		   (System.currentTimeMillis() - startTime) * 1000 /
-		   CLOCKS_PER_SEC <= max_turn_time) {
-		for (int i = 0; i < clients.size(); ++i) {
-		    Process p = clients.get(i);
-		    if (p.IsAlive() && !clientDone[i]) {
-			String order;
-			int readResult = clients[i]->ReadLine(order);
-			if (read_result > 0) {
-			    std::cout << "Player " << (i + 1) << ": " << order << std::endl;
-			    if (order == "go" || order == "GO" || order == "Go") {
-				client_done[i] = true;
-			    } else {
-				int order_result = game.IssueOrder(i + 1, order);
-				if (order_result < 0) {
-				    std::cerr << "Killed player " << (i + 1) << " due to "
-					      << "error while processing order: " << order
-					      << std::endl;
-				    clients[i]->Kill();
-				}
-			    }
+	    for (int i = 0 ; i < clients.size(); ++i) {
+		InputStream inputStream = clients.get(i).getInputStream();
+		InputStreamReader reader = new InputStreamReader(inputStream);
+		BufferedReader bufferedReader = new BufferedReader(reader);
+		String line;
+		boolean done = false;
+		try {
+		    while (!done && (line = bufferedReader.readLine()) != null) {
+			System.out.println("received: " + line);
+			line = line.toLowerCase().trim();
+			if (line.equals("go")) {
+			    done = true;
+			} else {
+			    game.IssueOrder(i + 1, line);
 			}
 		    }
-		}
-		sleep(0);
-	    }
-	    // Drop players who didn't respond before the timeout cutoff.
-	    for (unsigned int i = 0; i < clients.size(); ++i) {
-		if (clients[i]->IsAlive() && !client_done[i]) {
-		    std::cerr << "Killing player " << (i + 1) << " for timing out."
-			      << std::endl;
-		    clients[i]->Kill();
-		    game.DropPlayer(i + 1);
+		} catch (Exception e) {
+		    System.err.println("Problem while getting orders: " + e);
 		}
 	    }
 	    game.DoTimeStep();
 	}
 	KillClients(clients);
 	if (game.Winner() > 0) {
-	    std::cout << "Player " << game.Winner() << " Wins!" << std::endl;
+	    System.out.println("Player " + game.Winner() + " Wins!");
 	} else {
-	    std::cout << "Draw!" << std::endl;
+	    System.out.println("Draw!");
 	}
-	std::cout << "Game playback string: " << game.GamePlaybackString()
-		  << std::endl;
-	return 0;
     }
 }

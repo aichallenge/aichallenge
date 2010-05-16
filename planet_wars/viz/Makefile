@@ -12,12 +12,15 @@
 #
 # Makefile for the Tic-Tac-Toe contest engine.
 
-TARGETS = Game.class RenderMap.class
+TARGETS = Engine.class RenderMap.class
 
 all: $(TARGETS)
 
 clean:
 	rm -f *.class $(TARGETS)
+
+Engine.class: Engine.java Game.class
+	javac Engine.java
 
 Fleet.class: Fleet.java
 	javac Fleet.java

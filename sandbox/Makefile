@@ -15,7 +15,7 @@
 CC=g++
 CPPFLAGS += -Wall -I.. -I../third_party/googletest/include
 VPATH = ../third_party/googletest/make:../cpp_util
-TARGETS = sandbox.a sum unit_tests
+TARGETS = sandbox.a sum unit_tests SandboxTest.class
 
 all: $(TARGETS)
 
@@ -27,5 +27,11 @@ sandbox.a: sandbox.a(sandbox.o)
 
 unit_tests: gtest_main.a sandbox_test.o sandbox.a cpp_util.a
 	$(CC) $(CPPFLAGS) -o $@ $^ -lpthread
+
+Sandbox.class: Sandbox.java
+	javac Sandbox.java
+
+SandboxTest.class: SandboxTest.java Sandbox.class
+	javac SandboxTest.java
 
 sum: sum.o cpp_util.a
