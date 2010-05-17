@@ -8,14 +8,17 @@
 // CONDITIONS OF ANY KIND, either express or implied. See the License for the
 // specific language governing permissions and limitations under the License.
 //
-// Author: Jeff Cameron (jeff@jpcameron.com)
+// Author:	Jeff Cameron (jeff@jpcameron.com)
 //
 // Stores the game state.
 
 import java.awt.*;
 import java.awt.image.*;
+import java.awt.geom.AffineTransform;
 import java.io.*;
 import java.util.*;
+import javax.imageio.*;
+import java.lang.Math;
 
 public class Game {
     // There are two modes:
@@ -385,6 +388,68 @@ public class Game {
 	return numShips;
     }
 
+	// There is probably a better way of doing this init stuff
+	// that I will have to look in to.
+	private ArrayList<Color> colors;
+	private Color bgColor;
+	private Color textColor;
+	private BufferedImage bgImage;
+	private Font planetFont;
+	private Font fleetFont;
+	private GraphicsConfiguration gc;
+	private boolean renderInit = false;
+	
+	// Creates the color 'theme' used for the game
+	private void initRenderer() {
+		bgColor = new Color(188, 189, 172);
+		
+		colors = new ArrayList<Color>();
+			colors.add(new Color(106, 74, 60));
+			colors.add(new Color(74, 166, 60));
+			colors.add(new Color(204, 51, 63));
+			colors.add(new Color(235, 104, 65));
+			colors.add(new Color(237, 201, 81));
+			// anything after this is probably not necessary yet!
+
+		textColor = Color.BLACK;
+		
+		try {
+			// NOTE:	We don't have permission to use this image yet
+			//			so it is just here for 'testing' purposes until
+			//			we either contact the creator or find one that
+			//			we are allowed to use.
+			bgImage = ImageIO.read(new File("space.jpg"));
+		} catch (IOException Err) {
+			// do nothing
+		}
+		
+		planetFont = new Font("Sans Serif", Font.BOLD, 11);
+		fleetFont = new Font("Sans serif", Font.PLAIN, 7);
+		
+		gc = GraphicsEnvironment.getLocalGraphicsEnvironment()
+			.getDefaultScreenDevice().getDefaultConfiguration();
+		
+		renderInit = true;
+		
+	}
+	
+	// Gets a color for a player (clamped)
+	private Color GetColor(int player) {
+		if (player > colors.size()) {
+			return Color.PINK;
+		} else {
+			return colors.get(player);
+		}
+	}
+	
+	private Point GetPlanetPos(Planet p, double top, double left,
+							   double right, double bottom, int width,
+							   int height) {
+		int x = (int)((p.X() - left) / (right - left) * width);
+		int y = height - (int)((p.Y() - top) / (bottom - top) * height);
+		return new Point(x, y);
+	}
+	
     // Renders the current state of the game as an image.
     //
     // The offset is a number between 0 and 1 that specifies how far we are
@@ -394,51 +459,134 @@ public class Game {
     //
     // On success, return an image. If something goes wrong, returns null.
     BufferedImage Render(int width, int height, double offset) {
-	// Set up the graphics context.
-	BufferedImage image =
-	    new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
-	Graphics2D graphics = image.createGraphics();
-	graphics.setBackground(Color.BLACK);
-	graphics.clearRect(0, 0, width, height);
-	// Set up the player colors.
-	ArrayList<Color> colors = new ArrayList<Color>();
-	colors.add(Color.DARK_GRAY);
-	colors.add(Color.RED);
-	colors.add(Color.BLUE);
-	colors.add(Color.WHITE);
-	colors.add(Color.YELLOW);
-	colors.add(Color.GREEN);
-	colors.add(Color.ORANGE);
-	colors.add(Color.PINK);
-	colors.add(Color.CYAN);
-	colors.add(Color.MAGENTA);
-	// Determine the dimensions of the viewport in game coordinates.
-	double top = Double.MAX_VALUE;
-	double left = Double.MAX_VALUE;
-	double right = Double.MIN_VALUE;
-	double bottom = Double.MIN_VALUE;
-	for (Planet p : planets) {
-	    if (p.X() < left) left = p.X();
-	    if (p.X() > right) right = p.X();
-	    if (p.Y() > bottom) bottom = p.Y();
-	    if (p.Y() < top) top = p.Y();
-	}
-	double xRange = right - left;
-	double yRange = bottom - top;
-	double paddingFactor = 0.1;
-	left -= xRange * paddingFactor;
-	right += xRange * paddingFactor;
-	top -= yRange * paddingFactor;
-	bottom += yRange * paddingFactor;
-	// Draw the planets.
-	for (Planet p : planets) {
-	    int x = (int)((p.X() - left) / (right - left) * width);
-	    int y = height - (int)((p.Y() - top) / (bottom - top) * height);
-	    int r = 10 * p.GrowthRate();
-	    graphics.setColor(colors.get(p.Owner()));
-	    graphics.fillOval(x - r / 2, y - r / 2, r, r);
-	}
-	return image;
+		// set up the colorscheme on first run
+		// this can probably be called from outside!
+		if (!renderInit)
+			initRenderer();
+		
+		// Set up the graphics context.
+		BufferedImage image = gc.createCompatibleImage(width, height);
+			//new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+		Graphics2D g = image.createGraphics();
+		
+		// Turn on AA/Speed
+		g.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
+						   RenderingHints.VALUE_ANTIALIAS_ON);
+		g.setRenderingHint(RenderingHints.KEY_RENDERING,
+						   RenderingHints.VALUE_RENDER_SPEED);
+		g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,
+						   RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+		
+		// Background
+		g.drawImage(bgImage, null, 0, 0);
+		
+		// Determine the dimensions of the viewport in game coordinates.
+		double top = Double.MAX_VALUE;
+		double left = Double.MAX_VALUE;
+		double right = Double.MIN_VALUE;
+		double bottom = Double.MIN_VALUE;
+		for (Planet p : planets) {
+			if (p.X() < left) left = p.X();
+			if (p.X() > right) right = p.X();
+			if (p.Y() > bottom) bottom = p.Y();
+			if (p.Y() < top) top = p.Y();
+		}
+		double xRange = right - left;
+		double yRange = bottom - top;
+		double paddingFactor = 0.1;
+		left -= xRange * paddingFactor;
+		right += xRange * paddingFactor;
+		top -= yRange * paddingFactor;
+		bottom += yRange * paddingFactor;
+		
+		// Store the planet positions for reference later
+		Point[] planetPos = new Point[planets.size()];
+		
+		// Draw the planets.
+		g.setFont(planetFont);
+		FontMetrics fm = g.getFontMetrics(planetFont);
+		int i = 0;
+		for (Planet p : planets) {
+			Point pos = GetPlanetPos(p, top, left, right, bottom, width,
+									 height);
+			planetPos[i++] = pos;
+			int x = pos.x;
+			int y = pos.y;
+			int r = 20 * p.GrowthRate();
+			g.setColor(GetColor(p.Owner()));
+			int cx = x - r / 2;
+			int cy = y - r / 2;
+			g.fillOval(cx, cy, r, r);
+			/*g.setColor(g.getColor().darker());
+			g.drawOval(cx, cy, r, r);
+			*/
+			Color c = g.getColor();
+			for (int step = 1; step >= 0; step--) {
+				g.setColor(g.getColor().brighter());
+				g.drawOval(x - (r-step)/2, y - (r-step)/2, r-step, r-step);
+			}
+			g.setColor(c);
+			for (int step = 0; step < 3; step++) {
+				g.drawOval(x - (r+step)/2, y - (r+step)/2, r+step, r+step);
+  				g.setColor(g.getColor().darker());
+			}
+			
+			java.awt.geom.Rectangle2D bounds =
+				fm.getStringBounds(Integer.toString(p.NumShips()), g);
+			x -= bounds.getWidth()/2;
+			y += fm.getAscent()/2;
+			
+			g.setColor(textColor);
+			g.drawString(Integer.toString(p.NumShips()), x, y);
+		}
+		
+		// Draw fleets
+		g.setFont(fleetFont);
+		fm = g.getFontMetrics(fleetFont);
+		for (Fleet f : fleets) {
+			Point sPos = planetPos[f.SourcePlanet()];
+			Point dPos = planetPos[f.DestinationPlanet()];
+			
+			double ang = Math.atan2((double)(sPos.y - dPos.y),
+									(double)(sPos.x - dPos.x)) + Math.PI/2;
+			
+			// Build triangle @ size of fleet, rotate to planet, lerp
+			Polygon poly = new Polygon();
+			poly.addPoint(0, 2);
+			poly.addPoint(-1, -1);
+			poly.addPoint(1, -1);
+			
+			Rectangle bounds = poly.getBounds();
+			AffineTransform at = AffineTransform.getTranslateInstance(sPos.x,
+																	  sPos.y);
+			
+			at.translate((offset + f.TotalTripLength() - f.TurnsRemaining())*
+						 (double)(dPos.x - sPos.x)/(double)(f.TotalTripLength()),
+						 (offset + f.TotalTripLength() - f.TurnsRemaining())*
+						 (double)(dPos.y - sPos.y)/(double)(f.TotalTripLength()));
+			at.scale((double)f.NumShips()*.4, (double)f.NumShips()*.4);
+			at.rotate(ang, bounds.getCenterX(), bounds.getCenterY());
+			
+			Shape sh = at.createTransformedShape(poly);
+			
+			g.setColor(GetColor(f.Owner()));
+			g.fill(sh);
+			g.setColor(g.getColor().darker());
+			g.draw(sh);
+			
+			java.awt.geom.Rectangle2D bounds2 = sh.getBounds();
+			java.awt.geom.Rectangle2D textBounds =
+				fm.getStringBounds(Integer.toString(f.NumShips()), g);
+			
+			g.setColor(textColor);
+			g.drawString(Integer.toString(f.NumShips()),
+						 // round x sub up
+						 (int)(bounds2.getCenterX()-textBounds.getWidth()/2),
+						 (int)(bounds2.getCenterY()+fm.getAscent()/2));
+		}
+		
+		g.dispose();
+		return image;
     }
 
     // Parses a game state from a string. On success, returns 1. On failure,
