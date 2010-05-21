@@ -4,4 +4,4 @@
 <p>Welcome back. Did you miss it? Now you can all neglect your families again!
   </p>
 
-<?php include 'header.php'; ?>
+<?php include 'footer.php'; ?>
