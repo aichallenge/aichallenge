@@ -1,0 +1,20 @@
+* { margin:0; padding:0; font: 1em; }
+body { background-color: #333330; text-align:center; }
+#wrapper { margin:3px; background-color:white; }
+#main { text-align:left; background-color: #fdfdfd; width:1000px; margin:auto; margin:2.2em auto; -moz-border-radius: 3px; -webkit-border-radius: 3px; }
+#header { position:relative; font: 0.9em normal New York, Times, Times New Roman; background-color: #222220; width:auto; color: #FFFFFF; height:175px; }
+#sign { display:inline; text-align:right; bottom:0; right:0; position:absolute; padding:1.25em; }
+
+#content { padding:1em; font: 0.75em Tahoma, Arial, Helvetica, sans-serif; min-height:500px; }
+#content h1 { font-size: 1.5em; }
+
+#sidebar { height:100%; margin-top:1em; border-left:1px solid black; padding:20px; float:right; width:200px; height:400px; }
+#sidebar ul { padding-left:1em; font:0.725em Arial, sans-serif; font-weight:bold; list-style:none; }
+#sidebar li { padding:0.8em 0em; }
+
+#footer { background-color: #e7e7e7; height:75px; }
+
+#header a:link, #header a:visited { color:#fff; }
+
+.shadow { background-image: url(images/shadow.png); background-repeat: repeat-x; height: 8px; }
+.space { height: 1px; }
