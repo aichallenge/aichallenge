@@ -26,4 +26,4 @@ body { background-color: #333330; text-align:center; }
 
 #sidebar { display:inline; position:absolute; right:0; top: 0; height: 90%; width: 22%;}
 #content { position:relative; }
-#news { padding: 1.2em; min-height:500px; width:66%; }
+#news { padding: 1.2em; min-height:500px; width:66%; height:auto !important; height:500px; }
