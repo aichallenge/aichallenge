@@ -1,29 +1,26 @@
 * { margin:0; padding:0; font: 1em; }
-body { background-color: #333330; text-align:center; }
-#wrapper { margin:3px; background-color:white; }
-#main { padding-top:1px; text-align:left; background-color: #fdfdfd; width:1000px; margin:auto; margin:2.2em auto; -moz-border-radius: 3px; -webkit-border-radius: 3px; }
+body { background-color: #555550; text-align:center; }
+#main { padding-top:1px; text-align:left; background-color: #fdfdfd; width:930px; margin:auto; margin:2.2em auto; -moz-border-radius: 6px; -webkit-border-radius: 6px; padding-top:6px; }
 #header { background-image: url('../img/header-right.png'); background-repeat: no-repeat; background-position:right; position:relative; background-color: #242424; width:auto; color: #FFFFFF; height:175px; border:1px solid #AAA; border-top:0; border-bottom:0; }
-#header h1, #header h2 { color: #FFF; padding:0.5em;}
-#header h1 { padding-top:1.5em; }
-#header h2 { color: #DDD; }
-#sign { display:inline; text-align:right; bottom:0; right:0; position:absolute; padding:1.25em; font-size:1em; }
-#sidebar { height:100%; margin-top:1em; border-left:1px solid black; padding:20px; float:right; width:200px; height:400px; }
-#sidebar ul { padding-left:1em; font:0.725em Arial, sans-serif; font-weight:bold; list-style:none; }
-#sidebar li { padding:0.8em 0em; }
+#header h1, #header h2 { color: #FFF; padding:0 20px; font-weight:bold; }
+#header h1 { padding-top:2em; }
+#header h2 { color: #DDD; font-size:1em; }
+#sign { display:inline; text-align:right; bottom:0; right:0; position:absolute; padding:1.25em; font-size: 1.1em; font-variant: small-caps; }
+
+#sidebar { height:100%; margin-top:1em; border-left:1px solid #aaa; padding-top:20px; padding-left: 20px; padding-right:10px; float:right; width:200px; }
+#sidebar h1 { font-size: 1.4em; font-weight:bold; border-bottom: 1px solid #ccc; color: #622; }
+#sidebar ul { padding-left:0em; }
+#sidebar li { padding:0.2em 0em; font-size:1.1em; }
 #footer { background-color: #e7e7e7; height:75px; }
 
 #header a:link, #header a:visited { color:#fff; }
+#header a { text-decoration: none; }
+#header a:hover { text-decoration: underline; }
+
+#news h1, #news h2, #news h3 { text-decoration: underline; }
 
 .shadow { background-image: url('../img/shadow.png'); background-repeat: repeat-x; height: 8px; }
 
-.rgrid {
-    display:inline;
-    float: left;
-    position: relative;
-    margin-left: 0.5%;
-    margin-right: 0.5%;
-}
-
 #sidebar { display:inline; position:absolute; right:0; top: 0; height: 90%; width: 22%;}
 #content { position:relative; }
-#news { padding: 1.2em; min-height:500px; width:66%; height:auto !important; height:500px; }
+#news { padding: 20px; min-height:500px; width:66%; height:auto !important; height:500px; }

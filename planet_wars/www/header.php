@@ -16,8 +16,7 @@
   <div id="header">
     <div class="grid">
     <h1>Google AI Challenge</h1>
-    <h2>Organized by the Uniersity of Waterloo Computer Science Club.<br />
-      Sponsored by Google.</h2>
+    <h2>Organized by the University of Waterloo Computer Science Club and sponsored by Google</h2>
     <span id="sign">
       <?php if (logged_in_with_valid_credentials()) { ?>
         <a href="profile.php">My Profile</a> |
