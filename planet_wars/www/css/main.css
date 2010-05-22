@@ -11,13 +11,15 @@ body { background-color: #555550; text-align:center; }
 #sidebar h1 { font-size: 1.4em; font-weight:bold; border-bottom: 1px solid #ccc; color: #622; }
 #sidebar ul { padding-left:0em; }
 #sidebar li { padding:0.2em 0em; font-size:1.1em; }
+#sidebar li a { color: #222; }
+#sidebar li a:hover { color: #622; }
 #footer { background-color: #e7e7e7; height:75px; }
 
 #header a:link, #header a:visited { color:#fff; }
 #header a { text-decoration: none; }
 #header a:hover { text-decoration: underline; }
 
-#news h1, #news h2, #news h3 { text-decoration: underline; }
+#news h1, #news h2, #news h3 { text-decoration: underline; color: #622; }
 
 .shadow { background-image: url('../img/shadow.png'); background-repeat: repeat-x; height: 8px; }
 
