@@ -1,10 +1,11 @@
 <?php include 'header.php'; ?>
 <?php include 'mysql_login.php'; ?>
 <?php include 'bad_words.php'; ?>
+<?php include 'web_util.php'; ?>
 
 <?php
 function check_valid_user_status_code($code) {
-  $query = "SELECT * FROM contest_user_status_codes";
+  $query = "SELECT * FROM user_status_codes";
   $result = mysql_query($query);
   while ($row = mysql_fetch_assoc($result)) {
     $status_id = $row['status_id'];
@@ -19,7 +20,7 @@ function check_valid_organization($code) {
   if ($code == 999) {
     return False;
   }
-  $query = "SELECT * FROM contest_organizations";
+  $query = "SELECT * FROM organizations";
   $result = mysql_query($query);
   while ($row = mysql_fetch_assoc($result)) {
     $org_id = $row['org_id'];
@@ -48,7 +49,8 @@ $bio = mysql_real_escape_string(stripslashes($_POST['bio']));
 $country_id = mysql_real_escape_string(stripslashes($_POST['user_country']));
 
 // Uncomment the following line to disable account creation
-$errors[] = "Nuh-uh. The contest is over. No more accounts.";
+//$errors[] = "Accounts can not be created at this time. Come back later, " .
+	    "once the contest opens.";
 
 // Check for bad words
 if (contains_bad_word($username)) {
@@ -66,7 +68,7 @@ if (strcmp($user_email, "donotsend") == 0) {
 }
 
 // Check if the username already exists.
-$sql="SELECT * FROM contest_users WHERE username='$username'";
+$sql="SELECT * FROM users WHERE username='$username'";
 $result = mysql_query($sql);
 if (mysql_num_rows($result) > 0) {
   $errors[] = "The username $username is already in use. Please choose a different username.";
@@ -74,14 +76,14 @@ if (mysql_num_rows($result) > 0) {
 
 // Check if the email is already in use (except by an admin account or a donotsend account).
 if (strcmp($user_email, "donotsend") != 0) {
-  $sql="select u.username, u.email, MIN(up.permission_id) from contest_users u INNER JOIN contest_user_permissions up ON up.user_id = u.user_id where u.email = '$user_email' GROUP BY u.email HAVING MIN(up.permission_id) > 1";
+  $sql="select u.email from users where u.email = '$user_email' and admin = 0";
   $result = mysql_query($sql);
   if ($result && mysql_num_rows($result) > 0) {
     $errors[] = "The email $user_email is already in use. You are only allowed to have one account! It is easy for us to tell if you have two accounts, and you will be disqualified if you have two accounts! If there is some problem with your existing account, get in touch with the contest organizers by dropping by the Computer Science Club office and we will help you get up-and-running again!  :-)";
   }
 }
 
-// Check if the email is made up of the right kinds of characters
+// Check if the username is made up of the right kinds of characters
 if (!valid_username($username)) {
   $errors[] = "Invalid username. Your username must be longer than 6 characters and composed only of the characters a-z, A-Z, 0-9, '-', '_', and '.'";
 }
@@ -127,8 +129,8 @@ if (count($errors) <= 0) {
   $confirmation_code =
     md5($username . "d3j7k4nh8dvs0" . $password1 . $username);
   $query = "SELECT org.name AS name, COUNT(u.user_id) AS peers FROM " .
-    "contest_organizations org " .
-    "LEFT OUTER JOIN contest_users u ON u.org_id = org.org_id GROUP BY " .
+    "organizations org " .
+    "LEFT OUTER JOIN users u ON u.org_id = org.org_id GROUP BY " .
     "org.org_id HAVING org.org_id = " . $user_org;
   $result = mysql_query($query);
   $peer_message = "";
@@ -151,16 +153,24 @@ if (count($errors) <= 0) {
       }
     }
   }
-  $query = "INSERT INTO contest_users " .
-    "(username,password,email,status_id,activation_code,org_id,bio,country_id,created) VALUES " .
+  $query = "INSERT INTO users " .
+    "(username,password,email,status_id,activation_code,org_id,bio," .
+    "country_id,created,activated,admin) VALUES " .
     "('$username','" . md5($password1) . "','$user_email',$user_status," .
-    "'$confirmation_code',$user_org,'$bio',$country_id,CURRENT_TIMESTAMP)";
+    "'$confirmation_code',$user_org,'$bio',$country_id,CURRENT_TIMESTAMP,0,0)";
   if (mysql_query($query)) {
     // Send confirmation mail to user.
     $mail_subject = "Google AI Challenge!";
+    $activation_url = current_url();
+    $activation_url = str_replace("process_registration.php",
+                                  "account_confirmation.php",
+                                  $activation_url);
+    if (strlen($activation_url) < 5) {
+      $activation_url = "http://www.ai-contest.com/account_confirmation.php";
+    }
     $mail_content = "Welcome to the contest! Click the link below in order " .
       "to activate your account.\n\n" .
-      "http://csclub.uwaterloo.ca/contest/account_confirmation.php" .
+      $activation_url .
       "?confirmation_code=" . $confirmation_code . "\n\n" .
       "After you activate your account by clicking the link above, you will " .
       "be able to sign in and start competing. Good luck!\n\n" .
@@ -173,7 +183,7 @@ if (count($errors) <= 0) {
     if (!$mail_accepted) {
       $errors[] = "Failed to send confirmation email. Try again in a few " .
         "minutes.";
-      $query = "DELETE FROM contest_users WHERE username='$username' and " .
+      $query = "DELETE FROM users WHERE username='$username' and " .
         "password='" . md5($password1) . "'";
       mysql_query($query);
     } else {
@@ -189,11 +199,9 @@ if (count($errors) <= 0) {
       if (!$mail_accepted) {
         $errors[] = "Failed to send confirmation email. Try again in a few " .
           "minutes.";
-        $query = "DELETE FROM contest_users WHERE username='$username' and " .
+        $query = "DELETE FROM users WHERE username='$username' and " .
           "password='" . md5($password1) . "'";
         mysql_query($query);
-      } else {
-        grant_permission_to_user($username, "exists");
       }
     }
   } else {

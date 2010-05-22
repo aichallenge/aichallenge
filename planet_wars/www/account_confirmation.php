@@ -4,7 +4,7 @@ include 'mysql_login.php';
 include 'header.php';
 
 function get_username_from_confirmation_code($confirmation_code) {
-  $query = "SELECT username FROM contest_users WHERE " .
+  $query = "SELECT username FROM users WHERE " .
     "activation_code = '$confirmation_code'";
   $result = mysql_query($query);
   if ($row = mysql_fetch_assoc($result)) {
@@ -23,7 +23,7 @@ if ($confirmation_code == NULL || strlen($confirmation_code) <= 0) {
   if ($username == NULL || strlen($username) <= 0) {
     $errors[] = "Failed to activate the account. (102)";
   } else {
-    $result = grant_permission_to_user($username, "activated");
+    $result = activate_user($username);
     if (!$result) {
       $errors[] = "Failed to activate the account. (103)";
     }

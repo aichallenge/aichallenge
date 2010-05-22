@@ -43,7 +43,7 @@
     <td>
       <select name="user_status">
 <?php
-  $query = "SELECT * FROM contest_user_status_codes";
+  $query = "SELECT * FROM user_status_codes";
   $result = mysql_query($query);
   while ($row = mysql_fetch_assoc($result)) {
     $status_id = $row['status_id'];
@@ -65,7 +65,7 @@
       <option value="1">University of Waterloo</option>
       <option value="999">---</option>
 <?php
-  $query = "SELECT * FROM contest_organizations WHERE org_id > 1 ORDER BY name";
+  $query = "SELECT * FROM organizations WHERE org_id > 1 ORDER BY name";
   $result = mysql_query($query);
   while ($row = mysql_fetch_assoc($result)) {
     $status_id = $row['org_id'];
@@ -86,7 +86,7 @@
       <select name="user_country" style="width:210px">
       <option value="">&nbsp;</option>
 <?php
-  $query = "SELECT * FROM contest_countries ORDER BY country_id";
+  $query = "SELECT * FROM countries ORDER BY country_id";
   $result = mysql_query($query);
   while ($row = mysql_fetch_assoc($result)) {
     $country_id = $row['country_id'];
@@ -110,7 +110,7 @@
       your profile. Optional</td>
   </tr>
   </tr>
-  <tr><td colspan="4" style="color:red">By submitting this form, you implicity agree to <a href="contest_information.php">these rules</a>.</td></tr>
+  <tr><td colspan="4" style="color:red">By submitting this form, you implicity agree to <a href="rules.php">these rules</a>.</td></tr>
   <tr><td colspan="4" style="color:red">We take security very seriously. Any attempt to compromise the integrity of the contest or CSC servers will result in the immediate involvement of law enforcement officials.</td></tr>
   <!-- Submit -->
   <tr>

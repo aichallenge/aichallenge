@@ -71,17 +71,30 @@ function permission_exists($permission_name) {
   return mysql_num_rows($result) > 0;
 }
 
+// This function is deprecated, and doesn't do anything. We used to use this
+// in the early contests when there was a list of permissions a user could have
+// which each had a name. Now permissions are just boolean-valued fields in the
+// users table in the database.
 function grant_permission_to_user($username, $permission_name) {
+  return False;
+  //if ($username == NULL) {
+  //  return False;
+  //}
+  //$query = "INSERT INTO contest_user_permissions (user_id, permission_id) " .
+  //  "VALUES (" .
+  //  "(SELECT user_id from contest_users WHERE username = '$username')" .
+  //  ", " .
+  //  "(SELECT permission_id FROM contest_permissions WHERE " .
+  //  "name = '$permission_name')" .
+  //  ")";
+  //return mysql_query($query);
+}
+
+function activate_user($username) {
   if ($username == NULL) {
     return False;
   }
-  $query = "INSERT INTO contest_user_permissions (user_id, permission_id) " .
-    "VALUES (" .
-    "(SELECT user_id from contest_users WHERE username = '$username')" .
-    ", " .
-    "(SELECT permission_id FROM contest_permissions WHERE " .
-    "name = '$permission_name')" .
-    ")";
+  $query = "UPDATE users SET activated = 1 WHERE username = '$username'";
   return mysql_query($query);
 }
 
