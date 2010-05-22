@@ -1,3 +1,5 @@
+<?php include 'session.php'; ?>
+
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
       "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
@@ -17,8 +19,13 @@
     <h2>Organized by the Uniersity of Waterloo Computer Science Club.
       Sponsored by Google.</h2>
     <span id="sign">
-      <a href="login.php">Sign In</a> |
-      <a href="register.php">Sign Up</a>
+      <?php if (logged_in_with_valid_credentials()) { ?>
+        <a href="profile.php">My Profile</a> |
+        <a href="logout.php">Sign Out</a>
+      <?php } else { ?>
+        <a href="login.php">Sign In</a> |
+        <a href="register.php">Sign Up</a>
+      <?php } ?>
     </span>
   </div>
   <div class="shadow"></div>

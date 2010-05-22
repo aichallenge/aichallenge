@@ -13,9 +13,10 @@ function logged_in_with_valid_credentials() {
   }
   $username = $_SESSION['username'];
   $password = $_SESSION['password'];
-  $query = "SELECT * FROM contest_users u INNER JOIN contest_user_permissions p ON p.user_id = u.user_id " .
+  $query = "SELECT * FROM users u " .
            "WHERE username='$username' " .
-           "and password='$password'";
+           "AND password='$password' " .
+	   "AND activated = 1";
   $result = mysql_query($query);
   return mysql_num_rows($result) > 0;
 }
