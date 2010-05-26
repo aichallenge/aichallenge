@@ -26,7 +26,7 @@ function create_new_submission_for_current_user() {
   if ($username = NULL) {
     return FALSE;
   }
-  $query = "INSERT INTO contest_submissions (" .
+  $query = "INSERT INTO submissions (" .
     "user_id,status,timestamp) VALUES (" .
     current_user_id() . "," .
     "10,CURRENT_TIMESTAMP)";
@@ -38,7 +38,7 @@ function current_submission_id() {
   if ($user_id == NULL) {
     return -1;
   }
-  $query = "SELECT * FROM contest_submissions " .
+  $query = "SELECT * FROM submissions " .
     "WHERE user_id = " . $user_id . " ORDER BY timestamp DESC LIMIT 1";
   $result = mysql_query($query);
   if (!$result) {
@@ -58,7 +58,7 @@ function current_submission_status() {
   if ($user_id = NULL) {
     return -1;
   }
-  $query = "SELECT TOP 1 * FROM contest_submissions " .
+  $query = "SELECT TOP 1 * FROM submissions " .
     "WHERE user_id = " . $user_id . " ORDER BY timestamp DESC";
   $result = mysql_query($query);
   if ($row = mysql_fetch_assoc($result)) {
@@ -69,7 +69,7 @@ function current_submission_status() {
 }
 
 function submission_status($submission_id) {
-  $query = "SELECT * FROM contest_submissions " . "WHERE submission_id = " . $submission_id;
+  $query = "SELECT * FROM submissions " . "WHERE submission_id = " . $submission_id;
   $result = mysql_query($query);
   if ($row = mysql_fetch_assoc($result)) {
     return $row['status'];
@@ -89,7 +89,7 @@ function update_current_submission_status($new_status) {
     print "<p>user_id = " . $user_id . "</p>";
     return FALSE;
   }
-  $query = "UPDATE contest_submissions SET status = " . $new_status .
+  $query = "UPDATE submissions SET status = " . $new_status .
     " WHERE submission_id = " . $submission_id . " AND user_id = " . $user_id;
   //print "<p>query = " . $query . "</p>";
   return mysql_query($query);

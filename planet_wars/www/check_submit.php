@@ -7,8 +7,8 @@ function ends_with($str, $sub) {
   return preg_match('/\Q' . $sub . '\E$/', $str);
 }
 
-$submission_directory = "/users/contest2/tron/entries/";
-if (!current_user_has_permission("activated")) {
+$submission_directory = "../submissions/";
+if (!logged_in_with_valid_credentials()) {
   header('index.php');
 }
 if (!setup_submission_directory($submission_diectory)) {
@@ -28,7 +28,7 @@ if (!setup_submission_directory($submission_diectory)) {
       $errors[] = "Your zip file may be larger than the maximum allowed " .
         "size, 1 MB. You probably have some executables or other larger " .
         "files in your zip file. Re-zip your submission, being sure to " .
-        "include only the source code along with compile.sh and run.sh.";
+        "include only the source code.";
     }
     update_current_submission_status(30);
   } else {
@@ -59,7 +59,8 @@ if (!setup_submission_directory($submission_diectory)) {
     }
   }
 }
-$errors[] = "Nuh-uh. The contest is over. No more submissions.";
+// Uncomment the following line to turn off new submissions.
+//$errors[] = "Nuh-uh. The contest is over. No more submissions.";
 include 'header.php';
 if (count($errors) == 0) {
 ?>

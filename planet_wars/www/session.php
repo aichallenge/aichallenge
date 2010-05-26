@@ -21,6 +21,20 @@ function logged_in_with_valid_credentials() {
   return mysql_num_rows($result) > 0;
 }
 
+function logged_in_as_admin() {
+  if (!isset($_SESSION['username']) || !isset($_SESSION['password'])) {
+    return False;
+  }
+  $username = $_SESSION['username'];
+  $password = $_SESSION['password'];
+  $query = "SELECT * FROM users u " .
+           "WHERE username='$username' " .
+           "AND password='$password' " .
+	   "AND admin = 1";
+  $result = mysql_query($query);
+  return mysql_num_rows($result) > 0;
+}
+
 function current_username() {
   if (logged_in_with_valid_credentials()) {
     return $_SESSION['username'];
@@ -35,11 +49,14 @@ function current_user_id() {
   }
   $username = $_SESSION['username'];
   $password = $_SESSION['password'];
-  $query = "SELECT user_id FROM contest_users " .
+  $query = "SELECT user_id FROM users " .
            "WHERE username='$username' " .
            "and password='$password'";
   // print "<p>" . $query . "<\p>";
   $result = mysql_query($query);
+  if (!$result) {
+    return -1;
+  }
   if ($row = mysql_fetch_assoc($result)) {
     $user_id = $row['user_id'];
     // print "<p>user_id = " . $user_id . "</p>";
@@ -49,26 +66,33 @@ function current_user_id() {
   }
 }
 
+// This function is deprecated, and doesn't do anything. We used to use this
+// in the early contests when there was a list of permissions a user could have
+// which each had a name. Now permissions are just boolean-valued fields in the
+// users table in the database.
 function has_permission($username, $permission_name) {
-  if ($username == NULL) {
-    return False;
-  }
-  $query = "SELECT DISTINCT u.user_id, p.permission_id FROM contest_users u " .
-    "INNER JOIN contest_user_permissions up ON up.user_id = u.user_id " .
-    "INNER JOIN contest_permissions p ON p.permission_id = up.permission_id " .
-    "WHERE u.username = '$username' AND p.name = '$permission_name'";
-  $result = mysql_query($query);
-  return mysql_num_rows($result) > 0;
+  return False;
+  //if ($username == NULL) {
+  //  return False;
+  //}
+  //$query = "SELECT DISTINCT u.user_id, p.permission_id FROM contest_users u " .
+  //  "INNER JOIN contest_user_permissions up ON up.user_id = u.user_id " .
+  //  "INNER JOIN contest_permissions p ON p.permission_id = up.permission_id " .
+  //  "WHERE u.username = '$username' AND p.name = '$permission_name'";
+  //$result = mysql_query($query);
+  //return mysql_num_rows($result) > 0;
 }
 
 function current_user_has_permission($permission_name) {
-  return has_permission(current_username(), $permission_name);
+  return False;
+  //return has_permission(current_username(), $permission_name);
 }
 
 function permission_exists($permission_name) {
-  $query = "SELECT * FROM contest_permissions WHERE name = '$permission_name'";
-  $result = mysql_query($query);
-  return mysql_num_rows($result) > 0;
+  return False;
+  //$query = "SELECT * FROM contest_permissions WHERE name = '$permission_name'";
+  //$result = mysql_query($query);
+  //return mysql_num_rows($result) > 0;
 }
 
 // This function is deprecated, and doesn't do anything. We used to use this

@@ -2,7 +2,7 @@
 
 include 'session.php';
 
-if (!current_user_has_permission("activated")) {
+if (!logged_in_with_valid_credentials()) {
   header('location:login.php');
 }
 

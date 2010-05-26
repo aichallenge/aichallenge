@@ -223,7 +223,7 @@ foreach ($errors as $key => $error) {
 ?>
 
 </ul>
-<p>Go <a href="signup.php">back to the signup page</a> and try again.</p>
+<p>Go <a href="register.php">back to the signup page</a> and try again.</p>
 
 <?php
 } else {
