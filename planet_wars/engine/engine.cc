@@ -41,10 +41,11 @@ bool AllTrue(const std::vector<bool>& v) {
 
 int main(int argc, char *argv[]) {
   // Check the command-line arguments.
-  if (argc < 6) {
-    std::cerr << "ERROR: you must give at least five command-line arguments"
+  if (argc < 8) {
+    std::cerr << "ERROR: you must give at least seven command-line arguments"
 	      << std::endl << "USAGE: engine map_file_name max_turn_time "
-	      << "max_num_turns player_one player_two [more_players]"
+	      << "max_num_turns player_one_directory player_one_command "
+	      << "player_two_directory player_two_command [more_players]"
 	      << std::endl;
     exit(1);
   }
@@ -59,8 +60,12 @@ int main(int argc, char *argv[]) {
   long max_turn_time = atol(argv[2]);
   // Start the client programs (players).
   std::vector<Sandbox*> clients;
-  for (int i = 4; i < argc; ++i) {
-    std::string command(argv[i]);
+  for (int i = 4; i < argc; i += 2) {
+    std::string directory(argv[i]);
+    std::string command(argv[i+1]);
+    // Use the sadbox to launch the client program securely
+    command = "python ../sadbox/sadbox.py -directory " + directory +
+      " -command " + command;
     Sandbox *client = new Sandbox(command);
     if (!client->Init()) {
       KillClients(clients);
@@ -119,6 +124,7 @@ int main(int argc, char *argv[]) {
       if (clients[i]->IsAlive() && !client_done[i]) {
 	std::cerr << "Killing player " << (i + 1) << " for timing out."
 		  << std::endl;
+	std::cout << "timeout:" << (i + 1) << std::endl;
 	clients[i]->Kill();
 	game.DropPlayer(i + 1);
       }
@@ -127,11 +133,12 @@ int main(int argc, char *argv[]) {
   }
   KillClients(clients);
   if (game.Winner() > 0) {
-    std::cout << "Player " << game.Winner() << " Wins!" << std::endl;
+    //std::cout << "Player " << game.Winner() << " Wins!" << std::endl;
+    std::cout << "winner:" << game.Winner() << std::endl;
   } else {
-    std::cout << "Draw!" << std::endl;
+    //std::cout << "Draw!" << std::endl;
+    std::cout << "winner:0" << std::endl;
   }
-  std::cout << "Game playback string: " << game.GamePlaybackString()
-	    << std::endl;
+  std::cout << "playback:" << game.GamePlaybackString() << std::endl;
   return 0;
 }
