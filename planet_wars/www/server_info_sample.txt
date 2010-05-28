@@ -1,0 +1,4 @@
+db_username:
+db_password:
+db_name:
+db_host:127.0.0.1
