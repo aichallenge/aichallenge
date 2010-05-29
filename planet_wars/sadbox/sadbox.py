@@ -26,7 +26,7 @@ def launch_qemu():
 	print "spinning up qemu instance"
 	qemu_process = subprocess.Popen(qemu_args, stdin=subprocess.PIPE, stdout=subprocess.PIPE, close_fds=True)
 	time.sleep(1)
-	qemu_process.poll
+	qemu_process.poll()
 	while qemu_process.returncode != None and qemu_port < 5565:
 		qemu_port += 1
         	qemu_cmd = "/usr/bin/qemu " + img_name + " -net nic -net user,hostfwd=tcp:127.0.0.1:" + str(qemu_port) + "-:22 -nographic"
