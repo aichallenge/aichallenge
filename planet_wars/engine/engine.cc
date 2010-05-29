@@ -64,8 +64,8 @@ int main(int argc, char *argv[]) {
     std::string directory(argv[i]);
     std::string command(argv[i+1]);
     // Use the sadbox to launch the client program securely
-    command = "python ../sadbox/sadbox.py -directory " + directory +
-      " -command " + command;
+    command = "python ../sadbox/sadbox.py -d" + directory +
+      " -c" + command;
     Sandbox *client = new Sandbox(command);
     if (!client->Init()) {
       KillClients(clients);
