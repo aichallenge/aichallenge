@@ -16,8 +16,9 @@ CC=g++
 CPPFLAGS += -Wall -I.. -I../third_party/googletest/include
 VPATH = third_party/googletest/make:cpp_util:sandbox
 SUBDIRS = engine viz
+VM_IMG = http://csclub.uwaterloo.ca/~ssalbiz/test.img
 
-all: subdirs
+all: subdirs qemuimg
 
 clean:
 	for dir in $(SUBDIRS); \
@@ -30,3 +31,7 @@ subdirs: $(SUBDIRS)
 
 $(SUBDIRS):
 	$(MAKE) -C $@
+
+qemuimg:
+	wget $(VM_IMG) -O sadbox/test.img
+
