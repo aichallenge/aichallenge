@@ -1,4 +1,5 @@
 import smtplib
+from server_info import server_info
 
 # Uses Gmail to send an email message. This function also work with Google Apps
 # (Gmail for your domain) accounts.
@@ -21,7 +22,9 @@ def send_gmail(username, password, recipients, subject, body, full_name):
       "Subject: " + subject + "\n" + \
       "\n" + body
     smtp_server = smtplib.SMTP("smtp.gmail.com", 587)
+    smtp_server.ehlo()
     smtp_server.starttls()
+    smtp_server.ehlo()
     smtp_server.login(username, password)
     smtp_server.sendmail(username, recipients, message)
     smtp_server.quit()
@@ -32,5 +35,13 @@ def send_gmail(username, password, recipients, subject, body, full_name):
 # Sends an email message using the email account specified in the
 # server_info.txt file. If the message is successfully sent, returns True.
 # Otherwise, returns False.
-def send_mail(recipients, subject, body):
-  
+def send(recipients, subject, body):
+  mail_username = server_info["mail_username"]
+  mail_password = server_info["mail_password"]
+  mail_name = server_info["mail_name"]
+  return send_gmail(mail_username, \
+                    mail_password, \
+                    recipients, \
+                    subject, \
+                    body, \
+                    mail_name)
