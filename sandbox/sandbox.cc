@@ -67,7 +67,9 @@ int Sandbox::Init() {
     if (trap_stderr_) {
       dup2(child_stderr_pipe[1], 2);
     }
+    std::cout << "Starting sadbox" << std::endl;
     execv(argv[0], argv);
+    std::cout << "error executing " << argv[0] << std::endl;
     exit(1);
   } else {
     child_stdin_ = child_stdin_pipe[1];
@@ -175,5 +177,28 @@ int Sandbox::ReadLine(std::string& buf, int max_blocking_time) {
 }
 
 int Sandbox::ReadErrorLine(std::string& buf) {
+  char c;
+  while (true) {
+    ssize_t bytes_read = read(child_stderr_, &c, 1);
+    switch (bytes_read) {
+    case 1:
+      if (c == '\n') {
+	buf = std::string(child_stderr_buffer_);
+	child_stderr_buffer_ = std::string("");
+	return buf.length() + 1;
+      } else {
+	child_stderr_buffer_ += c;
+      }
+      break;
+    case 0:
+      return 0;
+    case -1:
+      return 0;
+    }
+  } 
   return 0;
+}
+
+int Sandbox::getcpid() {
+  return pid_;
 }

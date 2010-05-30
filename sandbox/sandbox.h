@@ -82,6 +82,9 @@ class Sandbox {
   // Returns the shell command used to initialize this sandbox.
   std::string Command();
 
+  // Returns the pid of the spawned child
+  int getcpid();
+
  private:
   // Sets a file descriptor to eb non-blocking.
   int SetNonBlockingIO(int file_descriptor);
