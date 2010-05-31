@@ -69,6 +69,18 @@ def set_submission_status(submission_id, status):
   cursor.close()
   connection.close()
 
+def set_submission_language(submission_id, language_id):
+  connection = MySQLdb.connect(host = server_info["db_host"],
+                               user = server_info["db_username"],
+                               passwd = server_info["db_password"],
+                               db = server_info["db_name"])
+  cursor = connection.cursor()
+  query = "UPDATE submissions SET language_id = " + str(language_id) + " " + \
+    "WHERE submission_id = " + str(submission_id)
+  cursor.execute(query)
+  cursor.close()
+  connection.close()
+
 # Given a submission_id, compiles the submission. If the compile was
 # successful, return True. Otherwise, returns False. Also sends mail to the
 # user letting them know how the compile went.
@@ -82,7 +94,8 @@ def compile_submission(submission_id, email_address):
   output_messages += out
   error_messages += err
   if len(error_messages) == 0:
-    out, err = compile_anything()
+    out, err, language_id = compile_anything()
+    set_submission_language(submission_id, language_id)
     output_messages += out
     error_messages += err
   if len(error_messages) == 0:
@@ -90,7 +103,7 @@ def compile_submission(submission_id, email_address):
     send_success_mail(email_address, output_messages)
   else:
     set_submission_status(submission_id, 70)
-    send_fail_mail(email, address, output_messages, error_messages)
+    send_fail_mail(email_address, output_messages, error_messages)
 
 # Returns a list of submissions that have to be compiled. Each element of the
 # list is a dictionary with keys submission_id and email.

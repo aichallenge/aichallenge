@@ -67,9 +67,7 @@ int Sandbox::Init() {
     if (trap_stderr_) {
       dup2(child_stderr_pipe[1], 2);
     }
-    std::cout << "Starting sadbox" << std::endl;
     execv(argv[0], argv);
-    std::cout << "error executing " << argv[0] << std::endl;
     exit(1);
   } else {
     child_stdin_ = child_stdin_pipe[1];

@@ -12,12 +12,16 @@ cursor = connection.cursor(MySQLdb.cursors.DictCursor)
 
 # Get the list of currently active submissions.
 cursor.execute("""
-  SELECT
-    user_id,
-    MAX(submission_id) AS submission_id
-  FROM submissions
-  WHERE status = 40
-  GROUP BY user_id
+  SELECT s.*, l.*
+  FROM submissions s
+  INNER JOIN (
+    SELECT
+      MAX(submission_id) AS submission_id
+    FROM submissions
+    GROUP BY user_id
+  ) AS o ON o.submission_id = s.submission_id
+  INNER JOIN languages l ON l.language_id = s.language_id
+  WHERE s.status = 40
 """)
 submissions = cursor.fetchall()
 
@@ -43,11 +47,65 @@ print str(player_one["submission_id"]) + " vs " + \
   str(player_two["submission_id"]) + " on " + str(map["name"])
 
 # Invoke the game engine
-command = "~/ai-contest/planet_wars/engine/engine " + map["path"]
-engine_process = subprocess.Popen(command, \
-                                  stdout=subprocess.PIPE, \
-                                  stderr=subprocess.PIPE)
-(output, error) = p.communicate()
+command = [
+  "../engine/engine", # Path to the engine
+  "../maps/" + map["path"], # The map file
+  "1000", # Max turn time in milliseconds
+  "100", # Max game length in turns
+  "../submissions/" + str(player_one["submission_id"]), # Player one directory
+  player_one["command"], # Player one command
+  "../submissions/" + str(player_two["submission_id"]), # Player two directory
+  player_two["command"] # Player two command
+]
+(output, stderr) = subprocess.Popen(command, \
+                                    stdout=subprocess.PIPE, \
+                                    stderr=subprocess.PIPE).communicate()
+result = dict()
+for line in output.split("\n"):
+  (key, colon, value) = line.partition(":")
+  key = key.strip()
+  value = value.strip()
+  if key != "" and value != "":
+    result[key] = value
 
+# Store the game results in the database
+winner = "NULL"
+loser = "NULL"
+map_id = map["map_id"]
+draw = 1
+timestamp = "CURRENT_TIMESTAMP"
+playback_string = ""
+errors = ""
+if "winner" in result:
+  if result["winner"] == "0":
+    pass
+  elif result["winner"] == "1":
+    winner = player_one["submission_id"]
+    loser = player_two["submission_id"]
+    draw = 0
+  elif result["winner"] == "2":
+    winner = player_two["submission_id"]
+    loser = player_one["submission_id"]
+    draw = 0
+  else:
+    errors += "Game engine reported invalid winner value: " + \
+      str(result["winner"]) + "\n"
+else:
+  errors += "The engine did not report a winner."
+if "playback" in result:
+  playback_string = result["playback"]
+if len(errors) == 0:
+  cursor.execute("INSERT INTO games (winner,loser,map_id,draw,timestamp," + \
+    "player_one,player_two,playback_string) VALUES (" + \
+    str(winner) + "," + \
+    str(loser) + "," + \
+    str(map_id) + "," + \
+    str(draw) + "," + \
+    str(timestamp) + "," + \
+    str(player_one["submission_id"]) + "," + \
+    str(player_two["submission_id"]) + "," + \
+    "'" + str(playback_string) + "')")
+
+# Close the database connection
 cursor.close()
 connection.close()
