@@ -23,7 +23,7 @@ import subprocess
 import shlex
 
 def usage():
-	print "sadbox.py - Executes commands in a sandbox VM\n\n\
+	print  "sadbox.py - Executes commands in a sandbox VM\n\n\
 Required Arguments:\n\n\
 --directory, -d : directory where executable and related files live\n\n\
 --command, -c : shell command to execute inside sandboxed VM\n\n\
@@ -32,10 +32,10 @@ Required Arguments:\n\n\
 
 def copy_exec_dir(qemu_port, qemu_identfile, sadbox_path, dest_path):
 	scp_cmd = "scp -r -P " + str(qemu_port) + " -i " + qemu_identfile + " " + sadbox_path + " " + dest_path
-	print scp_cmd
+	sys.stderr.write( scp_cmd)
 	scp_args = shlex.split(scp_cmd)
 	scp_process = subprocess.Popen(scp_args, close_fds=True)
-	print "copying files to instance"
+	sys.stderr.write( "copying files to instance")
 	scp_process.wait()
 	return scp_process
 #...
@@ -48,9 +48,9 @@ def launch_qemu():
 	img_name = "../sadbox/test.img"
 	qemu_port = 5555
         qemu_cmd = construct_qemu_shell_cmd(img_name, qemu_port)
-	print qemu_cmd
+	sys.stderr.write( qemu_cmd)
 	qemu_args = shlex.split(qemu_cmd)
-	print "spinning up qemu instance"
+	sys.stderr.write( "spinning up qemu instance")
 	qemu_process = subprocess.Popen(qemu_args, stdin=subprocess.PIPE, stdout=subprocess.PIPE, close_fds=True)
 	time.sleep(1)
 	qemu_process.poll()
@@ -62,7 +62,7 @@ def launch_qemu():
 		time.sleep(1)
 		qemu_process.poll()
 	if (qemu_process.returncode != None):
-		print "Error starting qemu instance, max retries exceeded"
+		sys.stderr.write( "Error starting qemu instance, max retries exceeded")
 		sys.exit(2)
 	time.sleep(10) #allow time for vm to spin up
 	return (qemu_process, qemu_port)
@@ -74,7 +74,7 @@ def main():
 	try:
 		opts, args = getopt.getopt(sys.argv[1:], "d:c:", ["directory=", "command="])
 	except getopt.GetoptError, err:
-		print str(err)
+		sys.stderr.write( str(err))
 		usage()
 		sys.exit(2)
 	sadbox_path = None
@@ -91,14 +91,13 @@ def main():
 		sys.exit(2)
 	sadbox_dir = os.path.basename(sadbox_path)
 	cmd = "cd ./" + sadbox_dir + "/; " + cmd
-	print sadbox_path, sadbox_dir, cmd
 	(qemu_proc, port) = launch_qemu()
 	scp_proc = copy_exec_dir(port, qemu_identfile, sadbox_path, dest_path)
-	print "READY"
+	print  "READY"
 	child_cmd = "ssh -p " + str(port) + " -i " + qemu_identfile + " contestvm@localhost " + cmd
 	child_args = shlex.split(child_cmd)
 	child_process = subprocess.Popen(child_args, close_fds=True)
-	print "executing command inside VM"
+	sys.stderr.write( "executing command inside VM")
 
 	child_process.wait()
 	#wait for command to finish execution
