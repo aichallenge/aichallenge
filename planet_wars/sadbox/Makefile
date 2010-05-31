@@ -24,4 +24,4 @@ clean:
 	rm *.img
 
 test.img:
-	wget $(VM_IMG) -O sadbox/test.img
+	wget $(VM_IMG) -O test.img

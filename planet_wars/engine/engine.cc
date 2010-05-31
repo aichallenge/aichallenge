@@ -64,7 +64,7 @@ int main(int argc, char *argv[]) {
     std::string directory(argv[i]);
     std::string command(argv[i+1]);
     // Use the sadbox to launch the client program securely
-    command = "/usr/bin/python ../sadbox/sadbox.py -d " + directory +
+    command = "/usr/bin/python ../sadbox/sadbox.py -s 1 -d " + directory +
       " -c " + command;
     Sandbox *client = new Sandbox(command);
     if (!client->Init()) {
@@ -76,6 +76,9 @@ int main(int argc, char *argv[]) {
     std::cerr << "Successfully invoked " << command
 	      << " pid: " << client->getcpid() << std::endl;
   }
+
+
+  sleep(100);
   // Enter the main game loop.
   while (game.Winner() < 0) {
     // Send the game state to the clients.
