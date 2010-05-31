@@ -1,5 +1,8 @@
-#!/bin/sh
+#!/bin/bash
 cd `dirname $0`
-./readgames.py | BayesElo/bayeselo
-./process_ratings.py ratings.txt ratings_temp.csv
-mv ratings_temp.csv ratings.csv
+start_time="$(date +%s)"
+python readgames.py | ../../third_party/bayeselo/bayeselo > /dev/null 2> /dev/null
+sleep 3
+end_time="$(date +%s)"
+elapsed_seconds="$(expr $end_time - $start_time)"
+python process_ratings.py $elapsed_seconds
