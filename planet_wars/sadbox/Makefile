@@ -15,18 +15,13 @@
 CC=g++
 CPPFLAGS += -Wall -I.. -I../third_party/googletest/include
 VPATH = third_party/googletest/make:cpp_util:sandbox
-SUBDIRS = engine viz sadbox
+SUBDIRS = engine viz
+VM_IMG = http://csclub.uwaterloo.ca/~ssalbiz/test.img
 
-all: subdirs
+all: test.img
 
 clean:
-	for dir in $(SUBDIRS); \
-	do \
-		$(MAKE) -C $$dir clean; \
-	done
+	rm *.img
 
-.PHONY: subdirs $(SUBDIRS)
-subdirs: $(SUBDIRS)
-
-$(SUBDIRS):
-	$(MAKE) -C $@
+test.img:
+	wget $(VM_IMG) -O sadbox/test.img

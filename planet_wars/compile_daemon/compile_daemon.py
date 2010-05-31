@@ -33,6 +33,8 @@ def unpack():
       "happen. Please let the contest administrators know!\n"
   return out, err
 
+# Sends an email message to a user letting them know that their code compiled
+# successfully.
 def send_success_mail(email_address, output_messages):
   subject = "Compile Success!"
   body = "This is just to let you know that your latest submissions to the "
@@ -42,6 +44,7 @@ def send_success_mail(email_address, output_messages):
   body += "\n\nSincerely,\nThe Compile Script"
   gmail.send(email_address, subject, body)
 
+# Sends an email to a user letting them know that their code failed to compile.
 def send_fail_mail(email_address, output_messages, error_messages):
   subject = "Compile Failure!"
   body = "Unfortunately, your latest submission to the Google AI Challenge "
@@ -53,6 +56,7 @@ def send_fail_mail(email_address, output_messages, error_messages):
   body += "Sincerely,\nThe Compile Script"
   gmail.send(email_address, subject, body)
 
+# Changes the numerical status of a submission in the database.
 def set_submission_status(submission_id, status):
   connection = MySQLdb.connect(host = server_info["db_host"],
                                user = server_info["db_username"],
@@ -88,6 +92,8 @@ def compile_submission(submission_id, email_address):
     set_submission_status(submission_id, 70)
     send_fail_mail(email, address, output_messages, error_messages)
 
+# Returns a list of submissions that have to be compiled. Each element of the
+# list is a dictionary with keys submission_id and email.
 def submissions_to_be_compiled():
   connection = MySQLdb.connect(host = server_info["db_host"],
                                user = server_info["db_username"],
@@ -117,6 +123,9 @@ def submissions_to_be_compiled():
   connection.close()
   return submissions
 
+# This is the main loop of the compile daemon. It cycles waiting for new
+# submissions to compile, and compiles them one after the other. If the
+# maximum amount of time has passed, then no new compiles are started.
 if len(sys.argv) < 2:
   print "USAGE: python compile_daemon.py max_time_in_seconds"
   sys.exit(1)

@@ -72,37 +72,42 @@ def main():
 	qemu_identfile = "../sadbox/sshkey/vmkey"
 	dest_path = "contestvm@localhost:~"
 	try:
-		opts, args = getopt.getopt(sys.argv[1:], "d:c:", ["directory=", "command="])
+		opts, args = getopt.getopt(sys.argv[1:], "d:c:s:", ["directory=", "command=", "security="])
 	except getopt.GetoptError, err:
 		sys.stderr.write( str(err))
 		usage()
 		sys.exit(2)
 	sadbox_path = None
 	cmd = None
+	security_on = False
 	for o, a in opts:
 		if o in ("-d", "--directory"):
 			sadbox_path = a
 		elif o in ("-c", "--command"):
 			cmd = a
+		elif o in ("-a", "--security"):
+			security_on = a.lower() in ("on", "true", "1")
 		else:
 			usage()
 	if sadbox_path == None:
 		usage()
 		sys.exit(2)
-	sadbox_dir = os.path.basename(sadbox_path)
-	cmd = "cd ./" + sadbox_dir + "/; " + cmd
-	(qemu_proc, port) = launch_qemu()
-	scp_proc = copy_exec_dir(port, qemu_identfile, sadbox_path, dest_path)
-	print  "READY"
-	child_cmd = "ssh -p " + str(port) + " -i " + qemu_identfile + " contestvm@localhost " + cmd
-	child_args = shlex.split(child_cmd)
-	child_process = subprocess.Popen(child_args, close_fds=True)
-	sys.stderr.write( "executing command inside VM")
-
-	child_process.wait()
-	#wait for command to finish execution
-	os.kill(qemu_proc.pid, signal.SIGINT)
-	qemu_proc.wait() #wait for vm to die
+	if security_on:
+		sadbox_dir = os.path.basename(sadbox_path)
+		cmd = "cd ./" + sadbox_dir + "/; " + cmd
+		(qemu_proc, port) = launch_qemu()
+		scp_proc = copy_exec_dir(port, qemu_identfile, sadbox_path, dest_path)
+		print  "READY"
+		child_cmd = "ssh -p " + str(port) + " -i " + qemu_identfile + " contestvm@localhost " + cmd
+		child_args = shlex.split(child_cmd)
+		child_process = subprocess.Popen(child_args, close_fds=True)
+		sys.stderr.write( "executing command inside VM")
+		child_process.wait()
+		os.kill(qemu_proc.pid, signal.SIGINT)
+		qemu_proc.wait() #wait for vm to die
+	else:
+		os.chdir(sadbox_path)
+		subprocess.Popen(cmd).wait()
 #...
 
 if __name__ == "__main__":

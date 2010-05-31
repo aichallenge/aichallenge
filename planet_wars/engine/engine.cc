@@ -76,24 +76,7 @@ int main(int argc, char *argv[]) {
     std::cout << "Successfully invoked " << command
 	      << " pid: " << client->getcpid() << std::endl;
   }
-  //Wait for sandboxes to spin up
-  unsigned int players_ready = 0;
-  while (players_ready < clients.size()) {
-    for (unsigned int i = 0; i < clients.size(); ++i) {
-      if (!clients[i]->IsAlive() || !game.IsAlive(i + 1)) {
-	continue;
-      }
-      std::string status;
-      clients[i]->ReadLine(status);
-      if (status == "READY") {
-	std::cout << "Player " << i << " is ready!" << std::endl;
-        players_ready++;
-      }
-    }
-    sleep(1);
-  }
   // Enter the main game loop.
-
   while (game.Winner() < 0) {
     // Send the game state to the clients.
     std::string game_state_string = game.ToString();
