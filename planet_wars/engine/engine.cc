@@ -73,14 +73,14 @@ int main(int argc, char *argv[]) {
       exit(1);
     }
     clients.push_back(client);
-    std::cout << "Successfully invoked " << command
+    std::cerr << "Successfully invoked " << command
 	      << " pid: " << client->getcpid() << std::endl;
   }
   // Enter the main game loop.
   while (game.Winner() < 0) {
     // Send the game state to the clients.
     std::string game_state_string = game.ToString();
-    std::cout << "The game state: " << std::endl << game_state_string;
+    std::cerr << "The game state: " << std::endl << game_state_string;
     for (unsigned int i = 0; i < clients.size(); ++i) {
       if (!clients[i]->IsAlive() || !game.IsAlive(i + 1)) {
 	continue;
@@ -102,7 +102,7 @@ int main(int argc, char *argv[]) {
 	  std::string order;
 	  int read_result = clients[i]->ReadLine(order);
 	  if (read_result > 0) {
-	    std::cout << "Player " << (i + 1) << ": " << order << std::endl;
+	    std::cerr << "Player " << (i + 1) << ": " << order << std::endl;
 	    if (order == "go" || order == "GO" || order == "Go") {
 	      client_done[i] = true;
 	    } else {
@@ -133,10 +133,8 @@ int main(int argc, char *argv[]) {
   }
   KillClients(clients);
   if (game.Winner() > 0) {
-    //std::cout << "Player " << game.Winner() << " Wins!" << std::endl;
     std::cout << "winner:" << game.Winner() << std::endl;
   } else {
-    //std::cout << "Draw!" << std::endl;
     std::cout << "winner:0" << std::endl;
   }
   std::cout << "playback:" << game.GamePlaybackString() << std::endl;
