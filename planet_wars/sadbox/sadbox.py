@@ -27,6 +27,7 @@ def usage():
 Required Arguments:\n\n\
 --directory, -d : directory where executable and related files live\n\n\
 --command, -c : shell command to execute inside sandboxed VM\n\n\
+--security, -s: is not set, command is run on current host, otherwise, funneled through VM\n\n\
 "
 #...
 
