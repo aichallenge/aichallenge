@@ -109,7 +109,7 @@ def main():
 		cmd = "cd ./" + sadbox_dir + "/; " + cmd
 		(qemu_proc, port) = launch_qemu()
 		scp_proc = copy_exec_dir(port, qemu_identfile, sadbox_path, dest_path)
-		print "READY"
+#		print "READY"
 		child_cmd = "ssh -p " + str(port) + " -i " + qemu_identfile + " contestvm@localhost " + cmd
 		child_args = shlex.split(child_cmd)
 		child_process = subprocess.Popen(child_args, close_fds=True)
