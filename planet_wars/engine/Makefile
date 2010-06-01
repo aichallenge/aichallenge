@@ -15,7 +15,7 @@
 CC=g++
 CPPFLAGS += -Wall -I../.. -I../../third_party/googletest/include
 VPATH = ../../third_party/googletest/make:../../cpp_util:../../sandbox
-TARGETS = engine simple_bot unit_tests
+TARGETS = engine python_test simple_bot unit_tests
 
 all: $(TARGETS)
 
@@ -23,6 +23,8 @@ clean:
 	rm -f *.o $(TARGETS) *_test
 
 engine: engine.o fleet.o game.o planet.o sandbox.a cpp_util.a
+
+python_test: sandbox.a cpp_util.a
 
 simple_bot: fleet.o game.o planet.o simple_bot.o cpp_util.a
 

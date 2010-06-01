@@ -118,8 +118,10 @@ def main():
 		os.kill(qemu_proc.pid, signal.SIGINT)
 		qemu_proc.wait() #wait for vm to die
 	else:
+		cmd = cmd.replace("+", " ")
+		args = shlex.split(cmd)
 		os.chdir(sadbox_path)
-		subprocess.Popen(shlex.split(cmd)).wait()
+		subprocess.Popen(args).wait()
 #...
 
 if __name__ == "__main__":
