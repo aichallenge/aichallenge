@@ -64,8 +64,8 @@ int main(int argc, char *argv[]) {
     std::string directory(argv[i]);
     std::string command(argv[i+1]);
     // Use the sadbox to launch the client program securely
-    command = "/usr/bin/python ../sadbox/sadbox.py -s 1 -d " + directory +
-      " -c " + command;
+    command = "/usr/bin/python ../sadbox/sadbox.py -d " + directory +
+      " -c \"" + command + "\"";
     Sandbox *client = new Sandbox(command);
     if (!client->Init()) {
       KillClients(clients);
@@ -76,16 +76,20 @@ int main(int argc, char *argv[]) {
     std::cerr << "Successfully invoked " << command
 	      << " pid: " << client->getcpid() << std::endl;
   }
-
-
-  sleep(100);
+  // Sleep while we wait for the sadbox VM to spin up.
+  //sleep(100);
   // Enter the main game loop.
   while (game.Winner() < 0) {
     // Send the game state to the clients.
     std::string game_state_string = game.ToString();
     std::cerr << "The game state: " << std::endl << game_state_string;
     for (unsigned int i = 0; i < clients.size(); ++i) {
-      if (!clients[i]->IsAlive() || !game.IsAlive(i + 1)) {
+      if (!clients[i]->IsAlive()) {
+	game.DropPlayer(i + 1);
+	continue;
+      }
+      if (!game.IsAlive(i + 1)) {
+	clients[i]->Kill();
 	continue;
       }
       int result = clients[i]->WriteLine(game.ToString(i + 1) + "go");

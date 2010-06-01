@@ -119,7 +119,7 @@ def main():
 		qemu_proc.wait() #wait for vm to die
 	else:
 		os.chdir(sadbox_path)
-		subprocess.Popen(cmd).wait()
+		subprocess.Popen(shlex.split(cmd)).wait()
 #...
 
 if __name__ == "__main__":

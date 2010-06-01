@@ -115,11 +115,11 @@ def compile_function(language):
     system(['/usr/local/bin/6l', '-o', 'MyBot', '_go_.6'])
     check_path('MyBot')
   if language == "Python":
-    print "Python scripts need not be compiled"
     nukeglob('*.pyc')
     for script in safeglob('*.py'):
       os.chmod(script, 0644)
     check_path('MyBot.py')
+    return "Python scripts do not need to be compiled.", ""
   if language == "Ruby":
     print "Ruby scripts need not be compiled"
     for script in safeglob('*.rb'):
