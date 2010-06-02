@@ -15,12 +15,14 @@
 CC=g++
 CPPFLAGS += -Wall -I.. -I../third_party/googletest/include
 VPATH = ../third_party/googletest/make:../cpp_util
-TARGETS = sandbox.a sum unit_tests #SandboxTest.class
+TARGETS = informal_sum_test sandbox.a sum unit_tests #SandboxTest.class
 
 all: $(TARGETS)
 
 clean:
 	rm -f *.o $(TARGETS) *_test
+
+informal_sum_test: informal_sum_test.o sandbox.a cpp_util.a
 
 sandbox.a: sandbox.a(sandbox.o)
 	ranlib sandbox.a

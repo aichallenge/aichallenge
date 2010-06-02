@@ -27,10 +27,12 @@ Sandbox::Sandbox(const std::string& command, bool trap_stderr) {
   child_stderr_ = -1;
   command_ = command;
   pid_ = 0;
-  child_stdout_buffer_ = "";
-  child_stderr_buffer_ = "";
   trap_stderr_ = trap_stderr;
   is_alive_ = false;
+  child_stdout_thread_ = -1;
+  child_stderr_thread_ = -1;
+  child_stdout_buffer_length_ = 0;
+  child_stderr_buffer_length_ = 0;
 }
 
 Sandbox::~Sandbox() {
@@ -38,6 +40,7 @@ Sandbox::~Sandbox() {
 }
 
 int Sandbox::Init() {
+  // Tokenize the program arguments.
   std::vector<std::string> tokens;
   StringUtil::Tokenize(command_, " ", tokens);
   char **argv = new char*[tokens.size()+1];
@@ -48,6 +51,7 @@ int Sandbox::Init() {
     argv[i] = (char*)tokens[i].c_str();
   }
   argv[tokens.size()] = NULL;
+  // Set up pipes to communicate with the client.
   int child_stdin_pipe[2];
   int child_stdout_pipe[2];
   int child_stderr_pipe[2];
@@ -57,6 +61,7 @@ int Sandbox::Init() {
     delete argv;
     return 0;
   }
+  // Exec the client process.
   pid_ = fork();
   if (pid_ == -1) {
     delete argv;
@@ -68,24 +73,42 @@ int Sandbox::Init() {
       dup2(child_stderr_pipe[1], 2);
     }
     execv(argv[0], argv);
-    exit(1);
-  } else {
-    child_stdin_ = child_stdin_pipe[1];
-    child_stdout_ = child_stdout_pipe[0];
-    if (trap_stderr_) {
-      child_stderr_ = child_stderr_pipe[0];
-    } else {
-      child_stderr_ = -1;
-    }
-    SetNonBlockingIO(child_stdin_);
-    SetNonBlockingIO(child_stdout_);
-    if (trap_stderr_) {
-      SetNonBlockingIO(child_stderr_);
-    }
-    delete argv;
-    is_alive_ = true;
-    return 1;
+    exit(1); // We should never get here because execv shouldn't return.
   }
+  // Set up the pipes to be non-blocking.
+  child_stdin_ = child_stdin_pipe[1];
+  child_stdout_ = child_stdout_pipe[0];
+  if (trap_stderr_) {
+    child_stderr_ = child_stderr_pipe[0];
+  } else {
+    child_stderr_ = -1;
+  }
+  SetNonBlockingIO(child_stdin_);
+  SetNonBlockingIO(child_stdout_);
+  if (trap_stderr_) {
+    SetNonBlockingIO(child_stderr_);
+  }
+  delete argv;
+  // Start up some threads to continuously monitor the client's stdout and
+  // stderr streams and buffer any output in memory.
+  child_stdout_thread_ = fork();
+  if (child_stdout_thread_ == -1) {
+    Kill();
+    return 0;
+  } else if (child_stdout_thread_ == 0) {
+    ChildStdoutMonitor();
+  }
+  if (trap_stderr_) {
+    child_stderr_thread_ = fork();
+    if (child_stderr_thread_ == -1) {
+      Kill();
+      return 0;
+    } else if (child_stderr_thread_ == 0) {
+      ChildStderrMonitor();
+    }
+  }
+  is_alive_ = true;
+  return 1;
 }
 
 void Sandbox::Kill() {
@@ -94,12 +117,16 @@ void Sandbox::Kill() {
     return;
   }
   kill(pid_, SIGTERM);
+  kill(child_stdout_thread_, SIGTERM);
+  kill(child_stderr_thread_, SIGTERM);
   int child_pid = fork();
   if (child_pid == -1) {
     return;
   } else if (child_pid == 0) {
     sleep(1);
     kill(pid_, SIGKILL);
+    kill(child_stdout_thread_, SIGKILL);
+    kill(child_stderr_thread_, SIGKILL);
     exit(0);
   }
 }
@@ -135,25 +162,9 @@ int Sandbox::Write(const std::string& message) {
   return write(child_stdin_, message.c_str(), message.length());
 }
 
-int Sandbox::ReadLine(std::string& buf) {
-  char c;
-  while (true) {
-    ssize_t bytes_read = read(child_stdout_, &c, 1);
-    switch (bytes_read) {
-    case 1:
-      if (c == '\n') {
-	buf = std::string(child_stdout_buffer_);
-	child_stdout_buffer_ = std::string("");
-	return buf.length() + 1;
-      } else {
-	child_stdout_buffer_ += c;
-      }
-      break;
-    case 0:
-      return 0;
-    case -1:
-      return 0;
-    }
+void Sandbox::SlideCharactersBack(char *s, int start, int end) {
+  for (int i = 0; i < end - start; ++i) {
+    s[i] = s[start + i];
   }
 }
 
@@ -175,28 +186,67 @@ int Sandbox::ReadLine(std::string& buf, int max_blocking_time) {
 }
 
 int Sandbox::ReadErrorLine(std::string& buf) {
-  char c;
-  while (true) {
-    ssize_t bytes_read = read(child_stderr_, &c, 1);
-    switch (bytes_read) {
-    case 1:
-      if (c == '\n') {
-	buf = std::string(child_stderr_buffer_);
-	child_stderr_buffer_ = std::string("");
-	return buf.length() + 1;
-      } else {
-	child_stderr_buffer_ += c;
-      }
-      break;
-    case 0:
-      return 0;
-    case -1:
-      return 0;
+  std::string line;
+  for (int i = 0; i < child_stderr_buffer_length_; ++i) {
+    char c = child_stderr_buffer_[--child_stderr_buffer_length_];
+    if (c == '\n') {
+      buf = line;
+      SlideCharactersBack(child_stderr_buffer_,
+			  i + 1,
+			  child_stderr_buffer_length_);
+      child_stderr_buffer_length_ -= i;
+      return i + 1;
+    } else {
+      line += c;
     }
-  } 
+  }
   return 0;
 }
 
 int Sandbox::getcpid() {
   return pid_;
+}
+
+int Sandbox::ReadLine(std::string& buf) {
+  std::string line;
+  //std::cout << child_stdout_buffer_length_;
+  for (int i = 0; i < child_stdout_buffer_length_; ++i) {
+    char c = child_stdout_buffer_[--child_stdout_buffer_length_];
+    std::cout << "popping character: " << c << std::endl;
+    if (c == '\n') {
+      buf = line;
+      SlideCharactersBack(child_stdout_buffer_,
+			  i + 1,
+			  child_stdout_buffer_length_);
+      child_stdout_buffer_length_ -= i;
+      return i + 1;
+    } else {
+      line += c;
+    }
+  }
+  return 0;
+}
+
+void Sandbox::ChildStdoutMonitor() {
+  char c;
+  while (true) {
+    //std::cout << child_stdout_buffer_length_;
+    ssize_t bytes_read = read(child_stdout_, &c, 1);
+    if (bytes_read > 0) {
+      std::cout << "pushing character: " << c << std::endl;
+      child_stdout_buffer_[child_stdout_buffer_length_++] = c;
+    }
+    sched_yield();
+  }
+}
+
+void Sandbox::ChildStderrMonitor() {
+  char c;
+  while (true) {
+    ssize_t bytes_read = read(child_stderr_, &c, 1);
+    if (bytes_read > 0) {
+      child_stderr_buffer_[child_stderr_buffer_length_++] = c;
+    }
+    sched_yield();
+  }
 }
