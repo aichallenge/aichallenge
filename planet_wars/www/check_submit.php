@@ -7,7 +7,7 @@ function ends_with($str, $sub) {
   return preg_match('/\Q' . $sub . '\E$/', $str);
 }
 
-$submission_directory = "../submissions/";
+$submission_directory = "/home/contest/ai-contest/planet_wars/submissions/";
 if (!logged_in_with_valid_credentials()) {
   header('index.php');
 }
@@ -50,7 +50,9 @@ if (!setup_submission_directory($submission_diectory)) {
             "location.";
           update_current_submission_status(30);
         } else {
-          if (!update_current_submission_status(15)) {
+          chmod($destination_folder, 0777);
+          chmod($target_path, 0777);
+          if (!update_current_submission_status(20)) {
             $errors[] = "Failed to update the submission status in the " .
               "database.";
           }

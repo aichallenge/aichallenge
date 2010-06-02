@@ -6,7 +6,6 @@ $JPC_CONTEST_MYSQL_LOGIN_PHP__ = 1;
 
 // Get the database login information from the server_info.txt file.
 include 'server_info.php';
-$server_info = get_server_info();
 
 // Login credentials for MySQL database.
 $db_host = $server_info["db_host"]; // Host name

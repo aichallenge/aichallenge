@@ -60,12 +60,14 @@ if (contains_bad_word($bio)) {
   $errors[] = "Your bio contains a bad word. Keep it professional.";
 }
 
-// Check if email address is "donotsend". If so, don't send any confirmation mails. Display
-// the confirmation code once the account creation finishes, and let them access the account
-// activation page themselves.
-if (strcmp($user_email, "donotsend") == 0) {
-  $send_email = 0;
-}
+// Check if email address is "donotsend". If so, don't send any confirmation
+// mails. Display the confirmation code once the account creation finishes,
+// and let them access the account activation page themselves. This feature
+// has been turned off because it's a security hazard now that the code is
+// open-source.
+//if (strcmp($user_email, "donotsend") == 0) {
+//  $send_email = 0;
+//}
 
 // Check if the username already exists.
 $sql="SELECT * FROM users WHERE username='$username'";

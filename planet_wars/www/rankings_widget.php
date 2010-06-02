@@ -42,13 +42,13 @@ $rowcount_query = <<<EOT
 select
     count(1)
 from
-    contest_rankings r 
-    inner join contest_submissions s on s.submission_id = r.submission_id
-    inner join contest_users u on u.user_id = s.user_id
-    left outer join contest_organizations o on o.org_id = u.org_id
-    left outer join contest_countries c on c.country_id = u.country_id
+    rankings r 
+    inner join submissions s on s.submission_id = r.submission_id
+    inner join users u on u.user_id = s.user_id
+    left outer join organizations o on o.org_id = u.org_id
+    left outer join countries c on c.country_id = u.country_id
 where
-    leaderboard_id = (select max(leaderboard_id) from contest_leaderboards)
+    leaderboard_id = (select max(leaderboard_id) from leaderboards)
     $filter_text
 EOT;
 
@@ -72,15 +72,18 @@ select
     c.flag_filename,
     o.org_id,
     o.name as org_name,
+    l.language_id as language_id,
+    l.name as programming_language,
     round(((r.wins + 0.5*r.draws)/(r.wins+r.draws+r.losses))*100, 2) as rank_percent
 from
-    contest_rankings r 
-    inner join contest_submissions s on s.submission_id = r.submission_id
-    inner join contest_users u on u.user_id = s.user_id
-    left outer join contest_organizations o on o.org_id = u.org_id
-    left outer join contest_countries c on c.country_id = u.country_id
+    rankings r 
+    inner join submissions s on s.submission_id = r.submission_id
+    inner join users u on u.user_id = s.user_id
+    left outer join organizations o on o.org_id = u.org_id
+    left outer join countries c on c.country_id = u.country_id
+    inner join languages l on l.language_id = s.language_id
 where
-    leaderboard_id = (select max(leaderboard_id) from contest_leaderboards)
+    leaderboard_id = (select max(leaderboard_id) from leaderboards)
     $filter_text
 order by
     rank asc
