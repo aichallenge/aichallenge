@@ -18,7 +18,7 @@
 //   * a total trip length
 //   * a number of turns remaining before arrival
 
-public class Fleet implements Comparable {
+public class Fleet implements Comparable, Cloneable {
     // Initializes a fleet.
     public Fleet(int owner,
 		 int numShips,
@@ -97,4 +97,16 @@ public class Fleet implements Comparable {
     private int destinationPlanet;
     private int totalTripLength;
     private int turnsRemaining;
+	
+	private Fleet(Fleet _f) {
+		owner = _f.owner;
+		numShips = _f.numShips;
+		sourcePlanet = _f.sourcePlanet;
+		destinationPlanet = _f.destinationPlanet;
+		totalTripLength = _f.totalTripLength;
+		turnsRemaining = _f.turnsRemaining;
+	}
+	public Object clone() {
+		return new Fleet(this);
+	}
 }

@@ -16,7 +16,7 @@
 //   * a growth rate
 //   * a position (x, y)
 
-public class Planet {
+public class Planet implements Cloneable{
     // Initializes a planet.
     public Planet(int owner,
 		  int numShips,
@@ -72,4 +72,15 @@ public class Planet {
     private int numShips;
     private int growthRate;
     private double x, y;
+	
+	private Planet (Planet _p) {
+		owner = _p.owner;
+		numShips = _p.numShips;
+		growthRate = _p.growthRate;
+		x = _p.x;
+		y = _p.y;
+	}
+	public Object clone() {
+		return new Planet(this);
+	}
 }

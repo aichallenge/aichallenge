@@ -15,12 +15,11 @@
 import java.awt.*;
 import java.awt.image.*;
 import java.awt.geom.AffineTransform;
-import java.io.*;
 import java.util.*;
-import javax.imageio.*;
 import java.lang.Math;
+import java.io.*;
 
-public class Game {
+public class Game implements Cloneable {
     // There are two modes:
     //   * If mode == 0, then s is interpreted as a filename, and the game is
     //     initialized by reading map data out of the named file.
@@ -387,54 +386,9 @@ public class Game {
 	}
 	return numShips;
     }
-
-	// There is probably a better way of doing this init stuff
-	// that I will have to look in to.
-	private ArrayList<Color> colors;
-	private Color bgColor;
-	private Color textColor;
-	private BufferedImage bgImage;
-	private Font planetFont;
-	private Font fleetFont;
-	private GraphicsConfiguration gc;
-	private boolean renderInit = false;
-	
-	// Creates the color 'theme' used for the game
-	private void initRenderer() {
-		bgColor = new Color(188, 189, 172);
-		
-		colors = new ArrayList<Color>();
-			colors.add(new Color(106, 74, 60));
-			colors.add(new Color(74, 166, 60));
-			colors.add(new Color(204, 51, 63));
-			colors.add(new Color(235, 104, 65));
-			colors.add(new Color(237, 201, 81));
-			// anything after this is probably not necessary yet!
-
-		textColor = Color.BLACK;
-		
-		try {
-			// NOTE:	We don't have permission to use this image yet
-			//			so it is just here for 'testing' purposes until
-			//			we either contact the creator or find one that
-			//			we are allowed to use.
-			bgImage = ImageIO.read(new File("space.jpg"));
-		} catch (IOException Err) {
-			// do nothing
-		}
-		
-		planetFont = new Font("Sans Serif", Font.BOLD, 11);
-		fleetFont = new Font("Sans serif", Font.PLAIN, 7);
-		
-		gc = GraphicsEnvironment.getLocalGraphicsEnvironment()
-			.getDefaultScreenDevice().getDefaultConfiguration();
-		
-		renderInit = true;
-		
-	}
 	
 	// Gets a color for a player (clamped)
-	private Color GetColor(int player) {
+	private Color GetColor(int player, ArrayList<Color> colors) {
 		if (player > colors.size()) {
 			return Color.PINK;
 		} else {
@@ -450,7 +404,7 @@ public class Game {
 		return new Point(x, y);
 	}
 	
-    // Renders the current state of the game as an image.
+    // Renders the current state of the game to a graphics object
     //
     // The offset is a number between 0 and 1 that specifies how far we are
     // past this game state, in units of time. As this parameter varies from
@@ -458,27 +412,15 @@ public class Game {
     // fake smooth animation.
     //
     // On success, return an image. If something goes wrong, returns null.
-    BufferedImage Render(int width, int height, double offset) {
-		// set up the colorscheme on first run
-		// this can probably be called from outside!
-		if (!renderInit)
-			initRenderer();
-		
-		// Set up the graphics context.
-		BufferedImage image = gc.createCompatibleImage(width, height);
-			//new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
-		Graphics2D g = image.createGraphics();
-		
-		// Turn on AA/Speed
-		g.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
-						   RenderingHints.VALUE_ANTIALIAS_ON);
-		g.setRenderingHint(RenderingHints.KEY_RENDERING,
-						   RenderingHints.VALUE_RENDER_SPEED);
-		g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,
-						   RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+    void Render(int width, int height, double offset,
+				BufferedImage bgImage, ArrayList<Color> colors,
+				Color bgColor, Color textColor, Font planetFont,
+				Font fleetFont, Graphics2D g) {
 		
 		// Background
-		g.drawImage(bgImage, null, 0, 0);
+		if (bgImage != null) {
+			g.drawImage(bgImage, 0, 0, null);
+		}
 		
 		// Determine the dimensions of the viewport in game coordinates.
 		double top = Double.MAX_VALUE;
@@ -513,7 +455,7 @@ public class Game {
 			int x = pos.x;
 			int y = pos.y;
 			int r = 20 * p.GrowthRate();
-			g.setColor(GetColor(p.Owner()));
+			g.setColor(GetColor(p.Owner(), colors));
 			int cx = x - r / 2;
 			int cy = y - r / 2;
 			g.fillOval(cx, cy, r, r);
@@ -564,12 +506,12 @@ public class Game {
 						 (double)(dPos.x - sPos.x)/(double)(f.TotalTripLength()),
 						 (offset + f.TotalTripLength() - f.TurnsRemaining())*
 						 (double)(dPos.y - sPos.y)/(double)(f.TotalTripLength()));
-			at.scale((double)f.NumShips()*.4, (double)f.NumShips()*.4);
+			at.scale((double)f.NumShips()*.75, (double)f.NumShips()*.75);
 			at.rotate(ang, bounds.getCenterX(), bounds.getCenterY());
 			
 			Shape sh = at.createTransformedShape(poly);
 			
-			g.setColor(GetColor(f.Owner()));
+			g.setColor(GetColor(f.Owner(), colors));
 			g.fill(sh);
 			g.setColor(g.getColor().darker());
 			g.draw(sh);
@@ -580,13 +522,13 @@ public class Game {
 			
 			g.setColor(textColor);
 			g.drawString(Integer.toString(f.NumShips()),
-						 // round x sub up
 						 (int)(bounds2.getCenterX()-textBounds.getWidth()/2),
 						 (int)(bounds2.getCenterY()+fm.getAscent()/2));
+			
+			at = null;
 		}
 		
-		g.dispose();
-		return image;
+		fm = null;
     }
 
     // Parses a game state from a string. On success, returns 1. On failure,
@@ -698,4 +640,28 @@ public class Game {
     // player with the most ships, then the game is a draw.
     private int maxGameLength;
     private int numTurns;
+	
+	private Game (Game _g) {
+		planets = new ArrayList<Planet>();
+		for (Planet p : _g.planets) {
+			planets.add((Planet)(p.clone()));
+		}
+		fleets = new ArrayList<Fleet>();
+		for (Fleet f : _g.fleets) {
+			fleets.add((Fleet)(f.clone()));
+		}
+		if (_g.mapFilename != null)
+			mapFilename = new String(_g.mapFilename);
+		if (_g.mapData != null)
+			mapData = new String(_g.mapData);
+		initMode = _g.initMode;
+		if (_g.gamePlayback != null)
+			gamePlayback = new String(_g.gamePlayback);
+		maxGameLength = _g.maxGameLength;
+		numTurns = _g.numTurns;
+		// Dont need to init the drawing stuff (it does it itself)
+	}
+	public Object clone() {
+		return new Game(this);
+	}
 }

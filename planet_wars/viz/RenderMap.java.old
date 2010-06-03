@@ -20,7 +20,7 @@ import javax.imageio.*;
 public class RenderMap {
     public static void main(String[] args) {
 	try {
-	    if (args.length != 2) {
+	    /*if (args.length != 2) {
 		System.err.println("USAGE: java RenderMap map.txt image.png");
 	    }
 	    Game game = new Game(args[0], 100, 0);
@@ -30,7 +30,12 @@ public class RenderMap {
 	    }
 	    BufferedImage image = game.Render(640, 480, 0.0);
 	    File file = new File(args[1]);
-	    ImageIO.write(image, "png", file);
+	    ImageIO.write(image, "png", file);*/
+		Game game = new Game("0,0,1,30,2:2,4,2,30,2:1,2,0,0,5|0.2.15,1.2.15:::0.2.10,1.2.10:::0.2.8,1.2.8:::0.2.7,1.2.7:::0.2.7,1.2.7:::0.2.6,1.2.6:::0.2.6,1.2.6:::0.2.6,1.2.6:::0.2.6,1.2.6:::0.2.6,1.2.6:::0.2.6,1.2.6:::0.2.6,1.2.6:::0.2.6,1.2.6:::0.2.6,1.2.6:::0.2.6,1.2.6:::0.2.6,1.2.6:::0.2.6,1.2.6:::0.2.6,1.2.6:::0.2.6,1.2.6:::0.2.6,1.2.6:::0.2.6,1.2.6:::0.2.6,1.2.6:::0.2.6,1.2.6:::0.2.6,1.2.6:::0.2.6,1.2.6:::0.2.6,1.2.6:::1.2.6,0.2.6:::0.2.6,1.2.6:::0.2.6,1.2.6:::0.2.6,1.2.6:::0.2.6,1.2.6:::0.2.6,1.2.6:::0.2.6,1.2.6:::0.2.6,1.2.6:", 100, 1);
+		System.out.println(game.Init());
+		BufferedImage image = game.Render(640, 480, 0.0);
+		File file = new File("out.png");
+		ImageIO.write(image, "png", file);
 	} catch (Exception e) {
 	    System.err.println(e);
 	}
