@@ -22,11 +22,11 @@ all: $(TARGETS)
 clean:
 	rm -f *.o $(TARGETS) *_test
 
-engine: engine.o fleet.o game.o planet.o sandbox.a cpp_util.a
+engine: engine.o fleet.o game.o planet.o sandbox.a cpp_util.a -lpthread
 
-python_test: sandbox.a cpp_util.a
+python_test: sandbox.a cpp_util.a -lpthread
 
-simple_bot: fleet.o game.o planet.o simple_bot.o cpp_util.a
+simple_bot: fleet.o game.o planet.o simple_bot.o sandbox.a cpp_util.a -lpthread
 
-unit_tests: fleet.o game.o game_test.o planet.o cpp_util.a gtest_main.a
+unit_tests: fleet.o game.o game_test.o planet.o cpp_util.a sandbox.a gtest_main.a
 	$(CC) $(CPPFLAGS) -o $@ $^ -lpthread

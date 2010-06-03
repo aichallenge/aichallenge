@@ -121,10 +121,8 @@ class Sandbox {
 
   // Buffers that store characters that have been read from the spawned
   // process' stdout and stderr channels.
-  char child_stdout_buffer_[MAX_BUFFER_LENGTH];
-  char child_stderr_buffer_[MAX_BUFFER_LENGTH];
-  volatile int child_stdout_buffer_length_;
-  volatile int child_stderr_buffer_length_;
+  std::string child_stdout_buffer_;
+  std::string child_stderr_buffer_;
 
   // Whether or not to trap the spawned program's stderr output.
   bool trap_stderr_;

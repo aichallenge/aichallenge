@@ -63,6 +63,9 @@ class Game {
   // are player number 1.
   std::string ToString(int pov = -1) const;
 
+  // Sends a description of the game state to a client.
+  void SendGameState(Sandbox *sandbox, int pov = -1);
+
   // Carries out the point-of-view switch operation, so that each player can
   // always assume that he is player number 1. There are three cases.
   // 1. If pov < 0 then no pov switching is being used. Return player_id.

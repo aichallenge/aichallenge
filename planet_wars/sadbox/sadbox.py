@@ -121,7 +121,8 @@ def main():
 		cmd = cmd.replace("+", " ")
 		args = shlex.split(cmd)
 		os.chdir(sadbox_path)
-		subprocess.Popen(args).wait()
+		p = subprocess.Popen(args)
+		p.wait();
 #...
 
 if __name__ == "__main__":

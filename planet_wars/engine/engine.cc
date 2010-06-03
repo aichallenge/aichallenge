@@ -92,7 +92,8 @@ int main(int argc, char *argv[]) {
 	clients[i]->Kill();
 	continue;
       }
-      int result = clients[i]->WriteLine(game.ToString(i + 1) + "go");
+      game.SendGameState(clients[i], i + 1);
+      int result = clients[i]->WriteLine("go");
       if (result < 0) {
 	std::cerr << "WARNING: failed to communicate with client: "
 		  << clients[i]->Command() << std::endl;

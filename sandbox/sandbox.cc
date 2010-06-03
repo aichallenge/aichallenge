@@ -32,8 +32,6 @@ Sandbox::Sandbox(const std::string& command, bool trap_stderr) {
   is_alive_ = false;
   child_stdout_thread_ = -1;
   child_stderr_thread_ = -1;
-  child_stdout_buffer_length_ = 0;
-  child_stderr_buffer_length_ = 0;
   diediedie_ = false;
 }
 
@@ -198,20 +196,6 @@ int Sandbox::ReadLine(std::string& buf, int max_blocking_time) {
 }
 
 int Sandbox::ReadErrorLine(std::string& buf) {
-  std::string line;
-  for (int i = 0; i < child_stderr_buffer_length_; ++i) {
-    char c = child_stderr_buffer_[--child_stderr_buffer_length_];
-    if (c == '\n') {
-      buf = line;
-      SlideCharactersBack(child_stderr_buffer_,
-			  i + 1,
-			  child_stderr_buffer_length_);
-      child_stderr_buffer_length_ -= i;
-      return i + 1;
-    } else {
-      line += c;
-    }
-  }
   return 0;
 }
 
@@ -220,21 +204,13 @@ int Sandbox::getcpid() {
 }
 
 int Sandbox::ReadLine(std::string& buf) {
-  std::string line;
-  for (int i = 0; i < child_stdout_buffer_length_; ++i) {
-    char c = child_stdout_buffer_[--child_stdout_buffer_length_];
-    if (c == '\n') {
-      buf = line;
-      SlideCharactersBack(child_stdout_buffer_,
-			  i + 1,
-			  child_stdout_buffer_length_);
-      child_stdout_buffer_length_ -= i;
-      return i + 1;
-    } else {
-      line += c;
-    }
+  size_t index = child_stdout_buffer_.find_first_of('\n');
+  if (index == std::string::npos) {
+    return 0;
   }
-  return 0;
+  buf = child_stdout_buffer_.substr(0, index);
+  child_stdout_buffer_ = child_stdout_buffer_.substr(index + 1);
+  return index + 1;
 }
 
 void Sandbox::ChildStdoutMonitor() {
@@ -242,8 +218,7 @@ void Sandbox::ChildStdoutMonitor() {
   while (!diediedie_) {
     ssize_t bytes_read = read(child_stdout_, &c, 1);
     if (bytes_read > 0) {
-      std::cout << "pushing character: " << c << std::endl;
-      child_stdout_buffer_[child_stdout_buffer_length_++] = c;
+      child_stdout_buffer_ += c;
     }
     sched_yield();
   }
@@ -254,7 +229,7 @@ void Sandbox::ChildStderrMonitor() {
   while (!diediedie_) {
     ssize_t bytes_read = read(child_stderr_, &c, 1);
     if (bytes_read > 0) {
-      child_stderr_buffer_[child_stderr_buffer_length_++] = c;
+      child_stderr_buffer_ += c;
     }
     sched_yield();
   }

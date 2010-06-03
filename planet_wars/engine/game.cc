@@ -82,6 +82,28 @@ std::string Game::ToString(int pov) const {
   return s.str();
 }
 
+void Game::SendGameState(Sandbox *sandbox, int pov) {
+  for (unsigned int i = 0; i < planets_.size(); ++i) {
+    const Planet& p = planets_[i];
+    std::stringstream s;
+    s << "P " << p.X() << " " << p.Y() << " " << PovSwitch(pov, p.Owner())
+      << " " << p.NumShips() << " " << p.GrowthRate() << std::endl;
+    sandbox->Write(s.str());
+    std::string response;
+    sandbox->ReadLine(response, 200);
+  }
+  for (unsigned int i = 0; i < fleets_.size(); ++i) {
+    const Fleet& f = fleets_[i];
+    std::stringstream s;
+    s << "F " << PovSwitch(pov, f.Owner()) << " " << f.NumShips() << " "
+      << f.SourcePlanet() << " " << f.DestinationPlanet() << " "
+      << f.TotalTripLength() << " " << f.TurnsRemaining() << std::endl;
+    sandbox->Write(s.str());
+    std::string response;
+    sandbox->ReadLine(response, 200);
+  }
+}
+
 int Game::PovSwitch(int pov, int player_id) {
   if (pov < 0) return player_id;
   if (player_id == pov) return 1;

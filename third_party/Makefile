@@ -15,7 +15,7 @@
 CC=g++
 CPPFLAGS += -Wall -I.. -I../third_party/googletest/include
 VPATH = third_party/googletest/make:cpp_util:sandbox
-SUBDIRS = googletest/make
+SUBDIRS = googletest/make bayeselo
 
 all: subdirs
 
