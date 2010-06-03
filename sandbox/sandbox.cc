@@ -11,13 +11,14 @@
 // Author: Jeff Cameron (jeff@jpcameron.com)
 
 #include "sandbox/sandbox.h"
+#include <ctime>
 #include <fcntl.h>
 #include <iostream>
+#include <pthread.h>
 #include <sched.h>
 #include <signal.h>
 #include <stdlib.h>
 #include <string>
-#include <ctime>
 #include <vector>
 #include "cpp_util/string_util.h"
 
@@ -33,10 +34,23 @@ Sandbox::Sandbox(const std::string& command, bool trap_stderr) {
   child_stderr_thread_ = -1;
   child_stdout_buffer_length_ = 0;
   child_stderr_buffer_length_ = 0;
+  diediedie_ = false;
 }
 
 Sandbox::~Sandbox() {
   Kill();
+}
+
+void *DummyStdoutMonitor(void *instance) {
+  Sandbox *sandbox = (Sandbox*)instance;
+  sandbox->ChildStdoutMonitor();
+  return NULL;
+}
+
+void *DummyStderrMonitor(void *instance) {
+  Sandbox *sandbox = (Sandbox*)instance;
+  sandbox->ChildStderrMonitor();
+  return NULL;
 }
 
 int Sandbox::Init() {
@@ -91,20 +105,17 @@ int Sandbox::Init() {
   delete argv;
   // Start up some threads to continuously monitor the client's stdout and
   // stderr streams and buffer any output in memory.
-  child_stdout_thread_ = fork();
-  if (child_stdout_thread_ == -1) {
+  if (pthread_create(&child_stdout_thread_, NULL, DummyStdoutMonitor, this)) {
     Kill();
     return 0;
-  } else if (child_stdout_thread_ == 0) {
-    ChildStdoutMonitor();
   }
   if (trap_stderr_) {
-    child_stderr_thread_ = fork();
-    if (child_stderr_thread_ == -1) {
+    if (pthread_create(&child_stderr_thread_,
+		       NULL,
+		       DummyStderrMonitor,
+		       this)) {
       Kill();
       return 0;
-    } else if (child_stderr_thread_ == 0) {
-      ChildStderrMonitor();
     }
   }
   is_alive_ = true;
@@ -113,6 +124,7 @@ int Sandbox::Init() {
 
 void Sandbox::Kill() {
   is_alive_ = false;
+  diediedie_ = true;
   if (pid_ == 0) {
     return;
   }
@@ -209,10 +221,8 @@ int Sandbox::getcpid() {
 
 int Sandbox::ReadLine(std::string& buf) {
   std::string line;
-  //std::cout << child_stdout_buffer_length_;
   for (int i = 0; i < child_stdout_buffer_length_; ++i) {
     char c = child_stdout_buffer_[--child_stdout_buffer_length_];
-    std::cout << "popping character: " << c << std::endl;
     if (c == '\n') {
       buf = line;
       SlideCharactersBack(child_stdout_buffer_,
@@ -229,8 +239,7 @@ int Sandbox::ReadLine(std::string& buf) {
 
 void Sandbox::ChildStdoutMonitor() {
   char c;
-  while (true) {
-    //std::cout << child_stdout_buffer_length_;
+  while (!diediedie_) {
     ssize_t bytes_read = read(child_stdout_, &c, 1);
     if (bytes_read > 0) {
       std::cout << "pushing character: " << c << std::endl;
@@ -242,7 +251,7 @@ void Sandbox::ChildStdoutMonitor() {
 
 void Sandbox::ChildStderrMonitor() {
   char c;
-  while (true) {
+  while (!diediedie_) {
     ssize_t bytes_read = read(child_stderr_, &c, 1);
     if (bytes_read > 0) {
       child_stderr_buffer_[child_stderr_buffer_length_++] = c;

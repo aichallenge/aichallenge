@@ -17,6 +17,7 @@
 
 #define MAX_BUFFER_LENGTH 1024
 
+#include <pthread.h>
 #include <string>
 
 class Sandbox {
@@ -87,12 +88,12 @@ class Sandbox {
   // Returns the pid of the spawned child
   int getcpid();
 
- private:
   // These methods continuously monitor the child process' stdout and stderr
   // streams, buffering the output as it arrives.
   void ChildStdoutMonitor();
   void ChildStderrMonitor();
 
+ private:
   // Sets a file descriptor to eb non-blocking.
   int SetNonBlockingIO(int file_descriptor);
 
@@ -109,8 +110,8 @@ class Sandbox {
   // These are two processes that are spawned to continuously monitor the
   // client's stdout and stderr stream for new output. Any output found is
   // added to the relevant buffers.
-  int child_stdout_thread_;
-  int child_stderr_thread_;
+  pthread_t child_stdout_thread_;
+  pthread_t child_stderr_thread_;
 
   // The shell command to be invoked inside this sandbox.
   std::string command_;
@@ -122,14 +123,18 @@ class Sandbox {
   // process' stdout and stderr channels.
   char child_stdout_buffer_[MAX_BUFFER_LENGTH];
   char child_stderr_buffer_[MAX_BUFFER_LENGTH];
-  volatile int *child_stdout_buffer_length_;
-  volatile int *child_stderr_buffer_length_;
+  volatile int child_stdout_buffer_length_;
+  volatile int child_stderr_buffer_length_;
 
   // Whether or not to trap the spawned program's stderr output.
   bool trap_stderr_;
 
   // Keeps track of whether the spawned process is in good shape.
   bool is_alive_;
+
+  // If this value is true, all threads associated with the sandbox should
+  // cease executing.
+  bool diediedie_;
 };
 
 #endif

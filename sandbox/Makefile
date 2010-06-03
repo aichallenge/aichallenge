@@ -22,7 +22,7 @@ all: $(TARGETS)
 clean:
 	rm -f *.o $(TARGETS) *_test
 
-informal_sum_test: informal_sum_test.o sandbox.a cpp_util.a
+informal_sum_test: informal_sum_test.o sandbox.a cpp_util.a -lpthread
 
 sandbox.a: sandbox.a(sandbox.o)
 	ranlib sandbox.a
