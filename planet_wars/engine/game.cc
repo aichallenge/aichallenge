@@ -111,7 +111,6 @@ int Game::PovSwitch(int pov, int player_id) {
   return player_id;
 }
 
-
 int Game::Distance(int source_planet, int destination_planet) const {
   const Planet& source = planets_[source_planet];
   const Planet& destination = planets_[destination_planet];
