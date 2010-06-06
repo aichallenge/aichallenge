@@ -51,7 +51,7 @@ $bio = mysql_real_escape_string(stripslashes($_POST['bio']));
 $country_id = mysql_real_escape_string(stripslashes($_POST['user_country']));
 
 // Uncomment the following line to disable account creation
-//$errors[] = "Accounts can not be created at this time. Come back later, " .
+$errors[] = "Accounts can not be created at this time. Come back later, " .
 	    "once the contest opens.";
 
 // Check for bad words

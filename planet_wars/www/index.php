@@ -1,6 +1,7 @@
 <?php include 'header.php'; ?>
 
-<h2>The AI Challenge is Back!</h2>
-<p>Welcome back. Did you miss it? Now you can all neglect your families again!</p>
+<h2>Come Back in a Few Days!</h2>
+<p>The contest is not open yet. It will be open some time in early June.
+  Patience is a virtue, young Padawan.</p>
 
 <?php include 'footer.php'; ?>
