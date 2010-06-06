@@ -1,9 +1,11 @@
-<?php include 'header.php'; ?>
-<?php include 'mysql_login.php'; ?>
-<?php include 'bad_words.php'; ?>
-<?php include 'web_util.php'; ?>
-
 <?php
+
+include 'header.php';
+include 'mysql_login.php';
+include 'bad_words.php';
+include 'web_util.php';
+require_once "gmail.php";
+
 function check_valid_user_status_code($code) {
   $query = "SELECT * FROM user_status_codes";
   $result = mysql_query($query);
@@ -178,11 +180,11 @@ if (count($errors) <= 0) {
       "be able to sign in and start competing. Good luck!\n\n" .
       $peer_message . "Contest Staff\nUniversity of Waterloo Computer Science Club";
     if ($send_email == 1) {
-      $mail_accepted = mail($user_email, $mail_subject, $mail_content);
+      $mail_accepted = send_gmail($user_email, $mail_subject, $mail_content);
     } else {
       $mail_accepted = true;
     }
-    if (!$mail_accepted) {
+    if (intval($mail_accepted) == 0) {
       $errors[] = "Failed to send confirmation email. Try again in a few " .
         "minutes.";
       $query = "DELETE FROM users WHERE username='$username' and " .
@@ -190,21 +192,24 @@ if (count($errors) <= 0) {
       mysql_query($query);
     } else {
       // Send notification mail to contest admin.
-      $mail_subject = "New Contest User";
-      $mail_content = "username = " . $username . "\nOrganizationID = " . $user_org .
-        "\nUser number " . ($num_peers + 1) . " from " . $org_name;
-      if ($send_email == 1) {
-        $mail_accepted = mail("cameron.jp@gmail.com", $mail_subject, $mail_content);
-      } else {
-        $mail_accepted = true;
-      }
-      if (!$mail_accepted) {
-        $errors[] = "Failed to send confirmation email. Try again in a few " .
-          "minutes.";
-        $query = "DELETE FROM users WHERE username='$username' and " .
-          "password='" . md5($password1) . "'";
-        mysql_query($query);
-      }
+      //$mail_subject = "New Contest User";
+      //$mail_content = "username = " . $username . "\nOrganizationID = " .
+      //  $user_org . "\nUser number " . ($num_peers + 1) . " from " .
+      //  $org_name;
+      //if ($send_email == 1) {
+      //  $mail_accepted = send_gmail($admin_address,
+      //                              $mail_subject,
+      //                              $mail_content);
+      //} else {
+      //  $mail_accepted = true;
+      //}
+      //if (intval($mail_accepted) == 0) {
+      //  $errors[] = "Failed to send confirmation email. Try again in " .
+      //    "a few minutes.";
+      //  $query = "DELETE FROM users WHERE username='$username' and " .
+      //    "password='" . md5($password1) . "'";
+      //  mysql_query($query);
+      //}
     }
   } else {
     $errors[] = "Failed to communicate with the registration database. Try " .
