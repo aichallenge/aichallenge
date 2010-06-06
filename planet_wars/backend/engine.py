@@ -95,7 +95,7 @@ def travel_time(a, b):
 
 # Processes the given order, as if it was given by the given player_id. If
 # everything goes well, returns True. Otherwise, returns False.
-def issue_order(order, player_id, planets, fleets):
+def issue_order(order, player_id, planets, fleets, order_strings):
   source_planet = planets[order["source"]]
   destination_planet = planets[order["destination"]]
   if source_planet["owner"] != player_id:
@@ -112,6 +112,8 @@ def issue_order(order, player_id, planets, fleets):
     "total_trip_length" : t,
     "turns_remaining" : t
   })
+  order_strings.append(str(order["source"]) + "." + \
+    str(order["destination"]) + "." + str(order["num_ships"]))
 
 # "a" is an array. This method returns the number of non-zero elements in a.
 def num_non_zero(a):
@@ -179,6 +181,7 @@ def remaining_players(planets, fleets):
     players.add(p["owner"])
   for f in fleets:
     players.add(f["owner"])
+  players.discard(0)
   return players
 
 # Returns a string representation of the entire game state.
@@ -186,6 +189,16 @@ def serialize_game_state(planets, fleets, pov):
   message = "\n".join([serialize_planet(p, pov) for p in planets]) + \
     "\n" + "\n".join([serialize_fleet(f, pov) for f in fleets]) + "\ngo\n"
   return message.replace("\n\n", "\n")
+
+# Turns a list of planets into a string in playback format. This is the initial
+# game state part of a game playback string.
+def planet_to_playback_format(planets):
+  planet_strings = []
+  for p in planets:
+    planet_strings.append(str(p["x"]) + "," + str(p["y"]) + "," + \
+      str(p["owner"]) + "," + str(p["num_ships"]) + "," + \
+      str(p["growth_rate"]))
+  return ":".join(planet_strings)
 
 # Plays a game of Planet Wars.
 #   map: a full or relative path to a text file containing the map that this
@@ -202,6 +215,7 @@ def serialize_game_state(planets, fleets, pov):
 #                     path is the current working directory.
 def play_game(map, max_turn_time, max_turns, players):
   planets, fleets = read_map_file(map)
+  playback = planet_to_playback_format(planets) + "|"
   clients = []
   for p in players:
     client = subprocess.Popen(args=shlex.split(p["command"]),
@@ -211,32 +225,42 @@ def play_game(map, max_turn_time, max_turns, players):
                               stderr=subprocess.PIPE)
     clients.append(client)
   turn_number = 1
+  turn_strings = []
   while turn_number <= max_turns and \
     len(remaining_players(planets, fleets)) > 1:
-    print "turn: " + str(turn_number)
-    print "game state:"
-    print serialize_game_state(planets, fleets, -1)
-    print "sending game state to clients"
+    order_strings = []
+    #print "turn: " + str(turn_number)
+    #print "game state:"
+    #print serialize_game_state(planets, fleets, -1)
+    #print "sending game state to clients"
     for i, c in enumerate(clients):
       message = serialize_game_state(planets, fleets, i+1)
       c.stdin.write(message)
     time.sleep(1)
-    print "getting orders from clients"
+    #print "getting orders from clients"
     for i, c in enumerate(clients):
       orders = get_orders_from_client(c)
       for order in orders:
-        print "player_" + str(i+1) + ": " + str(order)
-        issue_order(order, i+1, planets, fleets)
-    print "updating game state"
+        #print "player_" + str(i+1) + ": " + str(order)
+        issue_order(order, i+1, planets, fleets, order_strings)
+    #print "updating game state"
     planets, fleets = do_time_step(planets, fleets)
+    turn_strings.append(",".join(order_strings))
     turn_number += 1
   for c in clients:
     os.kill(c.pid, signal.SIGKILL)
-  print "game state:"
-  print serialize_game_state(planets, fleets, -1)
+  playback += ":".join(turn_strings)
+  victors = remaining_players(planets, fleets)
+  outcome = dict()
+  if len(victors) == 1:
+    outcome["winner"] = victors.pop()
+  else:
+    outcome["winner"] = 0
+  outcome["playback"] = playback
+  return outcome
 
-players = [
-  {"path" : "../engine/", "command" : "./simple_bot"},
-  {"path" : "../submissions/1/", "command" : "java MyBot"}
-]
-play_game("../maps/king_of_the_hill.txt", 1000, 5, players)
+#players = [
+#  {"path" : "../engine/", "command" : "./simple_bot"},
+#  {"path" : "../submissions/122743/", "command" : "java -jar MyBot.jar"}
+#]
+#print play_game("../maps/king_of_the_hill.txt", 1000, 10, players)

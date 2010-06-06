@@ -2,6 +2,7 @@ import MySQLdb
 import subprocess
 import random
 from server_info import server_info
+import engine
 
 # Connect to the database.
 connection = MySQLdb.connect(host = server_info["db_host"],
@@ -47,28 +48,36 @@ print str(player_one["submission_id"]) + " vs " + \
   str(player_two["submission_id"]) + " on " + str(map["name"])
 
 # Invoke the game engine
-command = [
-  "../engine/engine", # Path to the engine
-  "../maps/" + map["path"], # The map file
-  "1000", # Max turn time in milliseconds
-  "100", # Max game length in turns
-  "../submissions/" + str(player_one["submission_id"]), # Player one directory
-  player_one["command"], # Player one command
-  "../submissions/" + str(player_two["submission_id"]), # Player two directory
-  player_two["command"] # Player two command
+#command = [
+#  "../engine/engine", # Path to the engine
+#  "../maps/" + map["path"], # The map file
+#  "1000", # Max turn time in milliseconds
+#  "100", # Max game length in turns
+#  "../submissions/" + str(player_one["submission_id"]), # Player one directory
+#  player_one["command"], # Player one command
+#  "../submissions/" + str(player_two["submission_id"]), # Player two directory
+#  player_two["command"] # Player two command
+#]
+#(output, stderr) = subprocess.Popen(command, \
+#                                    stdout=subprocess.PIPE, \
+#                                    stderr=subprocess.PIPE).communicate()
+#result = dict()
+#for line in output.split("\n"):
+#  (key, colon, value) = line.partition(":")
+#  key = key.strip()
+#  value = value.strip()
+#  if key != "" and value != "":
+#    result[key] = value
+player_one_path = "../submissions/" + str(player_one["submission_id"])
+player_two_path = "../submissions/" + str(player_two["submission_id"])
+map_path = "../maps/" + map["path"]
+players = [
+  {"path" : player_one_path, "command" : player_one["command"]},
+  {"path" : player_two_path, "command" : player_two["command"]}
 ]
-(output, stderr) = subprocess.Popen(command, \
-                                    stdout=subprocess.PIPE, \
-                                    stderr=subprocess.PIPE).communicate()
-result = dict()
-for line in output.split("\n"):
-  (key, colon, value) = line.partition(":")
-  key = key.strip()
-  value = value.strip()
-  if key != "" and value != "":
-    result[key] = value
+outcome = engine.play_game(map_path, 1000, 10, players)
 
-# Store the game results in the database
+# Store the game outcome in the database
 winner = "NULL"
 loser = "NULL"
 map_id = map["map_id"]
@@ -76,24 +85,24 @@ draw = 1
 timestamp = "CURRENT_TIMESTAMP"
 playback_string = ""
 errors = ""
-if "winner" in result:
-  if result["winner"] == "0":
+if "winner" in outcome:
+  if outcome["winner"] == 0:
     pass
-  elif result["winner"] == "1":
+  elif outcome["winner"] == 1:
     winner = player_one["submission_id"]
     loser = player_two["submission_id"]
     draw = 0
-  elif result["winner"] == "2":
+  elif outcome["winner"] == 2:
     winner = player_two["submission_id"]
     loser = player_one["submission_id"]
     draw = 0
   else:
     errors += "Game engine reported invalid winner value: " + \
-      str(result["winner"]) + "\n"
+      str(outcome["winner"]) + "\n"
 else:
   errors += "The engine did not report a winner."
-if "playback" in result:
-  playback_string = result["playback"]
+if "playback" in outcome:
+  playback_string = outcome["playback"]
 if len(errors) == 0:
   cursor.execute("INSERT INTO games (winner,loser,map_id,draw,timestamp," + \
     "player_one,player_two,playback_string) VALUES (" + \
@@ -105,6 +114,8 @@ if len(errors) == 0:
     str(player_one["submission_id"]) + "," + \
     str(player_two["submission_id"]) + "," + \
     "'" + str(playback_string) + "')")
+else:
+  print errors
 
 # Close the database connection
 cursor.close()
