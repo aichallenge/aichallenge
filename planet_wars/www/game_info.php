@@ -9,7 +9,7 @@ if (strlen($game_id) > 0) {
   if ($result) {
     if ($row = mysql_fetch_assoc($result)) {
       foreach ($row as $key => $value) {
-        echo "$key:$value\n";
+        echo "$key=$value\n";
       }
     }
   } else {
