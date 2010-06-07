@@ -71,6 +71,6 @@ for g in sorted(games.keys()):
 print "elo"
 print " mm"
 # print " exactdist" # we don't really need this
-print " ratings 10>ratings.txt"
+print " ratings >ratings.txt"
 print " x"
 print "x"

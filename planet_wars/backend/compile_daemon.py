@@ -89,10 +89,14 @@ def compile_submission(submission_id, email_address):
   error_messages = ""
   path = "/home/contest/ai-contest/planet_wars/submissions/" + \
     str(submission_id) + "/"
-  os.chdir(path)
-  out, err = unpack()
-  output_messages += out
-  error_messages += err
+  if os.path.exists(path):
+    os.chdir(path)
+  else:
+    error_messages += "Unable to locate submission directory.\n"
+  if len(error_messages) == 0:
+    out, err = unpack()
+    output_messages += out
+    error_messages += err
   if len(error_messages) == 0:
     out, err, language_id = compile_anything()
     set_submission_language(submission_id, language_id)

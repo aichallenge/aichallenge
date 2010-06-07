@@ -13,6 +13,7 @@ from server_info import server_info
 #              zero, then the name of the sender will just be the sender's
 #              email address.
 def send_gmail(username, password, recipients, subject, body, full_name):
+  recipients = [r for r in recipients if r.find("@") >= 0]
   try:
     if full_name is not None and len(full_name) > 0:
       from_line = full_name + " <" + username + ">"

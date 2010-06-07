@@ -67,7 +67,8 @@ def compile_function(language):
     out_message += out
     err_message += err
     err_message += check_path('MyBot.jar')
-    os.chmod("MyBot.jar", 0644)
+    if os.path.exists("MyBot.jar"):
+      os.chmod("MyBot.jar", 0644)
     return out_message, err_message
   if language == "Haskell":
     nukeglob('MyBot')
