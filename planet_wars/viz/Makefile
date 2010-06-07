@@ -20,8 +20,7 @@ clean:
 	rm -f *.class keystore *.jar $(TARGETS)
 
 keystore:
-	echo 'Set password as forthewin'
-	keytool -genkey -alias _alias -keystore keystore -keypass forthewin
+	keytool -genkey -alias _alias -keystore keystore -storepass	forthewin -keypass forthewin
 
 visualizer.jar: keystore Viewer.class Manifest.txt
 	jar cfvm visualizer.jar Manifest.txt *.class img/*.png img/*.jpg img/*.gif
@@ -44,8 +43,12 @@ RenderMap.class: RenderMap.java Game.class
 
 VizPanel.class: VizPanel.java
 	javac VizPanel.java
+	
 ViewerPanel.class: ViewerPanel.java
 	javac ViewerPanel.java
 
 Viewer.class: VizPanel.class ViewerPanel.class Viewer.java Game.class
+	javac Viewer.java
+	
 CLViewer.class: VizPanel.class ViewerPanel.class Viewer.java Game.class
+	javac CLViewer.java
