@@ -20,7 +20,8 @@ import java.awt.event.*;
 
 public class ViewerPanel extends JPanel implements ActionListener, Runnable {
 	
-	public ViewerPanel(String gameData) {
+	public ViewerPanel(String _players[],  String gameData) {
+		players = _players;
 		makeInterface();
 		loadGame(gameData);
 	}
@@ -34,6 +35,10 @@ public class ViewerPanel extends JPanel implements ActionListener, Runnable {
 	private JButton		pauseButton;
 	private JProgressBar	progress;
 	
+	private Color colors[] = { new Color(74, 166, 60),
+		new Color(204, 51, 63), new Color(235, 104, 65), new Color(237, 201, 81)	
+	};
+	
 	// Animation stuff
 	private Timer timer;
 	private Game games[];
@@ -45,6 +50,7 @@ public class ViewerPanel extends JPanel implements ActionListener, Runnable {
 	private boolean forward = true;
 	private Thread loadThread;
 	private String gameData;
+	private String players[];
 	
 	private void loadGame(String _gameData) {
 		gameData = _gameData;
@@ -109,7 +115,7 @@ public class ViewerPanel extends JPanel implements ActionListener, Runnable {
 			// Do a time step
 			tGame.DoTimeStep();
 		}
-
+		
 		for (JButton btn : buttons) {
 			if (btn != pauseButton)
 				btn.setEnabled(true);
@@ -124,7 +130,7 @@ public class ViewerPanel extends JPanel implements ActionListener, Runnable {
 		
 		update();
 	}
-		
+	
 	// Processes button click events
 	public void actionPerformed(ActionEvent e) {
 		String ac = e.getActionCommand();
@@ -205,10 +211,11 @@ public class ViewerPanel extends JPanel implements ActionListener, Runnable {
 	// Performs animation playback
 	private void animate() {
 		update();
-		if (_frame == -1) {
+		if (_frame < 0) {
 			if (forward) {
 				if (pos == games.length - 1) {
 					pauseButton.doClick();
+					frame = frameMax;
 				} else {
 					stepForward();
 					frame = 0;	
@@ -216,6 +223,7 @@ public class ViewerPanel extends JPanel implements ActionListener, Runnable {
 			} else {
 				if (pos == 0) {
 					pauseButton.doClick();
+					frame = 0;
 				} else {
 					stepBack();
 					frame = frameMax;
@@ -224,7 +232,7 @@ public class ViewerPanel extends JPanel implements ActionListener, Runnable {
 		} else {
 			frame = _frame;
 		}
-
+		
 	}
 	
 	// Creates the user interface for the viewer
@@ -239,6 +247,15 @@ public class ViewerPanel extends JPanel implements ActionListener, Runnable {
 		
 		viz = new VizPanel();
 		viz.setSize(640, 480);
+		
+		JLabel pl;
+		JLabel legend[] = new JLabel[players.length];
+		viz.addColor(new Color(106, 74, 60)); // neutral color
+		for (int i = 0; i < players.length; i++) {
+			pl = new JLabel(players[i], new ColorBox(colors[i]), SwingConstants.LEADING);
+			legend[i] = pl;
+			viz.addColor(colors[i]);
+		}
 		
 		sep1 = new JSeparator();
 		
@@ -266,15 +283,25 @@ public class ViewerPanel extends JPanel implements ActionListener, Runnable {
 			buttons[i] = btn;
 		}
 		
-		
 		// LAYOUT TIME GHRHAHGHARHAR
 		c.fill = GridBagConstraints.BOTH;
 		c.anchor = GridBagConstraints.CENTER;
-		c.weightx = 1.0;
-		c.weighty = 1.0;
-		// c.gridwidth = 1;
+		c.weightx = 0.0;
+		c.weighty = 0.0;
 		c.gridx = 0;
 		c.gridy = 0;
+		
+		JPanel legendPanel = new JPanel();
+		legendPanel.setBackground(Color.WHITE);
+		legendPanel.setLayout(new FlowLayout());
+		for (int i = 0; i < legend.length; i++) {
+			legendPanel.add(legend[i]);
+		}
+		add(legendPanel, c);
+		
+		c.weightx = 1.0;
+		c.weighty = 1.0;
+		c.gridy++;
 		add(viz, c);
 		
 		c.fill = GridBagConstraints.HORIZONTAL;

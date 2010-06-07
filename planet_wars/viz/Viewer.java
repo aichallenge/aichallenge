@@ -1,6 +1,6 @@
 /*<applet code=Viewer.class width=640 height=480>
-	<param name="game_id" value="413"/>
-	<param name="DEBUG" value=true />
+ <param name="game_id" value="413"/>
+ <param name="DEBUG" value=true />
  </applet> 
  */
 // ^^^^ STRICTLY FOR TESTING ^^^^
@@ -22,6 +22,7 @@
 import java.net.URL;
 import javax.swing.*;
 import java.util.Scanner;
+import java.util.Hashtable;
 
 public class Viewer extends JApplet {
 	ViewerPanel vp;
@@ -43,17 +44,32 @@ public class Viewer extends JApplet {
 	// 2. Pass it to ViewerPanel so it can make games out of them.
 	private void firstrun() {
 		try {
-			/*
-			 String _url = "http://csclub.uwaterloo.ca/~pgpaskar/planet_wars/test"+getParameter("game_id")+".html";
+			String _url = "http://www.ai-contest.com/game_info.php?game_id="
+			+getParameter("game_id");
 			URL url = new URL(_url);
 			Scanner scanner = new Scanner(url.openConnection().getInputStream());
 			scanner.useDelimiter("\\Z");
 			
 			String data = scanner.next();
-			 */
-			String data = "0,0,1,30,2:2,4,2,30,2:1,2,0,0,5|0.2.15,1.2.15:::0.2.10,1.2.10:::0.2.8,1.2.8:::0.2.7,1.2.7:::0.2.7,1.2.7:::0.2.6,1.2.6:::0.2.6,1.2.6:::0.2.6,1.2.6:::0.2.6,1.2.6:::0.2.6,1.2.6:::0.2.6,1.2.6:::0.2.6,1.2.6:::0.2.6,1.2.6:::0.2.6,1.2.6:::0.2.6,1.2.6:::0.2.6,1.2.6:::0.2.6,1.2.6:::0.2.6,1.2.6:::0.2.6,1.2.6:::0.2.6,1.2.6:::0.2.6,1.2.6:::0.2.6,1.2.6:::0.2.6,1.2.6:::0.2.6,1.2.6:::0.2.6,1.2.6:::0.2.6,1.2.6:::1.2.6,0.2.6:::0.2.6,1.2.6:::0.2.6,1.2.6:::0.2.6,1.2.6:::0.2.6,1.2.6:::0.2.6,1.2.6:::0.2.6,1.2.6:::0.2.6,1.2.6:";
+			System.err.println(data);
+			//String data = "game_id=4161292\nwinner=\nloser=\ngame_id=1\ndraw=1\ntimestamp=2010-05-30 23:45:02\nplayer_one=j3camero\nplayer_two=jeff_cameron\nplayback_string=0,0,1,30,2:2,4,2,30,2:1,2,0,0,5|0.2.15,1.2.15:::0.2.10,1.2.10:::0.2.8,1.2.8:::0.2.7,1.2.7:::0.2.7,1.2.7:::0.2.6,1.2.6:::0.2.6,1.2.6:::0.2.6,1.2.6:::0.2.6,1.2.6:::0.2.6,1.2.6:::0.2.6,1.2.6:::0.2.6,1.2.6:::0.2.6,1.2.6:::0.2.6,1.2.6:::0.2.6,1.2.6:::0.2.6,1.2.6:::0.2.6,1.2.6:::0.2.6,1.2.6:::0.2.6,1.2.6:::0.2.6,1.2.6:::0.2.6,1.2.6:::0.2.6,1.2.6:::0.2.6,1.2.6:::0.2.6,1.2.6:::0.2.6,1.2.6:::0.2.6,1.2.6:::0.2.6,1.2.6:::0.2.6,1.2.6:::0.2.6,1.2.6:::0.2.6,1.2.6:::0.2.6,1.2.6:::0.2.6,1.2.6:::0.2.6,1.2.6:::0.2.6,1.2.6:";
 			
-			vp = new ViewerPanel(data);
+			String parts[] = data.split("\\n");
+			String[] parts2;
+			Hashtable dict = new Hashtable();
+			for (String part : parts) {
+				parts2 = part.split("=");
+				if (parts2.length > 1) {
+					dict.put(parts2[0], parts2[1]);
+				}
+			}
+			String players[] = {
+				(String)dict.get("player_one"),
+				(String)dict.get("player_two")
+			};
+
+			vp = new ViewerPanel(players,
+								 (String)dict.get("playback_string"));
 			add(vp);
 		}
 		catch (Exception err) {

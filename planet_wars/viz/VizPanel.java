@@ -26,9 +26,9 @@ public class VizPanel extends JPanel {
 	private JLabel loader;
 	private BufferedImage img;
 	private Graphics2D _g;
-	private ArrayList<Color> colors;
-	private Color bgColor;
-	private Color textColor;
+	private ArrayList<Color> colors = new ArrayList<Color>();
+	private Color bgColor = new Color(188, 189, 172);
+	private Color textColor = Color.BLACK;
 	private Font planetFont;
 	private Font fleetFont;
 	private boolean renderInit = false;
@@ -38,20 +38,12 @@ public class VizPanel extends JPanel {
 	private int oldW = 0, oldH = 0;
 	// END HACKY FIX
 	
+	public void addColor(Color c) {
+		colors.add(c);
+	}
+	
 	// Creates the color 'theme' used for the game
 	private void initRenderer() {
-		bgColor = new Color(188, 189, 172);
-		
-		colors = new ArrayList<Color>();
-		colors.add(new Color(106, 74, 60));
-		colors.add(new Color(74, 166, 60));
-		colors.add(new Color(204, 51, 63));
-		colors.add(new Color(235, 104, 65));
-		colors.add(new Color(237, 201, 81));
-		// anything after this is probably not necessary yet!
-		
-		textColor = Color.BLACK;
-		
 		planetFont = new Font("Sans Serif", Font.BOLD, 11);
 		fleetFont = new Font("Sans serif", Font.PLAIN, 7);
 		
