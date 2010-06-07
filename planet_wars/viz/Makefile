@@ -12,19 +12,15 @@
 #
 # Makefile for the Tic-Tac-Toe contest engine.
 
-TARGETS = Engine.class RenderMap.class
+TARGETS = Engine.class RenderMap.class Visualizer.jar PlayGame.jar
 
 all: $(TARGETS)
 
 clean:
 	rm -f *.class keystore *.jar $(TARGETS)
 
-keystore:
-	keytool -genkey -alias _alias -keystore keystore -storepass	forthewin -keypass forthewin
-
-visualizer.jar: keystore Viewer.class Manifest.txt
-	jar cfvm visualizer.jar Manifest.txt *.class img/*.png img/*.jpg img/*.gif
-	jarsigner -keystore keystore -storepass forthewin visualizer.jar _alias
+CLViewer.class: VizPanel.class ViewerPanel.class Viewer.java Game.class
+	javac CLViewer.java
 
 Engine.class: Engine.java Game.class
 	javac Engine.java
@@ -35,20 +31,27 @@ Fleet.class: Fleet.java
 Game.class: Fleet.class Game.java Planet.class
 	javac Game.java
 
+keystore:
+	keytool -genkey -alias _alias -keystore keystore -storepass	forthewin -keypass forthewin
+
 Planet.class: Planet.java
 	javac Planet.java
+
+PlayGame.jar: CLViewer.class ViewerPanel.class VizPanel.class
+	jar cfe PlayGame.jar CLViewer *.class img/*.png img/*.jpg img/*.gif
 
 RenderMap.class: RenderMap.java Game.class
 	javac RenderMap.java
 
-VizPanel.class: VizPanel.java
-	javac VizPanel.java
-	
+Viewer.class: VizPanel.class ViewerPanel.class Viewer.java Game.class
+	javac Viewer.java
+
 ViewerPanel.class: ViewerPanel.java
 	javac ViewerPanel.java
 
-Viewer.class: VizPanel.class ViewerPanel.class Viewer.java Game.class
-	javac Viewer.java
-	
-CLViewer.class: VizPanel.class ViewerPanel.class Viewer.java Game.class
-	javac CLViewer.java
+Visualizer.jar: keystore Viewer.class AppletManifest.txt
+	jar cfvm Visualizer.jar AppletManifest.txt *.class img/*.png img/*.jpg img/*.gif
+	jarsigner -keystore keystore -storepass forthewin Visualizer.jar _alias
+
+VizPanel.class: VizPanel.java
+	javac VizPanel.java
