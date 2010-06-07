@@ -16,9 +16,9 @@ function getPaginationString($page = 1, $totalitems, $perpage = 50, $pagestring 
 		$pagination .= "<div class=\"pagination\">";
 
 		if ($page > 1) 
-			$pagination .= "<a href=\"$targetpage$pagestring$prev\">« prev</a>";
+			$pagination .= "<a href=\"$targetpage$pagestring$prev\">&laquo; prev</a>";
 		else
-			$pagination .= "<span class=\"disabled\">« prev</span>";	
+			$pagination .= "<span class=\"disabled\">&laquo; prev</span>";	
 		
 		if ($lastpage < 5 + ($adjacents * 2))	//not enough pages to bother breaking it up
 		{	
@@ -77,9 +77,9 @@ function getPaginationString($page = 1, $totalitems, $perpage = 50, $pagestring 
 		}
 		
 		if ($page < $counter - 1) 
-			$pagination .= "<a href=\"" . $targetpage . $pagestring . $next . "\">next »</a>";
+			$pagination .= "<a href=\"" . $targetpage . $pagestring . $next . "\">next &raquo;</a>";
 		else
-			$pagination .= "<span class=\"disabled\">next »</span>";
+			$pagination .= "<span class=\"disabled\">next &raquo;</span>";
 		$pagination .= "</div>\n";
 	}
 	

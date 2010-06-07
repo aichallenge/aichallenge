@@ -81,20 +81,20 @@ div.pagination a {
 }
 div.pagination a:hover, div.pagination a:active {
     border: 1px solid #4579F0;
-    color: #1549C0;
-    background-color: #EDF3FE;
+    color: #FFFFFF;
+    background-color: #242424;
 }
 div.pagination span.current {
     padding: 2px 5px 2px 5px;
     margin: 2px;
     border: 1px solid #1549C0;
     font-weight: bold;
-    background-color: #4579F0;
+    background-color: #242424;
     color: #FFF;
 }
 div.pagination span.disabled {
     padding: 2px 5px 2px 5px;
     margin: 2px;
-    border: 1px solid #EEE;
-    color: #DDD;
+    border: 1px solid #DDD;
+    color: #BBB;
 }
