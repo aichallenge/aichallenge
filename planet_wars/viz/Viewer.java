@@ -25,7 +25,7 @@ import java.util.Scanner;
 import java.util.Hashtable;
 
 public class Viewer extends JApplet {
-	ViewerPanel vp;
+	private ViewerPanel vp;
 	
 	public void init() {
 		try {
