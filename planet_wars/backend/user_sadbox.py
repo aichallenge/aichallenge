@@ -33,59 +33,6 @@ Required Arguments:
                 funneled through VM
 """
 
-qemu_process = None
-child_process = None
-
-def copy_exec_dir(qemu_port, qemu_identfile, sadbox_path, dest_path):
-  scp_cmd = "scp -r -P " + str(qemu_port) + " -i " + qemu_identfile + \
-    " " + sadbox_path + " " + dest_path
-  sys.stderr.write( scp_cmd + "\n")
-  scp_args = shlex.split(scp_cmd)
-  scp_process = subprocess.Popen(scp_args)
-  sys.stderr.write( "copying files to instance\n" )
-  scp_process.wait()
-  return scp_process
-
-def construct_qemu_shell_cmd(image, port):
-  load_vm = ""
-  #load_vm = "-loadvm contest"
-  return "/usr/bin/qemu " + image + " -net nic -net user -redir tcp:" + \
-    str(port) + "::22 -nographic " + load_vm
-
-def launch_qemu():
-  img_name = "test.img"
-  qemu_port = 5555
-  qemu_cmd = construct_qemu_shell_cmd(img_name, qemu_port)
-  qemu_args = shlex.split(qemu_cmd)
-  qemu_process = subprocess.Popen(qemu_args, \
-                                  stdin=subprocess.PIPE, \
-                                  stdout=subprocess.PIPE, \
-                                  close_fds=True)
-  time.sleep(1)
-  qemu_process.poll()
-  while qemu_process.returncode != None and qemu_port < 5565:
-    qemu_port += 1
-    qemu_cmd = construct_qemu_shell_cmd(img_name, qemu_port)
-    qemu_args = shlex.split(qemu_cmd)
-    qemu_process = subprocess.Popen(qemu_args, \
-                                    stdin=subprocess.PIPE, \
-                                    stdout=subprocess.PIPE, \
-                                    close_fds=True)
-    time.sleep(1)
-    qemu_process.poll()
-  if (qemu_process.returncode != None):
-    sys.stderr.write( "Error starting qemu instance, max retries exceeded\n")
-    sys.exit(2)
-  print "Waiting 60 seconds for qemu to start up on port " + str(qemu_port)
-  time.sleep(60)
-  return (qemu_process, qemu_port)
-
-def handler(signum, frame):
-  if child_process:
-    os.kill(child_process.pid, signal.SIGTERM)
-  if qemu_process:
-    os.kill(qemu_process.pid, signal.SIGTERM)
-
 def monitor_input_channel(sadbox):
   while sadbox.is_alive:
     line = sadbox.command_process.stdout.readline()
@@ -111,25 +58,18 @@ class Sadbox:
   #                isolated.
   def __init__(self, working_directory, shell_command, security_on):
     self.is_alive = False
-    self.qemu_process = None
     self.command_process = None
     self.stdout_queue = Queue()
     if security_on:
-      (self.qemu_process, port) = launch_qemu()
-      os.system("scp -r -P " + str(port) + " -i id_rsa " + \
-                str(working_directory) + " contestvm@localhost:~/ > " + \
-                "/dev/null 2> /dev/null")
-      ssh_command = "ssh -p " + str(port) + " -i id_rsa " + \
-        "contestvm@localhost " + shell_command
-      sys.stderr.write("ssh_command: " + ssh_command + "\n")
+      os.system("scp -rp -i user_id_rsa " + str(working_directory) + \
+                  " jail@localhost:~/ > /dev/null 2> /dev/null")
+      ssh_command = "ssh -i user_id_rsa jail@localhost " + shell_command
+      print "ssh_command: " + ssh_command
       self.command_process = subprocess.Popen(shlex.split(ssh_command), \
                                               stdin=subprocess.PIPE, \
                                               stdout=subprocess.PIPE, \
                                               stderr=subprocess.PIPE)
       self.is_alive = not self.command_process is None
-      sys.stderr.write("Waiting 20 seconds for SSH to connect to the VM.\n")
-      time.sleep(20)
-      sys.stderr.write("Done waiting. SSH should be done its thing now.\n")
       stdout_monitor = Thread(target=monitor_input_channel, args=(self,))
       stdout_monitor.start()
     else:
@@ -148,11 +88,7 @@ class Sadbox:
   # suddenly terminated.
   def kill(self):
     if self.is_alive:
-      print "killing ssh"
       os.kill(self.command_process.pid, signal.SIGKILL)
-      print "killing qemu"
-      os.kill(self.qemu_process.pid, signal.SIGKILL)
-      print "done killing"
       self.is_alive = False
 
   def write_line(self, line):
