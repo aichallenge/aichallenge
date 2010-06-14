@@ -15,8 +15,10 @@
 
 import fcntl
 import getopt
+import MySQLdb
 import os
 from Queue import Queue
+from server_info import server_info
 import shlex
 import signal
 import subprocess
@@ -33,11 +35,52 @@ Required Arguments:
                 funneled through VM
 """
 
+# Grabs a random jail user and attempts to mark it as locked in an atomic
+# fashion. If this succeeds, the username is returned. If no jail user is
+# successfully locked, then None is returned.
+def lock_jail_user():
+  connection = MySQLdb.connect(host = server_info["db_host"],
+                               user = server_info["db_username"],
+                               passwd = server_info["db_password"],
+                               db = server_info["db_name"])
+  cursor = connection.cursor(MySQLdb.cursors.DictCursor)
+  cursor.execute("SELECT * FROM jail_users WHERE in_use = 0 ORDER BY RAND()")
+  jail_users = cursor.fetchall()
+  username = None
+  if len(jail_users) > 0:
+    jail_user_id = jail_users[0]["jail_user_id"]
+    query = "UPDATE jail_users SET in_use = 1 WHERE jail_user_id = " + \
+      str(jail_user_id) + " AND in_use = 0"
+    cursor.execute(query)
+    if connection.affected_rows() > 0:
+      username = jail_users[0]["username"]
+  cursor.close()
+  connection.close()
+  return username
+
+# Releases a jail user.
+def release_jail_user(username):
+  if username is None:
+    return
+  connection = MySQLdb.connect(host = server_info["db_host"],
+                               user = server_info["db_username"],
+                               passwd = server_info["db_password"],
+                               db = server_info["db_name"])
+  cursor = connection.cursor(MySQLdb.cursors.DictCursor)
+  cursor.execute("UPDATE jail_users SET in_use = 0 WHERE username = '" + \
+    str(username) + "'")
+  cursor.close()
+  connection.close()
+
 def monitor_input_channel(sadbox):
   while sadbox.is_alive:
-    line = sadbox.command_process.stdout.readline()
-    if line is None and len(line) == 0:
-      sadbox.is_alive = False
+    try:
+      line = sadbox.command_process.stdout.readline()
+    except:
+      sadbox.kill()
+      break
+    if line is None or len(line) == 0:
+      sadbox.kill()
       break
     sadbox.stdout_queue.put(line.strip())
 
@@ -60,11 +103,17 @@ class Sadbox:
     self.is_alive = False
     self.command_process = None
     self.stdout_queue = Queue()
+    self.jail_username = None
     if security_on:
-      os.system("scp -rp -i user_id_rsa " + str(working_directory) + \
-                  " jail@localhost:~/ > /dev/null 2> /dev/null")
-      ssh_command = "ssh -i user_id_rsa jail@localhost " + shell_command
-      print "ssh_command: " + ssh_command
+      self.jail_username = lock_jail_user()
+      if self.jail_username is None:
+        return
+      os.system("ssh -i jail_id_rsa " + self.jail_username + \
+        "@localhost \"rm -rf *\"")
+      os.system("scp -r -i jail_id_rsa " + str(working_directory) + " " + \
+        self.jail_username + "@localhost:~/ > /dev/null 2> /dev/null")
+      ssh_command = "ssh -i jail_id_rsa " + self.jail_username + \
+        "@localhost " + shell_command
       self.command_process = subprocess.Popen(shlex.split(ssh_command), \
                                               stdin=subprocess.PIPE, \
                                               stdout=subprocess.PIPE, \
@@ -90,12 +139,29 @@ class Sadbox:
     if self.is_alive:
       os.kill(self.command_process.pid, signal.SIGKILL)
       self.is_alive = False
+      release_jail_user(self.jail_username)
+
+  def write(self, line):
+    if not self.is_alive:
+      return
+    try:
+      self.command_process.stdin.write(line)
+      self.command_process.stdin.flush()
+      return 0
+    except:
+      self.kill()
+      return -1
 
   def write_line(self, line):
     if not self.is_alive:
       return
-    self.command_process.stdin.write(line + "\n")
-    self.command_process.stdin.flush()
+    try:
+      self.command_process.stdin.write(line + "\n")
+      self.command_process.stdin.flush()
+      return 0
+    except:
+      self.kill()
+      return -1
 
   def read_line(self):
     if not self.is_alive:
@@ -113,6 +179,7 @@ class Sadbox:
 def main():
   sadbox = Sadbox("../submissions/122743/.", "java -jar MyBot.jar", True)
   #sadbox = Sadbox("../submissions/122742/.", "python MyBot.py", False)
+  time.sleep(1)
   sadbox.write_line("P 0 0 1 34 2")
   sadbox.write_line("P 7 9 2 34 2")
   sadbox.write_line("P 3.14 2.71 0 15 5")
@@ -125,53 +192,6 @@ def main():
       break
     print "response: " + response
   sadbox.kill()
-  sys.exit(0)
-
-  signal.signal(signal.SIGINT, handler)
-  qemu_identfile = "id_rsa"
-  dest_path = "contestvm@localhost:~"
-  try:
-    opts, args = getopt.getopt(sys.argv[1:], \
-                               "d:c:s:", \
-                               ["directory=", "command=", "security="])
-  except getopt.GetoptError, err:
-    sys.stderr.write( str(err) )
-    usage()
-    sys.exit(2)
-  sadbox_path = None
-  cmd = None
-  security_on = False
-  for o, a in opts:
-    if o in ("-d", "--directory"):
-      sadbox_path = a
-    elif o in ("-c", "--command"):
-      cmd = a
-    elif o in ("-s", "--security"):
-      security_on = a.lower() in ("on", "true", "1")
-    else:
-      usage()
-  if sadbox_path == None:
-    usage()
-    sys.exit(2)
-  if security_on:
-    sadbox_dir = os.path.basename(sadbox_path)
-    cmd = "cd ./" + sadbox_dir + "/; " + cmd
-    (qemu_proc, port) = launch_qemu()
-    scp_proc = copy_exec_dir(port, qemu_identfile, sadbox_path, dest_path)
-    child_cmd = "ssh -p " + str(port) + " -i " + qemu_identfile + \
-      " contestvm@localhost " + cmd
-    child_args = shlex.split(child_cmd)
-    child_process = subprocess.Popen(child_args, close_fds=True)
-    sys.stderr.write( "executing command inside VM\n")
-    child_process.wait()
-    os.kill(qemu_proc.pid, signal.SIGINT)
-    qemu_proc.wait()
-  else:
-    cmd = cmd.replace("+", " ")
-    args = shlex.split(cmd)
-    os.chdir(sadbox_path)
-    p = subprocess.Popen(args)
-    p.wait();
 
 if __name__ == "__main__":
   main()

@@ -4,6 +4,7 @@ import signal
 import shlex
 import subprocess
 import time
+from user_sadbox import Sadbox
 
 # Reads a text file that contains a game state, and returns the game state. A
 # game state is composed of a list of fleets and a list of planets.
@@ -70,11 +71,14 @@ def serialize_fleet(f, pov):
     str(int(f["total_trip_length"])) + " " + str(int(f["turns_remaining"]))
   return message.replace(".0 ", " ")
 
-# Gets a list of orders from the given client. 
+# Gets a list of orders from the given client.
 def get_orders_from_client(client):
   orders = []
   while True:
-    line = client.stdout.readline().strip()
+    line = client.read_line()
+    if line is None:
+      time.sleep(0)
+      continue
     if line.lower() == "go":
       break
     tokens = line.split(" ")
@@ -217,38 +221,39 @@ def play_game(map, max_turn_time, max_turns, players):
   planets, fleets = read_map_file(map)
   playback = planet_to_playback_format(planets) + "|"
   clients = []
-  for p in players:
-    client = subprocess.Popen(args=shlex.split(p["command"]),
-                              cwd=p["path"],
-                              stdin=subprocess.PIPE,
-                              stdout=subprocess.PIPE,
-                              stderr=subprocess.PIPE)
-    clients.append(client)
+  print "starting client programs"
+  for i, p in enumerate(players):
+    client = Sadbox(working_directory=p["path"],
+                    shell_command=p["command"],
+                    security_on=True)
+    if client.is_alive:
+      print "    started player " + str(i+1)
+      clients.append(client)
+    else:
+      print "    failed to start player " + str(i+1)
+  print "waiting for players to spin up"
+  time.sleep(3)
   turn_number = 1
   turn_strings = []
   while turn_number <= max_turns and \
     len(remaining_players(planets, fleets)) > 1:
     order_strings = []
-    #print "turn: " + str(turn_number)
-    #print "game state:"
-    #print serialize_game_state(planets, fleets, -1)
-    #print "sending game state to clients"
     for i, c in enumerate(clients):
       message = serialize_game_state(planets, fleets, i+1)
-      c.stdin.write(message)
+      print "engine > player" + str(i+1) + ":"
+      print message
+      c.write(message)
     time.sleep(1)
-    #print "getting orders from clients"
     for i, c in enumerate(clients):
+      print "getting orders from player " + str(i+1)
       orders = get_orders_from_client(c)
       for order in orders:
-        #print "player_" + str(i+1) + ": " + str(order)
         issue_order(order, i+1, planets, fleets, order_strings)
-    #print "updating game state"
     planets, fleets = do_time_step(planets, fleets)
     turn_strings.append(",".join(order_strings))
     turn_number += 1
   for c in clients:
-    os.kill(c.pid, signal.SIGKILL)
+    c.kill()
   playback += ":".join(turn_strings)
   victors = remaining_players(planets, fleets)
   outcome = dict()
@@ -259,8 +264,13 @@ def play_game(map, max_turn_time, max_turns, players):
   outcome["playback"] = playback
   return outcome
 
-#players = [
-#  {"path" : "../engine/", "command" : "./simple_bot"},
-#  {"path" : "../submissions/122743/", "command" : "java -jar MyBot.jar"}
-#]
-#print play_game("../maps/king_of_the_hill.txt", 1000, 10, players)
+def main():
+  players = [
+    {"path" : "../submissions/122743/.", "command" : "java -jar MyBot.jar"},
+    {"path" : "../submissions/122743/.", "command" : "java -jar MyBot.jar"}
+  ]
+  print "game result: " + \
+    str(play_game("../maps/king_of_the_hill.txt", 1000, 10, players))
+
+if __name__ == "__main__":
+  main()
