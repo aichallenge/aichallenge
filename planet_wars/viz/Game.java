@@ -252,6 +252,7 @@ public class Game implements Cloneable {
 	gamePlayback += ":";
 	// Check to see if the maximum number of turns has been reached.
 	++numTurns;
+	System.out.println("Finished turn " + numTurns);
     }
 
     // Issue an order. This function takes num_ships off the source_planet,

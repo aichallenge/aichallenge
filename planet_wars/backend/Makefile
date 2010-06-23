@@ -15,13 +15,3 @@
 CC=g++
 CPPFLAGS += -Wall -I.. -I../third_party/googletest/include
 VPATH = third_party/googletest/make:cpp_util:sandbox
-SUBDIRS = engine viz
-VM_IMG = http://csclub.uwaterloo.ca/~ssalbiz/test.img
-
-all: test.img
-
-clean:
-	rm *.img
-
-test.img:
-	wget $(VM_IMG) -O test.img

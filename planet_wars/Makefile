@@ -15,7 +15,7 @@
 CC=g++
 CPPFLAGS += -Wall -I.. -I../third_party/googletest/include
 VPATH = third_party/googletest/make:cpp_util:sandbox
-SUBDIRS = engine viz sadbox
+SUBDIRS = viz
 
 all: subdirs
 

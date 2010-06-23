@@ -119,5 +119,7 @@ public class Engine {
 	} else {
 	    System.out.println("Draw!");
 	}
+	System.out.println("Playback String: " + game.GamePlaybackString());
     }
 }
+
