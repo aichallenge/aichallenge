@@ -73,8 +73,8 @@ public class Engine {
 	// Enter the main game loop.
 	while (game.Winner() < 0) {
 	    // Send the game state to the clients.
-	    System.out.println("The game state:");
-	    System.out.print(game);
+	    System.err.println("The game state:");
+	    System.err.print(game);
 	    for (int i = 0; i < clients.size(); ++i) {
 		if (clients.get(i) == null || !game.IsAlive(i + 1)) {
 		    continue;
@@ -99,7 +99,7 @@ public class Engine {
 		boolean done = false;
 		try {
 		    while (!done && (line = bufferedReader.readLine()) != null) {
-			System.out.println("received: " + line);
+			System.err.println("received: " + line);
 			line = line.toLowerCase().trim();
 			if (line.equals("go")) {
 			    done = true;
@@ -115,11 +115,10 @@ public class Engine {
 	}
 	KillClients(clients);
 	if (game.Winner() > 0) {
-	    System.out.println("Player " + game.Winner() + " Wins!");
+	    System.err.println("Player " + game.Winner() + " Wins!");
 	} else {
-	    System.out.println("Draw!");
+	    System.err.println("Draw!");
 	}
-	System.out.println("Playback String: " + game.GamePlaybackString());
+	System.out.println(game.GamePlaybackString());
     }
 }
-

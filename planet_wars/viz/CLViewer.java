@@ -17,30 +17,40 @@ import javax.swing.*;
 public class CLViewer extends JFrame {
 	private ViewerPanel vp;
 	
-	// There are two ways of launching this viewer.
-	//		1. Send command line arguments
-	//		2. Just call the constructor with the stuff.
-	// Arguments are:
-	//		player1name
-	//		player2name
-	//		[more_players]
-	//		playback_string
-	// Separated by spaces.
-	public static void main(String args[]) {
-		if (args.length < 3) {
-			System.err.println("ERROR: you must give at least 3 command line arguments");
-			System.err.println("USAGE: player1name player2name [moreplayers] playback_string");
-			System.exit(1);
-		}
-		
-		String players[] = new String[args.length - 1];
-		for (int i =0; i < args.length-1; i++) {
-			players[i] = args[i];
-		}
-		
-		CLViewer c = new CLViewer(players, args[args.length - 1]);
-		c.show();
-	}
+  // There are two ways of launching this viewer.
+  //   1. Send command line arguments, sending a playback string over stdin.
+  //   3. Just call the constructor with the stuff.
+  //   Arguments are:
+  //		player1name
+  //		player2name
+  //		[more_players]
+  //   Separated by spaces.
+  public static void main(String args[]) {
+    if (args.length < 2) {
+      System.err.println("ERROR: you must give at least 2 command line " +
+        "arguments.");
+      System.err.println("USAGE: player1name player2name [moreplayers]");
+      System.exit(1);
+    }
+    String players[] = new String[args.length];
+    for (int i = 0; i < args.length; i++) {
+      players[i] = args[i];
+    }
+    String playbackString = "";
+    int ch;
+    try {
+      while ((ch = System.in.read()) >= 0) {
+        playbackString += (char)ch;
+      }
+    } catch (Exception e) {
+      System.err.println("ERROR: game player failed while reading game " +
+        "playback string.");
+      System.exit(1);
+    }
+    CLViewer c = new CLViewer(players, playbackString.trim());
+    c.show();
+  }
+
 	public CLViewer (String players[], String gameData) {
 		try {
 			// house keeping

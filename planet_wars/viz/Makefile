@@ -12,14 +12,14 @@
 #
 # Makefile for the Tic-Tac-Toe contest engine.
 
-TARGETS = Engine.class RenderMap.class Visualizer.jar PlayGame.jar
+TARGETS = Visualizer.jar PlayGame.jar ShowGame.jar
 
 all: $(TARGETS)
 
 clean:
 	rm -f *.class keystore *.jar $(TARGETS)
 
-CLViewer.class: VizPanel.class ViewerPanel.class Viewer.java Game.class
+CLViewer.class: VizPanel.class ViewerPanel.class Viewer.java Game.class CLViewer.java
 	javac CLViewer.java
 
 Engine.class: Engine.java Game.class
@@ -37,11 +37,14 @@ keystore:
 Planet.class: Planet.java
 	javac Planet.java
 
-PlayGame.jar: CLViewer.class ViewerPanel.class VizPanel.class
-	jar cfe PlayGame.jar CLViewer *.class img/*.png img/*.jpg img/*.gif
+PlayGame.jar: Engine.class
+	jar cfe PlayGame.jar Engine *.class
 
 RenderMap.class: RenderMap.java Game.class
 	javac RenderMap.java
+
+ShowGame.jar: CLViewer.class ViewerPanel.class VizPanel.class
+	jar cfe ShowGame.jar CLViewer *.class img/*.png img/*.jpg img/*.gif
 
 Viewer.class: VizPanel.class ViewerPanel.class Viewer.java Game.class
 	javac Viewer.java
