@@ -29,32 +29,26 @@ public class VizPanel extends JPanel {
   private ArrayList<Color> colors = new ArrayList<Color>();
   private boolean renderInit = false;
   private BufferedImage bgImage;
-  
+
   // HACKY FIX BECAUSE JAVA BLOWS
   private int oldW = 0, oldH = 0;
   // END HACKY FIX
-  
+
   public void addColor(Color c) {
     colors.add(c);
   }
-  
+
   // Creates the color 'theme' used for the game
   private void initRenderer() {
-    
     try {
-      // NOTE:  We don't have permission to use this image yet
-      //      so it is just here for 'testing' purposes until
-      //      we either contact the creator or find one that
-      //      we are allowed to use.
       bgImage = ImageIO.read(getClass().getResource("img/space.jpg"));
     } catch (IOException Err) {
-      // do nothing
+      bgImage = null;
     }
-    
     _ginit();
-    
     renderInit = true;
   }
+
   private void _ginit() {
     // Set up the graphics context.
     if (img != null) {
@@ -93,29 +87,15 @@ public class VizPanel extends JPanel {
     }
   }
   
-  // Render a % of a single frame.
-  // Returns the frame progress (1-frameMax) or negative if the game object
-  // is no longer useful
-  public int think(Game game, int frame, int frameMax, boolean forward) {
+  // Prepare to render a game state.
+  public void prepare(Game game, double turn) {
     if (loader != null) {
       initRenderer();
       remove(loader);
       loader = null;
     }
-    
     gameCache = game;
-    if (forward) {
-      if (frame >= frameMax) {
-        frameCache = 1.0;
-        return -1;
-      } else {
-        frameCache = (double)frame/(double)frameMax;
-        return frame + 1;
-      }
-    } else {
-      frameCache = (double)frame/(double)frameMax;
-      return frame - 1;
-    }
+    frameCache = Math.IEEEremainder(turn, 1.0);
   }
 
   public void paint(Graphics g){

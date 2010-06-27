@@ -397,28 +397,38 @@ public class Game implements Cloneable {
     }
   }
   
-  private Point GetPlanetPos(Planet p, double top, double left,
+  private Point getPlanetPos(Planet p, double top, double left,
                  double right, double bottom, int width,
                  int height) {
     int x = (int)((p.X() - left) / (right - left) * width);
     int y = height - (int)((p.Y() - top) / (bottom - top) * height);
     return new Point(x, y);
   }
-  
-    // Renders the current state of the game to a graphics object
-    //
-    // The offset is a number between 0 and 1 that specifies how far we are
-    // past this game state, in units of time. As this parameter varies from
-    // 0 to 1, the fleets all move in the forward direction. This is used to
-    // fake smooth animation.
-    //
-    // On success, return an image. If something goes wrong, returns null.
-    void Render(int width, // Desired image width
-                int height, // Desired image height
-                double offset, // Real number between 0 and 1
-                BufferedImage bgImage, // Background image
-                ArrayList<Color> colors, // Player colors
-                Graphics2D g) { // Rendering context
+
+  // A planet's inherent radius is its radius before being transformed for
+  // rendering. The final rendered radii of all the planets are proportional
+  // to their inherent radii. The radii are scaled for maximum aesthetic
+  // appeal.
+  private double inherentRadius(Planet p) {
+    return Math.sqrt(p.GrowthRate());
+    //return Math.log(p.GrowthRate() + 3.0);
+    //return p.GrowthRate();
+  }
+
+  // Renders the current state of the game to a graphics object
+  //
+  // The offset is a number between 0 and 1 that specifies how far we are
+  // past this game state, in units of time. As this parameter varies from
+  // 0 to 1, the fleets all move in the forward direction. This is used to
+  // fake smooth animation.
+  //
+  // On success, return an image. If something goes wrong, returns null.
+  void Render(int width, // Desired image width
+              int height, // Desired image height
+              double offset, // Real number between 0 and 1
+              BufferedImage bgImage, // Background image
+              ArrayList<Color> colors, // Player colors
+              Graphics2D g) { // Rendering context
     Font planetFont = new Font("Sans Serif", Font.BOLD, 12);
     Font fleetFont = new Font("Sans serif", Font.BOLD, 18);
     Color bgColor = new Color(188, 189, 172);
@@ -445,17 +455,35 @@ public class Game implements Cloneable {
     top -= yRange * paddingFactor;
     bottom += yRange * paddingFactor;
     Point[] planetPos = new Point[planets.size()];
-    // Draw the planets.
     g.setFont(planetFont);
     FontMetrics fm = g.getFontMetrics(planetFont);
+    // Determine the best scaling factor for the sizes of the planets.
+    double minSizeFactor = Double.MAX_VALUE;
+    for (int i = 0; i < planets.size(); ++i) {
+      for (int j = i + 1; j < planets.size(); ++j) {
+        Planet a = planets.get(i);
+        Planet b = planets.get(j);
+        double dx = b.X() - a.X();
+        double dy = b.Y() - a.Y();
+        double dist = Math.sqrt(dx * dx + dy * dy);
+        double aSize = inherentRadius(a);
+        double bSize = inherentRadius(b);
+        double sizeFactor = dist / (Math.sqrt(a.GrowthRate()));
+        minSizeFactor = Math.min(sizeFactor, minSizeFactor);
+      }
+    }
+    minSizeFactor *= 2.0;
+    // Draw the planets.
     int i = 0;
     for (Planet p : planets) {
-      Point pos = GetPlanetPos(p, top, left, right, bottom, width,
+      Point pos = getPlanetPos(p, top, left, right, bottom, width,
                    height);
       planetPos[i++] = pos;
       int x = pos.x;
       int y = pos.y;
-      int r = 20 * p.GrowthRate();
+      double size = minSizeFactor * inherentRadius(p);
+      int r = (int)Math.min(size / (right - left) * width,
+                            size / (bottom - top) * height);
       g.setColor(GetColor(p.Owner(), colors));
       int cx = x - r / 2;
       int cy = y - r / 2;
@@ -498,8 +526,8 @@ public class Game implements Cloneable {
         fm.getStringBounds(Integer.toString(f.NumShips()), g);
       g.setColor(GetColor(f.Owner(), colors).darker());
       g.drawString(Integer.toString(f.NumShips()),
-		   (int)(x-textBounds.getWidth()/2),
-             (int)(y+textBounds.getHeight()/2));
+                  (int)(x-textBounds.getWidth()/2),
+                  (int)(y+textBounds.getHeight()/2));
     }
   }
 
