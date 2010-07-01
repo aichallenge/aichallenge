@@ -306,11 +306,16 @@ public class Game implements Cloneable {
     // Kicks a player out of the game. This is used in cases where a player
     // tries to give an illegal order or runs over the time limit.
     public void DropPlayer(int playerID) {
-  for (Planet p : planets) {
-      if (p.Owner() == playerID) {
-    p.Owner(0);
-      }
-  }
+	for (Planet p : planets) {
+	    if (p.Owner() == playerID) {
+		p.Owner(0);
+	    }
+	}
+	for (Fleet f : fleets) {
+	    if (f.Owner() == playerID) {
+		f.Kill();
+	    }
+	}
     }
 
     // Returns true if the named player owns at least one planet or fleet.

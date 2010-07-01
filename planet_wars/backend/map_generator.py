@@ -19,7 +19,7 @@ def fix_coordinates(planets):
   translate_planets(planets, -min_x, -min_y)
 
 planets = []
-planets.append(make_planet(0, 0, 0, 5, 16))
+planets.append(make_planet(0, 0, 0, random.randint(0, 5), random.randint(1, 150)))
 planets.append(make_planet(7, 7, 1, 5, 100))
 planets.append(make_planet(-7, -7, 2, 5, 100))
 for i in range(10):

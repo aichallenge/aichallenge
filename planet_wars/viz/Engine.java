@@ -24,9 +24,9 @@ public class Engine {
 	}
     }
 
-    public static boolean AllTrue(List<Boolean> v) {
-	for (Boolean b : v) {
-	    if (!b.booleanValue()) {
+    public static boolean AllTrue(boolean[] v) {
+	for (int i = 0; i < v.length; ++i) {
+	    if (!v[i]) {
 		return false;
 	    }
 	}
@@ -45,6 +45,7 @@ public class Engine {
 	}
 	// Initialize the game. Load the map.
 	String mapFilename = args[0];
+	int maxTurnTime = Integer.parseInt(args[1]);
 	int maxNumTurns = Integer.parseInt(args[2]);
 	Game game = new Game(mapFilename, maxNumTurns, 0);
 	if (game.Init() == 0) {
@@ -70,6 +71,10 @@ public class Engine {
 	    }
 	    clients.add(client);
 	}
+	boolean[] isAlive = new boolean[clients.size()];
+	for (int i = 0; i < clients.size(); ++i) {
+	    isAlive[i] = (clients.get(i) != null);
+	}
 	// Enter the main game loop.
 	while (game.Winner() < 0) {
 	    // Send the game state to the clients.
@@ -85,31 +90,63 @@ public class Engine {
 		    OutputStreamWriter writer = new OutputStreamWriter(out);
 		    writer.write(message, 0, message.length());
 		    writer.flush();
-		    
 		} catch (Exception e) {
 		    clients.set(i, null);
 		}
 	    }
 	    // Get orders from the clients.
-	    for (int i = 0 ; i < clients.size(); ++i) {
-		InputStream inputStream = clients.get(i).getInputStream();
-		InputStreamReader reader = new InputStreamReader(inputStream);
-		BufferedReader bufferedReader = new BufferedReader(reader);
-		String line;
-		boolean done = false;
-		try {
-		    while (!done && (line = bufferedReader.readLine()) != null) {
-			System.err.println("received: " + line);
-			line = line.toLowerCase().trim();
-			if (line.equals("go")) {
-			    done = true;
-			} else {
-			    game.IssueOrder(i + 1, line);
-			}
+	    String[] buffers = new String[clients.size()];
+	    boolean[] clientDone = new boolean[clients.size()];
+	    for (int i = 0; i < clients.size(); ++i) {
+		buffers[i] = "";
+		clientDone[i] = false;
+	    }
+	    long startTime = System.currentTimeMillis();
+	    while (!AllTrue(clientDone) &&
+		   System.currentTimeMillis() - startTime < maxTurnTime) {
+		for (int i = 0 ; i < clients.size(); ++i) {
+		    if (!isAlive[i] || !game.IsAlive(i + 1)) {
+			continue;
 		    }
-		} catch (Exception e) {
-		    System.err.println("Problem while getting orders: " + e);
+		    try {
+			InputStream inputStream =
+			    clients.get(i).getInputStream();
+			while (inputStream.available() > 0) {
+			    char c = (char)inputStream.read();
+			    if (c == '\n') {
+				String line = buffers[i];
+				System.err.println("P" + (i+1) + ": " + line);
+				line = line.toLowerCase().trim();
+				if (line.equals("go")) {
+				    clientDone[i] = true;
+				} else {
+				    game.IssueOrder(i + 1, line);
+				}
+			    } else {
+				buffers[i] += c;
+			    }
+			}
+		    } catch (Exception e) {
+			System.err.println("WARNING: player " + (i+1) +
+					   " crashed.");
+			clients.get(i).destroy();
+			game.DropPlayer(i + 1);
+			isAlive[i] = false;
+		    }
 		}
+	    }
+	    for (int i = 0 ; i < clients.size(); ++i) {
+		if (!isAlive[i] || !game.IsAlive(i + 1)) {
+		    continue;
+		}
+		if (clientDone[i]) {
+		    continue;
+		}
+		System.err.println("WARNING: player " + (i+1) +
+				   " timed out.");
+		clients.get(i).destroy();
+		game.DropPlayer(i + 1);
+		isAlive[i] = false;
 	    }
 	    game.DoTimeStep();
 	}

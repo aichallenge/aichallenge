@@ -75,6 +75,12 @@ public class Fleet implements Comparable, Cloneable {
 	numShips -= amount;
     }
 
+    public void Kill() {
+	owner = 0;
+	numShips = 0;
+	turnsRemaining = 0;
+    }
+
     // Subtracts one turn remaining. Call this function to make the fleet get
     // one turn closer to its destination.
     public void TimeStep() {

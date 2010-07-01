@@ -1,31 +1,37 @@
 import java.util.*;
 
 public class MyBot {
-    public static void DoTurn(PlanetWars pw, Random r) {
-	for (int i = 0; i < pw.NumFleets(); ++i) {
-	    if (pw.GetFleet(i).Owner() == 1) {
-		System.out.println("go");
-		return;
+    public static void DoTurn(PlanetWars pw) {
+	// (1) If we current have a fleet in flight, just do nothing.
+	if (pw.MyFleets().size() >= 2) {
+	    return;
+	}
+	// (2) Find my strongest planet.
+	Planet source = null;
+	double sourceScore = Double.MIN_VALUE;
+	for (Planet p : pw.MyPlanets()) {
+	    double score = (double)p.NumShips();
+	    if (score > sourceScore) {
+		sourceScore = score;
+		source = p;
 	    }
 	}
-	List<Integer> myPlanets = new ArrayList<Integer>();
-	List<Integer> opPlanets = new ArrayList<Integer>();
-	for (int i = 0; i < pw.NumPlanets(); ++i) {
-	    Planet p = pw.GetPlanet(i);
-	    if (p.Owner() == 1) {
-		myPlanets.add(i);
-	    } else {
-		opPlanets.add(i);
+	// (3) Find the weakest enemy or neutral planet.
+	Planet dest = null;
+	double destScore = Double.MIN_VALUE;
+	for (Planet p : pw.NotMyPlanets()) {
+	    double score = 1.0 / (1 + p.NumShips());
+	    if (score > destScore) {
+		destScore = score;
+		dest = p;
 	    }
 	}
-	if (myPlanets.size() > 0 && opPlanets.size() > 0) {
-	    int source = myPlanets.get(r.nextInt(myPlanets.size()));
-	    int destination = opPlanets.get(r.nextInt(opPlanets.size()));
-	    int numShips = r.nextInt(pw.GetPlanet(source).NumShips());
-	    System.out.println("" + source + " " +
-			       destination + " " + numShips);
+	// (4) Send half the ships from my strongest planet to the weakest
+	// planet that I do not own.
+	if (source != null && dest != null) {
+	    int numShips = source.NumShips() / 2;
+	    pw.IssueOrder(source, dest, numShips);
 	}
-	System.out.println("go");
     }
 
     public static void main(String[] args) {
@@ -33,15 +39,13 @@ public class MyBot {
 	String message = "";
 	int c;
 	try {
-	    Random r = new Random();
 	    while ((c = System.in.read()) >= 0) {
 		switch (c) {
 		case '\n':
 		    if (line.equals("go")) {
-			PlanetWars pw = new PlanetWars(message, 1);
-			if (pw.Init() == 1) {
-			    DoTurn(pw, r);
-			}
+			PlanetWars pw = new PlanetWars(message);
+			DoTurn(pw);
+		        pw.FinishTurn();
 			message = "";
 		    } else {
 			message += line + "\n";
