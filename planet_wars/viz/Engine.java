@@ -105,7 +105,8 @@ public class Engine {
 	    while (!AllTrue(clientDone) &&
 		   System.currentTimeMillis() - startTime < maxTurnTime) {
 		for (int i = 0 ; i < clients.size(); ++i) {
-		    if (!isAlive[i] || !game.IsAlive(i + 1)) {
+		    if (!isAlive[i] || !game.IsAlive(i + 1) || clientDone[i]) {
+			clientDone[i] = true;
 			continue;
 		    }
 		    try {
@@ -122,6 +123,7 @@ public class Engine {
 				} else {
 				    game.IssueOrder(i + 1, line);
 				}
+				buffers[i] = new String("");
 			    } else {
 				buffers[i] += c;
 			    }

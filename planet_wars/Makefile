@@ -15,7 +15,7 @@
 CC=g++
 CPPFLAGS += -Wall -I.. -I../third_party/googletest/include
 VPATH = third_party/googletest/make:cpp_util:sandbox
-SUBDIRS = viz
+SUBDIRS = viz starter_packages
 
 all: subdirs
 
@@ -24,6 +24,8 @@ clean:
 	do \
 		$(MAKE) -C $$dir clean; \
 	done
+
+starter_packages: viz
 
 .PHONY: subdirs $(SUBDIRS)
 subdirs: $(SUBDIRS)

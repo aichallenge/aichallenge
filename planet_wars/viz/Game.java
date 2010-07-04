@@ -339,35 +339,36 @@ public class Game implements Cloneable {
     // is left) then that player's number is returned. If there are no
     // remaining players, then the game is a draw and 0 is returned.
     public int Winner() {
-  Set<Integer> remainingPlayers = new TreeSet<Integer>();
-  for (Planet p : planets) {
-      remainingPlayers.add(p.Owner());
-  }
-  for (Fleet f : fleets) {
-      remainingPlayers.add(f.Owner());
-  }
-  if (numTurns > maxGameLength) {
-      int leadingPlayer = -1;
-      int mostShips = -1;
-      for (int playerID : remainingPlayers) {
-    int numShips = NumShips(playerID);
-    if (numShips == mostShips) {
-        leadingPlayer = 0;
-    } else if (numShips > mostShips) {
-        leadingPlayer = playerID;
-        mostShips = numShips;
-    }
-      }
-      return leadingPlayer;
-  }
-  switch (remainingPlayers.size()) {
-  case 0:
-      return 0;
-  case 1:
-      return ((Integer)remainingPlayers.toArray()[0]).intValue();
-  default:
-      return -1;
-  }
+	Set<Integer> remainingPlayers = new TreeSet<Integer>();
+	for (Planet p : planets) {
+	    remainingPlayers.add(p.Owner());
+	}
+	for (Fleet f : fleets) {
+	    remainingPlayers.add(f.Owner());
+	}
+	remainingPlayers.remove(0);
+	if (numTurns > maxGameLength) {
+	    int leadingPlayer = -1;
+	    int mostShips = -1;
+	    for (int playerID : remainingPlayers) {
+		int numShips = NumShips(playerID);
+		if (numShips == mostShips) {
+		    leadingPlayer = 0;
+		} else if (numShips > mostShips) {
+		    leadingPlayer = playerID;
+		    mostShips = numShips;
+		}
+	    }
+	    return leadingPlayer;
+	}
+	switch (remainingPlayers.size()) {
+	case 0:
+	    return 0;
+	case 1:
+	    return ((Integer)remainingPlayers.toArray()[0]).intValue();
+	default:
+	    return -1;
+	}
     }
 
     // Returns the game playback string. This is a complete record of the game,
@@ -477,7 +478,7 @@ public class Game implements Cloneable {
         minSizeFactor = Math.min(sizeFactor, minSizeFactor);
       }
     }
-    minSizeFactor *= 2.0;
+    minSizeFactor *= 1.2;
     // Draw the planets.
     int i = 0;
     for (Planet p : planets) {
