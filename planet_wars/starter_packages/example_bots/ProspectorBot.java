@@ -1,30 +1,16 @@
 import java.util.*;
 
-public class MyBot {
+public class ProspectorBot {
     public static void DoTurn(PlanetWars pw) {
-        int numFleets = 1;
-	if (pw.NumShips(1) > pw.NumShips(2)) {
-	    if (pw.Production(1) > pw.Production(2)) {
-		numFleets = 1;
-	    } else {
-		numFleets = 3;
-	    }
-	} else {
-	    if (pw.Production(1) > pw.Production(2)) {
-		numFleets = 1;
-	    } else {
-		numFleets = 5;
-	    }	    
-	}
 	// (1) If we current have a fleet in flight, just do nothing.
-	if (pw.MyFleets().size() >= numFleets) {
+	if (pw.MyFleets().size() >= 1) {
 	    return;
 	}
 	// (2) Find my strongest planet.
 	Planet source = null;
 	double sourceScore = Double.MIN_VALUE;
 	for (Planet p : pw.MyPlanets()) {
-	    double score = (double)p.NumShips();
+	    double score = (double)p.NumShips() / (1 + p.GrowthRate());
 	    if (score > sourceScore) {
 		sourceScore = score;
 		source = p;
@@ -34,7 +20,7 @@ public class MyBot {
 	Planet dest = null;
 	double destScore = Double.MIN_VALUE;
 	for (Planet p : pw.NotMyPlanets()) {
-	    double score = 1.0 / (1 + p.NumShips());
+	    double score = (double)(1 + p.GrowthRate()) / p.NumShips();
 	    if (score > destScore) {
 		destScore = score;
 		dest = p;

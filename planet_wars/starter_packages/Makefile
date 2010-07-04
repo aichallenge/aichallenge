@@ -16,10 +16,10 @@ CppStarterPackage.zip:
 
 JavaStarterPackage.zip:
 	mkdir JavaStarterPackage
-	cp cpp/MyBot.java JavaStarterPackage
-	cp cpp/PlanetWars.java JavaStarterPackage
-	cp cpp/Fleet.java JavaStarterPackage
-	cp cpp/Planet.java JavaStarterPackage
+	cp java/MyBot.java JavaStarterPackage
+	cp java/PlanetWars.java JavaStarterPackage
+	cp java/Fleet.java JavaStarterPackage
+	cp java/Planet.java JavaStarterPackage
 	mkdir JavaStarterPackage/Tools
 	cp ../viz/PlayGame.jar JavaStarterPackage/Tools
 	cp ../viz/ShowGame.jar JavaStarterPackage/Tools

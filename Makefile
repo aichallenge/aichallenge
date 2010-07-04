@@ -12,7 +12,7 @@
 #
 # Makefile for the entire AI contest project.
 
-SUBDIRS = cpp_util planet_wars sandbox third_party tic_tac_toe
+SUBDIRS = cpp_util planet_wars third_party
 
 all: subdirs
 
