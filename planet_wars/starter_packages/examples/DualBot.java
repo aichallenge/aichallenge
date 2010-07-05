@@ -3,9 +3,11 @@ import java.util.*;
 public class DualBot {
     public static void DoTurn(PlanetWars pw) {
         int numFleets = 1;
+	boolean attackMode = false;
 	if (pw.NumShips(1) > pw.NumShips(2)) {
 	    if (pw.Production(1) > pw.Production(2)) {
 		numFleets = 1;
+		attackMode = true;
 	    } else {
 		numFleets = 3;
 	    }
@@ -34,7 +36,11 @@ public class DualBot {
 	// (3) Find the weakest enemy or neutral planet.
 	Planet dest = null;
 	double destScore = Double.MIN_VALUE;
-	for (Planet p : pw.NotMyPlanets()) {
+	List<Planet> candidates = pw.NotMyPlanets();
+	if (attackMode) {
+	    candidates = pw.EnemyPlanets();
+	}
+	for (Planet p : candidates) {
 	    double score = (double)(1 + p.GrowthRate()) / p.NumShips();
 	    if (score > destScore) {
 		destScore = score;

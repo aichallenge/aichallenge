@@ -75,11 +75,12 @@ public class Engine {
 	for (int i = 0; i < clients.size(); ++i) {
 	    isAlive[i] = (clients.get(i) != null);
 	}
+	int numTurns = 0;
 	// Enter the main game loop.
 	while (game.Winner() < 0) {
 	    // Send the game state to the clients.
-	    System.err.println("The game state:");
-	    System.err.print(game);
+	    //System.err.println("The game state:");
+	    //System.err.print(game);
 	    for (int i = 0; i < clients.size(); ++i) {
 		if (clients.get(i) == null || !game.IsAlive(i + 1)) {
 		    continue;
@@ -116,7 +117,7 @@ public class Engine {
 			    char c = (char)inputStream.read();
 			    if (c == '\n') {
 				String line = buffers[i];
-				System.err.println("P" + (i+1) + ": " + line);
+				//System.err.println("P" + (i+1) + ": " + line);
 				line = line.toLowerCase().trim();
 				if (line.equals("go")) {
 				    clientDone[i] = true;
@@ -150,6 +151,8 @@ public class Engine {
 		game.DropPlayer(i + 1);
 		isAlive[i] = false;
 	    }
+	    ++numTurns;
+	    System.err.println("Turn " + numTurns);
 	    game.DoTimeStep();
 	}
 	KillClients(clients);

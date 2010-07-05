@@ -22,6 +22,8 @@ public class ViewerPanel extends JPanel implements ActionListener, Runnable {
   
   public ViewerPanel(String _players[],  String gameData) {
     players = _players;
+    //loadGame(gameData);
+    //try { Thread.sleep(1000); } catch (Exception e) { }
     makeInterface();
     loadGame(gameData);
     lastFrameTime = System.currentTimeMillis();
@@ -36,8 +38,11 @@ public class ViewerPanel extends JPanel implements ActionListener, Runnable {
   private JButton    pauseButton;
   private JProgressBar  progress;
 
-  private Color colors[] = { new Color(74, 166, 60),
-    new Color(204, 51, 63), new Color(235, 104, 65), new Color(237, 201, 81)  
+  private Color colors[] = {
+      new Color(255, 64, 64),
+      new Color(64, 255, 64),
+      new Color(64, 64, 255),
+      new Color(255, 255, 64)
   };
 
   // Animation stuff

@@ -26,15 +26,9 @@ public class CLViewer extends JFrame {
   //		[more_players]
   //   Separated by spaces.
   public static void main(String args[]) {
-    if (args.length < 2) {
-      System.err.println("ERROR: you must give at least 2 command line " +
-        "arguments.");
-      System.err.println("USAGE: player1name player2name [moreplayers]");
-      System.exit(1);
-    }
-    String players[] = new String[args.length];
-    for (int i = 0; i < args.length; i++) {
-      players[i] = args[i];
+    String players[] = new String[4];
+    for (int i = 1; i <= 4; i++) {
+      players[i-1] = "P" + i;
     }
     String playbackString = "";
     int ch;
