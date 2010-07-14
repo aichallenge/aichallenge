@@ -29,7 +29,8 @@ public class Game implements Cloneable {
     // This constructor does not actually initialize the game object. You must
     // always call Init() before the game object will be in any kind of
     // coherent state.
-    public Game(String s, int maxGameLength, int mode) {
+    public Game(String s, int maxGameLength, int mode, String logFilename) {
+	this.logFilename = logFilename;
   planets = new ArrayList<Planet>();
   fleets = new ArrayList<Fleet>();
   gamePlayback = "";
@@ -51,6 +52,17 @@ public class Game implements Cloneable {
     // Initializes a game of Planet Wars. Loads the map data from the file
     // specified in the constructor. Returns 1 on success, 0 on failure.
     public int Init() {
+	// Delete the contents of the log file.
+	if (logFilename != null) {
+	    try {
+		FileOutputStream fos = new FileOutputStream(logFilename);
+		fos.close();
+		WriteLogMessage("initializing");
+	    } catch (Exception e) {
+		// do nothing.
+	    }
+	}
+
   switch (initMode) {
   case 0:
       return LoadMapFromFile(mapFilename);
@@ -59,6 +71,23 @@ public class Game implements Cloneable {
   default:
       return 0;
   }
+    }
+
+    public void WriteLogMessage(String message) {
+	if (logFilename == null) {
+	    return;
+	}
+	BufferedWriter bw = null;
+	try {
+	    bw = new BufferedWriter(new FileWriter(logFilename, true));
+	    bw.write(message);
+	    bw.newLine();
+	    bw.flush();
+	} catch (Exception e) {
+	    // do nothing.
+	} finally {
+	    try { bw.close(); } catch (Exception e) { }
+	}
     }
 
     // Returns the number of planets. Planets are numbered starting with 0.
@@ -646,6 +675,9 @@ public class Game implements Cloneable {
     // player with the most ships, then the game is a draw.
     private int maxGameLength;
     private int numTurns;
+
+    // This is the name of the file in which to write log messages.
+    private String logFilename;
   
   private Game (Game _g) {
     planets = new ArrayList<Planet>();

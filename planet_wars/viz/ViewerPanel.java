@@ -19,7 +19,6 @@ import java.awt.*;
 import java.awt.event.*;
 
 public class ViewerPanel extends JPanel implements ActionListener, Runnable {
-  
   public ViewerPanel(String _players[],  String gameData) {
     players = _players;
     //loadGame(gameData);
@@ -90,7 +89,7 @@ public class ViewerPanel extends JPanel implements ActionListener, Runnable {
     // copy the object each move into a buffer for rendering
     games = new Game[turns.length];
     // initial game object
-    Game tGame = new Game(mapPIT, turns.length + 1, 1);
+    Game tGame = new Game(mapPIT, turns.length + 1, 1, null);
     tGame.Init();
     int i = 0;
     for (String turn : turns) {      

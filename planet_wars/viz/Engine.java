@@ -36,18 +36,19 @@ public class Engine {
     public static void main(String[] args) {
 	// Check the command-line arguments.
 	if (args.length < 5) {
-	    System.err.println("ERROR: you must give at least five command-" +
-			       "line arguments.");
+	    System.err.println("ERROR: wrong number of command-line " +
+			       "arguments.");
 	    System.err.println("USAGE: engine map_file_name max_turn_time " +
-			       "max_num_turns player_one player_two " +
-			       "[more_players]");
+			       "max_num_turns log_filename player_one " +
+			       "player_two [more_players]");
 	    System.exit(1);
 	}
 	// Initialize the game. Load the map.
 	String mapFilename = args[0];
 	int maxTurnTime = Integer.parseInt(args[1]);
 	int maxNumTurns = Integer.parseInt(args[2]);
-	Game game = new Game(mapFilename, maxNumTurns, 0);
+	String logFilename = args[3];
+	Game game = new Game(mapFilename, maxNumTurns, 0, logFilename);
 	if (game.Init() == 0) {
 	    System.err.println("ERROR: failed to start game. map: " +
 			       mapFilename);
@@ -55,7 +56,7 @@ public class Engine {
 	long max_turn_time = Integer.parseInt(args[1]);
 	// Start the client programs (players).
 	List<Process> clients = new ArrayList<Process>();
-	for (int i = 3; i < args.length; ++i) {
+	for (int i = 4; i < args.length; ++i) {
 	    String command = args[i];
 	    Process client = null;
 	    try {
@@ -91,6 +92,8 @@ public class Engine {
 		    OutputStreamWriter writer = new OutputStreamWriter(out);
 		    writer.write(message, 0, message.length());
 		    writer.flush();
+		    game.WriteLogMessage("engine > player" + (i + 1) + ": " +
+					 message);
 		} catch (Exception e) {
 		    clients.set(i, null);
 		}
@@ -119,6 +122,7 @@ public class Engine {
 				String line = buffers[i];
 				//System.err.println("P" + (i+1) + ": " + line);
 				line = line.toLowerCase().trim();
+				game.WriteLogMessage("player" + (i + 1) + " > engine: " + line);
 				if (line.equals("go")) {
 				    clientDone[i] = true;
 				} else {
