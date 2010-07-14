@@ -14,24 +14,24 @@ class StringUtil {
   // Tokenizes a string s into tokens. Tokens are delimited by any of the
   // characters in delimiters. Blank tokens are omitted.
   static void Tokenize(const std::string& s,
-		       const std::string& delimiters,
-		       std::vector<std::string>& tokens);
+                       const std::string& delimiters,
+                       std::vector<std::string>& tokens);
 
   // A more convenient way of calling the Tokenize() method.
   static std::vector<std::string> Tokenize(
-					   const std::string& s,
-					   const std::string& delimiters = std::string(" "));
+                       const std::string& s,
+                       const std::string& delimiters = std::string(" "));
 };
 
 class Fleet {
  public:
   // Initializes a fleet.
   Fleet(int owner,
-	int num_ships,
-	int source_planet = -1,
-	int destination_planet = -1,
-	int total_trip_length = -1,
-	int turns_remaining = -1);
+        int num_ships,
+        int source_planet = -1,
+        int destination_planet = -1,
+        int total_trip_length = -1,
+        int turns_remaining = -1);
 
   // Accessors and simple modification functions. These should be mostly
   // self-explanatory.

@@ -7,8 +7,8 @@
 #include <vector>
 
 void StringUtil::Tokenize(const std::string& s,
-			  const std::string& delimiters,
-			  std::vector<std::string>& tokens) {
+                          const std::string& delimiters,
+                          std::vector<std::string>& tokens) {
   std::string::size_type lastPos = s.find_first_not_of(delimiters, 0);
   std::string::size_type pos = s.find_first_of(delimiters, lastPos);
   while (std::string::npos != pos || std::string::npos != lastPos) {
@@ -19,18 +19,18 @@ void StringUtil::Tokenize(const std::string& s,
 }
 
 std::vector<std::string> StringUtil::Tokenize(const std::string& s,
-					      const std::string& delimiters) {
+                                              const std::string& delimiters) {
   std::vector<std::string> tokens;
   Tokenize(s, delimiters, tokens);
   return tokens;
 }
 
 Fleet::Fleet(int owner,
-	     int num_ships,
-	     int source_planet,
-	     int destination_planet,
-	     int total_trip_length,
-	     int turns_remaining) {
+             int num_ships,
+             int source_planet,
+             int destination_planet,
+             int total_trip_length,
+             int turns_remaining) {
   owner_ = owner;
   num_ships_ = num_ships;
   source_planet_ = source_planet;
@@ -171,11 +171,11 @@ int PlanetWars::Distance(int source_planet, int destination_planet) const {
 }
 
 void PlanetWars::IssueOrder(int source_planet,
-			    int destination_planet,
-			    int num_ships) {
+                            int destination_planet,
+                            int num_ships) {
   std::cout << source_planet << " "
-	    << destination_planet << " "
-	    << num_ships << std::endl;
+            << destination_planet << " "
+            << num_ships << std::endl;
   std::cout.flush();
 }
 
@@ -209,24 +209,24 @@ int PlanetWars::ParseGameState(const std::string& s) {
     }
     if (tokens[0] == "P") {
       if (tokens.size() != 6) {
-	return 0;
+        return 0;
       }
       Planet p(atoi(tokens[3].c_str()),  // Owner
-	       atoi(tokens[4].c_str()),  // Num ships
-	       atoi(tokens[5].c_str()),  // Growth rate
+               atoi(tokens[4].c_str()),  // Num ships
+               atoi(tokens[5].c_str()),  // Growth rate
                atof(tokens[1].c_str()),  // X
-	       atof(tokens[2].c_str())); // Y
+               atof(tokens[2].c_str())); // Y
       planets_.push_back(p);
     } else if (tokens[0] == "F") {
       if (tokens.size() != 7) {
-	return 0;
+        return 0;
       }
       Fleet f(atoi(tokens[1].c_str()),  // Owner
-	      atoi(tokens[2].c_str()),  // Num ships
-	      atoi(tokens[3].c_str()),  // Source
-	      atoi(tokens[4].c_str()),  // Destination
-	      atoi(tokens[5].c_str()),  // Total trip length
-	      atoi(tokens[6].c_str())); // Turns remaining
+              atoi(tokens[2].c_str()),  // Num ships
+              atoi(tokens[3].c_str()),  // Source
+              atoi(tokens[4].c_str()),  // Destination
+              atoi(tokens[5].c_str()),  // Total trip length
+              atoi(tokens[6].c_str())); // Turns remaining
       fleets_.push_back(f);
     } else {
       return 0;
