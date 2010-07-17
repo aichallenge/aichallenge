@@ -33,7 +33,7 @@ if (!setup_submission_directory($submission_diectory)) {
     update_current_submission_status(30);
   } else {
     $file_size = $_FILES['uploadedfile']['size'];
-    if ($file_size > 1000000) {
+    if ($file_size > 2000000) {
       $errors[] = "File is too big. Maximum size is 1 KB. Make sure that " .
       "your zip file contains only your code files, run.sh, and compile.sh.";
       update_current_submission_status(30);

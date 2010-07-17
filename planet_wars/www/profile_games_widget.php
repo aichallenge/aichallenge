@@ -29,7 +29,7 @@ $submission_query = <<<EOT
 select
     max(s.submission_id) as id
 from
-    contest_submissions s
+    submissions s
 where
     s.user_id = $user_id
 EOT;
@@ -46,7 +46,7 @@ $rowcount_query = <<<EOT
 select
     count(1)
 from
-    contest_games g
+    games g
 where
     (g.winner = $submission or g.loser = $submission)
 EOT;
@@ -70,9 +70,9 @@ $games_query = <<<EOT
     g.timestamp,
     'Win' as outcome
 from
-    contest_games g
-    inner join contest_submissions s on s.submission_id = g.loser
-    inner join contest_users u on u.user_id = s.user_id
+    games g
+    inner join submissions s on s.submission_id = g.loser
+    inner join users u on u.user_id = s.user_id
     where g.winner = $submission)
 union
 (select
@@ -85,9 +85,9 @@ union
     g.timestamp,
     'Loss' as outcome
 from
-    contest_games g
-    inner join contest_submissions s on s.submission_id = g.winner
-    inner join contest_users u on u.user_id = s.user_id
+    games g
+    inner join submissions s on s.submission_id = g.winner
+    inner join users u on u.user_id = s.user_id
 where
     g.loser = $submission)
 order by
@@ -112,7 +112,7 @@ EOT;
     if (!$viewmore) {
         $table .= getPaginationString($page, $rowcount, $viewresults, $viewlink);
     }
-    $table .= "<table class=\"submissions\"><thead><tr><th>Date Time</th><th>Opponent</th><th>Outcome</th><th>&nbsp;</th></tr></thead>";
+    $table .= "<table class=\"submissions\"><thead><tr><th>Time</th><th>Opponent</th><th>Outcome</th><th>&nbsp;</th></tr></thead>";
     $table .= "<tbody>";
     for ($i = 1; $row = mysql_fetch_assoc($games_results); $i += 1) {
         $opp_name = $row["opp_name"];

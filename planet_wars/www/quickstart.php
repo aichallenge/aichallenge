@@ -39,8 +39,8 @@
 <ul>
   <li><a href="using_the_tools.php">Using the Visualizer</a>: watch two of
     the sample bots play against each other.</li>
-  <li><a href="your_own.php">Starting Your Own Bot</a></li>
-  <li><a href="http://ai-contest.com/forums">Forums</a> (See especially the Strategy section)</li>
+  <li><a href="starting_your_own.php">Starting Your Own Bot</a></li>
+  <li><a href="forums/">Forums</a> (See especially the Strategy section)</li>
 </ul>
 
 <?php include 'footer.php'; ?>

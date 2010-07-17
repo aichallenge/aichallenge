@@ -28,9 +28,9 @@ $rowcount_query = <<<EOT
 select
     count(1)
 from
-    contest_submissions r
-    inner join contest_submissions s on s.submission_id = r.submission_id
-    inner join contest_users u on u.user_id = s.user_id
+    submissions r
+    inner join submissions s on s.submission_id = r.submission_id
+    inner join users u on u.user_id = s.user_id
 where
     u.user_id = $user_id
 EOT;
@@ -47,15 +47,18 @@ $submission_query = <<<EOT
 select
     s.status,
     date_format(s.timestamp,'%b %D %H:%i:%S') as timestamp,
-    s.programming_language as language
+    l.name as language
 from
-    contest_submissions r
-    inner join contest_submissions s on s.submission_id = r.submission_id
-    inner join contest_users u on u.user_id = s.user_id
+    submissions r
+    inner join submissions s on s.submission_id = r.submission_id
+    inner join users u on u.user_id = s.user_id
+    inner join languages l on l.language_id = s.language_id
 where
     u.user_id = $user_id
     order by s.timestamp desc
 EOT;
+
+ echo "<p>$submission_query</p>";
 
     if ($viewmore) {
         $submission_query .= " limit $viewresults";
