@@ -6,15 +6,15 @@
   is also a Next Steps section to give you some idea which direction to go
   after you've completed this guide.</p>
 <h3>1. Create an Account</h3>
-<p>Create an account by filling out the <a href="signup.php">signup form</a>.
-  </p>
+<p>Create an account by filling out the <a href="register.php">signup form
+  </a>.</p>
 <h3>2. Activate Your Account</h3>
 <p>Once your account is created, you must activate it by clicking the link in
   the confirmation email. If you haven't received a confirmation email in your
   inbox after five minutes, check your junk mail folder.</p>
 <h3>3. Sign in to the Website</h3>
 <p>You can sign in by clicking the <a href="login.php">Sign In</a> link at the
-  top of the website, or by <a href="login.php">clicking here</a>.</p>
+  top of the website.</p>
 <h3>4. Download a Starter Package</h3>
 <p>The starter packages are <a href="starter_packages.php">here</a>.</p>
 <p>At this stage, it doesn't matter which starter package you choose, since
@@ -37,8 +37,9 @@
   places to look for guidance as you move forward on your quest to the top of
   the leaderboard!</p>
 <ul>
-  <li><a href="off_the_ground.php">Compiling &amp; Running</a></li>
-  <li><a href="strategy.php">Robert Xiao's Strategy Guide</a></li>
+  <li><a href="using_the_tools.php">Using the Visualizer</a>: watch two of
+    the sample bots play against each other.</li>
+  <li><a href="your_own.php">Starting Your Own Bot</a></li>
   <li><a href="http://ai-contest.com/forums">Forums</a> (See especially the Strategy section)</li>
 </ul>
 

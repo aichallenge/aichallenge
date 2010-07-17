@@ -21,19 +21,23 @@ include 'header.php';
   ranking on the <a href="rankings.php">leaderboard</a> to stabilize.</p>
 <p>Just a few things to remember...</p>
 <ul>
-  <li>Your main code file must be called MyTronBot.<i>ext</i>, where <i>ext</i> is java, cc,
-    py, pl, rb, etc. Remember to include all the code files that your entry needs.</li>
+  <li>Your main code file must be called MyBot.<i>ext</i>, where <i>ext</i>
+    is java, cc, or whatever the standard extension for code files in your
+    language is. Remember to include all the code files that your entry
+    needs.</li>
   <li>Your zip file may not exceed 1 MB in size. If you need to submit a bigger
-    file for some reason, that's fine. Post on the forums and we'll work something out.</li>
+    file for some reason, that's fine. Post on the forums and we'll work
+    something out.</li>
   <li>Make sure that your code compiles okay on your own machine before
-    submitting it. If it doesn't compile there, it won't compile in here either.
-    You can test your code using the Tron.jar that comes with the starter packages.
-    </li>
+    submitting it. If it doesn't compile there, it won't compile in here
+    either. Test your code before submitting it to avoid wasting our
+    precious precious CPU cycles.</li>
   <li>We highly suggest using one of the premade starter packages as a starting
     point.</li>
-  <li>Keep in mind the <a href="contest_information.php">rules</a>. We take
+  <li>Keep in mind the <a href="rules.php">rules</a>. We take
     security very seriously. Any attempt to compromise the integrity of the
-    contest or CSC servers will result in disqualification and possible legal action.</li>
+    contest will result in the immediate involvement of law enforcement
+    officials. Our policy is to always prosecute..</li>
 </ul>
 
 <form enctype="multipart/form-data" action="check_submit.php" method="POST">

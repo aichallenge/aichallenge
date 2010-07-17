@@ -5,6 +5,7 @@
       <li><a href="index.php">Home</a></li>
       <li><a href="rankings.php">Current Rankings</a></li>
       <li><a href="problem_description.php">Problem Description</a></li>
+      <li><a href="rules.php">Contest Rules</a></li>
     </ul>
     <?php if (logged_in_with_valid_credentials()) { ?>
     <h1>My Account</h1>
@@ -18,6 +19,7 @@
     <ul>
       <li><a href="register.php">Create Your Account</a></li>
       <li><a href="quickstart.php">Five Minute Quickstart Guide</a></li>
+      <li><a href="starter_packages.php">Starter Packages</a></li>
       <li><a href="resources.php">Tutorials &amp; Strategy Guides</a></li>
     </ul>
     <h1>Help</h1>
