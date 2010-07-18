@@ -319,6 +319,10 @@ public class Game implements Cloneable {
   return 0;
     }
 
+    public void AddFleet(Fleet f) {
+	fleets.add(f);
+    }
+
     // Behaves just like the longer form of IssueOrder, but takes a string
     // of the form "source_planet destination_planet num_ships". That is, three
     // integers separated by space characters.

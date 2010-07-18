@@ -83,30 +83,32 @@ public class ViewerPanel extends JPanel implements ActionListener, Runnable {
     }
     String mapPIT = map.toString();
     String turns[] = parts[1].split(":");
-    String fleets[];
-    String fleetData[];
     // Create the games by issuing the same orders as the game would
     // copy the object each move into a buffer for rendering
     games = new Game[turns.length];
     // initial game object
     Game tGame = new Game(mapPIT, turns.length + 1, 1, "log.txt");
     tGame.Init();
-    int i = 0;
-    for (String turn : turns) {      
-      fleets = turn.split("\\,");
-      for (String f : fleets) {
-        fleetData = f.split("\\.");
-        
-        if (fleetData.length > 1) {
-          int source = Integer.parseInt(fleetData[0]);
-          int target = Integer.parseInt(fleetData[1]);
-          int ships = Integer.parseInt(fleetData[2]);
-          int player = tGame.GetPlanet(source).Owner();
-          tGame.IssueOrder(player, source, target, ships);
-        }
+    for (int i = 0; i < turns.length; ++i) {
+      Game thisFrame = (Game)tGame.clone();
+      String[] items = turn[i].split("\\,");
+      for (int j = 0; j < tGame.NumPlanets(); ++j) {
+        Planet p = thisFrame.GetPlanet(j);
+        String[] fields = items[j].split("\\.");
+	p.Owner(Integer.parseInt(fields[0]));
+	p.NumShips(Integer.parseInt(fields[1]));
       }
-      games[i++] = (Game)(tGame.clone());
-      tGame.DoTimeStep();
+      for (int j = tGame.NumPlanet(); j < items.length; ++j) {
+        String[] fields = items[j].split("\\.");
+        Fleet f = new Fleet(Integer.parseInt(fields[0]),
+			    Integer.parseInt(fields[1]),
+			    Integer.parseInt(fields[2]),
+			    Integer.parseInt(fields[3]),
+			    Integer.parseInt(fields[4]),
+			    Integer.parseInt(fields[5]));
+	thisFrame.AddFleet(f);
+      }
+      games[i] = thisFrame;
     }
     for (JButton btn : buttons) {
       if (btn != pauseButton)
