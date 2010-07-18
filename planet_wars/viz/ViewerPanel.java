@@ -89,7 +89,7 @@ public class ViewerPanel extends JPanel implements ActionListener, Runnable {
     // copy the object each move into a buffer for rendering
     games = new Game[turns.length];
     // initial game object
-    Game tGame = new Game(mapPIT, turns.length + 1, 1, null);
+    Game tGame = new Game(mapPIT, turns.length + 1, 1, "log.txt");
     tGame.Init();
     int i = 0;
     for (String turn : turns) {      

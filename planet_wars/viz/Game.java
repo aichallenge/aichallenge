@@ -297,6 +297,7 @@ public class Game implements Cloneable {
         int numShips) {
   Planet source = planets.get(sourcePlanet);
   if (source.Owner() != playerID || numShips > source.NumShips()) {
+      WriteLogMessage("Dropping player " + playerID + ". source.Owner() = " + source.Owner() + ", playerID = " + playerID + ", numShips = " + numShips + ", source.NumShips() = " + source.NumShips());
       DropPlayer(playerID);
       return -1;
   }
