@@ -204,6 +204,22 @@ def planet_to_playback_format(planets):
       str(p["growth_rate"]))
   return ":".join(planet_strings)
 
+# Turns a list of planets into a string in playback format. This is the initial
+# game state part of a game playback string.
+def fleets_to_playback_format(planets):
+  fleet_strings = []
+  for p in planets:
+    fleet_strings.append(str(p["owner"]) + "." + str(p["num_ships"]) + "." + \
+      str(p["source"]) + "." + str(p["destination"]) + "." + \
+      str(p["total_trip_length"]) + "." + str(p["turns_remaining"]))
+  return ",".join(planet_strings)
+
+# Represents the game state in frame format. Represents one frame.
+def frame_representation(planets, fleets):
+  planet_string = \
+    ",".join([str(p["owner"]) + "." + str(p["num_ships"]) for p in planets])
+  return planet_string + "," + fleets_to_playback_format(fleets)
+
 # Plays a game of Planet Wars.
 #   map: a full or relative path to a text file containing the map that this
 #        game should be played on.
@@ -250,7 +266,7 @@ def play_game(map, max_turn_time, max_turns, players):
       for order in orders:
         issue_order(order, i+1, planets, fleets, order_strings)
     planets, fleets = do_time_step(planets, fleets)
-    turn_strings.append(",".join(order_strings))
+    turn_strings.append(frame_representation(planets, fleets))
     turn_number += 1
   for c in clients:
     c.kill()
