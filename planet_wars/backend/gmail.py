@@ -13,7 +13,9 @@ from server_info import server_info
 #              zero, then the name of the sender will just be the sender's
 #              email address.
 def send_gmail(username, password, recipients, subject, body, full_name):
-  recipients = [r for r in recipients if r.find("@") >= 0]
+  if isinstance(recipients, list):
+    recipients = [r for r in recipients if r.find("@") >= 0]
+  print recipients
   try:
     if full_name is not None and len(full_name) > 0:
       from_line = full_name + " <" + username + ">"
@@ -30,7 +32,7 @@ def send_gmail(username, password, recipients, subject, body, full_name):
     smtp_server.sendmail(username, recipients, message)
     smtp_server.quit()
     return True
-  except Exception:
+  except Exception, inst:
     return False
 
 # Sends an email message using the email account specified in the
@@ -46,3 +48,10 @@ def send(recipients, subject, body):
                     subject, \
                     body, \
                     mail_name)
+
+def main():
+  print "result: " + \
+    str(send("youraddress@yourdomain.com", "Test mail message", "Test!"))
+
+if __name__ == "__main__":
+  main()

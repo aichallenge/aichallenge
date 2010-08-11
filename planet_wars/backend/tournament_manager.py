@@ -57,14 +57,14 @@ while time.time() - start_time < time_limit:
     str(player_two["submission_id"]) + " on " + str(map["name"])
 
   # Invoke the game engine.
-  player_one_path = "../submissions/" + str(player_one["submission_id"])
-  player_two_path = "../submissions/" + str(player_two["submission_id"])
+  player_one_path = "../submissions/" + str(player_one["submission_id"]) + "/."
+  player_two_path = "../submissions/" + str(player_two["submission_id"]) + "/."
   map_path = "../maps/" + map["path"]
   players = [
     {"path" : player_one_path, "command" : player_one["command"]},
     {"path" : player_two_path, "command" : player_two["command"]}
   ]
-  outcome = engine.play_game(map_path, 1000, 10, players)
+  outcome = engine.play_game(map_path, 1000, 100, players, debug=False)
 
   # Store the game outcome in the database
   winner = "NULL"
@@ -74,7 +74,10 @@ while time.time() - start_time < time_limit:
   timestamp = "CURRENT_TIMESTAMP"
   playback_string = ""
   errors = ""
+  if "error" in outcome:
+    print "the game engine reported an error: " + outcome["error"]
   if "winner" in outcome:
+    print "winner:" + str(outcome["winner"])
     if outcome["winner"] == 0:
       pass
     elif outcome["winner"] == 1:

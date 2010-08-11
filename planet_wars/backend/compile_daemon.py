@@ -26,6 +26,20 @@ def unpack():
       out += command + "\n"
       os.system(command)
       found_archive_file = True
+      files = os.listdir(os.getcwd())
+      num_files = 0
+      num_dirs = 0
+      dir_name = ""
+      for file in files:
+        if os.path.isfile(file):
+          num_files += 1
+        if os.path.isdir(file):
+          num_dirs += 1
+          dir_name = file
+      if num_dirs == 1 and num_files == 1:
+        os.system("mv " + str(dir_name) + "/* .")
+        os.system("rm -rf " + str(dir_name))
+        os.system("rm -rf tools maps example_bots")
       break
   if not found_archive_file:
     err +=  "Failed to unpack the submission. This is probably " + \

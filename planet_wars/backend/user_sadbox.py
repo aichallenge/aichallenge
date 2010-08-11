@@ -137,6 +137,8 @@ class Sadbox:
   # suddenly terminated.
   def kill(self):
     if self.is_alive:
+      os.system("ssh -i jail_id_rsa " + self.jail_username + "@localhost " + \
+        "killall -u " + self.jail_username + " > /dev/null 2> /dev/null")
       os.kill(self.command_process.pid, signal.SIGKILL)
       self.is_alive = False
       release_jail_user(self.jail_username)
@@ -177,7 +179,7 @@ class Sadbox:
     return self.command_process.stderr.readline().strip()
 
 def main():
-  sadbox = Sadbox("../submissions/122743/.", "java -jar MyBot.jar", True)
+  sadbox = Sadbox("../submissions/122734/.", "./MyBot", True)
   #sadbox = Sadbox("../submissions/122742/.", "python MyBot.py", False)
   time.sleep(1)
   sadbox.write_line("P 0 0 1 34 2")

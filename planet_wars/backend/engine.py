@@ -3,6 +3,7 @@ import os
 import signal
 import shlex
 import subprocess
+import sys
 import time
 from user_sadbox import Sadbox
 
@@ -71,24 +72,21 @@ def serialize_fleet(f, pov):
     str(int(f["total_trip_length"])) + " " + str(int(f["turns_remaining"]))
   return message.replace(".0 ", " ")
 
-# Gets a list of orders from the given client.
-def get_orders_from_client(client):
-  orders = []
-  while True:
-    line = client.read_line()
-    if line is None:
-      time.sleep(0)
-      continue
-    if line.lower() == "go":
-      break
-    tokens = line.split(" ")
-    if len(tokens) == 3:
-      orders.append({
+# Takes a string which contains an order and parses it, returning the order in
+# dictionary format. If the order can't be parsed, return None.
+def parse_order_string(s):
+  tokens = s.split(" ")
+  if len(tokens) == 3:
+    try:
+      return {
         "source" : int(tokens[0]),
         "destination" : int(tokens[1]),
         "num_ships" : int(tokens[2])
-      })
-  return orders
+      }
+    except:
+      return None
+  else:
+    return None
 
 # Calculates the travel time between two planets. This is the cartesian
 # distance, rounded up to the nearest integer.
@@ -128,6 +126,9 @@ def num_non_zero(a):
 # dealt with. If there are any battles to be resolved, then they're taken
 # care of.
 def do_time_step(planets, fleets):
+  for p in planets:
+    if p["owner"] > 0:
+      p["num_ships"] += p["growth_rate"]
   attackers = dict()
   traveling_fleets = []
   for f in fleets:
@@ -204,21 +205,57 @@ def planet_to_playback_format(planets):
       str(p["growth_rate"]))
   return ":".join(planet_strings)
 
+# Returns True if and only if all the elements of list are True. Otherwise
+# return False.
+def all_true(list):
+  for item in list:
+    if item == False:
+      return False
+  return True
+
+# Kicks the given player from the game. All their fleets disappear. All their
+# planets become neutral, and keep the same number of ships.
+def kick_player_from_game(player_number, planets, fleets):
+  for f in fleets:
+    if f["owner"] == player_number:
+      f["turns_remaining"] = 1
+      f["owner"] = 0
+      f["num_ships"] = 0
+  for p in planets:
+    if p["owner"] == player_number:
+      p["owner"] = 0
+
 # Turns a list of planets into a string in playback format. This is the initial
 # game state part of a game playback string.
-def fleets_to_playback_format(planets):
+def fleets_to_playback_format(fleets):
   fleet_strings = []
-  for p in planets:
+  for p in fleets:
     fleet_strings.append(str(p["owner"]) + "." + str(p["num_ships"]) + "." + \
       str(p["source"]) + "." + str(p["destination"]) + "." + \
       str(p["total_trip_length"]) + "." + str(p["turns_remaining"]))
-  return ",".join(planet_strings)
+  return ",".join(fleet_strings)
 
 # Represents the game state in frame format. Represents one frame.
 def frame_representation(planets, fleets):
   planet_string = \
     ",".join([str(p["owner"]) + "." + str(p["num_ships"]) for p in planets])
   return planet_string + "," + fleets_to_playback_format(fleets)
+
+def num_ships_for_player(planets, fleets, player_id):
+  return sum([p["num_ships"] for p in planets if p["owner"] == player_id]) + \
+    sum([f["num_ships"] for f in fleets if f["owner"] == player_id])
+
+def player_with_most_ships(planets, fleets):
+  max_player = 0
+  max_ships = 0
+  for player in remaining_players(planets, fleets):
+    ships = num_ships_for_player(planets, fleets, player)
+    if ships == max_ships:
+      max_player = 0
+    elif ships > max_ships:
+      max_ships = ships
+      max_player = player
+  return max_player
 
 # Plays a game of Planet Wars.
 #   map: a full or relative path to a text file containing the map that this
@@ -233,60 +270,101 @@ def frame_representation(planets, fleets):
 #            path: the path where the player's files are located
 #            command: the command that invokes the player, assuming the given
 #                     path is the current working directory.
-def play_game(map, max_turn_time, max_turns, players):
+def play_game(map, max_turn_time, max_turns, players, debug=False):
   planets, fleets = read_map_file(map)
   playback = planet_to_playback_format(planets) + "|"
   clients = []
-  print "starting client programs"
+  if debug:
+    sys.stderr.write("starting client programs\n")
   for i, p in enumerate(players):
     client = Sadbox(working_directory=p["path"],
                     shell_command=p["command"],
                     security_on=True)
     if client.is_alive:
-      print "    started player " + str(i+1)
+      if debug:
+        sys.stderr.write("    started player " + str(i+1) + "\n")
       clients.append(client)
     else:
-      print "    failed to start player " + str(i+1)
-  print "waiting for players to spin up"
+      if debug:
+        sys.stderr.write("    failed to start player " + str(i+1) + "\n")
+      return {"error" : "failure_to_start_client"}
+  if debug:
+    sys.stderr.write("waiting for players to spin up\n")
   time.sleep(3)
   turn_number = 1
   turn_strings = []
-  while turn_number <= max_turns and \
-    len(remaining_players(planets, fleets)) > 1:
+  outcome = dict()
+  remaining = remaining_players(planets, fleets)
+  while turn_number <= max_turns and len(remaining) > 1:
     order_strings = []
     for i, c in enumerate(clients):
+      if (i+1) not in remaining:
+        continue
       message = serialize_game_state(planets, fleets, i+1)
-      print "engine > player" + str(i+1) + ":"
-      print message
+      if debug:
+        sys.stderr.write("engine > player" + str(i+1) + ":\n")
+        sys.stderr.write(message)
       c.write(message)
     time.sleep(1)
+    client_done = [False] * len(clients)
+    start_time = time.time()
+    time_limit = float(max_turn_time) / 1000
+    # Get orders from players
+    while not all_true(client_done) and time.time() - start_time < time_limit:
+      for i, c in enumerate(clients):
+        if client_done[i] or not c.is_alive or (i+1) not in remaining:
+          continue
+        line = c.read_line()
+        if line is None:
+          continue
+        line = line.strip().lower()
+        if line == "go":
+          client_done[i] = True
+        else:
+          order = parse_order_string(line)
+          if order is None:
+            sys.stderr.write("player " + str(i+1) + " kicked for making " + \
+              "an unparseable order: " + line + "\n")
+            c.kill()
+            kick_player_from_game(i+1, planets, fleets)
+          else:
+            if debug:
+              sys.stderr.write("player " + str(i+1) + " order: " + line + "\n")
+            issue_order(order, i+1, planets, fleets, order_strings)
+      time.sleep(0)
+    # Kick players that took too long to move.
     for i, c in enumerate(clients):
-      print "getting orders from player " + str(i+1)
-      orders = get_orders_from_client(c)
-      for order in orders:
-        issue_order(order, i+1, planets, fleets, order_strings)
+      if (i+1) not in remaining or client_done[i]:
+        continue
+      sys.stderr.write("player " + str(i+1) + " kicked for taking too " + \
+        "long to move\n")
+      if "timeout" not in outcome:
+        outcome["timeout"] = []
+      outcome["timeout"].append(i+1)
+      c.kill()
+      kick_player_from_game(i+1, planets, fleets)
     planets, fleets = do_time_step(planets, fleets)
     turn_strings.append(frame_representation(planets, fleets))
+    remaining = remaining_players(planets, fleets)
     turn_number += 1
-  for c in clients:
+  for i, c in enumerate(clients):
+    if not c.is_alive:
+      if "fail" not in outcome:
+        outcome["fail"] = []
+      outcome["fail"].append(i+1)
     c.kill()
   playback += ":".join(turn_strings)
-  victors = remaining_players(planets, fleets)
-  outcome = dict()
-  if len(victors) == 1:
-    outcome["winner"] = victors.pop()
-  else:
-    outcome["winner"] = 0
+  outcome["winner"] = player_with_most_ships(planets, fleets)
   outcome["playback"] = playback
   return outcome
 
 def main():
   players = [
-    {"path" : "../submissions/122743/.", "command" : "java -jar MyBot.jar"},
-    {"path" : "../submissions/122743/.", "command" : "java -jar MyBot.jar"}
+    {"path" : "../submissions/122734/.", "command" : "./MyBot"},
+    {"path" : "../submissions/123117/.", "command" : "java -jar MyBot.jar"}
   ]
   print "game result: " + \
-    str(play_game("../maps/king_of_the_hill.txt", 1000, 10, players))
+    str(play_game("../maps/king_of_the_hill.txt", 1000, 10, players, True))
 
 if __name__ == "__main__":
   main()

@@ -15,3 +15,19 @@
 CC=g++
 CPPFLAGS += -Wall -I.. -I../third_party/googletest/include
 VPATH = third_party/googletest/make:cpp_util:sandbox
+SUBDIRS = engine viz
+VM_IMG = http://csclub.uwaterloo.ca/~ssalbiz/test.img
+
+all: test.img sample_bots/do_nothing_bot sample_bots/timeout_bot
+
+clean:
+	rm *.img
+
+sample_bots/do_nothing_bot:
+	g++ -o sample_bots/do_nothing_bot sample_bots/do_nothing_bot.cc
+
+sample_bots/timeout_bot:
+	g++ -o sample_bots/timeout_bot sample_bots/timeout_bot.cc
+
+test.img:
+	wget $(VM_IMG) -O test.img
