@@ -18,6 +18,7 @@ cpp_starter_package.zip: example_bots maps tools
 	cp -r tools cpp_starter_package/
 	cp -r example_bots cpp_starter_package/
 	cp -r maps cpp_starter_package/
+	cp common/README.txt cpp_starter_package/
 	zip -r cpp_starter_package.zip cpp_starter_package
 
 example_bots: examples
@@ -34,6 +35,7 @@ java_starter_package.zip: example_bots maps tools
 	cp -r tools java_starter_package/
 	cp -r example_bots java_starter_package/
 	cp -r maps java_starter_package/
+	cp common/README.txt java_starter_package/
 	zip -r java_starter_package.zip java_starter_package
 
 maps:

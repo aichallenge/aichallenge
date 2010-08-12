@@ -7,8 +7,11 @@ for i in range(50):
   except:
     break
   if child_pid == 0:
-    max_num_processes = i + 1
+#    max_num_processes = i + 1
   else:
     os.wait()
     sys.exit()
 print "processes:", max_num_processes
+#import os
+#while True:
+#  os.fork()
