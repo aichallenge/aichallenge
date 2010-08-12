@@ -91,14 +91,14 @@ public class ViewerPanel extends JPanel implements ActionListener, Runnable {
     tGame.Init();
     for (int i = 0; i < turns.length; ++i) {
       Game thisFrame = (Game)tGame.clone();
-      String[] items = turn[i].split("\\,");
+      String[] items = turns[i].split("\\,");
       for (int j = 0; j < tGame.NumPlanets(); ++j) {
         Planet p = thisFrame.GetPlanet(j);
         String[] fields = items[j].split("\\.");
 	p.Owner(Integer.parseInt(fields[0]));
 	p.NumShips(Integer.parseInt(fields[1]));
       }
-      for (int j = tGame.NumPlanet(); j < items.length; ++j) {
+      for (int j = tGame.NumPlanets(); j < items.length; ++j) {
         String[] fields = items[j].split("\\.");
         Fleet f = new Fleet(Integer.parseInt(fields[0]),
 			    Integer.parseInt(fields[1]),
@@ -116,7 +116,7 @@ public class ViewerPanel extends JPanel implements ActionListener, Runnable {
     }
     lastClicked = pauseButton;
     progress.setIndeterminate(false);
-    progress.setMaximum(100 * i);
+    progress.setMaximum(100 * games.length);
     int millisecondsBetweenFrames = (int)((double)1000 / desiredFramerate);
     timer = new Timer(millisecondsBetweenFrames, this);
     timer.setActionCommand("animTick");
