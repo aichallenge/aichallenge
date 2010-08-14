@@ -98,6 +98,11 @@ public class ViewerPanel extends JPanel implements ActionListener, Runnable {
 	p.Owner(Integer.parseInt(fields[0]));
 	p.NumShips(Integer.parseInt(fields[1]));
       }
+      //System.out.println("NumPlanets: " + tGame.NumPlanets());
+      //System.out.println("Items:");
+      //for (int j = 0; j < items.length; ++j) {
+      //  System.out.println("    " + j + ": " + items[j]);
+      //}
       for (int j = tGame.NumPlanets(); j < items.length; ++j) {
         String[] fields = items[j].split("\\.");
         Fleet f = new Fleet(Integer.parseInt(fields[0]),

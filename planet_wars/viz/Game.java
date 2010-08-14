@@ -278,10 +278,20 @@ public class Game implements Cloneable {
     }
       }
   }
+  for (Planet p : planets) {
+    gamePlayback += "" + p.Owner() + "." + p.NumShips() + ",";
+  }
+  for (Fleet f : fleets) {
+    gamePlayback += "" + f.Owner() + "." + f.NumShips() + "." +
+      f.SourcePlanet() + "." + f.DestinationPlanet() + "." +
+      f.TotalTripLength() + "." + f.TurnsRemaining() + ",";
+  }
+  if (gamePlayback.charAt(gamePlayback.length() - 1) == ',') {
+    gamePlayback = gamePlayback.substring(0, gamePlayback.length() - 1);
+  }
   gamePlayback += ":";
   // Check to see if the maximum number of turns has been reached.
   ++numTurns;
-  //System.out.println("Finished turn " + numTurns);
     }
 
     // Issue an order. This function takes num_ships off the source_planet,
@@ -310,12 +320,12 @@ public class Game implements Cloneable {
           distance,
           distance);
   fleets.add(f);
-  char lastChar = gamePlayback.charAt(gamePlayback.length() - 1);
-  if (lastChar != ':' && lastChar != '|') {
-      gamePlayback += ",";
-  }
-  gamePlayback += "" + sourcePlanet + "." + destinationPlanet + "." +
-      numShips;
+  //char lastChar = gamePlayback.charAt(gamePlayback.length() - 1);
+  //if (lastChar != ':' && lastChar != '|') {
+  //    gamePlayback += ",";
+  //}
+  //gamePlayback += "" + sourcePlanet + "." + destinationPlanet + "." +
+  //    numShips;
   return 0;
     }
 
