@@ -205,7 +205,7 @@ void _init_map(char *data, struct game_info *game_info) {
     int i = 0;
 
     for (; i < map_len; ++i)
-        if (game_info->map[i] != '%')
+        if (game_info->map[i] != '%' && game_info->map[i] != '*')
             game_info->map[i] = '.';
 
     while (*data != 0) {
@@ -250,6 +250,9 @@ void _init_map(char *data, struct game_info *game_info) {
                 break;
             case 'f':
                 game_info->map[offset] = '*';
+                break;
+            case 'r':
+                game_info->map[offset] = '.';
                 break;
         }
 
