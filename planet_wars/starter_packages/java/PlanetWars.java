@@ -90,11 +90,31 @@ public class PlanetWars {
 	return r;
     }
 
+    // Return a list of all the fleets.
+    public List<Fleet> Fleets() {
+	List<Fleet> r = new ArrayList<Fleet>();
+	for (Fleet f : fleets) {
+            r.add(f);
+	}
+	return r;
+    }
+
     // Return a list of all the fleets owned by the current player.
     public List<Fleet> MyFleets() {
 	List<Fleet> r = new ArrayList<Fleet>();
 	for (Fleet f : fleets) {
 	    if (f.Owner() == 1) {
+		r.add(f);
+	    }
+	}
+	return r;
+    }
+
+    // Return a list of all the fleets owned by enemy players.
+    public List<Fleet> EnemyFleets() {
+	List<Fleet> r = new ArrayList<Fleet>();
+	for (Fleet f : fleets) {
+	    if (f.Owner() != 1) {
 		r.add(f);
 	    }
 	}

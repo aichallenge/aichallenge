@@ -1,46 +1,57 @@
 #include <iostream>
 #include "PlanetWars.h"
 
-bool NumFleetsForPlayer(int player_id, const PlanetWars& pw) {
-  int num_fleets = 0;
-  for (int i = 0; i < pw.NumFleets(); ++i) {
-    num_fleets += pw.GetFleet(i).Owner() == player_id ? 1 : 0;
-  }
-  return num_fleets;
-}
-
+// The DoTurn function is where your code goes. The PlanetWars object contains
+// the state of the game, including information about all planets and fleets
+// that currently exist. Inside this function, you issue orders using the
+// pw.IssueOrder() function. For example, to send 10 ships from planet 3 to
+// planet 8, you would say pw.IssueOrder(3, 8, 10).
+//
+// There is already a basic strategy in place here. You can use it as a
+// starting point, or you can throw it out entirely and replace it with your
+// own. Check out the tutorials and articles on the contest website at
+// http://www.ai-contest.com/resources.
 void DoTurn(const PlanetWars& pw) {
-  if (NumFleetsForPlayer(1, pw) > 0) {
-    std::cout << "go" << std::endl;
-    std::cout.flush();
+  // (1) If we currently have a fleet in flight, just do nothing.
+  if (pw.MyFleets().size() >= 1) {
     return;
   }
-  int my_strongest_planet = -1;
-  int my_score = -1;
-  int other_weakest_planet = -1;
-  int other_score = 999999999;
-  for (int i = 0; i < pw.NumPlanets(); ++i) {
-    const Planet& p = pw.GetPlanet(i);
-    if (p.Owner() == 1) {
-      if (p.NumShips() > my_score) {
-        my_score = p.NumShips();
-        my_strongest_planet = i;
-      }
-    } else {
-      if (p.NumShips() < other_score) {
-        other_score = p.NumShips();
-        other_weakest_planet = i;
-      }
+  // (2) Find my strongest planet.
+  int source = -1;
+  double source_score = -999999.0;
+  int source_num_ships = 0;
+  std::vector<Planet> my_planets = pw.MyPlanets();
+  for (int i = 0; i < my_planets.size(); ++i) {
+    const Planet& p = my_planets[i];
+    double score = (double)p.NumShips();
+    if (score > source_score) {
+      source_score = score;
+      source = p.PlanetID();
+      source_num_ships = p.NumShips();
     }
   }
-  if (my_strongest_planet >= 0 && other_weakest_planet >= 0) {
-    std::cout << my_strongest_planet << " " << other_weakest_planet << " "
-              << (my_score / 2) << std::endl;
+  // (3) Find the weakest enemy or neutral planet.
+  int dest = -1;
+  double dest_score = -999999.0;
+  std::vector<Planet> not_my_planets = pw.NotMyPlanets();
+  for (int i = 0; i < not_my_planets.size(); ++i) {
+    const Planet& p = not_my_planets[i];
+    double score = 1.0 / (1 + p.NumShips());
+    if (score > dest_score) {
+      dest_score = score;
+      dest = p.PlanetID();
+    }
   }
-  std::cout << "go" << std::endl;
-  std::cout.flush();
+  // (4) Send half the ships from my strongest planet to the weakest
+  // planet that I do not own.
+  if (source >= 0 && dest >= 0) {
+    int num_ships = source_num_ships / 2;
+    pw.IssueOrder(source, dest, num_ships);
+  }
 }
 
+// This is just the main game loop that takes care of communicating with the
+// game engine for you. You don't have to understand or change the code below.
 int main(int argc, char *argv[]) {
   std::string current_line;
   std::string map_data;
@@ -52,6 +63,7 @@ int main(int argc, char *argv[]) {
         PlanetWars pw(map_data);
         map_data = "";
         DoTurn(pw);
+	pw.FinishTurn();
       } else {
         map_data += current_line;
       }
