@@ -302,31 +302,30 @@ public class Game implements Cloneable {
     // order was carried out without any issue, and everything is peachy, then
     // 0 is returned. Otherwise, -1 is returned.
     public int IssueOrder(int playerID,
-        int sourcePlanet,
-        int destinationPlanet,
-        int numShips) {
-  Planet source = planets.get(sourcePlanet);
-  if (source.Owner() != playerID || numShips > source.NumShips()) {
-      WriteLogMessage("Dropping player " + playerID + ". source.Owner() = " + source.Owner() + ", playerID = " + playerID + ", numShips = " + numShips + ", source.NumShips() = " + source.NumShips());
-      DropPlayer(playerID);
-      return -1;
-  }
-  source.RemoveShips(numShips);
-  int distance = Distance(sourcePlanet, destinationPlanet);
-  Fleet f = new Fleet(source.Owner(),
-          numShips,
-          sourcePlanet,
-          destinationPlanet,
-          distance,
-          distance);
-  fleets.add(f);
-  //char lastChar = gamePlayback.charAt(gamePlayback.length() - 1);
-  //if (lastChar != ':' && lastChar != '|') {
-  //    gamePlayback += ",";
-  //}
-  //gamePlayback += "" + sourcePlanet + "." + destinationPlanet + "." +
-  //    numShips;
-  return 0;
+                          int sourcePlanet,
+                          int destinationPlanet,
+                          int numShips) {
+        Planet source = planets.get(sourcePlanet);
+        if (source.Owner() != playerID ||
+            numShips > source.NumShips() ||
+            numShips < 0) {
+            WriteLogMessage("Dropping player " + playerID +
+                ". source.Owner() = " + source.Owner() + ", playerID = " +
+                playerID + ", numShips = " + numShips +
+                ", source.NumShips() = " + source.NumShips());
+            DropPlayer(playerID);
+            return -1;
+        }
+        source.RemoveShips(numShips);
+        int distance = Distance(sourcePlanet, destinationPlanet);
+        Fleet f = new Fleet(source.Owner(),
+                            numShips,
+                            sourcePlanet,
+                            destinationPlanet,
+                            distance,
+                            distance);
+        fleets.add(f);
+        return 0;
     }
 
     public void AddFleet(Fleet f) {

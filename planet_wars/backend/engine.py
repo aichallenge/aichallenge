@@ -104,6 +104,8 @@ def issue_order(order, player_id, planets, fleets, order_strings):
     return False
   if order["num_ships"] > source_planet["num_ships"]:
     return False
+  if order["num_ships"] < 0:
+    return False
   source_planet["num_ships"] -= order["num_ships"]
   t = travel_time(source_planet, destination_planet)
   fleets.append({
