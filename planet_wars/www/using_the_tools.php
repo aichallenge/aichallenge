@@ -62,4 +62,18 @@
   your local machine, then you must use X-forwarding in order to see the
   graphical playback interface. Alternatively, you can just follow this
   tutorial on your own local machine to solve this problem.</p>
+<h3>Next Steps</h3>
+<p>So you have had enough of playing with the tools that come with the starter
+  package? In the next tutorial, you will make one little change to the
+  starter package which should give you a big bump in the rankings. Here are
+  some places to look for guidance as you move forward on your quest to the
+  top of the leaderboard!</p>
+<ul>
+  <li><a href="starting_your_own.php">Starting Your Own Bot</a></li>
+  <li><a href="simple_strategy_guide.php">Climbing the Rankings</a>:
+    make some simple improvements to the starter package to climb the
+    rankings.</li>
+  <li><a href="resources.php">More Articles and Tutorials</a></li>
+  <li><a href="forums/">Forums</a> (See especially the Strategy section)</li>
+</ul>
 <?php include 'footer.php'; ?>

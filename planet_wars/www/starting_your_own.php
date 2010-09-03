@@ -109,4 +109,17 @@
 <p>To submit your code online, make sure that your account is activated and you
   are signed in to the website, then visit the <a href="submit.php">Upload
   Your Code</a> page.</p>
+<h3>Next Steps</h3>
+<p>Just by making this one little change to the starter package, you should
+  notice that your ranking will start to improve over the next hour or so.
+  But it doesn't end here! In the next tutorial, you will make a series of
+  simple changes that should give you another big bump. Soon you will be well
+  on your way to the top of the leaderboard!</p>
+<ul>
+  <li><a href="simple_strategy_guide.php">Climbing the Rankings</a>:
+    make some simple improvements to the starter package to climb the
+    rankings.</li>
+  <li><a href="resources.php">More Articles and Tutorials</a></li>
+  <li><a href="forums/">Forums</a> (See especially the Strategy section)</li>
+</ul>
 <?php include 'footer.php'; ?>

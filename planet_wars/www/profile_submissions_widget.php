@@ -58,8 +58,6 @@ where
     order by s.timestamp desc
 EOT;
 
- echo "<p>$submission_query</p>";
-
     if ($viewmore) {
         $submission_query .= " limit $viewresults";
     } else if ($page != 0) {

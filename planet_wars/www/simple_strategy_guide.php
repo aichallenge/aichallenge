@@ -159,4 +159,11 @@
   long as your bot is ahead, then it is calm and careful. If your bot ever
   falls behind its opponent, then it panics and sends a whole bunch of ships
   out. Anything to get ahead.</p>
+<h3>Next Steps</h3>
+<p>Go ahead and submit your latest bot to see how it ranks. Your ranking
+  should settle down within about an hour. After this, it's really up to you
+  which direction to go. There are a couple <a href="resources.php">
+  more resources</a> to guide you on your way. However, you're free to
+  throw out all of the suggestions from these tutorials, and do your own
+  thing instead!</p>
 <?php include "footer.php"; ?>

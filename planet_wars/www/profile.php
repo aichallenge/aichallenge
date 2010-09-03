@@ -68,35 +68,30 @@ $flag_filename = $flag_filename == NULL ? "" : "<img alt=\"$country_name\" width
 $org_id = htmlentities($userdata["org_id"]);
 $org_name = htmlentities($userdata["org_name"]);
 $bio = htmlentities($userdata["bio"]);
+if ($org_name == NULL) {
+  $org_name = "None";
+}
 if (!$userresult) {
   echo "<p>Invalid User ID</p>";
 } else {
 echo <<<EOT
     <h2>Profile for $username</h2>
-    <h3><span>Personal Information</span><div class="divider" /></h3>
-  <p><strong>Joined:</strong>&nbsp;$created</p>
-  <p><strong>Country:</strong>&nbsp;
-    <a href="country_profile.php?country_id=$country_id">$flag_filename
-      $country_name</a></p>
+    <p><strong>Country:</strong>&nbsp;
+      <a href="country_profile.php?country_id=$country_id">$flag_filename
+        $country_name</a></p>
+    <p><strong>Affiliation:</strong>&nbsp;
+      <a href="organization_profile.php?org_id=$org_id">$org_name</a></p>
+    <p><strong>Joined:</strong>&nbsp;$created</p>
 EOT;
-    if ($org_name != NULL) {
-echo <<<EOT
-  <p><strong>Organization:</strong>&nbsp;
-    <a href="organization_profile.php?org_id=$org_id">$org_name</a></p>
-EOT;
-    }
-
-    if ($bio != NULL) {
+if ($bio != NULL) {
 echo <<<EOT
     <dt>About Me:</dt>
     <dd>$bio &nbsp;</dd>
 EOT;
-    }
-
+}
 echo <<<EOT
     </dl>
-    <h3><span>Ranking</span><div class="divider" /></h3>
-  <p><strong>Current Rank:</strong>&nbsp;$rank</p>
+    <p><strong>Current Rank:</strong>&nbsp;$rank</p>
     </dl>
 
     <!--<h3><span>Statistics</span><div class=\"divider\" /></h3>
@@ -106,7 +101,7 @@ EOT;
     echo "<h3><span>Latest Games</span><div class=\"divider\" /></h3>";
     echo getGamesTableString($user_id, true, 15, "profile_games.php?user_id=$user_id");
     echo "<p></p>";
-    echo "<h3><span>Submissions</span><div class=\"divider\" /></h3>";
+    echo "<h3><span>Recent Submissions</span><div class=\"divider\" /></h3>";
     echo getSubmissionTableString($user_id, true, 10, "profile_submissions.php?user_id=$user_id");
 
 }

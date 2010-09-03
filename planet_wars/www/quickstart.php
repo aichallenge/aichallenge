@@ -38,8 +38,9 @@
   the leaderboard!</p>
 <ul>
   <li><a href="using_the_tools.php">Using the Visualizer</a>: watch two of
-    the sample bots play against each other.</li>
+    the sample bots play against each other on your own computer.</li>
   <li><a href="starting_your_own.php">Starting Your Own Bot</a></li>
+  <li><a href="resources.php">More Articles and Tutorials</a></li>
   <li><a href="forums/">Forums</a> (See especially the Strategy section)</li>
 </ul>
 

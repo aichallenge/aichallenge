@@ -69,11 +69,11 @@ $games_query = <<<EOT
     date_format(g.timestamp,'%b %d %r') as date,
     g.timestamp,
     'Win' as outcome
-from
+    from
     games g
     inner join submissions s on s.submission_id = g.loser
     inner join users u on u.user_id = s.user_id
-    where g.winner = $submission)
+    where g.winner= $submission)
 union
 (select
     u.username as opp_name,
@@ -84,12 +84,43 @@ union
     date_format(g.timestamp,'%b %d %r') as date,
     g.timestamp,
     'Loss' as outcome
-from
+   from
     games g
     inner join submissions s on s.submission_id = g.winner
     inner join users u on u.user_id = s.user_id
-where
-    g.loser = $submission)
+    where g.loser = $submission)
+union
+(select
+    u.username as opp_name,
+    u.user_id as opp_id,
+    g.game_id,
+    g.loser,
+    g.draw,
+    date_format(g.timestamp,'%b %d %r') as date,
+    g.timestamp,
+    'Draw' as outcome
+    from
+    games g
+    inner join submissions s on s.submission_id = g.player_one
+    inner join users u on u.user_id = s.user_id
+    where g.player_two = $submission
+    and g.draw = 1)
+union
+(select
+    u.username as opp_name,
+    u.user_id as opp_id,
+    g.game_id,
+    g.loser,
+    g.draw,
+    date_format(g.timestamp,'%b %d %r') as date,
+    g.timestamp,
+    'Draw' as outcome
+    from
+    games g
+    inner join submissions s on s.submission_id = g.player_two
+    inner join users u on u.user_id = s.user_id
+    where g.player_one = $submission
+    and g.draw = 1)
 order by
     timestamp desc
 EOT;
