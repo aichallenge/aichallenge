@@ -147,7 +147,7 @@ class PlanetWars:
     s = ''
     for p in self._planets:
       s += "P %f %f %d %d %d\n" % \
-       (p.X(), p.Y(), p.Owner(), p.NumShips(), p.GrothRate())
+       (p.X(), p.Y(), p.Owner(), p.NumShips(), p.GrowthRate())
     for f in self._fleets:
       s += "F %d %d %d %d %d %d\n" % \
        (f.Owner(), f.NumShips(), f.SourcePlanet(), f.DestinationPlanet(), \
