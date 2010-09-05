@@ -1,5 +1,5 @@
 SUBDIRS = examples
-TARGETS = cpp_starter_package.zip java_starter_package.zip python_starter_package.zip
+TARGETS = cpp_starter_package.zip csharp_starter_package.zip java_starter_package.zip python_starter_package.zip
 
 all: $(TARGETS)
 
@@ -21,6 +21,18 @@ cpp_starter_package.zip: example_bots maps tools
 	cp -r maps cpp_starter_package/
 	cp common/README.txt cpp_starter_package/
 	zip -r cpp_starter_package.zip cpp_starter_package
+
+csharp_starter_package.zip: example_bots maps tools
+	mkdir csharp_starter_package
+	cp csharp/MyBot.cs csharp_starter_package
+	cp csharp/PlanetWars.cs csharp_starter_package
+	cp csharp/Planet.cs csharp_starter_package
+	cp csharp/Fleet.cs csharp_starter_package
+	cp -r tools csharp_starter_package/
+	cp -r example_bots csharp_starter_package/
+	cp -r maps csharp_starter_package/
+	cp common/README.txt csharp_starter_package/
+	zip -r csharp_starter_package.zip csharp_starter_package
 
 example_bots: examples
 	mkdir example_bots

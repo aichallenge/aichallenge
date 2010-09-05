@@ -292,26 +292,6 @@ public class PlanetWars {
 	return 1;
     }
 
-    // Loads a map from a text file. The text file contains a description of
-    // the starting state of a game. See the project wiki for a description of
-    // the file format. It should be called the Planet Wars Point-in-Time
-    // format. On success, return 1. On failure, returns 0.
-    private int LoadMapFromFile(string mapFilename) {
-	string s = "";
-	try {
-            //StreamReader in = new StreamReader(mapFilename);
-            //int c;
-            //while ((c = in.Read()) >= 0) {
-            //    s += (char)c;
-            //}
-	    //in.Close();
-	    s = new StreamReader(mapFilename).ReadToEnd();
-	} catch (Exception) {
-	    return 0;
-	}
-	return ParseGameState(s);
-    }
-
     // Store all the planets and fleets. OMG we wouldn't wanna lose all the
     // planets and fleets, would we!?
     private List<Planet> planets;
