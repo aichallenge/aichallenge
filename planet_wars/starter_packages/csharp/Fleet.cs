@@ -1,4 +1,4 @@
-public class Fleet implements Comparable, Cloneable {
+public class Fleet {
     // Initializes a fleet.
     public Fleet(int owner,
 		 int numShips,
@@ -65,12 +65,6 @@ public class Fleet implements Comparable, Cloneable {
 	}
     }
 
-    @Override
-    public int compareTo(Object o) {
-	Fleet f = (Fleet)o;
-	return this.numShips - f.numShips;
-    }
-
     private int owner;
     private int numShips;
     private int sourcePlanet;
@@ -85,8 +79,5 @@ public class Fleet implements Comparable, Cloneable {
 		destinationPlanet = _f.destinationPlanet;
 		totalTripLength = _f.totalTripLength;
 		turnsRemaining = _f.turnsRemaining;
-	}
-	public Object clone() {
-		return new Fleet(this);
 	}
 }

@@ -1,4 +1,4 @@
-public class Planet implements Cloneable {
+public class Planet {
     // Initializes a planet.
     public Planet(int planetID,
                   int owner,
@@ -69,9 +69,5 @@ public class Planet implements Cloneable {
 	growthRate = _p.growthRate;
 	x = _p.x;
 	y = _p.y;
-    }
-
-    public Object clone() {
-	return new Planet(this);
     }
 }

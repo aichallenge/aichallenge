@@ -1,4 +1,5 @@
-import java.util.*;
+using System;
+using System.Collections.Generic;
 
 public class MyBot {
     // The DoTurn function is where your code goes. The PlanetWars object
@@ -13,13 +14,13 @@ public class MyBot {
     // http://www.ai-contest.com/resources.
     public static void DoTurn(PlanetWars pw) {
 	// (1) If we currently have a fleet in flight, just do nothing.
-	if (pw.MyFleets().size() >= 1) {
+	if (pw.MyFleets().Count >= 1) {
 	    return;
 	}
 	// (2) Find my strongest planet.
 	Planet source = null;
-	double sourceScore = Double.MIN_VALUE;
-	for (Planet p : pw.MyPlanets()) {
+	double sourceScore = Double.MinValue;
+	foreach (Planet p in pw.MyPlanets()) {
 	    double score = (double)p.NumShips();
 	    if (score > sourceScore) {
 		sourceScore = score;
@@ -28,8 +29,8 @@ public class MyBot {
 	}
 	// (3) Find the weakest enemy or neutral planet.
 	Planet dest = null;
-	double destScore = Double.MIN_VALUE;
-	for (Planet p : pw.NotMyPlanets()) {
+	double destScore = Double.MinValue;
+	foreach (Planet p in pw.NotMyPlanets()) {
 	    double score = 1.0 / (1 + p.NumShips());
 	    if (score > destScore) {
 		destScore = score;
@@ -44,15 +45,15 @@ public class MyBot {
 	}
     }
 
-    public static void main(String[] args) {
-	String line = "";
-	String message = "";
+    public static void Main() {
+	string line = "";
+	string message = "";
 	int c;
 	try {
-	    while ((c = System.in.read()) >= 0) {
+	    while ((c = Console.Read()) >= 0) {
 		switch (c) {
 		case '\n':
-		    if (line.equals("go")) {
+		    if (line.Equals("go")) {
 			PlanetWars pw = new PlanetWars(message);
 			DoTurn(pw);
 		        pw.FinishTurn();
@@ -67,7 +68,7 @@ public class MyBot {
 		    break;
 		}
 	    }
-	} catch (Exception e) {
+	} catch (Exception) {
 	    // Owned.
 	}
     }
