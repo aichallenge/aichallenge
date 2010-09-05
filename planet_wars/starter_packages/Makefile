@@ -1,9 +1,10 @@
 SUBDIRS = examples
+TARGETS = cpp_starter_package.zip java_starter_package.zip python_starter_package.zip
 
-all: cpp_starter_package.zip java_starter_package.zip
+all: $(TARGETS)
 
 clean:
-	rm -rf cpp_starter_package java_starter_package *.zip tools example_bots maps
+	rm -rf *_starter_package $(TARGETS) tools example_bots maps
 	for dir in $(SUBDIRS); \
 	do \
 		$(MAKE) -C $$dir clean; \
@@ -41,6 +42,16 @@ java_starter_package.zip: example_bots maps tools
 maps:
 	mkdir maps
 	cp ../maps/*.txt maps
+
+python_starter_package.zip: example_bots maps tools
+	mkdir python_starter_package
+	cp python/MyBot.py python_starter_package
+	cp python/PlanetWars.py python_starter_package
+	cp -r tools python_starter_package/
+	cp -r example_bots python_starter_package/
+	cp -r maps python_starter_package/
+	cp common/README.txt python_starter_package/
+	zip -r python_starter_package.zip python_starter_package
 
 .PHONY: subdirs $(SUBDIRS)
 subdirs: $(SUBDIRS)

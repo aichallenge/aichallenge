@@ -27,4 +27,10 @@
   starting point. You can even submit the zip file on the Upload Your Code
   page, since it is a valid working entry!</p>
 
+<h3><a href="starter_packages/python_starter_package.zip">Python</a></h3>
+<p>Download the Python starter package to get started writing your entry in
+  Python. The starter package is a simple working entry that you can use as a
+  starting point. You can even submit the zip file on the Upload Your Code
+  page, since it is a valid working entry!</p>
+
 <?php include 'footer.php'; ?>
