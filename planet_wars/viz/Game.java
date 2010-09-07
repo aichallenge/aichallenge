@@ -259,7 +259,7 @@ public class Game implements Cloneable {
       // then the planet becomes neutral with zero ships occupying it.
       if (numEnemyShips > 0) {
     p.Owner(0);
-    while (true) {
+    while (enemyFleets.size() > 1) {
         for (int j = 0; j < enemyFleets.size(); ++j) {
       enemyFleets.get(j).RemoveShips(1);
       if (enemyFleets.get(j).NumShips() <= 0) {
@@ -267,14 +267,11 @@ public class Game implements Cloneable {
           --j;
       }
         }
-        if (enemyFleets.size() == 0) {
-      break;
-        }
-        if (enemyFleets.size() == 1) {
-      p.Owner(enemyFleets.get(0).Owner());
-      p.NumShips(enemyFleets.get(0).NumShips());
-      break;
-        }
+    }
+    if (enemyFleets.size() == 1) {
+        p.Owner(enemyFleets.get(0).Owner());
+        p.NumShips(enemyFleets.get(0).NumShips());
+        break;
     }
       }
   }
