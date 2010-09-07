@@ -158,20 +158,16 @@ def do_time_step(planets, fleets):
     attacking_forces = [value for key, value in attackers[i].items()]
     current_attacker = 0
     while defending_forces > 0 and sum(attacking_forces) > 0:
-      if attacking_forces[current_attacker] == 0:
-        current_attacker += 1
-        continue
-      attacking_forces[current_attacker] -= 1
-      defending_forces -= 1
+      if attacking_forces[current_attacker] > 0:
+        attacking_forces[current_attacker] -= 1
+        defending_forces -= 1
       current_attacker += 1
       if current_attacker >= len(attacking_players):
         current_attacker = 0
     if sum(attacking_forces) > 0:
       while num_non_zero(attacking_forces) > 1:
-        if attacking_forces[current_attacker] == 0:
-          current_attacker += 1
-          continue
-        attacking_forces[current_attacker] -= 1
+        if attacking_forces[current_attacker] > 0:
+          attacking_forces[current_attacker] -= 1
         current_attacker += 1
         if current_attacker >= len(attacking_players):
           current_attacker = 0
@@ -365,11 +361,11 @@ def play_game(map, max_turn_time, max_turns, players, debug=False):
 
 def main():
   players = [
-    {"path" : "../submissions/122734/.", "command" : "./MyBot"},
-    {"path" : "../submissions/123117/.", "command" : "java -jar MyBot.jar"}
+    {"path" : "../submissions/123443/.", "command" : "./MyBot"},
+    {"path" : "../submissions/123429/.", "command" : "java -jar MyBot.jar"}
   ]
   print "game result: " + \
-    str(play_game("../maps/king_of_the_hill.txt", 1000, 10, players, True))
+    str(play_game("../maps/map7.txt", 1000, 10, players, True))
 
 if __name__ == "__main__":
   main()
