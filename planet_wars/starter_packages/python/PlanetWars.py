@@ -11,6 +11,7 @@ class Fleet:
     self._owner = owner
     self._num_ships = num_ships
     self._source_planet = source_planet
+    self._destination_planet = destination_planet
     self._total_trip_length = total_trip_length
     self._turns_remaining = turns_remaining
 
