@@ -32,6 +32,8 @@
     <h1>Galcon</h1>
     <ul>
       <li><a href="http://www.galcon.com">Galcon Home</a></li>
+      <li><a href="http://www.galcon.com/fusion/">Galcon for Desktop</a></li>
+      <li><a href="http://www.galcon.com/iphone/">Galcon for iPhone</a></li>
       <li><a href="http://www.galcon.com/flash">Play Galcon Online for
         Free</a></li>
     </ul>
