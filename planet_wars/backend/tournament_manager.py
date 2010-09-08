@@ -64,7 +64,7 @@ while time.time() - start_time < time_limit:
     {"path" : player_one_path, "command" : player_one["command"]},
     {"path" : player_two_path, "command" : player_two["command"]}
   ]
-  outcome = engine.play_game(map_path, 1000, 100, players, debug=False)
+  outcome = engine.play_game(map_path, 1000, 200, players, debug=False)
 
   # Store the game outcome in the database
   winner = "NULL"
