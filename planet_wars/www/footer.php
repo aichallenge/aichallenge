@@ -1,4 +1,4 @@
-Â    </div> 
+    </div> 
     <div id="sidebar">
     <h1>Overview</h1>
     <ul>
