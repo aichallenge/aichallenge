@@ -37,7 +37,7 @@ include 'header.php';
   <li>Keep in mind the <a href="rules.php">rules</a>. We take
     security very seriously. Any attempt to compromise the integrity of the
     contest will result in the immediate involvement of law enforcement
-    officials. Our policy is to always prosecute..</li>
+    officials. Our policy is to always prosecute.</li>
 </ul>
 
 <form enctype="multipart/form-data" action="check_submit.php" method="POST">

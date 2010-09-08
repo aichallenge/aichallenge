@@ -2,15 +2,24 @@
 
 <h2>Problem Description</h2>
 <p>The objective is to create a computer program that plays the game of Planet
-  Wars as intelligently as possible. It's recommended that you use one of the
+  Wars as intelligently as possible. It is recommended that you use one of the
   <a href="starter_packages.php">starter packages</a> as a starting point. If
-  you're looking to get up and running as quickly as possible, check out the
+  you are looking to get up and running as quickly as possible, check out the
   <a href="quickstart.php">Five Minute Quickstart Guide</a>.</p>
 <p>Planet Wars is a strategy game set in outer space. The objective is to
   take over all the planets on the map, or altenatively eliminate all of
-  your opponents' ships.</p>
+  your opponents ships.</p>
 <center><object width="500" height="405"><param name="movie" value="http://www.youtube.com/v/O0uxXZY-t-s&amp;hl=en_US&amp;fs=1?border=1"></param><param name="allowFullScreen" value="true"></param><param name="allowscriptaccess" value="always"></param><embed src="http://www.youtube.com/v/O0uxXZY-t-s&amp;hl=en_US&amp;fs=1?border=1" type="application/x-shockwave-flash" allowscriptaccess="always" allowfullscreen="true" width="500" height="405"></embed></object></center>
 <p></p>
+<p>Planet Wars is inspired by Galcon, a popular iPhone and desktop strategy
+  game. A huge thank-you goes out to the creator of Galcon, Phil Hassey, for
+  letting us use his idea. You can play Galcon online against other people for
+  free <a href="http://www.galcon.com/flash/">here</a>. The Galcon
+  homepage is <a href="http://www.galcon.com/">here</a>. If you love Galcon
+  as much as we do, then consider buying it!</p>
+<center><a href="http://www.galcon.com">
+  <img src="galcon_fusion_logo.png">
+</a></center>
 <p>The game is turn-based. Your bot is a function that takes a list of planets
   and a list of fleets, and outputs some orders. Each planet has the following
   fields/properties:</p>

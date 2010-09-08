@@ -33,4 +33,10 @@
   starting point. You can even submit the zip file on the Upload Your Code
   page, since it is a valid working entry!</p>
 
+<h3><a href="starter_packages/csharp_starter_package.zip">C&#35;</a></h3>
+<p>Download the C&#35; starter package to get started writing your entry in
+  C&#35;. The starter package is a simple working entry that you can use as a
+  starting point. You can even submit the zip file on the Upload Your Code
+  page, since it is a valid working entry!</p>
+
 <?php include 'footer.php'; ?>

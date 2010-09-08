@@ -1,4 +1,4 @@
-    </div> 
+Â    </div> 
     <div id="sidebar">
     <h1>Overview</h1>
     <ul>
@@ -10,7 +10,9 @@
     <?php if (logged_in_with_valid_credentials()) { ?>
     <h1>My Account</h1>
     <ul>
-      <li><a href="profile.php">My Profile</a></li>
+      <li><a href="profile.php?user_id=<?php echo current_user_id(); ?>">
+        My Profile
+        </a></li>
       <li><a href="submit.php">Upload Your Code</a></li>
       <li><a href="logout.php">Sign Out</a></li>
     </ul>
@@ -26,6 +28,12 @@
     <ul>
       <li><a href="faq.php">Frequently Asked Questions</a></li>
       <li><a href="forum/">Forum</a></li>
+    </ul>
+    <h1>Galcon</h1>
+    <ul>
+      <li><a href="http://www.galcon.com">Galcon Home</a></li>
+      <li><a href="http://www.galcon.com/flash">Play Galcon Online for
+        Free</a></li>
     </ul>
     <?php if (logged_in_as_admin()) { ?>
     <h1>Admin</h1>
