@@ -21,7 +21,7 @@
   <tr>
     <td>&nbsp;</td>
     <td>&nbsp;</td>
-    <td><a href="signup.php">Create an account</a></td>
+    <td><a href="register.php">Create an account</a></td>
   </tr>
   </table>
 </form>
