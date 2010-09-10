@@ -268,6 +268,21 @@ bool PlanetWars::IsAlive(int player_id) const {
   return false;
 }
 
+int PlanetWars::NumShips(int player_id) const {
+  int num_ships = 0;
+  for (unsigned int i = 0; i < planets_.size(); ++i) {
+    if (planets_[i].Owner() == player_id) {
+      num_ships += planets_[i].NumShips();
+    }
+  }
+  for (unsigned int i = 0; i < fleets_.size(); ++i) {
+    if (fleets_[i].Owner() == player_id) {
+      num_ships += fleets_[i].NumShips();
+    }
+  }
+  return num_ships;
+}
+
 int PlanetWars::ParseGameState(const std::string& s) {
   planets_.clear();
   fleets_.clear();
