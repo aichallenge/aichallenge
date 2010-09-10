@@ -13,6 +13,7 @@
 // This class is for the viewer JFrame.
 
 import javax.swing.*;
+import java.io.*;
 
 public class CLViewer extends JFrame {
 	private ViewerPanel vp;
@@ -30,18 +31,19 @@ public class CLViewer extends JFrame {
     for (int i = 1; i <= 4; i++) {
       players[i-1] = "P" + i;
     }
-    String playbackString = "";
-    int ch;
+    StringBuilder playbackString = new StringBuilder();
+    InputStreamReader input = new InputStreamReader(System.in);
+    BufferedReader reader = new BufferedReader(input);
+    String string;
     try {
-      while ((ch = System.in.read()) >= 0) {
-        playbackString += (char)ch;
-      }
+      while((string = reader.readLine()) != null)
+        playbackString.append(string);
     } catch (Exception e) {
       System.err.println("ERROR: game player failed while reading game " +
         "playback string.");
       System.exit(1);
     }
-    CLViewer c = new CLViewer(players, playbackString.trim());
+    CLViewer c = new CLViewer(players, playbackString.toString().trim());
     c.show();
   }
 

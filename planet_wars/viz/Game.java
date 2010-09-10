@@ -52,71 +52,70 @@ public class Game implements Cloneable {
     // Initializes a game of Planet Wars. Loads the map data from the file
     // specified in the constructor. Returns 1 on success, 0 on failure.
     public int Init() {
-	// Delete the contents of the log file.
-	if (logFilename != null) {
-	    try {
-		FileOutputStream fos = new FileOutputStream(logFilename);
-		fos.close();
-		WriteLogMessage("initializing");
-	    } catch (Exception e) {
-		// do nothing.
-	    }
-	}
+      // Delete the contents of the log file.
+      if (logFilename != null) {
+        try {
+          FileOutputStream fos = new FileOutputStream(logFilename);
+          fos.close();
+          WriteLogMessage("initializing");
+        } catch (Exception e) {
+          // do nothing.
+        }
+      }
 
-  switch (initMode) {
-  case 0:
-      return LoadMapFromFile(mapFilename);
-  case 1:
-      return ParseGameState(mapData);
-  default:
-      return 0;
-  }
+      switch (initMode) {
+        case 0:
+          return LoadMapFromFile(mapFilename);
+        case 1:
+          return ParseGameState(mapData);
+        default:
+          return 0;
+      }
     }
 
     public void WriteLogMessage(String message) {
-	if (logFilename == null) {
-	    return;
-	}
-	BufferedWriter bw = null;
-	try {
-	    bw = new BufferedWriter(new FileWriter(logFilename, true));
-	    bw.write(message);
-	    bw.newLine();
-	    bw.flush();
-	} catch (Exception e) {
-	    // do nothing.
-	} finally {
-	    try { bw.close(); } catch (Exception e) { }
-	}
+      if (logFilename == null) {
+        return;
+      }
+      try {
+        if (logFile == null) {
+          logFile = new BufferedWriter(new FileWriter(logFilename, true));
+        }
+        logFile.write(message);
+        logFile.newLine();
+        logFile.flush();
+      } catch (Exception e) {
+        // whatev
+      }
     }
 
     // Returns the number of planets. Planets are numbered starting with 0.
     public int NumPlanets() {
-  return planets.size();
+      return planets.size();
     }
 
     // Returns the planet with the given planet_id. There are NumPlanets()
     // planets. They are numbered starting at 0.
     public Planet GetPlanet(int planetID) {
-  return planets.get(planetID);
+      return planets.get(planetID);
     }
 
     // Returns the number of fleets.
     public int NumFleets() {
-  return fleets.size();
+      return fleets.size();
     }
 
     // Returns the fleet with the given fleet_id. Fleets are numbered starting
     // with 0. There are NumFleets() fleets. fleet_id's are not consistent from
     // one turn to the next.
     public Fleet GetFleet(int fleetID) {
-  return fleets.get(fleetID);
+      return fleets.get(fleetID);
     }
 
     // Writes a string which represents the current game state. No point-of-
     // view switching is performed.
     public String toString() {
-  return PovRepresentation(-1);
+      return PovRepresentation(-1);
     }
 
     // Writes a string which represents the current game state. This string
@@ -128,17 +127,17 @@ public class Game implements Cloneable {
     // game state to individual players, so that they can always assume that
     // they are player number 1.
     public String PovRepresentation(int pov) {
-  String s = "";
-  for (Planet p : planets) {
-      s += "P " + p.X() + " " + p.Y() + " " + PovSwitch(pov, p.Owner()) +
-    " " + p.NumShips() + " " + p.GrowthRate() + "\n";
-  }
-  for (Fleet f : fleets) {
-      s += "F " + PovSwitch(pov, f.Owner()) + " " + f.NumShips() + " " +
-    f.SourcePlanet() + " " + f.DestinationPlanet() + " " +
-    f.TotalTripLength() + " " + f.TurnsRemaining() + "\n";
-  }
-  return s;
+      StringBuilder s = new StringBuilder();
+      for (Planet p : planets) {
+        s.append(String.format("P %f %f %d %d %d\n", p.X(), p.Y(),
+              PovSwitch(pov, p.Owner()), p.NumShips(), p.GrowthRate()));
+      }
+      for (Fleet f : fleets) {
+        s.append(String.format("F %d %d %d %d %d %d\n", PovSwitch(pov, f.Owner()),
+              f.NumShips(), f.SourcePlanet(), f.DestinationPlanet(),
+              f.TotalTripLength(), f.TurnsRemaining()));
+      }
+      return s.toString();
     }
 
     // Carries out the point-of-view switch operation, so that each player can
@@ -151,10 +150,10 @@ public class Game implements Cloneable {
     // 4. Otherwise return player_id, since players other than 1 and pov are
     //    unaffected by the pov switch.
     public static int PovSwitch(int pov, int playerID) {
-  if (pov < 0) return playerID;
-  if (playerID == pov) return 1;
-  if (playerID == 1) return pov;
-  return playerID;
+      if (pov < 0) return playerID;
+      if (playerID == pov) return 1;
+      if (playerID == 1) return pov;
+      return playerID;
     }
 
     // Returns the distance between two planets, rounded up to the next highest
@@ -433,7 +432,7 @@ public class Game implements Cloneable {
   }
   return numShips;
     }
-  
+
   // Gets a color for a player (clamped)
   private Color GetColor(int player, ArrayList<Color> colors) {
     if (player > colors.size()) {
@@ -442,7 +441,7 @@ public class Game implements Cloneable {
       return colors.get(player);
     }
   }
-  
+
   private Point getPlanetPos(Planet p, double top, double left,
                  double right, double bottom, int width,
                  int height) {
@@ -544,12 +543,12 @@ public class Game implements Cloneable {
         g.drawOval(x - (r+step)/2, y - (r+step)/2, r+step, r+step);
           g.setColor(g.getColor().darker());
       }
-      
+
       java.awt.geom.Rectangle2D bounds =
         fm.getStringBounds(Integer.toString(p.NumShips()), g);
       x -= bounds.getWidth()/2;
       y += fm.getAscent()/2;
-      
+
       g.setColor(textColor);
       g.drawString(Integer.toString(p.NumShips()), x, y);
     }
@@ -637,30 +636,31 @@ public class Game implements Cloneable {
   return 1;
     }
 
-    // Loads a map from a test file. The text file contains a description of
-    // the starting state of a game. See the project wiki for a description of
-    // the file format. It should be called the Planet Wars Point-in-Time
-    // format. On success, return 1. On failure, returns 0.
-    private int LoadMapFromFile(String mapFilename) {
-  String s = "";
-  BufferedReader in = null;
-  try {
-    in = new BufferedReader(new FileReader(mapFilename));
-    int c;
-    while ((c = in.read()) >= 0) {
-        s += (char)c;
-    }
-  } catch (Exception e) {
-      return 0;
-  } finally {
-      try {
-    in.close();
-      } catch (Exception e) {
-    // Fucked.
+  // Loads a map from a test file. The text file contains a description of
+  // the starting state of a game. See the project wiki for a description of
+  // the file format. It should be called the Planet Wars Point-in-Time
+  // format. On success, return 1. On failure, returns 0.
+  private int LoadMapFromFile(String mapFilename) {
+    StringBuffer s = new StringBuffer();
+    BufferedReader in = null;
+    try {
+      in = new BufferedReader(new FileReader(mapFilename));
+      String line;
+      while ((line = in.readLine()) != null) {
+        s.append(line);
+        s.append("\n");
       }
-  }
-  return ParseGameState(s);
+    } catch (Exception e) {
+      return 0;
+    } finally {
+      try {
+        in.close();
+      } catch (Exception e) {
+        // Fucked.
+      }
     }
+    return ParseGameState(s.toString());
+  }
 
     // Store all the planets and fleets. OMG we wouldn't wanna lose all the
     // planets and fleets, would we!?
@@ -689,7 +689,8 @@ public class Game implements Cloneable {
 
     // This is the name of the file in which to write log messages.
     private String logFilename;
-  
+    private BufferedWriter logFile;
+
   private Game (Game _g) {
     planets = new ArrayList<Planet>();
     for (Planet p : _g.planets) {
