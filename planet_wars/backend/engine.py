@@ -291,7 +291,7 @@ def play_game(map, max_turn_time, max_turns, players, debug=False):
       return {"error" : "failure_to_start_client"}
   if debug:
     sys.stderr.write("waiting for players to spin up\n")
-  time.sleep(3)
+  time.sleep(2)
   turn_number = 1
   turn_strings = []
   outcome = dict()
@@ -306,7 +306,6 @@ def play_game(map, max_turn_time, max_turns, players, debug=False):
         sys.stderr.write("engine > player" + str(i+1) + ":\n")
         sys.stderr.write(message)
       c.write(message)
-    time.sleep(1)
     client_done = [False] * len(clients)
     start_time = time.time()
     time_limit = float(max_turn_time) / 1000
