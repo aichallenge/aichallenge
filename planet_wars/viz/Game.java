@@ -270,6 +270,7 @@ public class Game implements Cloneable {
     if (enemyFleets.size() == 1) {
         p.Owner(enemyFleets.get(0).Owner());
         p.NumShips(enemyFleets.get(0).NumShips());
+        break;
     }
       }
   }
