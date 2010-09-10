@@ -33,7 +33,7 @@ public class Game implements Cloneable {
 	this.logFilename = logFilename;
   planets = new ArrayList<Planet>();
   fleets = new ArrayList<Fleet>();
-  gamePlayback = "";
+  gamePlayback = new StringBuffer();
   initMode = mode;
   switch (initMode) {
   case 0:
@@ -167,6 +167,49 @@ public class Game implements Cloneable {
   return (int)Math.ceil(Math.sqrt(dx * dx + dy * dy));
     }
 
+    //Resolves the battle at planet p, if there is one.
+    //* Removes all fleets involved in the battle
+    //* Sets the number of ships and owner of the planet according the outcome
+    private void FightBattle(Planet p) {
+
+      Map<Integer, Integer> participants = new TreeMap<Integer, Integer>();
+
+      participants.put(p.Owner(), p.NumShips());
+
+      Iterator<Fleet> it = fleets.iterator();
+      while (it.hasNext()) {
+        Fleet f = it.next();
+        if (f.TurnsRemaining() <= 0 && GetPlanet(f.DestinationPlanet()) == p) {
+          if (!participants.containsKey(f.Owner())) {
+            participants.put(f.Owner(), f.NumShips());
+          } else {
+            participants.put(f.Owner(), f.NumShips() + participants.get(f.Owner()));
+          }
+          it.remove();
+        }
+      }
+
+      Fleet winner = new Fleet(0, 0);
+      Fleet second = new Fleet(0, 0);
+      for (Map.Entry<Integer, Integer> f : participants.entrySet()) {
+        if (f.getValue() > second.NumShips()) {
+          if(f.getValue() > winner.NumShips()) {
+            second = winner;
+            winner = new Fleet(f.getKey(), f.getValue());
+          } else {
+            second = new Fleet(f.getKey(), f.getValue());
+          }
+        }
+      }
+
+      if (winner.NumShips() > second.NumShips()) {
+         p.NumShips(winner.NumShips() - second.NumShips());
+         p.Owner(winner.Owner());
+      } else {
+         p.NumShips(0);
+      }
+    }
+
     // Executes one time step.
     //   * Planet bonuses are added to non-neutral planets.
     //   * Fleets are advanced towards their destinations.
@@ -178,114 +221,40 @@ public class Game implements Cloneable {
     p.AddShips(p.GrowthRate());
       }
   }
-  // Advance all fleets by one time step. Collect the ones that are
-  // arriving at their destination planets this turn. Group them by
-  // destination and attacking player using the attackers map. For
-  // example, attackers[3][4] will store how many of player 4's ships
-  // are landing on planet 3 this turn.
-  ArrayList<Fleet> newFleets = new ArrayList<Fleet>();
-  Map<Integer, Map<Integer, Integer>> attackers =
-      new TreeMap<Integer, Map<Integer, Integer>>();
+  // Advance all fleets by one time step.
   for (Fleet f : fleets) {
-      f.TimeStep();
-      if (f.TurnsRemaining() == 0) {
-    int dest = f.DestinationPlanet();
-    int attacker = f.Owner();
-    if (!attackers.containsKey(dest)) {
-        attackers.put(dest, new TreeMap<Integer, Integer>());
-    }
-    if (!attackers.get(dest).containsKey(attacker)) {
-        attackers.get(dest).put(attacker, 0);
-    }
-    int existingAttackers = attackers.get(dest).get(attacker);
-    attackers.get(dest).put(attacker,
-          existingAttackers + f.NumShips());
-      } else {
-    newFleets.add(f);
-      }
+    f.TimeStep();
   }
-  fleets = newFleets;
-  // Resolve the status of each planet which is being attacked. This is
-  // non-trivial, since a planet can be attacked by many different
-  // players at once.
-  for (int i = 0; i < planets.size(); ++i) {
-      if (!attackers.containsKey(i)) {
-    continue;
-      }
-      Planet p = planets.get(i);
-      int defender = p.Owner();
-      // Add the current owner's "attacking" ships to the defending
-      // forces.
-      if (attackers.get(i).containsKey(defender)) {
-    p.AddShips(attackers.get(i).get(defender));
-    attackers.get(i).remove(defender);
-      }
-      // Empty the attackers into a vector of fleets and sort them from
-      // weakest to strongest.
-      ArrayList<Fleet> enemyFleets = new ArrayList<Fleet>();
-      int numEnemyShips = 0;
-      for (Integer j : attackers.get(i).keySet()) {
-    int numAttackers = attackers.get(i).get(j);
-    enemyFleets.add(new Fleet(j, numAttackers));
-    numEnemyShips += numAttackers;
-      }
-      Collections.sort(enemyFleets);
-      // Starting with the weakest attacker, the attackers take turns
-      // chipping away the defending forces one by one until there are
-      // either no more defenders or no more attackers.
-      int whoseTurn = 0;
-      while (p.NumShips() > 0 && numEnemyShips > 0) {
-    if (enemyFleets.get(whoseTurn).NumShips() > 0) {
-        p.RemoveShips(1);
-        enemyFleets.get(whoseTurn).RemoveShips(1);
-        --numEnemyShips;
-        if (enemyFleets.get(whoseTurn).NumShips() == 0) {
-      enemyFleets.remove(whoseTurn);
-      --whoseTurn;
-        }
-    }
-    ++whoseTurn;
-    if (whoseTurn >= enemyFleets.size()) {
-        whoseTurn = 0;
-    }
-      }
-      // If there are no enemy fleets left, then the defender keeps
-      // control of the planet. If there are any enemy fleets left, then
-      // they battle it out to determine who gets control of the planet.
-      // This is done by cycling through the attackers and subtracting
-      // one ship at a time from each, until there is only one attacker
-      // left. If the last attackers are all eliminated at the same time,
-      // then the planet becomes neutral with zero ships occupying it.
-      if (numEnemyShips > 0) {
-    p.Owner(0);
-    while (enemyFleets.size() > 1) {
-        for (int j = 0; j < enemyFleets.size(); ++j) {
-      enemyFleets.get(j).RemoveShips(1);
-      if (enemyFleets.get(j).NumShips() <= 0) {
-          enemyFleets.remove(j);
-          --j;
-      }
-        }
-    }
-    if (enemyFleets.size() == 1) {
-        p.Owner(enemyFleets.get(0).Owner());
-        p.NumShips(enemyFleets.get(0).NumShips());
-        break;
-    }
-      }
-  }
+  // Determine the result of any battles
   for (Planet p : planets) {
-    gamePlayback += "" + p.Owner() + "." + p.NumShips() + ",";
+    FightBattle(p);
+  }
+
+  boolean needcomma=false;
+  for (Planet p : planets) {
+    if(needcomma)
+      gamePlayback.append(",");
+    gamePlayback.append(p.Owner());
+    gamePlayback.append(".");
+    gamePlayback.append(p.NumShips());
+    needcomma = true;
   }
   for (Fleet f : fleets) {
-    gamePlayback += "" + f.Owner() + "." + f.NumShips() + "." +
-      f.SourcePlanet() + "." + f.DestinationPlanet() + "." +
-      f.TotalTripLength() + "." + f.TurnsRemaining() + ",";
+    if(needcomma)
+      gamePlayback.append(",");
+    gamePlayback.append(f.Owner());
+    gamePlayback.append(".");
+    gamePlayback.append(f.NumShips());
+    gamePlayback.append(".");
+    gamePlayback.append(f.SourcePlanet());
+    gamePlayback.append(".");
+    gamePlayback.append(f.DestinationPlanet());
+    gamePlayback.append(".");
+    gamePlayback.append(f.TotalTripLength());
+    gamePlayback.append(".");
+    gamePlayback.append(f.TurnsRemaining());
   }
-  if (gamePlayback.charAt(gamePlayback.length() - 1) == ',') {
-    gamePlayback = gamePlayback.substring(0, gamePlayback.length() - 1);
-  }
-  gamePlayback += ":";
+  gamePlayback.append(":");
   // Check to see if the maximum number of turns has been reached.
   ++numTurns;
     }
@@ -413,7 +382,7 @@ public class Game implements Cloneable {
     // Returns the game playback string. This is a complete record of the game,
     // and can be passed to a visualization program to playback the game.
     public String GamePlaybackString() {
-  return gamePlayback;
+  return gamePlayback.toString();
     }
 
     // Returns the number of ships that the current player has, either located
@@ -607,10 +576,9 @@ public class Game implements Cloneable {
     Planet p = new Planet(owner, numShips, growthRate, x, y);
     planets.add(p);
     if (gamePlayback.length() > 0) {
-        gamePlayback += ":";
+        gamePlayback.append(":");
     }
-    gamePlayback += "" + x + "," + y + "," + owner + "," +
-        numShips + "," + growthRate;
+    gamePlayback.append("" + x + "," + y + "," + owner + "," + numShips + "," + growthRate);
       } else if (tokens[0].equals("F")) {
     if (tokens.length != 7) {
         return 0;
@@ -632,7 +600,7 @@ public class Game implements Cloneable {
     return 0;
       }
   }
-  gamePlayback += "|";
+  gamePlayback.append("|");
   return 1;
     }
 
@@ -679,7 +647,7 @@ public class Game implements Cloneable {
 
     // This is the game playback string. It's a complete description of the
     // game. It can be read by a visualization program to visualize the game.
-    private String gamePlayback;
+    private StringBuffer gamePlayback;
 
     // The maximum length of the game in turns. After this many turns, the game
     // will end, with whoever has the most ships as the winner. If there is no
@@ -706,7 +674,7 @@ public class Game implements Cloneable {
       mapData = new String(_g.mapData);
     initMode = _g.initMode;
     if (_g.gamePlayback != null)
-      gamePlayback = new String(_g.gamePlayback);
+      gamePlayback = new StringBuffer(_g.gamePlayback);
     maxGameLength = _g.maxGameLength;
     numTurns = _g.numTurns;
     // Dont need to init the drawing stuff (it does it itself)
