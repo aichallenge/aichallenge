@@ -31,7 +31,7 @@ for line in f:
   values = str(leaderboard_id) + "," + \
     str(submission_id) + "," + \
     str(rank) + "," + \
-    "0,0,0," + elo
+    "0,0,0," + str(elo)
   cursor.execute("""
     INSERT INTO rankings
     (leaderboard_id,submission_id,rank,wins,losses,draws,score)
