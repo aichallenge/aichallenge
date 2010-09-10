@@ -18,6 +18,11 @@
             <a href="#" id="next-frame-button">&raquo;</a> | 
             <a href="#" id="end-button">&raquo;<span class="small">|</span></a>
         </p>
+        <p>
+          <br>
+          <br>
+          <canvas id="chart" width="640" height="100" ></canvas>
+        </p>
     </div>
     
 <?php include "footer.php"; ?>
@@ -27,11 +32,21 @@
   <script>!window.jQuery && document.write('<script src="visualizer/js/jquery-1.4.2.min.js"><\/script>')</script>
   
   <script>
+  $(function(){
+    if(document.getElementById('display').getContext==undefined){
+      $('#visualizer').html('<APPLET code="Viewer.class" width="500" height="500" archive="Visualizer.jar"> <param name="game_id" value="<?= htmlspecialchars($_GET["game_id"]); ?>"/> Java applet support required.</APPLET>')
+    }
+  })
+  
+  </script>
+  
+  
+  <script>
   <?php
   ob_start();
   include('game_info.php');
   $data = ob_get_clean();
-  echo 'var data = "' . addslashes(str_replace("\n", "\\n", $data)) . '"';
+  echo 'var data = "' . htmlspecialchars(str_replace("\n", "\\n", $data)) . '"';
   ?>
   </script>
   <script src="visualizer/js/visualizer.js?v=1"></script>

@@ -15,7 +15,6 @@ var Visualizer = {
       fleet_font: 'normal 12px Arial,Helvetica',
       planet_pixels: [10,13,18,21,23,29],
       showFleetText: true,
-      display_size: 640,
       display_margin: 50,
       turnsPerSecond: 8,
       teamColor: ['#455','#c00','#7ac']
@@ -31,7 +30,7 @@ var Visualizer = {
         this.parseData(data);
         
         // Calculated configs
-        this.config.unit_to_pixel = (this.config.display_size - this.config.display_margin * 2) / 24;
+        this.config.unit_to_pixel = (this.canvas.height - this.config.display_margin * 2) / 24;
         
         // Draw first frame
         this.drawFrame(0);        
@@ -154,6 +153,51 @@ var Visualizer = {
         }
         
         $(this.canvas).trigger('drawn');
+    },
+    
+    drawChart: function(){
+        var canvas = document.getElementById('chart')
+        var ctx = canvas.getContext('2d');
+        ctx.scale(1,-1)
+        ctx.translate(0,-canvas.height)
+        
+        // Total the ship counts
+        var mostShips = 100;
+        for(var i=0; i < this.moves.length; i++ ){
+            var turn = this.moves[i]
+            turn.shipCount=[0,0,0]
+            for(var j=0; j < turn.moving.length; j++ ){
+                var fleet = turn.moving[j]
+                turn.shipCount[fleet.owner]+=fleet.numShips
+            }
+            for(var j=0; j < turn.planets.length; j++ ){
+                var planet = turn.planets[j]
+                turn.shipCount[planet.owner]+=planet.numShips
+            }
+                        
+            for(var j=0; j < turn.shipCount.length; j++ ){
+                mostShips = Math.max(mostShips, turn.shipCount[j] )
+            }
+        }
+
+        var heightFactor = canvas.height / mostShips / 1.05
+        var widthFactor = canvas.width / Math.max(200, this.moves.length)
+        for(var i = 1; i <= 2; i++ ){
+            ctx.strokeStyle = this.config.teamColor[i];
+            ctx.fillStyle = this.config.teamColor[i];
+            ctx.beginPath();
+            ctx.moveTo(0,this.moves[0].shipCount[i] * heightFactor)
+            for(var j=1; j < this.moves.length; j++ ){
+                var shipCount = this.moves[j].shipCount[i]
+                ctx.lineTo(j*widthFactor, shipCount*heightFactor)
+            }
+            ctx.stroke();
+            
+            ctx.beginPath();
+            ctx.arc((j-1)*widthFactor, shipCount*heightFactor, 2, 0, Math.PI*2, true);
+            ctx.fill();
+        }
+        
     },
     
     start: function() {
@@ -358,4 +402,5 @@ var ParserUtils = {
     $('title').text(Visualizer.players[0]+' v.s. '+Visualizer.players[1]+' - Planet Wars')
     
     Visualizer.start();
+    Visualizer.drawChart();
 })(window.jQuery);
