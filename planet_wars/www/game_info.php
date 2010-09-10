@@ -2,7 +2,7 @@
 
 include "mysql_login.php";
 
-$game_id = $_GET["game_id"];
+$game_id = mysql_real_escape_string($_GET["game_id"]);
 if (strlen($game_id) > 0) {
   $query = file_get_contents("game_info_query.sql") . $game_id;
   $result = mysql_query($query);
