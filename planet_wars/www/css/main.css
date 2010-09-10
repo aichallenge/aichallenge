@@ -173,3 +173,45 @@ table.submissions td.game_draw {
 table.submissions .error_code {
     color:#FF5555;
 }
+
+
+
+/* Visualizer */
+
+#visualizer {
+    width:640px;
+    margin-right: -10px;
+    
+}
+
+#visualizer a:hover, #visualizer a:active { outline: none; }
+#visualizer a, #visualizer a:active, #visualizer a:visited { color:#607890; }
+#visualizer a:link { -webkit-tap-highlight-color: #FF5E99; } 
+#visualizer a:hover { color:#036; }
+#visualizer a:hover, #visualizer a:active { outline: none; }
+
+
+#visualizer p { margin:0px;}
+
+#controls {
+    text-align: center;
+    margin: 5px 0;
+}
+
+#controls a {
+    text-decoration: none;
+    font-size: 32px;
+    padding: 0 10px;
+}
+
+#controls a .small{ 
+  font-size: 0.7em;
+}
+
+#players {
+  font-size: 24px;
+  width:100%;
+  margin-bottom: 5px;
+}
+
+/* End Visualizer */
