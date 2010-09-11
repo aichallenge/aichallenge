@@ -27,9 +27,12 @@
     rankings will be released. Who will be the winner? Will it be <strong>
     you</strong>?!</li>
 </ul>
-<p>The official start date is not here yet, but there are plenty of materials,
-  tools, and articles up on the site already. Browse the links at the right to
-  get started on your entry ahead of time!</p>
+
+<p>Ready to get started? Download a <a href="starter_packages.php">starter pack</a>, and then follow the <a href="quickstart.php">five minute tutorial</a>.</p>
+
+<p>Got questions? Ask them in our <a href="forum/">forum</a> or join us on <a href="http://webchat.freenode.net/?channels=aichallenge&uio=d4">#aichallenge</a> on irc.freenode.net</p>
+
+
 <p></p>
 <center><object width="500" height="405"><param name="movie" value="http://www.youtube.com/v/O0uxXZY-t-s&amp;hl=en_US&amp;fs=1?border=1"></param><param name="allowFullScreen" value="true"></param><param name="allowscriptaccess" value="always"></param><embed src="http://www.youtube.com/v/O0uxXZY-t-s&amp;hl=en_US&amp;fs=1?border=1" type="application/x-shockwave-flash" allowscriptaccess="always" allowfullscreen="true" width="500" height="405"></embed></object></center>
 <p></p>
