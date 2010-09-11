@@ -34,12 +34,11 @@ for row in cursor:
 
 t = ','.join(str(k) for k in subs)
 cursor.execute("""
-  SELECT *
+  SELECT game_id, winner, loser, map_id, draw, timestamp, player_one, player_two
   FROM games
   WHERE player_one IN (""" + str(t) + """)
   AND player_two IN (""" + str(t) + """)
   AND timestamp >= timestampadd(DAY, -3, current_timestamp)
-  ORDER BY game_id DESC
 """)
 
 games = {}
