@@ -1,4 +1,18 @@
 <?php include 'header.php'; ?>
+<h2>A Few Technical Kinks...</h2>
+<p>As many of you have noticed, the website has been
+  <a href="http://ai-contest.com/forums/viewforum.php?f=18&sid=ffbce95caabdd3a666217e7454b10893">a little shaky</a> since the
+  Google AI Challenge launched a few hours ago. These problems are temporary
+  and should be resolved by the end of this weekend.</p>
+<p>Did you know that the Google AI Challenge is now
+  <a href="http://code.google.com/p/ai-contest/">open source</a>? You can
+  see how everything works, and even help us fix the problems with the
+  website! Many of the contestants have already noticed bugs and contributed
+  patches to fix them.</p>
+<p>The rumors are true. So many people tried to sign up for the Google AI
+  Challenge today that our email confirmation system was blacklisted for
+  spamming by Gmail&#39;s outgoing mail servers. Kind of ironic for a
+  Google-sponsored contest, right? &nbsp;&nbsp;  :-)</p>
 <h2>Google AI Challenge!</h2>
 <p>That&#39;s right, the Google AI Challenge is back! Are you excited to get
   started? So are we! Here is the timeline:</p>

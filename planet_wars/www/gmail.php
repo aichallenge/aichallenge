@@ -11,15 +11,15 @@ function send_gmail($recipient, $subject, $body) {
   }
   $mail = new PHPMailer();
   $mail->IsSMTP();
-  $mail->SMTPAuth = true;
-  $mail->Username = $server_info["mailer_address"];
-  $mail->Password = $server_info["mailer_password"];
+  $mail->SMTPAuth = false;
+//  $mail->Username = $server_info["mailer_address"];
+//  $mail->Password = $server_info["mailer_password"];
   $mail->From = $server_info["mailer_address"];
   $mail->FromName = $server_info["mailer_name"];
   $mail->AddAddress($recipient, "");
   $mail->WordWrap = 80;
-  $mail->Host = "ssl://smtp.gmail.com";
-  $mail->Port = 465;
+  $mail->Host = "localhost";
+  $mail->Port = 25;
   $mail->Subject = $subject;
   $mail->Body = $body;
   return $mail->Send();
