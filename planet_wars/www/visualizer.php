@@ -1,29 +1,52 @@
 <?php include "header.php"; ?>
-<h2>Planet Wars Game Viewer</h2>
-<center>
-  <APPLET code="Viewer.class"
-          width="500"
-          height="500"
-          archive="Visualizer.jar">
-    <param name="game_id" value="<?php echo $_GET["game_id"]; ?>"/>
-    Java applet support required.
-  </APPLET> 
-</center>
-<p>&nbsp;</p>
-<p>The visualizer can take up to a minute to load. If it does not appear
-  after one minute, then you probably do not have Java applets enabled in
-  your browser. Enable Java applets, then restart your browser before trying
-  again.</p>
-<h3>Frequently Asked Questions</h3>
-<p><strong>Why do some games end suddenly?</strong> In order to allow as many
-  games as possible, games that go longer than 200 turns are ended. The game
-  is won by whichever player has the most ships on the map at the end of
-  turn 200. In the rare case when the bots have the same number of ships, the
-  game is a draw. The ship count includes ships that are on planets as well as
-  ships that are in flight. We hope that this restriction will not impact
-  the rankings, since most games are basically settled fairly early on.</p>
-<p><strong>Why does this playback have less than two players?</strong> Usually
-  this happens when one player or the other crashes at the beginning of the
-  game. This results in a game of length zero that contains only one player.
-  If a bot crashes, it loses the game and a win is awarded to the opponent.</p>
+
+<div id="visualizer">
+  <table id="players">
+          <tr>
+            <td width='40%' style="text-align:right" class="player1Name"></td>
+            <td width='20%' style="text-align:center" class="playerVs">Loading</td>
+            <td width='40%' style="text-align:left" class="player2Name"></td>
+          </tr>
+        </table>
+        
+        <canvas id="display" width="640" height="640"></canvas>
+        <p id="turnCounter"></p>
+        <p id="controls">
+            <a href="#" id="start-button"><span class="small">|</span>&laquo;</a> | 
+            <a href="#" id="prev-frame-button">&laquo;</a> | 
+            <a href="#" id="play-button">&#9654;</a> | 
+            <a href="#" id="next-frame-button">&raquo;</a> | 
+            <a href="#" id="end-button">&raquo;<span class="small">|</span></a>
+        </p>
+        <p>
+          <br>
+          <br>
+          <canvas id="chart" width="640" height="100" ></canvas>
+        </p>
+    </div>
+    
 <?php include "footer.php"; ?>
+
+
+  <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.4.2/jquery.min.js"></script>
+  <script>!window.jQuery && document.write('<script src="visualizer/js/jquery-1.4.2.min.js"><\/script>')</script>
+  
+  <script>
+  $(function(){
+    if(document.getElementById('display').getContext==undefined){
+      $('#visualizer').html('<APPLET code="Viewer.class" width="500" height="500" archive="Visualizer.jar"> <param name="game_id" value="<?= htmlspecialchars($_GET["game_id"]); ?>"/> Java applet support required.</APPLET>')
+    }
+  })
+  
+  </script>
+  
+  
+  <script>
+  <?php
+  ob_start();
+  include('game_info.php');
+  $data = ob_get_clean();
+  echo 'var data = "' . htmlspecialchars(str_replace("\n", "\\n", $data)) . '"';
+  ?>
+  </script>
+  <script src="visualizer/js/visualizer.js?v=1"></script>
