@@ -123,6 +123,37 @@ def issue_order(order, player_id, planets, fleets, order_strings):
 def num_non_zero(a):
   return len([x for x in a if x != 0])
 
+# Resolves the battle at planet p, if there is one.
+# * removes all fleets involved in the battle
+# * sets the number of ships and owner of the planet according the outcome
+def fight_battle(pid, p, fleets):
+  participants = {p["owner"]: p["num_ships"]}
+  for i in range (len(fleets) - 1, -1, -1):
+    f = fleets[i]
+    ow = f["owner"]
+    if f["turns_remaining"] <= 0 and f["destination"] == pid:
+      if ow in participants:
+        participants[ow] += f["num_ships"]
+      else:
+        participants[ow] = f["num_ships"]
+      del fleets[i]
+
+  winner = {"owner": 0, "ships": 0}
+  second = {"owner": 0, "ships": 0}
+  for owner, ships in participants.items():
+    if ships >= second["ships"]:
+      if ships >= winner["ships"]:
+        second = winner
+        winner = {"owner": owner, "ships": ships}
+      else:
+        second = {"owner": owner, "ships": ships}
+
+  if winner["ships"] > second["ships"]:
+    p["num_ships"] = winner["ships"] - second["ships"]
+    p["owner"] = winner["owner"]
+  else:
+   p["num_ships"] = 0
+
 # Performs the logic needed to advance the state of the game by one turn.
 # Fleets move forward one tick. Any fleets reaching their destinations are
 # dealt with. If there are any battles to be resolved, then they're taken
@@ -131,53 +162,11 @@ def do_time_step(planets, fleets):
   for p in planets:
     if p["owner"] > 0:
       p["num_ships"] += p["growth_rate"]
-  attackers = dict()
-  traveling_fleets = []
   for f in fleets:
     f["turns_remaining"] -= 1
-    if f["turns_remaining"] > 0:
-      traveling_fleets.append(f)
-    else:
-      dest = f["destination"]
-      owner = f["owner"]
-      if dest not in attackers:
-        attackers[dest] = dict()
-      if owner not in attackers[dest]:
-        attackers[dest][owner] = 0
-      attackers[dest][owner] += f["num_ships"]
-  fleets = traveling_fleets
-  for i, p in enumerate(planets):
-    if i not in attackers:
-      continue
-    defender = p["owner"]
-    defending_forces = p["num_ships"]
-    if defender in attackers[i]:
-      defending_forces += attackers[i][defender]
-      del attackers[i][defender]
-    attacking_players = [key for key, value in attackers[i].items()]
-    attacking_forces = [value for key, value in attackers[i].items()]
-    current_attacker = 0
-    while defending_forces > 0 and sum(attacking_forces) > 0:
-      if attacking_forces[current_attacker] > 0:
-        attacking_forces[current_attacker] -= 1
-        defending_forces -= 1
-      current_attacker += 1
-      if current_attacker >= len(attacking_players):
-        current_attacker = 0
-    if sum(attacking_forces) > 0:
-      while num_non_zero(attacking_forces) > 1:
-        if attacking_forces[current_attacker] > 0:
-          attacking_forces[current_attacker] -= 1
-        current_attacker += 1
-        if current_attacker >= len(attacking_players):
-          current_attacker = 0
-      for i in range(len(attacking_players)):
-        if attacking_forces[i] > 0:
-          p["owner"] = attacking_players[i]
-          p["num_ships"] = attacking_forces[i]
-    else:
-      p["owner"] = defender
-      p["num_ships"] = defending_forces
+  for i in range(len(planets)):
+   fight_battle(i, planets[i], fleets)
+
   return planets, fleets
 
 # Calculates the number of players remaining
@@ -331,7 +320,6 @@ def play_game(map, max_turn_time, max_turns, players, debug=False):
             if debug:
               sys.stderr.write("player " + str(i+1) + " order: " + line + "\n")
             issue_order(order, i+1, planets, fleets, order_strings)
-      time.sleep(0)
     # Kick players that took too long to move.
     for i, c in enumerate(clients):
       if (i+1) not in remaining or client_done[i]:
