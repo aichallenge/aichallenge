@@ -98,6 +98,10 @@ def travel_time(a, b):
 # Processes the given order, as if it was given by the given player_id. If
 # everything goes well, returns True. Otherwise, returns False.
 def issue_order(order, player_id, planets, fleets, order_strings):
+  if order["source"] < 0 or order["source"] >= len(planets):
+    return False
+  if order["destination"] < 0 or order["destination"] >= len(planets):
+    return False
   source_planet = planets[order["source"]]
   destination_planet = planets[order["destination"]]
   if source_planet["owner"] != player_id:

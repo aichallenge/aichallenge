@@ -32,11 +32,11 @@ cursor.execute("""
   WHERE s.status = 40
 """)
 submissions = cursor.fetchall()
-
+print "submissions:", len(submissions)
 # Get the list of maps.
 cursor.execute("SELECT * FROM maps")
 maps = cursor.fetchall()
-
+print "maps:", len(maps)
 # Are there enough players? Are there enough maps?
 if len(submissions) < 2:
   print "There are fewer than two active submissions. No games can be played."
