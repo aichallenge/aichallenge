@@ -113,27 +113,40 @@ public class Engine {
 			clientDone[i] = true;
 			continue;
 		    }
-		    try {
-			InputStream inputStream =
-			    clients.get(i).getInputStream();
-			while (inputStream.available() > 0) {
-			    char c = (char)inputStream.read();
-			    if (c == '\n') {
-				String line = buffers[i].toString().trim();
-				//System.err.println("P" + (i+1) + ": " + line);
-				line = line.toLowerCase().trim();
-				game.WriteLogMessage("player" + (i + 1) + " > engine: " + line);
-				if (line.equals("go")) {
-				    clientDone[i] = true;
-				} else {
-				    game.IssueOrder(i + 1, line);
-				}
-				buffers[i] = new StringBuilder();
-			    } else {
-				buffers[i].append(c);
-			    }
-			}
-		    } catch (Exception e) {
+                    try {
+                        InputStream inputStream =
+                            clients.get(i).getInputStream();
+                        while (inputStream.available() > 0) {
+                            char c = (char)inputStream.read();
+                            if (c == '\n') {
+                                String line = buffers[i].toString().trim();
+                                //System.err.println("P" + (i+1) + ": " + line);
+                                line = line.toLowerCase().trim();
+                                game.WriteLogMessage("player" + (i + 1) + " > engine: " + line);
+                                if (line.equals("go")) {
+                                    clientDone[i] = true;
+                                } else {
+                                    game.IssueOrder(i + 1, line);
+                                }
+                                buffers[i] = new StringBuilder();
+                            } else {
+                                buffers[i].append(c);
+                            }
+                        }
+                        StringBuilder buf = new StringBuilder();
+                        InputStream stderr = clients.get(i).getErrorStream();
+                        while (stderr.available() > 0){
+                            char c = (char)stderr.read();
+                            if (c == '\n') {
+                                String ln = buf.toString();
+                                System.err.println("Player " + (i+1) + ": " + ln);
+                                buf = new StringBuilder();
+                            }
+                            else {
+                                buf.append(c);
+                            }
+                        }
+                    } catch (Exception e) {
 			System.err.println("WARNING: player " + (i+1) +
 					   " crashed.");
 			clients.get(i).destroy();
