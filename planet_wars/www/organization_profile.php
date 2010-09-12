@@ -3,6 +3,9 @@ include 'header.php';
 include_once 'rankings_widget.php';
 
 $org_id = $_GET["org_id"];
+if(!filter_var($org_id, FILTER_VALIDATE_INT)) {
+  $org_id = NULL;
+}
 
 // Grab Data
 $org_query = <<<EOT
