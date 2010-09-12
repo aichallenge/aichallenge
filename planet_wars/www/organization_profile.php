@@ -3,7 +3,6 @@ include 'header.php';
 include_once 'rankings_widget.php';
 
 $org_id = $_GET["org_id"];
-$org_id = mysql_real_escape_string($org_id);
 
 // Grab Data
 $org_query = <<<EOT

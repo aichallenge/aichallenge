@@ -7,7 +7,7 @@ $result = mysql_query($query);
 if ($result) {
   echo "<ul>";
   while ($row = mysql_fetch_assoc($result)) {
-    $username = $row['username'];
+    $username = htmlspecialchars($row['username']);
     echo "<li>$username</li>";
   }
   echo "</ul>";

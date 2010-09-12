@@ -146,7 +146,7 @@ EOT;
     $table .= "<table class=\"submissions\"><thead><tr><th>Time</th><th>Opponent</th><th>Outcome</th><th>&nbsp;</th></tr></thead>";
     $table .= "<tbody>";
     for ($i = 1; $row = mysql_fetch_assoc($games_results); $i += 1) {
-        $opp_name = $row["opp_name"];
+        $opp_name = htmlspecialchars($row["opp_name"]);
         $opp_id = $row["opp_id"];
 	$game_id = $row["game_id"];
         $outcome = $row["outcome"];

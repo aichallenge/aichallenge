@@ -36,7 +36,7 @@ $query = "INSERT INTO login_attempts (timestamp,username,password,naive_ip," .
   "'$real_ip')";
 $result = mysql_query($query);
 if (!$result) {
-  echo "<p>Could not write to log: " . mysql_error() . "</p>";
+  echo "<p>Could not write to log: " . htmlspecialchars(mysql_error()) . "</p>";
 }
 
 $_SESSION['username'] = $username;

@@ -5,7 +5,7 @@
           width="500"
           height="500"
           archive="Visualizer.jar">
-    <param name="game_id" value="<?php echo $_GET["game_id"]; ?>"/>
+    <param name="game_id" value="<?php echo htmlspecialchars($_GET["game_id"]); ?>"/>
     Java applet support required.
   </APPLET> 
 </center>

@@ -33,6 +33,8 @@ if ($username_data) {
     $username = "";
 }
 
+$username = htmlspecialchars($username);
+
 echo "<h2><a href=\"profile.php?user_id=$user_id\">$username</a>'s latest submission's games</h2>";
 echo getGamesTableString($user_id, false, 200, "?user_id=$user_id&page=", $page);
 

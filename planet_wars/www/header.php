@@ -30,7 +30,7 @@
     <span id="sign">
       <?php if (logged_in_with_valid_credentials()) { ?>
         <a href="profile.php?user_id=<?php echo current_user_id(); ?>">
-          My Profile (<?php echo current_username(); ?>)
+          My Profile (<?php echo htmlspecialchars(current_username()); ?>)
           </a> |
         <a href="logout.php">Sign Out</a>
       <?php } else { ?>
