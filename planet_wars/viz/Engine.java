@@ -157,6 +157,8 @@ public class Engine {
 	    }
 	    ++numTurns;
 	    System.err.println("Turn " + numTurns);
+	    System.out.print(game.FlushGamePlaybackString());
+	    System.out.flush();
 	    game.DoTimeStep();
 	}
 	KillClients(clients);

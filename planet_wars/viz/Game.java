@@ -389,6 +389,15 @@ public class Game implements Cloneable {
     public String GamePlaybackString() {
   return gamePlayback.toString();
     }
+    
+    
+    // Returns the playback string so far, then clears it.
+    // Used for live streaming output
+    public String FlushGamePlaybackString(){
+        StringBuffer oldGamePlayback = gamePlayback;
+        gamePlayback = new StringBuffer();
+        return oldGamePlayback.toString();
+    }
 
     // Returns the number of ships that the current player has, either located
     // on planets or in flight.
