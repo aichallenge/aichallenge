@@ -119,7 +119,7 @@ public class Engine {
 			while (inputStream.available() > 0) {
 			    char c = (char)inputStream.read();
 			    if (c == '\n') {
-				String line = buffers[i].toString();
+				String line = buffers[i].toString().trim();
 				//System.err.println("P" + (i+1) + ": " + line);
 				line = line.toLowerCase().trim();
 				game.WriteLogMessage("player" + (i + 1) + " > engine: " + line);

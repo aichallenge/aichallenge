@@ -129,13 +129,18 @@ public class Game implements Cloneable {
     public String PovRepresentation(int pov) {
       StringBuilder s = new StringBuilder();
       for (Planet p : planets) {
-        s.append(String.format("P %f %f %d %d %d\n", p.X(), p.Y(),
-              PovSwitch(pov, p.Owner()), p.NumShips(), p.GrowthRate()));
+        // We can't use String.format here because in certain locales, the ,
+        // and . get switched for X and Y (yet just appending them using the
+        // default toString methods apparently doesn't switch them?)
+        s.append("P " + p.X() + " " + p.Y() + " " + PovSwitch(pov, p.Owner()) +
+          " " + p.NumShips() + " " + p.GrowthRate() + "\n");
+
       }
       for (Fleet f : fleets) {
-        s.append(String.format("F %d %d %d %d %d %d\n", PovSwitch(pov, f.Owner()),
-              f.NumShips(), f.SourcePlanet(), f.DestinationPlanet(),
-              f.TotalTripLength(), f.TurnsRemaining()));
+        s.append("F " + PovSwitch(pov, f.Owner()) + " " + f.NumShips() + " " +
+              f.SourcePlanet() + " " + f.DestinationPlanet() + " " +
+              f.TotalTripLength() + " " + f.TurnsRemaining() + "\n");
+
       }
       return s.toString();
     }
