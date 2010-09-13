@@ -6,9 +6,9 @@
 <head>
   <meta http-equiv="content-type" content="text/html; charset=utf-8" />
   <title>Google AI Challenge</title>
-  <link rel="stylesheet" href="css/reset.css" type="text/css" media="screen, projection">
-  <link rel="stylesheet" href="css/typo.css" type="text/css" media="screen, projection">
-  <link rel="stylesheet" href="css/main.css" type="text/css" media="screen, projection">
+  <link rel="stylesheet" href="css/reset.css?v=1" type="text/css" media="screen, projection">
+  <link rel="stylesheet" href="css/typo.css?v=1" type="text/css" media="screen, projection">
+  <link rel="stylesheet" href="css/main.css?v=1" type="text/css" media="screen, projection">
 <script type="text/javascript">
   var _gaq = _gaq || [];
   _gaq.push(['_setAccount', 'UA-10883001-6']);
