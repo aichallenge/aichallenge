@@ -18,6 +18,7 @@ import re
 import glob
 import subprocess
 import errno
+import shutil
 import MySQLdb
 from server_info import server_info
 
@@ -35,7 +36,7 @@ def nukeglob(pattern):
   paths = glob.glob(pattern)
   for path in paths:
     try:
-      os.unlink(path)
+      shutil.rmtree(path)
     except OSError, e:
       if e.errno != errno.ENOENT:
         raise
