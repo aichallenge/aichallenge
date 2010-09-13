@@ -5,7 +5,9 @@
   Wars as intelligently as possible. It is recommended that you use one of the
   <a href="starter_packages.php">starter packages</a> as a starting point. If
   you are looking to get up and running as quickly as possible, check out the
-  <a href="quickstart.php">Five Minute Quickstart Guide</a>.</p>
+   <a href="quickstart.php">Five Minute Quickstart Guide</a>. For more details
+  about Planet Wars beyond this introductory document, see the
+  <a href="specification.php">Planet Wars Specification</a>.</p>
 <p>Planet Wars is a strategy game set in outer space. The objective is to
   take over all the planets on the map, or altenatively eliminate all of
   your opponents ships.</p>

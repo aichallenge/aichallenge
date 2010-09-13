@@ -23,6 +23,7 @@
       <li><a href="quickstart.php">Five Minute Quickstart Guide</a></li>
       <li><a href="starter_packages.php">Starter Packages</a></li>
       <li><a href="resources.php">Tutorials &amp; Strategy Guides</a></li>
+      <li><a href="specification.php">Planet Wars Specification</a></li>
     </ul>
     <h1>Help</h1>
     <ul>

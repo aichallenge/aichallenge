@@ -28,6 +28,12 @@ body { background-color: #555550; /*text-align:center;*/ }
 
 #sidebar { display:inline; position:absolute; right:0; top: 0; height: 90%; width: 22%;}
 #content { position:relative; }
+#news em { font-weight: bold; }
+#news pre { padding: 0 0 2em 3em; font-family: monospace; }
+#news ol { padding: 0 0 1em 3em; }
+#news li { padding-bottom: 0.5em; }
+#TOC ul { list-style-type: none; }
+#TOC li { padding-bottom: 0; }
 #news { padding: 20px; min-height:500px; width:66%; height:auto !important; height:500px; }
 
 /* Leaderboard style */
