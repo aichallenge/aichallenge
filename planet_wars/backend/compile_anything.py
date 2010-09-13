@@ -36,7 +36,10 @@ def nukeglob(pattern):
   paths = glob.glob(pattern)
   for path in paths:
     try:
-      shutil.rmtree(path)
+      if os.path.isdir(path):
+           shutil.rmtree(path)
+      else:
+        os.unlink(path)
     except OSError, e:
       if e.errno != errno.ENOENT:
         raise
