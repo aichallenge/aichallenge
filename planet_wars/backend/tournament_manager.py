@@ -8,6 +8,7 @@ from server_info import server_info
 import subprocess
 import sys
 import time
+import zlib
 
 # Set up logging
 logger = logging.getLogger('tm_logger')
@@ -133,6 +134,15 @@ while time.time() - start_time < time_limit:
       str(player_one["submission_id"]) + "," + \
       str(player_two["submission_id"]) + "," + \
       "'" + str(playback_string) + "')")
+    
+    game_id = connection.insert_id()
+    compressed_playback_string = zlib.compress(playback_string,9)
+    cursor = connection.cursor()
+    cursor.execute(
+        "INSERT INTO playback SET game_id = %s, playback_string = %s",
+        (game_id, compressed_playback_string)
+        )
+    
     log_message("finished inserting")
   else:
     log_message(errors)
