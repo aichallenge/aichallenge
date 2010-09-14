@@ -12,7 +12,7 @@ if(!filter_var($page, FILTER_VALIDATE_INT)) {
     $page = 1;
 }
 
-$query = "select u.username from contest_users u where u.user_id = '$user_id' limit 1";
+$query = "select u.username from users u where u.user_id = '$user_id' limit 1";
 $username = mysql_fetch_object(mysql_query($query))->username;
 
 $username = htmlspecialchars($username);
