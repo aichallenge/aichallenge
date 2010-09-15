@@ -214,7 +214,11 @@ def compile_anything():
   language_id = detected_langs[0]["language_id"]
   output += "Found " + main_code_file + ". Compiling this entry as " + \
     detected_lang + "\n"
-  out, err = compile_function(detected_lang)
-  output += out
-  error += err
+  cf_res = compile_function(detected_lang)
+  if cf_res is not None:
+    output += cf_res[0]
+    error += cf_res[1]
+  else:
+    output += ''
+    error += 'There was an unspecificed Error. (compile_function returned None.)'
   return output, error, language_id
