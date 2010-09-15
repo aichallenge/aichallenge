@@ -7,7 +7,6 @@ groupscript = """
   groupadd jailusers;
   echo "@jailusers hard nproc 10 # contest" >> /etc/security/limits.conf
   echo "@jailusers hard cpu 10 # contest" >> /etc/security/limits.conf
-  echo "@jailusers hard as 196000 # contest" >> /etc/security/limits.conf
 """
 
 userscript = """
