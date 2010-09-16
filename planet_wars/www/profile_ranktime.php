@@ -30,9 +30,9 @@ select straight_join
     date_format(l.timestamp,'%b %D %h%p') as day,
     date_format(l.timestamp, '%k') as hour
 from
-    contest_submissions s
-    inner join contest_rankings r on r.submission_id = s.submission_id
-    inner join contest_leaderboards l on l.leaderboard_id = r.leaderboard_id
+    submissions s
+    inner join rankings r on r.submission_id = s.submission_id
+    inner join leaderboards l on l.leaderboard_id = r.leaderboard_id
 where 
     s.user_id = '$user_id'
 group by

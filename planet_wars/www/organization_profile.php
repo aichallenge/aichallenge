@@ -12,7 +12,7 @@ $org_query = <<<EOT
 select
     *
 from
-    contest_organizations
+    organizations
 where
     org_id = '$org_id'
 EOT;
