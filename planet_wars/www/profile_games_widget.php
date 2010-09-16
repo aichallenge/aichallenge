@@ -68,12 +68,13 @@ $games_query = <<<EOT
     g.draw,
     date_format(g.timestamp,'%b %d %r') as date,
     g.timestamp,
-    'Win' as outcome
+    if( g.draw = 0, 'Win', 'Draw' ) as outcome
     from
-    games g
-    inner join submissions s on s.submission_id = g.loser
-    inner join users u on u.user_id = s.user_id
-    where g.winner= $submission)
+    games g USE INDEX (winner_3)
+    inner join submissions s USE INDEX (submission_id) on s.submission_id = g.loser
+    inner join users u USE INDEX (user_id) on u.user_id = s.user_id
+    where g.winner = $submission
+    )
 union
 (select
     u.username as opp_name,
@@ -83,44 +84,13 @@ union
     g.draw,
     date_format(g.timestamp,'%b %d %r') as date,
     g.timestamp,
-    'Loss' as outcome
+    if( g.draw = 0, 'Loss', 'Draw' ) as outcome
    from
-    games g
-    inner join submissions s on s.submission_id = g.winner
-    inner join users u on u.user_id = s.user_id
-    where g.loser = $submission)
-union
-(select
-    u.username as opp_name,
-    u.user_id as opp_id,
-    g.game_id,
-    g.loser,
-    g.draw,
-    date_format(g.timestamp,'%b %d %r') as date,
-    g.timestamp,
-    'Draw' as outcome
-    from
-    games g
-    inner join submissions s on s.submission_id = g.player_one
-    inner join users u on u.user_id = s.user_id
-    where g.player_two = $submission
-    and g.draw = 1)
-union
-(select
-    u.username as opp_name,
-    u.user_id as opp_id,
-    g.game_id,
-    g.loser,
-    g.draw,
-    date_format(g.timestamp,'%b %d %r') as date,
-    g.timestamp,
-    'Draw' as outcome
-    from
-    games g
-    inner join submissions s on s.submission_id = g.player_two
-    inner join users u on u.user_id = s.user_id
-    where g.player_one = $submission
-    and g.draw = 1)
+    games g USE INDEX (loser_3)
+    inner join submissions s USE INDEX (submission_id) on s.submission_id = g.winner
+    inner join users u USE INDEX (user_id) on u.user_id = s.user_id
+    where g.loser = $submission 
+    )
 order by
     timestamp desc
 EOT;
