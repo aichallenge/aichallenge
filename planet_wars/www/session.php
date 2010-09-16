@@ -5,62 +5,43 @@ if (!isset($JPC_CONTEST_SESSION_PHP__)) {
 $JPC_CONTEST_SESSION_PHP__ = 1;
 
 session_start();
+
 include 'mysql_login.php';
 
-function logged_in_with_valid_credentials() {
-  if (!isset($_SESSION['username']) || !isset($_SESSION['password'])) {
-    return False;
-  }
-  $username = $_SESSION['username'];
-  $password = $_SESSION['password'];
-  $query = "SELECT * FROM users u " .
-           "WHERE username='$username' " .
-           "AND password='$password' " .
-	   "AND activated = 1";
+function check_credentials($username, $md5password) {
+  $query = "
+        SELECT * 
+        FROM users u 
+        WHERE
+            username='$username' AND 
+            password='$md5password' AND
+            activated = 1";
   $result = mysql_query($query);
-  return mysql_num_rows($result) > 0;
+    if( $user = mysql_fetch_assoc( $result ) ) {
+        $_SESSION['username']   = $user['username'];
+        $_SESSION['admin']      = $user['admin'];
+        $_SESSION['user_id']    = $user['user_id'];
+        return true;
+    } else {
+        return false;
+    }
+}
+
+function logged_in_with_valid_credentials() {
+    return isset($_SESSION['user_id']);
 }
 
 function logged_in_as_admin() {
-  if (!isset($_SESSION['username']) || !isset($_SESSION['password'])) {
-    return False;
-  }
-  $username = $_SESSION['username'];
-  $password = $_SESSION['password'];
-  $query = "SELECT * FROM users u " .
-           "WHERE username='$username' " .
-           "AND password='$password' " .
-	   "AND admin = 1";
-  $result = mysql_query($query);
-  return mysql_num_rows($result) > 0;
+  return isset($_SESSION['user_id']) && isset($_SESSION['admin']) && $_SESSION['admin'] == 1;
 }
 
 function current_username() {
-  if (logged_in_with_valid_credentials()) {
     return $_SESSION['username'];
-  } else {
-    return NULL;
-  }
 }
 
 function current_user_id() {
-  if (!isset($_SESSION['username']) || !isset($_SESSION['password'])) {
-    return NULL;
-  }
-  $username = $_SESSION['username'];
-  $password = $_SESSION['password'];
-  $query = "SELECT user_id FROM users " .
-           "WHERE username='$username' " .
-           "and password='$password'";
-  // print "<p>" . $query . "<\p>";
-  $result = mysql_query($query);
-  if (!$result) {
-    return -1;
-  }
-  if ($row = mysql_fetch_assoc($result)) {
-    $user_id = $row['user_id'];
-    // print "<p>user_id = " . $user_id . "</p>";
-    return $user_id;
+  if( isset($_SESSION['user_id']) ) {
+    return $_SESSION['user_id'];
   } else {
     return -1;
   }

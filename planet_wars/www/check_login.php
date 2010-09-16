@@ -28,24 +28,24 @@ function getRealIpAddr()
 
 // Log this login attempt
 $username = mysql_real_escape_string(stripslashes($_POST['username']));
-$password = md5(mysql_real_escape_string(stripslashes($_POST['password'])));
+$md5password = md5(mysql_real_escape_string(stripslashes($_POST['password'])));
 $naive_ip = $_SERVER['REMOTE_ADDR'];
 $real_ip = getRealIpAddr();
 $query = "INSERT INTO login_attempts (timestamp,username,password,naive_ip," .
-  "real_ip) VALUES (CURRENT_TIMESTAMP,'$username','$password','$naive_ip'," .
+  "real_ip) VALUES (CURRENT_TIMESTAMP,'$username','$md5password','$naive_ip'," .
   "'$real_ip')";
 $result = mysql_query($query);
 if (!$result) {
   echo "<p>Could not write to log: " . htmlspecialchars(mysql_error()) . "</p>";
 }
 
-$_SESSION['username'] = $username;
-$_SESSION['password'] = $password;  
-if (logged_in_with_valid_credentials()) {
+if (check_credentials($username, $md5password)) {
   header("location:index.php");
 } else {
   unset($_SESSION['username']);
   unset($_SESSION['password']);
+  unset($_SESSION['admin']);
+  unset($_SESSION['user_id']);
   header("location:login_failed.php");
 }
 
