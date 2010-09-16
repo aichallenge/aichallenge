@@ -281,11 +281,16 @@ var Visualizer = {
         var turns = data[1].split(':').slice(0,-1);
         for(var i = 0; i < turns.length; i++) {
             var turn = turns[i].split(',');
+            var move = {}
             
-            this.moves.push({
-               'planets': turn.slice(0, this.planets.length).map(ParserUtils.parsePlanetState),
-               'moving': turn.slice(this.planets.length).map(ParserUtils.parseFleet)
-            });
+            move.planets = turn.slice(0, this.planets.length).map(ParserUtils.parsePlanetState)
+            var fleet_strings = turn.slice(this.planets.length)
+            if( fleet_strings.length == 1 && fleet_strings[0] == '' ){
+                fleet_strings = []
+            }
+            move.moving = fleet_strings.map(ParserUtils.parseFleet)
+            
+            this.moves.push(move);
         }
     },
     
