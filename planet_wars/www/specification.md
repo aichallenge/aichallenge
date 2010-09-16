@@ -190,15 +190,17 @@ from turn to turn.
 
 Once the engine starts sending the game state to the bots, the bots
 each have 1 second of wall-clock time to receive the game state,
-process it, and send their orders. (The first turn is an exception, in
-which case the bots have 3 seconds of wall-clock time. This is to help
-bots written in languages whose VMs need some "warm-up" time.) Both
-bots perform these operations concurrently, and they are each unaware
-of what the other bot is doing. The choice of using wall-clock time
-rather than CPU time is primarily due to technical difficulties in
-measuring child processes' CPU times in real time. If a simple way to
-monitor CPU time instead is discovered, this part of the spec may
-change.
+process it, and send their orders. (An additional two seconds is given
+after launching the bots but before sending them the game state. This
+was previously reported as having a longer first turn, but since the
+map is not given, no processing is possible for these two
+seconds. This is just to help bots written in languages whose VMs need
+some "warm-up" time.) Both bots perform these operations concurrently,
+and they are each unaware of what the other bot is doing. The choice
+of using wall-clock time rather than CPU time is primarily due to
+technical difficulties in measuring child processes' CPU times in real
+time. If a simple way to monitor CPU time instead is discovered, this
+part of the spec may change.
 
 ### Bot Orders
 
