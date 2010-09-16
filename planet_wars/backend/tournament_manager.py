@@ -149,15 +149,23 @@ while time.time() - start_time < time_limit:
   if len(errors) == 0:
     log_message("inserting game outcome into the db")
     cursor.execute("INSERT INTO games (winner,loser,map_id,draw,timestamp," + \
-      "player_one,player_two,playback_string) VALUES (" + \
+      "player_one,player_two) VALUES (" + \
       str(winner) + "," + \
       str(loser) + "," + \
       str(map_id) + "," + \
       str(draw) + "," + \
       str(timestamp) + "," + \
       str(player_one["submission_id"]) + "," + \
-      str(player_two["submission_id"]) + "," + \
-      "'" + str(playback_string) + "')")
+      str(player_two["submission_id"]) + ")")
+    
+    game_id = connection.insert_id()
+    compressed_playback_string = zlib.compress(playback_string,9)
+    cursor = connection.cursor()
+    cursor.execute(
+        "INSERT INTO playback SET game_id = %s, playback_string = %s",
+        (game_id, compressed_playback_string)
+        )
+    
     
     game_id = connection.insert_id()
     compressed_playback_string = zlib.compress(playback_string,9)
