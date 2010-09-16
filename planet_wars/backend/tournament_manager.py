@@ -55,13 +55,27 @@ cursor.execute("""
   INNER JOIN languages l ON l.language_id = s.language_id
   WHERE s.status = 40
 """)
-submissions = cursor.fetchall()
+submissions = list(cursor.fetchall())
 log_message("found " + str(len(submissions)) + " active submissions")
 # Get the list of maps.
 log_message("fetching map list from db")
 cursor.execute("SELECT * FROM maps")
 maps = cursor.fetchall()
 log_message("found " + str(len(maps)) + " maps")
+# Get the rankings
+cursor.execute("""
+  SELECT r.* from rankings r WHERE leaderboard_id = (select max(leaderboard_id) from leaderboards);
+""")
+rankings = cursor.fetchall()
+log_message("found " + str(len(maps)) + " rankings")
+# Order submissions by ranking
+rankings_by_submission_id = {}
+for ranking in rankings:
+  rankings_by_submission_id[ranking['submission_id']] = ranking['rank']
+default_rank = int(len(rankings)/2)
+for submission in submissions:
+  submission['rank'] = rankings_by_submission_id.get(submission['submission_id'],default_rank)
+submissions.sort(key=lambda x: x['rank'])
 # Are there enough players? Are there enough maps?
 if len(submissions) < 2:
   log_message("There are fewer than two active submissions. No games can " + \
@@ -73,15 +87,25 @@ if len(maps) < 1:
 log_message("starting tournament. time is " + str(time.time()))
 start_time = time.time()
 while time.time() - start_time < time_limit:
-  # Choose two different players at random
   log_message("attempting to match two bots. time is " + str(time.time()))
   map = random.choice(maps)
+  # Choose probably near bots to fight
+  pickable_spread = random.choice([5,10,10,20,40,100,200,1000])
   player_one = random.choice(submissions)
   player_two = player_one
   while player_one == player_two:
-    player_two = random.choice(submissions)
-  log_message(str(player_one["submission_id"]) + " vs " + \
-    str(player_two["submission_id"]) + " on " + str(map["name"]))
+    offset = random.randint(-pickable_spread,pickable_spread) + submissions.index(player_one)
+    if offset < 0:
+      continue
+    if offset >= len(submissions):
+      continue
+    player_two = submissions[offset]
+  log_message("%s (rank %d) vs %s (rank %d) on %s" % (
+      player_one["submission_id"],
+      player_one["rank"],
+      player_two["submission_id"],
+      player_two["rank"],
+      map["name"]))
   # Invoke the game engine.
   player_one_path = "../submissions/" + str(player_one["submission_id"]) + "/."
   player_two_path = "../submissions/" + str(player_two["submission_id"]) + "/."
