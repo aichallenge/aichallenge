@@ -97,31 +97,51 @@ def travel_time(a, b):
 
 # Processes the given order, as if it was given by the given player_id. If
 # everything goes well, returns True. Otherwise, returns False.
-def issue_order(order, player_id, planets, fleets, order_strings):
-  if order["source"] < 0 or order["source"] >= len(planets):
+def issue_order(order, player_id, planets, fleets, temp_fleets):
+  src = order["source"]
+  dest = order["destination"]
+  if src < 0 or src >= len(planets):
     return False
-  if order["destination"] < 0 or order["destination"] >= len(planets):
+  if dest < 0 or dest >= len(planets):
     return False
-  source_planet = planets[order["source"]]
-  destination_planet = planets[order["destination"]]
-  if source_planet["owner"] != player_id:
+  source_planet = planets[src]
+  owner = source_planet["owner"]
+  num_ships = order["num_ships"]
+  if owner != player_id:
     return False
-  if order["num_ships"] > source_planet["num_ships"]:
+  if num_ships > source_planet["num_ships"]:
     return False
-  if order["num_ships"] < 0:
+  if num_ships < 0:
     return False
-  source_planet["num_ships"] -= order["num_ships"]
-  t = travel_time(source_planet, destination_planet)
-  fleets.append({
-    "source" : order["source"],
-    "destination" : order["destination"],
-    "num_ships" : order["num_ships"],
-    "owner" : source_planet["owner"],
-    "total_trip_length" : t,
-    "turns_remaining" : t
-  })
-  order_strings.append(str(order["source"]) + "." + \
-    str(order["destination"]) + "." + str(order["num_ships"]))
+  source_planet["num_ships"] -= num_ships
+  if src not in temp_fleets:
+    temp_fleets[src] = {}
+  if dest not in temp_fleets[src]:
+    temp_fleets[src][dest] = 0
+  temp_fleets[src][dest] += num_ships
+  return True
+
+# Processes fleets launched this turn into the normal
+# fleets array.
+def process_new_fleets(planets, fleets, temp_fleets):
+  for src, destd in temp_fleets.iteritems():
+    source_planet = planets[src]
+    owner = source_planet["owner"]
+    if owner == 0:
+      # player launched fleets then died, so "erase" these fleets
+      continue
+    for dest, num_ships in destd.iteritems():
+      if num_ships > 0:
+        destination_planet = planets[dest]
+        t = travel_time(source_planet, destination_planet)
+        fleets.append({
+          "source" : src,
+          "destination" : dest,
+          "num_ships" : num_ships,
+          "owner" : owner,
+          "total_trip_length" : t,
+          "turns_remaining" : t
+        })
 
 # "a" is an array. This method returns the number of non-zero elements in a.
 def num_non_zero(a):
@@ -290,7 +310,7 @@ def play_game(map, max_turn_time, max_turns, players, debug=False):
   outcome = dict()
   remaining = remaining_players(planets, fleets)
   while turn_number <= max_turns and len(remaining) > 1:
-    order_strings = []
+    temp_fleets = {}
     for i, c in enumerate(clients):
       if (i+1) not in remaining:
         continue
@@ -321,9 +341,13 @@ def play_game(map, max_turn_time, max_turns, players, debug=False):
             c.kill()
             kick_player_from_game(i+1, planets, fleets)
           else:
-            if debug:
+            if not issue_order(order, i+1, planets, fleets, temp_fleets):
+              sys.stderr.write("player %d bad order: %s\n" % (i+1, line))
+              c.kill()
+              kick_player_from_game(i+1, planets, fleets)
+            elif debug:
               sys.stderr.write("player " + str(i+1) + " order: " + line + "\n")
-            issue_order(order, i+1, planets, fleets, order_strings)
+    process_new_fleets(planets, fleets, temp_fleets)
     # Kick players that took too long to move.
     for i, c in enumerate(clients):
       if (i+1) not in remaining or client_done[i]:
