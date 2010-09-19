@@ -43,7 +43,7 @@ log_message("db connection established")
 log_message("getting active submissions from db")
 
 # Get the list of currently active submissions.
-cursor.execute("""
+submissions_sql = """
   SELECT s.*, l.*
   FROM submissions s
   INNER JOIN (
@@ -54,8 +54,9 @@ cursor.execute("""
   ) AS o ON o.submission_id = s.submission_id
   INNER JOIN languages l ON l.language_id = s.language_id
   WHERE s.status = 40
-""")
-submissions = list(cursor.fetchall())
+"""
+cursor.execute(submissions_sql)
+submissions = list(cursor.fetchall()) 
 log_message("found " + str(len(submissions)) + " active submissions")
 # Get the list of maps.
 log_message("fetching map list from db")
@@ -89,12 +90,23 @@ start_time = time.time()
 while time.time() - start_time < time_limit:
   log_message("attempting to match two bots. time is " + str(time.time()))
   map = random.choice(maps)
-  # Choose probably near bots to fight
+  # Choose a bot that has not been played recently
+  next_bot_sql = submissions_sql + " ORDER BY last_game_timestamp LIMIT 1"
+  cursor = connection.cursor(MySQLdb.cursors.DictCursor)
+  cursor.execute(next_bot_sql)
+  player_one = cursor.fetchone()
+  update_timestamp_sql = "UPDATE submissions SET last_game_timestamp = current_timestamp WHERE submission_id = %s"
+  cursor.execute(update_timestamp_sql, player_one['submission_id'])
+  player_one['rank'] = rankings_by_submission_id.get(player_one['submission_id'],default_rank)
+  # Choose a probably near bot to fight
   pickable_spread = random.choice([5,10,10,20,40,100,200,1000])
-  player_one = random.choice(submissions)
   player_two = player_one
-  while player_one == player_two:
-    offset = random.randint(-pickable_spread,pickable_spread) + submissions.index(player_one)
+  while player_one['user_id'] == player_two['user_id']:
+    if player_one in submissions:
+      player_one_offset = submissions.index(player_one)
+    else:
+      player_one_offset = default_rank
+    offset = random.randint(-pickable_spread,pickable_spread) + player_one_offset
     if offset < 0:
       continue
     if offset >= len(submissions):
@@ -157,15 +169,6 @@ while time.time() - start_time < time_limit:
       str(timestamp) + "," + \
       str(player_one["submission_id"]) + "," + \
       str(player_two["submission_id"]) + ")")
-    
-    game_id = connection.insert_id()
-    compressed_playback_string = zlib.compress(playback_string,9)
-    cursor = connection.cursor()
-    cursor.execute(
-        "INSERT INTO playback SET game_id = %s, playback_string = %s",
-        (game_id, compressed_playback_string)
-        )
-    
     
     game_id = connection.insert_id()
     compressed_playback_string = zlib.compress(playback_string,9)
