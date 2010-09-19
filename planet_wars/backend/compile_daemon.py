@@ -2,9 +2,23 @@ import os
 import sys
 from compile_anything import *
 import gmail
+import logging
+import logging.handlers
 import MySQLdb
 from server_info import server_info
 import time
+
+logger = logging.getLogger('compile_logger')
+logger.setLevel(logging.INFO)
+handler = logging.handlers.RotatingFileHandler("compile.log",
+                                               maxBytes=1000000,
+                                               backupCount=5)
+logger.addHandler(handler)
+my_pid = os.getpid()
+
+def log_message(message):
+  logger.info(str(my_pid) + ": " + message)
+  print message
 
 # Looks in the given directory for a file called entry.zip, entry.tar.gz, or
 # entry.gz. Returns some output and some error output. If the error output has
@@ -121,6 +135,9 @@ def compile_submission(submission_id, email_address):
     send_success_mail(email_address, output_messages)
   else:
     set_submission_status(submission_id, 70)
+    log_message('submission_id: %s' % submission_id)
+    log_message('output: %s' % output_messages)
+    log_message('error_messages: %s' % error_messages)
     send_fail_mail(email_address, output_messages, error_messages)
 
 # Returns a list of submissions that have to be compiled. Each element of the
@@ -170,8 +187,8 @@ while time.time() - start_time < max_time:
     s = submissions[0]
     submission_id = s["submission_id"]
     email = s["email"]
-    print "Compiling submission " + str(submission_id) + ". Backlog size: " + \
-      str(len(submissions) - 1)
+    log_message( "Compiling submission " + str(submission_id) + ". Backlog size: " + \
+      str(len(submissions) - 1) )
     compile_submission(submission_id, email)
   else:
     time.sleep(2)
