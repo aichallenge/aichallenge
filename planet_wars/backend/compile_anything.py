@@ -74,6 +74,11 @@ def compile_function(language):
     if os.path.exists("MyBot.jar"):
       os.chmod("MyBot.jar", 0644)
     return out_message, err_message
+  if language == "CoffeeScript":
+    for script in safeglob('*.coffee'):
+      os.chmod(script, 0644)
+    check_path('MyBot.coffee')
+    return "CoffeeScript scripts do not need to be compiled.", ""
   if language == "Haskell":
     nukeglob('MyBot')
     out, err = system(['ghc', '--make', 'MyBot.hs', '-O2', '-v0'])
@@ -125,21 +130,26 @@ def compile_function(language):
       os.chmod(script, 0644)
     check_path('MyBot.py')
     return "Python scripts do not need to be compiled.", ""
+  if language == "PHP":
+    for script in safeglob('*.php'):
+      os.chmod(script, 0644)
+    check_path('MyBot.php')
+    return "Php scripts need not be compiled", ""
   if language == "Ruby":
-    print "Ruby scripts need not be compiled"
     for script in safeglob('*.rb'):
       os.chmod(script, 0644)
     check_path('MyBot.rb')
+    return "Ruby scripts need not be compiled", ""
   if language == "Perl":
-    print "Perl scripts need not be compiled"
     for script in safeglob('*.pl'):
       os.chmod(script, 0644)
     check_path('MyBot.pl')
+    return "Perl scripts need not be compiled", ""
   if language == "Javascript":
-    print "JavaScript scripts need not be compiled"
     for script in safeglob('*.js'):
       os.chmod(script, 0644)
     check_path('MyBot.js')
+    return "Javascript scripts do not need to be compiled.", ""
   if language == "Scheme":
     print "Scheme scripts need not be compiled"
     for script in safeglob('*.ss'):
@@ -157,12 +167,14 @@ def compile_function(language):
     check_path('MyBot.clj')
   if language == "Ocaml":
     nukeglob('MyBot.native')
-    system(['ocamlbuild', 'MyBot.native'])
+    out, err = system(['ocamlbuild', 'MyBot.native'])
     check_path('MyBot.native')
+    return out, err
   if language == "Lisp":
     nukeglob('MyBot')
-    system(['/usr/local/bin/make-clisp', 'MyBot.lisp'])
-    check_path('MyBot.sbcl')
+    out, err = system(['sbcl', '--end-runtime-options', '--no-sysinit', '--no-userinit', '--disable-debugger', '--load MyBot.lisp', '--eval', "(save-lisp-and-die \"MyBot\" :executable t :toplevel #'pwbot::main)"])
+    check_path('MyBot')
+    return out, err
 
 def get_programming_languages():
   connection = MySQLdb.connect(host = server_info["db_host"],
