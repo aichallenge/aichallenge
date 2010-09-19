@@ -47,6 +47,7 @@ from
     inner join users u on u.user_id = s.user_id
     left outer join organizations o on o.org_id = u.org_id
     left outer join countries c on c.country_id = u.country_id
+    inner join languages l on l.language_id = s.language_id
 where
     leaderboard_id = (select max(leaderboard_id) from leaderboards)
     $filter_text
@@ -94,7 +95,6 @@ EOT;
     } else if ($page != 0) {
         $rankings_query .= " limit $viewresults OFFSET " . ($viewresults * ($page-1));
     }
-
     $rankings_results = mysql_query($rankings_query);
 
     // If query fails
