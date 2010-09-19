@@ -7,6 +7,7 @@ var Visualizer = {
     frameDrawStarted: null,
     frameDrawEnded: null,
     players: ["Player A", "Player B"],
+    playerIds: ["-1", "-1"],
     planets: [],
     moves: [],
     dirtyRegions: [],
@@ -255,6 +256,8 @@ var Visualizer = {
                     case "player_one": this.players[0] = value[1]; break;
                     case "player_two": this.players[1] = value[1]; break;
                     case "playback_string": data = value[1]; break;
+                    case "user_one_id": this.playerIds[0] = value[1]; break;
+                    case "user_two_id": this.playerIds[1] = value[1]; break;
                 }
             }
         }
@@ -396,13 +399,13 @@ var ParserUtils = {
     })
     
     $('#display').bind('drawn', function(){
-      $('#turnCounter').html('Turn: '+Math.floor(Visualizer.frame+1)+' of '+Visualizer.moves.length)
+      $('#turnCounter').text('Turn: '+Math.floor(Visualizer.frame+1)+' of '+Visualizer.moves.length)
     })
     
-    $('.player1Name').text(Visualizer.players[0])
-    $('.player1Name').css('color',Visualizer.config.teamColor[1])
-    $('.player2Name').text(Visualizer.players[1])
-    $('.player2Name').css('color',Visualizer.config.teamColor[2])
+    $('.player1Name').html('<a href="profile.php?user_id=' + Visualizer.playerIds[0] + '">' + Visualizer.players[0] + '</a>')
+    $('.player1Name a').css({'color':Visualizer.config.teamColor[1],'text-decoration':'none'})
+    $('.player2Name').html('<a href="profile.php?user_id=' + Visualizer.playerIds[1] + '">' + Visualizer.players[1] + '</a>')
+    $('.player2Name a').css({'color':Visualizer.config.teamColor[2],'text-decoration':'none'})
     $('.playerVs').text('v.s.')
     $('title').text(Visualizer.players[0]+' v.s. '+Visualizer.players[1]+' - Planet Wars')
     
