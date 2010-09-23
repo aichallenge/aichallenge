@@ -389,8 +389,8 @@ public class Game implements Cloneable {
     public String GamePlaybackString() {
   return gamePlayback.toString();
     }
-    
-    
+
+
     // Returns the playback string so far, then clears it.
     // Used for live streaming output
     public String FlushGamePlaybackString(){
@@ -438,7 +438,7 @@ public class Game implements Cloneable {
   // to their inherent radii. The radii are scaled for maximum aesthetic
   // appeal.
   private double inherentRadius(Planet p) {
-    return Math.sqrt(p.GrowthRate());
+    return Math.sqrt(Math.max(1, p.GrowthRate()));
     //return Math.log(p.GrowthRate() + 3.0);
     //return p.GrowthRate();
   }
