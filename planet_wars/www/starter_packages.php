@@ -38,5 +38,28 @@
   C&#35;. The starter package is a simple working entry that you can use as a
   starting point. You can even submit the zip file on the Upload Your Code
   page, since it is a valid working entry!</p>
+  
+
+<h3>Haskell</h3>
+<p>Haskel is supported. We are using GHC version 6.8.2. Check the forums for user contributed starter packs.</p>
+
+<h3>Ruby</h3>
+<p>Ruby is supported. We are using Ruby 1.9.0. Check the forums for user contributed starter packs.</p>
+
+<h3>Javascript</h3>
+<p>Javascript is supported. We are using node v0.2.1. Check the forums for user contributed starter packs.</p>
+
+<h3>PHP</h3>
+<p>PHP is supported. We are using PHP 5.2.4. Check the forums for user contributed starter packs.</p>
+
+<h3>Perl</h3>
+<p>Perl is supported. We are using perl 5.8.8. Check the forums for user contributed starter packs.</p>
+
+<h3>OCaml</h3>
+<p>OCaml is supported. We are using OCaml version 3.10.0. Check the forums for user contributed starter packs.</p>
+
+<h3>Lisp</h3>
+<p>Lisp is supported. We are using SBCL 1.0.11. Check the forums for user contributed starter packs.</p>
+
 
 <?php include 'footer.php'; ?>
