@@ -21,9 +21,9 @@ $sql = "INSERT INTO games (winner,loser,map_id,draw,timestamp,".
             "'".addslashes($gamedata->draw) . "', ".
             " current_timestamp, ".
             "'".addslashes($gamedata->player_one) . "',".
-            "'".addslashes($gamedata->player_two) . "',
-            2
-          )";
+            "'".addslashes($gamedata->player_two) . "',".
+            "'".addslashes($worker['worker_id'])."'".
+          ")";
 mysql_query($sql);
 if(mysql_error()!=''){
   die(mysql_error()."\n".$sql);

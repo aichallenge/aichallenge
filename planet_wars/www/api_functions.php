@@ -1,8 +1,8 @@
 <?
 require_once('mysql_login.php');
 
-$allowed = valid_worker($_GET['api_key'],$_SERVER['REMOTE_ADDR']);
-if(! $allowed){
+$worker = valid_worker($_GET['api_key'],$_SERVER['REMOTE_ADDR']);
+if($worker==false){
   header('HTTP/1.0 401 Unauthorized');
   die();
 }
@@ -22,7 +22,7 @@ function valid_worker($api_key,$ip_address){
    if($ip_address!=$worker['ip_address']){
      return false;
    }
-   return true;
+   return $worker;
 }
  
 ?>
