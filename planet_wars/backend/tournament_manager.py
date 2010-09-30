@@ -130,8 +130,12 @@ while time.time() - start_time < time_limit:
   timestamp = "CURRENT_TIMESTAMP"
   playback_string = ""
   errors = ""
+  errors_data = []
   if "error" in outcome:
     log_message("the game engine reported an error: " + outcome["error"])
+  if "errors_data" in outcome:
+    errors_data = outcome["errors_data"]
+    log_message(errors_data)
   if "winner" in outcome:
     log_message("winner:" + str(outcome["winner"]))
     if outcome["winner"] == 0:
@@ -161,7 +165,8 @@ while time.time() - start_time < time_limit:
       'draw':draw,
       'player_one':player_one['submission_id'],
       'player_two':player_two['submission_id'],
-      'playback_string':playback_string
+      'playback_string':playback_string,
+      'errors':errors_data
     }
     
     cloud.record_game(data)
