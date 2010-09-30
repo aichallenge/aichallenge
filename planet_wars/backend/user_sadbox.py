@@ -107,17 +107,25 @@ class Sadbox:
     if security_on:
       self.jail_username = lock_jail_user()
       if self.jail_username is None:
+        sys.stderr.write("No open jail users")
         return
       os.system("ssh -i jail_id_rsa " + self.jail_username + \
         "@localhost \"rm -rf *\"")
       os.system("scp -r -i jail_id_rsa " + str(working_directory) + " " + \
         self.jail_username + "@localhost:~/ > /dev/null 2> /dev/null")
-      ssh_command = "ssh -i jail_id_rsa " + self.jail_username + \
-        "@localhost " + shell_command
-      self.command_process = subprocess.Popen(shlex.split(ssh_command), \
-                                              stdin=subprocess.PIPE, \
-                                              stdout=subprocess.PIPE, \
-                                              stderr=subprocess.PIPE)
+      shell_command = shell_command.encode("iso-8859-1")
+      shell_command = "sudo -H -u %s %s" % (self.jail_username, shell_command)
+      print "%r" % shell_command
+      self.command_process = subprocess.Popen(shlex.split(shell_command), 
+                                              stdin=subprocess.PIPE, 
+                                              stdout=subprocess.PIPE, 
+                                              # Not handling stderr, since we want it passed up
+                                              # and not piling up inside the tournament manager/
+                                              # Some bots write gigs to stderr.
+                                              # In the future, we should read it, 
+                                              # save the front and the back, and discard the rest.
+                                              cwd="/home/"+self.jail_username
+                                              )
       self.is_alive = not self.command_process is None
       stdout_monitor = Thread(target=monitor_input_channel, args=(self,))
       stdout_monitor.start()
@@ -137,9 +145,7 @@ class Sadbox:
   # suddenly terminated.
   def kill(self):
     if self.is_alive:
-      os.system("ssh -i jail_id_rsa " + self.jail_username + "@localhost " + \
-        "killall -u " + self.jail_username + " > /dev/null 2> /dev/null")
-      os.kill(self.command_process.pid, signal.SIGKILL)
+      os.system("sudo -u %s -H killall -u %s " % (self.jail_username, self.jail_username))
       self.is_alive = False
       release_jail_user(self.jail_username)
 
