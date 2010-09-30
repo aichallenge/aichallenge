@@ -33,13 +33,16 @@ def too_close(x, y, growth_rate):
     dist = math.sqrt(dx * dx + dy * dy)
     threshold = \
       multiplier * (math.sqrt(growth_rate) + math.sqrt(p["growth_rate"]))
-    if dist < threshold:
+    if dist < threshold or dist <= 1:
       return True
   return False
 
 planets.append(make_planet(0, 0, 0, random.randint(0, 5), random.randint(1, 150)))
 x = rand_coord()
 y = rand_coord()
+while too_close(x, y, 5):
+  x = rand_coord()
+  y = rand_coord()
 planets.append(make_planet(x, y, 1, 5, 100))
 planets.append(make_planet(-x, -y, 2, 5, 100))
 for i in range(10):
