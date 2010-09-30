@@ -304,7 +304,8 @@ def play_game(map, max_turn_time, max_turns, players, debug=False):
       return {"error" : "failure_to_start_client"}
   if debug:
     sys.stderr.write("waiting for players to spin up\n")
-  time.sleep(2)
+  time.sleep(0.01) # Changed from 2 seconds, since this meant that we waste a guaranteed 2 seconds each game.
+                   # When a tournament manager is playing 15 games a minute, this adds up
   turn_number = 1
   turn_strings = []
   outcome = dict()
@@ -322,6 +323,10 @@ def play_game(map, max_turn_time, max_turns, players, debug=False):
     client_done = [False] * len(clients)
     start_time = time.time()
     time_limit = float(max_turn_time) / 1000
+    if turn_number <= 2:           # Add a little extra time for clients to spin up
+      time_limit = time_limit * 3  # and for avoiding timeout errors
+                                   # For bot coders reading this, don't count on this time
+                                   # It may be removed at any time!
     # Get orders from players
     while not all_true(client_done) and time.time() - start_time < time_limit:
       for i, c in enumerate(clients):
@@ -347,6 +352,9 @@ def play_game(map, max_turn_time, max_turns, players, debug=False):
               kick_player_from_game(i+1, planets, fleets)
             elif debug:
               sys.stderr.write("player " + str(i+1) + " order: " + line + "\n")
+      time.sleep(0.001) # added this since this while loop would use up 33% of the CPU
+                        # it's still quite bad CPU wise
+                        # Really needs to use select or the like to wait on bot input.
     process_new_fleets(planets, fleets, temp_fleets)
     # Kick players that took too long to move.
     for i, c in enumerate(clients):
