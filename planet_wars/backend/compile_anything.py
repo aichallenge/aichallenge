@@ -165,14 +165,14 @@ def compile_function(language):
     for script in safeglob('*.clj'):
       os.chmod(script, 0644)
     check_path('MyBot.clj')
-  if language == "Ocaml":
+  if language == "OCaml":
     nukeglob('MyBot.native')
     out, err = system(['ocamlbuild', 'MyBot.native'])
     check_path('MyBot.native')
     return out, err
   if language == "Lisp":
     nukeglob('MyBot')
-    out, err = system(['sbcl', '--end-runtime-options', '--no-sysinit', '--no-userinit', '--disable-debugger', '--load MyBot.lisp', '--eval', "(save-lisp-and-die \"MyBot\" :executable t :toplevel #'pwbot::main)"])
+    out, err = system(['sbcl', '--end-runtime-options', '--no-sysinit', '--no-userinit', '--disable-debugger', '--load', 'MyBot.lisp', '--eval', "(save-lisp-and-die \"MyBot\" :executable t :toplevel #'pwbot::main)"])
     check_path('MyBot')
     return out, err
 
