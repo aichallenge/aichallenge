@@ -6,7 +6,8 @@ import sys
 groupscript = """
   groupadd jailusers;
   echo "@jailusers hard nproc 10 # contest" >> /etc/security/limits.conf
-  echo "@jailusers hard cpu 10 # contest" >> /etc/security/limits.conf
+  echo "@jailusers hard cpu 4 # contest" >> /etc/security/limits.conf
+  echo "@jailusers hard rss 1040000 # contest" >> /etc/security/limits.conf
 """
 
 userscript = """
