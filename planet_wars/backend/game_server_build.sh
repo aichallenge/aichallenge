@@ -83,3 +83,7 @@ cd /home/contest/ai-contest/planet_wars/backend/;
 # for (( ; ; )); do   sudo -u contest python tournament_manager.py 575 > /dev/null 2> /dev/null; sleep 5; done
 
 
+echo '/home/contest/ai-contest/planet_wars/backend/tournament_manager_runner.sh &' >> /etc/rc.local
+echo '/home/contest/ai-contest/planet_wars/backend/tournament_manager_runner.sh &' >> /etc/rc.local
+/home/contest/ai-contest/planet_wars/backend/tournament_manager_runner.sh &
+/home/contest/ai-contest/planet_wars/backend/tournament_manager_runner.sh &
