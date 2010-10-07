@@ -1,39 +1,48 @@
+#!/bin/sh
 # 
 # This should build a cloud game server.
 # 
 # Start with ami-5d59be34 Ubuntu 8 HARDY LTS
-# 
-# 
-# 
-api_base_url="http://ai-contest.com"
-api_key="KEYGOESHERElakfjsdkjfhalksdjfhalksdjfhkdasjhfaklj"
+
+# If manualy using the script, uncomment the two below lines
+
+# api_base_url="http://ai-contest.com"
+# api_key="KEYGOESHERElakfjsdkjfhalksdjfhalksdjfhkdasjhfaklj"
 
 
+
+set -e # print commands to output - helpful for debugging
+
+export DEBIAN_FRONTEND=noninteractive
 aptitude update
 aptitude install -y htop subversion curl screen rrdtool collectd unzip pwgen vim
-export DEBIAN_FRONTEND=noninteractive
 aptitude install -y mysql-server mysql-client
-export DEBIAN_FRONTEND=
+echo $?
 aptitude install -y python2.5-mysqldb python2.5-simplejson
+echo $?
 aptitude install -y python ruby1.9 php5-cli perl gcc g++ libssl-dev make glibc-2.7-1 common-lisp-controller ghc6 git-core haskell-utils mono-common mono-gac mono-gmcs mono-jit mono-mcs mono-runtime mono-utils ocaml openjdk-6-jre-headless sbcl libboost-dev python2.5-numpy
+echo $?
+export DEBIAN_FRONTEND=''
 
 cd ~
     curl 'http://nodejs.org/dist/node-v0.2.2.tar.gz' | tar -xz \
     && cd node-v0.2.2/ \
     && ./configure && make && make install
 
-adduser contest --disabled-password
+adduser contest --disabled-password --gecos ""
 echo 'export HISTCONTROL=erasedups' >> ~/.bashrc
 echo 'export HISTSIZE=10000' >> ~/.bashrc
 echo 'shopt -s histappend' >> ~/.bashrc
 echo 'PROMPT_COMMAND=\"history -a\"' >> ~/.bashrc
-source ~/.bashrc
 mv /usr/bin/ruby /usr/bin/ruby_old
 ln -s /usr/bin/ruby1.9 /usr/bin/ruby
 
 
 cd /home/contest/; svn checkout https://ai-contest.googlecode.com/svn/branches/20100929-games-in-the-cloud ai-contest --username danielvf
 /etc/init.d/mysql start
+
+# Amazon specific. Disallow access to instance userdata (since it would contain the api registration key)
+route add -host 169.254.169.254 reject 
 
 # Copy over the latest scripts
 
@@ -57,7 +66,6 @@ server_info = {
     mysql contest < schema.sql
     python create_jail_users.py 32
     chown -R contest:contest .
-    chmod 600 jail_id_rsa
     chmod 640 /etc/sudoers
     echo 'contest ALL = (%jailusers) NOPASSWD: ALL' >> /etc/sudoers
     chmod 440 /etc/sudoers
