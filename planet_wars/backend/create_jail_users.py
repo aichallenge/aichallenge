@@ -13,11 +13,6 @@ groupscript = """
 userscript = """
   useradd -G jailusers -d /home/[username] -m [username];
   mkdir /home/[username]/.ssh;
-  cp jail_id_rsa.pub /home/[username]/.ssh/authorized_keys;
-  chown [username] /home/[username]/.ssh;
-  #chown [username] /home/[username]/.ssh/authorized_keys;
-  chmod 700 /home/[username]/.ssh;
-  chmod 644 /home/[username]/.ssh/authorized_keys;
   iptables -A OUTPUT -p tcp -m owner --uid-owner [username] -j DROP;
 """
 
