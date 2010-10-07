@@ -24,16 +24,16 @@ aptitude install -y python ruby1.9 php5-cli perl gcc g++ libssl-dev make glibc-2
 echo $?
 export DEBIAN_FRONTEND=''
 
-cd ~
+cd /root/
     curl 'http://nodejs.org/dist/node-v0.2.2.tar.gz' | tar -xz \
     && cd node-v0.2.2/ \
     && ./configure && make && make install
 
 adduser contest --disabled-password --gecos ""
-echo 'export HISTCONTROL=erasedups' >> ~/.bashrc
-echo 'export HISTSIZE=10000' >> ~/.bashrc
-echo 'shopt -s histappend' >> ~/.bashrc
-echo 'PROMPT_COMMAND=\"history -a\"' >> ~/.bashrc
+echo 'export HISTCONTROL=erasedups' >> /root/.bashrc
+echo 'export HISTSIZE=10000' >> /root/.bashrc
+echo 'shopt -s histappend' >> /root/.bashrc
+echo 'PROMPT_COMMAND=\"history -a\"' >> /root/.bashrc
 mv /usr/bin/ruby /usr/bin/ruby_old
 ln -s /usr/bin/ruby1.9 /usr/bin/ruby
 
