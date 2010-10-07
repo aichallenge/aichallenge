@@ -72,6 +72,6 @@ cd /home/contest/ai-contest/planet_wars/backend/;
 # sudo -u contest python tournament_manager.py 1
 
 # Run games by launching screen, then two instances of
-# for (( ; ; )); do   sudo -u contest python tournament_manager.py 575; sleep 5; done
+# for (( ; ; )); do   sudo -u contest python tournament_manager.py 575 > /dev/null 2> /dev/null; sleep 5; done
 
 
