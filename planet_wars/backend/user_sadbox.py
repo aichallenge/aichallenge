@@ -109,10 +109,9 @@ class Sadbox:
       if self.jail_username is None:
         sys.stderr.write("No open jail users")
         return
-      os.system("ssh -i jail_id_rsa " + self.jail_username + \
-        "@localhost \"rm -rf *\"")
-      os.system("scp -r -i jail_id_rsa " + str(working_directory) + " " + \
-        self.jail_username + "@localhost:~/ > /dev/null 2> /dev/null")
+      os.system("sudo -H -u %s rm -rf /home/%s/*" % (self.jail_username, self.jail_username))
+      os.system("sudo -H -u %s cp -r %s /home/%s" % (self.jail_username, working_directory, self.jail_username))
+      
       shell_command = shell_command.encode("iso-8859-1")
       shell_command = "sudo -H -u %s %s" % (self.jail_username, shell_command)
       print "%r" % shell_command
