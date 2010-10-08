@@ -11,7 +11,7 @@
 
 
 
-set -e # print commands to output - helpful for debugging
+set -e -x # print commands to output - helpful for debugging
 
 export DEBIAN_FRONTEND=noninteractive
 aptitude update
