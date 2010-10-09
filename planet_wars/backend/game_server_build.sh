@@ -58,8 +58,8 @@ server_info = {
   "mail_password" : ""
 }
     ' > server_info.py
-    echo "server_info[\"api_base_url\"]=\"$api_base_url\"" >> server_info.py
-    echo "server_info[\"api_key\"]=\"$api_key\"" >> server_info.py
+    echo "server_info['api_base_url']='$api_base_url'" >> server_info.py
+    echo "server_info['api_key']='$api_key'" >> server_info.py
     chmod 600 server_info.py
     
     echo 'create database contest' | mysql 
