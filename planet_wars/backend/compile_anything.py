@@ -1,27 +1,50 @@
 # compile_anything.py
 # Author: Jeff Cameron (jeff@jpcameron.com)
 #
-# Auto-detects the language of the entry in the current working directory
-# and attempts to compile it. The auto-detection works by looking for the
-# "main" code file of several different languages. If no languages are found
-# it is an error, and a message is printed on stderr. If more than one
-# language is auto-detected, it is an error, and a message is printed on
-# stderr.
+# Auto-detects the language of the entry based on the extension,
+# attempts to compile it, returning the stdout and stderr.
+# The auto-detection works by looking for the "main" code file of
+# the available languages. If the number of matching languages is 0 or
+# more than 1, it is an error, and an appropriate error message is returned.
 #
-# To add support for a new language, you need to add a function like
-# compile_java, except for the new language. You also need to "register"
-# this new function in the programming_languages dictionary.
+# To add a new language you must add an entry to the "languages" dictionary in
+# the following format:
+#   LanguageName : (extension, [NukeGlobs], [(Compile_globs, Compile_class)])
+#
+# For example the entry for Python is as follows:
+#   "Python" : (".py", ["*.pyc"], [("*.py", ChmodCompiler("Python"))]).
+# This defines the extension as .py, removes all .pyc files, and runs all the
+# found .py files through the ChmodCompiler, which is a pseudo-compiler class
+# which only chmods the found files.
+#
+# If you want to run a real compiler then you need to define a set of flags to
+# send it. In this case you would either use TargetCompiler or ExternalCompiler.
+# The difference between the two is the TargetCompiler iterates over the found
+# files and creates object files from them, whereas the External doesn't.
+# If in doubt just stick to the ExternalCompiler.
+#
+# An example is from the C# Entry:
+#   "C#" : (".exe", ["*.exe"],
+#           [(["*.cs"], ExternalCompiler(comp_args["C#"][0]))])
+#
+# To make the dictionary more readable the flags have been split into a
+# separate "comp_args" dictionary. C#'s entry looks like so:
+#   "C#" : [["gmcs", "-warn:0", "-out:%s.exe" % BOT]]
+# At runtime this all boils down to:
+#   gmcs -warn:0 -out:MyBot.exe *.cs
+# (though the *.cs is actually replaced with the list of files found)
 
 import os
-import sys
 import re
 import glob
 import subprocess
 import errno
+import time
 import shutil
 import MySQLdb
 from server_info import server_info
 
+BOT = "MyBot"
 SAFEPATH = re.compile('[a-zA-Z0-9_.$-]+$')
 
 def safeglob(pattern):
@@ -32,149 +55,203 @@ def safeglob(pattern):
       safepaths.append(path)
   return safepaths
 
+def safeglob_multi(patterns):
+  safepaths = []
+  for pattern in patterns:
+    safepaths.extend(safeglob(pattern))
+  return safepaths
+
 def nukeglob(pattern):
   paths = glob.glob(pattern)
   for path in paths:
     try:
       if os.path.isdir(path):
-           shutil.rmtree(path)
+        shutil.rmtree(path)
       else:
         os.unlink(path)
     except OSError, e:
       if e.errno != errno.ENOENT:
         raise
 
-def system(args):
-  cmd = ' '.join(args) + "\n"
+class Log:
+  def __init__(self):
+    self.out = ""
+    self.err = ""
+
+def system(args, log):
+  log.out += ' '.join(args) + "\n"
   proc = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
   (out, err) = proc.communicate()
-  return cmd + out, err
+  log.out += out
+  log.err += err
+  return proc.returncode == 0
 
-def check_path(path):
+def check_path(path, log):
   if not os.path.exists(path):
-    return "Failure: output file " + str(path) + " was not created\n"
+    log.err += "\nFailure: output file " + str(path) + " was not created.\n"
+    return False
   else:
-    return ""
+    return True
 
-def compile_function(language):
-  if language == "Java":
-    out_message = ""
-    err_message = ""
-    nukeglob('*.class')
-    nukeglob('*.jar')
-    sources = safeglob('*.java')
-    out, err = system(['javac'] + sources)
-    out_message += out
-    err_message += err
-    out, err = system(['jar', 'cfe', 'MyBot.jar', 'MyBot'] + \
-      safeglob('*.class'))
-    out_message += out
-    err_message += err
-    err_message += check_path('MyBot.jar')
-    if os.path.exists("MyBot.jar"):
-      os.chmod("MyBot.jar", 0644)
-    return out_message, err_message
-  if language == "CoffeeScript":
-    for script in safeglob('*.coffee'):
-      os.chmod(script, 0644)
-    check_path('MyBot.coffee')
-    return "CoffeeScript scripts do not need to be compiled.", ""
-  if language == "Haskell":
-    nukeglob('MyBot')
-    out, err = system(['ghc', '--make', 'MyBot.hs', '-O2', '-v0'])
-    err += check_path('MyBot')
-    return out, err
-  if language == "C#":
-    nukeglob('MyBot.exe')
-    sources = safeglob('*.cs')
-    out, err = system(['gmcs', '-warn:0', '-out:MyBot.exe'] + sources)
-    err += check_path('MyBot.exe')
-    return out, err
-  if language == "C++":
-    out_message = ""
-    err_message = ""
-    nukeglob('*.o')
-    nukeglob('MyBot')
-    sources = safeglob('*.c') + safeglob('*.cc') + safeglob('*.cpp')
+class Compiler:
+  def compile(self, globs, log):
+    raise NotImplementedError
+
+class ChmodCompiler(Compiler):
+  def __init__(self, language):
+    self.language = language
+
+  def compile(self, globs, log):
+    for f in safeglob_multi(globs):
+      try:
+        os.chmod(f, 0644)
+      except Exception, e:
+        log.err += "Error chmoding %s - %s\n" % (f, e)
+    log.out += self.language + " scripts do not need to be compiled.\n"
+    return True
+
+class ExternalCompiler(Compiler):
+  def __init__(self, args, separate=False):
+    self.args = args
+    self.separate = separate
+
+  def compile(self, globs, log):
+    files = safeglob_multi(globs)
+    if self.separate:
+      for file in files:
+        if not system(self.args + [file], log):
+          return False
+    else:
+      if not system(self.args + files, log):
+        return False
+    return True
+
+# Compiles each file to its own output, based on the replacements dict.
+class TargetCompiler(Compiler):
+  def __init__(self, args, replacements, outflag="-o"):
+    self.args = args
+    self.replacements = replacements
+    self.outflag = outflag
+
+  def compile(self, globs, log):
+    sources = safeglob_multi(globs)
     for source in sources:
-      object_file = \
-        source.replace(".cc", "").replace(".cpp", "").replace(".c", "") + ".o"
-      out, err = system(['g++', '-O3', '-funroll-loops', '-c', '-o', \
-        object_file, source])
-      out_message += out
-      err_message += err
-    out, err = system(['g++', '-O2', '-o', 'MyBot'] + safeglob('*.o') + ['-lm'])
-    out_message += out
-    err_message += err
-    err_message += check_path('MyBot')
-    return out_message, err_message
-  if language == "C":
-    nukeglob('*.o')
-    nukeglob('MyBot')
-    sources = safeglob('*.c')
-    for source in sources:
-      object_file = source.replace(".c", "") + ".o"
-      system(['gcc', '-O3', '-funroll-loops', '-c', '-o', object_file, source])
-    system(['gcc', '-O2', '-o', 'MyBot'] + safeglob('*.o') + ['-lm'])
-    check_path('MyBot')
-  if language == "Go":
-    nukeglob('*.6')
-    nukeglob('MyBot')
-    sources = safeglob('*.go')
-    system(['/usr/local/bin/6g', '-o', '_go_.6'] + sources)
-    system(['/usr/local/bin/6l', '-o', 'MyBot', '_go_.6'])
-    check_path('MyBot')
-  if language == "Python":
-    nukeglob('*.pyc')
-    for script in safeglob('*.py'):
-      os.chmod(script, 0644)
-    check_path('MyBot.py')
-    return "Python scripts do not need to be compiled.", ""
-  if language == "PHP":
-    for script in safeglob('*.php'):
-      os.chmod(script, 0644)
-    check_path('MyBot.php')
-    return "Php scripts need not be compiled", ""
-  if language == "Ruby":
-    for script in safeglob('*.rb'):
-      os.chmod(script, 0644)
-    check_path('MyBot.rb')
-    return "Ruby scripts need not be compiled", ""
-  if language == "Perl":
-    for script in safeglob('*.pl'):
-      os.chmod(script, 0644)
-    check_path('MyBot.pl')
-    return "Perl scripts need not be compiled", ""
-  if language == "Javascript":
-    for script in safeglob('*.js'):
-      os.chmod(script, 0644)
-    check_path('MyBot.js')
-    return "Javascript scripts do not need to be compiled.", ""
-  if language == "Scheme":
-    print "Scheme scripts need not be compiled"
-    for script in safeglob('*.ss'):
-      os.chmod(script, 0644)
-    check_path('MyBot.ss')
-  if language == "Lua":
-    print "Lua scripts need not be compiled"
-    for script in safeglob('*.lua'):
-      os.chmod(script, 0644)
-    check_path('MyBot.lua')
-  if language == "Clojure":
-    print "Clojure scripts need not be compiled"
-    for script in safeglob('*.clj'):
-      os.chmod(script, 0644)
-    check_path('MyBot.clj')
-  if language == "OCaml":
-    nukeglob('MyBot.native')
-    out, err = system(['ocamlbuild', 'MyBot.native'])
-    check_path('MyBot.native')
-    return out, err
-  if language == "Lisp":
-    nukeglob('MyBot')
-    out, err = system(['sbcl', '--end-runtime-options', '--no-sysinit', '--no-userinit', '--disable-debugger', '--load', 'MyBot.lisp', '--eval', "(save-lisp-and-die \"MyBot\" :executable t :toplevel #'pwbot::main)"])
-    check_path('MyBot')
-    return out, err
+      head, ext = os.path.splitext(source)
+      if ext in self.replacements:
+        target = head + self.replacements[ext]
+      else:
+        log.err += "Could not determine target for source file %s.\n" % source
+        return False
+      if not system(self.args + [self.outflag, target, source], log):
+        return False
+    return True
+
+comp_args = {
+  # lang : ([list of compilation arguments], ...)
+  #        If the compilation should output each source file to
+  #        its own object file, don't include the -o flags here,
+  #        and use the TargetCompiler in the languages dict.
+  "C"       : [["gcc", "-O3", "-funroll-loops", "-c"],
+               ["gcc", "-O2", "-lm", "-o", BOT]],
+  "C#"      : [["gmcs", "-warn:0", "-out:%s.exe" % BOT]],
+  "C++"     : [["g++", "-O3", "-funroll-loops", "-c"],
+               ["g++", "-O2", "-lm", "-o", BOT]],
+  "Go"      : [["/usr/local/bin/6g", "-o", "_go_.6"],
+               ["/usr/local/bin/6l", "-o", BOT, "_go_.6"]],
+  "Haskell" : [["ghc", "--make", BOT + ".hs", "-O2", "-v0"]],
+  "Java"    : [["javac"],
+               ["jar", "cfe", BOT + ".jar", BOT]],
+  "Lisp"    : [['sbcl', '--end-runtime-options', '--no-sysinit',
+                '--no-userinit', '--disable-debugger', '--load',
+                BOT + '.lisp', '--eval', "(save-lisp-and-die \"" + BOT
+                + "\" :executable t :toplevel #'pwbot::main)"]],
+  "OCaml"   : [["ocamlbuild", BOT + ".native"]],
+  }
+
+targets = {
+  # lang : { old_ext : new_ext, ... }
+  "C"   : { ".c" : ".o" },
+  "C++" : { ".c" : ".o", ".cpp" : ".o", ".cc" : ".o" },
+  }
+
+languages = {
+  # lang : (output extension, [nukeglobs], [(source glob, compiler), ...])
+  #        The compilers are run in the order given.
+  #        If the extension is "" it means the output file is just BOT
+  #        If a source glob is "" it means the source is part of the
+  #          compiler arguments.
+  "C"           : ("",
+                   ["*.o", BOT],
+                   [(["*.c"], TargetCompiler(comp_args["C"][0], targets["C"])),
+                    (["*.o"], ExternalCompiler(comp_args["C"][1]))]),
+  "C#"          : (".exe",
+                   [BOT + ".exe"],
+                   [(["*.cs"], ExternalCompiler(comp_args["C#"][0]))]),
+  "C++"         : ("",
+                   ["*.o", BOT],
+                   [(["*.c", "*.cpp", "*.cc"],
+                     TargetCompiler(comp_args["C++"][0], targets["C++"])),
+                    (["*.o"], ExternalCompiler(comp_args["C++"][1]))]),
+  "Clojure"     : (".clj",
+                   [],
+                   [(["*.clj"], ChmodCompiler("Clojure"))]),
+  "CoffeeScript": (".coffee",
+                   [],
+                   [(["*.coffee"], ChmodCompiler("CoffeeScript"))]),
+  "Go"          : ("",
+                   ["*.6", BOT],
+                   [(["*.go"], ExternalCompiler(comp_args["Go"][0]))]),
+  "Haskell"     : ("",
+                   [BOT],
+                   [([""], ExternalCompiler(comp_args["Haskell"][0]))]),
+  "Java"        : (".jar",
+                   ["*.class, *.jar"],
+                   [(["*.java"], ExternalCompiler(comp_args["Java"][0])),
+                    (["*.class"], ExternalCompiler(comp_args["Java"][1]))]),
+  "Javascript"  : (".js",
+                   [],
+                   [(["*.js"], ChmodCompiler("Javascript"))]),
+  "Lisp"        : (".sbcl",
+                   [BOT, BOT + ".sbcl"],
+                   [([""], ExternalCompiler(comp_args["Lisp"][0]))]),
+  "Lua"         : (".lua",
+                   [],
+                   [(["*.lua"], ChmodCompiler("Lua"))]),
+  "OCaml"       : (".native",
+                   [BOT + ".native"],
+                   [([""], ExternalCompiler(comp_args["OCaml"][0]))]),
+  "Perl"        : (".pl",
+                   [],
+                   [(["*.pl"], ChmodCompiler("Perl"))]),
+  "PHP"        : (".php",
+                   [],
+                   [(["*.php"], ChmodCompiler("PHP"))]),
+  "Python"      : (".py",
+                   ["*.pyc"],
+                   [(["*.py"], ChmodCompiler("Python"))]),
+  "Ruby"        : (".rb",
+                   [],
+                   [(["*.rb"], ChmodCompiler("Ruby"))]),
+  "Scheme"      : (".ss",
+                   [],
+                   [(["*.ss"], ChmodCompiler("Scheme"))]),
+  }
+
+
+def compile_function(language, log):
+  info = languages[language]
+  extension = info[0]
+  nukeglobs = info[1]
+  compilers = info[2]
+
+  for glob in nukeglobs:
+    nukeglob(glob)
+
+  for globs, compiler in compilers:
+    if not compiler.compile(globs, log):
+      return False
+
+  return check_path(BOT + extension, log)
 
 def get_programming_languages():
   connection = MySQLdb.connect(host = server_info["db_host"],
@@ -191,8 +268,7 @@ def get_programming_languages():
 # Autodetects the language of the entry in the current working directory and
 # compiles it.
 def compile_anything():
-  output = ""
-  error = ""
+  log = Log()
   programming_languages = get_programming_languages()
   detected_langs = [
     lang for lang in programming_languages \
@@ -200,37 +276,35 @@ def compile_anything():
   ]
   # If no language was detected
   if len(detected_langs) == 0:
-    error += "The auto-compile environment could not locate your main code\n"
-    error += "file. This is probably because you accidentally changed the\n"
-    error += "name of your main code file. You must include exactly one file\n"
-    error += "with one of the following names:\n"
+    log.err += "The auto-compile environment could not locate your main code\n"
+    log.err += "file. This is probably because you accidentally changed the\n"
+    log.err += "name of your main code file. You must include exactly one file"
+    log.err += "\nwith one of the following names:\n"
     for lang in programming_languages:
-      error += "   * " + lang["main_code_file"] + " (" + lang["name"] + ")\n"
-    error += "This is to help the auto-compile environment figure out which\n"
-    error += "programming language you are using.\n"
-    return output, error, "NULL"
+      log.err += "   * " + lang["main_code_file"] + " (" + lang["name"] + ")\n"
+    log.err += "This is to help the auto-compile environment figure out which"
+    log.err += "\nprogramming language you are using.\n"
+    return log.out, log.err, "NULL"
   # If more than one language was detected
   if len(detected_langs) > 1:
-    error = "The auto-compile environment found more than one main code "
-    error += "file:\n"
+    log.err = "The auto-compile environment found more than one main code "
+    log.err += "file:\n"
     for lang in detected_langs:
-      error += "   * " + lang["main_code_file"] + " (" + lang["name"] + ")\n"
-    error += "You must submit only one of these files so that the "
-    error += "auto-compile environment can figure out which programming "
-    error += "language you are trying to use.\n"
-    return output, error, "NULL"
+      log.err += "   * " + lang["main_code_file"] + " (" + lang["name"] + ")\n"
+    log.err += "You must submit only one of these files so that the\n"
+    log.err += "auto-compile environment can figure out which programming\n"
+    log.err += "language you are trying to use.\n"
+    return log.out, log.err, "NULL"
   # If we get this far, then we have successfully auto-detected the language
   # that this contestant is using.
   main_code_file = detected_langs[0]["main_code_file"]
   detected_lang = detected_langs[0]["name"]
   language_id = detected_langs[0]["language_id"]
-  output += "Found " + main_code_file + ". Compiling this entry as " + \
+  log.out += "Found " + main_code_file + ". Compiling this entry as " + \
     detected_lang + "\n"
-  cf_res = compile_function(detected_lang)
-  if cf_res is not None:
-    output += cf_res[0]
-    error += cf_res[1]
+  t1 = time.time()
+  if compile_function(detected_lang, log):
+    log.out += "Completed in %f seconds.\n" % (time.time() - t1)
   else:
-    output += ''
-    error += 'There was an unspecificed Error. (compile_function returned None.)'
-  return output, error, language_id
+    log.err += "Compilation failed.\n"
+  return log.out, log.err, language_id
