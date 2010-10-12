@@ -1,6 +1,6 @@
 import engine
 from server_info import server_info
-from compile_anything import compile_function
+from compile_anything import compile_function, Log
 
 import logging
 import logging.handlers
@@ -67,10 +67,11 @@ class GameAPIClient:
     if int(platform_specific_compilation) == 1:      # This has a race condition in that two workers
       log_message("Compiling %s " % submission_id)   # could be simultaniously trying to compile the same 
       os.chdir(submission_dir)                       # bot. Or one could try to run a not yet compiled bot. 
-      out, err = compile_function(language_name)
+      compile_log = Log()
+      success = compile_function(language_name, compile_log)
       os.chdir('../../backend')
-      if len(err) > 0:
-        log_message(err)
+      if not success:
+        log_message(compile_log.err)
         raise Exception()
     else:
       log_message("Not compiling %s " % submission_id)
