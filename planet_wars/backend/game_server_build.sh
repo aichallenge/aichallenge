@@ -24,6 +24,13 @@ aptitude install -y python ruby1.9 php5-cli perl gcc g++ libssl-dev make glibc-2
 echo $?
 export DEBIAN_FRONTEND=''
 
+echo '
+#!/bin/sh
+iptables-restore < /etc/iptables.rules
+exit 0
+' > /etc/network/if-pre-up.d/iptablesload
+chmod +x /etc/network/if-pre-up.d/iptablesload
+
 cd /root/
     curl 'http://nodejs.org/dist/node-v0.2.2.tar.gz' | tar -xz \
     && cd node-v0.2.2/ \

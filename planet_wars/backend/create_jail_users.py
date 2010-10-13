@@ -13,7 +13,8 @@ groupscript = """
 userscript = """
   useradd -G jailusers -d /home/[username] -m [username];
   mkdir /home/[username]/.ssh;
-  iptables -A OUTPUT -p tcp -m owner --uid-owner [username] -j DROP;
+  iptables -A OUTPUT -m owner --uid-owner [username] -j DROP;
+  iptables-save > /etc/iptables.rules
 """
 
 def main(argv):
