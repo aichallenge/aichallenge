@@ -9,8 +9,6 @@
 # api_base_url="http://ai-contest.com"
 # api_key="KEYGOESHERElakfjsdkjfhalksdjfhalksdjfhkdasjhfaklj"
 
-
-
 set -e -x # print commands to output - helpful for debugging
 
 export DEBIAN_FRONTEND=noninteractive
@@ -37,8 +35,7 @@ echo 'PROMPT_COMMAND=\"history -a\"' >> /root/.bashrc
 mv /usr/bin/ruby /usr/bin/ruby_old
 ln -s /usr/bin/ruby1.9 /usr/bin/ruby
 
-
-cd /home/contest/; svn checkout https://ai-contest.googlecode.com/svn/branches/20100929-games-in-the-cloud ai-contest --username danielvf
+cd /home/contest/; svn checkout https://ai-contest.googlecode.com/svn/branches/20100929-games-in-the-cloud ai-contest 
 /etc/init.d/mysql start
 
 # Amazon specific. Disallow access to instance userdata (since it would contain the api registration key)
@@ -78,17 +75,12 @@ exit 0
 ' > /etc/network/if-pre-up.d/iptablesload
 chmod +x /etc/network/if-pre-up.d/iptablesload
 
-cd /home/contest/ai-contest/planet_wars/backend/;
+cd /home/contest/ai-contest/planet_wars/backend/
 
-
-# First run a single game, to check that it is working
+# To run a single game, to check that it is working
 # sudo -u contest python tournament_manager.py 1
 
-# Run games by launching screen, then two instances of
-# for (( ; ; )); do   sudo -u contest python tournament_manager.py 575 > /dev/null 2> /dev/null; sleep 5; done
-
-
-echo '@reboot /home/contest/ai-contest/planet_wars/backend/tournament_manager_runner.sh &' >> /etc/cron.d/ai-games
-echo '@reboot /home/contest/ai-contest/planet_wars/backend/tournament_manager_runner.sh &' >> /etc/cron.d/ai-games
+echo '@reboot root /home/contest/ai-contest/planet_wars/backend/tournament_manager_runner.sh &' >> /etc/cron.d/ai-games
+echo '@reboot root /home/contest/ai-contest/planet_wars/backend/tournament_manager_runner.sh &' >> /etc/cron.d/ai-games
 /home/contest/ai-contest/planet_wars/backend/tournament_manager_runner.sh &
 /home/contest/ai-contest/planet_wars/backend/tournament_manager_runner.sh &
