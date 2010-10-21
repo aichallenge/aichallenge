@@ -8,14 +8,21 @@ if($_GET['api_create_key'] != $server_info["api_create_key"]){
   die();
 }
 
-$new_key = md5(uniqid(null,true).rand());
 $ip = $_SERVER['REMOTE_ADDR'];
+$check_sql = "select api_key from workers where ip_address = '".$ip."';";
+$check_result = mysql_query($check_sql);
+if ($check_result && mysql_num_rows($check_result) != 0){
+  $row = mysql_fetch_row($check_result);
+  $new_key = $row[0];
+} else {
+  $new_key = md5(uniqid(null,true).rand());
 
-$sql = "insert into workers SET api_key = '".addslashes($new_key)."', ip_address = '".$ip."';";
-$success = mysql_query($sql);
-if(!$success){
-  echo("# ".mysql_error());
-  die('#Failed to create worker key');
+  $insert_sql = "insert into workers SET api_key = '".addslashes($new_key)."', ip_address = '".$ip."';";
+  $success = mysql_query($insert_sql);
+  if(!$success){
+    echo("# ".mysql_error());
+    die('#Failed to create worker key');
+  }
 }
 
 ?>
