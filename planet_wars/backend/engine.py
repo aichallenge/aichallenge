@@ -5,6 +5,7 @@ import shlex
 import subprocess
 import sys
 import time
+import select
 from user_sadbox import Sadbox
 
 # Reads a text file that contains a game state, and returns the game state. A
@@ -288,6 +289,7 @@ def play_game(map, max_turn_time, max_turns, players, debug=False):
   planets, fleets = read_map_file(map)
   playback = planet_to_playback_format(planets) + "|"
   clients = []
+  wait_counts = {'select':0,'sleep':0}
   if debug:
     sys.stderr.write("starting client programs\n")
   for i, p in enumerate(players):
@@ -304,7 +306,7 @@ def play_game(map, max_turn_time, max_turns, players, debug=False):
       return {"error" : "failure_to_start_client"}
   if debug:
     sys.stderr.write("waiting for players to spin up\n")
-  time.sleep(2)
+  time.sleep(0.01)
   turn_number = 1
   turn_strings = []
   outcome = dict()
@@ -322,6 +324,8 @@ def play_game(map, max_turn_time, max_turns, players, debug=False):
     client_done = [False] * len(clients)
     start_time = time.time()
     time_limit = float(max_turn_time) / 1000
+    if turn_number <= 2:
+      time_limit = time_limit * 3
     # Get orders from players
     while not all_true(client_done) and time.time() - start_time < time_limit:
       for i, c in enumerate(clients):
@@ -347,6 +351,20 @@ def play_game(map, max_turn_time, max_turns, players, debug=False):
               kick_player_from_game(i+1, planets, fleets)
             elif debug:
               sys.stderr.write("player " + str(i+1) + " order: " + line + "\n")
+      
+      file_descriptors_to_wait_on = []
+      for i, c in enumerate(clients):
+        if c.stdout_fd <> None and c.stdout_queue.empty():
+          file_descriptors_to_wait_on.append(c.stdout_fd)
+      if file_descriptors_to_wait_on:
+        # Yeah, this doesn't change anything until I change the engine to not use a seperate read thread.
+        select.select(file_descriptors_to_wait_on,[],[], 0.002)
+        wait_counts['select']+=1
+      else:
+        time.sleep(0.007)
+        wait_counts['sleep']+=1
+      
+      
     process_new_fleets(planets, fleets, temp_fleets)
     # Kick players that took too long to move.
     for i, c in enumerate(clients):
@@ -372,7 +390,9 @@ def play_game(map, max_turn_time, max_turns, players, debug=False):
   playback += ":".join(turn_strings)
   outcome["winner"] = player_with_most_ships(planets, fleets)
   outcome["playback"] = playback
+  outcome["engine_stats"] = "sleeps: %d, selects: %d " % (wait_counts['sleep'], wait_counts['select'])
   return outcome
+
 
 def main():
   players = [

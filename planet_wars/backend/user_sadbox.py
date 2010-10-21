@@ -104,6 +104,7 @@ class Sadbox:
     self.command_process = None
     self.stdout_queue = Queue()
     self.jail_username = None
+    self.stdout_fd = None
     if security_on:
       self.jail_username = lock_jail_user()
       if self.jail_username is None:
@@ -118,6 +119,7 @@ class Sadbox:
                                               stdin=subprocess.PIPE, \
                                               stdout=subprocess.PIPE, \
                                               stderr=subprocess.PIPE)
+      self.stdout_fd = self.command_process.stdout.fileno()
       self.is_alive = not self.command_process is None
       stdout_monitor = Thread(target=monitor_input_channel, args=(self,))
       stdout_monitor.start()
@@ -130,6 +132,7 @@ class Sadbox:
       stdout_fd = self.command_process.stdout.fileno()
       fcntl_handle = fcntl.fcntl(stdout_fd, fcntl.F_GETFL)
       fcntl.fcntl(stdout_fd, fcntl.F_SETFL, fcntl_handle | os.O_NONBLOCK)
+      self.stdout_fd = self.command_process.stdout.fileno()
       self.is_alive = not self.command_process is None
 
   # Shuts down the sadbox, cleaning up any spawned processes, threads, and

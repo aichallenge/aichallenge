@@ -197,7 +197,7 @@ table.submissions .error_code {
 #visualizer a:hover, #visualizer a:active { outline: none; }
 
 
-#visualizer p { margin:0px;}
+#visualizer p { margin:0px; }
 
 #controls {
     text-align: center;
@@ -226,6 +226,11 @@ table.submissions .error_code {
     border-bottom: solid 1px #607890;
 }
 
+#error_message{
+    float: right;
+    text-align:right;
+    width:75%;
+}
 /* End Visualizer */
 
 

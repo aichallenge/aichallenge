@@ -25,19 +25,19 @@
 <p>Download the Java starter package to get started writing your entry in
   Java. The starter package is a simple working entry that you can use as a
   starting point. You can even submit the zip file on the Upload Your Code
-  page, since it is a valid working entry!</p>
+  page, since it is a valid working entry! (Our servers are running OpenJDK 1.6)</p>
 
 <h3><a href="starter_packages/python_starter_package.zip">Python</a></h3>
 <p>Download the Python starter package to get started writing your entry in
   Python. The starter package is a simple working entry that you can use as a
   starting point. You can even submit the zip file on the Upload Your Code
-  page, since it is a valid working entry!</p>
+  page, since it is a valid working entry! (Our servers are running Python 2.5)</p>
 
 <h3><a href="starter_packages/csharp_starter_package.zip">C&#35;</a></h3>
 <p>Download the C&#35; starter package to get started writing your entry in
   C&#35;. The starter package is a simple working entry that you can use as a
   starting point. You can even submit the zip file on the Upload Your Code
-  page, since it is a valid working entry!</p>
+  page, since it is a valid working entry! (Our servers are running Mono 1.2.6.)</p>
   
 
 <h3>Haskell</h3>

@@ -30,6 +30,9 @@ if($game_id == 0){
         $row['playback_string'] = $playback_string;
         $row['using_compression'] = true;
       }
+      if($error_message = get_error_message($game_id)){
+        $row['error_message'] = $error_message;
+      }
       if($row){
         foreach ($row as $key => $value) {
           echo "$key=$value\n";
@@ -46,6 +49,32 @@ function get_playback($game_id){
   if($result['playback_string']!=''){
     return gzuncompress($result['playback_string']);
   }
+}
+
+
+
+
+function get_error_message($game_id){
+  $error_types = array(
+    'TIMEOUT' => 'crashed / did not start / timeout',
+    'BAD_ORDER' => 'issued an invalid order.',
+    'UNPARSEABLE_ORDER' => 'issued an order that could not be parsed',
+    );
+  
+  $sql = "SELECT e.*, u.username from errors e inner join submissions s ON e.submission_id = s.submission_id inner join users u on u.user_id = s.user_id where game_id = '".addslashes($game_id)."'";
+  $q = mysql_query($sql);
+  $out = array();
+  while($result = mysql_fetch_assoc($q)){
+    if($result){
+      $nice_error = $error_types[$result['error']];
+      if($nice_error==''){
+        $nice_error = $result['error'];
+      }
+      $out[]=$result['username'].' '.$nice_error.".";
+    }
+  }
+  return implode(' ',$out);
+  
 }
 
 ?>

@@ -15,6 +15,14 @@ while($r = mysql_fetch_assoc($q)){
 }
 
 
+$errors_per_server = array();
+$sql = "select e.*, worker from errors e inner join games g on g.game_id = e.game_id where e.timestamp > timestampadd(minute, -5, current_timestamp) group by game_id order by worker,e.timestamp desc ;";
+$q = mysql_query($sql);
+while($r = mysql_fetch_assoc($q)){
+  $errors_per_server[$r['worker']] +=1/5;
+}
+
+
 
 ?>
 
@@ -48,6 +56,12 @@ while($r = mysql_fetch_assoc($q)){
     <th>Server #<?=htmlspecialchars($server['worker'])?></th>
   <?php endforeach ?>
   </tr>
+  <tr>
+  <?php foreach ($games_per_server as $server): ?>
+    <th style="color:#ccc"><?=number_format($errors_per_server[$server['worker']],1)?> EPM</th>
+  <?php endforeach ?>
+  </tr>
+
 </table>
 
 

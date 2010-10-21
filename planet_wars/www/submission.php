@@ -30,7 +30,11 @@ function create_new_submission_for_current_user() {
     "user_id,status,timestamp) VALUES (" .
     current_user_id() . "," .
     "10,CURRENT_TIMESTAMP)";
-  return mysql_query($query);
+  $successfull = mysql_query($query);
+  if($successfull){
+    mysql_query("UPDATE submissions SET latest = 0 WHERE user_id ='".current_user_id()."'");
+  }
+  return $successfull;
 }
 
 function current_submission_id() {

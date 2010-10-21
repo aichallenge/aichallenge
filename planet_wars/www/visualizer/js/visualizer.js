@@ -10,6 +10,7 @@ var Visualizer = {
     playerIds: ["-1", "-1"],
     planets: [],
     moves: [],
+    error_message: '',
     dirtyRegions: [],
     config : {
       planet_font: 'bold 15px Arial,Helvetica',
@@ -258,6 +259,7 @@ var Visualizer = {
                     case "playback_string": data = value[1]; break;
                     case "user_one_id": this.playerIds[0] = value[1]; break;
                     case "user_two_id": this.playerIds[1] = value[1]; break;
+                    case "error_message": this.error_message = value[1]; break;
                 }
             }
         }
@@ -401,6 +403,8 @@ var ParserUtils = {
     $('#display').bind('drawn', function(){
       $('#turnCounter').text('Turn: '+Math.floor(Visualizer.frame+1)+' of '+Visualizer.moves.length)
     })
+    
+    $('#error_message').text(Visualizer.error_message).css({'color':Visualizer.config.teamColor[1]})
     
     $('.player1Name').html('<a href="profile.php?user_id=' + Visualizer.playerIds[0] + '">' + Visualizer.players[0] + '</a>')
     $('.player1Name a').css({'color':Visualizer.config.teamColor[1],'text-decoration':'none'})

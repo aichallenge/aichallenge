@@ -2,28 +2,30 @@
 
 <div id="visualizer">
   <table id="players">
-          <tr>
-            <td width='40%' style="text-align:right" class="player1Name"></td>
-            <td width='20%' style="text-align:center" class="playerVs">Loading</td>
-            <td width='40%' style="text-align:left" class="player2Name"></td>
-          </tr>
-        </table>
+    <tr>
+      <td width='40%' style="text-align:right" class="player1Name"></td>
+      <td width='20%' style="text-align:center" class="playerVs">Loading</td>
+      <td width='40%' style="text-align:left" class="player2Name"></td>
+    </tr>
+  </table>
         
-        <canvas id="display" width="640" height="640"></canvas>
-        <p id="turnCounter"></p>
-        <p id="controls">
-            <a href="#" id="start-button"><span class="small">|</span>&laquo;</a> | 
-            <a href="#" id="prev-frame-button">&laquo;</a> | 
-            <a href="#" id="play-button">&#9654;</a> | 
-            <a href="#" id="next-frame-button">&raquo;</a> | 
-            <a href="#" id="end-button">&raquo;<span class="small">|</span></a>
-        </p>
-        <p>
-          <br>
-          <br>
-          <canvas id="chart" width="640" height="100" ></canvas>
-        </p>
-    </div>
+  <canvas id="display" width="640" height="640"></canvas>
+  <p id="error_message"></p>
+  <p id="turnCounter"></p>
+  <p id="controls">
+      <a href="#" id="start-button"><span class="small">|</span>&laquo;</a> | 
+      <a href="#" id="prev-frame-button">&laquo;</a> | 
+      <a href="#" id="play-button">&#9654;</a> | 
+      <a href="#" id="next-frame-button">&raquo;</a> | 
+      <a href="#" id="end-button">&raquo;<span class="small">|</span></a>
+  </p>
+  <p>
+    <br>
+    <br>
+    <canvas id="chart" width="640" height="100" ></canvas>
+  </p>
+        
+</div>
     
 <?php include "footer.php"; ?>
 
@@ -49,4 +51,4 @@
   echo 'var data = "' . htmlspecialchars(str_replace("\n", "\\n", $data)) . '"';
   ?>
   </script>
-  <script src="visualizer/js/visualizer.js?v=1"></script>
+  <script src="visualizer/js/visualizer.js?v=3"></script>

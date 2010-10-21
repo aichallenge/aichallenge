@@ -4,6 +4,8 @@ import logging.handlers
 import MySQLdb
 import os
 import random
+import signal
+import math
 from server_info import server_info
 import subprocess
 import sys
@@ -22,6 +24,7 @@ tm_pid = os.getpid()
 def log_message(message):
   logger.info(str(tm_pid) + ": " + message)
   print message
+
 
 log_message("started. time is " + str(time.time()))
 log_message("parsing command-line arguments")
@@ -65,10 +68,10 @@ maps = cursor.fetchall()
 log_message("found " + str(len(maps)) + " maps")
 # Get the rankings
 cursor.execute("""
-  SELECT r.* from rankings r WHERE leaderboard_id = (select max(leaderboard_id) from leaderboards);
+   SELECT r.* from rankings r WHERE leaderboard_id = (select max(leaderboard_id) from leaderboards);
 """)
 rankings = cursor.fetchall()
-log_message("found " + str(len(maps)) + " rankings")
+log_message("found " + str(len(rankings)) + " rankings")
 # Order submissions by ranking
 rankings_by_submission_id = {}
 for ranking in rankings:
@@ -99,9 +102,11 @@ while time.time() - start_time < time_limit:
   cursor.execute(update_timestamp_sql, player_one['submission_id'])
   player_one['rank'] = rankings_by_submission_id.get(player_one['submission_id'],default_rank)
   # Choose a probably near bot to fight
-  pickable_spread = random.choice([5,10,10,20,40,100,200,1000])
   player_two = player_one
-  while player_one['user_id'] == player_two['user_id']:
+  while player_one['user_id'] == player_two['user_id'] and time.time() - start_time < time_limit:
+    time.sleep(0.01)
+    pickable_spread = random.choice([5,10,10,20,40,100,200,1000])
+    pickable_spread = min(pickable_spread,len(submissions))
     if player_one in submissions:
       player_one_offset = submissions.index(player_one)
     else:
@@ -139,6 +144,12 @@ while time.time() - start_time < time_limit:
   errors = ""
   if "error" in outcome:
     log_message("the game engine reported an error: " + outcome["error"])
+  if "timeout" in outcome:
+    log_message("the game engine reported a timeout: %s" % outcome["timeout"])
+  if "error" in outcome:
+    log_message("the game engine reported an fail: %s" % outcome["error"])
+  if "engine_stats" in outcome:
+    log_message("the game engine reported these stats: %s" % outcome["engine_stats"])
   if "winner" in outcome:
     log_message("winner:" + str(outcome["winner"]))
     if outcome["winner"] == 0:
@@ -178,7 +189,7 @@ while time.time() - start_time < time_limit:
         (game_id, compressed_playback_string)
         )
     
-    log_message("finished inserting")
+    log_message("finished inserting game #%s" % game_id)
   else:
     log_message(errors)
 

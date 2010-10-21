@@ -94,6 +94,10 @@ def set_submission_status(submission_id, status):
   query = "UPDATE submissions SET status = " + str(status) + " " + \
     "WHERE submission_id = " + str(submission_id)
   cursor.execute(query)
+  if status == 40:
+    query = "UPDATE submissions SET latest = 1 " + \
+      "WHERE submission_id = " + str(submission_id)
+    cursor.execute(query)
   cursor.close()
   connection.close()
 

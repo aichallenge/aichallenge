@@ -36,6 +36,22 @@ $sql = "INSERT INTO playback SET
           playback_string = '".addslashes($compressed_playback_string)."'";
 $r=mysql_query($sql);
 
+if(isset($gamedata->errors)){
+  foreach($gamedata->errors as $error){
+    $sql = "INSERT INTO errors (submission_id,game_id,turn,`error`,timestamp)".
+            "VALUES (".
+                "'".addslashes($error->submission_id) . "', ".
+                "'".addslashes($game_id) . "', ".
+                "'".addslashes($error->turn) . "', ".
+                "'".addslashes($error->error) . "', ".
+                " current_timestamp ".
+              ")";
+    mysql_query($sql); 
+  }
+}
+
+
+
 if($r){
   echo("done");
 }else{
