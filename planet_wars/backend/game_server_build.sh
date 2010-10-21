@@ -65,13 +65,18 @@ server_info = {
     echo 'create database contest' | mysql 
     mysql contest < schema.sql
     python create_jail_users.py 32
+    iptables-save > /etc/iptables.rules
     chown -R contest:contest .
     chmod 640 /etc/sudoers
     echo 'contest ALL = (%jailusers) NOPASSWD: ALL' >> /etc/sudoers
     chmod 440 /etc/sudoers
 cd /home/contest/ai-contest/planet_wars/submissions/; chown -R contest:contest .
 
-
+echo '#!/bin/sh
+iptables-restore < /etc/iptables-rules
+exit 0
+' > /etc/network/if-pre-up.d/iptablesload
+chmod +x /etc/network/if-pre-up.d/iptablesload
 
 cd /home/contest/ai-contest/planet_wars/backend/;
 
