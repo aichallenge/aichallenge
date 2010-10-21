@@ -33,5 +33,5 @@ export api_key='<?=$new_key?>'
 echo '<?=$new_key?>' > /root/.api_key
 
 curl 'http://ai-contest.googlecode.com/svn/branches/20100929-games-in-the-cloud/planet_wars/backend/game_server_build.sh' > /root/game_server_build.sh
-sh < /root/game_server_build.sh
+sh /root/game_server_build.sh
 
