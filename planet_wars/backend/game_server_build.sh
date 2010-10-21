@@ -73,7 +73,7 @@ server_info = {
 cd /home/contest/ai-contest/planet_wars/submissions/; chown -R contest:contest .
 
 echo '#!/bin/sh
-iptables-restore < /etc/iptables-rules
+iptables-restore < /etc/iptables.rules
 exit 0
 ' > /etc/network/if-pre-up.d/iptablesload
 chmod +x /etc/network/if-pre-up.d/iptablesload
