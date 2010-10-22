@@ -24,11 +24,18 @@ def send_gmail(username, password, recipients, subject, body, full_name):
     message = "From: " + from_line + "\n" + \
       "Subject: " + subject + "\n" + \
       "\n" + body
-    smtp_server = smtplib.SMTP("smtp.gmail.com", 587)
+    server_port = 25
+    if server_info.has_key("mail_server_port"):
+        server_port = server_info["mail_server_port"]
+    smtp_server = smtplib.SMTP(server_info["mail_server"], server_port)
     smtp_server.ehlo()
-    smtp_server.starttls()
-    smtp_server.ehlo()
-    smtp_server.login(username, password)
+    try:
+        smtp_server.starttls()
+        smtp_server.ehlo()
+    except smtplib.SMTPException: # thrown if tls is not supported by server
+        pass
+    if password is not None:
+        smtp_server.login(username, password)
     smtp_server.sendmail(username, recipients, message)
     smtp_server.quit()
     return True
@@ -40,7 +47,10 @@ def send_gmail(username, password, recipients, subject, body, full_name):
 # Otherwise, returns False.
 def send(recipients, subject, body):
   mail_username = server_info["mail_username"]
-  mail_password = server_info["mail_password"]
+  try:
+      mail_password = server_info["mail_password"]
+  except KeyError:
+      mail_password = None
   mail_name = server_info["mail_name"]
   return send_gmail(mail_username, \
                     mail_password, \
