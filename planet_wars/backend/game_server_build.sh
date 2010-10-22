@@ -2,7 +2,7 @@
 # 
 # This should build a cloud game server.
 # 
-# Start with ami-5d59be34 Ubuntu 8 HARDY LTS
+# Start with ami-6836dc01 Ubuntu 8 HARDY LTS
 
 # If manualy using the script, uncomment the two below lines
 
