@@ -6,6 +6,7 @@ if (!logged_in_with_valid_credentials()) {
   header('location:login.php');
 }
 
+include 'submission.php';
 include 'header.php';
 ?>
 
@@ -40,11 +41,21 @@ include 'header.php';
     officials. Our policy is to always prosecute.</li>
 </ul>
 
+<?php
+if (has_recent_submission()) {
+?>
+<p>Sorry, you have to wait at least 10 minutes between submissions. This wait is waived if your current submission fails to succesfully enter the contest.</p>
+<?php
+} else {
+?>
 <form enctype="multipart/form-data" action="check_submit.php" method="POST">
 <input type="hidden" name="MAX_FILE_SIZE" value="2000000" />
 <b>Choose Your Zip File:</b> <input name="uploadedfile" type="file" /><br />
 <input type="submit" value="Upload!" />
 </form>
+<?php
+}
+?>
 
 <p>If you are having trouble, there are tons of ways to <a href="forums/">get help on the forums!</a></p>
 

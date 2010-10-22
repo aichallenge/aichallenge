@@ -11,7 +11,9 @@ $submission_directory = "/home/contest/ai-contest/planet_wars/submissions/";
 if (!logged_in_with_valid_credentials()) {
   header('index.php');
 }
-if (!setup_submission_directory($submission_diectory)) {
+if (has_recent_submission()) {
+  $errors[] = "Sorry your last submission was too recent.";
+} elseif (!setup_submission_directory($submission_directory)) {
   $errors[] = "Problem while creating submission directory.";
 } else {
   $destination_folder = $submission_directory . current_submission_id();

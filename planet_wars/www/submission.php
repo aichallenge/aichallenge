@@ -72,6 +72,28 @@ function current_submission_status() {
   }
 }
 
+/* 
+ * Returns true if it finds a submission from within the last 10 minutes that
+ * either succesfully entered the contest or is still in the process of
+ * entering.
+ */
+function has_recent_submission() {
+  $user_id = current_user_id();
+  if ($user_id == NULL) {
+    return FALSE;
+  }
+  $query = "SELECT COUNT(*) FROM submissions WHERE user_id='".$user_id."' AND ".
+    "(status < 30 OR status=40) AND timestamp >= (NOW() - INTERVAL 10 MINUTE)";
+  $result = mysql_query($query);
+  if (!$row = mysql_fetch_row($result)) {
+    return FALSE;
+  }
+  if ($row[0] == 0) {
+    return FALSE;
+  }
+  return TRUE;
+}
+
 function submission_status($submission_id) {
   $query = "SELECT * FROM submissions " . "WHERE submission_id = " . $submission_id;
   $result = mysql_query($query);
