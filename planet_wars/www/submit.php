@@ -44,7 +44,7 @@ include 'header.php';
 <?php
 if (has_recent_submission()) {
 ?>
-<p>Sorry, you have to wait at least 10 minutes between submissions. This wait is waived if your current submission fails to succesfully enter the contest.</p>
+<p>Sorry, you have to wait at least 10 minutes between submissions. This wait is waived if your current submission fails to successfully enter the contest.</p>
 <?php
 } else {
 ?>

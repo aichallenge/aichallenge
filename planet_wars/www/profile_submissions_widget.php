@@ -87,11 +87,11 @@ EOT;
             : ($status == 27 ? "compiled successfully, awaiting testing"
             : ($status == 30 ? "error receiving submission file"
             : ($status == 39 ? "garbage collected (<a class=\"error_code\" href=\"submission_errors.php?error=$status\">more info</a>)"
-            : ($status == 40 ? "sucessfully entered into contest"
+            : ($status == 40 ? "successfully entered into contest"
             : ($status == 50 ? "error while unzipping submission"
             : ($status == 60 ? "problem with submission file"
             : ($status == 70 ? "error while compiling submission"
-            : ($status == 80 ? "compiled sucessfully but failed test cases"
+            : ($status == 80 ? "compiled successfully but failed test cases"
             : ($status >= 90 ? "submission suspended (<a class=\"error_code\" href=\"submission_errors.php?error=$status\">more info</a>)"
             : "Unknown Error")))))))))))));
 

@@ -74,7 +74,7 @@ function current_submission_status() {
 
 /* 
  * Returns true if it finds a submission from within the last 10 minutes that
- * either succesfully entered the contest or is still in the process of
+ * either successfully entered the contest or is still in the process of
  * entering.
  */
 function has_recent_submission() {
