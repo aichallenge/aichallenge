@@ -109,9 +109,11 @@ class Sadbox:
       if self.jail_username is None:
         sys.stderr.write("No open jail users")
         return
-      os.system("sudo -H -u %s rm -rf /home/%s/*" % (self.jail_username, self.jail_username))
+      # sudo to a shell to delete files so we don't end up with too long of an
+      # argument list for sudo if there are lots of files in the directory
+      os.system('sudo -H -u %s sh -c "rm -rf /home/%s/*"' % (self.jail_username, self.jail_username))
       os.system("sudo -H -u %s cp -r %s /home/%s" % (self.jail_username, working_directory, self.jail_username))
-      
+
       shell_command = shell_command.encode("iso-8859-1")
       shell_command = "sudo -H -u %s %s" % (self.jail_username, shell_command)
       print "%r" % shell_command
