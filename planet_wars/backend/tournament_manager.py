@@ -7,9 +7,11 @@ import logging.handlers
 import MySQLdb
 import os
 import random
+import shutil
 import subprocess
 import sys
 import signal
+import tempfile
 import time
 import zlib
 import urllib
@@ -58,24 +60,32 @@ class GameAPIClient:
       log_message("Submission %d is local" % submission_id)
       return
     log_message("Downloading %d " % submission_id)
-    os.system("mkdir %s" % submission_dir);
+    download_dir = tempfile.mkdtemp(dir="../submissions/")
     url = self.base_url+'/api_get_submission.php'
     url += '?api_key=%s&submission_id=%d' % (self.api_key, submission_id)
-    # log_message(url)
-    os.system("cd %s; curl --silent '%s' | tar -xz" % (submission_dir, url));
-    
-    if int(platform_specific_compilation) == 1:      # This has a race condition in that two workers
-      log_message("Compiling %s " % submission_id)   # could be simultaniously trying to compile the same 
-      os.chdir(submission_dir)                       # bot. Or one could try to run a not yet compiled bot. 
+    os.system("cd %s; curl --silent '%s' | tar -xz" % (download_dir, url))
+
+    if int(platform_specific_compilation) == 1:
+      log_message("Compiling %s " % submission_id)
+      os.chdir(download_dir)
       compile_log = Log()
       success = compile_function(language_name, compile_log)
       os.chdir('../../backend')
       if not success:
+        shutil.rmtree(download_dir)
         log_message(compile_log.err)
         raise Exception()
     else:
       log_message("Not compiling %s " % submission_id)
-    
+
+    try:
+      os.rename(download_dir, submission_dir)
+    except OSError:
+      # the submission directory was probably already created by another
+      # manager, if not reraise the exception
+      if not os.path.exists(submission_dir):
+        raise
+      shutil.rmtree(download_dir)
     
     
   def record_game(self, data):
