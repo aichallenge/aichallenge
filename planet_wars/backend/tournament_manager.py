@@ -120,7 +120,7 @@ while time.time() - start_time < time_limit:
   player_two_path = "../submissions/" + str(player_two["submission_id"]) + "/."
   players = [
     {"path" : player_one_path, "command" : player_one["command"], "submission_id": player_one["submission_id"]},
-    {"path" : player_two_path, "command" : player_two["command"], "submission_id": player_one["submission_id"]}
+    {"path" : player_two_path, "command" : player_two["command"], "submission_id": player_two["submission_id"]}
   ]
   log_message("starting game")
   try:
