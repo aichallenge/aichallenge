@@ -61,6 +61,7 @@ class GameAPIClient:
       return
     log_message("Downloading %d " % submission_id)
     download_dir = tempfile.mkdtemp(dir="../submissions/")
+    os.chmod(download_dir, 0755)
     url = self.base_url+'/api_get_submission.php'
     url += '?api_key=%s&submission_id=%d' % (self.api_key, submission_id)
     os.system("cd %s; curl --silent '%s' | tar -xz" % (download_dir, url))
