@@ -14,9 +14,16 @@ if(!filter_var($submission_id, FILTER_VALIDATE_INT) || $submission_id == '') {
   die();
 }
 
+/*
+ * switch to the submission's directory making sure it's actually there
+ */
+if (!chdir($submission_directory.$submission_id)) {
+  die();
+}
+
 header("Content-disposition: attachment; filename=$submission_id.tgz");
 header("Content-type: application/x-compressed");
-passthru('cd "'.$submission_directory.$submission_id.'"; tar -czf - . \
+passthru('tar -czf - . \
               --exclude=\'*.zip\' \
               --exclude=\'*.tgz\' \
               --exclude=PlayGame.jar \
