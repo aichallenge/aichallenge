@@ -272,6 +272,9 @@ def player_with_most_ships(planets, fleets):
       max_player = player
   return max_player
 
+def error(submission_id, error_type, turn=1):
+  return {'submission_id':submission_id, 'error': error_type, 'turn':turn-1}
+
 # Plays a game of Planet Wars.
 #   map: a full or relative path to a text file containing the map that this
 #        game should be played on.
@@ -289,6 +292,8 @@ def play_game(map, max_turn_time, max_turns, players, debug=False):
   planets, fleets = read_map_file(map)
   playback = planet_to_playback_format(planets) + "|"
   clients = []
+  errors_data = []
+  killed = {}
   wait_counts = {'select':0,'sleep':0}
   if debug:
     sys.stderr.write("starting client programs\n")
@@ -303,10 +308,11 @@ def play_game(map, max_turn_time, max_turns, players, debug=False):
     else:
       if debug:
         sys.stderr.write("    failed to start player " + str(i+1) + "\n")
-      return {"error" : "failure_to_start_client"}
+      return {"error" : "failure_to_start_client",
+              'errors_data':[error(p['submission_id'],'STARTUP_FAILURE')]}
   if debug:
     sys.stderr.write("waiting for players to spin up\n")
-  time.sleep(0.01)
+  time.sleep(0.05)
   turn_number = 1
   turn_strings = []
   outcome = dict()
@@ -342,16 +348,23 @@ def play_game(map, max_turn_time, max_turns, players, debug=False):
           if order is None:
             sys.stderr.write("player " + str(i+1) + " kicked for making " + \
               "an unparseable order: " + line + "\n")
+            errors_data.append(error(players[i]['submission_id'],
+                'UNPARSEABLE_ORDER', turn_number))
+            killed[i]=True
             c.kill()
             kick_player_from_game(i+1, planets, fleets)
           else:
             if not issue_order(order, i+1, planets, fleets, temp_fleets):
+              if int(i) not in killed:
+                errors_data.append(error(players[i]['submission_id'],
+                    'BAD_ORDER', turn_number))
+                killed[int(i)]=True
               sys.stderr.write("player %d bad order: %s\n" % (i+1, line))
               c.kill()
               kick_player_from_game(i+1, planets, fleets)
             elif debug:
               sys.stderr.write("player " + str(i+1) + " order: " + line + "\n")
-      
+
       file_descriptors_to_wait_on = []
       for i, c in enumerate(clients):
         if c.stdout_fd <> None and c.stdout_queue.empty():
@@ -370,6 +383,10 @@ def play_game(map, max_turn_time, max_turns, players, debug=False):
     for i, c in enumerate(clients):
       if (i+1) not in remaining or client_done[i]:
         continue
+      if int(i) not in killed:
+        errors_data.append(error(players[i]['submission_id'], 'TIMEOUT',
+            turn_number))
+        killed[int(i)]=True
       sys.stderr.write("player " + str(i+1) + " kicked for taking too " + \
         "long to move\n")
       if "timeout" not in outcome:
@@ -383,6 +400,10 @@ def play_game(map, max_turn_time, max_turns, players, debug=False):
     turn_number += 1
   for i, c in enumerate(clients):
     if not c.is_alive:
+      if int(i) not in killed:
+        errors_data.append(error(players[i]['submission_id'], 'QUIT',
+            turn_number))
+        killed[int(i)]=True
       if "fail" not in outcome:
         outcome["fail"] = []
       outcome["fail"].append(i+1)
@@ -391,6 +412,8 @@ def play_game(map, max_turn_time, max_turns, players, debug=False):
   outcome["winner"] = player_with_most_ships(planets, fleets)
   outcome["playback"] = playback
   outcome["engine_stats"] = "sleeps: %d, selects: %d " % (wait_counts['sleep'], wait_counts['select'])
+  if errors_data:
+    outcome["errors_data"] = errors_data
   return outcome
 
 

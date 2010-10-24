@@ -128,8 +128,10 @@ while time.time() - start_time < time_limit:
   player_two_path = "../submissions/" + str(player_two["submission_id"]) + "/."
   map_path = "../maps/" + map["path"]
   players = [
-    {"path" : player_one_path, "command" : player_one["command"]},
-    {"path" : player_two_path, "command" : player_two["command"]}
+    {"path" : player_one_path, "command" : player_one["command"],
+      "submission_id" : player_one["submission_id"] },
+    {"path" : player_two_path, "command" : player_two["command"],
+      "submission_id" : player_two["submission_id"] }
   ]
   log_message("starting game")
   outcome = engine.play_game(map_path, 1000, 200, players, debug=False)
@@ -188,7 +190,13 @@ while time.time() - start_time < time_limit:
         "INSERT INTO playback SET game_id = %s, playback_string = %s",
         (game_id, compressed_playback_string)
         )
-    
+
+    if "errors_data" in outcome:
+      cursor.executemany("""INSERT INTO errors (submission_id,game_id,turn,
+          `error`,timestamp) VALUES (%s,%s,%s,%s,CURRENT_TIMESTAMP)""",
+        [ (e["submission_id"], game_id, e["turn"], e["error"]) for e
+          in outcome["errors_data"] ])
+
     log_message("finished inserting game #%s" % game_id)
   else:
     log_message(errors)
