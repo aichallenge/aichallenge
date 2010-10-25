@@ -22,7 +22,15 @@ while($r = mysql_fetch_assoc($q)){
   $errors_per_server[$r['worker']] +=1/5;
 }
 
-
+$error_percentage = array();
+foreach ($games_per_server as $server) {
+  $id = $server['worker'];
+  if ($server['gpm'] == 0) {
+    $error_percentage[$id] = 0;
+  } else {
+    $error_percentage[$id] = ($errors_per_server[$id] / $server['gpm']) * 100;
+  }
+}
 
 ?>
 
@@ -58,7 +66,10 @@ while($r = mysql_fetch_assoc($q)){
   </tr>
   <tr>
   <?php foreach ($games_per_server as $server): ?>
-    <th style="color:#ccc"><?=number_format($errors_per_server[$server['worker']],1)?> EPM</th>
+    <th style="color:#ccc">
+      <?=number_format($errors_per_server[$server['worker']],1)?> EPM <br />
+      <?=number_format($error_percentage[$server['worker']],1)?>%
+    </th>
   <?php endforeach ?>
   </tr>
 
