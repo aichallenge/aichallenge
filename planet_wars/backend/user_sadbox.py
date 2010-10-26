@@ -146,9 +146,21 @@ class Sadbox:
   # suddenly terminated.
   def kill(self):
     if self.is_alive:
-      os.system("sudo -u %s -H killall -u %s " % (self.jail_username, self.jail_username))
+      jail_user = self.jail_username
+      os.system("sudo -u %s -H killall -u %s " % (jail_user, jail_user))
       self.is_alive = False
-      release_jail_user(self.jail_username)
+      # clean up any leaked semaphores, mono seems to be really bad about this
+      ipcs_proc = subprocess.Popen("sudo -u %s ipcs -s" % (jail_user,),
+            shell=True, stdout=subprocess.PIPE)
+      ipcs_out, ipcs_err = ipcs_proc.communicate()
+      if ipcs_err:
+          raise OSError("ipcs returned error data:\n%s" % (ipcs_err))
+      ipcs_out = ipcs_out.splitlines()
+      for line in ipcs_out:
+          values = line.split()
+          if len(values) == 5 and values[2] == jail_user:
+              os.system("sudo -u %s ipcrm -s %s" % (jail_user, values[1],))
+      release_jail_user(jail_user)
 
   def write(self, line):
     if not self.is_alive:
