@@ -66,7 +66,7 @@ $games_query = <<<EOT
     g.game_id,
     g.loser,
     g.draw,
-    date_format(g.timestamp,'%b %d %r') as date,
+    date_format(g.timestamp,'%b %D %H:%i:%S') as date,
     g.timestamp,
     if( g.draw = 0, 'Win', 'Draw' ) as outcome
     from
@@ -82,7 +82,7 @@ union
     g.game_id,
     g.loser,
     g.draw,
-    date_format(g.timestamp,'%b %d %r') as date,
+    date_format(g.timestamp,'%b %D %H:%i:%S') as date,
     g.timestamp,
     if( g.draw = 0, 'Loss', 'Draw' ) as outcome
    from
