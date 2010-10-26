@@ -125,12 +125,11 @@ cd /home/contest/ai-contest/planet_wars/backend/
 
 if [ ! -e /etc/cron.d/ai-games ]
 then
-echo '@reboot root /home/contest/ai-contest/planet_wars/backend/tournament_manager_runner.sh &
-@reboot root /home/contest/ai-contest/planet_wars/backend/tournament_manager_runner.sh &' > /etc/cron.d/ai-games
+echo '@reboot root /home/contest/ai-contest/planet_wars/backend/start_worker.sh' > /etc/cron.d/ai-games
 fi
+
+/home/contest/ai-contest/planet_wars/backend/start_worker.sh
 
 # To run a single game, to check that it is working
 # sudo -u contest python tournament_manager.py 1
 
-/home/contest/ai-contest/planet_wars/backend/tournament_manager_runner.sh &
-/home/contest/ai-contest/planet_wars/backend/tournament_manager_runner.sh &
