@@ -11,39 +11,86 @@
 
 set -e -x # print commands to output - helpful for debugging
 
+# add badgerports for latest mono
+if ! grep -q 'deb http://badgerports.org/ hardy main' /etc/apt/sources.list
+then
+  curl 'http://badgerports.org/directhex.ppa.asc' | apt-key add -
+  echo 'deb http://badgerports.org/ hardy main ' >> /etc/apt/sources.list
+fi
+
+# install all needed packages
 export DEBIAN_FRONTEND=noninteractive
 aptitude update
+aptitude install -y openssh-server
 aptitude install -y htop subversion curl screen rrdtool collectd unzip pwgen vim
 aptitude install -y mysql-server mysql-client
 echo $?
 aptitude install -y python2.5-mysqldb python2.5-simplejson
 echo $?
-aptitude install -y python ruby1.9 php5-cli perl gcc g++ libssl-dev make glibc-2.7-1 common-lisp-controller ghc6 git-core haskell-utils mono-common mono-gac mono-gmcs mono-jit mono-mcs mono-runtime mono-utils ocaml openjdk-6-jre-headless sbcl libboost-dev python2.5-numpy
+aptitude install -y ruby1.9 php5-cli perl gcc g++ libssl-dev make glibc-2.7-1 common-lisp-controller ghc6 git-core haskell-utils ocaml openjdk-6-jre-headless sbcl libboost-dev
+echo $?
+aptitude install -y mono-2.0-devel
 echo $?
 export DEBIAN_FRONTEND=''
 
-cd /root/
-    curl 'http://nodejs.org/dist/node-v0.2.2.tar.gz' | tar -xz \
-    && cd node-v0.2.2/ \
-    && ./configure && make && make install
+# install node.js
+if [ ! -e /usr/local/bin/node ]
+then
+  cd /root/
+  curl 'http://nodejs.org/dist/node-v0.2.2.tar.gz' | tar -xz \
+  && cd node-v0.2.2/ \
+  && ./configure && make && make install
+fi
 
-adduser contest --disabled-password --gecos ""
+# set default ruby to ruby 1.9
+if [ ! `readlink /usr/bin/ruby` = "/usr/bin/ruby1.9" ]
+then
+  test -e /usr/bin/ruby && mv /usr/bin/ruby /usr/bin/ruby_old
+  ln -s /usr/bin/ruby1.9 /usr/bin/ruby
+fi
+
 echo 'export HISTCONTROL=erasedups' >> /root/.bashrc
 echo 'export HISTSIZE=10000' >> /root/.bashrc
 echo 'shopt -s histappend' >> /root/.bashrc
 echo 'PROMPT_COMMAND=\"history -a\"' >> /root/.bashrc
-mv /usr/bin/ruby /usr/bin/ruby_old
-ln -s /usr/bin/ruby1.9 /usr/bin/ruby
 
-cd /home/contest/; svn checkout https://ai-contest.googlecode.com/svn/branches/20100929-games-in-the-cloud ai-contest 
+# create and setup user 'ubuntu'
+if [ ! -e /home/ubuntu/ ]
+then
+  adduser ubuntu --disabled-password --gecos ""
+  adduser ubuntu admin
+fi
+if ! grep -q '^ubuntu ALL=(ALL) NOPASSWD:ALL' /etc/sudoers
+then
+  chmod 640 /etc/sudoers
+  echo 'ubuntu ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+  chmod 440 /etc/sudoers
+fi
+if [ ! -e /home/ubuntu/.ssh/ ]
+then mkdir /home/ubuntu/.ssh; chown ubuntu:ubuntu /home/ubuntu/.ssh; fi
+AUTHKEY_FILE=/home/ubuntu/.ssh/authorized_keys
+if [ ! -e $AUTHKEY_FILE]
+then
+  touch $AUTHKEY_FILE
+  chown ubuntu:ubuntu $AUTHKEY_FILE
+  chmod 600 $AUTHKEY_FILE
+fi
+if ! grep -q ' contest@ai-contest$' $AUTHKEY_FILE
+then
+  echo 'ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEAsLlstx9E6TiZZ1InY/d6r1Ykucjvcj0whesjURGstGgVcUhAmFC9EqheV7QniORpJFwBA7qBL00K1uGjiYpn4ykW6pPJMpw1cMztXA6u9ByejchUHPAbn5vy1e+1kxQsttTMe95rAYrdG91s1Uu0o4wxStluK90zdTukOX46Qjw5tcD7RujNoYCJnMWwWL2BYc+C1A1UeX6nrFlJJjLCgP1sb24BBCPgMoBnUCbH5+xPSaLKdQoAGicya6rVcsYLZqSxIOyQ43YHNXEEckYBxzRSMKJj5JzM7rhMNUb1HpsGZgxIVy74mCVRyO29TtlMrKZFjvcVIdt/UktG2lRETw== contest@ai-contest' >> $AUTHKEY_FILE
+fi
+
+adduser contest --disabled-password --gecos ""
+
+cd /home/contest/; svn checkout https://ai-contest.googlecode.com/svn/branches/20100929-games-in-the-cloud ai-contest
+
 /etc/init.d/mysql start
 
 # Amazon specific. Disallow access to instance userdata (since it would contain the api registration key)
-route add -host 169.254.169.254 reject 
+route add -host 169.254.169.254 reject
 
 # Copy over the latest scripts
-
-cd /home/contest/ai-contest/planet_wars/backend/; 
+cd /home/contest/ai-contest/planet_wars/backend/
     echo '
 server_info = {
   "db_username" : "root",
@@ -58,8 +105,7 @@ server_info = {
     echo "server_info['api_base_url']='$api_base_url'" >> server_info.py
     echo "server_info['api_key']='$api_key'" >> server_info.py
     chmod 600 server_info.py
-    
-    echo 'create database contest' | mysql 
+    echo 'create database contest' | mysql
     mysql contest < schema.sql
     python create_jail_users.py 32
     iptables-save > /etc/iptables.rules
@@ -77,10 +123,14 @@ chmod +x /etc/network/if-pre-up.d/iptablesload
 
 cd /home/contest/ai-contest/planet_wars/backend/
 
+if [ ! -e /etc/cron.d/ai-games ]
+then
+echo '@reboot root /home/contest/ai-contest/planet_wars/backend/tournament_manager_runner.sh &
+@reboot root /home/contest/ai-contest/planet_wars/backend/tournament_manager_runner.sh &' > /etc/cron.d/ai-games
+fi
+
 # To run a single game, to check that it is working
 # sudo -u contest python tournament_manager.py 1
 
-echo '@reboot root /home/contest/ai-contest/planet_wars/backend/tournament_manager_runner.sh &' >> /etc/cron.d/ai-games
-echo '@reboot root /home/contest/ai-contest/planet_wars/backend/tournament_manager_runner.sh &' >> /etc/cron.d/ai-games
 /home/contest/ai-contest/planet_wars/backend/tournament_manager_runner.sh &
 /home/contest/ai-contest/planet_wars/backend/tournament_manager_runner.sh &
