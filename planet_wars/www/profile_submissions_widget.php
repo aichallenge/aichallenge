@@ -97,12 +97,14 @@ EOT;
 
         $timestamp = $row["timestamp"];
         $language = $row["language"];
+        $language_link = urlencode($language);
         $row_class = $i % 2 == 0 ? "even" : "odd";
 
         $table .= "<tr class=\"$row_class\">";
         $table .= "  <td>$timestamp</td>";
         $table .= "  <td class=\"$status_class\">$status</td>";
-        $table .= "  <td>$language</td>";
+        $table .= "  <td><a href=\"language_profile.php?lang=$language_link\">
+            $language</a></td>";
         $table .= "</tr>";
     }
     $table .= "</tbody></table>";
