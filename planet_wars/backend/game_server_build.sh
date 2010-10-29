@@ -11,6 +11,18 @@
 
 set -e -x # print commands to output - helpful for debugging
 
+# install all needed packages
+export DEBIAN_FRONTEND=noninteractive
+aptitude update
+aptitude install -y openssh-server curl
+aptitude install -y htop subversion screen rrdtool collectd unzip pwgen vim
+aptitude install -y mysql-server mysql-client
+echo $?
+aptitude install -y python2.5-mysqldb python2.5-simplejson
+echo $?
+aptitude install -y ruby1.9 php5-cli perl gcc g++ libssl-dev make glibc-2.7-1 common-lisp-controller ghc6 git-core haskell-utils ocaml openjdk-6-jre-headless sbcl libboost-dev
+echo $?
+
 # add badgerports for latest mono
 if ! grep -q 'deb http://badgerports.org/ hardy main' /etc/apt/sources.list
 then
@@ -18,17 +30,6 @@ then
   echo 'deb http://badgerports.org/ hardy main ' >> /etc/apt/sources.list
 fi
 
-# install all needed packages
-export DEBIAN_FRONTEND=noninteractive
-aptitude update
-aptitude install -y openssh-server
-aptitude install -y htop subversion curl screen rrdtool collectd unzip pwgen vim
-aptitude install -y mysql-server mysql-client
-echo $?
-aptitude install -y python2.5-mysqldb python2.5-simplejson
-echo $?
-aptitude install -y ruby1.9 php5-cli perl gcc g++ libssl-dev make glibc-2.7-1 common-lisp-controller ghc6 git-core haskell-utils ocaml openjdk-6-jre-headless sbcl libboost-dev
-echo $?
 aptitude install -y mono-2.0-devel
 echo $?
 export DEBIAN_FRONTEND=''
