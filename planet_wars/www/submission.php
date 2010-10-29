@@ -82,8 +82,8 @@ function has_recent_submission() {
   if ($user_id == NULL) {
     return FALSE;
   }
-  $query = "SELECT COUNT(*) FROM submissions WHERE user_id='".$user_id."' AND ".
-    "(status < 30 OR status=40) AND timestamp >= (NOW() - INTERVAL 10 MINUTE)";
+  $query = "SELECT COUNT(*) FROM submissions WHERE user_id='".$user_id."' AND
+    (status < 30 OR (status=40 AND timestamp >= (NOW() - INTERVAL 10 MINUTE)))";
   $result = mysql_query($query);
   if (!$row = mysql_fetch_row($result)) {
     return FALSE;
