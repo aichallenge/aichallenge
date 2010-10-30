@@ -30,9 +30,40 @@ then
   echo 'deb http://badgerports.org/ hardy main ' >> /etc/apt/sources.list
 fi
 
+aptitude update
 aptitude install -y mono-2.0-devel
 echo $?
+
+#needed for golang build
+aptitude install -y bison ed gawk libc6-dev make
+echo $?
+aptitude install -y python-setuptools python-dev build-essential
+echo $?
+easy_install mercurial
+
 export DEBIAN_FRONTEND=''
+
+#install golang
+if [ ! -e /usr/local/bin/godoc ]
+then
+  if [ ! -e /usr/local/src ]
+  then
+    mkdir /usr/local/src
+  fi
+  cd /usr/local/src
+  
+  if [ ! -e /usr/local/src/go ]
+  then
+    hg clone -r release.2010-10-20 https://go.googlecode.com/hg/ go
+    echo 'export GOROOT=/usr/local/src/go' >> /root/.bashrc
+    echo 'export GOBIN=/usr/local/bin' >> /root/.bashrc
+  fi
+  
+  #export this, in case we're running the script a second time and .bashrc hasn't been called
+  export GOBIN=/usr/local/bin
+  cd /usr/local/src/go/src
+  ./all.bash
+fi
 
 # install node.js
 if [ ! -e /usr/local/bin/node ]
