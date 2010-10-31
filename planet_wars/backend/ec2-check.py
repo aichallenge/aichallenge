@@ -24,7 +24,7 @@ def get_ec2_instances():
     api_out, _ = api_proc.communicate()
     for line in api_out.splitlines():
         fields = line.split('\t')
-        if fields[0] != 'INSTANCE':
+        if fields[0] != 'INSTANCE' or fields[5] != 'running':
             continue
         data[fields[16]] = fields[1]
     return data
@@ -50,8 +50,11 @@ def get_worker_game_data(ip):
         print "IP: %s\nresult body:" % (ip,)
         print body
         raise
-    data['gpm'] = float(data['gpm'])
-    data['epm'] = float(data['epm'])
+    if data.has_key('error'):
+        data = {'gpm': 0.0, 'epm': 0.0, 'id': None}
+    else:
+        data['gpm'] = float(data['gpm'])
+        data['epm'] = float(data['epm'])
     return data
 
 def reboot_instance(instance_id):
