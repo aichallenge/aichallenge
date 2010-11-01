@@ -20,7 +20,7 @@ aptitude install -y mysql-server mysql-client
 echo $?
 aptitude install -y python2.5-mysqldb python2.5-simplejson
 echo $?
-aptitude install -y ruby1.9 php5-cli perl gcc g++ libssl-dev make glibc-2.7-1 common-lisp-controller ghc6 git-core haskell-utils ocaml openjdk-6-jre-headless sbcl libboost-dev
+aptitude install -y ruby1.9 php5-cli perl gcc g++ libssl-dev make glibc-2.7-1 common-lisp-controller ghc6 git-core haskell-utils ocaml openjdk-6-jre sbcl libboost-dev
 echo $?
 
 # add badgerports for latest mono
