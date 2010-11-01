@@ -41,10 +41,10 @@
 
 
 <h3>Go</h3>
-<p>The Go programming language is supported. We are using release 2010-10-20. Check the forums for user contributed starter packs.</p>
+<p>The Go programming language is supported. We are using Go release 2010-10-20. Check the forums for user contributed starter packs.</p>
 
 <h3>Groovy</h3>
-<p>Groovy is supported. We are using GHC version 6.8.2. Check the forums for user contributed starter packs.</p>
+<p>Groovy is supported. We are using Groovy version 1.7.5. Check the forums for user contributed starter packs.</p>
 
 <h3>Haskell</h3>
 <p>Haskel is supported. We are using GHC version 6.8.2. Check the forums for user contributed starter packs.</p>
