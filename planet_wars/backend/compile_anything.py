@@ -207,7 +207,7 @@ languages = {
   "Groovy"      : (".jar",
                    ["*.class, *.jar"],
                    [(["*.groovy"], ExternalCompiler(comp_args["Groovy"][0])),
-                   [(["*.class"], ExternalCompiler(comp_args["Groovy"][1]))]),
+                    (["*.class"], ExternalCompiler(comp_args["Groovy"][1]))]),
   "Haskell"     : ("",
                    [BOT],
                    [([""], ExternalCompiler(comp_args["Haskell"][0]))]),
