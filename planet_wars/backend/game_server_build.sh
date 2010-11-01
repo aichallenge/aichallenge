@@ -74,6 +74,14 @@ then
   && ./configure && make && make install
 fi
 
+# install groovy
+if [ ! -e /usr/bin/groovy ]
+then
+  cd /root/
+  curl 'http://dist.groovy.codehaus.org/distributions/installers/deb/groovy_1.7.5-1_all.deb' > groovy_1.7.7-1_all.deb
+  dpkg -i groovy_1.7.5-1_all.deb
+fi
+
 # set default ruby to ruby 1.9
 if [ ! `readlink /usr/bin/ruby` = "/usr/bin/ruby1.9" ]
 then
