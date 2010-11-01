@@ -78,7 +78,7 @@ fi
 if [ ! -e /usr/bin/groovy ]
 then
   cd /root/
-  curl 'http://dist.groovy.codehaus.org/distributions/installers/deb/groovy_1.7.5-1_all.deb' > groovy_1.7.7-1_all.deb
+  curl 'http://dist.groovy.codehaus.org/distributions/installers/deb/groovy_1.7.5-1_all.deb' > groovy_1.7.5-1_all.deb
   dpkg -i groovy_1.7.5-1_all.deb
 fi
 
