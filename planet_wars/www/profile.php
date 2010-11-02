@@ -71,22 +71,110 @@ $bio = htmlentities($userdata["bio"]);
 if ($org_name == NULL) {
   $org_name = "None";
 }
+if (logged_in_with_valid_credentials() && current_user_id() == $user_id) {
+    $logged_in = true;
+} else {
+    $logged_in = false;
+}
 if (!$userresult) {
   echo "<p>Invalid User ID</p>";
 } else {
 echo <<<EOT
+    <script>
+    function toggle_change_org() {
+       if (document.getElementById('orgchange').style.display == 'none') {
+          document.getElementById('orgchange').style.display='inline';
+          document.getElementById('org_ctxt').innerHTML = 'Cancel';
+       } else {
+          document.getElementById('orgchange').style.display='none';
+          document.getElementById('org_ctxt').innerHTML = 'Change';
+       }
+    }
+    function toggle_change_country() {
+       if (document.getElementById('countrychange').style.display == 'none') {
+          document.getElementById('countrychange').style.display='inline';
+          document.getElementById('country_ctxt').innerHTML = 'Cancel';
+       } else {
+          document.getElementById('countrychange').style.display='none';
+          document.getElementById('country_ctxt').innerHTML = 'Change';
+       }
+    }
+    </script>
     <h2>Profile for $username</h2>
+EOT;
+if ($logged_in) {
+  echo '   <form method="post" action="save_profile.php">';
+}
+echo <<<EOT
     <p><strong>Country:</strong>&nbsp;
-      <a href="country_profile.php?country_id=$country_id">$flag_filename
-        $country_name</a></p>
-    <p><strong>Affiliation:</strong>&nbsp;
-      <a href="organization_profile.php?org_id=$org_id">$org_name</a></p>
+    <a href="country_profile.php?country_id=$country_id">$flag_filename
+      $country_name</a>
+EOT;
+if ($logged_in) {
+echo <<<EOT
+    <span style="padding-left: 1em; font-size: smaller">
+      <a href="#" id="country_ctxt" onclick="toggle_change_country()">Change</a>
+    <span id="countrychange" style="display: none">
+      <select name="user_country" style="width:210px;">
+EOT;
+  $query = "SELECT * FROM countries ORDER BY country_id";
+  $result = mysql_query($query);
+  while ($row = mysql_fetch_assoc($result)) {
+    $option_id = $row['country_id'];
+    $option_name = $row['name'];
+    if ($option_id == $country_id) {
+      echo "<option selected value=$option_id>$option_name</option>";
+    } else {
+      echo "<option value=$option_id>$option_name</option>";
+    }
+    if ($option_id == 11) {
+        echo "<option value=999>---</option>";
+    }
+  }
+echo <<<EOT
+      </select><input type="submit" value="Save" />
+    </span></span></p>
+EOT;
+}
+echo <<<EOT
+    <p>
+    <strong>Affiliation:</strong>&nbsp;
+    <a href="organization_profile.php?org_id=$org_id">$org_name</a>
+EOT;
+if ($logged_in) {
+echo <<<EOT
+      <span style="padding-left: 1em; font-size: smaller">
+        <a href="#" id="org_ctxt" onclick="toggle_change_org()">Change</a>
+      <span id="orgchange" style="display: none">
+      <select name="user_organization" style="width:210px;">
+      <option value="0">Other</option>
+      <option value="1">University of Waterloo</option>
+      <option value="999">---</option>
+EOT;
+  $query = "SELECT * FROM organizations WHERE org_id > 1 ORDER BY name";
+  $result = mysql_query($query);
+  while ($row = mysql_fetch_assoc($result)) {
+    $option_id = $row['org_id'];
+    $option_name = $row['name'];
+    if ($option_id == $org_id) {
+      echo "<option selected value=$option_id>$option_name</option>";
+    } else {
+      echo "<option value=$option_id>$option_name</option>";
+    }
+  }
+?>
+     </select><input type="submit" value="Save" /></span></span>
+     </form>
+<?php }
+echo <<<EOT
+    </p>
     <p><strong>Joined:</strong>&nbsp;$created</p>
 EOT;
 if ($bio != NULL) {
 echo <<<EOT
-    <dt>About Me:</dt>
-    <dd>$bio &nbsp;</dd>
+    <p><strong>About Me:</strong><br />
+      $bio
+    </p>
 EOT;
 }
 echo <<<EOT
