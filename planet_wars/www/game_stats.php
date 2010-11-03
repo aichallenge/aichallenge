@@ -10,6 +10,12 @@ $result = mysql_query($query);
 $row = mysql_fetch_row($result);
 $submissions = $row[0];
 
+$query = "select count(*) from submissions where timestamp > (now() - interval 24 hour) and status = 40";
+$result = mysql_query($query);
+$row = mysql_fetch_row($result);
+$submissions_successful = $row[0];
+$submissions_percentage = ($submissions_successful / $submissions) * 100.0;
+
 $query = "select count(*) from games where timestamp > (now() - interval 24 hour)";
 $result = mysql_query($query);
 $row = mysql_fetch_row($result);
@@ -54,11 +60,17 @@ foreach ($games_per_server as $server) {
   <tr>
     <td><?=$new_users?></td>
     <td><?=$submissions?></td>
+    <td><?=$submissions_successful?>
+      <span style="font-size: smaller">
+        (<?=number_format($submissions_percentage,0)?>%)
+      </span>
+    </td>
     <td><?=$games_played?></td>
   </tr>
   <tr>
     <th>New users</th>
     <th>New submissions</th>
+    <th>Successful submissions</th>
     <th>Games played</th>
   </tr>
 </table>
