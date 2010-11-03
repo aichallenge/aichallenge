@@ -9,8 +9,8 @@ require_once('api_functions.php');
 */
 
 $conditions = array();
-# Lisp bots won't compile. Someone wrote a node js bot that crashes the server by using too much memory.
-$languages_condition = 'l.language_id <> 15 AND l.language_id <> 10'; 
+# Lisp bots won't compile.
+$languages_condition = 'l.language_id <> 15'; 
 $conditions[]=$languages_condition;
 
 // AND timestamp > timestampadd(hour, -24, current_timestamp)
