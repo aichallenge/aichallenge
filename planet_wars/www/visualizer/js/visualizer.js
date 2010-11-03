@@ -12,6 +12,7 @@ var Visualizer = {
     map_id: 0,
     planets: [],
     moves: [],
+    error_message: '',
     dirtyRegions: [],
     active_planet: -1,
     shipCount : [0,0,0],
@@ -77,7 +78,6 @@ var Visualizer = {
         );
       }
       this.dirtyRegions = [];
-
     },
     
     drawFrame: function(frame) { 
@@ -93,9 +93,9 @@ var Visualizer = {
         this.drawBackground();
         
         // Draw Planets
+        ctx.font = this.config.planet_font;
+        ctx.textAlign = 'center';
         for(var i = 0; i < this.planets.length; i++) {
-            ctx.font = this.config.planet_font;
-            ctx.textAlign = 'center';
             var planet = this.planets[i];
             planet.owner = planetStats[i].owner;
             planet.numShips = planetStats[i].numShips;
@@ -270,7 +270,6 @@ var Visualizer = {
             //ctx.arc((j-1)*widthFactor, prodCount*heightFactor, 2, 0, Math.PI*2, true);
             //ctx.fill();
         }
-        
 
         var heightFactor = canvas.height / mostShips / 1.05
         var widthFactor = canvas.width / Math.max(200, this.moves.length)
@@ -357,8 +356,9 @@ var Visualizer = {
                     case "player_one": this.players[0] = value[1]; break;
                     case "player_two": this.players[1] = value[1]; break;
                     case "playback_string": data = value[1]; break;
-                    case "player_one_id": this.playerIds[0] = value[1]; break;
-                    case "player_two_id": this.playerIds[1] = value[1]; break;
+                    case "user_one_id": this.playerIds[0] = value[1]; break;
+                    case "user_two_id": this.playerIds[1] = value[1]; break;
+                    case "error_message": this.error_message = value[1]; break;
                     case "map_id": this.map_id = value[1]; break;
                 }
             }
@@ -575,6 +575,13 @@ var ParserUtils = {
       $('#turnCounter').text('Turn: '+Math.floor(Visualizer.frame+1)+' of '+Visualizer.moves.length)
     })
     
+    $('#error_message').text(Visualizer.error_message).css({'color':Visualizer.config.teamColor[1]})
+
+    $('.player1Name').html('<a href="profile.php?user_id=' + Visualizer.playerIds[0] + '">' + Visualizer.players[0] + '</a>')
+    $('.player1Name a').css({'color':Visualizer.config.teamColor[1],'text-decoration':'none'})
+    $('.player2Name').html('<a href="profile.php?user_id=' + Visualizer.playerIds[1] + '">' + Visualizer.players[1] + '</a>')
+    $('.player2Name a').css({'color':Visualizer.config.teamColor[2],'text-decoration':'none'})
+
     $('.playerVs').text('v.s.')
     $('title').text(Visualizer.players[0]+' v.s. '+Visualizer.players[1]+' - Planet Wars')
     
