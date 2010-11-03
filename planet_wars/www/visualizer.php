@@ -13,15 +13,15 @@
   <p id="error_message"></p>
   <p id="turnCounter"></p>
   <p id="controls">
-      <a href="#" id="start-button"><span class="small">|</span>&laquo;</a> | 
-      <a href="#" id="prev-frame-button">&laquo;</a> | 
-      <a href="#" id="play-button">&#9654;</a> | 
-      <a href="#" id="next-frame-button">&raquo;</a> | 
-      <a href="#" id="end-button">&raquo;<span class="small">|</span></a>
+      <a href="#" id="start-button" title="To start"><span class="small">|</span>&laquo;</a> | 
+      <a href="#" id="prev-frame-button" title="Step back (left arrow)">&laquo;</a> | 
+      <a href="#" id="play-button" title="Play/Pause (spacebar)">&#9654;</a> | 
+      <a href="#" id="next-frame-button" title="Step forward (right arrow)">&raquo;</a> | 
+      <a href="#" id="end-button" title="To end">&raquo;<span class="small">|</span></a><br />
+      <a href="#" id="speeddown" title="Slow down (down arrow)">-</a>
+      <a href="#" id="speedup" title="Speed up (up arrow)">+</a>
   </p>
   <p>
-    <br>
-    <br>
     <canvas id="chart" width="640" height="100" ></canvas>
   </p>
         
