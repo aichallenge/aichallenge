@@ -1,5 +1,20 @@
 <?php include 'header.php'; 
 
+$query = "select count(*) from users where activated=1 and created > (now() - interval 24 hour)";
+$result = mysql_query($query);
+$row = mysql_fetch_row($result);
+$new_users = $row[0];
+
+$query = "select count(*) from submissions where timestamp > (now() - interval 24 hour)";
+$result = mysql_query($query);
+$row = mysql_fetch_row($result);
+$submissions = $row[0];
+
+$query = "select count(*) from games where timestamp > (now() - interval 24 hour)";
+$result = mysql_query($query);
+$row = mysql_fetch_row($result);
+$games_played = $row[0];
+
 $games_per_minute = array();
 foreach(array(5,60,1444) as $minutes){
   $sql = "select count(*)/$minutes from games where timestamp > timestampadd(minute, -$minutes, current_timestamp);";
@@ -13,7 +28,6 @@ $q = mysql_query($sql);
 while($r = mysql_fetch_assoc($q)){
   $games_per_server[] = $r;
 }
-
 
 $errors_per_server = array();
 $sql = "select e.*, worker from errors e inner join games g on g.game_id = e.game_id where e.timestamp > timestampadd(minute, -5, current_timestamp) group by game_id order by worker,e.timestamp desc ;";
@@ -34,10 +48,24 @@ foreach ($games_per_server as $server) {
 
 ?>
 
-<h2>Games per minute</h2>
+<h2>Last 24 hours</h2>
 
 <table class="bigstats">
+  <tr>
+    <td><?=$new_users?></td>
+    <td><?=$submissions?></td>
+    <td><?=$games_played?></td>
+  </tr>
+  <tr>
+    <th>New users</th>
+    <th>New submissions</th>
+    <th>Games played</th>
+  </tr>
+</table>
 
+<h2 style="margin-top: 1em">Games per minute</h2>
+
+<table class="bigstats">
   <tr>
     <td><?=number_format($games_per_minute[5],1)?></td>
     <td><?=number_format($games_per_minute[60],1)?></td>

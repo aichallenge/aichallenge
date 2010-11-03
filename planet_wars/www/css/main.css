@@ -235,6 +235,8 @@ table.submissions .error_code {
 
 
 .bigstats th{
+	padding-left: 10px;
+	padding-right: 10px;
 	text-align: center;
 }
 .bigstats td{
