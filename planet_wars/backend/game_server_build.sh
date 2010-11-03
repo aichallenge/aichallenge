@@ -2,9 +2,14 @@
 # 
 # This should build a cloud game server.
 # 
-# Start with ami-6836dc01 Ubuntu 8 HARDY LTS
-
-# If manualy using the script, uncomment the two below lines
+# ami-6836dc01 Ubuntu 8 HARDY LTS is the base ami used on Ec2 and this script
+# will setup a worker from it.
+#
+# ami-049b6c6d can now be used instead and has many of the packages preloaded.
+# This reduces worker initialization time on first boot from 12 to 14 minutes
+# down to 3 or 4 minutes.
+#
+# If manually using the script, uncomment the two lines below
 
 # api_base_url="http://ai-contest.com"
 # api_key="KEYGOESHERElakfjsdkjfhalksdjfhalksdjfhkdasjhfaklj"
