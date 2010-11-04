@@ -54,6 +54,7 @@ def hash_file(filename):
 def hash_submission(submission_id):
     sub_dir = os.path.join(SUB_PATH, submission_id)
     sub_files = collect_filenames(sub_dir)
+    sub_files.sort()
     sub_hash = sha1()
     for name in sub_files:
         sub_hash.update(hash_file(name))
