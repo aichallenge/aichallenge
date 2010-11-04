@@ -23,6 +23,7 @@ def collect_filenames(path):
     return filenames
 
 # suprisingly in testing this is slower than doing the file hash in python
+# this hash value will include the full absolute path to the file
 def hash_file_md5sum(filename):
     proc = Popen(["md5sum", filename], stdout=PIPE)
     fhash, _ = proc.communicate()
@@ -33,7 +34,7 @@ def hash_file_md5sum(filename):
 def hash_file_sha(filename):
     READ_SIZE = 4096 * 2500
     fhash = sha1()
-    fhash.update(filename)
+    fhash.update(os.path.basename(filename))
     f = open(filename, 'r')
     content = f.read(READ_SIZE)
     while len(content) != 0:
@@ -44,16 +45,15 @@ def hash_file_sha(filename):
 # this was only around 20-25% faster than the full hash
 def hash_file_size(filename):
     fhash = sha1()
-    fhash.update(filename)
+    fhash.update(os.path.basename(filename))
     fhash.update(str(os.path.getsize(filename)))
     return fhash.digest()
 
 def hash_file(filename):
     return hash_file_sha(filename)
 
-def hash_submission(submission_id):
-    sub_dir = os.path.join(SUB_PATH, submission_id)
-    sub_files = collect_filenames(sub_dir)
+def hash_submission(submission_dir):
+    sub_files = collect_filenames(submission_dir)
     sub_files.sort()
     sub_hash = sha1()
     for name in sub_files:
@@ -65,5 +65,6 @@ if __name__ == "__main__":
         print "usage: submission_hash.py <submission_id>"
         sys.exit(1)
     submission_id = sys.argv[1]
-    print hash_submission(submission_id)
+    submission_dir = os.path.join(SUB_PATH, submission_id)
+    print hash_submission(submission_dir)
 

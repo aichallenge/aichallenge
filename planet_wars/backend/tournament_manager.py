@@ -1,14 +1,9 @@
-import engine
-from server_info import server_info
-from compile_anything import compile_function, Log
-
 import logging
 import logging.handlers
 import MySQLdb
 import os
 import random
 import shutil
-import subprocess
 import sys
 import signal
 import tempfile
@@ -17,6 +12,13 @@ import zlib
 import urllib
 import simplejson as json
 import traceback
+from subprocess import Popen, PIPE
+
+import engine
+from compile_anything import compile_function, Log
+from server_info import server_info
+from submission_hash import hash_submission
+
 
 # Set up logging
 logger = logging.getLogger('tm_logger')
@@ -62,9 +64,19 @@ class GameAPIClient:
     log_message("Downloading %d " % submission_id)
     download_dir = tempfile.mkdtemp(dir="../submissions/")
     os.chmod(download_dir, 0755)
+    hash_url = self.base_url+'/api_get_submission_hash.php'
+    hash_url += '?api_key=%s&submission_id=%d' % (self.api_key, submission_id)
+    hash_req = Popen(['curl', '--silent', hash_url], stdout=PIPE)
     url = self.base_url+'/api_get_submission.php'
     url += '?api_key=%s&submission_id=%d' % (self.api_key, submission_id)
     os.system("cd %s; curl --silent '%s' | tar -xz" % (download_dir, url))
+    local_hash = hash_submission(download_dir)
+    remote_hash, _ = hash_req.communicate()
+    remote_hash = remote_hash.strip()
+    if local_hash != remote_hash:
+        log_message("After downloading submission %s to %s hash didn't match" %
+                (submission_id, download_dir))
+        raise Exception()
 
     if int(platform_specific_compilation) == 1:
       log_message("Compiling %s " % submission_id)
