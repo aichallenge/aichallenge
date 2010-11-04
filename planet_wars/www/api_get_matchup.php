@@ -10,8 +10,9 @@ require_once('api_functions.php');
 
 $conditions = array();
 # Lisp bots won't compile.
-$languages_condition = 'l.language_id <> 15'; 
-$conditions[]=$languages_condition;
+# $languages_condition = 'l.language_id <> 15'; 
+# $conditions[]=$languages_condition;
+$conditions[]='TRUE';
 
 // AND timestamp > timestampadd(hour, -24, current_timestamp)
 $conditions = implode(" AND ",$conditions);
