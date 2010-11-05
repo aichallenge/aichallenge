@@ -41,31 +41,34 @@
 
 
 <h3>Go</h3>
-<p>The Go programming language is supported. We are using Go release 2010-10-20. Check the forums for user contributed starter packs.</p>
+<p>The Go programming language is supported. We are using Go release 2010-10-20. Check the forums for user contributed starter packs. <a href="forum/viewtopic.php?f=18&t=883">This thread</a> is one place to start.</p>
 
 <h3>Groovy</h3>
-<p>Groovy is supported. We are using Groovy version 1.7.5. Check the forums for user contributed starter packs.</p>
+<p>Groovy is supported. We are using Groovy version 1.7.5. Check the forums for user contributed starter packs. <a href="forum/viewtopic.php?f=18&t=767">This thread</a> is one place to start.</p>
 
 <h3>Haskell</h3>
-<p>Haskel is supported. We are using GHC version 6.8.2. Check the forums for user contributed starter packs.</p>
+<p>Haskel is supported. We are using GHC version 6.8.2. Check the forums for user contributed starter packs. <a href="forum/viewtopic.php?f=18&t=428">This thread</a> is one place to start.</p>
 
 <h3>Javascript</h3>
-<p>Javascript is supported. We are using node v0.2.1. Check the forums for user contributed starter packs.</p>
+<p>Javascript is supported. We are using node v0.2.1. Check the forums for user contributed starter packs. <a href="forum/viewtopic.php?f=18&t=514">This thread</a> is one place to start.</p>
 
 <h3>Lisp</h3>
-<p>Lisp is supported. We are using SBCL 1.0.11. Check the forums for user contributed starter packs.</p>
+<p>Lisp is supported. We are using SBCL 1.0.11. Check the forums for user contributed starter packs. <a href="forum/viewtopic.php?f=18&t=421">This thread</a> is one place to start.</p>
 
 <h3>OCaml</h3>
-<p>OCaml is supported. We are using OCaml version 3.10.0. Check the forums for user contributed starter packs.</p>
+<p>OCaml is supported. We are using OCaml version 3.10.0. Check the forums for user contributed starter packs. <a href="forum/viewtopic.php?f=18&t=404">This thread</a> is one place to start.</p>
 
 <h3>Perl</h3>
-<p>Perl is supported. We are using perl 5.8.8. Check the forums for user contributed starter packs.</p>
+<p>Perl is supported. We are using perl 5.8.8. Check the forums for user contributed starter packs. <a href="forum/viewtopic.php?f=18&t=589">This thread</a> is one place to start.</p>
 
 <h3>PHP</h3>
-<p>PHP is supported. We are using PHP 5.2.4. Check the forums for user contributed starter packs.</p>
+<p>PHP is supported. We are using PHP 5.2.4. Check the forums for user contributed starter packs. <a href="forum/viewtopic.php?f=18&t=434">This thread</a> is one place to start.</p>
+
+<h3>Scala</h3>
+<p>Scala is supported. We are using Scala 1.8.0. Check the forums for user contributed starter packs. <a href="forum/viewtopic.php?f=18&t=488">This thread</a> is one place to start.</p>
 
 <h3>Ruby</h3>
-<p>Ruby is supported. We are using Ruby 1.9.0. Check the forums for user contributed starter packs.</p>
+<p>Ruby is supported. We are using Ruby 1.9.0. Check the forums for user contributed starter packs. <a href="forum/viewtopic.php?f=18&t=401">This thread</a> is one place to start.</p>
 
 
 <?php include 'footer.php'; ?>
