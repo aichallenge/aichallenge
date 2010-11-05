@@ -53,7 +53,8 @@ def unpack():
         for dir_name in dir_names:
           os.system("mv " + str(dir_name) + "/* .")
           os.system("rm -rf " + str(dir_name))
-        os.system("rm -rf tools maps example_bots")
+      os.system("rm -rf tools maps example_bots")
+      os.system("chmod -R go+r . 2> /dev/null")
       break
   if not found_archive_file:
     err +=  "Failed to unpack the submission. This is probably " + \
