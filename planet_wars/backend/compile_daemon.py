@@ -53,7 +53,8 @@ def unpack():
         for dir_name in dir_names:
           os.system("mv " + str(dir_name) + "/* .")
           os.system("rm -rf " + str(dir_name))
-        os.system("rm -rf tools maps example_bots")
+      os.system("rm -rf tools maps example_bots")
+      os.system("chmod -R go+r . 2> /dev/null")
       break
   if not found_archive_file:
     err +=  "Failed to unpack the submission. This is probably " + \
@@ -94,6 +95,10 @@ def set_submission_status(submission_id, status):
   query = "UPDATE submissions SET status = " + str(status) + " " + \
     "WHERE submission_id = " + str(submission_id)
   cursor.execute(query)
+  if status == 40:
+    query = "UPDATE submissions SET latest = 1 " + \
+      "WHERE submission_id = " + str(submission_id)
+    cursor.execute(query)
   cursor.close()
   connection.close()
 

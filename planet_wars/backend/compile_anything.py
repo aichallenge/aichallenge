@@ -168,6 +168,7 @@ comp_args = {
                 BOT + '.lisp', '--eval', "(save-lisp-and-die \"" + BOT
                 + "\" :executable t :toplevel #'pwbot::main)"]],
   "OCaml"   : [["ocamlbuild", BOT + ".native"]],
+  "Scala"   : [["scalac"]],
   }
 
 targets = {
@@ -239,6 +240,9 @@ languages = {
   "Ruby"        : (".rb",
                    [],
                    [(["*.rb"], ChmodCompiler("Ruby"))]),
+  "Scala"       : (".class",
+                   ["*.class, *.jar"],
+                   [(["*.scala"], ExternalCompiler(comp_args["Scala"][0]))]),
   "Scheme"      : (".ss",
                    [],
                    [(["*.ss"], ChmodCompiler("Scheme"))]),
