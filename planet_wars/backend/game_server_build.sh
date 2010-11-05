@@ -87,6 +87,17 @@ then
   dpkg -i groovy_1.7.5-1_all.deb
 fi
 
+# install scala
+if [ ! -e /usr/bin/scala ]
+then
+  cd /root/
+  curl "http://www.scala-lang.org/downloads/distrib/files/scala-2.8.0.final.tgz" > scala-2.8.0.final.tgz
+  tar xzf scala-2.8.0.final.tgz
+  mv scala-2.8.0.final /usr/share/scala
+  ln -s /usr/share/scala/bin/scala /usr/bin/scala
+  ln -s /usr/share/scala/bin/scalac /usr/bin/scalac
+fi
+
 # set default ruby to ruby 1.9
 if [ ! `readlink /usr/bin/ruby` = "/usr/bin/ruby1.9" ]
 then
