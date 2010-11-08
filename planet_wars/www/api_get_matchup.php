@@ -64,8 +64,14 @@ while($p1_offset == $p2_offset ){
 
 $submission_one = $submissions[(int)$p1_offset];
 $submission_two = $submissions[(int)$p2_offset];
-$map_id = rand(1,99);
-$map = array('id'=>$map_id,'name'=>'map'.$map_id.'.txt');
+$result = mysql_query("SELECT MAX(map_id) as max_id, MIN(map_id) as min_id
+    FROM maps");
+$row = mysql_fetch_assoc($result);
+$map_id = mt_rand($row['min_id'], $row['max_id']);
+$result = mysql_query("SELECT * FROM maps WHERE map_id >= $map_id LIMIT 1");
+$row = mysql_fetch_assoc($result);
+$map_file = $row['path'];
+$map = array('id'=>$map_id,'name'=>$map_file);
 echo json_encode(array(
     'players'=>array($submission_one,$submission_two),
     'map'=>$map,
