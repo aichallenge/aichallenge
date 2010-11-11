@@ -5,6 +5,7 @@ import math
 import os
 import random
 import sys
+import time
 from collections import defaultdict
 from datetime import datetime, timedelta
 
@@ -185,6 +186,7 @@ def add_matches(cursor, max_matches):
     return num_matches
 
 def main():
+    start_time = time.time()
     handler = logging.handlers.RotatingFileHandler("matchup.log",
                                                maxBytes=1000000,
                                                backupCount=5)
@@ -203,6 +205,7 @@ def main():
     if queue_size < gpm * 2:
         num_added = add_matches(cursor, (gpm * 6) - queue_size)
         log_message("Added %d new matches to queue" % (num_added,))
+    log_message("Run time was %.2f seconds" % (time.time() - start_time,))
 
 if __name__ == '__main__':
     main()
