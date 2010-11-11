@@ -3,12 +3,14 @@ require_once('api_functions.php');
 
 /* 
   This script records game results.
-  In the future it will also store bot errors.
   Possibly in the future we will also check that the game we are storing is a match we had previously handed out.
 */
 
-
-
+function update_last_game_played($submission_id){
+  $sql = "UPDATE submissions set last_game_timestamp = current_timestamp
+      WHERE submission_id = '".addslashes($submission_id)."'";
+  mysql_query($sql);
+}
 
 $gamedata = json_decode(file_get_contents('php://input'));
 
@@ -50,14 +52,18 @@ if(isset($gamedata->errors)){
   }
 }
 
+update_last_game_played($gamedata->player_one);
+update_last_game_played($gamedata->player_two);
 
+$sql = "DELETE FROM matchups
+    WHERE player_one='".addslashes($gamedata->player_one)."'
+        AND player_two='".addslashes($gamedata->player_two)."'";
+mysql_query($sql);
 
 if($r){
   echo("done");
 }else{
   echo("error saving");
 }
-    
-    
 
 ?>
