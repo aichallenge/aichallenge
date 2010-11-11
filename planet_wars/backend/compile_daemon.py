@@ -55,6 +55,7 @@ def unpack():
           os.system("rm -rf " + str(dir_name))
       os.system("rm -rf tools maps example_bots")
       os.system("chmod -R go+r . 2> /dev/null")
+      os.system("find . -type d -exec 755 {} \;")
       break
   if not found_archive_file:
     err +=  "Failed to unpack the submission. This is probably " + \
