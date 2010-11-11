@@ -1,3 +1,4 @@
+#!/bin/python
 
 import logging
 import logging.handlers
@@ -111,7 +112,7 @@ def get_player_one_order(total_ranking):
     def sort_key(sub):
         if sub['last_game_timestamp'] is not None:
             return sub['last_game_timestamp']
-        return sub['timestamp'] - timedelta(year=1)
+        return sub['timestamp'] - timedelta(days=365)
     subs = list(total_ranking)
     subs.sort(key=sort_key, reverse=True)
     return subs
@@ -187,10 +188,14 @@ def add_matches(cursor, max_matches):
 
 def main():
     start_time = time.time()
-    handler = logging.handlers.RotatingFileHandler("matchup.log",
+    try:
+        handler = logging.handlers.RotatingFileHandler("matchup.log",
                                                maxBytes=1000000,
                                                backupCount=5)
-    logger.addHandler(handler)
+        logger.addHandler(handler)
+    except IOError:
+       # couldn't start the file logger
+       pass
     connection = MySQLdb.connect(host = server_info["db_host"],
                                  user = server_info["db_username"],
                                  passwd = server_info["db_password"],
