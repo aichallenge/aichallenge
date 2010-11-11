@@ -55,7 +55,7 @@ while (True) {
     $submission_one = get_submission($matchup['player_one']);
     $submission_two = get_submission($matchup['player_two']);
     if ($submission_one['latest'] != 1 or $submission_two['latest'] != 1) {
-        mysql_quert("DELETE FROM matchups
+        mysql_query("DELETE FROM matchups
             WHERE player_one='".$matchup['player_one']."'
                AND '".$matchup['player_two']."'");
         continue;
