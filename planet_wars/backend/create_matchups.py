@@ -28,16 +28,15 @@ def get_submissions(cursor):
     leaderboard_id = row['leaderboard_id']
     log_message("latest leaderboard is %d" % leaderboard_id)
     # check that the latest leaderboard is complete else use the previous one
-    if row['timestamp'] < (datetime.now() - timedelta(minutes=2)):
-        count_query = "SELECT count(*) FROM rankings where leaderboard_id = %s"
-        cursor.execute(count_query % (leaderboard_id,))
-        cur_num = cursor.fetchone()['count(*)']
-        cursor.execute(count_query % (leaderboard_id-1,))
-        prev_num = cursor.fetchone()['count(*)']
-        if prev_num > cur_num + 5:
-            leaderboard_id -= 1
-            log_message("using previous leaderboard %d as current has %d less"
-                    % (prev_num - cur_num,))
+    count_query = "SELECT count(*) FROM rankings where leaderboard_id = %s"
+    cursor.execute(count_query % (leaderboard_id,))
+    cur_num = cursor.fetchone()['count(*)']
+    cursor.execute(count_query % (leaderboard_id-1,))
+    prev_num = cursor.fetchone()['count(*)']
+    if prev_num > cur_num * 0.99:
+        leaderboard_id -= 1
+        log_message("using previous leaderboard %d as current has %d less"
+                % (leaderboard_id, prev_num - cur_num,))
     cursor.execute("SELECT * FROM matchups")
     pending = []
     for row in cursor.fetchall():
@@ -186,7 +185,7 @@ def add_matches(cursor, max_matches):
         num_matches += 1
     return num_matches
 
-def main(run_time=0):
+def main(run_time=0, qbuffer=6):
     start_time = time.time()
     try:
         handler = logging.handlers.RotatingFileHandler("matchup.log",
@@ -204,24 +203,28 @@ def main(run_time=0):
         cursor = connection.cursor(MySQLdb.cursors.DictCursor)
         cursor.execute("""SELECT count(*)/5 as gpm FROM games
                 WHERE timestamp > (NOW() - INTERVAL 5 minute)""")
-        gpm = max(cursor.fetchone()['gpm'], 5)
+        gpm = max(float(cursor.fetchone()['gpm']), 5.)
         cursor.execute("SELECT count(*) FROM matchups WHERE dispatch_time IS NULL")
         queue_size = cursor.fetchone()['count(*)']
         log_message("Found %d matches in queue with %d gpm" % (queue_size, gpm))
         if queue_size < gpm * 2:
             start_adding = time.time()
-            num_added = add_matches(cursor, (gpm * 6) - queue_size)
+            num_added = add_matches(cursor, (gpm * qbuffer) - queue_size)
             log_message("Added %d new matches to queue in %.2f seconds"
                     % (num_added, time.time()-start_adding))
         cursor.close()
         connection.close()
         if time.time() - start_time >= run_time - 32:
             break
-        time.sleep(30)
+        buffertime = max(0, ((queue_size / float(gpm)) - 2.1) * 60)
+        time.sleep(min(30, buffertime))
 
 if __name__ == '__main__':
+    runtime = 0
+    qbuffer = 6
     if len(sys.argv) > 1:
-        main(int(sys.argv[1]))
-    else:
-        main()
+        runtime = int(sys.argv[1])
+    if len(sys.argv) > 2:
+        qbuffer = float(sys.argv[2])
+    main(runtime, qbuffer)
 
