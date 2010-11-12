@@ -135,10 +135,11 @@ _SERVER_MAPS = None
 def choose_map(cursor, player1, player2):
     global _SERVER_MAPS
     if not _SERVER_MAPS:
-        cursor.execute("SELECT map_id FROM maps")
-        _SERVER_MAPS = []
+        cursor.execute("SELECT map_id, priority FROM maps")
+        _SERVER_MAPS = {}
         for row in cursor.fetchall():
-            _SERVER_MAPS.append(row['map_id'])
+            if row['priority'] > 0:
+                _SERVER_MAPS[row['map_id']] = row['priority']
     p1_id = player1['submission_id']
     p2_id = player2['submission_id']
     cursor.execute("""SELECT map_id FROM games
@@ -146,7 +147,7 @@ def choose_map(cursor, player1, player2):
             OR (player_one = %s AND player_two = %s)""" %
             (p1_id, p2_id, p2_id, p1_id))
     counts = dict()
-    for map_id in _SERVER_MAPS:
+    for map_id in _SERVER_MAPS.keys():
         counts[map_id] = 0
     for row in cursor.fetchall():
         try:
@@ -163,7 +164,15 @@ def choose_map(cursor, player1, player2):
             min_maps = [map_id]
         elif plays == min_played:
             min_maps.append(map_id)
-    return random.choice(min_maps)
+    qualified_maps = [min_maps.pop()]
+    high_priority = _SERVER_MAPS[qualified_maps[0]]
+    for map_id in min_maps:
+        if _SERVER_MAPS[map_id] < high_priority:
+            max_priority = _SERVER_MAPS[map_id]
+            qualified_maps = [map_id]
+        elif _SERVER_MAPS[map_id] == high_priority:
+            qualified_maps.append(map_id)
+    return random.choice(qualified_maps)
 
 def add_matches(cursor, max_matches):
     ranked, unranked = get_submissions(cursor)
@@ -177,8 +186,8 @@ def add_matches(cursor, max_matches):
         cursor.execute("""INSERT matchups
                 SET player_one=%s, player_two=%s, map_id=%s"""
                     % (p1['submission_id'], p2['submission_id'], m))
-        log_message("%s plays %s on %s" % (
-                p1['submission_id'], p2['submission_id'], m))
+        log_message("%s plays %s on %s(%d)" % (
+                p1['submission_id'], p2['submission_id'], m, _SERVER_MAPS[m]))
         total_ranking.remove(p1)
         total_ranking.remove(p2)
         player_order.remove(p2)
