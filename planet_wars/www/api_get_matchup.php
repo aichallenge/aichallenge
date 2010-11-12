@@ -18,7 +18,7 @@ function get_matchup() {
         $result = mysql_query($sql);
         if (mysql_num_rows($result) == 0) {
             chdir($BACKEND_DIR);
-            exec("python create_matchups.py");
+            exec("python create_matchups.py 0 1");
             continue;
         }
         $row = mysql_fetch_assoc($result);
