@@ -71,5 +71,6 @@ print "elo"
 print " mm"
 # print " exactdist" # we don't really need this
 print " ratings >ratings.txt"
+print " minelo 0"
 print " x"
 print "x"

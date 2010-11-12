@@ -27,7 +27,7 @@ for line in f:
     continue
   (rank, user_id, username, submission_id, elo, plus_bound, minus_bound, \
     num_games, score, oppo, draws) = tokens
-  elo = int(elo) + 2000
+  elo = int(elo)
   values = str(leaderboard_id) + "," + \
     str(submission_id) + "," + \
     str(rank) + "," + \
