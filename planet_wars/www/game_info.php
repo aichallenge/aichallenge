@@ -22,6 +22,10 @@ if($game_id == 0){
     INNER JOIN users u2 ON s2.user_id = u2.user_id
     WHERE g.game_id = $game_id";
     $result = mysql_query($query);
+    if(!$result || mysql_num_rows($result) == 0){
+      $query = str_replace("FROM games g", "FROM games_archive g", $query);
+      $result = mysql_query($query);
+    }
     if(!$result){
       echo "Could not query the database.\n";
     }else{
