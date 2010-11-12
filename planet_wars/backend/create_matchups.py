@@ -186,7 +186,7 @@ def add_matches(cursor, max_matches):
         num_matches += 1
     return num_matches
 
-def main():
+def main(run_time=0):
     start_time = time.time()
     try:
         handler = logging.handlers.RotatingFileHandler("matchup.log",
@@ -196,22 +196,32 @@ def main():
     except IOError:
        # couldn't start the file logger
        pass
-    connection = MySQLdb.connect(host = server_info["db_host"],
-                                 user = server_info["db_username"],
-                                 passwd = server_info["db_password"],
-                                 db = server_info["db_name"])
-    cursor = connection.cursor(MySQLdb.cursors.DictCursor)
-    cursor.execute("""SELECT count(*)/5 as gpm FROM games
-            WHERE timestamp > (NOW() - INTERVAL 5 minute)""")
-    gpm = max(cursor.fetchone()['gpm'], 5)
-    cursor.execute("SELECT count(*) FROM matchups WHERE dispatch_time IS NULL")
-    queue_size = cursor.fetchone()['count(*)']
-    log_message("Found %d matches in queue with %d gpm" % (queue_size, gpm))
-    if queue_size < gpm * 2:
-        num_added = add_matches(cursor, (gpm * 6) - queue_size)
-        log_message("Added %d new matches to queue" % (num_added,))
-    log_message("Run time was %.2f seconds" % (time.time() - start_time,))
+    while True:
+        connection = MySQLdb.connect(host = server_info["db_host"],
+                                     user = server_info["db_username"],
+                                     passwd = server_info["db_password"],
+                                     db = server_info["db_name"])
+        cursor = connection.cursor(MySQLdb.cursors.DictCursor)
+        cursor.execute("""SELECT count(*)/5 as gpm FROM games
+                WHERE timestamp > (NOW() - INTERVAL 5 minute)""")
+        gpm = max(cursor.fetchone()['gpm'], 5)
+        cursor.execute("SELECT count(*) FROM matchups WHERE dispatch_time IS NULL")
+        queue_size = cursor.fetchone()['count(*)']
+        log_message("Found %d matches in queue with %d gpm" % (queue_size, gpm))
+        if queue_size < gpm * 2:
+            start_adding = time.time()
+            num_added = add_matches(cursor, (gpm * 6) - queue_size)
+            log_message("Added %d new matches to queue in %.2f seconds"
+                    % (num_added, time.time()-start_adding))
+        cursor.close()
+        connection.close()
+        if time.time() - start_time >= run_time - 32:
+            break
+        time.sleep(30)
 
 if __name__ == '__main__':
-    main()
+    if len(sys.argv) > 1:
+        main(int(sys.argv[1]))
+    else:
+        main()
 
