@@ -18,6 +18,8 @@ cursor.execute("""
   (CURRENT_TIMESTAMP,'Bayeselo',""" + str(elapsed_time) + """)
 """)
 leaderboard_id = connection.insert_id()
+min_elo = 1
+player_results = []
 f = open("ratings.txt", "r")
 f.readline()
 for line in f:
@@ -28,10 +30,16 @@ for line in f:
   (rank, user_id, username, submission_id, elo, plus_bound, minus_bound, \
     num_games, score, oppo, draws) = tokens
   elo = int(elo)
+  if min_elo > elo:
+    min_elo = elo
+  player_results.append({'id':submission_id, 'rank':rank, 'elo':elo})
+f.close()
+
+for player in player_results:
   values = str(leaderboard_id) + "," + \
-    str(submission_id) + "," + \
-    str(rank) + "," + \
-    "0,0,0," + str(elo)
+    str(player['id']) + "," + \
+    str(player['rank']) + "," + \
+    "0,0,0," + str(player['elo']-min_elo)
   cursor.execute("""
     INSERT INTO rankings
     (leaderboard_id,submission_id,rank,wins,losses,draws,score)
