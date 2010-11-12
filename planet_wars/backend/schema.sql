@@ -50,7 +50,7 @@ CREATE TABLE `errors` (
   KEY `game_id` (`game_id`),
   KEY `error` (`error`,`timestamp`),
   KEY `timestamp` (`timestamp`)
-) ENGINE=MyISAM AUTO_INCREMENT=221152 DEFAULT CHARSET=latin1;
+) ENGINE=MyISAM AUTO_INCREMENT=238167 DEFAULT CHARSET=latin1;
 SET character_set_client = @saved_cs_client;
 
 --
@@ -80,7 +80,28 @@ CREATE TABLE `games` (
   KEY `player_two_all` (`player_two`,`timestamp`,`draw`,`game_id`,`winner`,`loser`,`player_one`),
   KEY `worker` (`worker`,`timestamp`),
   KEY `player_one_player_two` (`player_one`,`player_two`)
-) ENGINE=MyISAM AUTO_INCREMENT=6941826 DEFAULT CHARSET=latin1;
+) ENGINE=MyISAM AUTO_INCREMENT=7091709 DEFAULT CHARSET=latin1;
+SET character_set_client = @saved_cs_client;
+
+--
+-- Table structure for table `games_archive`
+--
+
+DROP TABLE IF EXISTS `games_archive`;
+SET @saved_cs_client     = @@character_set_client;
+SET character_set_client = utf8;
+CREATE TABLE `games_archive` (
+  `game_id` int(11) NOT NULL,
+  `winner` int(11) NOT NULL,
+  `loser` int(11) NOT NULL,
+  `map_id` int(11) NOT NULL,
+  `draw` tinyint(1) NOT NULL,
+  `timestamp` datetime NOT NULL,
+  `player_one` int(11) NOT NULL,
+  `player_two` int(11) NOT NULL,
+  `worker` int(11) NOT NULL,
+  PRIMARY KEY  (`game_id`)
+) ENGINE=MyISAM DEFAULT CHARSET=latin1;
 SET character_set_client = @saved_cs_client;
 
 --
@@ -162,7 +183,7 @@ CREATE TABLE `leaderboards` (
   `calculation_time` bigint(20) default '0',
   PRIMARY KEY  (`leaderboard_id`),
   KEY `timestamp` (`timestamp`)
-) ENGINE=MyISAM AUTO_INCREMENT=157475 DEFAULT CHARSET=latin1;
+) ENGINE=MyISAM AUTO_INCREMENT=157703 DEFAULT CHARSET=latin1;
 SET character_set_client = @saved_cs_client;
 
 --
@@ -212,7 +233,7 @@ CREATE TABLE `matchups` (
   `map_id` int(11) NOT NULL,
   `dispatch_time` datetime default NULL,
   PRIMARY KEY  (`matchup_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=247 DEFAULT CHARSET=latin1;
+) ENGINE=MyISAM AUTO_INCREMENT=153340 DEFAULT CHARSET=latin1;
 SET character_set_client = @saved_cs_client;
 
 --
@@ -302,7 +323,7 @@ CREATE TABLE `submissions` (
   KEY `timestamp` (`timestamp`),
   KEY `user_id_2` (`user_id`,`timestamp`),
   KEY `latest` (`latest`)
-) ENGINE=MyISAM AUTO_INCREMENT=186764 DEFAULT CHARSET=latin1;
+) ENGINE=MyISAM AUTO_INCREMENT=187547 DEFAULT CHARSET=latin1;
 SET character_set_client = @saved_cs_client;
 
 --
@@ -343,7 +364,7 @@ CREATE TABLE `users` (
   PRIMARY KEY  (`user_id`),
   KEY `username` (`username`),
   KEY `user_id` (`user_id`,`username`)
-) ENGINE=MyISAM AUTO_INCREMENT=13130 DEFAULT CHARSET=latin1;
+) ENGINE=MyISAM AUTO_INCREMENT=13261 DEFAULT CHARSET=latin1;
 SET character_set_client = @saved_cs_client;
 
 --
@@ -373,7 +394,7 @@ CREATE TABLE `workers` (
   `api_key` char(64) NOT NULL,
   PRIMARY KEY  (`worker_id`),
   UNIQUE KEY `api_key` (`api_key`)
-) ENGINE=MyISAM AUTO_INCREMENT=131 DEFAULT CHARSET=latin1;
+) ENGINE=MyISAM AUTO_INCREMENT=134 DEFAULT CHARSET=latin1;
 SET character_set_client = @saved_cs_client;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 
@@ -385,4 +406,4 @@ SET character_set_client = @saved_cs_client;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2010-11-11  4:49:18
+-- Dump completed on 2010-11-12 22:20:11
