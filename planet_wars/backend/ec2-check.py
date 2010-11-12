@@ -81,7 +81,7 @@ for worker in new_store.keys():
     worker_data = new_store[worker]
     if ((worker_data['boot_time'] < min_age and worker_data['gpm'] < 4) or
             (worker_data['gpm'] > 8 and
-                worker_data['epm'] > worker_data['gpm'] / 2.0)):
+                worker_data['epm'] > worker_data['gpm'] * 0.8)):
         print "%s: Rebooting %s at %s as worker %s with %s gpm %s epm" % (
                 time.asctime(), instances[worker], worker, worker_data['id'],
                 worker_data['gpm'], worker_data['epm'])
