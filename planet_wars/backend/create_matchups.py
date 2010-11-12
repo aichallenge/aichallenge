@@ -168,7 +168,7 @@ def choose_map(cursor, player1, player2):
     high_priority = _SERVER_MAPS[qualified_maps[0]]
     for map_id in min_maps:
         if _SERVER_MAPS[map_id] < high_priority:
-            max_priority = _SERVER_MAPS[map_id]
+            high_priority = _SERVER_MAPS[map_id]
             qualified_maps = [map_id]
         elif _SERVER_MAPS[map_id] == high_priority:
             qualified_maps.append(map_id)
