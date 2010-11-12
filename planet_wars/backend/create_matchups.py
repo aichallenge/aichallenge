@@ -216,7 +216,7 @@ def main(run_time=0, qbuffer=6):
         connection.close()
         if time.time() - start_time >= run_time - 32:
             break
-        buffertime = max(0, ((queue_size / float(gpm)) - 2.1) * 60)
+        buffertime = max(1, ((queue_size / float(gpm)) - 2.1) * 60)
         time.sleep(min(30, buffertime))
 
 if __name__ == '__main__':
