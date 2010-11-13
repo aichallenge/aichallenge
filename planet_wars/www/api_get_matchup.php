@@ -29,10 +29,10 @@ function get_matchup() {
         if ($dispatch_time === NULL) {
             $sql = $sql." AND dispatch_time IS NULL";
         } else {
-            $sql = $sql." AND dispatch_time = ".$dispatch_time;
+            $sql = $sql." AND dispatch_time = '$dispatch_time'";
         }
         mysql_query($sql);
-        if (mysql_affected_rows() != 0) $matchup = $row;
+        if (mysql_affected_rows() > 0) $matchup = $row;
     }
     return $matchup;
 }
