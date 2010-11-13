@@ -46,7 +46,7 @@ $rowcount_query = <<<EOT
 select
     count(1)
 from
-    games g
+    games g 
 where
     (g.winner = $submission or g.loser = $submission)
 EOT;
@@ -56,6 +56,14 @@ EOT;
         list($rowcount) = mysql_fetch_row($rowcount_data);
     } else {
         $rowcount = 0;
+    }
+
+    $rowcount_query = str_replace("games g", "games_archive g",
+        $rowcount_query);
+    $rowcount_data = mysql_query($rowcount_query);
+    if ($rowcount_data) {
+        list($archived) = mysql_fetch_row($rowcount_data);
+        $rowcount += $archived;
     }
 
     // Fetch Game Information For Users Current Submission
@@ -87,6 +95,38 @@ union
     if( g.draw = 0, 'Loss', 'Draw' ) as outcome
    from
     games g USE INDEX (loser_3)
+    inner join submissions s USE INDEX (submission_id) on s.submission_id = g.winner
+    inner join users u USE INDEX (user_id) on u.user_id = s.user_id
+    where g.loser = $submission 
+    )
+union
+(select
+    u.username as opp_name,
+    u.user_id as opp_id,
+    g.game_id,
+    g.loser,
+    g.draw,
+    date_format(g.timestamp,'%b %D %H:%i:%S') as date,
+    g.timestamp,
+    if( g.draw = 0, 'Win', 'Draw' ) as outcome
+    from
+    games_archive g
+    inner join submissions s USE INDEX (submission_id) on s.submission_id = g.loser
+    inner join users u USE INDEX (user_id) on u.user_id = s.user_id
+    where g.winner = $submission
+    )
+union
+(select
+    u.username as opp_name,
+    u.user_id as opp_id,
+    g.game_id,
+    g.loser,
+    g.draw,
+    date_format(g.timestamp,'%b %D %H:%i:%S') as date,
+    g.timestamp,
+    if( g.draw = 0, 'Loss', 'Draw' ) as outcome
+   from
+    games_archive g
     inner join submissions s USE INDEX (submission_id) on s.submission_id = g.winner
     inner join users u USE INDEX (user_id) on u.user_id = s.user_id
     where g.loser = $submission 
