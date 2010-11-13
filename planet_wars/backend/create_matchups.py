@@ -33,7 +33,7 @@ def get_submissions(cursor):
     cur_num = cursor.fetchone()['count(*)']
     cursor.execute(count_query % (leaderboard_id-1,))
     prev_num = cursor.fetchone()['count(*)']
-    if prev_num > cur_num * 0.99:
+    if prev_num * 0.99 > cur_num:
         leaderboard_id -= 1
         log_message("using previous leaderboard %d as current has %d less"
                 % (leaderboard_id, prev_num - cur_num,))
