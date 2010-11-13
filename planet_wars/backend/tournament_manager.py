@@ -87,6 +87,7 @@ class GameAPIClient:
       if not success:
         shutil.rmtree(download_dir)
         log_message(compile_log.err)
+        log_message("ERROR: could not compile submission")
         raise Exception()
     else:
       log_message("Not compiling %s " % submission_id)
