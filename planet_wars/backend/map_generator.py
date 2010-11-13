@@ -6,8 +6,10 @@ import random
 # minimum and maximum total number of planets in map
 minPlanets = 15
 maxPlanets = 30
-# maximum number of planets located equidistant from both players
-# not including the planet exactly in the center of the map
+# maximum number of planets specifically generated to be equidistant from both
+# players, by chance planet generated in the standard symmetric way could still
+# end up equidistant as well
+# also does not include the planet exactly in the center of the map
 maxCentral = 5
 # minimum and maximum number of ships on neutral planets
 minShips = 1
