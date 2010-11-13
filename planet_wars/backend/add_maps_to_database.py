@@ -1,17 +1,37 @@
+#!/usr/bin/python
+
+import os
 import sys
+
 import MySQLdb
 from server_info import server_info
 
-n = int(sys.argv[1])
-connection = MySQLdb.connect(host = server_info["db_host"],
-                             user = server_info["db_username"],
-                             passwd = server_info["db_password"],
-                             db = server_info["db_name"])
-cursor = connection.cursor(MySQLdb.cursors.DictCursor)
-for i in range(1, n+1):
-  query = "INSERT INTO maps (name,path,priority) VALUES ('Map " + str(i) + \
-    "','map" + str(i) + ".txt',1)"
-  print query
-  cursor.execute(query)
-cursor.close()
-connection.close()
+def main(map_dir):
+    map_files = os.listdir(map_dir)
+    map_files = [m for m in map_files
+            if m.startswith("map") and m.endswith(".txt")]
+    connection = MySQLdb.connect(host = server_info["db_host"],
+                                 user = server_info["db_username"],
+                                 passwd = server_info["db_password"],
+                                 db = server_info["db_name"])
+    cursor = connection.cursor(MySQLdb.cursors.DictCursor)
+    values = []
+    for map in map_files:
+        cursor.execute("SELECT count(1) FROM maps WHERE path ='%s'" % (map,))
+        if cursor.rowcount > 0:
+            continue
+        values.append((os.path.splitext(map)[0], map, '1'))
+    if len(values) == 0:
+        print "No new maps found"
+        sys.exit()
+    print "Adding %d maps to database" % (len(values),)
+    values = ["("+",".join(v)+")" for v in values]
+    values = "("+",".join(values)+")"
+    cursor.execute("INSERT INTO maps (name,path,priority) VALUES "+ values)
+
+if __name__ == "__main__":
+    if len(sys.argv) < 2:
+        print "usage: %s <map directory>" % sys.argv[0]
+        sys.exit()
+    main(sys.argv[1])
+

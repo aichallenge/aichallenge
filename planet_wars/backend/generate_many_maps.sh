@@ -1,5 +1,5 @@
 #!/bin/bash
-for i in `seq 1 100`;
+for i in `seq 1 $2`;
 do
-  python map_generator.py > "../maps/map$i.txt"
+  python map_generator.py > "../maps/map_$1_$i.txt"
 done
