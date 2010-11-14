@@ -18,15 +18,16 @@ def main(map_dir):
     values = []
     for map in map_files:
         cursor.execute("SELECT count(1) FROM maps WHERE path ='%s'" % (map,))
-        if cursor.rowcount > 0:
+        count = cursor.fetchone()['count(1)']
+        if count > 0:
             continue
-        values.append((os.path.splitext(map)[0], map, '1'))
+        values.append((os.path.splitext(map)[0], map, 1))
     if len(values) == 0:
         print "No new maps found"
         sys.exit()
     print "Adding %d maps to database" % (len(values),)
-    values = ["("+",".join(v)+")" for v in values]
-    values = "("+",".join(values)+")"
+    values = ["('%s','%s','%s')" % (n,m,p) for n,m,p in values]
+    values = ",".join(values)
     cursor.execute("INSERT INTO maps (name,path,priority) VALUES "+ values)
 
 if __name__ == "__main__":
