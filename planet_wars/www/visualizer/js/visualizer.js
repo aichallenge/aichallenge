@@ -79,19 +79,21 @@ var Visualizer = {
       }
       this.dirtyRegions = [];
     },
-    
-    drawFrame: function(frame) { 
+
+    drawFrame: function(frame) {
         var disp_x = 0, disp_y = 0;
         var ctx = this.ctx;
         var frameNumber = Math.floor(frame);
-        
+        if (frameNumber >= this.moves.length)
+            frameNumber = this.moves.length - 1;
+
         var planetStats = this.moves[frameNumber].planets;
         var fleets = this.moves[frameNumber].moving;
         var numShips = [0,0];
         var production = [0,0];
-        
+
         this.drawBackground();
-        
+
         // Draw Planets
         ctx.font = this.config.planet_font;
         ctx.textAlign = 'center';
