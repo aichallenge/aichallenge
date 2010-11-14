@@ -164,6 +164,8 @@ def choose_map(cursor, player1, player2):
             min_maps = [map_id]
         elif plays == min_played:
             min_maps.append(map_id)
+    if min_played > 0:
+        log_message("WARNING: All maps have been played with this pairing")
     qualified_maps = [min_maps.pop()]
     high_priority = _SERVER_MAPS[qualified_maps[0]]
     for map_id in min_maps:
