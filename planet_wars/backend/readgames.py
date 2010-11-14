@@ -40,7 +40,7 @@ cursor.execute("""
   SELECT game_id, winner, loser, map_id, draw, timestamp, player_one, player_two
   FROM games
   WHERE player_one IN (%s) AND player_two IN (%s)
-  AND timestamp >= timestampadd(DAY, -3, current_timestamp)""" % (t, t))
+  AND timestamp >= timestampadd(DAY, -10, current_timestamp)""" % (t, t))
 
 pgn_fd, tmp_name = tempfile.mkstemp(dir=".")
 pgn = os.fdopen(pgn_fd, 'w')

@@ -7,3 +7,5 @@ end_time="$(date +%s)"
 elapsed_seconds="$(expr $end_time - $start_time)"
 python process_ratings.py $elapsed_seconds
 mv *.pgn ranking-data
+cd ranking-data
+gzip *.pgn
