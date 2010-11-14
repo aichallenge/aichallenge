@@ -29,42 +29,64 @@ var Visualizer = {
       fleetColor:  ['rgba(64,080,080,1.00)','rgba(192,000,000,1.00)','rgba(112,160,240,1.00)'],
       planetColor: ['rgba(64,080,080,1.00)','rgba(192,000,000,0.40)','rgba(112,160,240,0.40)']
     },
-    
+
     setup: function(data) {
         // Setup Context
         this.canvas = document.getElementById('display');
         this.ctx = this.canvas.getContext('2d');
         this.ctx.textAlign = 'center'
-        
+
         // Parse data
         this.parseData(data);
-        
-        // Calculated configs
-        this.config.unit_to_pixel = (this.canvas.height - this.config.display_margin * 2) / 24;
-        
+
+        // calculate offset and range so the map is centered and fills the area
+        max_coords = {x: -999, y: -999};
+        min_coords = {x: 999, y: 999};
+        for (var i=0; i < this.planets.length; i++) {
+            p = this.planets[i];
+            if (p.x > max_coords.x) max_coords.x = p.x;
+            if (p.x < min_coords.x) min_coords.x = p.x;
+            if (p.y > max_coords.y) max_coords.y = p.y;
+            if (p.y < min_coords.y) min_coords.y = p.y;
+        }
+        ranges = [max_coords.x - min_coords.x,
+                max_coords.y - min_coords.y];
+        range = Math.max(ranges[0], ranges[1])
+        this.max_coords = max_coords;
+        this.min_coords = min_coords;
+
+        display_margin = this.config.display_margin;
+        unit_to_pixel = (this.canvas.height - display_margin * 2) / range;
+        this.config.unit_to_pixel = unit_to_pixel;
+        this.config.offset = [
+            (-min_coords.x * unit_to_pixel) + display_margin,
+            (-min_coords.y * unit_to_pixel) + display_margin];
+        this.config.offset[0] += ((range - ranges[0]) / 2) * unit_to_pixel;
+        this.config.offset[1] += ((range - ranges[1]) / 2) * unit_to_pixel;
+
         // Draw first frame
-        this.drawFrame(0);        
+        this.drawFrame(0);
     },
 
     changeSpeed: function(difference) {
-    	if ((this.frameSpeed > 0.06) || (difference > 0)) {
-    		this.frameSpeed = this.frameSpeed + difference;
-    	}
+        if ((this.frameSpeed > 0.06) || (difference > 0)) {
+            this.frameSpeed = this.frameSpeed + difference;
+        }
     },
-    
+
     unitToPixel: function(unit) {
         return this.config.unit_to_pixel * unit;
     },
     pixelToUnit: function(pixel) {
         return pixel / this.config.unit_to_pixel;
     },
-    
+
     drawBackground: function(){
       var ctx = this.ctx;
-      
+
       // Draw background
       ctx.fillStyle = '#000';
-      if(this.haveDrawnBackground==false){  
+      if(this.haveDrawnBackground==false){
         ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
         this.haveDrawnBackground = true;
       }
@@ -110,8 +132,8 @@ var Visualizer = {
                 production[planet.owner-1] += planet.growthRate;
             }
 
-            disp_x = this.unitToPixel(planet.x) + this.config.display_margin;
-            disp_y = this.unitToPixel(planet.y) + this.config.display_margin;
+            disp_x = this.unitToPixel(planet.x) + this.config.offset[0];
+            disp_y = this.unitToPixel(planet.y) + this.config.offset[1];
 
             // Add shadow
             ctx.beginPath();
@@ -148,8 +170,8 @@ var Visualizer = {
           var progress = (fleet.progress + 1 + (frame - frameNumber)) / (fleet.tripLength + 2);
           fleet.x = fleet.source.x + (fleet.destination.x - fleet.source.x) * progress
           fleet.y = fleet.source.y + (fleet.destination.y - fleet.source.y) * progress
-          disp_x = this.unitToPixel(fleet.x) + this.config.display_margin;
-          disp_y = this.unitToPixel(fleet.y) + this.config.display_margin;
+          disp_x = this.unitToPixel(fleet.x) + this.config.offset[0];
+          disp_y = this.unitToPixel(fleet.y) + this.config.offset[1];
           
           var color = this.config.teamColor[fleet.owner];
           if ( this.active_planet >= 0
@@ -404,8 +426,8 @@ var Visualizer = {
 
     updateActivePlanet: function(x,y) {
         var new_active_planet = -1;
-        x = this.pixelToUnit(x - this.config.display_margin);
-        y = this.pixelToUnit(y - this.config.display_margin);
+        x = this.pixelToUnit(x - this.config.offset[0]);
+        y = this.pixelToUnit(y - this.config.offset[1]);
         for(var i = 0; i < this.planets.length; i++) {
             var planet = this.planets[i];
             var size = this.pixelToUnit(this.config.planet_pixels[planet.growthRate]);
