@@ -6,3 +6,4 @@ python readgames.py | ../../third_party/bayeselo/bayeselo > /dev/null 2> /dev/nu
 end_time="$(date +%s)"
 elapsed_seconds="$(expr $end_time - $start_time)"
 python process_ratings.py $elapsed_seconds
+mv *.pgn ranking-data
