@@ -39,8 +39,8 @@ def print_planet(p):
 
 def translate_planets(planets):
     for p in planets:
-        p["x"] += maxRadius+2
-        p["y"] += maxRadius+2
+        p["x"] += maxRadius
+        p["y"] += maxRadius
 
 def generate_coordinates(p, r, theta):
     if theta < 0:
@@ -184,7 +184,7 @@ for i in range(planetsToGenerate/2):
     r = rand_radius(minDistance, maxRadius)
     theta = rand_num(0, 360)
     if i == 0:
-        planet_max = min(100, 5 * distance(p1, p2) - 1)
+        planet_max = min(100, 5 * distance(planets[1], planets[2]) - 1)
         num_ships = random.randint(minShips, planet_max)
     else:
         num_ships = random.randint(minShips, maxShips)
