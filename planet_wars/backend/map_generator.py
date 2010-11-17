@@ -23,7 +23,7 @@ minDistance = 2
 # minimum distance between the players starting planets
 minStartingDistance = 4
 # maximum radius from center of map a planet can be
-maxRadius = 12
+maxRadius = 15
 # minimum difference between true distance and rounded distance between planets
 # this is to try and avoid rounding errors causing different distances to be
 # calculated on different platforms and languages
@@ -53,8 +53,11 @@ def generate_coordinates(p, r, theta):
 def rand_num(min, max):
     return ( random.random() * (max-min) ) + min
 
-def rand_radius(min, max):
-    return ( math.sqrt(random.random()) * (max-min) ) + min
+def rand_radius(min_r, max_r):
+    val = min_r - 1
+    while val < min_r:
+        val = math.sqrt(random.random()) * max_r
+    return val
 
 def distance(p1, p2):
     return math.ceil(actual_distance(p1, p2))
@@ -181,7 +184,8 @@ for i in range(planetsToGenerate/2):
     r = rand_radius(minDistance, maxRadius)
     theta = rand_num(0, 360)
     if i == 0:
-        num_ships = random.randint(minShips, 5*distance(p1, p2)-1)
+        planet_max = min(100, 5 * distance(p1, p2) - 1)
+        num_ships = random.randint(minShips, planet_max)
     else:
         num_ships = random.randint(minShips, maxShips)
     growth_rate = random.randint(minGrowth, maxGrowth)
