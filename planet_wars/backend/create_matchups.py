@@ -174,7 +174,36 @@ def choose_map(cursor, player1, player2):
             qualified_maps = [map_id]
         elif _SERVER_MAPS[map_id] == high_priority:
             qualified_maps.append(map_id)
-    return random.choice(qualified_maps)
+    qmaps_vstr = ",".join(str(m) for m in qualified_maps)
+    cursor.execute("""SELECT map_id, count(1) FROM games
+        WHERE map_id in (%s) AND (player_one = %d or player_two = %d)
+        GROUP BY map_id"""
+        % (qmaps_vstr, p1_id, p1_id))
+    p1_counts = defaultdict(int)
+    for row in cursor.fetchall():
+        p1_counts[row['map_id']] = row['count(1)']
+    cursor.execute("""SELECT map_id, count(1) FROM games
+        WHERE map_id in (%s) AND (player_one = %d or player_two = %d)
+        GROUP BY map_id"""
+        % (qmaps_vstr, p2_id, p2_id))
+    p2_counts = defaultdict(int)
+    for row in cursor.fetchall():
+        p2_counts[row['map_id']] = row['count(1)']
+    comb_counts = {}
+    for map_id in qualified_maps:
+        comb_counts[map_id] = p1_counts[map_id] + p2_counts[map_id]
+    least_played = [qualified_maps.pop()]
+    low_count = comb_counts[least_played[0]]
+    for map_id in qualified_maps:
+        if comb_counts[map_id] < low_count:
+            low_count = comb_counts[map_id]
+            least_played = [map_id]
+        elif comb_counts[map_id] == low_count:
+            least_played.append(map_id)
+    match_map = random.choice(qualified_maps)
+    info_str = "%s(%d) times played p1 %s p2 %s" % (match_map,
+            _SERVER_MAPS[match_map], p1_counts[match_map], p2_counts[match_map])
+    return (match_map, info_str)
 
 def add_matches(cursor, max_matches):
     ranked, unranked = get_submissions(cursor)
@@ -184,12 +213,12 @@ def add_matches(cursor, max_matches):
     while len(total_ranking) > 1 and num_matches < max_matches:
         p1 = player_order.pop()
         p2 = choose_opponent(p1, total_ranking)
-        m = choose_map(cursor, p1, p2)
+        m, map_info = choose_map(cursor, p1, p2)
         cursor.execute("""INSERT matchups
                 SET player_one=%s, player_two=%s, map_id=%s"""
                     % (p1['submission_id'], p2['submission_id'], m))
-        log_message("%s plays %s on %s(%d)" % (
-                p1['submission_id'], p2['submission_id'], m, _SERVER_MAPS[m]))
+        log_message("%s plays %s on %s" % (
+                p1['submission_id'], p2['submission_id'], map_info))
         total_ranking.remove(p1)
         total_ranking.remove(p2)
         player_order.remove(p2)
