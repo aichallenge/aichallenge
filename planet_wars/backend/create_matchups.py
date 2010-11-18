@@ -200,7 +200,7 @@ def choose_map(cursor, player1, player2):
             least_played = [map_id]
         elif comb_counts[map_id] == low_count:
             least_played.append(map_id)
-    match_map = random.choice(qualified_maps)
+    match_map = random.choice(least_played)
     info_str = "%s(%d) times played p1 %s p2 %s" % (match_map,
             _SERVER_MAPS[match_map], p1_counts[match_map], p2_counts[match_map])
     return (match_map, info_str)
