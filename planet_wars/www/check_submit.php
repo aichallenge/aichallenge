@@ -39,7 +39,8 @@ function upload_errors($errors) {
 
 $submission_directory = "/home/contest/ai-contest/planet_wars/submissions/";
 if (!logged_in_with_valid_credentials()) {
-  header('index.php');
+  header('Location: index.php');
+  die();
 }
 // Uncomment the following line to turn off new submissions.
 //$errors[] = "Nuh-uh. The contest is over. No more submissions.";
