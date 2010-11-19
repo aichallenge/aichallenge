@@ -38,13 +38,9 @@ function get_matchup() {
 }
 
 function get_submission($sub_id) {
-    $sql = "SELECT s.*, l.*, l.name as language_name,
-                IF(r.rank is NULL, 500, r.rank) as rank
+    $sql = "SELECT s.*, l.*, l.name as language_name                
         FROM submissions s INNER JOIN languages l
             ON l.language_id = s.language_id
-            LEFT OUTER JOIN rankings r ON r.submission_id = s.submission_id
-                AND r.leaderboard_id = (
-                    select max(leaderboard_id) from leaderboards)
         WHERE s.submission_id=".$sub_id;
     $result = mysql_query($sql);
     return mysql_fetch_assoc($result);
