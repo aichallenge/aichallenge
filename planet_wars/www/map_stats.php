@@ -1,10 +1,12 @@
 <?php include 'header.php';
 
-$query = "SELECT map_id, count(1) FROM games GROUP BY map_id";
+$query = "SELECT map_id, count(1), MAX(game_id) FROM games GROUP BY map_id";
 $result = mysql_query($query);
 $played = array();
+$latest = array();
 while ($row = mysql_fetch_assoc($result)) {
     $played[$row['map_id']] = $row['count(1)'];
+    $latest[$row['map_id']] = $row['MAX(game_id)'];
 }
 
 $query = "SELECT map_id, count(1) FROM games WHERE draw = 1 GROUP BY map_id";
@@ -80,7 +82,8 @@ foreach ($map_info as $id => $info) {
     $row_num += 1;
     $row_class = $row_num % 2 ? "odd" : "even";
     $table .= "<tr class=\"$row_class\">\n";
-    $table .= "  <td>".$info['name']."</td> <td>".$info['priority']."</td>\n";
+    $table .= "  <td><a href=\"/visualizer.php?game_id=".$latest[$id]."\">"
+        .$info['name']."</a></td> <td>".$info['priority']."</td>\n";
     $draw_per = number_format(($draws[$id] / $played[$id]) * 100, 1);
     $table .= "  <td>".$played[$id]."</td> <td>".$draws[$id]
         ." (".$draw_per."%)</td>\n";
