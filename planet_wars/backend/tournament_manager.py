@@ -119,11 +119,9 @@ while time.time() - start_time < time_limit:
   player_one = matchup['players'][0]
   player_two = matchup['players'][1]
   map_path = "../maps/" + matchup["map"]['name']
-  log_message("%s (rank %s) vs %s (rank %s)" % (
+  log_message("%s vs %s" % (
       player_one["submission_id"],
-      player_one["rank"],
-      player_two["submission_id"],
-      player_two["rank"]))
+      player_two["submission_id"]))
   cloud.ensure_submission_is_local(player_one["submission_id"],player_one["language_name"],player_one["platform_specific_compilation"])
   cloud.ensure_submission_is_local(player_two["submission_id"],player_two["language_name"],player_two["platform_specific_compilation"])
 
