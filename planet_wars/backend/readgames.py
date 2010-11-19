@@ -69,7 +69,7 @@ connection.close()
 
 print "readpgn", pgn_name
 print "elo"
-print " mm"
+print " mm 0 1"
 print " ratings >ratings.txt"
 print " x"
 print "x"
