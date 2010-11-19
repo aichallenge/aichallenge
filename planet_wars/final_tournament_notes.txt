@@ -1,16 +1,18 @@
 Final tournament start checklist:
 
 At submission deadline, 11-27 23:59 (CST, i.e. server time?), stop submissions by:
-    In file add "Sorry submissions are closed..." after submission rules and disable form
+    In file submit.php add "Sorry submissions are closed..." after submission rules and disable form
     In file check_submit.php uncomment "$errors[] = "Nuh-uh..." line (line 46)
 
 Add line to create_matchups.py startup to have it immediately exit; remember that api_get_matchup.php will call it directly
 
-Wait and then verify queue of pending matches is clear in mysql matchups table
+Wait and then verify queue of pending matches is clear in matchups table
 
 Modify archive_games.py to move all games to games_archive table and run it
 
 Verify games table is empty
+
+Remove time limit on games used in rankings from query in readgames.py
 
 Run update_rankings.sh twice and verify the two most recent leaderboards in the database have no player rankings
 
