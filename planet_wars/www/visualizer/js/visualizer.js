@@ -17,6 +17,7 @@ var Visualizer = {
     active_planet: -1,
     shipCount : [0,0,0],
     growthRate : [0,0,0],
+    planetZOrder : [],
     config : {
       planet_font: 'bold 15px Arial,Helvetica',
       fleet_font: 'normal 12px Arial,Helvetica',
@@ -43,6 +44,7 @@ var Visualizer = {
         max_coords = {x: -999, y: -999};
         min_coords = {x: 999, y: 999};
         for (var i=0; i < this.planets.length; i++) {
+            this.planetZOrder.push(i);
             p = this.planets[i];
             if (p.x > max_coords.x) max_coords.x = p.x;
             if (p.x < min_coords.x) min_coords.x = p.x;
@@ -120,9 +122,10 @@ var Visualizer = {
         ctx.font = this.config.planet_font;
         ctx.textAlign = 'center';
         for(var i = 0; i < this.planets.length; i++) {
-            var planet = this.planets[i];
-            planet.owner = planetStats[i].owner;
-            planet.numShips = planetStats[i].numShips;
+            var z = this.planetZOrder[i];
+            var planet = this.planets[z];
+            planet.owner = planetStats[z].owner;
+            planet.numShips = planetStats[z].numShips;
 
             this.shipCount[planet.owner] += planet.numShips;
             this.growthRate[planet.owner] += planet.growthRate;
@@ -143,7 +146,7 @@ var Visualizer = {
             ctx.fill();
 
             var color = this.config.teamColor[planet.owner];
-            if (this.active_planet >= 0 && this.active_planet == i) {
+            if (this.active_planet >= 0 && this.active_planet == z) {
                 color = this.config.teamColor_highlight[planet.owner];
             }
 
@@ -157,7 +160,7 @@ var Visualizer = {
 
             ctx.fillStyle = "#fff";
             ctx.fillText(planet.numShips, disp_x, this.canvas.height - disp_y + 5);
-            
+
         }
 
         // Draw Fleets
@@ -227,18 +230,18 @@ var Visualizer = {
         // update status next to usernames
         $('.player1Name').html(
                 '<a href="profile.php?user_id='+ Visualizer.playerIds[0] +'">'+
-                Visualizer.players[0] +'</a> ('+  numShips[0] +'/'+
+                Visualizer.players[0] +'</a><br /> ('+  numShips[0] +'/'+
                 production[0] +')');
 
         $('.player1Name a').css({'color':Visualizer.config.teamColor[1],'text-decoration':'none'})
         $('.player2Name').html(
                 '<a href="profile.php?user_id='+ Visualizer.playerIds[1] +'">'+
-                Visualizer.players[1] +'</a> ('+ numShips[1] +'/'+
+                Visualizer.players[1] +'</a><br /> ('+ numShips[1] +'/'+
                 production[1] +')');
-                
+
         $('.player2Name a').css({'color':Visualizer.config.teamColor[2],'text-decoration':'none'})
     },
-    
+
     drawChart: function(frame){
         var canvas = document.getElementById('chart')
         var ctx = canvas.getContext('2d');
@@ -419,7 +422,7 @@ var Visualizer = {
                 fleet_strings = []
             }
             move.moving = fleet_strings.map(ParserUtils.parseFleet)
-            
+
             this.moves.push(move);
         }
     },
@@ -428,27 +431,37 @@ var Visualizer = {
         var new_active_planet = -1;
         x = this.pixelToUnit(x - this.config.offset[0]);
         y = this.pixelToUnit(y - this.config.offset[1]);
-        for(var i = 0; i < this.planets.length; i++) {
-            var planet = this.planets[i];
+        for (var i = this.planets.length - 1; i >= 0; --i) {
+            z = this.planetZOrder[i];
+            var planet = this.planets[z];
             var size = this.pixelToUnit(this.config.planet_pixels[planet.growthRate]);
             var dx = x - planet.x;
             var dy = y - planet.y;
             if ( dx*dx + dy*dy < size ) {
-                new_active_planet = i;
+                new_active_planet = z;
                 break;
             }
         }
 
         if ( new_active_planet != this.active_planet ) {
             this.active_planet = new_active_planet;
+            this.switchPlanetZOrder(new_active_planet);
             this.drawFrame(Visualizer.frame);
         }
     },
-    
+
+    switchPlanetZOrder: function(id) {
+        if (id !== -1) {
+            var z = this.planetZOrder.indexOf(id);
+            this.planetZOrder.splice(z, 1);
+            this.planetZOrder.push(id);
+        }
+    },
+
     _eof: true
 };
 
-var ParserUtils = {    
+var ParserUtils = {
     parseFleet: function(data) {
         data = data.split('.');
         // (owner,numShips,sourcePlanet,destinationPlanet,totalTripLength,turnsRemaining)
