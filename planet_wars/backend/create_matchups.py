@@ -201,7 +201,7 @@ def choose_map(cursor, player1, player2):
         elif comb_counts[map_id] == low_count:
             least_played.append(map_id)
     match_map = random.choice(least_played)
-    info_str = "%s(%d) times played p1 %s p2 %s" % (match_map,
+    info_str = "%s(%d) p1 %s p2 %s" % (match_map,
             _SERVER_MAPS[match_map], p1_counts[match_map], p2_counts[match_map])
     return (match_map, info_str)
 
@@ -217,8 +217,11 @@ def add_matches(cursor, max_matches):
         cursor.execute("""INSERT matchups
                 SET player_one=%s, player_two=%s, map_id=%s"""
                     % (p1['submission_id'], p2['submission_id'], m))
-        log_message("%s plays %s on %s" % (
-                p1['submission_id'], p2['submission_id'], map_info))
+        p1_rank = p1['rank'] if p1['rank'] else -1
+        p2_rank = p2['rank'] if p2['rank'] else -1
+        log_message("%s (%d) plays %s (%d) on %s" % (
+                p1['submission_id'], p1_rank, p2['submission_id'], p2_rank,
+                map_info))
         total_ranking.remove(p1)
         total_ranking.remove(p2)
         player_order.remove(p2)
