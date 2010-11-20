@@ -39,9 +39,10 @@ EOT;
     echo "</ul>";
 } else {
     echo "<h2>Sorry could not find any user with that name</h2>";
-    if (isset($_SERVER['HTTP_REFERRER'])) {
-        echo "<a href=\"".$_SERVER['HTTP_REFERRER']."\">Back</a>";
-    }
+}
+
+if (isset($_SERVER['HTTP_REFERER'])) {
+    echo "<a href=\"".$_SERVER['HTTP_REFERER']."\">Back</a>";
 }
 
 include "footer.php";
