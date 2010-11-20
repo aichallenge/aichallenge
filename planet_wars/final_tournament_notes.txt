@@ -1,6 +1,6 @@
 Final tournament start checklist:
 
-At submission deadline, 11-27 23:59 (CST, i.e. server time?), stop submissions by:
+At submission deadline, 11-27 23:59 CST (i.e. server time), stop submissions by:
     In file submit.php add "Sorry submissions are closed..." after submission rules and disable form
     In file check_submit.php uncomment "$errors[] = "Nuh-uh..." line (line 46)
 

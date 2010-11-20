@@ -8,7 +8,7 @@
   <li><strong>Friday Sept 10, 2010:</strong> official start date. You will be
     able to create an account and see your ranking.</li>
   <li><strong>Saturday Nov 27, 2010:</strong> submission deadline. No
-    submissions will be accepted after 11:59 PM.</li>
+    submissions will be accepted after 11:59 PM CST (i.e. server time as used in profile game listings). Don't wait till the last second to send in your final submission though, leaving yourself a few hours buffer to make sure it submits correctly is best.</li>
   <li><strong>Wednesday Dec 1, 2010:</strong> official results and final
     rankings will be released. Who will be the winner? Will it be <strong>
     you</strong>?!</li>
