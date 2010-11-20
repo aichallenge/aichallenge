@@ -27,6 +27,7 @@ Verify that all contest organizer player accounts do not have an active submissi
         amstan2     5775
         janzert     6079
         dstufft     6808
+        janzert_1   12061
 
 Generate a new set of maps, distribute them to all workers, set all current maps to priority 0 and then add the new maps to the database
 
