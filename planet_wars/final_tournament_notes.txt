@@ -20,8 +20,11 @@ Verify that all contest organizer player accounts do not have an active submissi
     List of accounts:
         jeff_cameron 3156
         j3camero    3160
+        admin       3161
+        testuser1   3182
         amstan      3880
         danielvf    3912
+        amstan2     5775
         janzert     6079
         dstufft     6808
 
