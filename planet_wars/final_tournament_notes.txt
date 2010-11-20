@@ -18,6 +18,7 @@ Run update_rankings.sh twice and verify the two most recent leaderboards in the 
 
 Verify that all contest organizer player accounts do not have an active submission
     List of accounts:
+        jeff_cameron 3156
         j3camero    3160
         amstan      3880
         danielvf    3912
