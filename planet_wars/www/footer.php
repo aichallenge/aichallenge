@@ -1,10 +1,5 @@
     </div>
     <div id="sidebar">
-    <form name="user_search_form" method="get" action="find_user.php">
-        <p>Search for user:
-            <input name="username" type="text" style="width: 10em">
-            <input type="submit" name="search" value="Go">
-    </p></form>
     <h1>Overview</h1>
     <ul>
       <li><a href="index.php">Home</a></li>
@@ -51,6 +46,11 @@
       <li><a href="#">Link 3</a></li>
     </ul>
     <?php } ?>
+    <form name="user_search_form" method="get" action="find_user.php">
+        Search for user:
+        <input name="username" type="text" style="width: 10em">
+        <input type="submit" name="search" value="Go">
+    </form>
   </div>
     </div>
 
