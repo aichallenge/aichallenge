@@ -323,18 +323,14 @@ The following conditions will cause the game to end:
   * The turn limit is reached. The winner is the player with the most
     ships, both on planets and in fleets. If both players have the
     same number of ships, it's a draw.
-  * One player runs out of ships entirely. The winner is the other
+  * One player runs out of ships and planets entirely. The winner is the other
     player.
-  * Both players run out of ships at the same time. The game is a
+  * Both players run out of ships and planets at the same time. The game is a
     draw.
-  * A bot issues a command with the same source and destination planet
-    and forfeits the game.
   * A bot sends invalid data and forfeits the game.
   * A bot crashes and forfeits the game.
   * A bot exceeds the time limit without completing its orders (it
-    never sends a line that says "`go`") and is disqualified. This is
-    perhaps overly harsh, but is the way it currently works. It may
-    change in the future to simply be a forfeit.
+    never sends a line that says "`go`") it forfeits the game.
   * A bot attempts to do something that the tournament manager deems a
     security issue and is disqualified.
 

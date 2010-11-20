@@ -336,11 +336,9 @@ go
 ><li
   >The turn limit is reached. The winner is the player with the most ships, both on planets and in fleets. If both players have the same number of ships, it’s a draw.</li
   ><li
-  >One player runs out of ships entirely. The winner is the other player.</li
+  >One player runs out of ships and planets entirely. The winner is the other player.</li
   ><li
-  >Both players run out of ships at the same time. The game is a draw.</li
-  ><li
-  >A bot issues a command with the same source and destination planet and forfeits the game.</li
+  >Both players run out of ships and planets at the same time. The game is a draw.</li
   ><li
   >A bot sends invalid data and forfeits the game.</li
   ><li
@@ -348,7 +346,7 @@ go
   ><li
   >A bot exceeds the time limit without completing its orders (it never sends a line that says “<code
     >go</code
-    >”) and is disqualified. This is perhaps overly harsh, but is the way it currently works. It may change in the future to simply be a forfeit.</li
+    >”) it forfeits the game.</li
   ><li
   >A bot attempts to do something that the tournament manager deems a security issue and is disqualified.</li
   ></ul
