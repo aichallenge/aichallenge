@@ -14,20 +14,8 @@ connection = MySQLdb.connect(host = server_info["db_host"],
                              db = server_info["db_name"])
 cursor = connection.cursor(MySQLdb.cursors.DictCursor)
 cursor.execute("""
-  SELECT *
-  FROM submissions s,
-  users u,
-  (
-    SELECT
-    user_id,
-    MAX(submission_id) as maxid
-    FROM submissions
-    GROUP BY user_id
-  ) AS x
-  WHERE s.user_id = u.user_id
-  AND s.user_id = x.user_id
-  AND submission_id = x.maxid
-  AND status = 40;
+  SELECT * FROM submissions s JOIN users u ON s.user_id=u.user_id
+  WHERE status = 40 AND latest = 1
 """)
 
 players = {}
