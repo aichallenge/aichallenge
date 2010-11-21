@@ -26,9 +26,10 @@ select
 from
     rankings r
     inner join submissions s on s.submission_id = r.submission_id
-where
-    s.user_id = '$user_id' and
-  leaderboard_id = (select max(leaderboard_id) from leaderboards)
+    where
+        s.user_id = '$user_id' and
+        leaderboard_id = (select max(leaderboard_id) from leaderboards
+            where complete=1)
 EOT;
 $rankresult = mysql_query($rankquery);
 

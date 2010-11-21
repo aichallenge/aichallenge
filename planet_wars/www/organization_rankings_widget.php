@@ -46,7 +46,8 @@ from
     inner join users u on u.user_id = s.user_id
     inner join organizations o on o.org_id = u.org_id
 where
-    r.leaderboard_id = (select max(leaderboard_id) from leaderboards)
+    r.leaderboard_id = (select max(leaderboard_id) from leaderboards
+        WHERE complete = 1)
     and r.rank <= $top
     and o.org_id <> 0
 group by o.org_id

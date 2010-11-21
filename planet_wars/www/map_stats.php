@@ -18,7 +18,8 @@ while ($row = mysql_fetch_assoc($result)) {
 
 # this could pull a partial leaderboard with less than 100 players
 $query = "SELECT submission_id FROM rankings
-    WHERE leaderboard_id = (SELECT MAX(leaderboard_id) FROM leaderboards)
+    WHERE leaderboard_id = (SELECT MAX(leaderboard_id) FROM leaderboards
+        WHERE complete = 1)
     ORDER BY rank LIMIT 100";
 $result = mysql_query($query);
 $top_players = "";

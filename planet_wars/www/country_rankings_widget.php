@@ -47,7 +47,8 @@ from
     inner join users u on u.user_id = s.user_id
     inner join countries c on c.country_id = u.country_id
 where
-    r.leaderboard_id = (select max(leaderboard_id) from leaderboards)
+    r.leaderboard_id = (select max(leaderboard_id) from leaderboards
+        where complete=1)
     and r.rank <= $top 
 group by u.country_id
 order by num_leaders desc
