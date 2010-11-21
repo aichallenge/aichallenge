@@ -17,9 +17,11 @@ function get_matchup() {
                     OR dispatch_time < (NOW() - INTERVAL 6 MINUTE))";
         $result = mysql_query($sql);
         if (mysql_num_rows($result) == 0) {
-            chdir($BACKEND_DIR);
-            exec("python create_matchups.py 0 1");
-            continue;
+            # trying to create matchups here instead of just dieing
+            # leads to the server overloading as every worker tries to create
+            # pairings
+            sleep(5);
+            die();
         }
         $row = mysql_fetch_assoc($result);
         $matchup_id = $row['matchup_id'];
