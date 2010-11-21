@@ -193,7 +193,7 @@ EOT;
         $queue_size = $row['count(1)'];
         if ($queue_size > 50) {
             echo "<p>Most likely to play next game within the
-                next $queue_size games,</p>";
+                next $queue_size games.</p>";
         } else {
             echo "<p>Next game should be played soon.</p>";
         }
