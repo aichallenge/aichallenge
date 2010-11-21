@@ -244,13 +244,13 @@ def main(run_time=0, qbuffer=6):
                                      passwd = server_info["db_password"],
                                      db = server_info["db_name"])
         cursor = connection.cursor(MySQLdb.cursors.DictCursor)
-        cursor.execute("""SELECT count(*)/5 as gpm FROM games
-                WHERE timestamp > (NOW() - INTERVAL 5 minute)""")
+        cursor.execute("""SELECT count(*)/2 as gpm FROM games
+                WHERE timestamp > (NOW() - INTERVAL 2 minute)""")
         gpm = max(float(cursor.fetchone()['gpm']), 5.)
         cursor.execute("SELECT count(*) FROM matchups WHERE dispatch_time IS NULL")
         queue_size = cursor.fetchone()['count(*)']
         log_message("Found %d matches in queue with %d gpm" % (queue_size, gpm))
-        if queue_size < gpm * 2:
+        if queue_size < gpm * 4:
             start_adding = time.time()
             num_added = add_matches(cursor, (gpm * qbuffer) - queue_size)
             log_message("Added %d new matches to queue in %.2f seconds"
@@ -264,7 +264,7 @@ def main(run_time=0, qbuffer=6):
 
 if __name__ == '__main__':
     runtime = 0
-    qbuffer = 6
+    qbuffer = 8
     if len(sys.argv) > 1:
         runtime = int(sys.argv[1])
     if len(sys.argv) > 2:
