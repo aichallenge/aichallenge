@@ -48,7 +48,7 @@ select
 from
     games g 
 where
-    (g.winner = $submission or g.loser = $submission)
+    (g.player_one = $submission or g.player_two = $submission)
 EOT;
 
     $rowcount_data = mysql_query($rowcount_query);
