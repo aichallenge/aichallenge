@@ -46,12 +46,6 @@ if(isset($gamedata->errors)){
   }
 }
 
-# update last game timestamp of players
-$sql = "UPDATE submissions set last_game_timestamp = current_timestamp
-    WHERE submission_id = '".addslashes($gamedata->player_one)."'
-        OR submission_id = '".addslashes($gamedata->player_two)."'";
-mysql_query($sql);
-
 # remove the matchup from the queue
 $sql = "DELETE FROM matchups
     WHERE player_one='".addslashes($gamedata->player_one)."'

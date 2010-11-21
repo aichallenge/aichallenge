@@ -71,4 +71,12 @@ echo json_encode(array(
     'map'=>array('id'=>$matchup['map_id'],'name'=>$map_name),
     ));
 
+# update last game timestamp of players
+# doing it here as the game is handed out instead of when the game is
+# turned in avoids bias against players that take a longer time to play
+$sql = "UPDATE submissions set last_game_timestamp = current_timestamp
+    WHERE submission_id = '".$matchup['player_one']."'
+        OR submission_id = '".$matchup['player_two']."'";
+mysql_query($sql);
+
 ?>
