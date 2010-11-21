@@ -50,7 +50,7 @@ CREATE TABLE `errors` (
   KEY `game_id` (`game_id`),
   KEY `error` (`error`,`timestamp`),
   KEY `timestamp` (`timestamp`)
-) ENGINE=MyISAM AUTO_INCREMENT=371943 DEFAULT CHARSET=latin1;
+) ENGINE=MyISAM AUTO_INCREMENT=373965 DEFAULT CHARSET=latin1;
 SET character_set_client = @saved_cs_client;
 
 --
@@ -80,7 +80,7 @@ CREATE TABLE `games` (
   KEY `player_two_all` (`player_two`,`timestamp`,`draw`,`game_id`,`winner`,`loser`,`player_one`),
   KEY `worker` (`worker`,`timestamp`),
   KEY `player_one_player_two` (`player_one`,`player_two`)
-) ENGINE=MyISAM AUTO_INCREMENT=8167386 DEFAULT CHARSET=latin1;
+) ENGINE=MyISAM AUTO_INCREMENT=8184674 DEFAULT CHARSET=latin1;
 SET character_set_client = @saved_cs_client;
 
 --
@@ -185,9 +185,10 @@ CREATE TABLE `leaderboards` (
   `timestamp` datetime NOT NULL,
   `algorithm_name` varchar(64) default NULL,
   `calculation_time` bigint(20) default '0',
+  `complete` tinyint(4) NOT NULL default '0',
   PRIMARY KEY  (`leaderboard_id`),
   KEY `timestamp` (`timestamp`)
-) ENGINE=MyISAM AUTO_INCREMENT=158494 DEFAULT CHARSET=latin1;
+) ENGINE=MyISAM AUTO_INCREMENT=158510 DEFAULT CHARSET=latin1;
 SET character_set_client = @saved_cs_client;
 
 --
@@ -237,7 +238,7 @@ CREATE TABLE `matchups` (
   `map_id` int(11) NOT NULL,
   `dispatch_time` datetime default NULL,
   PRIMARY KEY  (`matchup_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=1233085 DEFAULT CHARSET=latin1;
+) ENGINE=MyISAM AUTO_INCREMENT=1250352 DEFAULT CHARSET=latin1;
 SET character_set_client = @saved_cs_client;
 
 --
@@ -327,7 +328,7 @@ CREATE TABLE `submissions` (
   KEY `timestamp` (`timestamp`),
   KEY `user_id_2` (`user_id`,`timestamp`),
   KEY `latest` (`latest`)
-) ENGINE=MyISAM AUTO_INCREMENT=191307 DEFAULT CHARSET=latin1;
+) ENGINE=MyISAM AUTO_INCREMENT=191355 DEFAULT CHARSET=latin1;
 SET character_set_client = @saved_cs_client;
 
 --
@@ -368,7 +369,7 @@ CREATE TABLE `users` (
   PRIMARY KEY  (`user_id`),
   KEY `username` (`username`),
   KEY `user_id` (`user_id`,`username`)
-) ENGINE=MyISAM AUTO_INCREMENT=13563 DEFAULT CHARSET=latin1;
+) ENGINE=MyISAM AUTO_INCREMENT=13564 DEFAULT CHARSET=latin1;
 SET character_set_client = @saved_cs_client;
 
 --
@@ -410,4 +411,4 @@ SET character_set_client = @saved_cs_client;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2010-11-21  6:37:07
+-- Dump completed on 2010-11-21 10:20:20

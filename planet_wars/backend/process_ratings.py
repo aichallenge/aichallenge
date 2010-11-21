@@ -47,5 +47,7 @@ cursor.execute("""
     INSERT INTO rankings
     (leaderboard_id,submission_id,rank,wins,losses,draws,score)
     VALUES %s""" % (",".join(game_values),))
+cursor.execute("UPDATE leaderboards SET complete=1 WHERE leaderboard_id=%d" %
+        (leaderboard_id,))
 cursor.close()
 connection.close()
