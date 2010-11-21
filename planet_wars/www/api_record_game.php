@@ -6,12 +6,6 @@ require_once('api_functions.php');
   Possibly in the future we will also check that the game we are storing is a match we had previously handed out.
 */
 
-function update_last_game_played($submission_id){
-  $sql = "UPDATE submissions set last_game_timestamp = current_timestamp
-      WHERE submission_id = '".addslashes($submission_id)."'";
-  mysql_query($sql);
-}
-
 $gamedata = json_decode(file_get_contents('php://input'));
 
 $sql = "INSERT INTO games (winner,loser,map_id,draw,timestamp,".
@@ -52,9 +46,13 @@ if(isset($gamedata->errors)){
   }
 }
 
-update_last_game_played($gamedata->player_one);
-update_last_game_played($gamedata->player_two);
+# update last game timestamp of players
+$sql = "UPDATE submissions set last_game_timestamp = current_timestamp
+    WHERE submission_id = '".addslashes($gamedata->player_one)."'
+        OR submission_id = '".addslashes($gamedata->player_two)."'";
+mysql_query($sql);
 
+# remove the matchup from the queue
 $sql = "DELETE FROM matchups
     WHERE player_one='".addslashes($gamedata->player_one)."'
         AND player_two='".addslashes($gamedata->player_two)."'";
