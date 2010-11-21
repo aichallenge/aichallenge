@@ -177,14 +177,27 @@ echo <<<EOT
     </p>
 EOT;
 }
-echo <<<EOT
-    </dl>
-    <p><strong>Current Rank:</strong>&nbsp;$rank</p>
-    </dl>
+    echo "<p><strong>Current Rank:</strong>&nbsp;$rank</p>";
 
-    <!--<h3><span>Statistics</span><div class=\"divider\" /></h3>
-    <img width="600" height="280" alt="" src="profile_ranktime.php?user_id=$user_id" />-->
-EOT;
+    $query = "SELECT * FROM submissions
+        WHERE user_id='$user_id' AND status = 40 and latest = 1";
+    $result = mysql_query($query);
+    if ($row = mysql_fetch_assoc($result)) {
+        $sub_id = $row['submission_id'];
+        $query = "SELECT count(1) FROM submissions
+            WHERE last_game_timestamp < (SELECT last_game_timestamp
+                FROM submissions WHERE submission_id = '$sub_id')
+            AND status = 40 AND latest = 1";
+        $result = mysql_query($query);
+        $row = mysql_fetch_assoc($result);
+        $queue_size = $row['count(1)'];
+        if ($queue_size > 50) {
+            echo "<p>Most likely to play next game within the
+                next $queue_size games,</p>";
+        } else {
+            echo "<p>Next game should be played soon.</p>";
+        }
+    }
 
     echo "<h3><span>Latest Games</span><div class=\"divider\" /></h3>";
     echo getGamesTableString($user_id, true, 15, "profile_games.php?user_id=$user_id");
