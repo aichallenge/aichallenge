@@ -23,7 +23,7 @@ def log_message(message):
 def get_submissions(cursor):
     cursor.execute("""SELECT MAX(leaderboard_id)
             FROM leaderboards WHERE complete=1""")
-    leaderboard_id = cursor.fetchone()['leaderboard_id']
+    leaderboard_id = cursor.fetchone()['MAX(leaderboard_id)']
     log_message("latest leaderboard is %d" % leaderboard_id)
     cursor.execute("SELECT * FROM matchups")
     pending = []
