@@ -26,7 +26,7 @@ for line in f:
   elo = int(elo)
   if min_elo > elo:
     min_elo = elo
-  player_results.append({'id':submission_id, 'rank':rank, 'elo':elo})
+  player_results.append({'id':int(submission_id), 'rank':int(rank), 'elo':elo})
 f.close()
 
 cursor.execute("""
