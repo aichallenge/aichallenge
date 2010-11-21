@@ -210,22 +210,24 @@ def add_matches(cursor, max_matches):
     total_ranking = get_total_ranking(cursor, ranked, unranked)
     player_order = get_player_one_order(total_ranking)
     num_matches = 0
+    matchup_values = []
     while len(total_ranking) > 1 and num_matches < max_matches:
         p1 = player_order.pop()
         p2 = choose_opponent(p1, total_ranking)
         m, map_info = choose_map(cursor, p1, p2)
-        cursor.execute("""INSERT matchups
-                SET player_one=%s, player_two=%s, map_id=%s"""
-                    % (p1['submission_id'], p2['submission_id'], m))
         p1_rank = p1['rank'] if p1['rank'] else -1
         p2_rank = p2['rank'] if p2['rank'] else -1
         log_message("%s (%d) plays %s (%d) on %s" % (
                 p1['submission_id'], p1_rank, p2['submission_id'], p2_rank,
                 map_info))
+        matchup_values.append("(%d,%d,%d)" % (
+            p1['submission_id'], p2['submission_id'], m))
         total_ranking.remove(p1)
         total_ranking.remove(p2)
         player_order.remove(p2)
         num_matches += 1
+    cursor.execute("""INSERT matchups (player_one, player_two, map_id)
+            VALUES %s""" % (",".join(matchup_values),))
     return num_matches
 
 def main(run_time=0, qbuffer=6):
@@ -244,13 +246,13 @@ def main(run_time=0, qbuffer=6):
                                      passwd = server_info["db_password"],
                                      db = server_info["db_name"])
         cursor = connection.cursor(MySQLdb.cursors.DictCursor)
-        cursor.execute("""SELECT count(*)/2 as gpm FROM games
-                WHERE timestamp > (NOW() - INTERVAL 2 minute)""")
+        cursor.execute("""SELECT count(*)/5 as gpm FROM games
+                WHERE timestamp > (NOW() - INTERVAL 5 minute)""")
         gpm = max(float(cursor.fetchone()['gpm']), 5.)
         cursor.execute("SELECT count(*) FROM matchups WHERE dispatch_time IS NULL")
         queue_size = cursor.fetchone()['count(*)']
         log_message("Found %d matches in queue with %d gpm" % (queue_size, gpm))
-        if queue_size < gpm * 4:
+        if queue_size < gpm * 2:
             start_adding = time.time()
             num_added = add_matches(cursor, (gpm * qbuffer) - queue_size)
             log_message("Added %d new matches to queue in %.2f seconds"
@@ -264,7 +266,7 @@ def main(run_time=0, qbuffer=6):
 
 if __name__ == '__main__':
     runtime = 0
-    qbuffer = 8
+    qbuffer = 6
     if len(sys.argv) > 1:
         runtime = int(sys.argv[1])
     if len(sys.argv) > 2:
