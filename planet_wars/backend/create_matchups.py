@@ -21,22 +21,10 @@ def log_message(message):
   print message
 
 def get_submissions(cursor):
-    cursor.execute("""SELECT leaderboard_id, timestamp FROM leaderboards
-        WHERE leaderboard_id = (SELECT MAX(leaderboard_id)
-            from leaderboards)""")
-    row = cursor.fetchone()
-    leaderboard_id = row['leaderboard_id']
+    cursor.execute("""SELECT MAX(leaderboard_id)
+            FROM leaderboards WHERE complete=1""")
+    leaderboard_id = cursor.fetchone()['leaderboard_id']
     log_message("latest leaderboard is %d" % leaderboard_id)
-    # check that the latest leaderboard is complete else use the previous one
-    count_query = "SELECT count(*) FROM rankings where leaderboard_id = %s"
-    cursor.execute(count_query % (leaderboard_id,))
-    cur_num = cursor.fetchone()['count(*)']
-    cursor.execute(count_query % (leaderboard_id-1,))
-    prev_num = cursor.fetchone()['count(*)']
-    if prev_num * 0.99 > cur_num:
-        leaderboard_id -= 1
-        log_message("using previous leaderboard %d as current has %d less"
-                % (leaderboard_id, prev_num - cur_num,))
     cursor.execute("SELECT * FROM matchups")
     pending = []
     for row in cursor.fetchall():
