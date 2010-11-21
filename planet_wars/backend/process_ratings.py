@@ -11,13 +11,7 @@ connection = MySQLdb.connect(host = server_info["db_host"],
                              passwd = server_info["db_password"],
                              db = server_info["db_name"])
 cursor = connection.cursor(MySQLdb.cursors.DictCursor)
-cursor.execute("""
-  INSERT INTO leaderboards
-  (timestamp,algorithm_name,calculation_time)
-  VALUES
-  (CURRENT_TIMESTAMP,'Bayeselo',""" + str(elapsed_time) + """)
-""")
-leaderboard_id = connection.insert_id()
+
 min_elo = 1
 player_results = []
 f = open("ratings.txt", "r")
@@ -35,16 +29,23 @@ for line in f:
   player_results.append({'id':submission_id, 'rank':rank, 'elo':elo})
 f.close()
 
+cursor.execute("""
+  INSERT INTO leaderboards
+  (timestamp,algorithm_name,calculation_time)
+  VALUES
+  (CURRENT_TIMESTAMP,'Bayeselo',""" + str(elapsed_time) + """)
+""")
+leaderboard_id = connection.insert_id()
+
+game_values = []
 for player in player_results:
-  values = str(leaderboard_id) + "," + \
-    str(player['id']) + "," + \
-    str(player['rank']) + "," + \
-    "0,0,0," + str(player['elo']-min_elo)
-  cursor.execute("""
+  values = "(%d,%d,%d,0,0,0,%d)" % (
+    leaderboard_id, player['id'], player['rank'], player['elo']-min_elo)
+  game_values.append(values)
+
+cursor.execute("""
     INSERT INTO rankings
     (leaderboard_id,submission_id,rank,wins,losses,draws,score)
-    VALUES
-    (""" + values + """)
-  """)
+    VALUES %s""" % (",".join(game_values),))
 cursor.close()
 connection.close()
