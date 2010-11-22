@@ -31,7 +31,11 @@ Verify that all contest organizer player accounts do not have an active submissi
 
 Generate a new set of maps, distribute them to all workers, set all current maps to priority 0 and then add the new maps to the database
 
-Revert archive_games.py and create_matchups.py
+disable next game estimate in profile.php
+
+Change create_matchups.py to choose player with least games instead of least recent game
+
+Update create_matchups.py to new version
 
 Tournament is now up and running
 
