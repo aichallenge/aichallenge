@@ -136,7 +136,7 @@ def choose_opponent(p1, ranking, recent_ids):
     p1_ix = ranking.index(p1)
     p2_ix = p1_ix
     while p1_ix == p2_ix:
-        offset = random.paretovariate(0.5)
+        offset = random.paretovariate(0.6)
         offset = int(offset if random.randint(0,1) else 0-offset)
         ix = p1_ix + offset
         if ix < 0 or ix > len(ranking) - 1:
