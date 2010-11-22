@@ -104,10 +104,25 @@ def get_player_one_order(total_ranking):
     subs.sort(key=sort_key, reverse=True)
     return subs
 
-def choose_opponent(p1, ranking):
+def get_previous_opponents(cursor, p, num_opponents):
+    cursor.execute("""(SELECT player_two as opponent, timestamp FROM games
+                WHERE player_one = %(id)s)
+            UNION
+            (SELECT player_one as opponent, timestamp FROM games
+                WHERE player_two = %(id)s)
+            ORDER BY timestamp desc
+            LIMIT %(num)d""" % {'id': p['submission_id'], 'num': num_opponents})
+    return [r['opponent'] for r in cursor]
+
+def choose_opponent(p1, ranking, recent_ids):
     if p1['last_game_timestamp'] == None:
         ranking = [s for s in ranking
                 if s == p1 or s['last_game_timestamp'] != None]
+    recent_ids = set(recent_ids)
+    ranking = [s for s in ranking if s['submission_id'] not in recent_ids]
+    if len(ranking) < 2:
+        raise ValueError("No opponents left after removing recent, %s" % (
+            p1['submission_id']))
     p1_ix = ranking.index(p1)
     p2_ix = p1_ix
     while p1_ix == p2_ix:
@@ -199,9 +214,11 @@ def add_matches(cursor, max_matches):
     player_order = get_player_one_order(total_ranking)
     num_matches = 0
     matchup_values = []
+    pairing_start = time.time()
     while len(total_ranking) > 1 and num_matches < max_matches:
         p1 = player_order.pop()
-        p2 = choose_opponent(p1, total_ranking)
+        recent = get_previous_opponents(cursor, p1, 20)
+        p2 = choose_opponent(p1, total_ranking, recent)
         m, map_info = choose_map(cursor, p1, p2)
         p1_rank = p1['rank'] if p1['rank'] else -1
         p2_rank = p2['rank'] if p2['rank'] else -1
@@ -216,9 +233,10 @@ def add_matches(cursor, max_matches):
         num_matches += 1
     cursor.execute("""INSERT matchups (player_one, player_two, map_id)
             VALUES %s""" % (",".join(matchup_values),))
-    return num_matches
+    pairing_time = time.time() - pairing_start
+    return (num_matches, pairing_time)
 
-def main(run_time=0, qbuffer=6):
+def main(run_time=0, high_buffer=8, low_buffer=4):
     start_time = time.time()
     try:
         handler = logging.handlers.RotatingFileHandler("matchup.log",
@@ -234,17 +252,18 @@ def main(run_time=0, qbuffer=6):
                                      passwd = server_info["db_password"],
                                      db = server_info["db_name"])
         cursor = connection.cursor(MySQLdb.cursors.DictCursor)
-        cursor.execute("""SELECT count(*)/5 as gpm FROM games
-                WHERE timestamp > (NOW() - INTERVAL 5 minute)""")
+        cursor.execute("""SELECT count(*)/2 as gpm FROM games
+                WHERE timestamp > (NOW() - INTERVAL 2 minute)""")
         gpm = max(float(cursor.fetchone()['gpm']), 5.)
         cursor.execute("SELECT count(*) FROM matchups WHERE dispatch_time IS NULL")
         queue_size = cursor.fetchone()['count(*)']
         log_message("Found %d matches in queue with %d gpm" % (queue_size, gpm))
-        if queue_size < gpm * 2:
+        if queue_size < gpm * low_buffer:
             start_adding = time.time()
-            num_added = add_matches(cursor, (gpm * qbuffer) - queue_size)
-            log_message("Added %d new matches to queue in %.2f seconds"
-                    % (num_added, time.time()-start_adding))
+            num_added, pair_time = add_matches(cursor,
+                    max((gpm * high_buffer) - queue_size, 10))
+            log_message("Added %d new matches to queue in %.2f seconds (%.2f in pairing)"
+                    % (num_added, time.time()-start_adding, pair_time))
         cursor.close()
         connection.close()
         if time.time() - start_time >= run_time - 32:
@@ -254,10 +273,13 @@ def main(run_time=0, qbuffer=6):
 
 if __name__ == '__main__':
     runtime = 0
-    qbuffer = 6
+    low_buffer = 4
+    high_buffer = 8
     if len(sys.argv) > 1:
         runtime = int(sys.argv[1])
     if len(sys.argv) > 2:
-        qbuffer = float(sys.argv[2])
-    main(runtime, qbuffer)
+        high_buffer = float(sys.argv[2])
+    if len(sys.argv) > 3:
+        low_buffer = float(sys.argv[3])
+    main(runtime, high_buffer, low_buffer)
 
