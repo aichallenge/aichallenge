@@ -27,11 +27,21 @@ def get_submissions(cursor):
     log_message("latest leaderboard is %d" % leaderboard_id)
     cursor.execute("SELECT * FROM matchups")
     pending = []
+    min_mid = None
+    max_mid = None
     for row in cursor.fetchall():
+        mid = row['matchup_id']
+        if mid < min_mid or min_mid is None:
+            min_mid = mid
+        if mid > max_mid or max_mid is None:
+            max_mid = mid
         pending.append(str(row['player_one']))
         pending.append(str(row['player_two']))
     if pending:
         pending_cond = "AND s.submission_id NOT IN (" + ",".join(pending) + ")"
+        # check for matches that aren't being completed
+        if (min_mid + 1000) < (max_mid - len(pending)):
+            log_message("WARNING: min matchup_id is over 1000 less than max")
     else:
         pending_cond = ''
     cursor.execute("""SELECT s.*, r.rank as rank
