@@ -12,6 +12,8 @@ Modify archive_games.py to move all games to games_archive table and run it
 
 Verify games table is empty
 
+Modify profile_games_widget.php to only pull from games table
+
 Remove time limit on games used in rankings from query in readgames.py
 
 Run update_rankings.sh twice and verify the two most recent leaderboards in the database have no player rankings
