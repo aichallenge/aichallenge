@@ -319,3 +319,9 @@ def compile_anything():
   else:
     log.err += "Compilation failed.\n"
   return log.out, log.err, language_id
+
+if __name__ == '__main__':
+  import cPickle
+  out, err, language_id = compile_anything()
+  print cPickle.dumps((out, err, language_id))
+

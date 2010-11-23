@@ -1,12 +1,17 @@
-import os
-import sys
-from compile_anything import *
-import gmail
+#!/usr/bin/python
+
+import cPickle
 import logging
 import logging.handlers
+import os
+import signal
+import sys
+import time
+from subprocess import Popen, PIPE
+
+import gmail
 import MySQLdb
 from server_info import server_info
-import time
 
 logger = logging.getLogger('compile_logger')
 logger.setLevel(logging.INFO)
@@ -132,10 +137,21 @@ def compile_submission(submission_id, email_address):
     output_messages += out
     error_messages += err
   if len(error_messages) == 0:
-    out, err, language_id = compile_anything()
-    set_submission_language(submission_id, language_id)
-    output_messages += out
-    error_messages += err
+    comp_proc = Popen(['python',
+        '/home/contest/ai-contest/planet_wars/backend/compile_anything.py'],
+      stdout=PIPE)
+    stop_time = time.time() + 300
+    while comp_proc.poll() is None and time.time() < stop_time:
+      time.sleep(1)
+    if comp_proc.poll() is None:
+      os.kill(comp_proc.pid, signal.SIGKILL)
+      error_messages = "Compilation did not finish in 5 minutes"
+    else:
+      comp_out = comp_proc.stdout.read()
+      out, err, language_id = cPickle.loads(comp_out)
+      set_submission_language(submission_id, language_id)
+      output_messages += out
+      error_messages += err
   if len(error_messages) == 0:
     set_submission_status(submission_id, 40)
     send_success_mail(email_address, output_messages)
