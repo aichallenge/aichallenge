@@ -246,6 +246,11 @@ def add_matches(cursor, max_matches):
     pairing_time = time.time() - pairing_start
     return (num_matches, pairing_time)
 
+def get_queue_size(cursor):
+    cursor.execute("""SELECT count(*) FROM matchups
+        WHERE dispatch_time IS NULL""")
+    return cursor.fetchone()['count(*)']
+
 def main(run_time=0, high_buffer=8, low_buffer=4):
     start_time = time.time()
     try:
@@ -262,29 +267,40 @@ def main(run_time=0, high_buffer=8, low_buffer=4):
                                      passwd = server_info["db_password"],
                                      db = server_info["db_name"])
         cursor = connection.cursor(MySQLdb.cursors.DictCursor)
-        cursor.execute("""SELECT count(*)/2 as gpm FROM games
-                WHERE timestamp > (NOW() - INTERVAL 2 minute)""")
-        gpm = max(float(cursor.fetchone()['gpm']), 5.)
-        cursor.execute("SELECT count(*) FROM matchups WHERE dispatch_time IS NULL")
-        queue_size = cursor.fetchone()['count(*)']
-        log_message("Found %d matches in queue with %d gpm" % (queue_size, gpm))
-        if queue_size < gpm * low_buffer:
-            start_adding = time.time()
-            num_added, pair_time = add_matches(cursor,
-                    max((gpm * high_buffer) - queue_size, 10))
-            log_message("Added %d new matches to queue in %.2f seconds (%.2f in pairing)"
-                    % (num_added, time.time()-start_adding, pair_time))
-        cursor.close()
-        connection.close()
-        if time.time() - start_time >= run_time - 32:
-            break
+        try:
+            cursor.execute("""SELECT count(*)/2 as gpm FROM games
+                    WHERE timestamp > (NOW() - INTERVAL 2 minute)""")
+            gpm = max(float(cursor.fetchone()['gpm']), 5.)
+            queue_size = get_queue_size(cursor)
+            log_message("Found %d matches in queue with %d gpm"
+                    % (queue_size, gpm))
+            if (queue_size < gpm * low_buffer
+                    or time.time() - start_time >= run_time):
+                start_adding = time.time()
+                num_added = 0
+                pair_time = 0
+                num_matches = max((gpm * high_buffer) - queue_size, 20)
+                while num_matches >= 20:
+                    batch_size = min(num_matches + (gpm * 0.5), 100)
+                    batch_added, batch_time = add_matches(cursor, batch_size)
+                    num_added += batch_added
+                    pair_time += batch_time
+                    queue_size = get_queue_size(cursor)
+                    num_matches = (gpm * high_buffer) - queue_size
+                log_message("Added %d new matches to queue in %.2f seconds (%.2f in pairing)"
+                        % (num_added, time.time()-start_adding, pair_time))
+                if time.time() - start_time >= run_time:
+                    break
+        finally:
+            cursor.close()
+            connection.close()
         buffertime = max(1, ((queue_size / float(gpm)) - 2.1) * 60)
         time.sleep(min(30, buffertime))
 
 if __name__ == '__main__':
     runtime = 0
-    low_buffer = 4
-    high_buffer = 8
+    low_buffer = 3
+    high_buffer = 7
     if len(sys.argv) > 1:
         runtime = int(sys.argv[1])
     if len(sys.argv) > 2:
