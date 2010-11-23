@@ -285,6 +285,8 @@ def main(run_time=0, high_buffer=8, low_buffer=4):
                     batch_added, batch_time = add_matches(cursor, batch_size)
                     num_added += batch_added
                     pair_time += batch_time
+                    if batch_added < batch_size:
+                        break # we paired everyone that could be
                     queue_size = get_queue_size(cursor)
                     num_matches = (gpm * high_buffer) - queue_size
                 log_message("Added %d new matches to queue in %.2f seconds (%.2f in pairing)"
