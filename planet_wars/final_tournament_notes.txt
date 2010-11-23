@@ -16,7 +16,8 @@ Modify profile_games_widget.php to only pull from games table
 
 Remove time limit on games used in rankings from query in readgames.py
 
-Run update_rankings.sh twice and verify the two most recent leaderboards in the database have no player rankings
+Run update_rankings.sh most recent leaderboard in the database has no player rankings and is marked complete
+
 
 Verify that all contest organizer player accounts do not have an active submission
     List of accounts:
@@ -35,7 +36,10 @@ Generate a new set of maps, distribute them to all workers, set all current maps
 
 disable next game estimate in profile.php
 
-Change create_matchups.py to choose player with least games instead of least recent game
+Modify create_matchups.py to:
+    choose player with least games instead of least recent game
+    not lookup old submission rankings, instead add them to no_previous
+
 
 Update create_matchups.py to new version
 

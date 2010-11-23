@@ -63,6 +63,7 @@ def get_submissions(cursor):
 
 def get_total_ranking(cursor, ranked, unranked):
     ranking = defaultdict(list)
+    ranking[0] = [] # assure one key for middle rank calculation
     for sub in ranked:
         ranking[sub['rank']].append(sub)
     no_previous = []
@@ -100,8 +101,8 @@ def get_total_ranking(cursor, ranked, unranked):
     ranking = ranking.items()
     ranking.sort()
     for rank, tier in ranking:
-        for sub in tier:
-            total_ranking.append(sub)
+        random.shuffle(tier)
+        total_ranking += tier
     return total_ranking
 
 def get_player_one_order(total_ranking):
