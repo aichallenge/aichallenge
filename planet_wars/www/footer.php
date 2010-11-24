@@ -38,14 +38,6 @@
       <li><a href="http://www.galcon.com/flash">Play Galcon Online for
         Free</a></li>
     </ul>
-    <?php if (logged_in_as_admin()) { ?>
-    <h1>Admin</h1>
-    <ul>
-      <li><a href="#">Link 1</a></li>
-      <li><a href="#">Link 2</a></li>
-      <li><a href="#">Link 3</a></li>
-    </ul>
-    <?php } ?>
     <form name="user_search_form" method="get" action="find_user.php">
         Search for user:
         <input name="username" type="text" style="width: 10em">
