@@ -210,8 +210,7 @@ EOT;
 //$cache->end();
 //}
 
-if (logged_in_with_valid_credentials() && logged_in_as_admin()
-    && $userdata['password'] != '') {
+if (logged_in_with_valid_credentials() && logged_in_as_admin()) {
     $username = current_username();
     echo <<<EOT
 <form  method="post" action="disable_account.php"

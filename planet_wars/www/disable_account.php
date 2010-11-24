@@ -29,6 +29,8 @@ $email = safe_str($user['email']." disabled");
 $query = "UPDATE users SET email='$email', bio = '$bio', password = ''
     WHERE user_id=$user_id";
 mysql_query($query);
+$query = "UPDATE submissions SET latest=0 WHERE user_id=$user_id";
+mysql_query($query);
 
 header("Location: profile.php?user_id=".$user_id);
 
