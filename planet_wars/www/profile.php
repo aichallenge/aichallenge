@@ -210,5 +210,19 @@ EOT;
 //$cache->end();
 //}
 
+if (logged_in_with_valid_credentials() && logged_in_as_admin()
+    && $userdata['password'] != '') {
+    $username = current_username();
+    echo <<<EOT
+<form  method="post" action="disable_account.php"
+ onSubmit='return confirm("Are you sure you want do disable this account?")'>
+  <h2>Disable Account:</h2>
+  <p>Reason: <input name="reason" type="text" />&nbsp;by&nbsp;$username.</p>
+  <input type="submit" value="Disable Account" />
+  <input type="hidden" name="user_id" value="$user_id" />
+</form>
+EOT;
+}
+
 include 'footer.php';
 ?>
