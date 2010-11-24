@@ -263,10 +263,15 @@ def main(run_time=0, high_buffer=8, low_buffer=4):
        # couldn't start the file logger
        pass
     while True:
-        connection = MySQLdb.connect(host = server_info["db_host"],
+        try:
+            connection = MySQLdb.connect(host = server_info["db_host"],
                                      user = server_info["db_username"],
                                      passwd = server_info["db_password"],
                                      db = server_info["db_name"])
+        except MySQLdb.OperationalError:
+            log_message("WARNING: Received mysql OperationalError")
+            time.sleep(10)
+            continue
         cursor = connection.cursor(MySQLdb.cursors.DictCursor)
         try:
             cursor.execute("""SELECT count(*)/2 as gpm FROM games
