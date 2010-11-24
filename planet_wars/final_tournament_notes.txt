@@ -45,3 +45,5 @@ Update create_matchups.py to new version
 
 Tournament is now up and running
 
+Modify register.php and process_registration.php to disable new account creation
+
