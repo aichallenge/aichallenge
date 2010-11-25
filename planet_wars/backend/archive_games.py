@@ -31,23 +31,23 @@ def main(max_games=10000):
                                      passwd = server_info["db_password"],
                                      db = server_info["db_name"])
     cursor = connection.cursor(MySQLdb.cursors.DictCursor)
-    cursor.execute("""SELECT min(player_one) as p1, min(player_two) as p2
-            from games""")
-    sub_mins = cursor.fetchone()
     cursor.execute("""INSERT INTO games_archive
-        SELECT * FROM games
-            WHERE player_one in (SELECT submission_id FROM submissions
-                    WHERE latest = 0 and submission_id >= %d)
-                OR player_two in (SELECT submission_id FROM submissions
-                    WHERE latest = 0 and submission_id >= %d)
-            ORDER BY game_id LIMIT %d"""
-            % (sub_mins['p1'], sub_mins['p2'], max_games))
+        SELECT g.* FROM games g LEFT JOIN games_archive ga
+            ON g.game_id = ga.game_id
+            WHERE ga.game_id IS NULL
+            LIMIT %d""" % (max_games,))
+    copied = cursor.rowcount
     log_message("copied %d old games in %.2f seconds"
-            % (cursor.rowcount, time.time()-start_time))
-    time.sleep(1)
-    cursor.execute("""DELETE QUICK g FROM games g LEFT JOIN games_archive ga
-            ON g.game_id = ga.game_id WHERE g.game_id = ga.game_id""")
-    log_message("removed %d old games from primary table" % (cursor.rowcount,))
+            % (copied, time.time()-start_time))
+    if copied < max_games:
+        time.sleep(1)
+        del_start = time.time()
+        max_games -= copied
+        cursor.execute("""DELETE QUICK FROM games
+                WHERE timestamp < NOW() - INTERVAL 14 DAY
+                LIMIT %d""" % (max_games,))
+        log_message("removed %d old games from primary table in %.2f seconds"
+                % (cursor.rowcount, time.time() - del_start))
     log_message("total runtime %.2f seconds" % (time.time()-start_time,))
 
 if __name__ == '__main__':
