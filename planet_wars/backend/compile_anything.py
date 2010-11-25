@@ -38,6 +38,7 @@ import os
 import re
 import glob
 import subprocess
+import fnmatch
 import errno
 import time
 import shutil
@@ -117,6 +118,46 @@ class ExternalCompiler(Compiler):
 
   def compile(self, globs, log):
     files = safeglob_multi(globs)
+    if self.separate:
+      for file in files:
+        if not system(self.args + [file], log):
+          return False
+    else:
+      if not system(self.args + files, log):
+        return False
+    return True
+
+class JavaCompiler(ExternalCompiler):
+  @staticmethod
+  def safeglob(pattern):
+    safepaths = []
+    for root, dirs, files in os.walk("."):
+      files = fnmatch.filter(files, pattern)
+      for fname in files:
+        if SAFEPATH.match(fname):
+          safepaths.append(os.path.join(root, fname))
+    return safepaths
+
+  @staticmethod
+  def safeglob_multi(patterns):
+    safepaths = []
+    for pattern in patterns:
+      safepaths.extend(JavaCompiler.safeglob(pattern))
+    return safepaths
+
+  @staticmethod
+  def nukeglob(pattern):
+    paths = JavaCompiler.safeglob(pattern)
+    for path in paths:
+      # Ought to be all files, not folders
+      try:
+        os.unlink(path)
+      except OSError, e:
+        if e.errno != errno.ENOENT:
+          raise
+
+  def compile(self, globs, log):
+    files = JavaCompiler.safeglob_multi(globs)
     if self.separate:
       for file in files:
         if not system(self.args + [file], log):
@@ -213,9 +254,9 @@ languages = {
                    [BOT],
                    [([""], ExternalCompiler(comp_args["Haskell"][0]))]),
   "Java"        : (".jar",
-                   ["*.class, *.jar"],
-                   [(["*.java"], ExternalCompiler(comp_args["Java"][0])),
-                    (["*.class"], ExternalCompiler(comp_args["Java"][1]))]),
+                   ["*.class", "*.jar"],
+                   [(["*.java"], JavaCompiler(comp_args["Java"][0])),
+                    (["*.class"], JavaCompiler(comp_args["Java"][1]))]),
   "Javascript"  : (".js",
                    [],
                    [(["*.js"], ChmodCompiler("Javascript"))]),
@@ -231,7 +272,7 @@ languages = {
   "Perl"        : (".pl",
                    [],
                    [(["*.pl"], ChmodCompiler("Perl"))]),
-  "PHP"        : (".php",
+  "PHP"         : (".php",
                    [],
                    [(["*.php"], ChmodCompiler("PHP"))]),
   "Python"      : (".py",
@@ -255,8 +296,12 @@ def compile_function(language, log):
   nukeglobs = info[1]
   compilers = info[2]
 
-  for glob in nukeglobs:
-    nukeglob(glob)
+  if language == "Java":
+    for glob in nukeglobs:
+      JavaCompiler.nukeglob(glob)
+  else:
+    for glob in nukeglobs:
+      nukeglob(glob)
 
   for globs, compiler in compilers:
     if not compiler.compile(globs, log):

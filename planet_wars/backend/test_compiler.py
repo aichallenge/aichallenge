@@ -57,11 +57,13 @@ def safeglob(pattern):
         return mockglob[pattern]
     return []
 true_safeglob = compile_anything.safeglob
+true_javasafeglob = compile_anything.JavaCompiler.safeglob
 
 def nukeglob(pattern):
     if pattern in mockglob:
         log.out += "Nuking: " + ", ".join(mockglob[pattern]) + ".\n"
 true_nukeglob = compile_anything.nukeglob
+true_javanukeglob = compile_anything.JavaCompiler.nukeglob
 
 def ospathexists(file):
     return file in mockglob
@@ -108,6 +110,8 @@ def run_test_case(filelist, dry_run=False):
     if dry_run:
         compile_anything.safeglob = safeglob
         compile_anything.nukeglob = nukeglob
+        compile_anything.JavaCompiler.safeglob = staticmethod(safeglob)
+        compile_anything.JavaCompiler.nukeglob = staticmethod(nukeglob)
         compile_anything.system = system
         os.path.exists = ospathexists
         mockglob.update(make_mock_glob(filelist))
@@ -128,6 +132,8 @@ def run_test_case(filelist, dry_run=False):
     if dry_run:
         compile_anything.safeglob = true_safeglob
         compile_anything.nukeglob = true_nukeglob
+        compile_anything.JavaCompiler.safeglob = true_javasafeglob
+        compile_anything.JavaCompiler.nukeglob = true_javanukeglob
         compile_anything.system = true_system
         os.path.exists = true_ospathexists
         mockglob.clear()
@@ -148,6 +154,10 @@ test_cases = [
         ([BOT + ".go", "_go_.6", BOT], True),
         ([BOT + ".hs", BOT], True),
         ([BOT + ".java", "PlanetWars.java", BOT + ".class",
+            "PlanetWars.class", "PlanetWars$Planet.class",
+            "PlanetWars$Fleet.class", BOT + ".jar"], True),
+        ([BOT + ".java", "pkg/PlanetLib.java", "PlanetWars.java",
+            BOT + ".class", "pkg/PlanetLib.class",
             "PlanetWars.class", "PlanetWars$Planet.class",
             "PlanetWars$Fleet.class", BOT + ".jar"], True),
         ([BOT + ".js"], True),
