@@ -45,8 +45,8 @@ def main(max_games=10000):
     log_message("copied %d old games in %.2f seconds"
             % (cursor.rowcount, time.time()-start_time))
     time.sleep(1)
-    cursor.execute("""DELETE FROM games WHERE game_id in (
-            SELECT game_id FROM games_archive)""")
+    cursor.execute("""DELETE QUICK g FROM games g LEFT JOIN games_archive ga
+            ON g.game_id = ga.game_id WHERE g.game_id = ga.game_id""")
     log_message("removed %d old games from primary table" % (cursor.rowcount,))
     log_message("total runtime %.2f seconds" % (time.time()-start_time,))
 
