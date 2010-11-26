@@ -8,6 +8,8 @@ Add line to create_matchups.py startup to have it immediately exit; remember tha
 
 Wait and then verify queue of pending matches is clear in matchups table
 
+Shutdown and cancel all worker instance requests
+
 Modify archive_games.py to move all games to games_archive table and run it
 
 Verify games table is empty
@@ -39,9 +41,11 @@ disable next game estimate in profile.php
 Modify create_matchups.py to:
     choose player with least games instead of least recent game
     not lookup old submission rankings, instead add them to no_previous
-
+    expand number of recent restricted opponents and increase pareto alpha
 
 Update create_matchups.py to new version
+
+Create new worker instances
 
 Tournament is now up and running
 
