@@ -29,6 +29,7 @@ def get_submissions(cursor):
     leaderboard_id = cursor.fetchone()['MAX(leaderboard_id)']
     log_message("latest leaderboard is %d" % leaderboard_id)
     cursor.execute("SELECT * FROM matchups")
+    paired = cursor.rowcount * 2
     pending = []
     min_mid = None
     max_mid = None
@@ -62,7 +63,7 @@ def get_submissions(cursor):
             ranked.append(row)
     log_message("Got %d ranked and %d unranked active submissions"
             % (len(ranked), len(unranked)))
-    return (ranked, unranked)
+    return (ranked, unranked, paired)
 
 def get_total_ranking(cursor, ranked, unranked):
     ranking = defaultdict(list)
@@ -223,9 +224,10 @@ def choose_map(cursor, player1, player2):
     return (match_map, info_str)
 
 def add_matches(cursor, max_matches, pairing_cutoff):
-    ranked, unranked = get_submissions(cursor)
+    ranked, unranked, paired = get_submissions(cursor)
     total_ranking = get_total_ranking(cursor, ranked, unranked)
     if pairing_cutoff:
+        pairing_cutoff = max(pairing_cutoff - paired, 0)
         total_ranking = total_ranking[:pairing_cutoff]
     log_message("After cutoff %d available for pairing"
             % (len(total_ranking),))
