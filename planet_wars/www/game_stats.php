@@ -52,6 +52,14 @@ foreach ($games_per_server as $server) {
   }
 }
 
+$PAIRCUT_FILE = "/home/contest/pairing_cutoff";
+if (is_readable($PAIRCUT_FILE)) {
+  $pfc = file($PAIRCUT_FILE);
+  $pair_cutoff = $pfc[0];
+} else {
+  $pair_cutoff = "None";
+}
+
 ?>
 
 <h2>Last 24 hours</h2>
@@ -66,12 +74,14 @@ foreach ($games_per_server as $server) {
       </span>
     </td>
     <td><?=$games_played?></td>
+    <td><?=$pair_cutoff?></td>
   </tr>
   <tr>
     <th>New users</th>
     <th>New submissions</th>
     <th>Successful submissions</th>
     <th>Games played</th>
+    <th>Pairing cutoff</th>
   </tr>
 </table>
 
