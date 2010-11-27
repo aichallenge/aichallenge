@@ -4,6 +4,7 @@ import logging
 import logging.handlers
 import math
 import os
+import os.path
 import random
 import sys
 import time
@@ -12,6 +13,8 @@ from datetime import datetime, timedelta
 
 import MySQLdb
 from server_info import server_info
+
+PAIRCUT_FILE = "/home/contest/pairing_cutoff"
 
 logger = logging.getLogger('compile_logger')
 logger.setLevel(logging.INFO)
@@ -219,9 +222,13 @@ def choose_map(cursor, player1, player2):
             _SERVER_MAPS[match_map], p1_counts[match_map], p2_counts[match_map])
     return (match_map, info_str)
 
-def add_matches(cursor, max_matches):
+def add_matches(cursor, max_matches, pairing_cutoff):
     ranked, unranked = get_submissions(cursor)
     total_ranking = get_total_ranking(cursor, ranked, unranked)
+    if pairing_cutoff:
+        total_ranking = total_ranking[:pairing_cutoff]
+    log_message("After cutoff %d available for pairing"
+            % (len(total_ranking),))
     player_order = get_player_one_order(total_ranking)
     num_matches = 0
     matchup_values = []
@@ -263,6 +270,12 @@ def main(run_time=0, high_buffer=8, low_buffer=4):
        # couldn't start the file logger
        pass
     while True:
+        if os.path.exists(PAIRCUT_FILE):
+            pc_file = open(PAIRCUT_FILE, 'r')
+            pairing_cutoff = int(pc_file.readline())
+            pc_file.close()
+        else:
+            pairing_cutoff = None
         try:
             connection = MySQLdb.connect(host = server_info["db_host"],
                                      user = server_info["db_username"],
@@ -288,7 +301,8 @@ def main(run_time=0, high_buffer=8, low_buffer=4):
                 num_matches = max((gpm * high_buffer) - queue_size, 20)
                 while num_matches >= 20:
                     batch_size = min(num_matches + (gpm * 0.5), 100)
-                    batch_added, batch_time = add_matches(cursor, batch_size)
+                    batch_added, batch_time = add_matches(cursor, batch_size,
+                            pairing_cutoff)
                     num_added += batch_added
                     pair_time += batch_time
                     if batch_added < batch_size:
