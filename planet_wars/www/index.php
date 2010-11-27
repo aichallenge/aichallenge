@@ -1,15 +1,16 @@
 <?php include 'header.php';
 
 $deadline = new DateTime("2010-11-27 23:59");
-$deadline = floatval($deadline->format("U"));
+$deadline = intval($deadline->format("U"));
 $now = new DateTime();
-$now = floatval($now->format("U"));
-$diff = max(($deadline - $now) / 60, 0);
-if ($diff > 60) {
-    $timeleft = number_format($diff/60) ." hours ".
-        number_format($diff%60) ." minutes";
+$now = intval($now->format("U"));
+$seconds_left = max($deadline - $now, 0);
+$minutes = $seconds_left / 60;
+if ($minutes > 60) {
+    $timeleft = floor($minutes/60) ." hours ".
+        ($minutes%60) ." minutes";
 } else {
-    $timeleft = number_format($diff) ." minutes";
+    $timeleft = number_format($minutes) ." minutes";
 }
 
 ?>
@@ -29,14 +30,15 @@ function serverTime() {
 }
 
 $(function() {
-$('#countdown_timer').countdown({until: new Date("2010-11-27T23:59"),
-    serverSync: serverTime, timezone: -6, format: "HMS"});
+$('#countdown_timer').attr("style", "width: 200px; height: 45px; margin:auto;");
+$('#countdown_timer').countdown({until: "+<?=$seconds_left?>",
+    format: "HMS"});
 });
 </script>
 
 <div style="text-align: center; padding-bottom: 2em">
   <h2>Submissions closing in approximately</h2>
-  <div id="countdown_timer" style="width: 150px; height: 45px; margin: auto">
+  <div id="countdown_timer" style="margin: auto">
     <h3><?=$timeleft?></h3></div>
 </div>
 
