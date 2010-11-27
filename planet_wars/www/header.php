@@ -8,6 +8,7 @@
   <title>Google AI Challenge</title>
   <link rel="stylesheet" href="css/reset.css?v=1" type="text/css" media="screen, projection">
   <link rel="stylesheet" href="css/typo.css?v=1" type="text/css" media="screen, projection">
+  <link rel="stylesheet" href="css/jquery.countdown.css" type="text/css" media="screen, projection">
   <link rel="stylesheet" href="css/main.css?v=3" type="text/css" media="screen, projection">
 <script type="text/javascript">
   var _gaq = _gaq || [];

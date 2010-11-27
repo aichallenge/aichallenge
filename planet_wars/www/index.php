@@ -30,13 +30,14 @@ function serverTime() {
 
 $(function() {
 $('#countdown_timer').countdown({until: new Date("2010-11-27T23:59"),
-    timezone: -6, format: "HM"});
+    serverSync: serverTime, timezone: -6, format: "HMS"});
 });
 </script>
 
-<div style="text-align: center">
-  <h2>Submissions close in </h2>
-  <span id="countdown_timer"><h3><?=$timeleft?></h3></span>
+<div style="text-align: center; padding-bottom: 2em">
+  <h2>Submissions closing in approximately</h2>
+  <div id="countdown_timer" style="width: 150px; height: 45px; margin: auto">
+    <h3><?=$timeleft?></h3></div>
 </div>
 
 <h2>Google AI Challenge!</h2>
