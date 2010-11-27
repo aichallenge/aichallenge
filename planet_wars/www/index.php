@@ -1,4 +1,44 @@
-<?php include 'header.php'; ?>
+<?php include 'header.php';
+
+$deadline = new DateTime("2010-11-27 23:59");
+$deadline = floatval($deadline->format("U"));
+$now = new DateTime();
+$now = floatval($now->format("U"));
+$diff = max(($deadline - $now) / 60, 0);
+if ($diff > 60) {
+    $timeleft = number_format($diff/60) ." hours ".
+        number_format($diff%60) ." minutes";
+} else {
+    $timeleft = number_format($diff) ." minutes";
+}
+
+?>
+<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.4.2/jquery.min.js"></script>
+<script type="text/javascript" src="js/jquery.countdown.min.js"></script>
+<script>
+function serverTime() { 
+    var time = null; 
+    $.ajax({url: 'server_time.php', 
+        async: false, dataType: 'text', 
+        success: function(text) { 
+            time = new Date(text); 
+        }, error: function(http, message, exc) { 
+            time = new Date(); 
+    }}); 
+    return time; 
+}
+
+$(function() {
+$('#countdown_timer').countdown({until: new Date("2010-11-27T23:59"),
+    timezone: -6, format: "HM"});
+});
+</script>
+
+<div style="text-align: center">
+  <h2>Submissions close in </h2>
+  <span id="countdown_timer"><h3><?=$timeleft?></h3></span>
+</div>
+
 <h2>Google AI Challenge!</h2>
 <p>That&#39;s right, the Google AI Challenge is back! Are you excited to get
   started? So are we! Here is the timeline:</p>
