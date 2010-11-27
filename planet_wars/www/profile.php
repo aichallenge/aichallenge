@@ -43,7 +43,9 @@ select
   o.org_id,
   o.name as org_name,
   c.country_id,
-  c.name as country_name
+  c.name as country_name,
+  u.email,
+  u.activation_code
 from
   users u
   left outer join organizations o on o.org_id = u.org_id
@@ -74,13 +76,18 @@ if ($org_name == NULL) {
 }
 if (logged_in_with_valid_credentials() && current_user_id() == $user_id) {
     $logged_in = true;
+    $chk = mt_rand();
+    $update_key = sha1(
+        $chk . $userdata["activation_code"] . $userdata["email"]);
 } else {
     $logged_in = false;
 }
 if (!$userresult) {
   echo "<p>Invalid User ID</p>";
 } else {
-echo <<<EOT
+echo "    <h2>Profile for $username</h2>";
+if ($logged_in) {
+echo <<< EOT
     <script>
     function toggle_change_org() {
        if (document.getElementById('orgchange').style.display == 'none') {
@@ -101,10 +108,10 @@ echo <<<EOT
        }
     }
     </script>
-    <h2>Profile for $username</h2>
+    <form method="post" action="save_profile.php">
+        <input type="hidden" name="chk" value="$chk" />
+        <input type="hidden" name="update_key" value="$update_key" />
 EOT;
-if ($logged_in) {
-  echo '   <form method="post" action="save_profile.php">';
 }
 echo <<<EOT
     <p><strong>Country:</strong>&nbsp;

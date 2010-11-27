@@ -27,7 +27,25 @@ function check_valid_country($id) {
 if (!logged_in_with_valid_credentials())
   die ("Nice try.. but the bad robot WILL get you");
 
+if (!array_key_exists('chk', $_POST)
+    || !array_key_exists('update_key', $_POST)) {
+  die("Check keys not found.");
+}
+
 $user_id = current_user_id();
+
+$query = "SELECT email, activation_code FROM users WHERE user_id=".$user_id;
+$result = mysql_query($query);
+if ($row = mysql_fetch_assoc($result)) {
+  $chk = $_POST['chk'];
+  $update_key = $_POST['update_key'];
+  $local_key = sha1($chk . $row['activation_code'] . $row['email']);
+  if ($local_key != $update_key) {
+    die("Bad update key found.");
+  }
+} else {
+  die("User data query failed.");
+}
 
 if (array_key_exists('user_country', $_POST)) {
   $country_id = $_POST['user_country'];
