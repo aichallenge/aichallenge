@@ -76,9 +76,9 @@ if ($org_name == NULL) {
 }
 if (logged_in_with_valid_credentials() && current_user_id() == $user_id) {
     $logged_in = true;
-    $chk = mt_rand();
+    $sid = session_id();
     $update_key = sha1(
-        $chk . $userdata["activation_code"] . $userdata["email"]);
+        $sid . $userdata["activation_code"] . $userdata["email"]);
 } else {
     $logged_in = false;
 }
@@ -109,7 +109,6 @@ echo <<< EOT
     }
     </script>
     <form method="post" action="save_profile.php">
-        <input type="hidden" name="chk" value="$chk" />
         <input type="hidden" name="update_key" value="$update_key" />
 EOT;
 }
