@@ -1,7 +1,7 @@
 <?php include 'header.php';
 ?>
 <div style="text-align: center; padding-bottom: 2em">
-  <h2>Submissions are now closed and transition to the final tournament is in progress.</h2>
+  <h2>Submissions are now closed and the final tournament is underway.</h2>
 </div>
 
 <h2>Google AI Challenge!</h2>
