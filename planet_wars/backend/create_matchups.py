@@ -100,7 +100,7 @@ def get_player_one_order(total_ranking):
     for sub in total_ranking:
         play_counts[sub['game_count']].append(sub)
     play_counts = play_counts.items()
-    play_counts.sort()
+    play_counts.sort(reverse=True)
     order = []
     for count, subs in play_counts:
         random.shuffle(subs)
