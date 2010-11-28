@@ -52,7 +52,7 @@ if ($local_key != $_POST['submit_key']) {
 }
 
 // Uncomment the following line to turn off new submissions.
-//$errors[] = "Nuh-uh. The contest is over. No more submissions.";
+$errors[] = "Nuh-uh. The contest is over. No more submissions.";
 if (count($errors) == 0) {
   if (has_recent_submission()) {
     $errors[] = "Sorry your last submission was too recent.";

@@ -1,45 +1,7 @@
 <?php include 'header.php';
-
-$deadline = new DateTime("2010-11-27 23:59");
-$deadline = intval($deadline->format("U"));
-$now = new DateTime();
-$now = intval($now->format("U"));
-$seconds_left = max($deadline - $now, 0);
-$minutes = $seconds_left / 60;
-if ($minutes > 60) {
-    $timeleft = floor($minutes/60) ." hours ".
-        ($minutes%60) ." minutes";
-} else {
-    $timeleft = number_format($minutes) ." minutes";
-}
-
 ?>
-<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.4.2/jquery.min.js"></script>
-<script type="text/javascript" src="js/jquery.countdown.min.js"></script>
-<script>
-function serverTime() { 
-    var time = null; 
-    $.ajax({url: 'server_time.php', 
-        async: false, dataType: 'text', 
-        success: function(text) { 
-            time = new Date(text); 
-        }, error: function(http, message, exc) { 
-            time = new Date(); 
-    }}); 
-    return time; 
-}
-
-$(function() {
-$('#countdown_timer').attr("style", "width: 200px; height: 45px; margin:auto;");
-$('#countdown_timer').countdown({until: "+<?=$seconds_left?>",
-    format: "HMS"});
-});
-</script>
-
 <div style="text-align: center; padding-bottom: 2em">
-  <h2>Submissions closing in approximately</h2>
-  <div id="countdown_timer" style="margin: auto">
-    <h3><?=$timeleft?></h3></div>
+  <h2>Submissions are now closed and transition to the final tournament is in progress.</h2>
 </div>
 
 <h2>Google AI Challenge!</h2>

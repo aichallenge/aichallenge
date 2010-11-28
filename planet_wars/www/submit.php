@@ -41,28 +41,7 @@ include 'header.php';
     officials. Our policy is to always prosecute.</li>
 </ul>
 
-<?php
-if (has_recent_submission()) {
-?>
-<p>Sorry, you have to wait at least 10 minutes between submissions. This wait is waived if your current submission fails to successfully enter the contest.</p>
-<?php
-} else {
-    $result = mysql_query("SELECT * FROM users WHERE user_id=".current_user_id());
-    if (!$row = mysql_fetch_assoc($result)) {
-        die("Could not get user data from database.");
-    }
-    $sid = session_id();
-    $submit_key = sha1($sid . $row['activation_code'] . $row['email']);
-?>
-<form enctype="multipart/form-data" action="check_submit.php" method="POST">
-<input type="hidden" name="MAX_FILE_SIZE" value="2000000" />
-<input type="hidden" name="submit_key" value="<?=$submit_key?>" />
-<b>Choose Your Zip File:</b> <input name="uploadedfile" type="file" /><br />
-<input type="submit" value="Upload!" />
-</form>
-<?php
-}
-?>
+<p>Sorry, submissions are now closed. Good luck in the finals.</p>
 
 <p>If you are having trouble, there are tons of ways to <a href="forums/">get help on the forums!</a></p>
 
