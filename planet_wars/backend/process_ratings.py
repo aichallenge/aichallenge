@@ -43,7 +43,8 @@ for player in player_results:
     leaderboard_id, player['id'], player['rank'], player['elo']-min_elo)
   game_values.append(values)
 
-cursor.execute("""
+if game_values:
+  cursor.execute("""
     INSERT INTO rankings
     (leaderboard_id,submission_id,rank,wins,losses,draws,score)
     VALUES %s""" % (",".join(game_values),))
