@@ -239,7 +239,8 @@ def add_matches(cursor, max_matches, pairing_cutoff):
         total_ranking.remove(p2)
         player_order.remove(p2)
         num_matches += 1
-    cursor.execute("""INSERT matchups (player_one, player_two, map_id)
+    if matchup_values:
+        cursor.execute("""INSERT matchups (player_one, player_two, map_id)
             VALUES %s""" % (",".join(matchup_values),))
     pairing_time = time.time() - pairing_start
     return (num_matches, pairing_time)
