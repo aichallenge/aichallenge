@@ -44,7 +44,6 @@ def main(max_games=10000):
         del_start = time.time()
         max_games -= copied
         cursor.execute("""DELETE QUICK FROM games
-                WHERE timestamp < NOW() - INTERVAL 14 DAY
                 LIMIT %d""" % (max_games,))
         log_message("removed %d old games from primary table in %.2f seconds"
                 % (cursor.rowcount, time.time() - del_start))

@@ -22,7 +22,7 @@ SELECT g.game_id, g.winner, g.draw,
   ON (g.player_one = p1.submission_id AND g.player_two = p2.submission_id
     AND p1.user_id = u1.user_id AND p2.user_id = u2.user_id)
   WHERE p1.latest = 1 AND p1.status = 40 AND p2.latest = 1 AND p2.status = 40
-    AND g.timestamp >= NOW() - INTERVAL 10 DAY""")
+""")
 
 
 pgn_fd, tmp_name = tempfile.mkstemp(dir=".")
