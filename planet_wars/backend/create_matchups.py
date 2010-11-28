@@ -61,6 +61,12 @@ def get_submissions(cursor):
             unranked.append(row)
         else:
             ranked.append(row)
+    for group in (ranked, unranked):
+        for sub in group:
+            s_id = sub['submission_id']
+            cursor.execute("""SELECT count(1) FROM games
+                WHERE player_one = %s OR player_two = %s""" % (s_id, s_id))
+            sub['game_count'] = cursor.fetchone()['count(1)']
     log_message("Got %d ranked and %d unranked active submissions"
             % (len(ranked), len(unranked)))
     return (ranked, unranked, paired)
@@ -74,28 +80,8 @@ def get_total_ranking(cursor, ranked, unranked):
     for sub in unranked:
         log_message("Finding provisional rank for submission %d"
                 % sub['submission_id'])
-        old_rank = None
-        cursor.execute("""SELECT submission_id FROM submissions
-                WHERE status = 40 AND user_id = %s AND submission_id != %s
-                ORDER BY submission_id DESC
-            """ % (sub['user_id'], sub['submission_id']))
-        log_message(" has %d old submissions" % (cursor.rowcount,))
-        old_subs = cursor.fetchall()
-        for old_sub in old_subs:
-            cursor.execute("""SELECT leaderboard_id, rank FROM rankings
-                WHERE submission_id = %d
-                ORDER BY leaderboard_id DESC
-                LIMIT 1""" % (old_sub['submission_id'],))
-            row = cursor.fetchone()
-            if row:
-                old_rank = row['rank']
-                break
-        if old_rank is not None:
-            ranking[row['rank']].append(sub)
-            log_message("  set rank to %d" % (row['rank'],))
-        else:
-            no_previous.append(sub)
-            log_message("  could not find a previous rank")
+        no_previous.append(sub)
+        log_message("  could not find a previous rank")
     if no_previous:
         middle_rank = max(ranking.keys()) / 2
         log_message("Setting %d submissions with no provisional rank to %d"
@@ -110,14 +96,16 @@ def get_total_ranking(cursor, ranked, unranked):
     return total_ranking
 
 def get_player_one_order(total_ranking):
-    # this will break if last game can be over a year ago
-    def sort_key(sub):
-        if sub['last_game_timestamp'] is not None:
-            return sub['last_game_timestamp']
-        return sub['timestamp'] - timedelta(days=365)
-    subs = list(total_ranking)
-    subs.sort(key=sort_key, reverse=True)
-    return subs
+    play_counts = defaultdict(list)
+    for sub in total_ranking:
+        play_counts[sub['game_count']].append(sub)
+    play_counts = play_counts.items()
+    play_counts.sort()
+    order = []
+    for count, subs in play_counts:
+        random.shuffle(subs)
+        order += subs
+    return order
 
 def get_previous_opponents(cursor, p, num_opponents):
     cursor.execute("""(SELECT player_two as opponent, timestamp FROM games
@@ -141,7 +129,7 @@ def choose_opponent(p1, ranking, recent_ids):
     p1_ix = ranking.index(p1)
     p2_ix = p1_ix
     while p1_ix == p2_ix:
-        offset = random.paretovariate(0.6)
+        offset = random.paretovariate(0.75)
         offset = int(offset if random.randint(0,1) else 0-offset)
         ix = p1_ix + offset
         if ix < 0 or ix > len(ranking) - 1:
@@ -237,7 +225,7 @@ def add_matches(cursor, max_matches, pairing_cutoff):
     pairing_start = time.time()
     while len(total_ranking) > 1 and num_matches < max_matches:
         p1 = player_order.pop()
-        recent = get_previous_opponents(cursor, p1, 20)
+        recent = get_previous_opponents(cursor, p1, 50)
         p2 = choose_opponent(p1, total_ranking, recent)
         m, map_info = choose_map(cursor, p1, p2)
         p1_rank = p1['rank'] if p1['rank'] else -1
