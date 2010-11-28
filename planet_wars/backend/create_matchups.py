@@ -230,7 +230,7 @@ def add_matches(cursor, max_matches, pairing_cutoff):
         m, map_info = choose_map(cursor, p1, p2)
         p1_rank = p1['rank'] if p1['rank'] else -1
         p2_rank = p2['rank'] if p2['rank'] else -1
-        log_message("%s (%d) plays %s (%d) on %s" % (
+        log_message("%s (%d, %d) plays %s (%d, %d) on %s" % (
                 p1['submission_id'], p1_rank, p1['game_count'],
                 p2['submission_id'], p2_rank, p2['game_count'],
                 map_info))
