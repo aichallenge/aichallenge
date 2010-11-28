@@ -231,7 +231,8 @@ def add_matches(cursor, max_matches, pairing_cutoff):
         p1_rank = p1['rank'] if p1['rank'] else -1
         p2_rank = p2['rank'] if p2['rank'] else -1
         log_message("%s (%d) plays %s (%d) on %s" % (
-                p1['submission_id'], p1_rank, p2['submission_id'], p2_rank,
+                p1['submission_id'], p1_rank, p1['game_count'],
+                p2['submission_id'], p2_rank, p2['game_count'],
                 map_info))
         matchup_values.append("(%d,%d,%d)" % (
             p1['submission_id'], p2['submission_id'], m))
