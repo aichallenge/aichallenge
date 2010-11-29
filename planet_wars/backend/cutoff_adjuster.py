@@ -8,10 +8,10 @@ import tempfile
 import time
 from datetime import datetime
 
-START_TIME = datetime(2010, 11, 29, 4, 0)
+START_TIME = datetime(2010, 11, 29, 3, 0)
 START_RANK = 4620
 
-END_TIME = datetime(2010, 11, 29, 5, 0)
+END_TIME = datetime(2010, 11, 29, 4, 0)
 END_RANK = 4540
 
 CUTOFF_FILE = "/home/contest/pairing_cutoff"
@@ -70,7 +70,7 @@ def main():
         if datetime.now() > END_TIME:
             stop = True
         update_cutoff()
-        time.sleep(30)
+        time.sleep(60)
 
 if __name__ == "__main__":
     main()
