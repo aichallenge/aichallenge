@@ -14,7 +14,11 @@ $query = "select count(*) from submissions where timestamp > (now() - interval 2
 $result = mysql_query($query);
 $row = mysql_fetch_row($result);
 $submissions_successful = $row[0];
-$submissions_percentage = ($submissions_successful / $submissions) * 100.0;
+if ($submissions) {
+    $submissions_percentage = ($submissions_successful / $submissions) * 100.0;
+} else {
+    $submissions_percentage = 0;
+}
 
 $query = "select count(*) from games where timestamp > (now() - interval 24 hour)";
 $result = mysql_query($query);
