@@ -58,14 +58,6 @@ EOT;
         $rowcount = 0;
     }
 
-    $rowcount_query = str_replace("games g", "games_archive g",
-        $rowcount_query);
-    $rowcount_data = mysql_query($rowcount_query);
-    if ($rowcount_data) {
-        list($archived) = mysql_fetch_row($rowcount_data);
-        $rowcount += $archived;
-    }
-
     // Fetch Game Information For Users Current Submission
 $games_query = <<<EOT
 (select
