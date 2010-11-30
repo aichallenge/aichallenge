@@ -8,6 +8,16 @@ require_once('api_functions.php');
 
 $gamedata = json_decode(file_get_contents('php://input'));
 
+$sql = "SELECT count(1) FROM games
+    WHERE player_one = ".$gamedata->player_one."
+        AND player_two = ".$gamedata->player_two."
+        AND map_id = ".$gamedata->map_id;
+$result = mysql_query($sql);
+$row = mysql_fetch_assoc($result);
+if ($row['count(1)'] != 0) {
+  die("Appears this pairing and map are already in the database");
+}
+
 $sql = "INSERT INTO games (winner,loser,map_id,draw,timestamp,".
           "player_one,player_two,worker) 
           VALUES (".
