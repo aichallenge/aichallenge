@@ -8,11 +8,11 @@ import tempfile
 import time
 from datetime import datetime
 
-START_TIME = datetime(2010, 11, 30, 0, 0)
-START_RANK = 4540
+START_TIME = datetime(2010, 11, 30, 12, 0)
+START_RANK = 3020
 
-END_TIME = datetime(2010, 11, 30, 5, 0)
-END_RANK = 3020
+END_TIME = datetime(2010, 12, 1, 0, 0)
+END_RANK = 1000
 
 CUTOFF_FILE = "/home/contest/pairing_cutoff"
 
