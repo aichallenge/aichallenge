@@ -44,8 +44,8 @@ def get_submissions(cursor):
     if pending:
         pending_cond = "AND s.submission_id NOT IN (" + ",".join(pending) + ")"
         # check for matches that aren't being completed
-        if (min_mid + 1000) < (max_mid - len(pending)):
-            log_message("WARNING: min matchup_id is over 1000 less than max")
+        if (min_mid + 2000) < (max_mid - len(pending)):
+            log_message("WARNING: min matchup_id is over 2000 less than max")
     else:
         pending_cond = ''
     cursor.execute("""SELECT s.*, r.rank as rank

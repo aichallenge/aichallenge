@@ -14,7 +14,7 @@ function get_matchup() {
         $sql = "SELECT * FROM matchups
             WHERE matchup_id = (SELECT MIN(matchup_id) FROM matchups
                 WHERE dispatch_time IS NULL
-                    OR dispatch_time < (NOW() - INTERVAL 6 MINUTE))";
+                    OR dispatch_time < (NOW() - INTERVAL 15 MINUTE))";
         $result = mysql_query($sql);
         if (mysql_num_rows($result) == 0) {
             # trying to create matchups here instead of just dieing
