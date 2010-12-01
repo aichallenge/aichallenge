@@ -28,7 +28,7 @@ from
     inner join submissions s on s.submission_id = r.submission_id
     where
         s.user_id = '$user_id' and
-        leaderboard_id = 159466;
+        leaderboard_id = 159501;
 EOT;
 $rankresult = mysql_query($rankquery);
 

@@ -43,7 +43,7 @@ function getRankingsTableString($user_id, $viewmore = true, $viewresults = 10, $
     $row = mysql_fetch_assoc($leaderboard_result);
     $leaderboard_id = $row['id'];
      */
-    $leaderboard_id = 159466;
+    $leaderboard_id = 159501;
 
     // Fetch row count
 $rowcount_query = <<<EOT
