@@ -37,10 +37,13 @@ function getRankingsTableString($user_id, $viewmore = true, $viewresults = 10, $
 
     $filter_text = ($filter == NULL)?"":"and $filter = '$filterparam'";
 
+    /*
     $leaderboard_result = mysql_query("SELECT MAX(leaderboard_id) as id
         FROM leaderboards where complete=1");
     $row = mysql_fetch_assoc($leaderboard_result);
     $leaderboard_id = $row['id'];
+     */
+    $leaderboard_id = 159466;
 
     // Fetch row count
 $rowcount_query = <<<EOT

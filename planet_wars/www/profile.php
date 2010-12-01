@@ -184,7 +184,7 @@ echo <<<EOT
     </p>
 EOT;
 }
-    echo "<p><strong>Current Rank:</strong>&nbsp;$rank</p>";
+/*    echo "<p><strong>Current Rank:</strong>&nbsp;$rank</p>"; */
 
 /*
     $query = "SELECT * FROM submissions
