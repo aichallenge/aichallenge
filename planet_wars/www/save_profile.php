@@ -1,5 +1,7 @@
-<?php include 'session.php'; ?>
 <?php
+include 'session.php';
+include 'bad_words.php';
+
 function check_valid_organization($id) {
   if ($id == 999) {
     return False;
@@ -65,6 +67,15 @@ if (array_key_exists('user_organization', $_POST)) {
   if (!mysql_query($query))
     die("Sorry, database update failed.");
 }
+
+if (array_key_exists('user_bio', $_POST)) {
+  $bio = mysql_real_escape_string(stripslashes($_POST['user_bio']));
+  if (contains_bad_word($bio)) {
+    die("Your bio contains a bad word. Keep it professional.");
+  }
+  mysql_query("UPDATE users SET bio='$bio' WHERE user_id='$user_id'");
+}
+  
 
 header('Location: profile.php?user_id='. $user_id);
 ?>

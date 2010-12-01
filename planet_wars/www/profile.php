@@ -106,6 +106,19 @@ echo <<< EOT
           document.getElementById('country_ctxt').innerHTML = 'Change';
        }
     }
+    function toggle_change_bio() {
+       if (document.getElementById('bio_submit').style.display == 'none') {
+           document.getElementById('bio_submit').style.display = 'inline';
+           document.getElementById('bio_span').style.display = 'none';
+           document.getElementById('bio_edit').style.display = 'inline';
+           document.getElementById('bio_ctxt').innerHTML = 'Cancel';
+       } else {
+           document.getElementById('bio_submit').style.display = 'none';
+           document.getElementById('bio_edit').style.display = 'none';
+           document.getElementById('bio_span').style.display = 'inline';
+           document.getElementById('bio_ctxt').innerHTML = 'Edit';
+       }
+    }
     </script>
     <form method="post" action="save_profile.php">
         <input type="hidden" name="update_key" value="$update_key" />
@@ -168,10 +181,10 @@ EOT;
       echo "<option value=$option_id>$option_name</option>";
     }
   }
-?>
+echo <<<EOT
      </select><input type="submit" value="Save" /></span></span>
-     </form>
-<?php }
+EOT;
+}
 echo <<<EOT
     </p>
     <p><strong>Joined:</strong>&nbsp;$created</p>
@@ -179,8 +192,32 @@ EOT;
 if ($bio != NULL) {
 echo <<<EOT
     <p><strong>About Me:</strong><br />
-      $bio
+      <span id="bio_span">$bio</span>
+EOT;
+  if ($logged_in) {
+echo <<<EOT
+      <textarea id="bio_edit" style="display: none" name="user_bio" cols="40" rows="3">$bio</textarea>
+    <input id="bio_submit" style="display: none" type="submit" value="Save" />
+    <span style="padding-left: 1em; font-size: smaller">
+      <a href="#" id="bio_ctxt" onclick="toggle_change_bio()">Edit</a>
+    </span>
     </p>
+    </form>
+EOT;
+  } else {
+    echo "</p>";
+  }
+} elseif ($logged_in) {
+echo <<<EOT
+    <p><strong>About Me:</strong><br />
+      <span id="bio_span">You currently have no information entered.</span>
+      <textarea id="bio_edit" style="display: none" name="user_bio" cols="40" rows="3"></textarea>
+    <input id="bio_submit" style="display: none" type="submit" value="Save" />
+    <span style="font-size: smaller">
+      <a href="#" id="bio_ctxt" onclick="toggle_change_bio()">Edit</a>
+    </span>
+    </p>
+    </form>
 EOT;
 }
     echo "<p><strong>Current Rank:</strong>&nbsp;$rank</p>";
