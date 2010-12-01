@@ -28,8 +28,7 @@ from
     inner join submissions s on s.submission_id = r.submission_id
     where
         s.user_id = '$user_id' and
-        leaderboard_id = (select max(leaderboard_id) from leaderboards
-            where complete=1)
+        leaderboard_id = 159466;
 EOT;
 $rankresult = mysql_query($rankquery);
 
@@ -184,7 +183,7 @@ echo <<<EOT
     </p>
 EOT;
 }
-/*    echo "<p><strong>Current Rank:</strong>&nbsp;$rank</p>"; */
+    echo "<p><strong>Current Rank:</strong>&nbsp;$rank</p>";
 
 /*
     $query = "SELECT * FROM submissions
