@@ -57,6 +57,9 @@ print "readpgn", pgn_name
 print "elo"
 print " mm 0 1"
 print " ratings >ratings.txt"
+# Uncomment to generate LoS matrix
+# Warning memory use is quadratic and time is cubic to number of players
+#print " los 0 4620 4 >los.txt"
 print " x"
 print "x"
 
