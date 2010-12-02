@@ -20,9 +20,9 @@ EOT;
 
 echo <<<EOT
 <h2>Final Rankings</h2>
-<p>Congratulations to this year's winner, <a href="http://quotenil.com/">
+<p>Congratulations to this term's winner, <a href="http://quotenil.com/">
   Gábor Melis</a>! Whereas the Google AI Challenge has traditionally been
-  dominated by entries written in compiled languages like
+  dominated by entries written in languages like
   <a href="http://ai-contest.com/language_profile.php?lang=C%2B%2B">C++</a>,
   Gábor has solidly taken the top spot with an innovative algorithm. His
   entry is one of just 33 submissions written in
@@ -37,7 +37,7 @@ echo <<<EOT
 <p>On behalf of <a href="http://www.google.com">Google</a> and the
   <a href="http://csclub.uwaterloo.ca">University of Waterloo Computer
   Science Club</a>, we would like to thank everybody who took part in the
-  Google AI Challenge. This year was the best yet, with more than 4600 working
+  Google AI Challenge. This term was the best yet, with more than 4600 working
   entries submitted by people from 112 different countries. Thank you!</p>
 <p>We would also like to thank all the <a href="thanks.php">people</a>
   who generously volunteered their time and mad skills to make the Google
