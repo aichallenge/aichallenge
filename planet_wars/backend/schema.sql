@@ -50,7 +50,7 @@ CREATE TABLE `errors` (
   KEY `game_id` (`game_id`),
   KEY `error` (`error`,`timestamp`),
   KEY `timestamp` (`timestamp`)
-) ENGINE=MyISAM AUTO_INCREMENT=373965 DEFAULT CHARSET=latin1;
+) ENGINE=MyISAM AUTO_INCREMENT=513985 DEFAULT CHARSET=latin1;
 SET character_set_client = @saved_cs_client;
 
 --
@@ -80,7 +80,7 @@ CREATE TABLE `games` (
   KEY `player_two_all` (`player_two`,`timestamp`,`draw`,`game_id`,`winner`,`loser`,`player_one`),
   KEY `worker` (`worker`,`timestamp`),
   KEY `player_one_player_two` (`player_one`,`player_two`)
-) ENGINE=MyISAM AUTO_INCREMENT=8184674 DEFAULT CHARSET=latin1;
+) ENGINE=MyISAM AUTO_INCREMENT=9559618 DEFAULT CHARSET=latin1;
 SET character_set_client = @saved_cs_client;
 
 --
@@ -106,37 +106,6 @@ CREATE TABLE `games_archive` (
   KEY `player_one` (`player_one`),
   KEY `player_two` (`player_two`)
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
-SET character_set_client = @saved_cs_client;
-
---
--- Table structure for table `games_old`
---
-
-DROP TABLE IF EXISTS `games_old`;
-SET @saved_cs_client     = @@character_set_client;
-SET character_set_client = utf8;
-CREATE TABLE `games_old` (
-  `game_id` int(11) NOT NULL auto_increment,
-  `winner` int(11) default NULL,
-  `loser` int(11) default NULL,
-  `map_id` int(11) NOT NULL,
-  `draw` tinyint(1) NOT NULL default '0',
-  `timestamp` datetime NOT NULL,
-  `player_one` int(11) NOT NULL,
-  `player_two` int(11) NOT NULL,
-  `playback_string` mediumtext NOT NULL,
-  PRIMARY KEY  (`game_id`),
-  KEY `timestamp` (`timestamp`),
-  KEY `loser` (`loser`),
-  KEY `player_one` (`player_one`),
-  KEY `player_two` (`player_two`),
-  KEY `player_one_2` (`player_one`,`timestamp`),
-  KEY `player_two_2` (`player_two`,`timestamp`),
-  KEY `winner_2` (`winner`,`timestamp`),
-  KEY `loser_2` (`loser`,`timestamp`),
-  KEY `winner_3` (`winner`,`timestamp`,`draw`,`game_id`,`loser`),
-  KEY `loser_3` (`loser`,`timestamp`,`draw`,`game_id`,`winner`)
-) ENGINE=MyISAM AUTO_INCREMENT=4480529 DEFAULT CHARSET=latin1;
 SET character_set_client = @saved_cs_client;
 
 --
@@ -188,7 +157,7 @@ CREATE TABLE `leaderboards` (
   `complete` tinyint(4) NOT NULL default '0',
   PRIMARY KEY  (`leaderboard_id`),
   KEY `timestamp` (`timestamp`)
-) ENGINE=MyISAM AUTO_INCREMENT=158510 DEFAULT CHARSET=latin1;
+) ENGINE=MyISAM AUTO_INCREMENT=159502 DEFAULT CHARSET=latin1;
 SET character_set_client = @saved_cs_client;
 
 --
@@ -221,7 +190,7 @@ CREATE TABLE `maps` (
   `path` varchar(256) default NULL,
   `priority` int(11) default NULL,
   PRIMARY KEY  (`map_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=851 DEFAULT CHARSET=latin1;
+) ENGINE=MyISAM AUTO_INCREMENT=1076 DEFAULT CHARSET=latin1;
 SET character_set_client = @saved_cs_client;
 
 --
@@ -238,7 +207,7 @@ CREATE TABLE `matchups` (
   `map_id` int(11) NOT NULL,
   `dispatch_time` datetime default NULL,
   PRIMARY KEY  (`matchup_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=1250352 DEFAULT CHARSET=latin1;
+) ENGINE=MyISAM AUTO_INCREMENT=2626721 DEFAULT CHARSET=latin1;
 SET character_set_client = @saved_cs_client;
 
 --
@@ -270,20 +239,6 @@ CREATE TABLE `playback` (
 SET character_set_client = @saved_cs_client;
 
 --
--- Table structure for table `playback_test`
---
-
-DROP TABLE IF EXISTS `playback_test`;
-SET @saved_cs_client     = @@character_set_client;
-SET character_set_client = utf8;
-CREATE TABLE `playback_test` (
-  `game_id` int(11) NOT NULL,
-  `playback_string` mediumblob,
-  PRIMARY KEY  (`game_id`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
-SET character_set_client = @saved_cs_client;
-
---
 -- Table structure for table `rankings`
 --
 
@@ -291,6 +246,27 @@ DROP TABLE IF EXISTS `rankings`;
 SET @saved_cs_client     = @@character_set_client;
 SET character_set_client = utf8;
 CREATE TABLE `rankings` (
+  `leaderboard_id` int(11) NOT NULL,
+  `submission_id` int(11) NOT NULL,
+  `rank` int(11) NOT NULL,
+  `wins` int(11) default NULL,
+  `losses` int(11) default NULL,
+  `draws` int(11) default NULL,
+  `score` double default '13',
+  KEY `leaderboard_id` (`leaderboard_id`),
+  KEY `submission_id` (`submission_id`),
+  KEY `leaderboard_id_2` (`leaderboard_id`,`submission_id`,`rank`)
+) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+SET character_set_client = @saved_cs_client;
+
+--
+-- Table structure for table `rankings_archive`
+--
+
+DROP TABLE IF EXISTS `rankings_archive`;
+SET @saved_cs_client     = @@character_set_client;
+SET character_set_client = utf8;
+CREATE TABLE `rankings_archive` (
   `leaderboard_id` int(11) NOT NULL,
   `submission_id` int(11) NOT NULL,
   `rank` int(11) NOT NULL,
@@ -328,7 +304,7 @@ CREATE TABLE `submissions` (
   KEY `timestamp` (`timestamp`),
   KEY `user_id_2` (`user_id`,`timestamp`),
   KEY `latest` (`latest`)
-) ENGINE=MyISAM AUTO_INCREMENT=191355 DEFAULT CHARSET=latin1;
+) ENGINE=MyISAM AUTO_INCREMENT=196462 DEFAULT CHARSET=latin1;
 SET character_set_client = @saved_cs_client;
 
 --
@@ -369,7 +345,7 @@ CREATE TABLE `users` (
   PRIMARY KEY  (`user_id`),
   KEY `username` (`username`),
   KEY `user_id` (`user_id`,`username`)
-) ENGINE=MyISAM AUTO_INCREMENT=13564 DEFAULT CHARSET=latin1;
+) ENGINE=MyISAM AUTO_INCREMENT=14265 DEFAULT CHARSET=latin1;
 SET character_set_client = @saved_cs_client;
 
 --
@@ -399,7 +375,7 @@ CREATE TABLE `workers` (
   `api_key` char(64) NOT NULL,
   PRIMARY KEY  (`worker_id`),
   UNIQUE KEY `api_key` (`api_key`)
-) ENGINE=MyISAM AUTO_INCREMENT=134 DEFAULT CHARSET=latin1;
+) ENGINE=MyISAM AUTO_INCREMENT=146 DEFAULT CHARSET=latin1;
 SET character_set_client = @saved_cs_client;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 
@@ -411,4 +387,4 @@ SET character_set_client = @saved_cs_client;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2010-11-21 10:20:20
+-- Dump completed on 2010-12-03 16:44:02
