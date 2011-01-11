@@ -1,7 +1,17 @@
 from django.db import models
 from django.contrib.auth.models import User
 
+class Map(models.Model):
+    name = models.SlugField()
+    data = models.TextField(verbose_name="map data")
+    priority = models.FloatField()
+    
+    def __unicode__(self):
+        return self.name
+
+
 class Language(models.Model):
+    """Programming Language"""
     name = models.CharField(max_length=200, verbose_name="name of the programming language")
     
     def __unicode__(self):
@@ -20,6 +30,7 @@ class Submission(models.Model):
 class Game(models.Model):
     players = models.ManyToManyField(Submission, verbose_name="participating players")
     time = models.DateTimeField('time played at')
+    map = models.ForeignKey(Map)
     
     def __unicode__(self):
         return "Game between %s at %s" % (', '.join([submission.owner.username for submission in self.players.all()]), self.time)
