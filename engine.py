@@ -35,5 +35,6 @@ def play_game(map_filename, players):
         m.do_turn()
         turn_count += 1
 
-players = [RandomBot(), RandomBot(), RandomBot(), HunterBot()]
+#players = [RandomBot(), RandomBot(), RandomBot(), HunterBot()]
+players = [HunterBot(), HunterBot(), HunterBot(), HunterBot()]
 play_game("four_map.png", players)
