@@ -1,4 +1,4 @@
 *.pyc
 *~
-*.gif
-*.png
+playback/
+movie.gif
