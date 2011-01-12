@@ -99,3 +99,4 @@ class Map:
           else:
             self.ants.ants.pop(j)
             self.ants.ants.pop(i)
+    self.randomly_place_food(1)
