@@ -1,10 +1,11 @@
 
 # statuses
-UNCOMPILED, COMPILE_FAILED, TEST_FAILED, READY = range(4)
+UNCOMPILED, COMPILE_FAILED, UNTESTED, TEST_FAILED, READY = range(5)
 
 short_messages = {
     UNCOMPILED : "has not been compiled.",
     COMPILE_FAILED : "failed to compile.",
+    UNTESTED : "has not been tested.",
     TEST_FAILED : "failed one or more test cases.",
     READY : "is ready for battle!",
 }
@@ -19,6 +20,11 @@ long_messages = {
              "Challenge did not compile successfully. Please check the "
              "error messages below for more information. Fix as many of "
              "the errors as you can, then submit your code again."),
+    UNTESTED :
+            ("Unfortunately, your latest submission to the Google AI "
+             "Challenge was not tested for some reason, though it appears "
+             "to have compiled successfully. Please check the error messages "
+             "below for more information."),
     TEST_FAILED : 
             ("Unfortunately, your latest submission to the Google AI "
              "Challenge did not pass all of the submission tests. Please "
@@ -35,6 +41,7 @@ long_messages = {
 subjects = {
     UNCOMPILED : "Submission Error!",
     COMPILE_FAILED : "Compile Failure!",
+    UNTESTED : "Submission Error!",
     TEST_FAILED : "Test Failure!",
     READY : "Submission Success!",
 }
