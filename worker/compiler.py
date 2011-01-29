@@ -16,9 +16,9 @@ SAFEPATH = re.compile('[a-zA-Z0-9_.$-]+$')
 class Compiler(object):
     """ Stub base class for compilers. """
     def __init__(self, language, main_file, output_file, nukeglobs, *actions):
-        """ Every language has minimally the following:
+        """ Every compiler has minimally the following:
 
-            language - its name.
+            language - the name of the language it compiles.
             main_file - the name of the main code file, eg. BOT + '.py'.
             output_file - the file of the executable or
                           interpretable, eg BOT + '.py' or just BOT.
@@ -160,6 +160,8 @@ class System(CompileAction):
             return proc.returncode == 0
 
 compilers = [
+        # Compiler(name, main_file, output_file, nukeglobs,
+        #          *actions)
         Compiler("C", BOT + ".c", BOT, ["*.o", BOT],
                  System(sourceglobs=["*.c"],
                         args=["gcc", "-O3", "-c", "{file}", "-o", "{head}.o"]),
