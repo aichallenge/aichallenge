@@ -1,10 +1,13 @@
-# AI Challange Source Code Repo
+AI Challenge Source Code Repository
+===================================
 
-## Codename: Zeta
-This is the contest happening after Winter 2011.
+*Codename: Zeta*
 
-**Folder Contents:**
+This code will provide the basis for future contests (after Winter 2011).
 
-* website/ - Main django website, frontend
-* manager/ - Tournament manager, the other part of the system that communicates with the database, should make use of the django models
-* worker/ - Sandalone workers: compiler, sandbox
+Folder Contents
+---------------
+
+* `website/` - Main website and frontend (currently on Django)
+* `manager/` - Tournament manager which coordinates the workers and computes skill ratings
+* `worker/` - Standalone workers which run games (including compiler and sandbox)
