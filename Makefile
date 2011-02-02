@@ -8,7 +8,7 @@ game: playback/frame00001.png
 
 
 playback/movie.gif: playback/frame00001.png
-	convert -loop 0 playback/frame*.png playback/movie.gif
+	convert -loop 0 -delay 4 playback/frame*.png -delay 400 playback/`ls playback | sort | tail -n 1` playback/movie.gif
 	ln -s playback/movie.gif movie.gif
 
 movie: playback/movie.gif
