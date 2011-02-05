@@ -58,4 +58,4 @@ def play_game(map_filename):
 random.seed(0)
 #import cProfile
 #cProfile.run('play_game("simple3.txt")')
-play_game('simple3.txt')
+play_game('complex1.txt')

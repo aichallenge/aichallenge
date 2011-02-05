@@ -105,6 +105,14 @@ class AntMap:
                             self.map[x][last_row] == LAND
                             self.wall_area -= 1
                             self.land_area += 1
+                    elif data[1][x] == '*':
+                        if self.map[x][last_row] != WALL:
+                            self.map[x][last_row] = FOOD
+                            self.food_list[(x,last_row)] = True
+                    elif ord(data[1][x]) >= 97 and ord(data[1][x]) <= 112:
+                        if self.map[x][last_row] != WALL:
+                            self.map[x][last_row] = ord(data[1][x]) - 96
+                            self.ant_list[(x,last_row)] = ord(data[1][x]) - 96
                 last_row += 1
             elif line[0] == 'F':
                 data = line.split()
