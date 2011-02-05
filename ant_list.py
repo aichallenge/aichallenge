@@ -5,12 +5,13 @@ class AntList:
     def add(self, ant):
         self.ants.append(ant)
 
-    def nearby_ants(self, x, y, r):
-	r *= r
+    def nearby_ants(self, x, y, r, filter=[0]):
+        r *= r
         nearby = []
         for ant in self.ants:
             if pow(ant.x - x, 2) + pow(ant.y - y, 2) <= r:
-                nearby.append(ant)
+                if (not (ant.owner in filter)):
+                    nearby.append(ant)
         return nearby
 
     def __iter__(self):

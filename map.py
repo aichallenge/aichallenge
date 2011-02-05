@@ -51,7 +51,9 @@ class Map:
             (0, 0, 0),
             (255, 255, 0),
             (255, 0, 255),
-            (255, 127, 0)
+            (255, 127, 0),
+            (0, 192, 192),
+            (128, 128, 128)
         ]
         image = Image.new("RGB", ((self.width, self.height)))
         for x in range(self.width):
@@ -86,11 +88,10 @@ class Map:
         for a in range(len(self.ants)):
             ant = self.ants[a]
             if ant.owner == 0:
-                near_ants = self.ants.nearby_ants(ant.x, ant.y, 3)
-                support = [0,0,0,0,0]
+                near_ants = self.ants.nearby_ants(ant.x, ant.y, 1.6)
+                support = [0,0,0,0,0,0,0,0,0]
                 for near_ant in near_ants:
-                    if near_ant.owner != 0:
-                        support[near_ant.owner] += 1
+                    support[near_ant.owner] += 1
                 max_support = max(support)
                 if max_support > 0:
                     if support.count(max_support) == 1:
@@ -102,15 +103,34 @@ class Map:
         for a in range(len(self.ants)):
             ant = self.ants[a]
             if ant.owner != 0:
-                near_ants = self.ants.nearby_ants(ant.x, ant.y, 3)
+                near_ants = self.ants.nearby_ants(ant.x, ant.y, 1.6)
                 support = 0
                 for near_ant in near_ants:
                     if near_ant.owner == ant.owner:
                         support += 1
                     elif near_ant.owner != 0:
                         support -= 1
-                if support < 0:
+                if support <= 0:
                     ants.ants[a].owner = -1
+        for i in range(len(ants)-1,-1,-1):
+            if ants.ants[i].owner == -1:
+                ants.ants.pop(i)
+        self.ants = ants
+
+    def do_death_2(self):
+        ants = deepcopy(self.ants)
+        for a in range(len(self.ants)):
+            ant = self.ants[a]
+            if ant.owner != 0:
+                enemy_ants = self.ants.nearby_ants(ant.x, ant.y, 1.6, [0,ant.owner])
+                for enemy_ant in enemy_ants:
+                    distracting_ants = self.ants.nearby_ants(enemy_ant.x, 
+                                                             enemy_ant.y, 
+                                                             1.6, 
+                                                             [0, enemy_ant.owner])
+                    if len(distracting_ants) <= len(enemy_ants):
+                        ants.ants[a].owner = -1
+                        break
         for i in range(len(ants)-1,-1,-1):
             if ants.ants[i].owner == -1:
                 ants.ants.pop(i)
