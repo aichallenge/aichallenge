@@ -30,6 +30,8 @@ class HunterBot(Player):
                 if dist < closest_distance:
                     closest_distance = dist
                     closest_enemy = other_ant
+            if closest_enemy == None:
+                continue
             best_move = None
             closest_distance = 999999.0
             for c in candidates:
