@@ -35,6 +35,7 @@ def play_game(map_filename):
     food_amount = int(initial_food_density * m.land_area)
     m.do_food(food_amount)
     turn_count = 1
+    score = [0 for i in range(len(players)+1)]
     while not m.game_over() and turn_count < 1000:
         print "turn:", turn_count
         save_image(m, turn_count, 'start')
@@ -53,9 +54,13 @@ def play_game(map_filename):
         m.do_food()
         save_image(m, turn_count, 'food')
         turn_count += 1
+        turn_score = m.do_score()
+        for i in range(len(players)+1):
+            score[i] += turn_score[i]
     save_image(m, turn_count, 'start')
+    print score
 
-random.seed(0)
+#random.seed(0)
 #import cProfile
 #cProfile.run('play_game("simple3.txt")')
-play_game('complex1.txt')
+play_game('simple1.txt')
