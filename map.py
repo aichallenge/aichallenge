@@ -11,6 +11,7 @@ class Map:
         self.passable = []
         self.ants = AntList()
         image = Image.open(filename)
+        img = image.load()
         (self.width, self.height) = image.size
         self.num_players = 0
         self.land_area = 0
@@ -18,7 +19,7 @@ class Map:
         for x in range(self.width):
             self.passable.append([])
             for y in range(self.height):
-                pixel = image.getpixel((x, y))
+                pixel = img[x,y]
                 if pixel[0] > 0:
                     self.passable[x].append(True)
                     self.num_players += 1
@@ -56,15 +57,16 @@ class Map:
             (128, 128, 128)
         ]
         image = Image.new("RGB", ((self.width, self.height)))
+        img = image.load()
         for x in range(self.width):
             for y in range(self.height):
                 ant = self.ants.get_by_location(x, y)
                 if ant is not None:
-                    image.putpixel((x, y), player_colors[ant.owner])
+                    img[x, y] = player_colors[ant.owner]
                 elif self.passable[x][y]:
-                    image.putpixel((x, y), land_color)
+                    img[x, y] = land_color
                 else:
-                    image.putpixel((x, y), water_color)
+                    img[x, y] = water_color
         return image
 
     def remaining_players(self):
