@@ -30,7 +30,7 @@ def save_image(map, turn, anno=""):
 
 def play_game(map_filename):
     m = AntMap(map_filename)
-    players = [HunterBot(), HunterBot(), HunterBot(), HunterBot()]
+    players = [HunterBot() for i in range(4)]
     initial_food_density = 0.01
     food_amount = int(initial_food_density * m.land_area)
     m.do_food(food_amount)
@@ -63,4 +63,4 @@ def play_game(map_filename):
 #random.seed(0)
 #import cProfile
 #cProfile.run('play_game("simple3.txt")')
-play_game('simple1.txt')
+play_game('simple2.txt')

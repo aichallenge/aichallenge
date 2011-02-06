@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 from copy import deepcopy
 from random import randrange
+from math import sqrt
 import Image
 import os
 
@@ -34,8 +35,8 @@ class AntMap:
         self.WALL = -2
         self.HILL = -3
         self.do_orders = self.do_orders_3
-        self.do_death = self.do_death_1
-        self.do_birth = self.do_birth_2
+        self.do_death = self.do_death_4
+        self.do_birth = self.do_birth_3
         self.do_food = self.do_food_1
         self.do_score = self.do_score_1
         self.order_map = None
@@ -198,13 +199,15 @@ class AntMap:
     def hills(self):
         return list(self.hill_list.keys())
 
-    def nearby_ants(self, x, y, exclude=0):
-        for dx in (-1,0,1):
-            for dy in (-1,0,1):
-                nx = (x + dx) % self.width
-                ny = (y + dy) % self.height
-                if self.map[nx][ny] > 0 and self.map[nx][ny] != exclude:
-                    yield (nx, ny, self.map[nx][ny])
+    def nearby_ants(self, x, y, exclude=0, min_dist=1, max_dist=2):
+        mx = int(sqrt(max_dist))
+        for dx in range(-mx,mx+1):
+            for dy in range(-mx,mx+1):
+                if dx**2 + dy**2 <= max_dist and dx**2 + dy**2 >= min_dist:
+                    nx = (x + dx) % self.width
+                    ny = (y + dy) % self.height
+                    if self.map[nx][ny] > 0 and self.map[nx][ny] != exclude:
+                        yield (nx, ny, self.map[nx][ny])
 
     def do_orders_3(self, player, orders):
         direction = {'N': (0, -1),
@@ -292,6 +295,27 @@ class AntMap:
             self.ant_list[(x,y)] = player
             del self.food_list[(x,y)]
 
+    # must have only 1 force near the ant to create a new ant, prefered method
+    #  and food in contention is eliminated
+    def do_birth_3(self):
+        new_ants = {}
+        for fx, fy in self.food():
+            owner = 0
+            for nx, ny, nowner in self.nearby_ants(fx, fy, 0, 1, 9):
+                if owner == 0:
+                    owner = nowner
+                elif owner != nowner:
+                    self.map[fx][fy] = LAND
+                    del self.food_list[(fx,fy)]
+                    break
+            else:
+                if owner != 0:
+                    new_ants[(fx,fy)] = owner
+        for (x, y), player in new_ants.items():
+            self.map[x][y] = player
+            self.ant_list[(x,y)] = player
+            del self.food_list[(x,y)]
+
     # any less occupied ant near you kills you, preferred method
     def do_death_1(self):
         old_ant = []
@@ -319,7 +343,7 @@ class AntMap:
             self.map[x][y] = LAND
             del self.ant_list[(x,y)]
 
-    # any ant near you kills you, method to make the game boring, not fun with simple dominant strategies thereby destroying the reputation of the contest
+    # ants within range kill you
     def do_death_3(self):
         old_ant = []
         for ax, ay, aowner in self.ants():
@@ -329,6 +353,24 @@ class AntMap:
         for x, y in old_ant:
             self.map[x][y] = LAND
             del self.ant_list[(x,y)]
+
+    # 1:1(:1:ect) kill ratio
+    def do_death_4(self):
+        ant_group = []
+        def find_enemy(x, y, owner, min_dist, max_dist):
+            for nx, ny, nowner in self.nearby_ants(x, y, owner, min_dist, max_dist):
+                if not (nx, ny) in ant_group:
+                    ant_group.append((nx,ny))
+                    find_enemy(nx, ny, nowner, min_dist, max_dist)
+        for distance in range(1,10):
+            for ax, ay, aowner in self.ants():
+                if self.map[ax][ay] != LAND:
+                    ant_group = [(ax, ay)]
+                    find_enemy(ax, ay, aowner, distance, distance)
+                    if len(ant_group) > 1:
+                        for ex, ey in ant_group:
+                            self.map[ex][ey] = LAND
+                            del self.ant_list[(ex,ey)]
 
     def do_food_1(self, amount=1):
         for f in range(amount):
