@@ -1,8 +1,8 @@
 import copy
 
 from ant_map import *
-from random_bot import *
-from hunter_bot import *
+from bots.random_bot import *
+from bots.hunter_bot import *
 
 player_count = 4
 
@@ -63,4 +63,4 @@ def play_game(map_filename):
 #random.seed(0)
 #import cProfile
 #cProfile.run('play_game("simple3.txt")')
-play_game('simple2.txt')
+play_game('maps/random4.txt')
