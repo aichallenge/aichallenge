@@ -1,12 +1,13 @@
 import math
 import random
+from ant import Ant
 
 from player import Player
 
 class HunterBot(Player):
     def do_turn(self, m):
         orders = []
-        my_ants = [a for a in m.ants if a.owner == 1]
+        my_ants = [Ant(*a) for a in m.ants() if a[2] == 1]
         for ant in my_ants:
             if ant.owner != 1:
                 continue
@@ -19,7 +20,8 @@ class HunterBot(Player):
                 ]
             closest_enemy = None
             closest_distance = 999999.0
-            for other_ant in m.ants:
+            other_ants = [Ant(*a) for a in m.ants()] + [Ant(a[0],a[1],0) for a in m.food()]
+            for other_ant in other_ants:
                 if other_ant.owner == 1:
                     continue
                 dx = ant.x - other_ant.x
@@ -28,6 +30,8 @@ class HunterBot(Player):
                 if dist < closest_distance:
                     closest_distance = dist
                     closest_enemy = other_ant
+            if closest_enemy == None:
+                continue
             best_move = None
             closest_distance = 999999.0
             for c in candidates:
@@ -35,7 +39,13 @@ class HunterBot(Player):
                     continue
                 if c[2] >= m.width or c[3] >= m.height:
                     continue
-                if not m.passable[c[2]][c[3]]:
+                if m.map[c[2]][c[3]] in (m.WALL, m.HILL, m.FOOD):
+                    continue
+                occupied = False
+                for order in orders:
+                    if c[2] == order[2] and c[3] == order[3]:
+                        occupied = True
+                if occupied:
                     continue
                 dx = c[2] - closest_enemy.x
                 dy = c[3] - closest_enemy.y
