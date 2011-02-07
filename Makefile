@@ -1,7 +1,7 @@
 all: playback/movie.gif
 
 
-playback/frame00001.png: *.py *.png
+playback/frame00001.png: *.py
 	python engine.py
 
 game: playback/frame00001.png
