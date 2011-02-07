@@ -3,4 +3,4 @@ Ants
 
 *Game from AI Challenge*
 
-This is where the software for running the Ants AI challenge lives.
+This code will provide the basis for the ants challenge. It will later be merged in a contest framework.
