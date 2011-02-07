@@ -1,0 +1,6 @@
+[worker]
+current_game = higher_number
+submission_bucket = your-submission-bucket
+submission_prefix = higher_number/
+aws_access_key = accesskey
+aws_secret_key = omgsecret
