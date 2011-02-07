@@ -15,9 +15,3 @@ def setup():
 	logger.addHandler(handler)
 	
 	return logger
-
-def get():
-	"""return the logger for the current process"""
-	filename = 'aichallenge.worker.%d.log' % os.getpid()
-	logger = logging.getLogger(filename)
-	return logger

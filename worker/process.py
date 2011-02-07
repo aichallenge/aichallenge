@@ -49,8 +49,7 @@ class Worker(object):
 		# fetch players from storage if necessary
 		for team in body['teams']:
 			for player in team:
-				worker.storage.fetch(player['submission_hash'],
-									logger=self.logger)
+				worker.storage.fetch(player['submission_hash'], logger=self.logger)
 		
 		# run the game and log the result
 		current_game = config.get('worker', 'current_game')

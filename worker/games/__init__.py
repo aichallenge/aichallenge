@@ -17,7 +17,10 @@ class Game(object):
 		return [self.start_player(player) for player in team]
 	
 	def start_player(self, player):
-		runner = Runner("python /var/lib/aichallenge/submissions/%s/MyBot.py" % player['submission_hash'])
+		# TODO: make this run non-Python submissions
+		# (this is only here temporarily for test purposes)
+		path = os.path.expandvars("$AICHALLENGE_PREFIX/var/lib/aichallenge/submissions")
+		runner = Runner("python %s/%s/MyBot.py" % (path, player['submission_hash']))
 		return (player['name'], runner)
 	
 	def stop_team(self, team):

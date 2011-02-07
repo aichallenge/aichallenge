@@ -29,7 +29,7 @@ streamlined in the future (i.e. packaged as a DEB and integrated into an AMI);
 until that happens (and perhaps still afterwards), it is documented here.
 
 There should be an `aichallenge` user, under which the main worker process will run.
-There should also be some number of sequentially numbered runner user accounts,
+There should also be some number of sequentially numbered runner user accounts:
 `aichallenge-run0` and so on. Currently, a maximum of 100 are supported, but you need
 only create as many as you expect to user. Be advised that the runner does maintain a
 lock on a user account while running, so there should be at least as many as you expect
@@ -85,3 +85,11 @@ number. To stop all workers, kill all runner processes and clean up lock files, 
     sudo aichallenge worker stop
 
 Init scripts will likely be created which call these at some point in the future.
+
+Currently, to satisfy the Python library dependencies, the worker requires the following APT
+packages:
+
+* `python-boto` - for Amazon Web Services support
+* `python-argparse` - for parsing command-line arguments
+* `python-simplejson` - for parsing and constructing JSON messages
+* `python-setproctitle` - for setting the process title

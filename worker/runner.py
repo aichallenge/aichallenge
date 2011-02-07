@@ -66,7 +66,7 @@ class Runner(object):
 			for user in users():
 				try:
 					self.lock_fd = os.open("%s/%s.lock" % (lock_dir, user),
-											os.O_CREAT | os.O_EXCL)
+					                       os.O_CREAT | os.O_EXCL)
 					return user
 				except OSError:
 					pass
