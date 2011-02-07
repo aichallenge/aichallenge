@@ -8,9 +8,9 @@ import shutil
 import signal
 import subprocess
 import time
+from language import BOT, is_valid_language
 from submission import *
 
-BOT = "MyBot"
 SAFEPATH = re.compile('[a-zA-Z0-9_.$-]+$')
 
 class Compiler(object):
@@ -233,23 +233,26 @@ def compile_submission(subm, max_time=None):
         overlong compilation times. """
     assert subm.status == UNCOMPILED # don't attempt multiple compilations
     detected_compilers = [compiler for compiler in compilers
-                          if os.path.exists(compiler.main_file)]
+                          if is_valid_language(compiler.language)
+                          and os.path.exists(compiler.main_file)]
     if len(detected_compilers) == 0:
         subm.compile_errors += (
-             "The auto-compile environment could not locate your main code "
-             "file. This is probably because you accidentally changed the "
-             "name of your main code file. Please check the languages list "
-             "for the file you must include so that the auto-compile "
-             "environment can figure out which language you are using.\n")
+            "The auto-compile environment could not locate your main code "
+            "file. This is probably because you accidentally changed the "
+            "name of your main code file. Please check the languages list "
+            "for the file you must include so that the auto-compile "
+            "environment can figure out which language you are using.\n")
+        subm.status = COMPILE_FAILED
         return False
     elif len(detected_compilers) > 1:
         subm.compile_errors += (
-             "The auto-compile environment found more than one main code "
-             "file:\n" + "\n".join(["  * %s (%s)" % (c.main_file, c.language)
-                                    for c in detected_compilers])
-             + "\nYou must submit only one of these files so that the auto-"
-             "compile environment can figure out which "
-             "language you are using.\n")
+            "The auto-compile environment found more than one main code "
+            "file:\n" + "\n".join(["  * %s (%s)" % (c.main_file, c.language)
+                                   for c in detected_compilers])
+            + "\nYou must submit only one of these files so that the auto-"
+            "compile environment can figure out which "
+            "language you are using.\n")
+        subm.status = COMPILE_FAILED
         return False
     else:
         compiler = detected_compilers[0]
