@@ -1,3 +1,4 @@
+import os.path
 import sys
 
 from worker.runner import Runner

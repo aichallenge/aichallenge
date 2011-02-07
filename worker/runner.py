@@ -43,21 +43,9 @@ class Runner(object):
 		"""read a line from the process' standard output"""
 		return self.process.stdout.readline()
 	
-	def with_time_limit(self, callable, timeout=1):
+	def time_limit(self, timeout=1):
 		"""unfreeze the process, do something with a time limit, then refreeze it"""
-		def timed_out(sig, frame):
-			signal.signal(signal.SIGALRM, signal.SIG_DFL)
-			self.send_signal(signal.SIGSTOP)
-			raise TimeoutError()
-		
-		self.send_signal(signal.SIGCONT)
-		signal.signal(signal.SIGALRM, timed_out)
-		signal.alarm(timeout)
-		result = callable(self)
-		signal.alarm(0)
-		signal.signal(signal.SIGALRM, signal.SIG_DFL)
-		self.send_signal(signal.SIGSTOP)
-		return result
+		return TimeLimit(runner=self, timeout=timeout)
 	
 	def acquire_user(self):
 		"""find and lock a user for running untrusted code"""
@@ -87,6 +75,28 @@ def users():
 			yield user
 	except KeyError:
 		pass
+
+class TimeLimit(object):
+	"""
+	Context manager which limits the execution time of its suite.
+	Sends SIGCONT/SIGSTOP to runner as appropriate, if applicable.
+	"""
+	
+	def __init__(self, timeout=1, runner=None):
+		self.runner = runner
+		self.timeout = timeout
+	
+	def __enter__(self):
+		def timed_out(sig, frame): raise TimeoutError()
+		if self.runner: self.runner.send_signal(signal.SIGCONT)
+		signal.signal(signal.SIGALRM, timed_out)
+		signal.alarm(self.timeout)
+		return self.runner
+	
+	def __exit__(self, exc_type, exc_value, traceback):
+		signal.alarm(0)
+		signal.signal(signal.SIGALRM, signal.SIG_DFL)
+		if self.runner: self.runner.send_signal(signal.SIGSTOP)
 
 class TimeoutError(Exception):
 	pass

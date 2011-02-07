@@ -6,9 +6,7 @@ Exists only for demonstrative purposes.
 """
 
 from random import randint
-
 import worker.games
-from worker.runner import TimeoutError
 
 class HigherNumberGame(worker.games.Game):
 	
@@ -20,8 +18,9 @@ class HigherNumberGame(worker.games.Game):
 		for team in self.teams:
 			info, runner = team[0] # assume one player per team
 			try:
-				move = runner.with_time_limit(lambda r: int(r.readline()), timeout=2)
-			except TimeoutError:
+				with runner.time_limit(2):
+					move = int(runner.readline())
+			except:
 				disqualified.append(info)
 				continue
 			
