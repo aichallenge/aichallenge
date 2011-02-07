@@ -1,6 +1,7 @@
 import os.path
 import sys
 
+from worker.language import get_command
 from worker.runner import Runner
 
 def get_game(name):
@@ -18,13 +19,10 @@ class Game(object):
         return [self.start_player(player) for player in team]
     
     def start_player(self, player):
-        # TODO: make this run non-Python submissions
-        # (this is only here temporarily for test purposes)
-        path = os.path.expandvars("$AICHALLENGE_PREFIX/var/lib/"
-                                  "aichallenge/submissions")
-        runner = Runner("python %s/%s/MyBot.py"
-                        % (path, player['submission_hash']))
-        return (player['name'], runner)
+        """ Start the given player Submission. This assumes that the
+            submission has already been compiled successfully. """
+        runner = Runner(get_command(player.language, player.directory))
+        return (player.username, runner)
     
     def stop_team(self, team):
         [self.stop_player(player) for player in team]
