@@ -20,27 +20,27 @@ def random_box():
         b = randrange(t+2, min(t+height//4,height))
         for y in range(t, b+1):
             for x in range(l, r+1):
-                carve(y, x) # m[y][x] = LAND
+                carve(y, x)
         for y in range(height-b-1, height-t):
             for x in range(l, r+1):
-                carve(y, x) # m[y][x] = LAND
+                carve(y, x)
         for y in range(t, b+1):
             for x in range(width-r-1, width-l):
-                carve(y, x) # m[y][x] = LAND
+                carve(y, x)
         for y in range(height-b-1, height-t):
             for x in range(width-r-1, width-l):
-                carve(y, x) # m[y][x] = LAND
+                carve(y, x)
         if box == 0:
             m[t][l] = 1
             m[height-t-1][l] = 2
             m[t][width-l-1] = 3
             m[height-t-1][width-l-1] = 4
             for y in range(t+1, height-t-1):
-                carve(y, l) # m[y][l] = LAND
-                carve(y, width-l-1) # m[y][width-l-1] = LAND
+                carve(y, l)
+                carve(y, width-l-1)
             for x in range(l+1, width-l-1):
-                carve(t, x) # m[t][x] = LAND
-                carve(height-t-1, x) # m[height-t-1][x] = LAND
+                carve(t, x)
+                carve(height-t-1, x)
     return ant_map(m)
 
 def ant_map(m):
