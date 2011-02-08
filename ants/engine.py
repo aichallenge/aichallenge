@@ -30,7 +30,8 @@ def save_image(map, turn, anno=""):
 
 def play_game(map_filename):
     m = AntMap(map_filename)
-    players = [HunterBot() for i in range(4)]
+    players = [HunterBot() for i in range(m.num_players)]
+    perspective = [[0 for i in range(m.num_players)] for i in range(m.num_players)]
     initial_food_density = 0.01
     food_amount = int(initial_food_density * m.land_area)
     m.do_food(food_amount)
@@ -60,7 +61,17 @@ def play_game(map_filename):
     save_image(m, turn_count, 'start')
     print score
 
-#random.seed(0)
-#import cProfile
-#cProfile.run('play_game("simple3.txt")')
-play_game('maps/simple3.txt')
+if __name__ == '__main__':
+    import sys, os
+    from optparse import OptionParser
+    parser = OptionParser()
+    parser.add_option('-m', '--map',
+                      dest='map', default='simple1.txt',
+                      help='map filename')
+    options, args = parser.parse_args(sys.argv)
+    if not os.path.exists(options.map):
+        options.map = os.path.join('maps', options.map)
+    if os.path.exists(options.map):
+        play_game(options.map)
+    else:
+        print('Invalid map file %s' % options.map)

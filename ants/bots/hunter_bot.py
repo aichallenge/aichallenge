@@ -55,4 +55,15 @@ class HunterBot(Player):
                     best_move = c
             if best_move is not None:
                 orders.append(best_move)
-        return orders
+        # TODO: crappy fix, should rewrite bot
+        direction_orders = []
+        for order in orders:
+            if order[2] > order[0]:
+                direction_orders.append((order[1],order[0],'E'))
+            elif order[2] < order[0]:
+                direction_orders.append((order[1],order[0],'W'))
+            elif order[3] > order[1]:
+                direction_orders.append((order[1],order[0],'N'))
+            elif order[3] < order[1]:
+                direction_orders.append((order[1],order[0],'S'))
+        return direction_orders

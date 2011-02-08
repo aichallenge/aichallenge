@@ -10,7 +10,7 @@ $(function () {
     var turn = 1;
     var anno = 'start';
     var mapSrc = function () {
-        return 'playback/frame' + zeroFill(turn, 5) + anno + '.png';
+        return '../playback/frame' + zeroFill(turn, 5) + anno + '.png';
     }
     map.src = mapSrc(turn);
     $('#back').click(function () {

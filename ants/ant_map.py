@@ -8,16 +8,13 @@ import os
 LAND = 0
 FOOD = -1
 WALL = -2
-HILL = -3
-BODY = -4
-CONFLICT = -5
+CONFLICT = -3
 
 WALL_COLOR = (128, 128, 128)
 LAND_COLOR = (139, 69, 19)
-HILL_COLOR = (0, 0, 0)
 FOOD_COLOR = (255, 255, 255)
-BODY_COLOR = (64, 64, 64)
 CONFLICT_COLOR = (255, 128, 128)
+UNSEEN_COLOR = (0, 0, 0)
 
 PLAYER_COLOR = [(204, 0, 0),    # red
                 (255, 255, 0),  # yellow
@@ -28,15 +25,23 @@ PLAYER_COLOR = [(204, 0, 0),    # red
                 (254, 154, 2),  # orange
                 (154, 206, 51)] # sage
 
+# precalculated radius coordinates
+SQRT = [int(sqrt(r)) for r in range(20)]
+RADIUS = []
+for r in range(20):
+    RADIUS.append([])
+    mx = SQRT[r]
+    for d_row in range(-mx, mx+1):
+        for d_col in range(-mx, mx+1):
+            if d_row**2 + d_col**2 == r:
+                RADIUS[r].append((d_row, d_col))
+
 class AntMap:
     def __init__(self, filename):
         self.LAND = 0
         self.FOOD = -1
         self.WALL = -2
         self.HILL = -3
-        self.do_orders = self.do_orders_3
-        self.do_death = self.do_death_4
-        self.do_birth = self.do_birth_3
         self.do_food = self.do_food_1
         self.do_score = self.do_score_1
         self.order_map = None
@@ -61,7 +66,6 @@ class AntMap:
         new_map.order_map = None
         new_map.ant_list = deepcopy(self.ant_list)
         new_map.food_list = self.food_list
-        new_map.hill_list = self.hill_list
         return new_map
 
     def load_text(self, filename):
@@ -78,8 +82,8 @@ class AntMap:
                 self.wall_area = 0
                 self.num_players = int(data[3])
                 self.player_colors = PLAYER_COLOR[:self.num_players]
-                self.image_colors = [LAND_COLOR] + self.player_colors + [CONFLICT_COLOR, 
-                                        BODY_COLOR, HILL_COLOR, WALL_COLOR, FOOD_COLOR]
+                self.image_colors = [LAND_COLOR] + self.player_colors + [
+                                     CONFLICT_COLOR, WALL_COLOR, FOOD_COLOR]
                 self.map = [[0 for i in range(self.height)] for i in range(self.width)]
             elif line[0] == 'W':
                 data = line.split()
@@ -87,64 +91,49 @@ class AntMap:
                 y1 = int(data[2])
                 x2 = int(data[3])
                 y2 = int(data[4])
-                for x in range(x1, x2+1):
+                for row in range(x1, x2+1):
                     for y in range(y1, y2+1):
-                        if self.map[x][y] != WALL:
-                            self.map[x][y] = WALL
+                        if self.map[row][y] != WALL:
+                            self.map[row][y] = WALL
                             self.wall_area += 1
                             self.land_area -= 1
             elif line[0] == 'M':
                 data = line.split()
-                for x in range(len(data[1])):
-                    if data[1][x] == 'X':
-                        if self.map[x][last_row] != WALL:
-                            self.map[x][last_row] = WALL
+                for col in range(len(data[1])):
+                    if data[1][col] == 'X':
+                        if self.map[last_row][col] != WALL:
+                            self.map[last_row][col] = WALL
                             self.wall_area += 1
                             self.land_area -= 1
-                    elif data[1][x] == '.':
-                        if self.map[x][last_row] == WALL:
-                            self.map[x][last_row] == LAND
+                    elif data[1][col] == '.' or data[1][col] == '!':
+                        if self.map[last_row][col] == WALL:
+                            self.map[last_row][col] == LAND
                             self.wall_area -= 1
                             self.land_area += 1
-                    elif data[1][x] == '*':
-                        if self.map[x][last_row] != WALL:
-                            self.map[x][last_row] = FOOD
-                            self.food_list[(x,last_row)] = True
-                    elif data[1][x] == '!':
-                        if self.map[x][last_row] != WALL:
-                            self.map[x][last_row] = HILL
-                            self.hill_list[(x,last_row)] = True
-                            self.wall_area += 1
-                            self.land_area -= 1
-                    elif ord(data[1][x]) >= 97 and ord(data[1][x]) <= 112:
-                        if self.map[x][last_row] != WALL:
-                            self.map[x][last_row] = ord(data[1][x]) - 96
-                            self.ant_list[(x,last_row)] = ord(data[1][x]) - 96
+                    elif data[1][col] == '*':
+                        if self.map[last_row][col] != WALL:
+                            self.map[last_row][col] = FOOD
+                            self.food_list[(last_row,col)] = True
+                    elif ord(data[1][col]) >= 97 and ord(data[1][col]) <= 112:
+                        if self.map[last_row][col] != WALL:
+                            self.map[last_row][col] = ord(data[1][col]) - 96
+                            self.ant_list[(last_row,col)] = ord(data[1][col]) - 96
                 last_row += 1
             elif line[0] == 'F':
                 data = line.split()
-                x = int(data[1])
-                y = int(data[2])
-                if self.map[x][y] == LAND:
-                    self.map[x][y] = FOOD
-                    self.food_list[(x,y)] = True
+                col = int(data[1])
+                row = int(data[2])
+                if self.map[row][col] == LAND:
+                    self.map[row][col] = FOOD
+                    self.food_list[(row,col)] = True
             elif line[0] == 'A':
                 data = line.split()
-                x = int(data[1])
-                y = int(data[2])
+                col = int(data[1])
+                row = int(data[2])
                 owner = int(data[3])
-                if self.map[x][y] == LAND:
-                    self.map[x][y] = owner
-                    self.ant_list[(x,y)] = owner
-            elif line[0] == 'H':
-                data = line.split()
-                x = int(data[1])
-                y = int(data[2])
-                if self.map[x][y] == LAND:
-                    self.map[x][y] = HILL
-                    self.hill_list[(x,y)] = True
-                    self.wall_area += 1
-                    self.land_area -= 1
+                if self.map[row][col] == LAND:
+                    self.map[row][col] = owner
+                    self.ant_list[(row,col)] = owner
 
     def load_image(self, filename):
         image = Image.open(filename)
@@ -179,227 +168,169 @@ class AntMap:
                         self.player_colors.append(pixel)
                         self.map[x][y] = self.num_players
                         self.ant_list[(x,y)] = self.map[x][y]
-        self.image_colors = [LAND_COLOR] + self.player_colors + [CONFLICT_COLOR, 
-                                BODY_COLOR, HILL_COLOR, WALL_COLOR, FOOD_COLOR]
+        self.image_colors = [LAND_COLOR] + self.player_colors + [
+                             CONFLICT_COLOR, WALL_COLOR, FOOD_COLOR]
 
     def render(self):
         image = Image.new('RGB', (self.width, self.height), LAND_COLOR)
-        for x in range(self.width):
-            for y in range(self.height):
-                if self.map[x][y] != LAND:
-                    image.putpixel((x, y), self.image_colors[self.map[x][y]])
+        img = image.load()
+        for row in range(self.height):
+            for col in range(self.width):
+                if self.map[row][col] != LAND:
+                    img[row, col] = self.image_colors[self.map[row][col]]
         return image
+        
+    def get_vision(self, player, radius=10):
+        vision = [[False for row in self.width] for col in self.height]
+        for row, col in self.player_ants(player):
+            for r in range(radius+1):
+                for d_row, d_col in RADIUS[r]:
+                    vision[row + d_row][col + d_col] = True
+        return vision
 
     def ants(self):
-        return [(x,y,o) for (x,y),o in self.ant_list.items()]
+        return [(row, col, ownr) for (row, col), ownr in self.ant_list.items()]
+
+    def player_ants(self, player):
+        return [(row, col) for (row, col), ownr
+                in self.ant_list.items() if player == ownr]
 
     def food(self):
         return list(self.food_list.keys())
 
-    def hills(self):
-        return list(self.hill_list.keys())
+    # min and max are defined as sum of directions squared, so 9 is dist 3
+    # default values 1-2 are the 8 spaces around a square
+    # this avoids the sqrt function
+    def nearby_ants(self, row, col, exclude=0, min_dist=1, max_dist=2):
+        mx = SQRT[max_dist]
+        for d_row in range(-mx,mx+1):
+            for d_col in range(-mx,mx+1):
+                d = d_row**2 + d_col**2
+                if d >= min_dist and d <= max_dist:
+                    n_row = (row + d_row) % self.width
+                    n_col = (col + d_col) % self.height
+                    owner = self.map[n_row][n_col]
+                    if owner > 0 and owner != exclude:
+                        yield (n_row, n_col, owner)
 
-    def nearby_ants(self, x, y, exclude=0, min_dist=1, max_dist=2):
-        mx = int(sqrt(max_dist))
-        for dx in range(-mx,mx+1):
-            for dy in range(-mx,mx+1):
-                if dx**2 + dy**2 <= max_dist and dx**2 + dy**2 >= min_dist:
-                    nx = (x + dx) % self.width
-                    ny = (y + dy) % self.height
-                    if self.map[nx][ny] > 0 and self.map[nx][ny] != exclude:
-                        yield (nx, ny, self.map[nx][ny])
-
-    def do_orders_3(self, player, orders):
+    # process orders 1 player at a time
+    def do_orders(self, player, orders):
         direction = {'N': (0, -1),
                      'S': (0, 1),
                      'E': (1, 0),
                      'W': (-1, 0)}
         src = {}
         dest = {}
+        # process orders ignoring bad or duplicates
         for order in orders:
-            x1, y1, x2, y2 = order
-            #x1, y1, d = order
-            #x2 = (x1 + direction[d][0]) % self.width
-            #y2 = (y1 + direction[d][1]) % self.height
-            if src.has_key((x1,y1)): # order already given
+            col1, row1, d = order
+            col2 = (col1 + direction[d][0]) % self.width
+            row2 = (row1 + direction[d][1]) % self.height
+            if src.has_key((row1,col1)): # order already given
                 continue
-            if self.map[x1][y1] != player: # must move *your* ant
+            if self.map[row1][col1] != player: # must move *your* ant
                 continue
-            src[(x1,y1)] = True
-            if self.map[x2][y2] in (FOOD, WALL, HILL, BODY): # blocking things
-                if dest.has_key((x1,y1)):
-                    dest[(x1,y1)].append((x1,y1))
+            src[(row1,col1)] = True
+            if self.map[row2][col2] in (FOOD, WALL): # blocking things
+                if dest.has_key((row1,col1)):
+                    dest[(row1,col1)].append((row1,col1))
                 else:
-                    dest[(x1,y1)] = [(x1,y1)]
-            else:
-                if dest.has_key((x2,y2)):
-                    dest[(x2,y2)].append((x2,y2))
+                    dest[(row1,col1)] = [(row1,col1)]
+            else: # good order
+                if dest.has_key((row2,col2)):
+                    dest[(row2,col2)].append((row1,col1))
                 else:
-                    dest[(x2,y2)] = [(x2,y2)]
-        # TODO: check for unordered ants and give them hold orders
-        for x1, y1 in src.keys():
-            self.map[x1][y1] = LAND
+                    dest[(row2,col2)] = [(row1,col1)]
+        # check for unordered ants and give them hold orders
+        for pos in self.player_ants(player):
+            if not src.has_key(pos):
+                if dest.has_key(pos):
+                    dest[pos].append(pos)
+                else:
+                    dest[pos] = [pos]
+        for row1, col1 in src.keys():
+            self.map[row1][col1] = LAND
             try:
-                del self.ant_list[(x1,y1)]
+                del self.ant_list[(row1,col1)]
             except:
-                print "delete ant error at %s %s" % (x1,y1)
-                print order
-                print self.map[x1][y1]
+                raise Exception("Delete ant error",
+                                "Ant not found at (%s, %s), found %s" % 
+                                (col1, row1, self.map[row1][col1]))
         # check for conflicts
-        for (x2, y2), srcs in dest.items():
-            if len(srcs) > 1 or self.map[x2][y2] > 0 or self.map[x2][y2] == CONFLICT:
-                self.map[x2][y2] = CONFLICT
-                if self.ant_list.has_key((x2,y2)):
-                    del self.ant_list[(x2,y2)]
+        for (row2, col2), srcs in dest.items():
+            if (len(srcs) > 1 or self.map[row2][col2] > 0
+                    or self.map[row2][col2] == CONFLICT):
+                self.map[row2][col2] = CONFLICT
+                if self.ant_list.has_key((row2,col2)):
+                    del self.ant_list[(row2,col2)]
             else:
-                self.map[x2][y2] = player
-                self.ant_list[(x2,y2)] = player
+                self.map[row2][col2] = player
+                self.ant_list[(row2,col2)] = player
 
     def resolve_orders(self):
-        for x in range(self.width):
-            for y in range(self.height):
-                if self.map[x][y] == CONFLICT:
-                    self.map[x][y] = LAND
+        for row in range(self.height):
+            for col in range(self.width):
+                if self.map[row][col] == CONFLICT:
+                    self.map[row][col] = LAND
 
-    # the most forces near food source claim the new ant
-    def do_birth_1(self):
-        new_ants = {}
-        for fx, fy in self.food():
-            support = [0 for i in range(self.num_players+1)]
-            for nx, ny, nowner in self.nearby_ants(fx, fy):
-                support[nowner] += 1
-            max_support = max(support)
-            if max_support > 0:
-                if support.count(max_support) == 1:
-                    new_ants[(fx,fy)] = support.index(max_support)
-        for (x, y), player in new_ants.items():
-            self.map[x][y] = player
-            self.ant_list[(x,y)] = player
-            del self.food_list[(x,y)]
-
-    # must have only 1 force near the ant to create a new ant, prefered method
-    def do_birth_2(self):
-        new_ants = {}
-        for fx, fy in self.food():
-            owner = 0
-            for nx, ny, nowner in self.nearby_ants(fx, fy):
-                if owner == 0:
-                    owner = nowner
-                elif owner != nowner:
-                    break
-            else:
-                if owner != 0:
-                    new_ants[(fx,fy)] = owner
-        for (x, y), player in new_ants.items():
-            self.map[x][y] = player
-            self.ant_list[(x,y)] = player
-            del self.food_list[(x,y)]
-
-    # must have only 1 force near the ant to create a new ant, prefered method
+    # must have only 1 force near the food to create a new ant
     #  and food in contention is eliminated
-    def do_birth_3(self):
+    def do_birth(self):
         new_ants = {}
-        for fx, fy in self.food():
-            owner = 0
-            for nx, ny, nowner in self.nearby_ants(fx, fy, 0, 1, 9):
-                if owner == 0:
-                    owner = nowner
-                elif owner != nowner:
-                    self.map[fx][fy] = LAND
-                    del self.food_list[(fx,fy)]
+        for f_row, f_col in self.food():
+            ownr = 0
+            for n_row, n_col, n_ownr in self.nearby_ants(f_row, f_col, 0, 1, 9):
+                if ownr == 0:
+                    ownr = n_ownr
+                elif ownr != n_ownr:
+                    self.map[f_row][f_col] = LAND
+                    del self.food_list[(f_row, f_col)]
                     break
             else:
-                if owner != 0:
-                    new_ants[(fx,fy)] = owner
-        for (x, y), player in new_ants.items():
-            self.map[x][y] = player
-            self.ant_list[(x,y)] = player
-            del self.food_list[(x,y)]
+                if ownr != 0:
+                    new_ants[(f_row, f_col)] = ownr
+        for (row, col), player in new_ants.items():
+            self.map[row][col] = player
+            self.ant_list[(row, col)] = player
+            del self.food_list[(row, col)]
 
-    # any less occupied ant near you kills you, preferred method
-    def do_death_1(self):
-        old_ant = []
-        for ax, ay, aowner in self.ants():
-            enemy_ants = list(self.nearby_ants(ax, ay, aowner))
-            for ex, ey, eowner in enemy_ants:
-                if len(list(self.nearby_ants(ex, ey, eowner))) <= len(enemy_ants):
-                    old_ant.append((ax,ay))
-                    break
-        for x, y in old_ant:
-            self.map[x][y] = LAND
-            del self.ant_list[(x,y)]
-
-    # more enemies must be near you than friendlies, this causes blocking lines of ants to be possible
-    #  but moving directly on enemies will kill them, this may be desireable
-    def do_death_2(self):
-        old_ant = []
-        for ax, ay, aowner in self.ants():
-            support = [0 for i in range(self.num_players+1)]
-            for nx, ny, nowner in self.nearby_ants(ax, ay):
-                support[nowner] += 1
-            if sum(support) - support[aowner] >= support[aowner]:
-                old_ant.append((ax,ay))
-        for x, y in old_ant:
-            self.map[x][y] = LAND
-            del self.ant_list[(x,y)]
-
-    # ants within range kill you
-    def do_death_3(self):
-        old_ant = []
-        for ax, ay, aowner in self.ants():
-            for ex, ey, eowner in self.nearby_ants(ax, ay, aowner):
-                old_ant.append((ax,ay))
-                break
-        for x, y in old_ant:
-            self.map[x][y] = LAND
-            del self.ant_list[(x,y)]
-
-    # 1:1(:1:ect) kill ratio
-    def do_death_4(self):
+    # 1:1 kill ratio, almost, match closest groups and eliminate iteratively
+    def do_death(self):
+        self.kills = [0 for i in range(self.num_players+1)]
         ant_group = []
-        def find_enemy(x, y, owner, min_dist, max_dist):
-            for nx, ny, nowner in self.nearby_ants(x, y, owner, min_dist, max_dist):
-                if not (nx, ny) in ant_group:
-                    ant_group.append((nx,ny))
-                    find_enemy(nx, ny, nowner, min_dist, max_dist)
-        for distance in range(1,10):
-            for ax, ay, aowner in self.ants():
-                if self.map[ax][ay] != LAND:
-                    ant_group = [(ax, ay)]
-                    find_enemy(ax, ay, aowner, distance, distance)
+        def find_enemy(row, col, owner, min_d, max_d):
+            for n_row, n_col, n_owner in self.nearby_ants(row, col, owner,
+                                                          min_d, max_d):
+                if not (n_row, n_col) in ant_group:
+                    ant_group.append((n_row, n_col))
+                    find_enemy(n_row, n_col, n_owner, min_d, max_d)
+        for distance in range(1, 10):
+            for a_row, a_col, a_owner in self.ants():
+                if self.map[a_row][a_col] != LAND:
+                    ant_group = [(a_row, a_col)]
+                    find_enemy(a_row, a_col, a_owner, distance, distance)
                     if len(ant_group) > 1:
-                        for ex, ey in ant_group:
-                            self.map[ex][ey] = LAND
-                            del self.ant_list[(ex,ey)]
+                        for e_row, e_col in ant_group:
+                            self.map[e_row][e_col] = LAND
+                            del self.ant_list[(e_row, e_col)]
 
     def do_food_1(self, amount=1):
         for f in range(amount):
             for t in range(10):
-                x = randrange(self.width)
-                y = randrange(self.height)
-                if self.map[x][y] == LAND:
-                    self.map[x][y] = FOOD
-                    self.food_list[(x,y)] = True
+                row = randrange(self.height)
+                col = randrange(self.width)
+                if self.map[row][col] == LAND:
+                    self.map[row][col] = FOOD
+                    self.food_list[(row, col)] = True
                     break
 
     def do_score_1(self):
-        score = [0 for i in range(self.num_players + 1)]
-        for fx, fy in self.food():
-            owner = 0
-            for nx, ny, nowner in self.nearby_ants(fx, fy):
-                if owner == 0:
-                    owner = nowner
-                elif owner != nowner:
-                    break
-            else:
-                if owner != 0:
-                    score[owner] += 1
-        return score
-
+        return [0 for x in range(self.num_players+1)]
+        
     def remaining_players(self):
-        exists = [0 for i in range(self.num_players+1)]
-        for x, y, owner in self.ants():
-            exists[owner] = 1
+        exists = [False for i in range(self.num_players+1)]
+        for row, col, owner in self.ants():
+            exists[owner] = True
         return sum(exists)
 
     def game_over(self):
