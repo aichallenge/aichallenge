@@ -1,7 +1,6 @@
 import os.path
 import sys
 
-from worker.language import get_command
 from worker.runner import Runner
 
 def get_game(name):
@@ -21,7 +20,7 @@ class Game(object):
     def start_player(self, player):
         """ Start the given player Submission. This assumes that the
             submission has already been compiled successfully. """
-        runner = Runner(get_command(player.language, player.directory))
+        runner = Runner(player.get_command(), cwd=player.directory)
         return (player.username, runner)
     
     def stop_team(self, team):

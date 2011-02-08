@@ -1,3 +1,4 @@
+from worker.language import get_command
 
 # statuses
 UNCOMPILED, COMPILE_FAILED, UNTESTED, TEST_FAILED, READY = range(5)
@@ -76,4 +77,7 @@ class Submission(object):
         s += "COMPILE ERRORS\n\n" + self.compile_errors + "\n\n"
         s += "Sincerely,\nThe Compile Script"
         return s
-
+    
+    def get_command(self):
+        """return the command needed to run the bot"""
+        return get_command(self.language, self.directory)
