@@ -11,10 +11,10 @@ Each submodule is responsible for a specific aspect of the worker's operation.
 Submodules
 ----------
 
-* `worker.compiler` - Compiling and preparing submissions for execution
 * `worker.config` - Loading configuration options for the worker from file
 * `worker.games` - Submodules each contain logic for running a particular game
     * `worker.games.higher_number` - Sample game for demonstrative purposes
+* `worker.language` - Programming language support and compiling submissions
 * `worker.log` - Local logging services, primarily for debugging purposes
 * `worker.process` - Worker startup routine and main loop
 * `worker.runner` - Running bots in a constrained environment and enforcing time limits
