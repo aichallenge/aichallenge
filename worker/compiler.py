@@ -8,8 +8,8 @@ import shutil
 import signal
 import subprocess
 import time
-from language import BOT, is_valid_language
-from submission import *
+from worker.language import BOT, is_valid_language
+from worker.submission import *
 
 SAFEPATH = re.compile('[a-zA-Z0-9_.$-]+$')
 
