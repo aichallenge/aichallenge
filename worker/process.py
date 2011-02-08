@@ -23,9 +23,9 @@ class Worker(object):
 
 	def __init__(self):
 		"""create a Worker object"""
-		self.queue = worker.queue.SQSQueue('aichallenge-work')
-		self.result_queue = worker.queue.SQSQueue('aichallenge-results')
 		self.logger = worker.log.setup()
+		self.queue = worker.queue.SQSQueue('aichallenge-work', logger=self.logger)
+		self.result_queue = worker.queue.SQSQueue('aichallenge-results', logger=self.logger)
 
 	def loop(self):
 		"""find and perform tasks until terminated"""
