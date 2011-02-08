@@ -1,4 +1,4 @@
-from worker.language import get_command
+import worker.language
 
 # statuses
 UNCOMPILED, COMPILE_FAILED, UNTESTED, TEST_FAILED, READY = range(5)
@@ -56,6 +56,8 @@ class Submission(object):
         self.directory = directory
         self.language = language
         self.status = status
+        # Main executable/interpretable
+        self.bot = None
         self.compile_output = ""
         self.compile_errors = ""
         self.test_results = ""
@@ -80,4 +82,16 @@ class Submission(object):
     
     def get_command(self):
         """return the command needed to run the bot"""
-        return get_command(self.language, self.directory)
+        return worker.language.get_command(self)
+
+    def compile(self, max_time=None):
+        """ Determines which language this submission is coded in, and
+            compiles it. Optionally, a time limit may be specified to prevent
+            overlong compilation times. """
+        assert self.status == UNCOMPILED # don't attempt multiple compilations
+        if worker.language.compile_submission(self, max_time):
+            self.status = UNTESTED # compile success
+            return True
+        else:
+            self.status = COMPILE_FAILED
+            return False
