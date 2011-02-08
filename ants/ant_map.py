@@ -8,7 +8,8 @@ import os
 LAND = 0
 FOOD = -1
 WALL = -2
-CONFLICT = -3
+UNSEEN = -3
+CONFLICT = -4
 
 WALL_COLOR = (128, 128, 128)
 LAND_COLOR = (139, 69, 19)
@@ -26,9 +27,9 @@ PLAYER_COLOR = [(204, 0, 0),    # red
                 (154, 206, 51)] # sage
 
 # precalculated radius coordinates
-SQRT = [int(sqrt(r)) for r in range(20)]
+SQRT = [int(sqrt(r)) for r in range(101)]
 RADIUS = []
-for r in range(20):
+for r in range(101):
     RADIUS.append([])
     mx = SQRT[r]
     for d_row in range(-mx, mx+1):
@@ -83,7 +84,7 @@ class AntMap:
                 self.num_players = int(data[3])
                 self.player_colors = PLAYER_COLOR[:self.num_players]
                 self.image_colors = [LAND_COLOR] + self.player_colors + [
-                                     CONFLICT_COLOR, WALL_COLOR, FOOD_COLOR]
+                                     CONFLICT_COLOR, UNSEEN_COLOR, WALL_COLOR, FOOD_COLOR]
                 self.map = [[0 for i in range(self.height)] for i in range(self.width)]
             elif line[0] == 'W':
                 data = line.split()
@@ -169,7 +170,7 @@ class AntMap:
                         self.map[x][y] = self.num_players
                         self.ant_list[(x,y)] = self.map[x][y]
         self.image_colors = [LAND_COLOR] + self.player_colors + [
-                             CONFLICT_COLOR, WALL_COLOR, FOOD_COLOR]
+                             CONFLICT_COLOR, UNSEEN_COLOR, WALL_COLOR, FOOD_COLOR]
 
     def render(self):
         image = Image.new('RGB', (self.width, self.height), LAND_COLOR)
@@ -180,13 +181,25 @@ class AntMap:
                     img[row, col] = self.image_colors[self.map[row][col]]
         return image
         
-    def get_vision(self, player, radius=10):
-        vision = [[False for row in self.width] for col in self.height]
+    def get_vision(self, player, radius=99):
+        vision = [[False for row in range(self.width)] for col in range(self.height)]
         for row, col in self.player_ants(player):
             for r in range(radius+1):
                 for d_row, d_col in RADIUS[r]:
                     vision[row + d_row][col + d_col] = True
         return vision
+
+    def get_perspective(self, player, radius=99):
+        v = self.get_vision(player, radius)
+        return [[self.map[row][col] if v[row][col] else UNSEEN for col in range(self.width)] for row in range(self.height)]
+
+    def render_text(self, player):
+        c = '.abcdefghijklmnopqrstuvwxyz!?X*'
+        tmp = ''
+        for row in self.get_perspective(player):
+            tmp += ''.join([c[col] for col in row])
+            tmp += '\n'
+        return tmp
 
     def ants(self):
         return [(row, col, ownr) for (row, col), ownr in self.ant_list.items()]
