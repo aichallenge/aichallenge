@@ -8,16 +8,15 @@ def do_turn(ants):
         print('%s %s %s' % (ant_x, ant_y, choice(['N', 'E', 'S', 'W'])))
 
 def main():
-    f = open('MyBot%s.log' % choice(range(100)), 'w')
     map_data = ''
     ants = Ants()
     while(True):
         try:
             current_line = raw_input()
-            f.write(current_line)
             if current_line == 'ready':
                 ants.setup(map_data)
-                print('go')
+                print('go fish')
+                sys.stdout.flush()
                 map_data = ''
             elif current_line == 'go':
                 ants.update(map_data)

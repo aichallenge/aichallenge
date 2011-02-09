@@ -14,9 +14,6 @@ from ants import Ants
 
 import copy
 
-from bots.random_bot import *
-from bots.hunter_bot import *
-
 player_count = 4
 
 def switch_players(m, a, b):
@@ -128,29 +125,41 @@ class BotThread(Thread):
             if self.process.poll() is not None:
                 raise Exception("bot did not start")
             while True:
+                print('waiting for input')
                 command = self.input.get(True)
+                print('got %s' % list(command))
                 try:
                     if command is None:
+                        print('command is None')
                         self.process.kill()
                         break
                     # not sure if this is excesive poll()'ing...
                     if self.process.poll() is not None:
+                        print('poll is not None')
                         self.output.put("CRASHED")
                         break
+                    print('writing to stdin %s' % command)
                     self.process.stdin.write(command)
+                    self.process.stdin.flush()
+            
                     result = []
                     while True:
                         if self.process.poll() is not None:
                             print "process crashed"
                             self.output.put("CRASHED")
                             return
+                        print('reading from stdout')
                         line = self.process.stdout.readline()
+                        print('got line from stdout %s' % list(line))
                         if line is None:
+                            print('got none from line')
                             self.output.put("CRASHED")
                             return
                         result.append(line)
-                        if line.startswith("go"): break
-                    self.output.put("".join(result))
+                        if line.startswith("go"):
+                            break
+                    print('got all input')
+                    self.output.put("\n".join(result) + '\n')
                 except:
                     self.output("CRASHED WITH EXCEPTION")
         except:
@@ -180,6 +189,7 @@ class EngineThread(Thread):
                 x = self.input.get(True)
                 if x is None: break
                 command, timeout = x
+                print('run step %s' % list(command))
                 result = self.bot.run_step(command, timeout)
                 self.output.put(result)
         except:
