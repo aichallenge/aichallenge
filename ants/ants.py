@@ -5,11 +5,12 @@ from math import sqrt
 import Image
 import os
 
-LAND = 0
-FOOD = -1
-WALL = -2
-UNSEEN = -3
+ANTS = 0
+LAND = -1
+FOOD = -2
+WALL = -3
 CONFLICT = -4
+UNSEEN = -5
 
 WALL_COLOR = (128, 128, 128)
 LAND_COLOR = (139, 69, 19)
@@ -26,7 +27,12 @@ PLAYER_COLOR = [(204, 0, 0),    # red
                 (254, 154, 2),  # orange
                 (154, 206, 51)] # sage
 
-# precalculated radius coordinates
+DIRECTION = {'N': (0, -1),
+             'S': (0, 1),
+             'E': (1, 0),
+             'W': (-1, 0)}
+
+# precalculated sqrt & radius coordinates for distance calcs
 SQRT = [int(sqrt(r)) for r in range(101)]
 RADIUS = []
 for r in range(101):
@@ -37,22 +43,23 @@ for r in range(101):
             if d_row**2 + d_col**2 == r:
                 RADIUS[r].append((d_row, d_col))
 
-class AntMap:
+class Ants:
     def __init__(self, filename):
-        self.LAND = 0
-        self.FOOD = -1
-        self.WALL = -2
-        self.HILL = -3
+        self.LAND = LAND
+        self.FOOD = FOOD
+        self.WALL = WALL
+        self.CONFLICT = CONFLICT
+        self.UNSEEN = UNSEEN
         self.do_food = self.do_food_1
         self.do_score = self.do_score_1
         self.order_map = None
         self.ant_list = {}
         self.food_list = {}
-        self.hill_list = {}
         if os.path.splitext(filename)[1].lower() == '.png':
             self.load_image(filename)
         elif os.path.splitext(filename)[1].lower() == '.txt':
             self.load_text(filename)
+        self.killed = [False for i in range(self.num_players)]
 
     def clone(self):
         new_map = AntMap('')
@@ -83,9 +90,9 @@ class AntMap:
                 self.wall_area = 0
                 self.num_players = int(data[3])
                 self.player_colors = PLAYER_COLOR[:self.num_players]
-                self.image_colors = [LAND_COLOR] + self.player_colors + [
-                                     CONFLICT_COLOR, UNSEEN_COLOR, WALL_COLOR, FOOD_COLOR]
-                self.map = [[0 for i in range(self.height)] for i in range(self.width)]
+                self.image_colors = self.player_colors + [UNSEEN_COLOR,
+                             CONFLICT_COLOR, WALL_COLOR, FOOD_COLOR, LAND_COLOR]
+                self.map = [[LAND for i in range(self.height)] for i in range(self.width)]
             elif line[0] == 'W':
                 data = line.split()
                 x1 = int(data[1])
@@ -135,7 +142,7 @@ class AntMap:
                 if self.map[row][col] == LAND:
                     self.map[row][col] = owner
                     self.ant_list[(row,col)] = owner
-
+        
     def load_image(self, filename):
         image = Image.open(filename)
         self.width, self.height = image.size
@@ -169,8 +176,8 @@ class AntMap:
                         self.player_colors.append(pixel)
                         self.map[x][y] = self.num_players
                         self.ant_list[(x,y)] = self.map[x][y]
-        self.image_colors = [LAND_COLOR] + self.player_colors + [
-                             CONFLICT_COLOR, UNSEEN_COLOR, WALL_COLOR, FOOD_COLOR]
+        self.image_colors = self.player_colors + [UNSEEN_COLOR,
+                             CONFLICT_COLOR, WALL_COLOR, FOOD_COLOR, LAND_COLOR]
 
     def render(self):
         image = Image.new('RGB', (self.width, self.height), LAND_COLOR)
@@ -193,20 +200,23 @@ class AntMap:
         v = self.get_vision(player, radius)
         return [[self.map[row][col] if v[row][col] else UNSEEN for col in range(self.width)] for row in range(self.height)]
 
-    def render_text(self, player):
-        c = '.abcdefghijklmnopqrstuvwxyz!?X*'
+    def render_text(self, player=LAND):
+        c = '-abcdefghijklmnopqrstuvwxyz!?#*'
         tmp = ''
-        for row in self.get_perspective(player):
-            tmp += ''.join([c[col] for col in row])
-            tmp += '\n'
+        if player == LAND:
+            m = self.map
+        else:
+            m = self.get_perspective(player)
+        for row in m:
+            tmp += ''.join([c[col] for col in row]) + '\n'
         return tmp
 
     def ants(self):
         return [(row, col, ownr) for (row, col), ownr in self.ant_list.items()]
 
     def player_ants(self, player):
-        return [(row, col) for (row, col), ownr
-                in self.ant_list.items() if player == ownr]
+        return [(row, col) for (row, col), owner
+                in self.ant_list.items() if player == owner]
 
     def food(self):
         return list(self.food_list.keys())
@@ -214,7 +224,7 @@ class AntMap:
     # min and max are defined as sum of directions squared, so 9 is dist 3
     # default values 1-2 are the 8 spaces around a square
     # this avoids the sqrt function
-    def nearby_ants(self, row, col, exclude=0, min_dist=1, max_dist=2):
+    def nearby_ants(self, row, col, exclude=LAND, min_dist=1, max_dist=2):
         mx = SQRT[max_dist]
         for d_row in range(-mx,mx+1):
             for d_col in range(-mx,mx+1):
@@ -223,22 +233,30 @@ class AntMap:
                     n_row = (row + d_row) % self.width
                     n_col = (col + d_col) % self.height
                     owner = self.map[n_row][n_col]
-                    if owner > 0 and owner != exclude:
+                    if owner >= ANTS and owner != exclude:
                         yield (n_row, n_col, owner)
 
+    def parse_orders(self, orders):
+        new_orders = []
+        try:
+            for line in orders:
+                data = split(line)
+                if data[2] in direction.keys():
+                    return None
+                new_orders.append(int(data[0]), int(data[1]), data[2])
+            return new_orders
+        except:
+            return None
+        
     # process orders 1 player at a time
     def do_orders(self, player, orders):
-        direction = {'N': (0, -1),
-                     'S': (0, 1),
-                     'E': (1, 0),
-                     'W': (-1, 0)}
         src = {}
         dest = {}
         # process orders ignoring bad or duplicates
         for order in orders:
             col1, row1, d = order
-            col2 = (col1 + direction[d][0]) % self.width
-            row2 = (row1 + direction[d][1]) % self.height
+            col2 = (col1 + DIRECTION[d][0]) % self.width
+            row2 = (row1 + DIRECTION[d][1]) % self.height
             if src.has_key((row1,col1)): # order already given
                 continue
             if self.map[row1][col1] != player: # must move *your* ant
@@ -271,7 +289,7 @@ class AntMap:
                                 (col1, row1, self.map[row1][col1]))
         # check for conflicts
         for (row2, col2), srcs in dest.items():
-            if (len(srcs) > 1 or self.map[row2][col2] > 0
+            if (len(srcs) > 1 or self.map[row2][col2] >= ANTS
                     or self.map[row2][col2] == CONFLICT):
                 self.map[row2][col2] = CONFLICT
                 if self.ant_list.has_key((row2,col2)):
@@ -309,7 +327,7 @@ class AntMap:
 
     # 1:1 kill ratio, almost, match closest groups and eliminate iteratively
     def do_death(self):
-        self.kills = [0 for i in range(self.num_players+1)]
+        self.kills = [0 for i in range(self.num_players)]
         ant_group = []
         def find_enemy(row, col, owner, min_d, max_d):
             for n_row, n_col, n_owner in self.nearby_ants(row, col, owner,
@@ -338,17 +356,72 @@ class AntMap:
                     break
 
     def do_score_1(self):
-        return [0 for x in range(self.num_players+1)]
+        return [0 for x in range(self.num_players)]
         
     def remaining_players(self):
-        exists = [False for i in range(self.num_players+1)]
-        for row, col, owner in self.ants():
-            exists[owner] = True
-        return sum(exists)
+        return sum(self.is_alive(p) for p in range(self.num_players))
 
     def game_over(self):
         return self.remaining_players() <= 1
+        
+    def kill_player(self, player):
+        self.killed[player] = True
+        
+    # common functions for all games
+    # used for 'map hack' playback
+    def get_state(self, player):
+        return self.render_text()
 
+    # used for turn 0, sending minimal info for bot to load
+    def get_player_start(self, player):
+        return 'D %s %s\nready\n' % (self.width, self.height)
+    
+    # used for sending state to bots for each turn
+    def get_player_state(self, player):
+        return self.render_text(player) + 'go\n'
+
+    # used by engine to determine players still in game
+    def is_alive(self, player):
+        if self.killed[player]:
+            return False
+        else:
+            for row, col, owner in self.ants():
+                if owner == player:
+                    return True
+                    break
+            else:
+                return False
+    
+    # used to report error that kicked a player from game
+    def get_error(self, player):
+        return ''
+        
+    def do_moves(self, player, moves):
+        orders = self.parse_orders(moves)
+        if orders != None:
+            self.do_orders(player, orders)
+            return None
+        else:
+            self.kill_player(player)
+            return 'Parse Error'
+        
+    def do_all_moves(self, bot_moves):
+        errors = []
+        for b in range(len(bot_moves)):
+            errors.append(self.do_moves(b, bot_moves[b]))
+        return errors
+        
+    # used for ranking
+    def get_scores(self):
+        return [0 for i in range(self.num_players)]
+
+    # used for stats
+    def get_stats(self):
+        ant_count = [0 for i in range(self.num_players)]
+        for row, col, owner in self.ants():
+            ant_count[owner] += 1
+        return {'ant_count': ant_count}
+        
 if __name__ == '__main__':
 
     def save_image(map, filename):
