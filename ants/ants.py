@@ -46,12 +46,6 @@ for r in range(101):
             if d_row**2 + d_col**2 == r:
                 RADIUS[r].append((d_row, d_col))
 
-class Player:
-    def __init__(self):
-        self.revealed = None
-        self.others = None
-        self.center = None
-
 class Ants:
     def __init__(self, filename):
         # methods to switch out possible game mechanics
@@ -63,7 +57,7 @@ class Ants:
         self.food_list = {} # indexed list of food locations for speed
 
 
-        self.center = [] # used to scroll the map so that a player's
+        #self.center = [] # used to scroll the map so that a player's
                          #   starting ant is in the center
 
         # load map and get number of players from map
@@ -100,7 +94,7 @@ class Ants:
                 self.land_area = self.width * self.height
                 self.wall_area = 0
                 self.num_players = int(data[3])
-                self.center = [None for i in range(self.num_players)]
+                #self.center = [None for i in range(self.num_players)]
                 self.player_colors = PLAYER_COLOR[:self.num_players]
                 self.image_colors = self.player_colors + [UNSEEN_COLOR,
                              CONFLICT_COLOR, WALL_COLOR, FOOD_COLOR, LAND_COLOR]
@@ -128,8 +122,8 @@ class Ants:
                         self.land_area += 1
                         self.wall_area -= 1
                         self.ant_list[(last_row, col)] = value
-                        if self.center[value] == None:
-                            self.center[value] = (last_row, col)
+                        #if self.center[value] == None:
+                        #    self.center[value] = (last_row, col)
                     elif value in (LAND, FOOD, CONFLICT):
                         self.land_area += 1
                         self.wall_area -= 1
@@ -149,8 +143,8 @@ class Ants:
                 if self.map[row][col] == LAND:
                     self.map[row][col] = owner
                     self.ant_list[(row,col)] = owner
-                    if self.center[owner] == None:
-                        self.center[owner] = (row, col)
+                    #if self.center[owner] == None:
+                    #    self.center[owner] = (row, col)
         return True
 
     def load_image(self, filename):
@@ -218,14 +212,16 @@ class Ants:
 
     def get_perspective(self, player, radius=96):
         v = self.get_vision(player, radius)
-        start_row = self.center[player][1] - self.height // 2
-        stop_row = start_row + self.height
-        start_col = self.center[player][0] - self.width // 2
-        stop_col = start_col + self.width
+        #start_row = self.center[player][1] - self.height // 2
+        #stop_row = start_row + self.height
+        #start_col = self.center[player][0] - self.width // 2
+        #stop_col = start_col + self.width
         return [[self.switch[player][self.map[row % self.height][col % self.width]]
                     if v[row % self.height][col % self.width] else UNSEEN
-                    for col in range(start_row, stop_row + 1)]
-                for row in range(start_col, stop_col + 1)]
+                #    for col in range(start_row, stop_row + 1)]
+                #for row in range(start_col, stop_col + 1)]
+                    for col in range(self.height)]
+                for row in range(self.width)]
 
     def render_text(self, player=LAND):
         tmp = ''
@@ -273,9 +269,9 @@ class Ants:
                     if not data[2] in DIRECTION.keys():
                         return None
                     order = [int(data[0]), int(data[1]), data[2]]
-                    o_col = (int(data[0]) - self.width//2 + self.center[player][0]) % self.width
-                    o_row = (int(data[1]) - self.height//2 + self.center[player][1]) % self.height
-                    new_orders.append((o_col, o_row, data[2]))
+                    #o_col = (int(data[0]) - self.width//2 + self.center[player][0]) % self.width
+                    #o_row = (int(data[1]) - self.height//2 + self.center[player][1]) % self.height
+                    new_orders.append((int(data[0]), int(data[1]), data[2]))
             return new_orders
         except:
             import traceback
