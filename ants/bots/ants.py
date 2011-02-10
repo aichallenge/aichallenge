@@ -1,4 +1,6 @@
 #!/usr/bin/env python
+import sys
+import traceback
 
 MY_ANT = 0
 ANTS = 0
@@ -17,7 +19,7 @@ class Ants():
         self.map = None
         self.ant_list = {}
         self.food_list = []
-    
+
     def setup(self, data):
         for line in data.split('\n'):
             if len(line) > 0:
@@ -27,18 +29,31 @@ class Ants():
                     self.height = int(tokens[2])
 
     def update(self, data):
-        self.map = [[MAP.index(col) - 5 for col in row]
-                        for row in data[:-1].split('\n')]
+        self.map = [[MAP.index(x) - 5 for x in y]
+                        for y in data[:-1].split('\n')]
         self.ant_list = {}
         self.food_list = []
-        for row in range(self.height):
-            for col in range(self.width):
-                if self.map[row][col] >= ANTS:
-                    self.ant_list[(col,row)] = self.map[row][col]
-                elif self.map[row][col] == FOOD:
-                    self.food_list.append((col,row))
-        
+        for y in range(self.height):
+            for x in range(self.width):
+                if self.map[y][x] >= ANTS:
+                    self.ant_list[(x,y)] = self.map[y][x]
+                elif self.map[y][x] == FOOD:
+                    self.food_list.append((x,y))
+
+    def finish_turn(self, f=None):
+        if f:
+            f.write('>> go\n')
+            f.flush()
+        sys.stdout.write('go\n')
+        sys.stdout.flush()
+
+    def error(self, msg):
+        traceback.print_exc(file=sys.stderr)
+        sys.stderr.write(msg + '\n')
+        sys.stderr.flush()
+
     def my_ants(self):
-        return [(col, row) for (col, row), owner in self.ant_list.items()
+        return [(x, y) for (x, y), owner in self.ant_list.items()
                     if owner == MY_ANT]
-    
+
+    def is_land(self, x, y):

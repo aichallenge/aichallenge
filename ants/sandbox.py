@@ -1,6 +1,4 @@
 #!/usr/bin/python
-
-import fcntl
 import os
 from Queue import Queue
 import shlex
@@ -18,7 +16,6 @@ Required Arguments:
 --security, -s: is not set, command is run on current host, otherwise,
                                 funneled through VM
 """
-
 
 def monitor_input_channel(sandbox):
     print "start monitor"
@@ -49,16 +46,17 @@ class Sandbox:
     #                                            command is executed.
     #     shell_command: the shell command to launch inside the sandbox.
     def __init__(self, working_directory, shell_command):
+        shell_command = shell_command.replace('\\','/')
         self.is_alive = False
         self.command_process = None
         self.stdout_queue = Queue()
-        self.command_process = subprocess.Popen(shlex.split(shell_command), \
-                                                            stdin=subprocess.PIPE, \
-                                                            stdout=subprocess.PIPE, \
-                                                            stderr=subprocess.PIPE, \
-                                                            cwd=working_directory)
+        self.command_process = subprocess.Popen(shlex.split(shell_command),
+                                                stdin=subprocess.PIPE,
+                                                stdout=subprocess.PIPE,
+                                                stderr=subprocess.PIPE,
+                                                cwd=working_directory)
         self.is_alive = not self.command_process is None
-        stdout_monitor = Timer(interval=1, function=monitor_input_channel, args=(self,))
+        stdout_monitor = Timer(1, monitor_input_channel, args=(self,))
         stdout_monitor.start()
 
     # Shuts down the sandbox, cleaning up any spawned processes, threads, and
@@ -66,7 +64,8 @@ class Sandbox:
     # suddenly terminated.
     def kill(self):
         if self.is_alive:
-            os.kill(self.command_process.pid, signal.SIGKILL)
+            self.command_process.kill()
+            #os.kill(self.command_process.pid, signal.SIGKILL)
             self.is_alive = False
 
     def write(self, line):
@@ -105,7 +104,7 @@ class Sandbox:
         return self.command_process.stderr.readline().strip()
 
 def main():
-    sandbox = Sandbox("bots", "./MyBot.py")
+    sandbox = Sandbox(".", "python bots\\MyBot.py")
     #sandbox = Sandbox("../submissions/122742/.", "python MyBot.py", False)
     time.sleep(1)
     sandbox.write_line("D 10 10")

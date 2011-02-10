@@ -1,16 +1,7 @@
 #!/usr/bin/env python
-import subprocess
-import shlex
-
-import threading
-import Queue
-import sys
-
-from Queue import Queue, Empty
-from subprocess import Popen
-from threading import Thread
-
+from sandbox import Sandbox
 from ants import Ants
+import time
 
 import copy
 
@@ -71,201 +62,83 @@ def play_game(map_filename):
     save_image(m, turn_count, 'start')
     print score
 
-
-
-
-class BotThread(Thread):
-    """
-    Class to run a bot in a thread.
-
-    Starts up a thread to talk to a bot process, and provide an
-    interface to call it. Handles the timeout here.
-    """
-    def __init__(self, command):
-        Thread.__init__(self)
-
-        self.input = Queue()
-        self.output = Queue()
-        args = shlex.split(command)
-        self.process = None
-        self.process = Popen(args,
-                             stdout=subprocess.PIPE,
-                             stdin=subprocess.PIPE)
-        self.daemon = False
-        self.start()
-
-    def run_step(self, game_state, timeoutms):
-        """Run one step of the game state."""
-        self.input.put(game_state)
-        try:
-            result = self.output.get(True, timeoutms/1000.0)
-            return result, True
-        except Empty:
-            return "TIMEOUT", False
-        except Crashed:
-            return "CRASHED", False
-
-    def __del__(self):
-        """Clean up the process if it is still running"""
-        if self.process and self.process.poll() is None:
-            self.process.kill()
-
-    def stop(self):
-        try:
-            self.input.put(None)
-            self.process.stdin.close()
-            if self.process.poll() is None:
-                self.process.kill()
-        except:
-            print "got an exception trying to end the bot"
-
-    def run(self):
-        """Run the bot loop.  Use run_step for individual steps"""
-        try:
-            if self.process.poll() is not None:
-                raise Exception("bot did not start")
-            while True:
-                print('waiting for input')
-                command = self.input.get(True)
-                print('got %s' % list(command))
-                try:
-                    if command is None:
-                        print('command is None')
-                        self.process.kill()
-                        break
-                    # not sure if this is excesive poll()'ing...
-                    if self.process.poll() is not None:
-                        print('poll is not None')
-                        self.output.put("CRASHED")
-                        break
-                    print('writing to stdin %s' % command)
-                    self.process.stdin.write(command)
-                    self.process.stdin.flush()
-            
-                    result = []
-                    while True:
-                        if self.process.poll() is not None:
-                            print "process crashed"
-                            self.output.put("CRASHED")
-                            return
-                        print('reading from stdout')
-                        line = self.process.stdout.readline()
-                        print('got line from stdout %s' % list(line))
-                        if line is None:
-                            print('got none from line')
-                            self.output.put("CRASHED")
-                            return
-                        result.append(line)
-                        if line.startswith("go"):
-                            break
-                    print('got all input')
-                    self.output.put("\n".join(result) + '\n')
-                except:
-                    self.output("CRASHED WITH EXCEPTION")
-        except:
-            pass
-
-
-class EngineThread(Thread):
-    """
-    Class to run a bot in an engine.
-
-    Need another level of threads to wait for the bot result.
-
-    """
-    def __init__(self, bot):
-        Thread.__init__(self)
-        self.bot = bot
-        self.input = Queue()
-        self.output = Queue()
-        self.event = threading.Event()
-        self.daemon = False
-        self.start()
-        self.result = None
-
-    def run(self):
-        try:
-            while True:
-                x = self.input.get(True)
-                if x is None: break
-                command, timeout = x
-                print('run step %s' % list(command))
-                result = self.bot.run_step(command, timeout)
-                self.output.put(result)
-        except:
-            pass
-
-    def send_input(self, game_state, timeoutms):
-        self.result = None
-        print(game_state)
-        self.input.put((game_state, timeoutms))
-
-    def wait(self, timeoutms):
-        if self.result is None:
-            result = self.output.get(timeoutms/1000.0)
-            if result:
-                self.result = result
-            else:
-                self.result = ("TIMEOUTWAIT", False)
-        return self.result
-
-    def stop(self):
-        self.input.put(None)
-        self.bot.stop()
-
-def run_game(game, bots, timeoutms, loadtimeoutms, num_turns=1000,
+def run_game(game, botcmds, timeoutms, loadtimeoutms, num_turns=1000,
              output_file="testout.txt", verbose=False, serial=False):
     try:
+        # create bot sandboxes
+        bots = [Sandbox(*bot) for bot in botcmds]
+        for b, bot in enumerate(bots):
+            if not bot.is_alive:
+                print('bot %s did not start' % botcmds[b])
+                game.kill_player(b)
+
         if output_file:
             of = open(output_file, "w")
             of.write(game.get_state())
             of.flush()
 
-        for turn in xrange(num_turns+1):
-            # get the moves from each player
-            # if both crash, draw.  if one crashes, it loses
+        print('running for %s turns' % num_turns)
+        for turn in range(num_turns+1):
+            print('turn %s' % turn)
             try:
-                timeout = timeoutms
-                for b in range(len(bots)):
+                if turn == 1:
+                    game.start_game()
+                game.start_turn()
+                # send game state to each player
+                for b, bot in enumerate(bots):
                     if game.is_alive(b):
-                        bot = bots[b]
                         if turn == 0:
-                            timeout = loadtimeoutms
-                            bot.send_input(game.get_player_start(b), timeout)
+                            bot.write(game.get_player_start(b) + 'ready\n')
                         else:
-                            bot.send_input(game.get_player_state(b), timeout)
-                        if serial:
-                            bot.wait(timeoutms)
+                            bot.write(game.get_player_state(b) + 'go\n')
 
-                moves = []
-                oks = []
-                for b in range(len(bots)):
-                    if game.is_alive(b):
-                        try:
-                            move, ok = bot.wait(timeout)
-                        except:
-                            move, ok = "EXCEPT", False
-                    else:
-                        move, ok = "EXCEPT", False
-                    moves.append(move)
-                    oks.append(ok)
+                # get moves from each player
+                if turn == 0:
+                    time_limit = float(loadtimeoutms) / 1000
+                else:
+                    time_limit = float(timeoutms) / 1000
+                start_time = time.time()
+                bot_finished = [not game.is_alive(b) for b in range(len(bots))]
+                bot_moves = ['' for b in bots]
+                while (sum(bot_finished) < len(bot_finished) and
+                        time.time() - start_time < time_limit):
+                    time.sleep(0.1)
+                    for b, bot in enumerate(bots):
+                        if bot_finished[b]:
+                            continue
+                        if not bot.is_alive:
+                            print('bot died')
+                            bot_finished[b] = True
+                            game.kill_player(b)
+                            continue
+                        line = bot.read_line()
+                        if line is None:
+                            continue
+                        else:
+                            print('got bot %s line: %s' % (b, line))
+                        line = line.strip().lower()
+                        if line == 'go':
+                            bot_finished[b] = True
+                        else:
+                            print('adding to bot moves: %s' % line)
+                            bot_moves[b] += line + '\n'
+
+                if not game.game_over() and turn > 0:
+                    print('doing moves: %s' % bot_moves)
+                    game.do_all_moves(bot_moves)
+                    game.finish_turn()
+                    if game.game_over():
+                        print('game over man')
+                else:
+                    print('game is over')
 
             except:
-                print "Got an error running the bots."
+                print("Got an error running the bots.")
                 raise
-
-            if sum(oks) == 0:
-                return "Game Over, %s" % game.get_scores()
-
-            # update the game state
-            errors = game.do_all_moves(moves)
 
             if output_file:
                 of.write(game.get_state())
                 of.flush()
-
-            if errors.count(None) == 0:
-                return "Game Over, %s" % game.get_scores()
 
             if verbose:
                 stats = game.get_stats()
@@ -274,13 +147,25 @@ def run_game(game, bots, timeoutms, loadtimeoutms, num_turns=1000,
                     s += '%s: %s' % (key, values)
                 sys.stderr.write("\r%-50s" % s)
 
-            # check if they made bad moves
             alive = [game.is_alive(b) for b in range(len(bots))]
+            print('alive %s' % alive)
             if sum(alive) == 0:
-                return "Game Over, %s" % game.get_scores()
+                break
 
+        game.finish_game()
+        for bot in bots:
+            if bot.is_alive:
+                bot.kill()
+        print(game.get_state())
         return "Game Over, %s" % game.get_scores()
 
     finally:
         if output_file:
             of.close()
+
+if __name__ == '__main__':
+    a = Ants('maps/random4.txt')
+    print(a.get_player_state(0))
+    print(a.get_player_state(1))
+    print(a.get_player_state(2))
+    print(a.get_player_state(3))
