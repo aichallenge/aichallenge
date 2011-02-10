@@ -52,5 +52,3 @@ class Ants():
     def my_ants(self):
         return [(x, y) for (x, y), owner in self.ant_list.items()
                     if owner == MY_ANT]
-
-    def is_land(self, x, y):
