@@ -40,10 +40,7 @@ class Ants():
                 elif self.map[y][x] == FOOD:
                     self.food_list.append((x,y))
 
-    def finish_turn(self, f=None):
-        if f:
-            f.write('>> go\n')
-            f.flush()
+    def finish_turn(self):
         sys.stdout.write('go\n')
         sys.stdout.flush()
 
