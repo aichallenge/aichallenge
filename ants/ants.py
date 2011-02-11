@@ -470,7 +470,6 @@ class Ants:
 
     def do_all_moves(self, bot_moves):
         return [self.do_moves(b, moves) for b, moves in enumerate(bot_moves)]
-        self.resolve_orders()
 
     # used for ranking
     def get_scores(self):

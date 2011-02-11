@@ -93,6 +93,7 @@ def run_game(game, botcmds, timeoutms, loadtimeoutms, num_turns=1000,
                         else:
                             bot.write(game.get_player_state(b) + 'go\n')
 
+                game.resolve_orders()
                 # get moves from each player
                 if turn == 0:
                     time_limit = float(loadtimeoutms) / 1000
