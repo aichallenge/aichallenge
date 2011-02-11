@@ -47,6 +47,14 @@ for r in range(101):
             if d_row**2 + d_col**2 == r:
                 RADIUS[r].append((d_row, d_col))
 
+FULL_RADIUS = []
+for r in range(101):
+    FULL_RADIUS.append([])
+    mx = SQRT[r]
+    for d_row in range(-mx, mx+1):
+        for d_col in range(-mx, mx+1):
+            if d_row**2 + d_col**2 <= r:
+                FULL_RADIUS[r].append((d_row, d_col))
 class Ants:
     def __init__(self, filename):
         # methods to switch out possible game mechanics
@@ -184,20 +192,19 @@ class Ants:
         # return true for each spot that is visable
         vision = [[False for col in range(self.width)] for row in range(self.height)]
         for col, row in self.player_ants(player):
-            for r in range(radius+1):
-                for d_row, d_col in RADIUS[r]:
-                    v_row = (row + d_row) % self.height
-                    v_col = (col + d_col) % self.width
-                    vision[v_row][v_col] = True
-                    if not self.revealed[player][v_row][v_col]:
-                        self.turn_reveal[player].append((v_col, v_row))
-                        self.revealed[player][v_row][v_col] = True
-                    # if player found a new player, setup the switch
-                    value = self.map[v_row][v_col]
-                    if (value >= ANTS and
-                            self.switch[player][value] == None):
-                        self.switch[player][value] = (self.num_players -
-                            self.switch[player][:self.num_players].count(None))
+            for d_col, d_row in FULL_RADIUS[radius]:
+                v_row = (row + d_row) % self.height
+                v_col = (col + d_col) % self.width
+                vision[v_row][v_col] = True
+                if not self.revealed[player][v_row][v_col]:
+                    self.turn_reveal[player].append((v_col, v_row))
+                    self.revealed[player][v_row][v_col] = True
+                # if player found a new player, setup the switch
+                value = self.map[v_row][v_col]
+                if (value >= ANTS and
+                        self.switch[player][value] == None):
+                    self.switch[player][value] = (self.num_players -
+                        self.switch[player][:self.num_players].count(None))
         return vision
 
     def get_perspective(self, player, radius=96):
