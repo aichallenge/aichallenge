@@ -22,8 +22,8 @@ def switch_players(m, a, b):
             m.ant_list[key] = a
     return m
 
-def save_image(map, turn, anno=""):
-    img = map.render()
+def save_image(game, turn, anno="", player=None):
+    img = game.render(player)
     scale = 4
     new_size = (img.size[0] * scale, img.size[1] * scale)
     img = img.resize(new_size)
@@ -84,6 +84,7 @@ def run_game(game, botcmds, timeoutms, loadtimeoutms, num_turns=1000,
                 if turn == 1:
                     game.start_game()
                 game.start_turn()
+
                 # send game state to each player
                 for b, bot in enumerate(bots):
                     if game.is_alive(b):
@@ -100,37 +101,33 @@ def run_game(game, botcmds, timeoutms, loadtimeoutms, num_turns=1000,
                 start_time = time.time()
                 bot_finished = [not game.is_alive(b) for b in range(len(bots))]
                 bot_moves = ['' for b in bots]
+
+                # loop until received all bots send moves or are dead
+                #   or when time is up
                 while (sum(bot_finished) < len(bot_finished) and
                         time.time() - start_time < time_limit):
                     time.sleep(0.1)
                     for b, bot in enumerate(bots):
                         if bot_finished[b]:
-                            continue
+                            continue # already got bot moves
                         if not bot.is_alive:
                             print('bot died')
                             bot_finished[b] = True
                             game.kill_player(b)
-                            continue
+                            continue # bot is dead
                         line = bot.read_line()
                         if line is None:
                             continue
-                        else:
-                            print('got bot %s line: %s' % (b, line))
                         line = line.strip().lower()
                         if line == 'go':
                             bot_finished[b] = True
                         else:
-                            print('adding to bot moves: %s' % line)
                             bot_moves[b] += line + '\n'
 
-                if not game.game_over() and turn > 0:
-                    print('doing moves: %s' % bot_moves)
+                # process all moves
+                if turn > 0:
                     game.do_all_moves(bot_moves)
                     game.finish_turn()
-                    if game.game_over():
-                        print('game over man')
-                else:
-                    print('game is over')
 
             except:
                 print("Got an error running the bots.")
@@ -139,6 +136,10 @@ def run_game(game, botcmds, timeoutms, loadtimeoutms, num_turns=1000,
             if output_file:
                 of.write(game.get_state())
                 of.flush()
+            for i in range(len(bots)):
+                save_image(game, turn, 'player%s' % i, i)
+            save_image(game, turn, 'start')
+            #print(game.get_state())
 
             if verbose:
                 stats = game.get_stats()
@@ -148,7 +149,7 @@ def run_game(game, botcmds, timeoutms, loadtimeoutms, num_turns=1000,
                 sys.stderr.write("\r%-50s" % s)
 
             alive = [game.is_alive(b) for b in range(len(bots))]
-            print('alive %s' % alive)
+            #print('alive %s' % alive)
             if sum(alive) == 0:
                 break
 

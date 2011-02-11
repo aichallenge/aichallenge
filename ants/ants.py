@@ -18,7 +18,6 @@ FOOD_COLOR = (255, 255, 255)
 CONFLICT_COLOR = (255, 128, 128)
 UNSEEN_COLOR = (0, 0, 0)
 
-MAP_READ = '?!%*.abcdefghijklmnopqrstuvwxyz'
 MAP_RENDER = 'abcdefghijklmnopqrstuvwxyz?!%*.'
 
 PLAYER_COLOR = [(204, 0, 0),    # red
@@ -29,6 +28,8 @@ PLAYER_COLOR = [(204, 0, 0),    # red
                 (50, 154, 154), # teal
                 (254, 154, 2),  # orange
                 (154, 206, 51)] # sage
+
+MAP_COLOR = PLAYER_COLOR + [UNSEEN_COLOR, CONFLICT_COLOR, WALL_COLOR, FOOD_COLOR, LAND_COLOR]
 
 DIRECTION = {'n': (-1, 0),
              's': (1, 0),
@@ -52,9 +53,14 @@ class Ants:
         self.do_food = self.do_food_1
         self.do_score = self.do_score_1
 
-        self.map = None     # the map
+        self.width = None   # the map
+        self.height = None
+        self.map = None
+        self.wall_area = 0
+        self.land_area = 0
+
         self.ant_list = {}  # indexed list of ant locations for speed
-        self.food_list = {} # indexed list of food locations for speed
+        self.food_list = [] # indexed list of food locations for speed
 
 
         #self.center = [] # used to scroll the map so that a player's
@@ -74,6 +80,8 @@ class Ants:
         self.revealed = [[[False for col in range(self.width)]
                           for row in range(self.height)]
                          for p in range(self.num_players)]
+        # used to track per turn for bot communication
+        self.turn_reveal = [[] for i in range(self.num_players)]
 
         # used to give a different ordering of players to each player
         #   to help hide total number of players
@@ -82,69 +90,47 @@ class Ants:
                          for i in range(self.num_players)]
 
     def load_text(self, filename):
-        num_players = 0
-        map = None
+        players = []
         f = open(filename, 'r')
-        last_row = 0
+        self.map = []
+        row = 0
         for line in f:
-            if line[0] == 'D':
-                data = line.split()
-                self.width = int(data[1])
-                self.height = int(data[2])
-                self.land_area = self.width * self.height
-                self.wall_area = 0
-                self.num_players = int(data[3])
-                #self.center = [None for i in range(self.num_players)]
-                self.player_colors = PLAYER_COLOR[:self.num_players]
-                self.image_colors = self.player_colors + [UNSEEN_COLOR,
-                             CONFLICT_COLOR, WALL_COLOR, FOOD_COLOR, LAND_COLOR]
-                self.map = [[LAND for i in range(self.width)] for i in range(self.height)]
-            elif line[0] == 'W':
-                data = line.split()
-                x1 = int(data[1])
-                y1 = int(data[2])
-                x2 = int(data[3])
-                y2 = int(data[4])
-                for row in range(x1, x2+1):
-                    for y in range(y1, y2+1):
-                        if self.map[row][y] != WALL:
-                            self.map[row][y] = WALL
-                            self.wall_area += 1
-                            self.land_area -= 1
-            elif line[0] == 'M':
-                data = line[2:-1]
+            data = line.strip()
+            if data == '':
+                continue # ignore blank lines
+            if self.width == None:
+                self.width = len(data)
+            else:
                 if len(data) != self.width:
                     return False
-                for col, c in enumerate(data):
-                    value = MAP_READ.index(c) - 5
-                    self.map[last_row][col] = value
-                    if value >= 0:
-                        self.land_area += 1
-                        self.wall_area -= 1
-                        self.ant_list[(last_row, col)] = value
+            if len(data) != self.width:
+                return False
+            self.map.append([])
+            for col, c in enumerate(data):
+                if c in 'abcdefghijklmnopqrstuvwxyz':
+                    if not c in players:
+                        players.append(c)
                         #if self.center[value] == None:
                         #    self.center[value] = (last_row, col)
-                    elif value in (LAND, FOOD, CONFLICT):
-                        self.land_area += 1
-                        self.wall_area -= 1
-                last_row += 1
-            elif line[0] == 'F':
-                data = line.split()
-                col = int(data[1])
-                row = int(data[2])
-                if self.map[row][col] == LAND:
-                    self.map[row][col] = FOOD
-                    self.food_list[(row,col)] = True
-            elif line[0] == 'A':
-                data = line.split()
-                col = int(data[1])
-                row = int(data[2])
-                owner = int(data[3])
-                if self.map[row][col] == LAND:
-                    self.map[row][col] = owner
-                    self.ant_list[(row,col)] = owner
-                    #if self.center[owner] == None:
-                    #    self.center[owner] = (row, col)
+                    value = players.index(c)
+                    self.map[-1].append(value)
+                    self.ant_list[(col, row)] = value
+                    self.land_area += 1
+                elif c == '*':
+                    self.map[-1].append(FOOD)
+                    self.food_list.append((col, row))
+                    self.land_area += 1
+                elif c == '%':
+                    self.map[-1].append(WALL)
+                    self.wall_area += 1
+                elif c == '.':
+                    self.map[-1].append(LAND)
+                    self.land_area += 1
+                else:
+                    return False
+            row += 1
+        self.height = row
+        self.num_players = len(players)
         return True
 
     def load_image(self, filename):
@@ -154,54 +140,58 @@ class Ants:
         self.land_area = 0
         self.wall_area = 0
         self.player_colors = []
-        self.map = [[LAND for i in range(self.height)] for i in range(self.width)]
+        self.map = [[LAND for i in range(self.width)] for i in range(self.height)]
         for x in range(self.width):
             for y in range(self.height):
                 pixel = image.getpixel((x,y))
                 if pixel == WALL_COLOR:
-                    self.map[x][y] = WALL
+                    self.map[y][x] = WALL
                     self.wall_area += 1
                 elif pixel == HILL_COLOR:
-                    self.map[x][y] = HILL
+                    self.map[y][x] = HILL
                     self.hill_list[(x,y)] = True
                     self.wall_area += 1
                 else:
                     self.land_area += 1
                     if pixel == LAND_COLOR:
-                        self.map[x][y] = LAND
+                        self.map[y][x] = LAND
                     elif pixel == FOOD_COLOR:
-                        self.map[x][y] = FOOD
-                        self.food_list[(x,y)] = True
+                        self.map[y][x] = FOOD
+                        self.food_list.append((x,y))
                     elif pixel in self.player_colors:
-                        self.map[x][y] = self.player_colors.index(pixel)
-                        self.ant_list[(x,y)] = self.map[x][y]
+                        self.map[y][x] = self.player_colors.index(pixel)
+                        self.ant_list[(x,y)] = self.map[y][x]
                     else:
                         self.num_players += 1
                         self.player_colors.append(pixel)
-                        self.map[x][y] = self.num_players
-                        self.ant_list[(x,y)] = self.map[x][y]
-        self.image_colors = self.player_colors + [UNSEEN_COLOR,
-                             CONFLICT_COLOR, WALL_COLOR, FOOD_COLOR, LAND_COLOR]
+                        self.map[y][x] = self.num_players
+                        self.ant_list[(x,y)] = self.map[y][x]
 
-    def render(self):
+    def render(self, player=None):
+        if player == None:
+            m = self.map
+        else:
+            m = self.get_perspective(player)
         image = Image.new('RGB', (self.width, self.height), LAND_COLOR)
         img = image.load()
         for row in range(self.height):
             for col in range(self.width):
-                if self.map[row][col] != LAND:
-                    img[row, col] = self.image_colors[self.map[row][col]]
+                if m[row][col] != LAND:
+                    img[col, row] = MAP_COLOR[m[row][col]]
         return image
 
     def get_vision(self, player, radius=96):
         # return true for each spot that is visable
-        vision = [[False for row in range(self.width)] for col in range(self.height)]
-        for row, col in self.player_ants(player):
+        vision = [[False for col in range(self.width)] for row in range(self.height)]
+        for col, row in self.player_ants(player):
             for r in range(radius+1):
                 for d_row, d_col in RADIUS[r]:
                     v_row = (row + d_row) % self.height
                     v_col = (col + d_col) % self.width
                     vision[v_row][v_col] = True
-                    self.revealed[player][v_row][v_col] = True
+                    if not self.revealed[player][v_row][v_col]:
+                        self.turn_reveal[player].append((v_col, v_row))
+                        self.revealed[player][v_row][v_col] = True
                     # if player found a new player, setup the switch
                     value = self.map[v_row][v_col]
                     if (value >= ANTS and
@@ -220,12 +210,37 @@ class Ants:
                     if v[row % self.height][col % self.width] else UNSEEN
                 #    for col in range(start_row, stop_row + 1)]
                 #for row in range(start_col, stop_col + 1)]
-                    for col in range(self.height)]
-                for row in range(self.width)]
+                    for col in range(self.width)]
+                for row in range(self.height)]
 
-    def render_text(self, player=LAND):
+    # communication to bot is in x, y coords
+    def render_changes(self, player):
+        v = self.get_vision(player)
+        # send new wall/land
         tmp = ''
-        if player == LAND:
+        CHANGES = ['D','W','F','L']
+        for col, row in self.turn_reveal[player]:
+            value = self.map[row][col]
+            if value in (LAND, WALL):
+                tmp += '%s %s %s\n' % (CHANGES[self.map[row][col]], col, row)
+        # send visible ants
+        for (col, row), owner in self.ant_list.items():
+            if v[row][col]:
+                tmp += 'A %s %s %s\n' % (col, row, self.switch[player][owner])
+        # send visible food
+        for col, row in self.food_list:
+            if v[row][col]:
+                tmp += 'F %s %s\n' % (col, row)
+        # send visible conflict
+        for row in range(self.height):
+            for col in range(self.width):
+                if v[row][col] and self.map[row][col] == CONFLICT:
+                    tmp += 'D %s %s\n' % (col, row)
+        return tmp
+
+    def render_text(self, player=None):
+        tmp = ''
+        if player == None:
             m = self.map
         else:
             m = self.get_perspective(player)
@@ -233,30 +248,24 @@ class Ants:
             tmp += ''.join([MAP_RENDER[col] for col in row]) + '\n'
         return tmp
 
-    def ants(self):
-        return [(row, col, ownr) for (row, col), ownr in self.ant_list.items()]
-
     def player_ants(self, player):
-        return [(row, col) for (row, col), owner
+        return [(col, row) for (col, row), owner
                 in self.ant_list.items() if player == owner]
-
-    def food(self):
-        return list(self.food_list.keys())
 
     # min and max are defined as sum of directions squared, so 9 is dist 3
     # default values 1-2 are the 8 spaces around a square
     # this avoids the sqrt function
-    def nearby_ants(self, row, col, exclude=LAND, min_dist=1, max_dist=2):
+    def nearby_ants(self, col, row, exclude=None, min_dist=1, max_dist=2):
         mx = SQRT[max_dist]
         for d_row in range(-mx,mx+1):
             for d_col in range(-mx,mx+1):
                 d = d_row**2 + d_col**2
                 if d >= min_dist and d <= max_dist:
-                    n_row = (row + d_row) % self.width
-                    n_col = (col + d_col) % self.height
+                    n_row = (row + d_row) % self.height
+                    n_col = (col + d_col) % self.width
                     owner = self.map[n_row][n_col]
                     if owner >= ANTS and owner != exclude:
-                        yield (n_row, n_col, owner)
+                        yield ((n_col, n_row), owner)
 
     def parse_orders(self, player, orders):
         # orders come in as x, y (col, row)
@@ -268,10 +277,10 @@ class Ants:
                     data = line.split()
                     if not data[2] in DIRECTION.keys():
                         return None
-                    order = [int(data[0]), int(data[1]), data[2]]
+                    #order = [int(data[0]), int(data[1]), data[2]]
                     #o_col = (int(data[0]) - self.width//2 + self.center[player][0]) % self.width
                     #o_row = (int(data[1]) - self.height//2 + self.center[player][1]) % self.height
-                    new_orders.append((int(data[0]), int(data[1]), data[2]))
+                    new_orders.append((int(data[1]), int(data[0]), data[2]))
             return new_orders
         except:
             import traceback
@@ -289,21 +298,21 @@ class Ants:
             row1, col1, d = order
             row2 = (row1 + DIRECTION[d][0]) % self.height
             col2 = (col1 + DIRECTION[d][1]) % self.width
-            if src.has_key((row1,col1)): # order already given
+            if src.has_key((col1,row1)): # order already given
                 continue
             if self.map[row1][col1] != player: # must move *your* ant
                 continue
-            src[(row1,col1)] = True
+            src[(col1,row1)] = True
             if self.map[row2][col2] in (FOOD, WALL): # blocking things
-                if dest.has_key((row1,col1)):
-                    dest[(row1,col1)].append((row1,col1))
+                if dest.has_key((col1,row1)):
+                    dest[(col1,row1)].append((col1,row1))
                 else:
-                    dest[(row1,col1)] = [(row1,col1)]
+                    dest[(col1,row1)] = [(col1,row1)]
             else: # good order
-                if dest.has_key((row2,col2)):
-                    dest[(row2,col2)].append((row1,col1))
+                if dest.has_key((col2,row2)):
+                    dest[(col2,row2)].append((col1,row1))
                 else:
-                    dest[(row2,col2)] = [(row1,col1)]
+                    dest[(col2,row2)] = [(col1,row1)]
         # check for unordered ants and give them hold orders
         for pos in self.player_ants(player):
             if not src.has_key(pos):
@@ -311,25 +320,25 @@ class Ants:
                     dest[pos].append(pos)
                 else:
                     dest[pos] = [pos]
-        for row1, col1 in src.keys():
+        for col1, row1 in src.keys():
             self.map[row1][col1] = LAND
             try:
-                del self.ant_list[(row1,col1)]
+                del self.ant_list[(col1,row1)]
             except:
                 raise Exception("Delete ant error",
                                 "Ant not found at (%s, %s), found %s" %
                                 (col1, row1, self.map[row1][col1]))
         # check for conflicts
-        for (row2, col2), srcs in dest.items():
+        for (col2, row2), srcs in dest.items():
             if (len(srcs) > 1 or (self.map[row2][col2] >= ANTS and
                     self.map[row2][col2] != player)
                     or self.map[row2][col2] == CONFLICT):
                 self.map[row2][col2] = CONFLICT
-                if self.ant_list.has_key((row2,col2)):
-                    del self.ant_list[(row2,col2)]
+                if self.ant_list.has_key((col2,row2)):
+                    del self.ant_list[(col2,row2)]
             else:
                 self.map[row2][col2] = player
-                self.ant_list[(row2,col2)] = player
+                self.ant_list[(col2,row2)] = player
 
     def resolve_orders(self):
         for row in range(self.height):
@@ -341,42 +350,41 @@ class Ants:
     #  and food in contention is eliminated
     def do_birth(self):
         new_ants = {}
-        for f_row, f_col in self.food():
-            ownr = 0
-            for n_row, n_col, n_ownr in self.nearby_ants(f_row, f_col, 0, 1, 9):
-                if ownr == 0:
-                    ownr = n_ownr
-                elif ownr != n_ownr:
+        for f_col, f_row in self.food_list[:]:
+            owner = None
+            for (n_col, n_row), n_owner in self.nearby_ants(f_col, f_row, None, 1, 9):
+                if owner == None:
+                    owner = n_owner
+                elif owner != n_owner:
                     self.map[f_row][f_col] = LAND
-                    del self.food_list[(f_row, f_col)]
+                    self.food_list.remove((f_col, f_row))
                     break
             else:
-                if ownr != 0:
-                    new_ants[(f_row, f_col)] = ownr
-        for (row, col), player in new_ants.items():
-            self.map[row][col] = player
-            self.ant_list[(row, col)] = player
-            del self.food_list[(row, col)]
+                if owner != None:
+                    new_ants[(f_col, f_row)] = owner
+                    self.food_list.remove((f_col, f_row))
+                    self.map[f_row][f_col] = owner
+                    self.ant_list[(f_col, f_row)] = owner
 
     # 1:1 kill ratio, almost, match closest groups and eliminate iteratively
     def do_death(self):
         self.kills = [0 for i in range(self.num_players)]
         ant_group = []
-        def find_enemy(row, col, owner, min_d, max_d):
-            for n_row, n_col, n_owner in self.nearby_ants(row, col, owner,
+        def find_enemy(col, row, owner, min_d, max_d):
+            for (n_col, n_row), n_owner in self.nearby_ants(col, row, owner,
                                                           min_d, max_d):
-                if not (n_row, n_col) in ant_group:
-                    ant_group.append((n_row, n_col))
-                    find_enemy(n_row, n_col, n_owner, min_d, max_d)
+                if not (n_col, n_row) in ant_group:
+                    ant_group.append((n_col, n_row))
+                    find_enemy(n_col, n_row, n_owner, min_d, max_d)
         for distance in range(1, 10):
-            for a_row, a_col, a_owner in self.ants():
+            for (a_col, a_row), a_owner in self.ant_list.items():
                 if self.map[a_row][a_col] != LAND:
-                    ant_group = [(a_row, a_col)]
-                    find_enemy(a_row, a_col, a_owner, distance, distance)
+                    ant_group = [(a_col, a_row)]
+                    find_enemy(a_col, a_row, a_owner, distance, distance)
                     if len(ant_group) > 1:
                         for e_row, e_col in ant_group:
                             self.map[e_row][e_col] = LAND
-                            del self.ant_list[(e_row, e_col)]
+                            del self.ant_list[(e_col, e_row)]
 
     def do_food_1(self, amount=1):
         for f in range(amount):
@@ -385,7 +393,7 @@ class Ants:
                 col = randrange(self.width)
                 if self.map[row][col] == LAND:
                     self.map[row][col] = FOOD
-                    self.food_list[(row, col)] = True
+                    self.food_list.append((col, row))
                     break
 
     def do_score_1(self):
@@ -411,6 +419,7 @@ class Ants:
         pass
 
     def finish_turn(self):
+        self.turn_reveal= [[] for i in range(self.num_players)]
         self.do_death()
         self.do_birth()
         self.do_food()
@@ -421,18 +430,18 @@ class Ants:
 
     # used for turn 0, sending minimal info for bot to load
     def get_player_start(self, player):
-        return 'D %s %s\n' % (self.width, self.height)
+        return 'P width %s\nP height %s\n' % (self.width, self.height)
 
     # used for sending state to bots for each turn
     def get_player_state(self, player):
-        return self.render_text(player)
+        return self.render_changes(player)
 
     # used by engine to determine players still in game
     def is_alive(self, player):
         if self.killed[player]:
             return False
         else:
-            for row, col, owner in self.ants():
+            for (col, row), owner in self.ant_list.items():
                 if owner == player:
                     return True
                     break
@@ -454,6 +463,7 @@ class Ants:
 
     def do_all_moves(self, bot_moves):
         return [self.do_moves(b, moves) for b, moves in enumerate(bot_moves)]
+        self.resolve_orders()
 
     # used for ranking
     def get_scores(self):

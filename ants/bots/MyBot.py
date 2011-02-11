@@ -12,11 +12,11 @@ def main():
     while(True):
         try:
             current_line = raw_input()
-            if current_line == 'ready':
+            if current_line.lower() == 'ready':
                 ants.setup(map_data)
                 ants.finish_turn()
                 map_data = ''
-            elif current_line == 'go':
+            elif current_line.lower() == 'go':
                 ants.update(map_data)
                 try:
                     do_turn(ants)
