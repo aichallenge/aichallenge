@@ -4,6 +4,7 @@ from random import randrange
 from math import sqrt
 import Image
 import os
+from collections import deque
 
 ANTS = 0
 LAND = -1
@@ -31,10 +32,10 @@ PLAYER_COLOR = [(204, 0, 0),    # red
 
 MAP_COLOR = PLAYER_COLOR + [UNSEEN_COLOR, CONFLICT_COLOR, WALL_COLOR, FOOD_COLOR, LAND_COLOR]
 
-DIRECTION = {'n': (-1, 0),
-             's': (1, 0),
-             'e': (0, 1),
-             'w': (0, -1)}
+DIRECTION = {'N': (-1, 0),
+             'E': (0, 1),
+             'S': (1, 0),
+             'W': (0, -1)}
 
 # precalculated sqrt & radius coordinates for distance calcs
 SQRT = [int(sqrt(r)) for r in range(101)]
@@ -189,6 +190,28 @@ class Ants:
         return image
 
     def get_vision(self, player, radius=96):
+        vision = [[False for col in range(self.width)] for row in range(self.height)]
+        squaresToCheck = deque()
+        for col, row in self.player_ants(player):
+            squaresToCheck.append(((col,row),(col,row)))
+        while len(squaresToCheck) > 0:
+            (a_col, a_row), (v_col, v_row) = squaresToCheck.popleft()
+            for d_col, d_row in ((0,-1),(0,1),(-1,0),(1,0)):
+                n_col = (v_col + d_col) % self.width
+                n_row = (v_row + d_row) % self.height
+                if not vision[n_row][n_col] and ((a_col - n_col)**2 + (a_row - n_row)**2) <= radius:
+                    vision[n_row][n_col] = True
+                    if not self.revealed[player][n_row][n_col]:
+                        self.turn_reveal[player].append((n_col, n_row))
+                        self.revealed[player][n_row][n_col] = True
+                    value = self.map[n_row][n_col]
+                    if (value >= ANTS and self.switch[player][value] == None):
+                        self.switch[player][value] = (self.num_players -
+                            self.switch[player][:self.num_players].count(None))
+                    squaresToCheck.append(((a_col,a_row),(n_col,n_row)))
+        return vision
+
+    def get_vision_old(self, player, radius=96):
         # return true for each spot that is visable
         vision = [[False for col in range(self.width)] for row in range(self.height)]
         for col, row in self.player_ants(player):
@@ -201,8 +224,7 @@ class Ants:
                     self.revealed[player][v_row][v_col] = True
                 # if player found a new player, setup the switch
                 value = self.map[v_row][v_col]
-                if (value >= ANTS and
-                        self.switch[player][value] == None):
+                if (value >= ANTS and self.switch[player][value] == None):
                     self.switch[player][value] = (self.num_players -
                         self.switch[player][:self.num_players].count(None))
         return vision
@@ -228,8 +250,10 @@ class Ants:
         CHANGES = ['D','W','F','L']
         for col, row in self.turn_reveal[player]:
             value = self.map[row][col]
-            if value in (LAND, WALL):
-                tmp += '%s %s %s\n' % (CHANGES[self.map[row][col]], col, row)
+            if value == LAND:
+                tmp += 'L %s %s\n' % (col, row)
+            elif value ==  WALL:
+                tmp += 'W %s %s\n' % (col, row)
         # send visible ants
         for (col, row), owner in self.ant_list.items():
             if v[row][col]:
@@ -280,14 +304,16 @@ class Ants:
         new_orders = []
         try:
             for line in orders.split('\n'):
+                line = line.strip().upper()
                 if line != '' and line[0] != '#':
                     data = line.split()
-                    if not data[2] in DIRECTION.keys():
-                        return None
-                    #order = [int(data[0]), int(data[1]), data[2]]
-                    #o_col = (int(data[0]) - self.width//2 + self.center[player][0]) % self.width
-                    #o_row = (int(data[1]) - self.height//2 + self.center[player][1]) % self.height
-                    new_orders.append((int(data[1]), int(data[0]), data[2]))
+                    if data[0] == 'M':
+                        if not data[3] in DIRECTION.keys():
+                            return None
+                        #order = [int(data[1]), int(data[2]), data[3]]
+                        #o_col = (int(data[1]) - self.width//2 + self.center[player][0]) % self.width
+                        #o_row = (int(data[2]) - self.height//2 + self.center[player][1]) % self.height
+                        new_orders.append((int(data[1]), int(data[2]), data[3]))
             return new_orders
         except:
             import traceback
@@ -302,7 +328,7 @@ class Ants:
         dest = {}
         # process orders ignoring bad or duplicates
         for order in orders:
-            row1, col1, d = order
+            col1, row1, d = order
             row2 = (row1 + DIRECTION[d][0]) % self.height
             col2 = (col1 + DIRECTION[d][1]) % self.width
             if src.has_key((col1,row1)): # order already given
@@ -389,9 +415,14 @@ class Ants:
                     ant_group = [(a_col, a_row)]
                     find_enemy(a_col, a_row, a_owner, distance, distance)
                     if len(ant_group) > 1:
-                        for e_row, e_col in ant_group:
+                        for e_col, e_row in ant_group:
                             self.map[e_row][e_col] = LAND
-                            del self.ant_list[(e_col, e_row)]
+                            try:
+                                del self.ant_list[(e_col, e_row)]
+                            except:
+                                raise Exception("Delete ant error",
+                                                "Ant not found at (%s, %s), kill_group %s" %
+                                                (e_col, e_row, ant_group))
 
     def do_food_1(self, amount=1):
         for f in range(amount):
@@ -423,7 +454,7 @@ class Ants:
         pass
 
     def start_turn(self):
-        pass
+        self.resolve_orders()
 
     def finish_turn(self):
         self.turn_reveal= [[] for i in range(self.num_players)]

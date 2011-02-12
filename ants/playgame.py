@@ -43,21 +43,26 @@ def main(argv):
     if opts.map is None:
         print("Please specify a map to start with")
         return -1
-    #try:
-    game = Ants(opts.map)
-    result = "NO RESULT"
-    bots = [('.', arg) for arg in args]
+    try:
+        game = Ants(opts.map)
+        result = "NO RESULT"
+        bots = [('.', arg) for arg in args]
 
-    result = run_game(game, bots, opts.timeout_ms, opts.load_timeout_ms,
+        result = run_game(game, bots, opts.timeout_ms, opts.load_timeout_ms,
                       opts.num_turns, output_file=opts.output_file,
                       verbose=opts.verbose,serial=opts.serial)
-    #except Exception as ex:
-    #    print(ex)
+    except Exception as ex:
+        print(ex)
 
-    #finally:
-    print('\n')
-    print(result)
-    return 1
+    finally:
+        print('\n')
+        print(result)
+        return 1
 
 if __name__ == "__main__":
+    try:
+        import psyco
+        psyco.full()
+    except ImportError:
+        pass
     sys.exit(main(sys.argv[1:]))

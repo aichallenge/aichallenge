@@ -1,18 +1,18 @@
 all: playback/movie.gif
 
 
-playback/frame00001start.png: *.py
+playback/frame_00000.png: *.py
 	python playgame.py --timeout 3000 -t 500 -m maps/random4.txt "python bots/MyBot.py" "python bots/MyBot.py" "python bots/MyBot.py" "python bots/MyBot.py"
 
-game: playback/frame00001start.png
+game: playback/frame_00000.png
 
 
-playback/movie.gif: playback/frame00001start.png
-	convert -loop 0 -delay 5 playback/frame*start.png -delay 400 `ls playback/frame*start.png | sort | tail -n 1` playback/movie.gif
-	convert -loop 0 -delay 5 playback/frame*player0.png -delay 400 `ls playback/frame*player0.png | sort | tail -n 1` playback/movie_player0.gif
-	convert -loop 0 -delay 5 playback/frame*player1.png -delay 400 `ls playback/frame*player1.png | sort | tail -n 1` playback/movie_player1.gif
-	convert -loop 0 -delay 5 playback/frame*player2.png -delay 400 `ls playback/frame*player2.png | sort | tail -n 1` playback/movie_player2.gif
-	convert -loop 0 -delay 5 playback/frame*player3.png -delay 400 `ls playback/frame*player3.png | sort | tail -n 1` playback/movie_player3.gif
+playback/movie.gif: playback/frame_00000.png
+	convert -loop 0 -delay 5 playback/frame*.png -delay 400 `ls playback/frame*.png | sort | tail -n 1` playback/movie.gif
+	convert -loop 0 -delay 5 playback/player0*.png -delay 400 `ls playback/player0*.png | sort | tail -n 1` playback/movie_player0.gif
+	convert -loop 0 -delay 5 playback/player1*.png -delay 400 `ls playback/player1*.png | sort | tail -n 1` playback/movie_player1.gif
+	convert -loop 0 -delay 5 playback/player2*.png -delay 400 `ls playback/player2*.png | sort | tail -n 1` playback/movie_player2.gif
+	convert -loop 0 -delay 5 playback/player3*.png -delay 400 `ls playback/player3*.png | sort | tail -n 1` playback/movie_player3.gif
 	ln -s playback/movie.gif movie.gif
 
 movie: playback/movie.gif

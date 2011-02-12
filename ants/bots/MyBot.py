@@ -1,28 +1,44 @@
 #!/usr/bin/env python
-from random import choice, randrange
+from random import shuffle
 from ants import *
+import sys
+
+DIRECTIONS = ['N','E','S','W']
+DIRECTION = {'N': (0, -1),
+             'E': (1, 0),
+             'S': (0, 1),
+             'W': (-1, 0)}
 
 def do_turn(ants):
+    destinations = []
     for ant_x, ant_y in ants.my_ants():
-        print('%s %s %s' % (ant_x, ant_y, choice(['n', 'e', 's', 'w'])))
+        # try all directions randomly until one is passable and not occupied
+        shuffle(DIRECTIONS)
+        for direction in DIRECTIONS:
+            new_x = (ant_x + DIRECTION[direction][0]) % ants.width
+            new_y = (ant_y + DIRECTION[direction][1]) % ants.height
+            if not (new_x, new_y) in destinations and ants.passable(new_x, new_y):
+                print('M %s %s %s' % (ant_x, ant_y, direction))
+                destinations.append((new_x, new_y))
+                break
 
 def main():
     map_data = ''
-    ants = Ants()
+    game = Ants()
     while(True):
         try:
             current_line = raw_input()
             if current_line.lower() == 'ready':
-                ants.setup(map_data)
-                ants.finish_turn()
+                game.setup(map_data)
+                game.finish_turn()
                 map_data = ''
             elif current_line.lower() == 'go':
-                ants.update(map_data)
+                game.update(map_data)
                 try:
-                    do_turn(ants)
+                    do_turn(game)
                 except:
-                    ants.error("Unexpected error in do_turn")
-                ants.finish_turn()
+                    sys.stderr.write("Unexpected error in do_turn\n")
+                game.finish_turn()
                 map_data = ''
             else:
                 map_data += current_line + '\n'
@@ -40,4 +56,4 @@ if __name__ == '__main__':
     except KeyboardInterrupt:
         print('ctrl-c, leaving ...')
     except:
-        Ants().error("Unexpected error in main")
+        sys.stderr.write("Unexpected error in main\n")

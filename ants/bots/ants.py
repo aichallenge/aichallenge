@@ -84,11 +84,6 @@ class Ants():
         sys.stdout.write('go\n')
         sys.stdout.flush()
 
-    def error(self, msg):
-        traceback.print_exc(file=sys.stderr)
-        sys.stderr.write(msg + '\n')
-        sys.stderr.flush()
-
     def my_ants(self):
         return [(x, y) for (x, y), owner in self.ant_list.items()
                     if owner == MY_ANT]
@@ -98,7 +93,7 @@ class Ants():
                     if owner != MY_ANT]
 
     def food(self):
-        return self.food_list
+        return self.food_list[:]
 
     def passable(self, x, y):
         return self.map[y][x] in (LAND, DEAD)
@@ -131,14 +126,14 @@ class Ants():
 
         if y1 < y2:
             if y2 - y1 >= self.height//2:
-                d.append('S')
-            if y2 - y1 <= self.height//2:
                 d.append('N')
+            if y2 - y1 <= self.height//2:
+                d.append('S')
         if y2 < y1:
             if y1 - y2 >= self.height//2:
-                d.append('N')
-            if y1 - y2 <= self.height//2:
                 d.append('S')
+            if y1 - y2 <= self.height//2:
+                d.append('N')
         return d
 
     def render_text(self):

@@ -7,27 +7,32 @@ $(function () {
         return number;
     }
     var map = $('#map');
-    var turn = 1;
-    var anno = 'start';
+    var turn = 0;
+    var anno = 'frame';
     var mapSrc = function () {
-        return '../playback/frame' + zeroFill(turn, 5) + anno + '.png';
+        return '../playback/' + anno + '_' + zeroFill(turn, 5) + '.png';
     }
     map.src = mapSrc(turn);
-    $('#back').click(function () {
-        turn -= 1;
-        if (turn === 0) {
-            turn = 1;
-        }
-        map.attr('src', mapSrc());
-        $('#turn').html(turn);
-    });
-    $('#forward').click(function () {
+    
+    var forward = function () {
         turn += 1;
         map.attr('src', mapSrc());
         $('#turn').html(turn);
-    });
+    };
+    
+    var backward = function () {
+        turn -= 1;
+        if (turn <= 0) {
+            turn = 0;
+        }
+        map.attr('src', mapSrc());
+        $('#turn').html(turn);
+    };
+    
+    $('#back').click(backward);
+    $('#forward').click(forward);
     $('#start').click(function () {
-        anno = 'start';
+        anno = 'frame';
         map.attr('src', mapSrc());
     });
     $('#move').click(function () {
@@ -46,8 +51,8 @@ $(function () {
         anno = 'player3';
         map.attr('src', mapSrc());
     });
-    $('#player4').click(function () {
-        anno = 'player4';
+    $('#player0').click(function () {
+        anno = 'player0';
         map.attr('src', mapSrc());
     });
     $('#death').click(function () {
@@ -62,4 +67,13 @@ $(function () {
         anno = 'food';
         map.attr('src', mapSrc());
     });
+    $(document.documentElement).keydown(function (evt) {
+        if (evt.keyCode == '37') { // Left Arrow
+            backward();
+            return false;
+        } else if(evt.keyCode == '39') { // Right Arrow
+            forward();
+            return false;
+        }
+    }); 
 });
