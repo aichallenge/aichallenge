@@ -4,10 +4,11 @@ suitable for playing games, and exposes an API through which the game
 judging modules can interact with the bots.
 """
 
-import pwd
 import os
 import os.path
+import pwd
 import shlex
+import shutil
 import signal
 import time
 from subprocess import Popen, PIPE, call
@@ -17,23 +18,52 @@ import worker.config
 class Runner(object):
     """Runs a bot"""
     
-    def __init__(self, command, cwd="/tmp"):
+    def __init__(self, origin=None, use_working=True):
         self.user = self.acquire_user()
-        command = ["sudo", "-Hnu", self.user, "--"] + shlex.split(command)
+        self.origin = origin
+        self.process = None
+        if use_working:
+            self.create_working_dir()
+        else:
+            self.working = origin
+    
+    def create_working_dir(self):
+        working = "$AICHALLENGE_PREFIX/var/lib/aichallenge/working/%s"
+        self.working = os.path.expandvars(working % self.user)
+        old_umask = os.umask(07007)
+        shutil.copytree(self.origin, self.working, True)
+        os.chown(self.working, -1, pwd.getpwnam(self.user).pw_gid)
+        os.chmod(self.working, 0770)
+        os.umask(old_umask)
+    
+    def remove_working_dir(self):
+        if self.working != self.origin:
+            shutil.rmtree(self.working)
+    
+    def run(self, command, cwd="{working}", should_stop=True):
+        cwd = cwd.format(working=self.working, origin=self.origin)
+        if isinstance(command, str): command = shlex.split(command)
+        command = ["sudo", "-Hnu", self.user, "--"] + command
         self.process = Popen(command, stdin=PIPE, stdout=PIPE, stderr=PIPE,
                              close_fds=True, cwd=cwd)
-        time.sleep(1) # some initial setup time
-        self.send_signal(signal.SIGSTOP)
+        time.sleep(0.3) # some initial setup time
+        if should_stop: self.send_signal(signal.SIGSTOP)
     
     def send_signal(self, signal):
         """send a signal to the process"""
-        call(["sudo", "-Hnu", self.user,
-              "kill", "-s", str(signal), str(self.process.pid)])
+        if self.process is not None:
+            call(["sudo", "-Hnu", self.user,
+                  "kill", "-s", str(signal), str(self.process.pid)],
+                  stdout=PIPE, stderr=PIPE)
+    
+    def done(self):
+        """done with the runner -- release the user and clear the work dir"""
+        self.remove_working_dir()
+        self.release_user(self.user)
     
     def kill(self):
-        """terminate the process and release the user"""
+        """terminate the process"""
         self.send_signal(signal.SIGKILL)
-        self.release_user(self.user)
     
     def write(self, data):
         """write to the process' standard input"""

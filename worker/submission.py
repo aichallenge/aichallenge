@@ -1,4 +1,6 @@
+import os.path
 import worker.language
+from worker.runner import Runner
 
 # statuses
 UNCOMPILED, COMPILE_FAILED, UNTESTED, TEST_FAILED, READY = range(5)
@@ -61,6 +63,11 @@ class Submission(object):
         self.compile_output = ""
         self.compile_errors = ""
         self.test_results = ""
+        
+        if self.language is None:
+            languages = list(worker.language.detect_languages(self))
+            if len(languages) == 1:
+                self.language, main_file = languages[0]
 
     def summary(self):
         return "Submission %d %s" % (self.sub_id, short_messages[self.status])
@@ -80,11 +87,11 @@ class Submission(object):
         s += "Sincerely,\nThe Compile Script"
         return s
     
-    def get_command(self):
+    def get_command(self, directory):
         """return the command needed to run the bot"""
-        return worker.language.get_command(self)
+        return worker.language.get_command(self, directory)
 
-    def compile(self, max_time=None):
+    def compile(self, max_time=300):
         """ Determines which language this submission is coded in, and
             compiles it. Optionally, a time limit may be specified to prevent
             overlong compilation times. """
@@ -95,3 +102,19 @@ class Submission(object):
         else:
             self.status = COMPILE_FAILED
             return False
+    
+    def run(self):
+        """Launches the submission inside a runner so that it may be used in
+            a game."""
+        runner = Runner(origin=self.directory)
+        runner.run(self.get_command(runner.working))
+        return runner
+    
+    def compile_if_needed(self, max_time=300, logger=None):
+        if os.path.exists(self.directory + "/.aichallenge/compiled"):
+            self.status = UNTESTED
+            return True
+        else:
+            if logger is not None:
+                logger.info('compiling %s' % self.directory)
+            return self.compile(max_time)

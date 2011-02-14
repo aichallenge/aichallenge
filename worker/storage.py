@@ -67,8 +67,11 @@ def decompress_zip(zip, path):
 def decompress_tar(tar, path):
     path_tmp = path + "." + str(time.time())
     os.mkdir(path_tmp, 0750)
-    for member in tar.getnames():
-        if not member.startswith("/") and not member.startswith(".."):
+    for member in tar.getmembers():
+        name_ok = (not member.name.startswith("/") and
+                    not member.name.startswith(".."))
+        type_ok = member.isfile() or member.isdir()
+        if name_ok and type_ok:
             tar.extract(member, path_tmp)    
     
     try:

@@ -11,7 +11,7 @@ def get_game(name):
 
 class Game(object):
     """game class providing useful underlying functionality"""
-    def __init__(self, teams):
+    def __init__(self, message_body, teams):
         self.teams = [self.start_team(team) for team in teams]
     
     def start_team(self, team):
@@ -20,15 +20,14 @@ class Game(object):
     def start_player(self, player):
         """ Start the given player Submission. This assumes that the
             submission has already been compiled successfully. """
-        runner = Runner(player.get_command(), cwd=player.directory)
-        return (player.username, runner)
+        return (player.username, player.run())
     
     def stop_team(self, team):
         [self.stop_player(player) for player in team]
     
     def stop_player(self, player):
         _, runner = player
-        runner.kill()
+        runner.done()
     
     def run(self):
         pass
