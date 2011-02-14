@@ -65,4 +65,5 @@ if __name__ == "__main__":
         psyco.full()
     except ImportError:
         pass
-    sys.exit(main(sys.argv[1:]))
+    import cProfile
+    cProfile.run('sys.exit(main(sys.argv[1:]))')

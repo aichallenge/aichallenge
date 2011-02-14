@@ -14,6 +14,7 @@ def save_image(game, turn, anno="", player=None):
 def run_game(game, botcmds, timeoutms, loadtimeoutms, num_turns=1000,
              output_file="testout.txt", verbose=False, serial=False):
     try:
+        f = open('bot1.txt', 'w')
         # create bot sandboxes
         bots = [Sandbox(*bot) for bot in botcmds]
         for b, bot in enumerate(bots):
@@ -38,8 +39,14 @@ def run_game(game, botcmds, timeoutms, loadtimeoutms, num_turns=1000,
                     if game.is_alive(b):
                         if turn == 0:
                             bot.write(game.get_player_start(b) + 'ready\n')
+                            if b == 0:
+                                f.write(game.get_player_start(b))
+                                f.flush()
                         else:
                             bot.write(game.get_player_state(b) + 'go\n')
+                            if b == 0:
+                                f.write(game.get_player_state(b))
+                                f.flush()
                 if turn > 0:
                     game.start_turn()
 
@@ -56,7 +63,6 @@ def run_game(game, botcmds, timeoutms, loadtimeoutms, num_turns=1000,
                 #   or when time is up
                 while (sum(bot_finished) < len(bot_finished) and
                         time.time() - start_time < time_limit):
-                    time.sleep(0.05)
                     for b, bot in enumerate(bots):
                         if bot_finished[b]:
                             continue # already got bot moves
@@ -75,7 +81,7 @@ def run_game(game, botcmds, timeoutms, loadtimeoutms, num_turns=1000,
                             bot_moves[b] += line + '\n'
 
                 # process all moves
-                if turn > 0:
+                if turn > 0 and not game.game_over():
                     game.do_all_moves(bot_moves)
                     game.finish_turn()
 
@@ -101,7 +107,7 @@ def run_game(game, botcmds, timeoutms, loadtimeoutms, num_turns=1000,
 
             alive = [game.is_alive(b) for b in range(len(bots))]
             #print('alive %s' % alive)
-            if sum(alive) == 0:
+            if sum(alive) <= 1:
                 break
 
         game.finish_game()
@@ -114,10 +120,4 @@ def run_game(game, botcmds, timeoutms, loadtimeoutms, num_turns=1000,
         if output_file:
             of.close()
     return "Game Over, %s" % game.get_scores()
-
-if __name__ == '__main__':
-    a = Ants('maps/random4.txt')
-    print(a.get_player_state(0))
-    print(a.get_player_state(1))
-    print(a.get_player_state(2))
-    print(a.get_player_state(3))
+    f.close()

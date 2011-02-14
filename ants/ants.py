@@ -199,7 +199,11 @@ class Ants:
             for d_col, d_row in ((0,-1),(0,1),(-1,0),(1,0)):
                 n_col = (v_col + d_col) % self.width
                 n_row = (v_row + d_row) % self.height
-                if not vision[n_row][n_col] and ((a_col - n_col)**2 + (a_row - n_row)**2) <= radius:
+                d_row = abs(a_row - n_row)
+                d_row = min(d_row, self.width - d_row)
+                d_col = abs(a_col - n_col)
+                d_col = min(d_col, self.height - d_col)
+                if not vision[n_row][n_col] and (d_row**2 + d_col**2) <= radius:
                     vision[n_row][n_col] = True
                     if not self.revealed[player][n_row][n_col]:
                         self.turn_reveal[player].append((n_col, n_row))
@@ -472,7 +476,7 @@ class Ants:
 
     # used for sending state to bots for each turn
     def get_player_state(self, player):
-        return self.render_changes(player)
+        return self.render_text(player)
 
     # used by engine to determine players still in game
     def is_alive(self, player):

@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import sys
 import traceback
+import random
 
 MY_ANT = 0
 ANTS = 0
@@ -11,6 +12,7 @@ DEAD = -4
 UNSEEN = -5
 
 MAP_RENDER = 'abcdefghijklmnopqrstuvwxyz?!%*.'
+MAP_READ = '?!%*.abcdefghijklmnopqrstuvwxyz'
 
 class Ants():
     def __init__(self):
@@ -35,7 +37,7 @@ class Ants():
         self.map = [[UNSEEN for col in range(self.width)]
                     for row in range(self.height)]
 
-    def update(self, data):
+    def update_1(self, data):
         # clear ant and food data
         for (col, row), owner in self.ant_list.items():
             self.map[row][col] = LAND
@@ -68,8 +70,8 @@ class Ants():
                 elif tokens[0] == 'D':
                     self.map[row][col] = DEAD
 
-    def update_old(self, data):
-        self.map = [[MAP.index(x) - 5 for x in y]
+    def update(self, data):
+        self.map = [[MAP_READ.index(x) - 5 for x in y]
                         for y in data[:-1].split('\n')]
         self.ant_list = {}
         self.food_list = []

@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-import random
+from random import shuffle
 from ants import *
 
 DIRECTION = {'N': (0, -1),
@@ -26,7 +26,9 @@ class Hunter():
                 # no target found, mark ant as not moving so we don't run into it
                 destinations.append((ant_x, ant_y))
                 continue
-            for direction in ants.direction(ant_x, ant_y, closest_target[0], closest_target[1]):
+            directions = ants.direction(ant_x, ant_y, closest_target[0], closest_target[1])
+            shuffle(directions)
+            for direction in directions:
                 new_x = (ant_x + DIRECTION[direction][0]) % ants.width
                 new_y = (ant_y + DIRECTION[direction][1]) % ants.height
                 if ants.passable(new_x, new_y) and not (new_x, new_y) in destinations:
