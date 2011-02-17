@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-
+import traceback
 import sys
 from engine import run_game
 
@@ -34,6 +34,12 @@ def main(argv):
     parser.add_option("--load_timeout_ms", dest="load_timeout_ms",
                       default=3000, type="int",
                       help="Amount of time to give for load, in milliseconds")
+    parser.add_option("--attack", dest="attack",
+                      default="closest",
+                      help="Attack method to use for engine. (closest, occupied)")
+    parser.add_option("--communication", dest="communication",
+                      default="changes",
+                      help="Bot communication method to use. (changes, map)")
 
     (opts, args) = parser.parse_args(argv)
     if len(args) < opts.num_players:
@@ -44,7 +50,9 @@ def main(argv):
         print("Please specify a map to start with")
         return -1
     try:
-        game = Ants(opts.map)
+        options = {"attack": opts.attack,
+                   "communication": opts.communication }
+        game = Ants(opts.map, options)
         result = "NO RESULT"
         bots = [('.', arg) for arg in args]
 
@@ -52,7 +60,7 @@ def main(argv):
                       opts.num_turns, output_file=opts.output_file,
                       verbose=opts.verbose,serial=opts.serial)
     except Exception as ex:
-        print(ex)
+        traceback.print_exc()
 
     finally:
         print('\n')
@@ -65,5 +73,6 @@ if __name__ == "__main__":
         psyco.full()
     except ImportError:
         pass
-    import cProfile
-    cProfile.run('sys.exit(main(sys.argv[1:]))')
+    #import cProfile
+    #cProfile.run('sys.exit(main(sys.argv[1:]))')
+    sys.exit(main(sys.argv[1:]))

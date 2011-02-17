@@ -33,7 +33,7 @@ class Hunter():
                 new_y = (ant_y + DIRECTION[direction][1]) % ants.height
                 if ants.passable(new_x, new_y) and not (new_x, new_y) in destinations:
                     destinations.append((new_x, new_y))
-                    print('M %s %s %s' % (ant_x, ant_y, direction))
+                    ants.give_order((ant_x, ant_y, direction))
                     break
             else:
                 # mark ant as not moving so we don't run into it

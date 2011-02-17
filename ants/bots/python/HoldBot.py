@@ -2,6 +2,7 @@
 from random import shuffle
 from ants import *
 import sys
+import traceback
 
 DIRECTIONS = ['N','E','S','W']
 DIRECTION = {'N': (0, -1),
@@ -10,17 +11,7 @@ DIRECTION = {'N': (0, -1),
              'W': (-1, 0)}
 
 def do_turn(ants):
-    destinations = []
-    for ant_x, ant_y in ants.my_ants():
-        # try all directions randomly until one is passable and not occupied
-        shuffle(DIRECTIONS)
-        for direction in DIRECTIONS:
-            new_x = (ant_x + DIRECTION[direction][0]) % ants.width
-            new_y = (ant_y + DIRECTION[direction][1]) % ants.height
-            if not (new_x, new_y) in destinations and ants.passable(new_x, new_y):
-                print('M %s %s %s' % (ant_x, ant_y, direction))
-                destinations.append((new_x, new_y))
-                break
+    pass
 
 def main():
     map_data = ''
@@ -37,7 +28,7 @@ def main():
                 try:
                     do_turn(game)
                 except:
-                    sys.stderr.write("Unexpected error in do_turn\n")
+                    traceback.print_exc(file=sys.stderr)
                 game.finish_turn()
                 map_data = ''
             else:
@@ -56,4 +47,4 @@ if __name__ == '__main__':
     except KeyboardInterrupt:
         print('ctrl-c, leaving ...')
     except:
-        sys.stderr.write("Unexpected error in main\n")
+        traceback.print_exc(file=sys.stderr)

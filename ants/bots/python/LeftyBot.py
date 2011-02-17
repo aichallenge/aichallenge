@@ -46,7 +46,7 @@ class Lefty:
                             not (new_x, new_y) in new_lefty and
                             not (new_x, new_y) in ant_locations):
                         new_straight[(new_x, new_y)] = direction
-                        print('M %s %s %s' % (ant_x, ant_y, direction))
+                        ants.issue_order((ant_x, ant_y, direction))
                         continue
                     else:
                         # have ant wait until it is clear
@@ -75,7 +75,7 @@ class Lefty:
                                 not (new_x, new_y) in new_lefty and
                                 not (new_x, new_y) in ant_locations):
                             new_lefty[(new_x, new_y)] = direction
-                            print('M %s %s %s' % (ant_x, ant_y, direction))
+                            ants.issue_order((ant_x, ant_y, direction))
                             break
                         else:
                             # have ant wait until it is clear

@@ -22,22 +22,22 @@ class Ants():
         self.ant_list = {}
         self.food_list = []
         self.dead_list = []
+        self.update = self.update_changes
 
     def setup(self, data):
         for line in data.split('\n'):
             line = line.strip().upper()
             if len(line) > 0:
                 tokens = line.split()
-                if tokens[0] == 'P':
-                    key = tokens[1]
-                    if key == 'WIDTH':
-                        self.width = int(tokens[2])
-                    elif key == 'HEIGHT':
-                        self.height = int(tokens[2])
+                key = tokens[0]
+                if key == 'WIDTH':
+                    self.width = int(tokens[1])
+                elif key == 'HEIGHT':
+                    self.height = int(tokens[1])
         self.map = [[UNSEEN for col in range(self.width)]
                     for row in range(self.height)]
 
-    def update_1(self, data):
+    def update_changes(self, data):
         # clear ant and food data
         for (col, row), owner in self.ant_list.items():
             self.map[row][col] = LAND
@@ -54,23 +54,24 @@ class Ants():
             line = line.strip().upper()
             if len(line) > 0:
                 tokens = line.split()
-                col = int(tokens[1])
-                row = int(tokens[2])
-                if tokens[0] == 'A':
-                    owner = int(tokens[3])
-                    self.map[row][col] = owner
-                    self.ant_list[(col, row)] = owner
-                elif tokens[0] == 'F':
-                    self.map[row][col] = FOOD
-                    self.food_list.append((col, row))
-                elif tokens[0] == 'L':
-                    self.map[row][col] = LAND
-                elif tokens[0] == 'W':
-                    self.map[row][col] = WALL
-                elif tokens[0] == 'D':
-                    self.map[row][col] = DEAD
+                if len(tokens) >= 3:
+                    col = int(tokens[1])
+                    row = int(tokens[2])
+                    if tokens[0] == 'A':
+                        owner = int(tokens[3])
+                        self.map[row][col] = owner
+                        self.ant_list[(col, row)] = owner
+                    elif tokens[0] == 'F':
+                        self.map[row][col] = FOOD
+                        self.food_list.append((col, row))
+                    elif tokens[0] == 'L':
+                        self.map[row][col] = LAND
+                    elif tokens[0] == 'W':
+                        self.map[row][col] = WALL
+                    elif tokens[0] == 'D':
+                        self.map[row][col] = DEAD
 
-    def update(self, data):
+    def update_map(self, data):
         self.map = [[MAP_READ.index(x) - 5 for x in y]
                         for y in data[:-1].split('\n')]
         self.ant_list = {}
@@ -82,6 +83,10 @@ class Ants():
                 elif self.map[y][x] == FOOD:
                     self.food_list.append((x,y))
 
+    def issue_order(self, order):
+        sys.stdout.write('O %s %s %s\n' % (order[0], order[1], order[2]))
+        sys.stdout.flush()
+        
     def finish_turn(self):
         sys.stdout.write('go\n')
         sys.stdout.flush()

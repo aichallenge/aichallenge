@@ -27,7 +27,10 @@ def monitor_input_channel(sandbox):
             sandbox.kill()
             break
         if line is None or len(line) == 0:
-            sandbox.kill()
+            try:
+                sandbox.kill()
+            except:
+                pass
             break
         sandbox.stdout_queue.put(line.strip())
     print "end monitor"
@@ -50,6 +53,7 @@ class Sandbox:
         self.is_alive = False
         self.command_process = None
         self.stdout_queue = Queue()
+        self.stderr_queue = Queue()
         self.command_process = subprocess.Popen(shlex.split(shell_command),
                                                 stdin=subprocess.PIPE,
                                                 stdout=subprocess.PIPE,
@@ -64,7 +68,10 @@ class Sandbox:
     # suddenly terminated.
     def kill(self):
         if self.is_alive:
-            self.command_process.kill()
+            try:
+                self.command_process.kill()
+            except:
+                pass
             #os.kill(self.command_process.pid, signal.SIGKILL)
             self.is_alive = False
 
@@ -97,11 +104,6 @@ class Sandbox:
             return self.stdout_queue.get(block=False, timeout=0)
         except:
             return None
-
-    def read_error_line(self):
-        if not self.is_alive:
-            return None
-        return self.command_process.stderr.readline().strip()
 
 def main():
     sandbox = Sandbox(".", "python bots\\MyBot.py")
