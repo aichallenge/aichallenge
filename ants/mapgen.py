@@ -4,6 +4,7 @@ import random
 
 #game parameters
 possibleNoPlayers = [4, 6, 8, 9, 10, 12, 14, 15, 16]
+possibleNoPlayers = [4]
 
 
 maxDim = 100
@@ -101,6 +102,7 @@ rDim = get_region_dimensions(P)
 
 sDim = [random.randint(10, int(maxDim/rDim[0])), random.randint(10, int(maxDim/rDim[1]))]
 sDim[0] = sDim[1] = min(sDim[0], sDim[1])
+sDim = [128, 128]
 
 Dim = [rDim[0]*sDim[0], rDim[1]*sDim[1]]
 map = [ ['.' for c in range(Dim[1])] for r in range(Dim[0]) ]

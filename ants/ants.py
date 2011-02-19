@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 from random import randrange
 from math import sqrt
-import Image
 import os
 from collections import deque
 from fractions import Fraction
@@ -58,9 +57,16 @@ for r in range(101):
             if d_row**2 + d_col**2 <= r:
                 FULL_RADIUS[r].append((d_row, d_col))
 class Ants:
-    def __init__(self, filename, options=None):
+    def __init__(self, options=None):
         # setup options
         # attack method
+        filename = options['map']
+        self.turns = options['turns']
+        self.loadtime = options['loadtime']
+        self.turntime = options['turntime']
+        self.viewradius = 96
+        self.attackradius = 5
+        self.spawnradius = 2
         self.do_attack = self.do_attack_closest
         if 'attack' in options:
             if options['attack'] == 'occupied':
@@ -87,7 +93,7 @@ class Ants:
 
 
         #self.center = [] # used to scroll the map so that a player's
-                         #   starting ant is in the center
+        #                 #   starting ant is in the center
 
         # load map and get number of players from map
         #   will fill in center data
@@ -117,6 +123,7 @@ class Ants:
 
         # used to track scores
         self.score = [Fraction(0,1) for i in range(self.num_players)]
+        self.turn = 0
 
     def load_text(self, filename):
         players = []
@@ -124,88 +131,48 @@ class Ants:
         self.map = []
         row = 0
         for line in f:
-            data = line.strip()
-            if data == '':
+            line = line.strip().lower()
+            if line == '':
                 continue # ignore blank lines
-            if self.width == None:
-                self.width = len(data)
-            else:
-                if len(data) != self.width:
-                    raise Exception("map", "Inconsistant number of cols in row %s" % row)
-            self.map.append([])
-            for col, c in enumerate(data):
-                if c in 'abcdefghijklmnopqrstuvwxyz':
-                    if not c in players:
-                        players.append(c)
-                        #if self.center[value] == None:
-                        #    self.center[value] = (last_row, col)
-                    value = players.index(c)
-                    self.map[-1].append(value)
-                    self.ant_list[(col, row)] = value
-                    self.land_area += 1
-                elif c == '*':
-                    self.map[-1].append(FOOD)
-                    self.food_list.append((col, row))
-                    self.land_area += 1
-                elif c == '%':
-                    self.map[-1].append(WATER)
-                    self.water_area += 1
-                elif c == '.':
-                    self.map[-1].append(LAND)
-                    self.land_area += 1
-                else:
-                    raise Exception("map", "Invalid character in map: %s" % c)
-            row += 1
-        self.height = row
+            data = line.split(' ')
+            if data[0] == 'cols':
+                self.width = int(data[1])
+            elif data[0] == 'rows':  
+                self.height = int(data[1])
+            elif data[0] == 'm':
+                if len(data[1]) != self.width:
+                    raise Exception('map',
+                                    'Incorrect number of cols in row %s. Got %s, expected %s.' % (
+                                    row, len(data[1]), self.width))
+                self.map.append([])
+                for col, c in enumerate(data[1]):
+                    if c in 'abcdefghijklmnopqrstuvwxyz':
+                        c = c
+                        if not c in players:
+                            players.append(c)
+                            #if self.center[value] == None:
+                            #    self.center[value] = (last_row, col)
+                        value = players.index(c)
+                        self.map[-1].append(value)
+                        self.ant_list[(col, row)] = value
+                        self.land_area += 1
+                    elif c == '*':
+                        self.map[-1].append(FOOD)
+                        self.food_list.append((col, row))
+                        self.land_area += 1
+                    elif c == '%':
+                        self.map[-1].append(WATER)
+                        self.water_area += 1
+                    elif c == '.':
+                        self.map[-1].append(LAND)
+                        self.land_area += 1
+                    else:
+                        raise Exception("map", "Invalid character in map: %s" % c)
+                row += 1
+        if self.height != row:
+                raise Exception("map", "Incorrect number of rows.  Expected %s, got %s" % (self.height, row))                
         self.num_players = len(players)
         return True
-
-    def load_image(self, filename):
-        image = Image.open(filename)
-        self.width, self.height = image.size
-        self.num_players = 0
-        self.land_area = 0
-        self.water_area = 0
-        self.player_colors = []
-        self.map = [[LAND for i in range(self.width)] for i in range(self.height)]
-        for x in range(self.width):
-            for y in range(self.height):
-                pixel = image.getpixel((x,y))
-                if pixel == WATER_COLOR:
-                    self.map[y][x] = WATER
-                    self.water_area += 1
-                elif pixel == HILL_COLOR:
-                    self.map[y][x] = HILL
-                    self.hill_list[(x,y)] = True
-                    self.water_area += 1
-                else:
-                    self.land_area += 1
-                    if pixel == LAND_COLOR:
-                        self.map[y][x] = LAND
-                    elif pixel == FOOD_COLOR:
-                        self.map[y][x] = FOOD
-                        self.food_list.append((x,y))
-                    elif pixel in self.player_colors:
-                        self.map[y][x] = self.player_colors.index(pixel)
-                        self.ant_list[(x,y)] = self.map[y][x]
-                    else:
-                        self.num_players += 1
-                        self.player_colors.append(pixel)
-                        self.map[y][x] = self.num_players
-                        self.ant_list[(x,y)] = self.map[y][x]
-
-    def render_image(self, player=None):
-        if player == None:
-            m = self.map
-        else:
-            m = self.get_perspective(player)
-        image = Image.new('RGB', (self.width, self.height), LAND_COLOR)
-        img = image.load()
-        for row in range(self.height):
-            for col in range(self.width):
-                if m[row][col] != LAND:
-                    img[col, row] = MAP_COLOR[m[row][col]]
-        return image
 
     def distance(self, x1, y1, x2, y2):
         d_x = min(abs(x1 - x2), self.width - abs(x1 - x2))
@@ -261,35 +228,30 @@ class Ants:
             for col, row in self.turn_reveal[player]:
                 value = self.map[row][col]
                 if value == LAND:
-                    tmp += 'L %s %s\n' % (col, row)
+                    tmp += 'l %s %s\n' % (col, row)
                 elif value ==  WATER:
-                    tmp += 'W %s %s\n' % (col, row)
-        elif not self.render_changes.rendered:
-            for row in range(self.height):
-                for col in range(self.width):
-                    if self.map[row][col] == LAND:
-                        tmp += 'L %s %s\n' % (col, row)
-                    elif self.map[row][col] == WATER:
-                        tmp += 'W %s %s\n' % (col, row)
+                    tmp += 'w %s %s\n' % (col, row)
         # send visible ants
         for (col, row), owner in self.ant_list.items():
-            if player == None or v[row][col]:
-                tmp += 'A %s %s %s\n' % (col, row, self.switch[player][owner])
+            if player == None:
+                tmp += 'a %s %s %s\n' % (col, row, owner)
+            elif v[row][col]:
+                tmp += 'a %s %s %s\n' % (col, row, self.switch[player][owner])
                 self.revealed[player][row][col] = False
         # send visible food
         for col, row in self.food_list:
             if player == None or v[row][col]:
-                tmp += 'F %s %s\n' % (col, row)
-                self.revealed[player][row][col] = False
+                tmp += 'f %s %s\n' % (col, row)
+                if player != None:
+                    self.revealed[player][row][col] = False
         # send visible conflict
         for row in range(self.height):
             for col in range(self.width):
                 if (player == None or v[row][col]) and self.map[row][col] == CONFLICT:
-                    tmp += 'D %s %s\n' % (col, row)
-                    self.revealed[player][row][col] = False
+                    tmp += 'd %s %s\n' % (col, row)
+                    if player != None:
+                        self.revealed[player][row][col] = False
         return tmp
-    # static variable on function used for map hack mode
-    render_changes.rendered = False
 
     def render_map(self, player=None):
         tmp = ''
@@ -298,7 +260,7 @@ class Ants:
         else:
             m = self.get_perspective(player)
         for row in m:
-            tmp += ''.join([MAP_RENDER[col] for col in row]) + '\n'
+            tmp += 'm ' + ''.join([MAP_RENDER[col] for col in row]) + '\n'
         return tmp
 
     def player_ants(self, player):
@@ -496,6 +458,7 @@ class Ants:
         pass
 
     def start_turn(self):
+        self.turn += 1
         self.resolve_orders()
 
     def finish_turn(self):
@@ -506,11 +469,18 @@ class Ants:
 
     # used for 'map hack' playback
     def get_state(self):
-        return self.render()
+        if self.turn == 0:
+            return self.render_map()
+        else:
+            return self.render_changes()
 
     # used for turn 0, sending minimal info for bot to load
-    def get_player_start(self, player):
-        return 'width %s\nheight %s\n' % (self.width, self.height)
+    def get_player_start(self, player=None):
+        return ('loadtime %s\nturntime %s\nrows %s\ncols %s\nturns %s\n' +
+                'viewradius2 %s\nattackradius2 %s\nspawnradius2 %s\n') % (
+                self.loadtime, self.turntime, self.height, self.width,
+                self.turns, self.viewradius, self.attackradius,
+                self.spawnradius)
 
     # used for sending state to bots for each turn
     def get_player_state(self, player):
@@ -570,5 +540,5 @@ if __name__ == '__main__':
                       dest='filename',
                       help='file name of map text file')
     options, args = parser.parse_args(sys.argv)
-    map = AntMap(options.filename)
+    map = Ants(options.filename)
     save_image(map, options.filename[:-4])

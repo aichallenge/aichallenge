@@ -18,7 +18,7 @@ Required Arguments:
 """
 
 def monitor_input_channel(sandbox):
-    print "start monitor"
+    #print "start monitor"
     while sandbox.is_alive:
         try:
             line = sandbox.command_process.stdout.readline()
@@ -33,7 +33,7 @@ def monitor_input_channel(sandbox):
                 pass
             break
         sandbox.stdout_queue.put(line.strip())
-    print "end monitor"
+    #print "end monitor"
     e = sandbox.command_process.stderr.read().strip()
     if len(e) > 0:
         print e

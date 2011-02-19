@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 import traceback
 import sys
+import os
+import time
 from engine import run_game
 
 from ants import Ants
@@ -9,62 +11,76 @@ def main(argv):
     from optparse import OptionParser
     usage ="Usage: %prog [options] bot1 bot2"
     parser = OptionParser()
-    parser.add_option("-o", "--output_file", dest="output_file",
-                      help="File to dump game state to.")
+
+    # map to be played
+    # number of players is determined by the map file
     parser.add_option("-m", "--map_file", dest="map",
                       help="Name of the map file")
-    parser.add_option("-p", "--players", dest="num_players",
-                      default=4, type="int",
-                      help="Number of players")
+
+    # maximum number of turns that the game will be played
+    parser.add_option("-t", "--turns", dest="turns",
+                      default=200, type="int",
+                      help="Number of turns in the game")
+    
+    # the output directory will contain the replay file used by the visualizer
+    # it will also contain the bot input/output logs, if requested
+    parser.add_option("-o", "--output_dir", dest="output_dir",
+                      help="Directory to dump replay files to.")
+    parser.add_option("-I", "--log_input", dest="log_input",
+                       action="store_true", default=False,
+                       help="Log input streams sent to bots")
+    parser.add_option("-O", "--log_output", dest="log_output",
+                       action="store_true", default=False,
+                       help="Log output streams from bots")
+    
 
     parser.add_option("--serial", dest="serial",
                       action="store_true",
                       help="Run bots in serial, instead of parallel.")
 
-    parser.add_option("-t", "--num_turns", dest="num_turns",
-                      default=200, type="int",
-                      help="Number of turns in the game")
     parser.add_option("-v", "--verbose", dest="verbose",
                       action="store_true",
                       help="Print out status as game goes.")
 
-    parser.add_option("--timeout_ms", dest="timeout_ms",
+    parser.add_option("--turntime", dest="turntime",
                       default=1000, type="int",
                       help="Amount of time to give each bot, in milliseconds")
-    parser.add_option("--load_timeout_ms", dest="load_timeout_ms",
+    parser.add_option("--loadtime", dest="loadtime",
                       default=3000, type="int",
                       help="Amount of time to give for load, in milliseconds")
     parser.add_option("--attack", dest="attack",
                       default="closest",
                       help="Attack method to use for engine. (closest, occupied)")
-    parser.add_option("--communication", dest="communication",
-                      default="changes",
-                      help="Bot communication method to use. (changes, map)")
+    parser.add_option("-r", "--rounds", dest="rounds",
+                      default=1, type="int",
+                      help="Number of rounds to play")
 
     (opts, args) = parser.parse_args(argv)
-    if len(args) < opts.num_players:
-        print("Need %s bots in the arguments, got %s %s." % (opts.num_players,
-                len(args), len(args) < opts.num_players))
-        return -1
     if opts.map is None:
         print("Please specify a map to start with")
         return -1
     try:
-        options = {"attack": opts.attack,
-                   "communication": opts.communication }
-        game = Ants(opts.map, options)
-        result = "NO RESULT"
-        bots = [('.', arg) for arg in args]
+        options = {"map": opts.map,
+                   "attack": opts.attack,
+                   "loadtime": opts.loadtime,
+                   "turntime": opts.turntime,
+                   "turns": opts.turns }
+        for round in range(opts.rounds):
+            game = Ants(options)
+            bots = [('.', arg) for arg in args]
+            if game.num_players != len(bots):
+                print("Incorrect number of bots for map.  Need %s, got %s" % (game.num_players, len(bots)))
+                break
+            print('playgame round %s' % round)
+            output_file = os.path.join(opts.output_dir, str(round))
+            run_game(game, bots, opts.turntime, opts.loadtime,
+                          opts.turns, output_file=output_file,
+                          verbose=opts.verbose,serial=opts.serial)
 
-        result = run_game(game, bots, opts.timeout_ms, opts.load_timeout_ms,
-                      opts.num_turns, output_file=opts.output_file,
-                      verbose=opts.verbose,serial=opts.serial)
-    except Exception as ex:
+    except Exception:
         traceback.print_exc()
 
     finally:
-        print('\n')
-        print(result)
         return 1
 
 if __name__ == "__main__":

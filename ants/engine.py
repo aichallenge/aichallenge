@@ -4,14 +4,7 @@ from ants import Ants
 import time
 import traceback
 
-def save_image(game, turn, anno="", player=None):
-    img = game.render_image(player)
-    scale = 4
-    new_size = (img.size[0] * scale, img.size[1] * scale)
-    img = img.resize(new_size)
-    img.save("playback/%s_%s.png" % (anno, str(turn).zfill(5)))
-
-def run_game(game, botcmds, timeoutms, loadtimeoutms, num_turns=1000,
+def run_game(game, botcmds, turntime, loadtime, turns=5000,
              output_file="testout.txt", verbose=False, serial=False):
     try:
         bot_log = [open('logs/bot%s.log' % i, 'w') for i in range(len(botcmds))]
@@ -23,15 +16,15 @@ def run_game(game, botcmds, timeoutms, loadtimeoutms, num_turns=1000,
                 game.kill_player(b)
 
         if output_file:
-            of = open(output_file, "w")
-            of.write(game.get_state())
+            of = open(output_file + ".replay", "w")
+            of.write(game.get_player_start())
             of.flush()
 
-        print('running for %s turns' % num_turns)
-        for turn in range(num_turns+1):
+        print('running for %s turns' % turns)
+        for turn in range(turns+1):
             print('turn %s' % turn)
             try:
-                if turn == 1:
+                if turn == 0:
                     game.start_game()
 
                 # send game state to each player
@@ -52,9 +45,9 @@ def run_game(game, botcmds, timeoutms, loadtimeoutms, num_turns=1000,
 
                 # get moves from each player
                 if turn == 0:
-                    time_limit = float(loadtimeoutms) / 1000
+                    time_limit = float(loadtime) / 1000
                 else:
-                    time_limit = float(timeoutms) / 1000
+                    time_limit = float(turntime) / 1000
                 start_time = time.time()
                 bot_finished = [not game.is_alive(b) for b in range(len(bots))]
                 bot_moves = [[] for b in bots]
@@ -104,29 +97,41 @@ def run_game(game, botcmds, timeoutms, loadtimeoutms, num_turns=1000,
                 raise
 
             if output_file:
+                of.write('turn %s\n' % turn)
                 of.write(game.get_state())
                 of.flush()
-            #for i in range(len(bots)):
-            #    save_image(game, turn, 'player%s' % i, i)
-            save_image(game, turn, 'frame')
-            #print(game.get_state())
 
             if verbose:
                 stats = game.get_stats()
                 s = 'turn %4d stats: '
                 for key, values in stats:
                     s += '%s: %s' % (key, values)
-                sys.stderr.write("\r%-50s" % s)
+                print("\r%-50s" % s)
 
             alive = [game.is_alive(b) for b in range(len(bots))]
-            #print('alive %s' % alive)
             if sum(alive) <= 1:
                 break
 
+        # send bots final state and score, output to replay file
         game.finish_game()
-        #print(game.get_state())
-    except Exception as ex:
-        print(ex)
+        end_line = 'end'
+        for score in game.get_scores():
+            end_line += ' %s' % score
+        end_line += '\n'
+        print(end_line)
+        for b, bot in enumerate(bots):
+            if game.is_alive(b):
+                state = end_line + game.get_player_state(b)
+                bot.write(state)
+                bot_log[b].write(state)
+                bot_log[b].flush()
+        if output_file:
+            of.write(end_line)
+            of.write(game.get_state())
+            of.flush()
+
+    except Exception:
+        traceback.print_exc()
     finally:
         for log in bot_log:
             log.close()
@@ -135,5 +140,3 @@ def run_game(game, botcmds, timeoutms, loadtimeoutms, num_turns=1000,
                 bot.kill()
         if output_file:
             of.close()
-    return "Game Over, %s" % game.get_scores()
-    f.close()
