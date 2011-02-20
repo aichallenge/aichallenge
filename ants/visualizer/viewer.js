@@ -83,9 +83,12 @@ Ants.parseData = function (data) {
         if (tokens[0] === 'turn') {
             // assume all turns are in order and start at 0
             turn = parseInt(tokens[1]);
+            this.changes.push([]);
+        } else if (tokens[0] === 'end') {
+            turn += 1;
             this.max_turns = turn;
             this.changes.push([]);
-        } else if (tokens[0] === 'M') {
+        } else if (tokens[0] === 'm') {
             // only except map input for turn 0
             if (turn === 0) {
                 var line = tokens[1];
@@ -112,18 +115,18 @@ Ants.parseData = function (data) {
                 }
                 map_row++;
             }
-        } else if (tokens[0] === 'A') {
-            var col = parseInt(tokens[1]);
-            var row = parseInt(tokens[2]);
+        } else if (tokens[0] === 'a') {
+            var row = parseInt(tokens[1]);
+            var col = parseInt(tokens[2]);
             var owner = parseInt(tokens[3]);
             this.changes[turn].push([row, col, owner]);
-        } else if (tokens[0] === 'F') {
-            var col = parseInt(tokens[1]);
-            var row = parseInt(tokens[2]);
+        } else if (tokens[0] === 'f') {
+            var row = parseInt(tokens[1]);
+            var col = parseInt(tokens[2]);
             this.changes[turn].push([row, col, this.FOOD]);
-        } else if (tokens[0] === 'D') {
-            var col = parseInt(tokens[1]);
-            var row = parseInt(tokens[2]);
+        } else if (tokens[0] === 'd') {
+            var row = parseInt(tokens[1]);
+            var col = parseInt(tokens[2]);
             this.changes[turn].push([row, col, this.DEAD]);
         }
     }
@@ -201,27 +204,32 @@ Ants.showIlks = function (changes) {
 
 // initialize visualizer
 $(function () {
-    $.get('game.0.changes.txt', function (response) {
+    $.get('0.replay', function (response) {
         Ants.init({data: response, canvas: $('#map')[0]});
         Ants.viewTurn(0);
     });
-    var map = $('#map_png');
-    var turn = 0;
-    var anno = 'frame';
-    var mapSrc = function () {
-        return '../playback/' + anno + '_' + Ants.zeroFill(turn, 5) + '.png';
+
+    var show_turn = function () {
+        if (Ants.turn === 0) {
+            $('#turn').html('start');
+        } else if (Ants.turn === Ants.max_turns) {
+            $('#turn').html('end');
+        } else {
+            $('#turn').html('turn ' + Ants.turn);
+        }
     }
-    map.src = mapSrc(turn);
-    
+
     var forward = function () {
         Ants.viewNext();
-        $('#turn').html(Ants.turn);
+        show_turn();
     };
     
     var backward = function () {
         Ants.viewPrevious();
         $('#turn').html(Ants.turn);
+        show_turn();
     };
+    
     $(document.documentElement).keydown(function (evt) {
         if (evt.keyCode == '37') { // Left Arrow
             backward();

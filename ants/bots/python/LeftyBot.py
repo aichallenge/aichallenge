@@ -5,111 +5,72 @@ import sys
 import logging
 from optparse import OptionParser
 
-DIRECTIONS = ['N','E','S','W']
-DIRECTION = {'N': (0, -1),
-             'E': (1, 0),
-             'S': (0, 1),
-             'W': (-1, 0)}
-RIGHT = {'N': 'E',
-         'E': 'S',
-         'S': 'W',
-         'W': 'N'}
-LEFT = {'N': 'W',
-        'E': 'N',
-        'S': 'E',
-        'W': 'S'}
-
-class Lefty:
+class LeftyBot:
     def __init__(self):
-        self.straight_ants = {}
-        self.lefty_ants = {}
+        self.ants_straight = {}
+        self.ants_lefty = {}
 
     def do_turn(self, ants):
+        destinations = []
         new_straight = {}
         new_lefty = {}
-        ant_locations = ants.my_ants()
-        for ant_x, ant_y in ant_locations:
-
-            # send new ants in a random direction
-            if (not (ant_x, ant_y) in self.straight_ants and
-                    not (ant_x, ant_y) in self.lefty_ants):
-                direction = choice(DIRECTIONS)
-                self.straight_ants[(ant_x, ant_y)] = direction
-
-            # send straight ants in same direction
-            if (ant_x, ant_y) in self.straight_ants:
-                direction = self.straight_ants[(ant_x, ant_y)]
-                new_x = (ant_x + DIRECTION[direction][0]) % ants.width
-                new_y = (ant_y + DIRECTION[direction][1]) % ants.height
-                if ants.passable(new_x, new_y):
-                    if (not (new_x, new_y) in new_straight and
-                            not (new_x, new_y) in new_lefty and
-                            not (new_x, new_y) in ant_locations):
-                        new_straight[(new_x, new_y)] = direction
-                        ants.issue_order((ant_x, ant_y, direction))
-                        continue
+        for a_row, a_col in ants.my_ants():
+            # send new ants in a straight line
+            if (not (a_row, a_col) in self.ants_straight and
+                    not (a_row, a_col) in self.ants_lefty):
+                if a_row % 2 == 0:
+                    if a_col % 2 == 0:
+                        direction = 'n'
                     else:
-                        # have ant wait until it is clear
-                        new_straight[(ant_x, ant_y)] = direction
-                        continue
+                        direction = 's'
                 else:
-                    self.lefty_ants[(ant_x, ant_y)] = RIGHT[direction]
+                    if a_col % 2 == 0:
+                        direction = 'e'
+                    else:
+                        direction = 'w'
+                self.ants_straight[(a_row, a_col)] = direction
 
-            # send lefty ants along the wall
-            if (ant_x, ant_y) in self.lefty_ants:
-                # check if ant got stuck in center of map
-                if (ants.passable((ant_x + 1) % ants.width, ant_y) and
-                        ants.passable((ant_x - 1) % ants.width, ant_y) and
-                        ants.passable(ant_x, (ant_y + 1) % ants.height) and
-                        ants.passable(ant_x, (ant_y - 1) % ants.height)):
-                    continue
-                direction = self.lefty_ants[(ant_x, ant_y)]
-                # turn left
-                direction = LEFT[direction]
-                # look for a valid direction clockwise
-                for i in range(4):
-                    new_x = (ant_x + DIRECTION[direction][0]) % ants.width
-                    new_y = (ant_y + DIRECTION[direction][1]) % ants.height
-                    if ants.passable(new_x, new_y):
-                        if (not (new_x, new_y) in new_straight and
-                                not (new_x, new_y) in new_lefty and
-                                not (new_x, new_y) in ant_locations):
-                            new_lefty[(new_x, new_y)] = direction
-                            ants.issue_order((ant_x, ant_y, direction))
+            # send ants going in a straight line in the same direction
+            if (a_row, a_col) in self.ants_straight:
+                direction = self.ants_straight[(a_row, a_col)]
+                n_row, n_col = ants.destination(a_row, a_col, direction)
+                if ants.passable(n_row, n_col):
+                    if (ants.unoccupied(n_row, n_col) and
+                            not (n_row, n_col) in destinations):
+                        ants.issue_order((a_row, a_col, direction))
+                        new_straight[(n_row, n_col)] = direction
+                        destinations.append((n_row, n_col))
+                    else:
+                        # pause ant, turn and try again next turn
+                        new_straight[(a_row, a_col)] = LEFT[direction]
+                        destinations.append((a_row, a_col))
+                else:
+                    # hit a wall, start following it
+                    self.ants_lefty[(a_row, a_col)] = RIGHT[direction]
+
+            # send ants following a wall, keeping it on their left
+            if (a_row, a_col) in self.ants_lefty:
+                direction = self.ants_lefty[(a_row, a_col)]
+                directions = [LEFT[direction], direction, RIGHT[direction], BEHIND[direction]]
+                # try 4 directions in order, attempting to turn left at corners
+                for new_direction in directions:
+                    n_row, n_col = ants.destination(a_row, a_col, new_direction)
+                    if ants.passable(n_row, n_col):
+                        if (ants.unoccupied(n_row, n_col) and
+                                not (n_row, n_col) in destinations):
+                            ants.issue_order((a_row, a_col, new_direction))
+                            new_lefty[(n_row, n_col)] = new_direction
+                            destinations.append((n_row, n_col))
                             break
                         else:
                             # have ant wait until it is clear
-                            new_lefty[(ant_x, ant_y)] = direction
+                            new_straight[(a_row, a_col)] = RIGHT[direction]
+                            destinations.append((a_row, a_col))
                             break
-                    direction = RIGHT[direction] # try another direction
 
         # reset lists
-        self.straight_ants = new_straight
-        self.lefty_ants = new_lefty
-
-def main():
-    map_data = ''
-    game = Ants()
-    bot = Lefty()
-    while(True):
-        try:
-            current_line = raw_input()
-            if current_line.lower() == 'ready':
-                game.setup(map_data)
-                game.finish_turn()
-                map_data = ''
-            elif current_line.lower() == 'go':
-                game.update(map_data)
-                try:
-                    bot.do_turn(game)
-                except:
-                    sys.stderr.write("Unexpected error in do_turn\n")
-                game.finish_turn()
-                map_data = ''
-            else:
-                map_data += current_line + '\n'
-        except EOFError:
-            break
+        self.ants_straight = new_straight
+        self.ants_lefty = new_lefty
 
 if __name__ == '__main__':
     try:
@@ -118,8 +79,7 @@ if __name__ == '__main__':
     except ImportError:
         pass
     try:
-        main()
+        Ants.run(LeftyBot())
     except KeyboardInterrupt:
         print('ctrl-c, leaving ...')
-    except:
-        sys.stderr.write("Unexpected error in main\n")
+        

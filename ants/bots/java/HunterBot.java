@@ -1,12 +1,11 @@
 import java.util.*;
 
-public class HunterBot implements Runnable {
-	private static Ants ants = new Ants();
+public class HunterBot implements Bot {
 	public static void main(String[] args) {
-		Ants.run(new HunterBot(), ants);
+		Ants.run(new HunterBot());
 	}
 
-	public void run() {
+	public void do_turn(Ants ants) {
 		Set<Tile> destinations = new HashSet<Tile>();
 		Set<Tile> targets = new HashSet<Tile>();
 		targets.addAll(ants.food());

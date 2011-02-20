@@ -13,29 +13,12 @@ WATER = -3
 CONFLICT = -4
 UNSEEN = -5
 
-WATER_COLOR = (0, 0, 128)
-LAND_COLOR = (139, 69, 19)
-FOOD_COLOR = (255, 255, 255)
-CONFLICT_COLOR = (255, 128, 128)
-UNSEEN_COLOR = (0, 0, 0)
-
 MAP_RENDER = 'abcdefghijklmnopqrstuvwxyz?!%*.'
 
-PLAYER_COLOR = [(204, 0, 0),    # red
-                (255, 255, 0),  # yellow
-                (51, 153, 0),   # green
-                (51, 51, 153),  # blue
-                (154, 51, 154), # purple
-                (50, 154, 154), # teal
-                (254, 154, 2),  # orange
-                (154, 206, 51)] # sage
-
-MAP_COLOR = PLAYER_COLOR + [UNSEEN_COLOR, CONFLICT_COLOR, WATER_COLOR, FOOD_COLOR, LAND_COLOR]
-
-DIRECTION = {'N': (-1, 0),
-             'E': (0, 1),
-             'S': (1, 0),
-             'W': (0, -1)}
+AIM = {'n': (-1, 0),
+       'e': (0, 1),
+       's': (1, 0),
+       'w': (0, -1)}
 
 # precalculated sqrt & radius coordinates for distance calcs
 SQRT = [int(sqrt(r)) for r in range(101)]
@@ -228,27 +211,27 @@ class Ants:
             for col, row in self.turn_reveal[player]:
                 value = self.map[row][col]
                 if value == LAND:
-                    tmp += 'l %s %s\n' % (col, row)
+                    tmp += 'l %s %s\n' % (row, col)
                 elif value ==  WATER:
-                    tmp += 'w %s %s\n' % (col, row)
+                    tmp += 'w %s %s\n' % (row, col)
         # send visible ants
         for (col, row), owner in self.ant_list.items():
             if player == None:
-                tmp += 'a %s %s %s\n' % (col, row, owner)
+                tmp += 'a %s %s %s\n' % (row, col, owner)
             elif v[row][col]:
-                tmp += 'a %s %s %s\n' % (col, row, self.switch[player][owner])
+                tmp += 'a %s %s %s\n' % (row, col, self.switch[player][owner])
                 self.revealed[player][row][col] = False
         # send visible food
         for col, row in self.food_list:
             if player == None or v[row][col]:
-                tmp += 'f %s %s\n' % (col, row)
+                tmp += 'f %s %s\n' % (row, col)
                 if player != None:
                     self.revealed[player][row][col] = False
         # send visible conflict
         for row in range(self.height):
             for col in range(self.width):
-                if (player == None or v[row][col]) and self.map[row][col] == CONFLICT:
-                    tmp += 'd %s %s\n' % (col, row)
+                if ((player == None or v[row][col])) and self.map[row][col] == CONFLICT:
+                    tmp += 'd %s %s\n' % (row, col)
                     if player != None:
                         self.revealed[player][row][col] = False
         return tmp
@@ -286,20 +269,25 @@ class Ants:
         # orders come in as x, y (col, row)
         # everywhere else they are row, col
         new_orders = []
-        errors = []
+        valid = []
+        invalid = []
         try:
             for line in orders:
-                line = line.strip().upper()
+                line = line.strip().lower()
                 if line != '' and line[0] != '#':
                     data = line.split()
-                    if data[0] == 'O':
-                        if not data[3] in DIRECTION.keys():
-                            errors.append()
+                    if data[0] == 'o':
+                        if not data[3] in AIM.keys():
+                            invalid.append(line + ' # invalid direction')
                         #order = [int(data[1]), int(data[2]), data[3]]
                         #o_col = (int(data[1]) - self.width//2 + self.center[player][0]) % self.width
                         #o_row = (int(data[2]) - self.height//2 + self.center[player][1]) % self.height
-                        new_orders.append((int(data[1]), int(data[2]), data[3]))
-            return new_orders, errors
+                        try:
+                            new_orders.append((int(data[2]), int(data[1]), data[3]))
+                            valid.append(line)
+                        except:
+                            invalid.append(line + ' # invalid row, col')
+            return new_orders, valid, invalid
         except:
             import traceback
             traceback.print_exc()
@@ -314,8 +302,8 @@ class Ants:
         # process orders ignoring bad or duplicates
         for order in orders:
             col1, row1, d = order
-            row2 = (row1 + DIRECTION[d][0]) % self.height
-            col2 = (col1 + DIRECTION[d][1]) % self.width
+            row2 = (row1 + AIM[d][0]) % self.height
+            col2 = (col1 + AIM[d][1]) % self.width
             if src.has_key((col1,row1)): # order already given
                 continue
             if self.map[row1][col1] != player: # must move *your* ant
@@ -423,7 +411,7 @@ class Ants:
                         score_share = len(ant_group)
                         for (e_col, e_row), e_owner in ant_group.items():
                             score[e_owner] += Fraction(1, score_share)
-                            self.map[e_row][e_col] = LAND
+                            self.map[e_row][e_col] = CONFLICT
                             try:
                                 del self.ant_list[(e_col, e_row)]
                             except:
@@ -469,18 +457,19 @@ class Ants:
 
     # used for 'map hack' playback
     def get_state(self):
-        if self.turn == 0:
-            return self.render_map()
-        else:
-            return self.render_changes()
+        return self.render_changes()
 
     # used for turn 0, sending minimal info for bot to load
     def get_player_start(self, player=None):
-        return ('loadtime %s\nturntime %s\nrows %s\ncols %s\nturns %s\n' +
+        
+        tmp = ('turn 0\nloadtime %s\nturntime %s\nrows %s\ncols %s\nturns %s\n' +
                 'viewradius2 %s\nattackradius2 %s\nspawnradius2 %s\n') % (
                 self.loadtime, self.turntime, self.height, self.width,
                 self.turns, self.viewradius, self.attackradius,
                 self.spawnradius)
+        if player == None:
+            tmp += self.render_map()
+        return tmp
 
     # used for sending state to bots for each turn
     def get_player_state(self, player):
@@ -503,12 +492,12 @@ class Ants:
         return ''
 
     def do_moves(self, player, moves):
-        orders, errors = self.parse_orders(player, moves)
-        if len(errors) == 0:
+        orders, valid, invalid = self.parse_orders(player, moves)
+        if len(invalid) == 0:
             self.do_orders(player, orders)
         else:
             self.kill_player(player)
-        return errors
+        return valid, invalid
 
     def do_all_moves(self, bot_moves):
         return [self.do_moves(b, moves) for b, moves in enumerate(bot_moves)]

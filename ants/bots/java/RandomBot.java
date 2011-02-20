@@ -1,12 +1,11 @@
 import java.util.*;
 
-public class RandomBot implements Runnable {
-	private static Ants ants = new Ants();
+public class RandomBot implements Bot {
 	public static void main(String[] args) {
-		Ants.run(new RandomBot(), ants);
+		Ants.run(new RandomBot());
 	}
 	
-	public void run() {
+	public void do_turn(Ants ants) {
 		Set<Tile> destinations = new HashSet<Tile>();
 		for (Tile location : ants.myAnts()) {
 			List<Aim> directions = new ArrayList<Aim>(EnumSet.allOf(Aim.class));

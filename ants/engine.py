@@ -18,6 +18,7 @@ def run_game(game, botcmds, turntime, loadtime, turns=5000,
         if output_file:
             of = open(output_file + ".replay", "w")
             of.write(game.get_player_start())
+            # TODO: write player names and crap
             of.flush()
 
         print('running for %s turns' % turns)
@@ -41,6 +42,11 @@ def run_game(game, botcmds, turntime, loadtime, turns=5000,
                             bot_log[b].write(state)
                             bot_log[b].flush()
                 if turn > 0:
+                    if output_file:
+                        of.write('turn %s\n' % turn)
+                        of.write('score %s\n' % ' '.join([str(s) for s in game.get_scores()]))
+                        of.write(game.get_state())
+                        of.flush()
                     game.start_turn()
 
                 # get moves from each player
@@ -85,7 +91,13 @@ def run_game(game, botcmds, turntime, loadtime, turns=5000,
                 # process all moves
                 bot_alive = [game.is_alive(b) for b in range(len(bots))]
                 if turn > 0 and not game.game_over():
-                    game.do_all_moves(bot_moves)
+                    for b, moves in enumerate(bot_moves):
+                        valid, invalid = game.do_moves(b, moves) 
+                        if output_file and len(valid) > 0:
+                            of.write('\n'.join(valid))
+                            of.write('\n')
+                            of.flush()
+
                     game.finish_turn()
                 for b, alive in enumerate(bot_alive):
                     if alive and not game.is_alive(b):
@@ -95,11 +107,6 @@ def run_game(game, botcmds, turntime, loadtime, turns=5000,
                 traceback.print_exc()
                 print("Got an error running the bots.")
                 raise
-
-            if output_file:
-                of.write('turn %s\n' % turn)
-                of.write(game.get_state())
-                of.flush()
 
             if verbose:
                 stats = game.get_stats()
@@ -114,19 +121,15 @@ def run_game(game, botcmds, turntime, loadtime, turns=5000,
 
         # send bots final state and score, output to replay file
         game.finish_game()
-        end_line = 'end'
-        for score in game.get_scores():
-            end_line += ' %s' % score
-        end_line += '\n'
-        print(end_line)
+        score_line = 'end\nscore %s\n' % ' '.join([str(s) for s in game.get_scores()])
         for b, bot in enumerate(bots):
             if game.is_alive(b):
-                state = end_line + game.get_player_state(b)
+                state = score_line + game.get_player_state(b)
                 bot.write(state)
                 bot_log[b].write(state)
                 bot_log[b].flush()
         if output_file:
-            of.write(end_line)
+            of.write(score_line)
             of.write(game.get_state())
             of.flush()
 

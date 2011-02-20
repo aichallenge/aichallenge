@@ -1,9 +1,8 @@
 import java.util.*;
 
-public class LeftyBot implements Runnable {
-	private static Ants ants = new Ants();	
+public class LeftyBot implements Bot {
 	public static void main(String[] args) {
-		Ants.run(new LeftyBot(), ants);
+		Ants.run(new LeftyBot());
 	}
 
 	// things to remember between turns
@@ -11,7 +10,7 @@ public class LeftyBot implements Runnable {
 	private Map<Tile, Aim> antLefty = new HashMap<Tile, Aim>();
 
 	// bot logic, run once per turn
-	public void run() {
+	public void do_turn(Ants ants) {
 		Set<Tile> destinations = new HashSet<Tile>();
 		Map<Tile, Aim> newStraight = new HashMap<Tile, Aim>();
 		Map<Tile, Aim> newLefty = new HashMap<Tile, Aim>();
@@ -53,7 +52,7 @@ public class LeftyBot implements Runnable {
 					antLefty.put(location, direction.right());
 				}
 			}
-			// send ants following a wall around the wall
+			// send ants following a wall, keeping it on their left
 			if (antLefty.containsKey(location)) {
 				Aim direction = antLefty.get(location);
 				List<Aim> directions = new ArrayList<Aim>();
@@ -69,6 +68,7 @@ public class LeftyBot implements Runnable {
 							ants.issueOrder(location, new_direction);
 							newLefty.put(destination, new_direction);
 							destinations.add(destination);
+							break;
 						} else {
 							// pause ant, turn and send straight
 							newStraight.put(location, direction.right());

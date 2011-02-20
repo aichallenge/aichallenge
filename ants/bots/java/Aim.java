@@ -4,10 +4,10 @@ import java.util.Map;
 
 
 public enum Aim {
-	NORTH (0, -1, 'N'),
-	EAST (1, 0, 'E'),
-	SOUTH (0, 1, 'S'),
-	WEST (-1, 0, 'W');
+	NORTH (0, -1, 'n'),
+	EAST (1, 0, 'e'),
+	SOUTH (0, 1, 's'),
+	WEST (-1, 0, 'w');
 	
 	private static final Map<Aim, Aim> rightLookup = new EnumMap<Aim, Aim>(Aim.class);
 	private static final Map<Aim, Aim> leftLookup = new EnumMap<Aim, Aim>(Aim.class);
@@ -27,19 +27,19 @@ public enum Aim {
 		behindLookup.put(SOUTH, NORTH);
 		behindLookup.put(EAST, WEST);
 		behindLookup.put(WEST, EAST);
-		symbolLookup.put('N', NORTH);
-		symbolLookup.put('E', EAST);
-		symbolLookup.put('S', SOUTH);
-		symbolLookup.put('W', WEST);
+		symbolLookup.put('n', NORTH);
+		symbolLookup.put('e', EAST);
+		symbolLookup.put('s', SOUTH);
+		symbolLookup.put('w', WEST);
 	}
 	
 	public final int dCol;
 	public final int dRow;
 	public final char symbol;
 	
-	private Aim(int dCol, int dRow, char symbol) {
-		this.dCol = dCol;
+	private Aim(int dRow, int dCol, char symbol) {
 		this.dRow = dRow;
+		this.dCol = dCol;
 		this.symbol = symbol;
 	}
 	

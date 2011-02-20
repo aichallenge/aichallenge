@@ -83,45 +83,41 @@ public class Ants {
 			return false;
 		}
 	}
-		
-	public boolean update(List<String> data) {
-		return this.updateChanges(data);
-	}
 	
-	private boolean updateChanges(List<String> data) {
+	private boolean update(List<String> data) {
 		// clear ants and food
-		//for (Tile ant : this.antList.keySet()) {
-		//	this.map[ant.row()][ant.col()] = Ilk.LAND;
-		//}
+		for (Tile ant : this.antList.keySet()) {
+			this.map[ant.row()][ant.col()] = Ilk.LAND;
+		}
 		this.antList.clear();
-		//for (Tile food : this.foodList) {
-		//	this.map[food.row()][food.col()] = Ilk.LAND;
-		//}
+		for (Tile food : this.foodList) {
+			this.map[food.row()][food.col()] = Ilk.LAND;
+		}
 		this.foodList.clear();
-		//for (Tile dead : this.deadList) {
-		//	this.map[dead.row()][dead.col()] = Ilk.LAND;
-		//}
+		for (Tile dead : this.deadList) {
+			this.map[dead.row()][dead.col()] = Ilk.LAND;
+		}
 		this.deadList.clear();
 		// get new tile ilks
 		for (String line : data) {
 			String tokens[] = line.split(" ");
 			if (tokens.length > 2) {
-				int col = Integer.parseInt(tokens[1]);
-				int row = Integer.parseInt(tokens[2]);
-				if (tokens[0].equals("L")) {
+				int row = Integer.parseInt(tokens[1]);
+				int col = Integer.parseInt(tokens[2]);
+				if (tokens[0].equals("l")) {
 					this.map[row][col] = Ilk.LAND;
-			    } else if (tokens[0].equals("W")) {
+			    } else if (tokens[0].equals("w")) {
 			    	this.map[row][col] = Ilk.WATER;
-			    } else if (tokens[0].equals("A")) {
+			    } else if (tokens[0].equals("a")) {
 			    	Ilk ilk = Ilk.fromId(Integer.parseInt(tokens[3]));
 			    	this.map[row][col] = ilk;
-			    	this.antList.put(new Tile(col, row), ilk);
-			    } else if (tokens[0].equals("F")) {
+			    	this.antList.put(new Tile(row, col), ilk);
+			    } else if (tokens[0].equals("f")) {
 			    	this.map[row][col] = Ilk.FOOD;
-			    	this.foodList.add(new Tile(col, row));
-			    } else if (tokens[0].equals("D")) {
+			    	this.foodList.add(new Tile(row, col));
+			    } else if (tokens[0].equals("d")) {
 			    	this.map[row][col] = Ilk.DEAD;
-			    	this.deadList.add(new Tile(col, row));
+			    	this.deadList.add(new Tile(row, col));
 			    }			
 			}
 		}
@@ -181,20 +177,6 @@ public class Ants {
 	public List<Aim> directions (Tile t1, Tile t2) {
 		List<Aim> directions = new ArrayList<Aim>();
 		
-		if (t1.col() < t2.col()) {
-			if (t2.col() - t1.col() >= this.cols / 2) {
-				directions.add(Aim.WEST);
-			} else {
-				directions.add(Aim.EAST);
-			}
-		} else if (t1.col() > t2.col()) {
-			if (t1.col() - t2.col() >= this.cols / 2) {
-				directions.add(Aim.EAST);
-			} else {
-				directions.add(Aim.WEST);
-			}
-		}
-		
 		if (t1.row() < t2.row()) {
 			if (t2.row() - t1.row() >= this.rows / 2) {
 				directions.add(Aim.NORTH);
@@ -206,6 +188,20 @@ public class Ants {
 				directions.add(Aim.SOUTH);
 			} else {
 				directions.add(Aim.NORTH);
+			}
+		}
+
+		if (t1.col() < t2.col()) {
+			if (t2.col() - t1.col() >= this.cols / 2) {
+				directions.add(Aim.WEST);
+			} else {
+				directions.add(Aim.EAST);
+			}
+		} else if (t1.col() > t2.col()) {
+			if (t1.col() - t2.col() >= this.cols / 2) {
+				directions.add(Aim.EAST);
+			} else {
+				directions.add(Aim.WEST);
 			}
 		}
 		
@@ -230,10 +226,11 @@ public class Ants {
 		if (nCol < 0) {
 			nCol += this.cols;
 		}
-		return new Tile(nCol, nRow);
+		return new Tile(nRow, nCol);
 	}
 
-	public static void run(Runnable bot, Ants ants) {
+	public static void run(Bot bot) {
+		Ants ants = new Ants();
 		StringBuffer line = new StringBuffer();
 		ArrayList<String> data = new ArrayList<String>();
 		int c;
@@ -250,7 +247,7 @@ public class Ants {
 							data.clear();
 						} else if (full_line.equals("go")) {
 							ants.update(data);
-							bot.run();
+							bot.do_turn(ants);
 							ants.finishTurn();
 							data.clear();
 					    } else {

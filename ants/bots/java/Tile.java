@@ -1,5 +1,5 @@
 public class Tile {
-	Tile(int col, int row) {
+	Tile(int row, int col) {
 		this.row = row;
 		this.col = col;
 	}
@@ -28,6 +28,6 @@ public class Tile {
 	}
 	
 	public String toString() {
-		return "(" + this.col + "," + this.row + ")";
+		return "(" + this.row + "," + this.col + ")";
 	}
 }

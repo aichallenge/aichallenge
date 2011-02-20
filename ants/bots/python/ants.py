@@ -5,14 +5,32 @@ import random
 
 MY_ANT = 0
 ANTS = 0
-LAND = -1
-FOOD = -2
-WALL = -3
-DEAD = -4
+DEAD = -1
+LAND = -2
+FOOD = -3
+WATER = -4
 UNSEEN = -5
 
 MAP_RENDER = 'abcdefghijklmnopqrstuvwxyz?!%*.'
 MAP_READ = '?!%*.abcdefghijklmnopqrstuvwxyz'
+
+
+AIM = {'n': (-1, 0),
+       'e': (0, 1),
+       's': (1, 0),
+       'w': (0, -1)}
+RIGHT = {'n': 'e',
+         'e': 's',
+         's': 'w',
+         'w': 'n'}
+LEFT = {'n': 'w',
+        'e': 'n',
+        's': 'e',
+        'w': 's'}
+BEHIND = {'n': 's',
+          's': 'n',
+          'e': 'w',
+          'w': 'e'}
 
 class Ants():
     def __init__(self):
@@ -22,66 +40,53 @@ class Ants():
         self.ant_list = {}
         self.food_list = []
         self.dead_list = []
-        self.update = self.update_changes
 
     def setup(self, data):
         for line in data.split('\n'):
-            line = line.strip().upper()
+            line = line.strip().lower()
             if len(line) > 0:
                 tokens = line.split()
                 key = tokens[0]
-                if key == 'WIDTH':
+                if key == 'cols':
                     self.width = int(tokens[1])
-                elif key == 'HEIGHT':
+                elif key == 'rows':
                     self.height = int(tokens[1])
         self.map = [[UNSEEN for col in range(self.width)]
                     for row in range(self.height)]
 
-    def update_changes(self, data):
+    def update(self, data):
         # clear ant and food data
-        for (col, row), owner in self.ant_list.items():
+        for (row, col), owner in self.ant_list.items():
             self.map[row][col] = LAND
         self.ant_list = {}
-        for col, row in self.food_list:
+        for row, col in self.food_list:
             self.map[row][col] = LAND
         self.food_list = []
-        for col, row in self.dead_list:
+        for row, col in self.dead_list:
             self.map[row][col] = LAND
         self.dead_list = []
 
         # update map and create new ant and food lists
         for line in data.split('\n'):
-            line = line.strip().upper()
+            line = line.strip().lower()
             if len(line) > 0:
                 tokens = line.split()
                 if len(tokens) >= 3:
-                    col = int(tokens[1])
-                    row = int(tokens[2])
-                    if tokens[0] == 'A':
+                    row = int(tokens[1])
+                    col = int(tokens[2])
+                    if tokens[0] == 'a':
                         owner = int(tokens[3])
                         self.map[row][col] = owner
-                        self.ant_list[(col, row)] = owner
-                    elif tokens[0] == 'F':
+                        self.ant_list[(row, col)] = owner
+                    elif tokens[0] == 'f':
                         self.map[row][col] = FOOD
-                        self.food_list.append((col, row))
-                    elif tokens[0] == 'L':
+                        self.food_list.append((row, col))
+                    elif tokens[0] == 'l':
                         self.map[row][col] = LAND
-                    elif tokens[0] == 'W':
-                        self.map[row][col] = WALL
-                    elif tokens[0] == 'D':
+                    elif tokens[0] == 'w':
+                        self.map[row][col] = WATER
+                    elif tokens[0] == 'd':
                         self.map[row][col] = DEAD
-
-    def update_map(self, data):
-        self.map = [[MAP_READ.index(x) - 5 for x in y]
-                        for y in data[:-1].split('\n')]
-        self.ant_list = {}
-        self.food_list = []
-        for y in range(self.height):
-            for x in range(self.width):
-                if self.map[y][x] >= ANTS:
-                    self.ant_list[(x,y)] = self.map[y][x]
-                elif self.map[y][x] == FOOD:
-                    self.food_list.append((x,y))
 
     def issue_order(self, order):
         sys.stdout.write('O %s %s %s\n' % (order[0], order[1], order[2]))
@@ -92,55 +97,61 @@ class Ants():
         sys.stdout.flush()
 
     def my_ants(self):
-        return [(x, y) for (x, y), owner in self.ant_list.items()
+        return [(row, col) for (row, col), owner in self.ant_list.items()
                     if owner == MY_ANT]
 
     def enemy_ants(self):
-        return [((x, y), owner) for (x, y), owner in self.ant_list.items()
+        return [((row, col), owner) for (row, col), owner in self.ant_list.items()
                     if owner != MY_ANT]
 
     def food(self):
         return self.food_list[:]
 
-    def passable(self, x, y):
-        return self.map[y][x] in (LAND, DEAD)
+    def passable(self, row, col):
+        return self.map[row][col] > WATER
+    
+    def unoccupied(self, row, col):
+        return self.map[row][col] in (LAND, DEAD)
 
-    def distance(self, x1, y1, x2, y2):
-        x1 = x1 % self.width
-        x2 = x2 % self.width
-        y1 = y1 % self.height
-        y2 = y2 % self.height
-        d_x = min(abs(x1 - x2), self.width - abs(x1 - x2))
-        d_y = min(abs(y1 - y2), self.height - abs(y1 - y2))
-        return d_x + d_y
+    def destination(self, row, col, direction):
+        d_row, d_col = AIM[direction]
+        return ((row + d_row) % self.height, (col + d_col) % self.width)        
 
-    def direction(self, x1, y1, x2, y2):
+    def distance(self, row1, col1, row2, col2):
+        row1 = row1 % self.height
+        row2 = row2 % self.height
+        col1 = col1 % self.width
+        col2 = col2 % self.width
+        d_col = min(abs(col1 - col2), self.width - abs(col1 - col2))
+        d_row = min(abs(row1 - row2), self.height - abs(row1 - row2))
+        return d_row + d_col
+
+    def direction(self, row1, col1, row2, col2):
         d = []
-        x1 = x1 % self.width
-        x2 = x2 % self.width
-        y1 = y1 % self.height
-        y2 = y2 % self.height
-        if x1 < x2:
-            if x2 - x1 >= self.width//2:
-                d.append('W')
-            if x2 - x1 <= self.width//2:
-                d.append('E')
-        if x2 < x1:
-            if x1 - x2 >= self.width//2:
-                d.append('E')
-            if x1 - x2 <= self.width//2:
-                d.append('W')
-
-        if y1 < y2:
-            if y2 - y1 >= self.height//2:
-                d.append('N')
-            if y2 - y1 <= self.height//2:
-                d.append('S')
-        if y2 < y1:
-            if y1 - y2 >= self.height//2:
-                d.append('S')
-            if y1 - y2 <= self.height//2:
-                d.append('N')
+        row1 = row1 % self.height
+        row2 = row2 % self.height
+        col1 = col1 % self.width
+        col2 = col2 % self.width
+        if row1 < row2:
+            if row2 - row1 >= self.height//2:
+                d.append('n')
+            if row2 - row1 <= self.height//2:
+                d.append('s')
+        if row2 < row1:
+            if row1 - row2 >= self.height//2:
+                d.append('s')
+            if row1 - row2 <= self.height//2:
+                d.append('n')
+        if col1 < col2:
+            if col2 - col1 >= self.width//2:
+                d.append('w')
+            if col2 - col1 <= self.width//2:
+                d.append('e')
+        if col2 < col1:
+            if col1 - col2 >= self.width//2:
+                d.append('e')
+            if col1 - col2 <= self.width//2:
+                d.append('w')
         return d
 
     def render_text(self):
@@ -148,3 +159,26 @@ class Ants():
         for row in self.map:
             tmp += '# %s\n' % ''.join([MAP_RENDER[col] for col in row])
         return tmp
+
+    @staticmethod
+    def run(bot):
+        ants = Ants()
+        map_data = ''
+        while(True):
+            try:
+                current_line = raw_input()
+                if current_line.lower() == 'ready':
+                    ants.setup(map_data)
+                    ants.finish_turn()
+                    map_data = ''
+                elif current_line.lower() == 'go':
+                    ants.update(map_data)
+                    bot.do_turn(ants)
+                    ants.finish_turn()
+                    map_data = ''
+                else:
+                    map_data += current_line + '\n'
+            except EOFError:
+                break
+            except:
+                traceback.print_exc(file=sys.stderr)
