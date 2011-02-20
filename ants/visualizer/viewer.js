@@ -157,7 +157,7 @@ Ants.viewTurn = function (turn) {
 }
 
 Ants.viewNext = function () {
-    this.clearIlks(this.changes[this.turn]);
+    this.clearIlks(this.changes[this.turn], false);
     this.turn++;
     if (this.turn > this.max_turns) {
         this.turn = 0;
@@ -174,17 +174,20 @@ Ants.viewPrevious = function () {
     this.showIlks(this.changes[this.turn]);
 }
 
-Ants.clearIlks = function (changes) {
+Ants.clearIlks = function (changes, clear_dead) {
+    clear_dead = clear_dead === undefined ? true : clear_dead
     var x_offset = this.canvas.width / 2 - this.x_offset
     var y_offset = this.canvas.height / 2 - this.y_offset
     for (var c = 0, clen = changes.length; c < clen; ++c) {
         var row = changes[c][0];
         var col = changes[c][1];
         var ilk = changes[c][2];
-        this.dc.fillStyle = this.COLOR[this.LAND];
-        var x = col * this.x_scale + x_offset;
-        var y = row * this.y_scale + y_offset;
-        this.dc.fillRect(x, y, this.x_scale, this.y_scale);
+        if (clear_dead && ilk === this.DEAD || ilk !== this.DEAD) {
+            this.dc.fillStyle = this.COLOR[this.LAND];
+            var x = col * this.x_scale + x_offset;
+            var y = row * this.y_scale + y_offset;
+            this.dc.fillRect(x, y, this.x_scale, this.y_scale);
+        }
     }
 }
 

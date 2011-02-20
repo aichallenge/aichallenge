@@ -73,6 +73,7 @@ class Ants:
 
         self.ant_list = {}  # indexed list of ant locations for speed
         self.food_list = [] # indexed list of food locations for speed
+        self.conflict_list = {}
 
 
         #self.center = [] # used to scroll the map so that a player's
@@ -205,14 +206,11 @@ class Ants:
     def render_changes(self, player=None):
         if player != None:
             v = self.get_vision(player)
-        # send new water/land
+        # send new water
         tmp = ''
         if player != None:
             for col, row in self.turn_reveal[player]:
-                value = self.map[row][col]
-                if value == LAND:
-                    tmp += 'l %s %s\n' % (row, col)
-                elif value ==  WATER:
+                if self.map[row][col] ==  WATER:
                     tmp += 'w %s %s\n' % (row, col)
         # send visible ants
         for (col, row), owner in self.ant_list.items():
@@ -231,9 +229,10 @@ class Ants:
         for row in range(self.height):
             for col in range(self.width):
                 if ((player == None or v[row][col])) and self.map[row][col] == CONFLICT:
-                    tmp += 'd %s %s\n' % (row, col)
-                    if player != None:
-                        self.revealed[player][row][col] = False
+                    for owner in self.conflict_list[(row, col)]:
+                        tmp += 'd %s %s %s\n' % (row, col, owner)
+                        if player != None:
+                            self.revealed[player][row][col] = False
         return tmp
 
     def render_map(self, player=None):
@@ -340,6 +339,10 @@ class Ants:
                     self.map[row2][col2] != player)
                     or self.map[row2][col2] == CONFLICT):
                 self.map[row2][col2] = CONFLICT
+                if (row2, col2) in self.conflict_list:
+                    self.conflict_list[(row2, col2)].append(player)
+                else:
+                    self.conflict_list[(row2, col2)] = [player]                    
                 if self.ant_list.has_key((col2,row2)):
                     del self.ant_list[(col2,row2)]
             else:
@@ -351,6 +354,7 @@ class Ants:
             for col in range(self.width):
                 if self.map[row][col] == CONFLICT:
                     self.map[row][col] = LAND
+        self.conflict_list.clear()
 
     # must have only 1 force near the food to create a new ant
     #  and food in contention is eliminated
@@ -373,6 +377,8 @@ class Ants:
                     self.ant_list[(f_col, f_row)] = owner
 
     # ants kill enemies of less or equally occupied
+    # TODO: update function to mark conflict for dead ant info
+    # TODO: write function correctly, don't kill any ant until end
     def do_attack_occupied(self):
         score = [Fraction(0, 1) for i in range(self.num_players)]
         for (a_col, a_row), a_owner in self.ant_list.items():
@@ -412,6 +418,10 @@ class Ants:
                         for (e_col, e_row), e_owner in ant_group.items():
                             score[e_owner] += Fraction(1, score_share)
                             self.map[e_row][e_col] = CONFLICT
+                            if (e_row, e_col) in self.conflict_list:
+                                self.conflict_list[(e_row, e_col)].append(e_owner)
+                            else:
+                                self.conflict_list[(e_row, e_col)] = [e_owner]                    
                             try:
                                 del self.ant_list[(e_col, e_row)]
                             except:

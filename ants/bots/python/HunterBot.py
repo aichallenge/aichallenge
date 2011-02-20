@@ -23,7 +23,7 @@ class HunterBot():
             shuffle(directions)
             for direction in directions:
                 n_row, n_col = ants.destination(a_row, a_col, direction)
-                if ants.passable(n_row, n_col) and not (n_row, n_col) in destinations:
+                if ants.unoccupied(n_row, n_col) and not (n_row, n_col) in destinations:
                     destinations.append((n_row, n_col))
                     ants.issue_order((a_row, a_col, direction))
                     break

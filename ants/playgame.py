@@ -69,13 +69,13 @@ def main(argv):
             game = Ants(options)
             bots = [('.', arg) for arg in args]
             if game.num_players != len(bots):
-                print("Incorrect number of bots for map.  Need %s, got %s" % (game.num_players, len(bots)))
+                print("Incorrect number of bots for map.  Need %s, got %s" % 
+                      (game.num_players, len(bots)))
                 break
             print('playgame round %s' % round)
-            output_file = os.path.join(opts.output_dir, str(round))
             run_game(game, bots, opts.turntime, opts.loadtime,
-                          opts.turns, output_file=output_file,
-                          verbose=opts.verbose,serial=opts.serial)
+                     opts.turns, opts.output_dir,
+                     opts.verbose, opts.serial, round)
 
     except Exception:
         traceback.print_exc()

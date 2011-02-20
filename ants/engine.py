@@ -3,11 +3,15 @@ from sandbox import Sandbox
 from ants import Ants
 import time
 import traceback
+import os
 
 def run_game(game, botcmds, turntime, loadtime, turns=5000,
-             output_file="testout.txt", verbose=False, serial=False):
+             output_dir="output", verbose=False, serial=False, gameid=0):
     try:
-        bot_log = [open('logs/bot%s.log' % i, 'w') for i in range(len(botcmds))]
+        bot_input_log = [open(os.path.join(output_dir, '%s.bot%s.input' % (gameid, i)), "w") 
+                         for i in range(len(botcmds))]
+        bot_output_log = [open(os.path.join(output_dir, '%s.bot%s.output' % (gameid, i)), "w") 
+                          for i in range(len(botcmds))]
         # create bot sandboxes
         bots = [Sandbox(*bot) for bot in botcmds]
         for b, bot in enumerate(bots):
@@ -15,8 +19,8 @@ def run_game(game, botcmds, turntime, loadtime, turns=5000,
                 print('bot %s did not start' % botcmds[b])
                 game.kill_player(b)
 
-        if output_file:
-            of = open(output_file + ".replay", "w")
+        if output_dir:
+            of = open(os.path.join(output_dir, '%s.replay' % gameid), "w")
             of.write(game.get_player_start())
             # TODO: write player names and crap
             of.flush()
@@ -34,15 +38,17 @@ def run_game(game, botcmds, turntime, loadtime, turns=5000,
                         if turn == 0:
                             start = game.get_player_start(b) + 'ready\n'
                             bot.write(start)
-                            bot_log[b].write(start)
-                            bot_log[b].flush()
+                            if output_dir:
+                                bot_input_log[b].write(start)
+                                bot_input_log[b].flush()
                         else:
                             state = 'turn ' + str(turn) + '\n' + game.get_player_state(b) + 'go\n'
                             bot.write(state)
-                            bot_log[b].write(state)
-                            bot_log[b].flush()
+                            if output_dir:
+                                bot_input_log[b].write(state)
+                                bot_input_log[b].flush()
                 if turn > 0:
-                    if output_file:
+                    if output_dir:
                         of.write('turn %s\n' % turn)
                         of.write('score %s\n' % ' '.join([str(s) for s in game.get_scores()]))
                         of.write(game.get_state())
@@ -87,16 +93,20 @@ def run_game(game, botcmds, turntime, loadtime, turns=5000,
                         print("bot %s timed out" % b)
                         game.kill_player(b)
                         bots[b].kill()
-                        
+                                            
                 # process all moves
                 bot_alive = [game.is_alive(b) for b in range(len(bots))]
                 if turn > 0 and not game.game_over():
                     for b, moves in enumerate(bot_moves):
                         valid, invalid = game.do_moves(b, moves) 
-                        if output_file and len(valid) > 0:
-                            of.write('\n'.join(valid))
-                            of.write('\n')
-                            of.flush()
+                        if output_dir:
+                            bot_output_log[b].write('# turn %s\n' % turn)
+                            if len(valid) > 0:
+                                tmp = '\n'.join(valid) + '\n'
+                                bot_output_log[b].write(tmp)
+                                bot_output_log[b].flush()
+                                of.write(tmp)
+                                of.flush()
 
                     game.finish_turn()
                 for b, alive in enumerate(bot_alive):
@@ -126,9 +136,10 @@ def run_game(game, botcmds, turntime, loadtime, turns=5000,
             if game.is_alive(b):
                 state = score_line + game.get_player_state(b)
                 bot.write(state)
-                bot_log[b].write(state)
-                bot_log[b].flush()
-        if output_file:
+                if output_dir:
+                    bot_input_log[b].write(state)
+                    bot_input_log[b].flush()
+        if output_dir:
             of.write(score_line)
             of.write(game.get_state())
             of.flush()
@@ -136,10 +147,12 @@ def run_game(game, botcmds, turntime, loadtime, turns=5000,
     except Exception:
         traceback.print_exc()
     finally:
-        for log in bot_log:
-            log.close()
         for bot in bots:
             if bot.is_alive:
                 bot.kill()
-        if output_file:
+        if output_dir:
             of.close()
+            for log in bot_input_log:
+                log.close()
+            for log in bot_output_log:
+                log.close()

@@ -76,7 +76,7 @@ public class Ants {
 			}
 			this.map = new Ilk[this.rows][this.cols];
 			for (Ilk[] row : this.map) {
-				Arrays.fill(row, Ilk.UNSEEN);
+				Arrays.fill(row, Ilk.LAND);
 			}
 			return true;
 		} catch (Exception ex) {
@@ -104,9 +104,7 @@ public class Ants {
 			if (tokens.length > 2) {
 				int row = Integer.parseInt(tokens[1]);
 				int col = Integer.parseInt(tokens[2]);
-				if (tokens[0].equals("l")) {
-					this.map[row][col] = Ilk.LAND;
-			    } else if (tokens[0].equals("w")) {
+				if (tokens[0].equals("w")) {
 			    	this.map[row][col] = Ilk.WATER;
 			    } else if (tokens[0].equals("a")) {
 			    	Ilk ilk = Ilk.fromId(Integer.parseInt(tokens[3]));

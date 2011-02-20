@@ -51,7 +51,7 @@ class Ants():
                     self.width = int(tokens[1])
                 elif key == 'rows':
                     self.height = int(tokens[1])
-        self.map = [[UNSEEN for col in range(self.width)]
+        self.map = [[LAND for col in range(self.width)]
                     for row in range(self.height)]
 
     def update(self, data):
@@ -81,8 +81,6 @@ class Ants():
                     elif tokens[0] == 'f':
                         self.map[row][col] = FOOD
                         self.food_list.append((row, col))
-                    elif tokens[0] == 'l':
-                        self.map[row][col] = LAND
                     elif tokens[0] == 'w':
                         self.map[row][col] = WATER
                     elif tokens[0] == 'd':
