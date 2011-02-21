@@ -87,7 +87,7 @@ class Ants():
                         self.map[row][col] = DEAD
 
     def issue_order(self, order):
-        sys.stdout.write('O %s %s %s\n' % (order[0], order[1], order[2]))
+        sys.stdout.write('o %s %s %s\n' % (order[0], order[1], order[2]))
         sys.stdout.flush()
         
     def finish_turn(self):

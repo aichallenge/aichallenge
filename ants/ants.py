@@ -428,6 +428,7 @@ class Ants:
                                 raise Exception("Delete ant error",
                                                 "Ant not found at (%s, %s), kill_group %s" %
                                                 (e_col, e_row, ant_group))
+        self.score = map(operator.add, self.score, score)
 
     def do_food_random(self, amount=1):
         for f in range(amount):

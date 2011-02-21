@@ -91,6 +91,8 @@ def run_game(game, botcmds, turntime, loadtime, turns=5000,
                 for b, finished in enumerate(bot_finished):
                     if not finished:
                         print("bot %s timed out" % b)
+                        if output_dir:
+                            of.write('# bot %s timed out\n' % b)
                         game.kill_player(b)
                         bots[b].kill()
                                             
@@ -98,20 +100,31 @@ def run_game(game, botcmds, turntime, loadtime, turns=5000,
                 bot_alive = [game.is_alive(b) for b in range(len(bots))]
                 if turn > 0 and not game.game_over():
                     for b, moves in enumerate(bot_moves):
-                        valid, invalid = game.do_moves(b, moves) 
-                        if output_dir:
-                            bot_output_log[b].write('# turn %s\n' % turn)
-                            if len(valid) > 0:
-                                tmp = '\n'.join(valid) + '\n'
-                                bot_output_log[b].write(tmp)
-                                bot_output_log[b].flush()
-                                of.write(tmp)
-                                of.flush()
+                        if game.is_alive(b):
+                            valid, invalid = game.do_moves(b, moves) 
+                            if output_dir:
+                                bot_output_log[b].write('# turn %s\n' % turn)
+                                if len(valid) > 0:
+                                    tmp = '\n'.join(valid) + '\n'
+                                    bot_output_log[b].write(tmp)
+                                    bot_output_log[b].flush()
+                                    of.write(tmp)
+                                    of.flush()
 
                     game.finish_turn()
+                    
+                # send ending info to eliminated bots
                 for b, alive in enumerate(bot_alive):
                     if alive and not game.is_alive(b):
                         print("bot %s eliminated" % b)
+                        if output_dir:
+                            of.write('# bot %s eliminated\n' % b)
+                        end_line = 'end\nscore %s\n' % ' '.join([str(s) for s in game.get_scores()])
+                        end_line += game.get_player_state(b)
+                        bots[b].write(end_line)
+                        if output_dir:
+                            bot_output_log[b].write(end_line)
+                            bot_output_log[b].flush()
 
             except:
                 traceback.print_exc()
