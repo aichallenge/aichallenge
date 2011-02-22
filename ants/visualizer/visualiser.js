@@ -270,6 +270,7 @@ var visualizer = {
 	turn: undefined,
 	playdir: undefined,
 	scale: undefined,
+	parameters: {},             // GET parameters from the URL
 
 	images : {
 		ants: [ new Image(), new Image() ],  // the two ant images
@@ -314,7 +315,7 @@ var visualizer = {
 		// finds the next line that isn't empty or a comment line
 		nonEmptyLine: function(canEnd) {
 			var result;
-			while (true) {
+			do {
 				this.parser.line++;
 				if (this.parser.line >= this.parser.lines.length) {
 					if (canEnd) {
@@ -326,10 +327,8 @@ var visualizer = {
 				result = this.parser.lines[this.parser.line];
 				// 'trim'
 				result = result.replace(/^\s\s*/, '').replace(/\s\s*$/, '');
-				if (result != '' && result.match('^#') != '#') {
-					return result;
-				}
-			}
+			} while (result == '' || result.charAt(0) == '#');
+			return result;
 		},
 
 		parseLocation: function(tokens, result) {
@@ -705,10 +704,10 @@ var visualizer = {
 	},
 
 	init: function() {
+		var i, parameters, equalPos, parameter, value;
 		this.canvas = document.getElementById('canvas');
 		this.ctx2d = this.canvas.getContext('2d');
 		document.onkeydown = function(event) {
-			var i;
 			if (event.keyCode == 37) {
 				visualizer.stepBw();
 			} else if (event.keyCode == 39) {
@@ -723,30 +722,46 @@ var visualizer = {
 				visualizer.first();
 			} else if (event.keyCode == 35) {
 				visualizer.last();
-			} else {
-				//alert(event.keyCode);
 			}
 		};
 		window.onresize = function(event) {
 			//alert('resized the window');
 		}
-		var buttonList = document.getElementById('buttonList');
-		var p = new XMLHttpRequest();
-		p.open("GET", 'replays', false);
-		p.setRequestHeader('Cache-Control', 'no-cache');
-		p.send(null);
-		var rows = p.responseText.split('<A HREF="');
-		for (var i = rows.length - 2; i >= 3; i--) {
-			var filename = rows[i].substr(0, rows[i].indexOf('.replay'));
-			var button = document.createElement('input');
-			var url = 'replays/' + filename + '.replay';
-			button.setAttribute('type', 'button');
-			button.setAttribute('value', unescape(filename));
-			button.setAttribute('onClick', 'visualizer.load(\'' + url + '\')');
-			buttonList.appendChild(button);
-			buttonList.appendChild(document.createElement('br'));
+		// check for game_id in the URL
+		parameters = window.location.href.split('?');
+		if (parameters.length > 1) {
+			parameters = parameters[1].split('&');
+			for (i = 0; i < parameters.length; i++) {
+				equalPos = parameters[i].indexOf('=');
+				parameter = parameters[i].substr(0, equalPos);
+				value = parameters[i].substr(equalPos + 1);
+				this.parameters[parameter] = value;
+			}
 		}
-		buttonList.children[0].click();
+		if (this.parameters.game_id === undefined) {
+			// get list of replays
+			var buttonList = document.getElementById('buttonList');
+			buttonList.appendChild(document.createTextNode('Stored replays:'));
+			buttonList.appendChild(document.createElement('br'));
+			var p = new XMLHttpRequest();
+			p.open("GET", 'replays', false);
+			p.setRequestHeader('Cache-Control', 'no-cache');
+			p.send(null);
+			var rows = p.responseText.split('<A HREF="');
+			for (i = rows.length - 2; i >= 3; i--) {
+				var filename = rows[i].substr(0, rows[i].indexOf('.replay'));
+				var button = document.createElement('input');
+				var url = 'replays/' + filename + '.replay';
+				button.setAttribute('type', 'button');
+				button.setAttribute('value', unescape(filename));
+				button.setAttribute('onClick', 'visualizer.load(\'' + url + '\')');
+				buttonList.appendChild(button);
+				buttonList.appendChild(document.createElement('br'));
+			}
+			buttonList.children[1].click();
+		} else {
+			visualizer.load('replays/' + this.parameters.game_id + '.replay');
+		}
 	},
 
 	initRequestImages: function() {
