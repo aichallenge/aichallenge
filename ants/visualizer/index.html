@@ -1,0 +1,41 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+	<title>Ant Canvas</title>
+	<script src="visualiser.js"></script>
+</head>
+<body onload="visualizer.init('canvas')">
+	<table style="font-family: 'arial'">
+	<tr valign="top">
+		<td>
+			<font size="5pt" color="#000033"><table cellspacing="0" cellpadding="5">
+				<tr>
+					<td>Turn:</td><td colspan="2" width="200px"><b id="lblTurn"></b></td>
+				</tr>
+			</table></font>
+			<input type="button" value="backward" onClick="visualizer.stepBw()"/>
+			<input type="button" value="forward" onClick="visualizer.stepFw()"/>
+			<input type="button" value="play" onClick="visualizer.play()"/><br/>
+			<hr/>
+			<table>
+				<tr>
+					<td valign="top">
+						Game replay copy &amp; paste:<br/>
+						<input type="button" value="Load text below" onClick="visualizer.load()"/>
+						<a href="ftp://antvis:antvis@marco-leise.homedns.org/" target="blank"><input type="button" value="Visit FTP to upload replays"/></a><br/>
+						<textarea id="txtReplay" rows="27" cols="41"></textarea>
+					</td>
+					<td valign="top">
+						Stored replays:
+						<div id="buttonList"></div>
+					</td>
+				</tr>
+			</table>
+		</td>
+		<td>
+			<canvas id="canvas" width="640" height="640"></canvas>
+		</td>
+	</tr>
+	</table>
+</body>
+</html>
