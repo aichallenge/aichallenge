@@ -703,14 +703,14 @@ var visualizer = {
 		}
 		var buttonList = document.getElementById('buttonList');
 		var p = new XMLHttpRequest();
-		p.open("GET", '../replays.2', false);
+		p.open("GET", 'replays', false);
 		p.setRequestHeader('Cache-Control', 'no-cache');
 		p.send(null);
 		var rows = p.responseText.split('<A HREF="');
 		for (var i = rows.length - 2; i >= 3; i--) {
 			var filename = rows[i].substr(0, rows[i].indexOf('.replay'));
 			var button = document.createElement('input');
-			var url = '../replays.2/' + filename + '.replay';
+			var url = 'replays/' + filename + '.replay';
 			button.setAttribute('type', 'button');
 			button.setAttribute('value', unescape(filename));
 			button.setAttribute('onClick', 'visualizer.load(\'' + url + '\')');
