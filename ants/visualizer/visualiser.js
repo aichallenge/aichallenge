@@ -39,9 +39,9 @@ var Ant = function(id) {
 	this.id = id;
 };
 // Initializes the ant's animation keyframes with default
-Ant.prototype.init = function(turn, x, y, player) {
+Ant.prototype.init = function(turn, x, y) {
 	var angle = Math.random() * 2 * Math.PI;
-	var color = (player === undefined) ? foodColor : playerColors[player];
+	var color = foodColor;
 	this.keyFrames = [
 		new KeyFrame(turn - 1, x, y, angle, color[0], color[1], color[2], color[3]),
 		new KeyFrame(turn    , x, y, angle, color[0], color[1], color[2], color[3])
@@ -51,7 +51,7 @@ Ant.prototype.init = function(turn, x, y, player) {
 // uses the last animation frame as start and end for next turn'a animation
 Ant.prototype.copyForNextTurn = function(width, height) {
 	var frame = this.keyFrames[this.keyFrames.length - 1];
-	var result = new Ant(this.id, this.type);
+	var result = new Ant(this.id);
 	result.keyFrames = [
 		frame.copyForTurn(this.keyFrames[0].time + 1, width, height),
 		frame.copyForTurn(this.keyFrames[0].time + 2, width, height)
@@ -155,24 +155,36 @@ Turn.prototype.food = function(data, id, prev) {
 	this.existing.push({ id: id, x: data.x, y: data.y });
 	return id + 1;
 };
-Turn.prototype.ant = function(data, newId, prev) {
+Turn.prototype.ant = function(data, prev) {
+	var target = null;
 	for (var id in this.existing) {
 		if (this.existing[id].x == data.x && this.existing[id].y == data.y) {
-			if (this.existing[id].player != data.player) {
-				this.existing[id].player = data.player;
-				prev.conversions.push({ id: this.existing[id].id, player: data.player });
+			if (this.existing[id].player === undefined) {
+				if (target) {
+					throw 'Multiple food items at (' + data.x + ';' + data.y + ') found during ant conversion';
+				}
+				target = this.existing[id];
+			} else if (this.existing[id].player == data.player) {
+				// command is a refresh for an existing ant
+				return;
+			} else {
+				throw 'An existing ant was found at (' + data.x + ';' + data.y + ') found during ant conversion';
 			}
-			return newId;
 		}
 	}
-	prev.spawns.push({ id: newId, x: data.x, y: data.y, player: data.player });
-	this.existing.push({ id: newId, x: data.x, y: data.y, player: data.player });
-	return newId + 1;
+	if (target == null) {
+		throw 'No food was found at (' + data.x + ';' + data.y + ') during ant conversion';
+	}
+	target.player = data.player;
+	prev.conversions.push({ id: target.id, player: data.player });
 };
 Turn.prototype.kill = function(data, prev) {
 	var deathList = [];
 	for (var id in this.existing) {
 		if (this.existing[id].x == data.x && this.existing[id].y == data.y) {
+			if (this.existing[id].player === undefined) {
+				alert('food killed');
+			}
 			deathList.push(this.existing[id].id);
 			delete this.existing[id];
 		}
@@ -183,13 +195,21 @@ Turn.prototype.kill = function(data, prev) {
 	prev.deaths.push(deathList);
 };
 Turn.prototype.order = function(data) {
+	var moves = 0;
 	for (var id in this.existing) {
 		if (this.existing[id].x == data.x && this.existing[id].y == data.y) {
+			if (this.existing[id].player === undefined) {
+				throw 'Attempt to move a food item at (' + data.x + ';' + data.y + ')';
+			}
 			this.orders.push({id: this.existing[id].id, direction: data.direction});
-			return;
+			moves++;
 		}
 	}
-	throw 'No item to move at (' + data.x + ';' + data.y + ')';
+	if (moves == 0) {
+		throw 'No ant to move at (' + data.x + ';' + data.y + ')';
+	} else if (moves > 1) {
+		throw 'More than one ant moved at (' + data.x + ';' + data.y + ')';
+	}		
 };
 // carry must be called first on a new turn
 Turn.prototype.carry = function(prev, width, height) {
@@ -407,7 +427,7 @@ var visualizer = {
 		},
 
 		load: function(replayStr) {
-			var row, col, i, a, g, k, t, x, y;
+			var row, col, i, a, g, k, t, x, y, c;
 			var id = 0;      // 'auto-increment' value for ant ids
 			var tturns = []; // for each turn, contains a basic data structure containing all the information from <replayStr>
 			var t = 0;       // keeps track of the current turn, during parsing
@@ -422,7 +442,6 @@ var visualizer = {
 			var old;
 			var antObj;
 			var spawn, order, offset, angle, frame, copy, conversion, deathList, death;
-			var lid = 0;
 
 			// convert replayStr into tokens per line
 			this.parser.lines = replayStr.split('\n');
@@ -469,6 +488,7 @@ var visualizer = {
 				};
 				this.players = undefined;
 				this.walls = [];
+				tturns.push(new Turn());
 				while (true) {
 					trimmed = this.nonEmptyLine();
 					result = this.tokenize(trimmed, validTokens, true);
@@ -483,7 +503,11 @@ var visualizer = {
 						}
 						row = new Array(this.parameters.cols);
 						for (col = 0; col < this.parameters.cols; col++) {
-							row[col] = (result.value.charAt(col) == '%');
+							c = result.value.charAt(col);
+							row[col] = (c == '%');
+							if (c >= 'a' && c <= 'z') {
+								id = tturns[0].food({ x: col, y: this.walls.length }, id);
+							}
 						}
 						this.walls.push(row);
 					} else if (result.type.search('^player[1-9][0-9]*') == 0) {
@@ -519,7 +543,6 @@ var visualizer = {
 					end : ParameterType.NONE
 				};
 				// other turns
-				tturns.push(new Turn());
 				this.turns.push({ ants: [], counts: new Array(this.players.length) });
 				while (!endTurn) {
 					t++;
@@ -542,7 +565,7 @@ var visualizer = {
 						result = this.tokenize(trimmed, validTokens);
 						switch (result.type) {
 							case 'a':
-								id = tturns[t].ant(result, id, tturns[t - 1]);
+								tturns[t].ant(result, tturns[t - 1]);
 								break;
 							case 'f':
 								id = tturns[t].food(result, id, tturns[t - 1]);
@@ -570,7 +593,13 @@ var visualizer = {
 				}
 			}
 			var nextDir;
+			// we need the existing dummy food items from turn '0'
 			var antStates = {};
+			for (id in tturns[0].existing) {
+				spawn = tturns[0].existing[id];
+				antObj = new Ant(spawn.id).init(0, spawn.x, spawn.y);
+				antStates[antObj.id] = antObj;
+			}
 			for (t = 0; t < this.turns.length - 1; t++) {
 				// movement
 				for (i = 0; i < tturns[t].orders.length; i++) {
@@ -620,7 +649,7 @@ var visualizer = {
 				// spawn
 				for (i = 0; i < tturns[t].spawns.length; i++) {
 					spawn = tturns[t].spawns[i];
-					antObj = new Ant(spawn.id).init(t, spawn.x, spawn.y, spawn.player);
+					antObj = new Ant(spawn.id).init(t, spawn.x, spawn.y);
 					if (spawn.player !== undefined) {
 						nextDir = nextAntDirection(antObj.id, t);
 						if (nextDir) {
@@ -732,7 +761,7 @@ var visualizer = {
 		if (this.canvasBackground === undefined) {
 			this.canvasBackground = document.createElement('canvas');
 		}
-		this.scale = Math.min(10, Math.max(1, Math.min(window.innerWidth / this.replay.parameters.cols, window.innerHeight / this.replay.parameters.rows) | 0));
+		this.scale = Math.min(10, Math.max(1, Math.min(window.innerWidth / this.replay.parameters.cols, window.innerHeight / this.replay.parameters.rows))) | 0;
 		var pw = this.scale * this.replay.parameters.cols;
 		var ph = this.scale * this.replay.parameters.rows;
 		this.canvasBackground.width = pw;
@@ -841,7 +870,7 @@ var visualizer = {
 			this.ctx2d.save();
 			if (true) {
 				this.ctx2d.fillStyle = 'rgba(' + antObj.r + ', ' + antObj.g + ', ' + antObj.b + ', ' + antObj.alpha + ')';
-				this.ctx2d.fillRect(this.scale * antObj.x, this.scale * antObj.y, this.scale, this.scale);
+				this.ctx2d.fillRect((this.scale * antObj.x) | 0, (this.scale * antObj.y) | 0, this.scale, this.scale);
 			} else {
 				this.ctx2d.globalAlpha = antObj.alpha;
 				this.ctx2d.translate(10 + 20 * antObj.x, 10 + 20 * antObj.y);
