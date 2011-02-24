@@ -1,0 +1,26 @@
+body { 
+    font-size: 75%;
+    color: #222; 
+    background: #fff;
+    font-family: "Helvetica Neue", Arial, Helvetica, sans-serif;
+}
+
+h1,h2,h3,h4,h5,h6 { font-weight: bold; color: #111; }
+h1 { font-size: 2em; line-height: 1; margin-bottom: 0.5em; }
+h2 { font-size: 1.4em; margin-bottom: 0.75em; }
+h3 { font-size: 1.3em; line-height: 1; margin-bottom: 1em; }
+h4 { font-size: 1.2em; line-height: 1.25; margin-bottom: 1.25em; }
+h5 { font-size: 1em; font-weight: bold; margin-bottom: 1.5em; }
+h6 { font-size: 1em; font-weight: bold; }
+
+p { font-size: 1.1em; }
+p { margin: 0 0 1.5em; }
+p img.left { float: left; margin: 1.5em 1.5em 1.5em 0; padding: 0; }
+p img.right { float: right; margin: 1.5em 0 1.5em 1.5em; }
+
+a:focus, a:hover { color: #000; }
+a { color: #009; text-decoration: underline; }
+
+ul { margin: 0 1.5em 1.5em 1.5em; list-style-type: disc; }
+li ul { margin: 0 1.5em; }
+

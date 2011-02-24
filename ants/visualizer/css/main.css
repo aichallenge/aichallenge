@@ -1,0 +1,247 @@
+* { margin:0; padding:0; font: 1em; }
+body { background-color: #555550; /*text-align:center;*/ }
+#main { padding-top:1px; /*text-align:left;*/ background-color: #fdfdfd; width:930px; margin:auto; margin:2.2em auto; -moz-border-radius: 6px; -webkit-border-radius: 6px; padding-top:0px; }
+#header { background-image: url('../img/header-right.png'); background-repeat: no-repeat; background-position:right; position:relative; background-color: #242424; width:auto; color: #FFFFFF; height:175px; border:1px solid #AAA; border-top:0; border-bottom:0; }
+#header h1, #header h2 { color: #FFF; padding:0 20px; font-weight:bold; }
+#header h1 { padding-top:2em; }
+#header h2 { color: #DDD; font-size:1em; }
+#sign { display:inline; text-align:right; bottom:0; right:0; position:absolute; padding:1.25em; font-size: 1.1em; font-variant: small-caps; }
+
+#sidebar { height:100%; margin-top:1em; border-left:1px solid #aaa; padding-top:20px; padding-left: 20px; padding-right:10px; float:right; width:200px; }
+#sidebar h1 { font-size: 1.4em; font-weight:bold; border-bottom: 1px solid #ccc; color: #622; }
+#sidebar ul { padding-left:0em; }
+#sidebar li { padding:0.2em 0em; font-size:1.1em; }
+#sidebar li a { color: #222; text-decoration: none; }
+#sidebar li a:hover { color: #622; }
+#footer { background-color: #e7e7e7; height:75px; }
+
+#header a:link, #header a:visited { color:#fff; }
+#header a { text-decoration: none; }
+#header a:hover { text-decoration: underline; }
+
+#news h1, #news h2, #news h3 { color: #622; }
+#news h2 {
+    font-size: 200%;
+}
+
+.shadow { background-image: url('../img/shadow.png'); background-repeat: repeat-x; height: 8px; }
+
+#sidebar { display:inline; position:absolute; right:0; top: 0; height: 90%; width: 22%;}
+#content { position:relative; }
+#news em { font-weight: bold; }
+#news pre { padding: 0 0 2em 3em; font-family: monospace; }
+#news ol { padding: 0 0 1em 3em; }
+#news li { padding-bottom: 0.5em; }
+#TOC ul { list-style-type: none; }
+#TOC li { padding-bottom: 0; }
+#news { padding: 20px; min-height:500px; width:66%; height:auto !important; height:500px; }
+
+/* Leaderboard style */
+table.leaderboard {
+    width: 100%;
+    border: 1px solid #aaa;
+    text-align: center;
+    border-collapse:collapse;
+    color:#111;
+}
+table.leaderboard img {
+    margin:0 !important; padding:0 !important;
+}
+table.leaderboard td {
+    border: 1px solid #A0A0A0;
+    text-align:center;
+    border-width: 1px 0;
+    margin-left: 0.2em;
+    padding: 0.2em;
+}
+table.leaderboard th {
+    font: bold 11px "Trebuchet MS", Verdana, Arial, Helvetica, sans-serif;
+    text-align:center;
+    background-color: #242424;
+    border-color: #000;
+    border-width:0 0 2px 0;
+    color: #FFF;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+}
+table.leaderboard tr:hover td {
+    background-color: #CDD3DF;
+}
+table.leaderboard tr.odd {
+    background-color: #EDF3FE;
+}
+table.leaderboard tr.even {
+    background-color: #FFFFFF;
+}
+table.leaderboard tr.user, table.leaderboard tr.user:hover td {
+    background-color: #FFD062;
+}
+div.pagination {
+    text-align:center;
+    padding: 3px;
+    margin: 3px;
+}
+div.pagination a {
+    padding: 2px 5px 2px 5px;
+    margin: 2px;
+    border: 1px solid #A0A0A0;
+    text-decoration: none;
+    color: #111;
+}
+div.pagination a:hover, div.pagination a:active {
+    border: 1px solid #4579F0;
+    color: #FFFFFF;
+    background-color: #242424;
+}
+div.pagination span.current {
+    padding: 2px 5px 2px 5px;
+    margin: 2px;
+    border: 1px solid #1549C0;
+    font-weight: bold;
+    background-color: #242424;
+    color: #FFF;
+}
+div.pagination span.disabled {
+    padding: 2px 5px 2px 5px;
+    margin: 2px;
+    border: 1px solid #DDD;
+    color: #BBB;
+}
+
+/* Styles for rendering code using a monospace font */
+#news .code {
+    font-family:"Courier New";
+    margin-left: 20px;
+    background-color: #e7e7e7;
+    border-style:solid;
+    border-width:1px;
+    border-color:#999;
+    padding: 5px;
+}
+
+/* Making bulleted lists properly indented */
+#news ul {
+    margin-left: 40px;
+}
+
+/* Making tables of submissions and lists of games display properly */
+table.submissions {
+    width: 100%;
+    border: 1px solid #aaa;
+    text-align: center;
+    border-collapse:collapse;
+    color:#111;
+}
+table.submissions td {
+    border: 1px solid #A0A0A0;
+    border-width: 1px 0;
+    margin-left: 0.2em;
+    padding: 0.2em;
+    text-align: center;
+}
+table.submissions th {
+    font: bold 11px "Trebuchet MS", Verdana, Arial, Helvetica, sans-serif;
+    text-align:center;
+    background-color: #242424;
+    border-color: #000;
+    border-width:0 0 2px 0;
+    color: #FFF;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+}
+table.submissions tr:hover td {
+    background-color: #CDD3DF;
+}
+table.submissions tr.odd {
+    background-color: #EDF3FE;
+}
+table.submissions tr.even {
+    background-color: #FFFFFF;
+}
+table.submissions td.success {
+    color:#22A022;
+}
+table.submissions td.fail {
+    color:#FF2222;
+}
+table.submissions td.inprogress {
+    color:#555555;
+}
+table.submissions td.game_win {
+    color:#22A022;
+}
+table.submissions td.game_loss {
+    color:#FF2222;
+}
+table.submissions td.game_draw {
+    color:#555555;
+}
+table.submissions .error_code {
+    color:#FF5555;
+}
+
+
+
+/* Visualizer */
+
+#visualizer {
+    width:640px;
+    margin-right: -10px;
+    
+}
+
+#visualizer a:hover, #visualizer a:active { outline: none; }
+#visualizer a, #visualizer a:active, #visualizer a:visited { color:#607890; }
+#visualizer a:link { -webkit-tap-highlight-color: #FF5E99; } 
+#visualizer a:hover { color:#036; }
+#visualizer a:hover, #visualizer a:active { outline: none; }
+
+
+#visualizer p { margin:0px; }
+
+#controls {
+    text-align: center;
+    margin: 5px 0;
+}
+
+#controls a {
+    text-decoration: none;
+    font-size: 32px;
+    padding: 0 10px;
+}
+
+#controls a .small{ 
+  font-size: 0.7em;
+}
+
+#players {
+  font-size: 24px;
+  width:100%;
+  margin-bottom: 5px;
+}
+
+#chart {
+    background:white; 
+    border-top: solid 1px #607890;
+    border-bottom: solid 1px #607890;
+}
+
+#error_message{
+    float: right;
+    text-align:right;
+    width:75%;
+}
+/* End Visualizer */
+
+
+.bigstats th{
+	padding-left: 10px;
+	padding-right: 10px;
+	text-align: center;
+}
+.bigstats td{
+	padding:  10px;
+	padding-bottom: 0px;
+	font-size: 40px;
+	text-align: center;
+}
