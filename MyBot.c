@@ -1,4 +1,4 @@
-#include "ants.c"
+#include "ants.h"
 
 // returns the absolute value of a number; used in distance function
 
@@ -65,8 +65,6 @@ void move(int index, char dir, struct game_state* Game, struct game_info* Info) 
             break;
     }
 }
-
-#include "YourCode.c"
 
 // just a function that returns the string on a given line for i/o
 // you don't need to worry about this

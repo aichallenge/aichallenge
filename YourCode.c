@@ -1,3 +1,5 @@
+#include "ants.h"
+
 // The following is an example program displaying a basic ai that
 // picks a direction for each ant, waits until the ant hits the wall
 // and then follows that wall around in a circle. This is not intended
