@@ -1,2 +1,2 @@
 all:
-	gcc bot.c -o YourBot -lm
+	gcc MyBot.c -o MyBot -lm
