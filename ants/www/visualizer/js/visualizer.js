@@ -1,6 +1,16 @@
 /**
  * @fileoverview This is a visualizer for the ai challenge ant game.
  * @author <a href="mailto:marco.leise@gmx.de">Marco Leise</a>
+ * @todo fullscreen mode, onscroll="scroll(0,0)"
+ * @todo animated single steps if possible
+ * @todo playback controls
+ * @todo fog of war option
+ * @todo set player colors from replay file (awaiting answer)
+ * @todo show when a bot crashed (awaiting answer)
+ * @todo borders around the game board
+ * @todo some nice graphics and transparency once the layout is good
+ * @todo scrolling player names if too long; fade to the left and right
+ * @todo zoom in to 20x20 squares with animated ants
  */
 
 /**
@@ -11,7 +21,7 @@ Const = {
 	/**
 	 * This is the relative path to the replay files including tailing '/'
 	 */
-	REPLAY_PATH: 'replays/',
+	REPLAY_PATH: 'visualizer/replays/',
 	DRAW_INTERVAL: 50,       // setInterval value
 	TIME_PER_TURN: 250,      // in milli seconds
 	LEFT_PANEL_W: 100,       // width of left side panel
@@ -267,7 +277,7 @@ Turn.prototype.kill = function(data, prev) {
 				}
 			}
 			if (i == -1) {
-				prev.deaths.push({ x: data.x, y: data.y, ids: [ this.existing[id].id ] });
+				prev.deaths.push({x: data.x, y: data.y, ids: [ this.existing[id].id ]});
 			}
 			delete this.existing[id];
 			return;
@@ -751,6 +761,8 @@ visualizer = {
 	timeOld: undefined,         // used to find turn transitions
 	turn: undefined,
 	playdir: undefined,
+	w: undefined,
+	h: undefined,
 	scale: undefined,
 	parameters: {},             // GET parameters from the URL
 
@@ -782,12 +794,6 @@ visualizer = {
 		}
 	},
 
-	// parses URL parameters and requests the replay file
-	init: function() {
-		visualizer.parseUrl();
-		visualizer.loadReplayDataFromGameId();
-	},
-
 	// reads URL parameters and stores them in the parameters object
 	parseUrl: function() {
 		var equalPos, value, parameter, i;
@@ -808,7 +814,7 @@ visualizer = {
 		this.loadReplayDataFromFile(Const.REPLAY_PATH + this.parameters.game_id + '.replay');
 	},
 
-	loadReplayDataFromFile: function(file) {
+	loadReplayDataFromURI: function(file) {
 		window.clearInterval(this.intervalDraw);
 		this.intervalDraw = undefined;
 		this.timeOffset = undefined;
@@ -819,9 +825,27 @@ visualizer = {
 		this.replay = new Replay(p.responseText);
 	},
 
-	attach: function(canvasId) {
+	loadReplay: function(data, unescape) {
+		window.clearInterval(this.intervalDraw);
+		this.intervalDraw = undefined;
+		this.timeOffset = undefined;
+		this.turn = undefined;
+		if (unescape) {
+			data = data.replace(/&lt;/g, '<').replace(/&gt;/g, '>')
+			data = data.replace(/&#0*39;/g, "'").replace(/&quot;/g, '"');
+			data = data.replace(/&amp;/g, '&').replace(/\\n/g, '\n');
+		}
+		this.replay = new Replay(data);
+	},
+
+	attach: function(container, width, height) {
+		this.w = width;
+		this.h = height;
 		this.replay.parse();
-		this.canvas = document.getElementById(canvasId);
+		if (this.canvas === undefined) {
+			this.canvas = document.createElement('canvas');
+			document.getElementById(container).appendChild(this.canvas);
+		}
 		this.ctx2d = this.canvas.getContext('2d');
 		document.onkeydown = function(event) {
 			if (event.keyCode == 37) {
@@ -858,7 +882,9 @@ visualizer = {
 		if (this.canvasBackground === undefined) {
 			this.canvasBackground = document.createElement('canvas');
 		}
-		this.scale = Math.min(10, Math.max(1, Math.min(window.innerWidth / this.replay.parameters.cols, window.innerHeight / this.replay.parameters.rows))) | 0;
+		var iw = (this.w ? this.w : window.innerWidth) - Const.LEFT_PANEL_W;
+		var ih = (this.h ? this.h : window.innerHeight) - Const.TOP_PANEL_H;
+		this.scale = Math.min(10, Math.max(1, Math.min(iw / this.replay.parameters.cols, ih / this.replay.parameters.rows))) | 0;
 		var pw = this.scale * this.replay.parameters.cols + Const.LEFT_PANEL_W;
 		var ph = this.scale * this.replay.parameters.rows + Const.TOP_PANEL_H;
 		this.canvasBackground.width = pw;
@@ -1106,8 +1132,3 @@ var Random = {
 	}
 
 };
-
-
-// initialization and download of replay file while the browser is 
-// loading css files and images
-visualizer.init();
