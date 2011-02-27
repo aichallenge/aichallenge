@@ -4,9 +4,10 @@
 	<title>Ant Canvas</title>
 	<script type="text/javascript" src="js/visualizer.js"></script>
 	<script type="text/javascript">
+		visualizer = new Visualizer('visualizerColumn');
 		function visualizePasted() {
-			visualizer.loadReplay(txtReplay.value);
-			visualizer.attach('visualizerColumn', 640, 640);
+			visualizer.loadReplayData(txtReplay.value);
+			visualizer.attach(640);
 		}
 	</script>
 </head>

@@ -11,6 +11,7 @@
  * @todo some nice graphics and transparency once the layout is good
  * @todo scrolling player names if too long; fade to the left and right
  * @todo zoom in to 20x20 squares with animated ants
+ * @todo clickable player names (requires user_id)
  */
 
 /**
@@ -18,10 +19,6 @@
  * here because NetBeans otherwise clutters the symbol viewer.
  */
 Const = {
-	/**
-	 * This is the relative path to the replay files including tailing '/'
-	 */
-	REPLAY_PATH: 'visualizer/replays/',
 	DRAW_INTERVAL: 50,       // setInterval value
 	TIME_PER_TURN: 250,      // in milli seconds
 	LEFT_PANEL_W: 100,       // width of left side panel
@@ -43,8 +40,8 @@ Const = {
  * HiFiData and read in the drawing routine of the visualizer.
  */
 Img = {
-	EMPTY: -2,
-	FOOD: -1
+	EMPTY: 26,
+	FOOD: 27
 };
 
 
@@ -77,6 +74,12 @@ ParameterType = {
 	LOCATION_NSEW: 6,
 	LOCATION_OPTION: 7
 };
+
+
+PlayDir = {
+	FORWARD: 0,
+	BACKWARD: 1
+}
 
 
 function LoFiData(other) {
@@ -129,9 +132,11 @@ function Ant(id, time) {
 	this.lo[0].time = time;
 	this.hi = [ new HiFiData() ];
 	this.hi[0].time = time;
-	this.loLookup = [];
-	this.hiLookup = [];
 	this.player = undefined;
+	/** @private */
+	this.loLookup = [];
+	/** @private */
+	this.hiLookup = [];
 }
 Ant.prototype.frameAt = function(time, quality, create) {
 	var set = quality ? this.hi : this.lo;
@@ -323,26 +328,25 @@ Turn.prototype.carry = function(prev, width, height) {
 };
 
 
-function Replay(replayStr) {
-	this.replayStr = replayStr;
-	this.lines = undefined;
-	this.line = undefined;
-	this.version = undefined;
-	this.players = undefined;
-	this.parameters = undefined;
-	this.walls = undefined;
-	this.turns = undefined;
+function LineIterator(textBlock) {
+	/** @private */
+	this.lines = textBlock.split('\n');
+	/** @private */
+	this.line = -1;
 }
 /**
  * Find the next line that isn't empty or a comment line.
+ * @param {boolean} canEnd if true, returns an empty string on the end of file
+ *     instead of throwing an error.
+ * @type string
  */
-Replay.prototype.nonEmptyLine = function(canEnd) {
+LineIterator.prototype.nonEmptyLine = function(canEnd) {
 	var result;
 	do {
 		this.line++;
 		if (this.line >= this.lines.length) {
 			if (canEnd) {
-				return null;
+				return '';
 			} else {
 				throw 'The input ended unexpectedly';
 			}
@@ -354,115 +358,28 @@ Replay.prototype.nonEmptyLine = function(canEnd) {
 	return result;
 };
 /**
- * Adds x and y to a result object by reading tokens 0 and 1.
+ * returns the line selected by the last call to nonEmptyLine
+ * @type string
  */
-Replay.prototype.parseLocation = function(tokens, result) {
-	result.y = parseInt(tokens[0]);
-	if (isNaN(result.y) || result.y < 0 || result.y >= this.parameters.rows) {
-		throw 'Y is not an integer within map borders';
-	}
-	result.x = parseInt(tokens[1]);
-	if (isNaN(result.x) || result.x < 0 || result.x >= this.parameters.cols) {
-		throw 'X is not an integer within map borders';
-	}
+LineIterator.prototype.current = function() {
+	return this.lines[this.line];
 };
 /**
- * Splits the currently selected line into tokens and checks if the parameters
- * are valid.
+ * returns the current line number
+ * @type number
  */
-Replay.prototype.tokenize = function(line, parameterTypes, allowOthers) {
-	// get command type first
-	var sp = line.indexOf(' ');
-	if (sp == -1) {
-		sp = line.length;
-	}
-	var result = {};
-	result.type = line.substr(0, sp).toLowerCase();
-	line = line.substr(sp).replace(/^\s\s*/, '').replace(/\s\s*$/, '');
-	// parse the rest
-	var i;
-	var tokens = line.split(' ');
-	var parameterType = parameterTypes[result.type];
-	if (parameterType === undefined) {
-		if (!allowOthers) {
-			tokens = [];
-			for (parameterType in parameterTypes) {
-				tokens.push(parameterType);
-			}
-			throw 'Unexpected token: ' + result.type + '\n'
-				+ 'Valid tokens: ' + tokens;
-		}
-		parameterType = ParameterType.STRING;
-	}
-	switch(parameterType) {
-		case ParameterType.NONE:
-			if (line != '') {
-				throw 'No parameter expected';
-			}
-			break;
-		case ParameterType.STRING:
-			result.value = line;
-			break;
-		case ParameterType.UINT:
-			result.value = parseInt(line);
-			if (isNaN(result.value) || result.value < 0) {
-				throw 'Unsigned integer expected';
-			}
-			break;
-		case ParameterType.SCORES:
-			result.scores = new Array(tokens.length);
-			if (result.scores.length != this.players.length) {
-				throw 'Number of scores doesn\' match player count';
-			}
-			for (i = 0; i < tokens.length; i++) {
-				result.scores[i] = parseInt(tokens[i]);
-				if (isNaN(result.scores[i])) {
-					throw 'Integer scores expected';
-				}
-			}
-			break;
-		case ParameterType.LOCATION:
-			if (tokens.length != 2) {
-				throw 'Location expected';
-			}
-			this.parseLocation(tokens, result);
-			break;
-		case ParameterType.LOCATION_PLAYER:
-			if (tokens.length != 3) {
-				throw 'Location and player id expected';
-			}
-			this.parseLocation(tokens, result);
-			result.player = parseInt(tokens[2]);
-			if (isNaN(result.player) || result.player < 0 || result.player >= this.players.count) {
-				throw 'Player id is out of range';
-			}
-			break;
-		case ParameterType.LOCATION_OPTION:
-			if (tokens.length < 2 || tokens.length > 3) {
-				throw 'Location and optional player id expected';
-			}
-			this.parseLocation(tokens, result);
-			if (tokens.length == 3) {
-				result.player = parseInt(tokens[2]);
-				if (isNaN(result.player) || result.player < 0 || result.player >= this.players.count) {
-					throw 'Player id is out of range';
-				}
-			}
-			break;
-		case ParameterType.LOCATION_NSEW:
-			if (tokens.length != 3) {
-				throw 'Location and direction expected';
-			}
-			this.parseLocation(tokens, result);
-			result.direction = Directions[tokens[2].toUpperCase()];
-			if (result.direction === undefined) {
-				throw 'Direction ' + tokens[2] + ' is undefined';
-			}
-			break;
-	}
-	return result;
+LineIterator.prototype.currentNum = function() {
+	return this.line + 1;
 };
-Replay.prototype.parse = function() {
+
+
+function Replay(replayStr) {
+	this.version = undefined;
+	this.players = undefined;
+	this.parameters = {};
+	this.walls = undefined;
+	this.turns = undefined;
+
 	var row, col, i, k, c, f1, f2, collision, spawn, order, conversion;
 	var deathList, playerId, antObj;
 	var id = 0;      // 'auto-increment' value for ant ids
@@ -472,55 +389,49 @@ Replay.prototype.parse = function() {
 	var result;      // a tokenized input line
 	var validTokens; // tokens understood in the current context (depending on player count)
 	var endTurn = false;
-
-	// convert replayStr into tokens per line
-	this.lines = this.replayStr.split('\n');
-	this.line = -1;
+	var	lines = new LineIterator(replayStr);
 	try {
 		// check version
-		trimmed = this.nonEmptyLine();
+		trimmed = lines.nonEmptyLine();
 		this.version = this.tokenize(trimmed, {version: ParameterType.UINT}).value;
 		if (this.version < 1 || this.version > 1) {
 			throw 'File version ' + this.version + ' cannot be read by this visualizer';
 		}
 		// turns
-		trimmed = this.nonEmptyLine();
+		trimmed = lines.nonEmptyLine();
 		// initialization turn '0'
 		if (this.tokenize(trimmed, {turn: ParameterType.UINT}).value != t) {
 			throw 'Expected turn ' + t;
 		}
 		// read parameters and map data
-		validTokens = {
-			players     : ParameterType.UINT,
-			rows        : ParameterType.UINT,
-			cols        : ParameterType.UINT,
-			m           : ParameterType.STRING,
-			viewradius  : ParameterType.UINT,
-			attackradius: ParameterType.UINT,
-			birthradius : ParameterType.UINT,
-			antvalue    : ParameterType.UINT,
-			gameid      : ParameterType.UINT,
-			gamelocation: ParameterType.STRING,
-			turn        : ParameterType.UINT,
-			end         : ParameterType.NONE
-		};
-		this.parameters = {
-			// these undefined parameters must be defined by the replay
-			cols: undefined,
-			rows: undefined,
-			// these values need not be defined and have defaults
-			viewradius: 16,
-			attackradius: 4,
-			birthradius: 1,
-			antvalue: 1,
-			gameid: null,
-			gamelocation: 'local'
-		};
+		validTokens = {};
+		validTokens.players       = ParameterType.UINT;
+		validTokens.rows          = ParameterType.UINT;
+		validTokens.cols          = ParameterType.UINT;
+		validTokens.m             = ParameterType.STRING;
+		validTokens.viewradius    = ParameterType.UINT;
+		validTokens.vattackradius = ParameterType.UINT;
+		validTokens.birthradius   = ParameterType.UINT;
+		validTokens.antvalue      = ParameterType.UINT;
+		validTokens.gameid        = ParameterType.UINT;
+		validTokens.gamelocation  = ParameterType.STRING;
+		validTokens.turn          = ParameterType.UINT;
+		validTokens.end           = ParameterType.NONE;
+		// these undefined parameters must be defined by the replay
+		this.parameters.cols = undefined;
+		this.parameters.rows = undefined;
+		// these values need not be defined and have defaults
+		this.parameters.viewradius = 16;
+		this.parameters.attackradius = 4;
+		this.parameters.birthradius = 1;
+		this.parameters.antvalue = 1;
+		this.parameters.gameid = null;
+		this.parameters.gamelocation = 'local';
 		this.players = undefined;
 		this.walls = [];
 		tturns.push(new Turn());
 		while (true) {
-			trimmed = this.nonEmptyLine();
+			trimmed = lines.nonEmptyLine();
 			result = this.tokenize(trimmed, validTokens, true);
 			if (result.type == 'turn' || result.type == 'end') {
 				break;
@@ -564,14 +475,13 @@ Replay.prototype.parse = function() {
 			throw 'Number of map rows doesn\'t match rows parameter';
 		}
 		this.turns = [];
-		validTokens = {
-			a   : ParameterType.LOCATION_PLAYER, // ant spawn
-			f   : ParameterType.LOCATION,        // food spawn
-			d   : ParameterType.LOCATION_OPTION, // ant or food died last round
-			o   : ParameterType.LOCATION_NSEW,   // move order
-			turn: ParameterType.UINT,
-			end : ParameterType.NONE
-		};
+		validTokens = {};
+		validTokens.a    = ParameterType.LOCATION_PLAYER; // ant spawn
+		validTokens.f    = ParameterType.LOCATION;        // food spawn
+		validTokens.d    = ParameterType.LOCATION_OPTION; // ant or food died last round
+		validTokens.o    = ParameterType.LOCATION_NSEW;   // move order
+		validTokens.turn = ParameterType.UINT;
+		validTokens.end  = ParameterType.NONE;
 		// other turns
 		this.turns.push({ants: [], counts: new Array(this.players.length)});
 		while (!endTurn) {
@@ -584,12 +494,12 @@ Replay.prototype.parse = function() {
 			tturns.push(new Turn());
 			tturns[t].carry(tturns[t - 1], this.parameters.cols, this.parameters.rows);
 			this.turns.push({ants: [], counts: new Array(this.players.length)});
-			trimmed = this.nonEmptyLine();
+			trimmed = lines.nonEmptyLine();
 			result = this.tokenize(trimmed, {score: ParameterType.SCORES});
 			this.turns[t].scores = result.scores.slice(0);
 			while (result.type != 'turn' && result.type != 'end') {
-				trimmed = this.nonEmptyLine(endTurn);
-				if (trimmed == null) { // this is the end of file check
+				trimmed = lines.nonEmptyLine(endTurn);
+				if (!trimmed) { // this is the end of file check
 					break;
 				}
 				result = this.tokenize(trimmed, validTokens);
@@ -610,10 +520,10 @@ Replay.prototype.parse = function() {
 			}
 		}
 	} catch (error) {
-		alert(error + '\nIn line ' + (this.line + 1) + ': ' + this.lines[this.line]);
+		throw 'In line #' + lines.currentNum() + ' "' + lines.current() + '": ' + error;
 	}
 
-	// Add ants...
+	// Add animation...
 	var nextAntDirection = function(id, turn) {
 		for (var nadk = 0; nadk < tturns[turn + 1].orders.length; nadk++) {
 			var nadAction = tturns[turn + 1].orders[nadk];
@@ -743,110 +653,329 @@ Replay.prototype.parse = function() {
 			}
 		}
 	}
+}
+/**
+ * Adds x and y to a result object by reading tokens 0 and 1.
+ * @private
+ */
+Replay.prototype.parseLocation = function(tokens, result) {
+	result.y = parseInt(tokens[0]);
+	if (isNaN(result.y) || result.y < 0 || result.y >= this.parameters.rows) {
+		throw 'Y is not an integer within map borders';
+	}
+	result.x = parseInt(tokens[1]);
+	if (isNaN(result.x) || result.x < 0 || result.x >= this.parameters.cols) {
+		throw 'X is not an integer within map borders';
+	}
+};
+/**
+ * Splits the currently selected line into tokens and checks if the parameters
+ * are valid.
+ * @private
+ */
+Replay.prototype.tokenize = function(line, parameterTypes, allowOthers) {
+	// get command type first
+	var sp = line.indexOf(' ');
+	if (sp == -1) {
+		sp = line.length;
+	}
+	var result = {};
+	result.type = line.substr(0, sp).toLowerCase();
+	line = line.substr(sp).replace(/^\s\s*/, '').replace(/\s\s*$/, '');
+	// parse the rest
+	var i;
+	var tokens = line.split(' ');
+	var parameterType = parameterTypes[result.type];
+	if (parameterType === undefined) {
+		if (!allowOthers) {
+			tokens = [];
+			for (parameterType in parameterTypes) {
+				tokens.push(parameterType);
+			}
+			throw 'Unexpected token: ' + result.type + '\n'
+				+ 'Valid tokens: ' + tokens;
+		}
+		parameterType = ParameterType.STRING;
+	}
+	switch(parameterType) {
+		case ParameterType.NONE:
+			if (line != '') {
+				throw 'No parameter expected';
+			}
+			break;
+		case ParameterType.STRING:
+			result.value = line;
+			break;
+		case ParameterType.UINT:
+			result.value = parseInt(line);
+			if (isNaN(result.value) || result.value < 0) {
+				throw 'Unsigned integer expected';
+			}
+			break;
+		case ParameterType.SCORES:
+			result.scores = new Array(tokens.length);
+			if (result.scores.length != this.players.length) {
+				throw 'Number of scores doesn\' match player count';
+			}
+			for (i = 0; i < tokens.length; i++) {
+				result.scores[i] = parseInt(tokens[i]);
+				if (isNaN(result.scores[i])) {
+					throw 'Integer scores expected';
+				}
+			}
+			break;
+		case ParameterType.LOCATION:
+			if (tokens.length != 2) {
+				throw 'Location expected';
+			}
+			this.parseLocation(tokens, result);
+			break;
+		case ParameterType.LOCATION_PLAYER:
+			if (tokens.length != 3) {
+				throw 'Location and player id expected';
+			}
+			this.parseLocation(tokens, result);
+			result.player = parseInt(tokens[2]);
+			if (isNaN(result.player) || result.player < 0 || result.player >= this.players.count) {
+				throw 'Player id is out of range';
+			}
+			break;
+		case ParameterType.LOCATION_OPTION:
+			if (tokens.length < 2 || tokens.length > 3) {
+				throw 'Location and optional player id expected';
+			}
+			this.parseLocation(tokens, result);
+			if (tokens.length == 3) {
+				result.player = parseInt(tokens[2]);
+				if (isNaN(result.player) || result.player < 0 || result.player >= this.players.count) {
+					throw 'Player id is out of range';
+				}
+			}
+			break;
+		case ParameterType.LOCATION_NSEW:
+			if (tokens.length != 3) {
+				throw 'Location and direction expected';
+			}
+			this.parseLocation(tokens, result);
+			result.direction = Directions[tokens[2].toUpperCase()];
+			if (result.direction === undefined) {
+				throw 'Direction ' + tokens[2] + ' is undefined';
+			}
+			break;
+	}
+	return result;
 };
 
-/**
- * the main 'application' object
- */
-visualizer = {
 
-	canvas: undefined,          // the main canvas
-	ctx2d: undefined,           // ...and it's 2D context
-	canvasBackground: undefined,// contains the backdrop for the map
-	ctx2dBackground: undefined, // ...associated 2D context
-
-	turns: undefined,           // array of precomputed turn data
-	intervalDraw: undefined,    // handle to the redraw timer
-	timeOffset: undefined,      // playback time is relative to this
-	timeOld: undefined,         // used to find turn transitions
-	turn: undefined,
-	playdir: undefined,
-	w: undefined,
-	h: undefined,
-	scale: undefined,
-	parameters: {},             // GET parameters from the URL
-
-	images : {
-		ants: [ new Image(), new Image() ],  // the two ant images
-		sands: [ new Image(), new Image() ], // the two background textures
-		distributionMap: new Image(),        // interpolation map for the textures
-		wall: new Image(),                   // image of the wall
-		base: new Image(),                   // image of the player base
-
-		request: function() {
-/*			var sandA = Random.range(SANDS);
-			var sandB = (sandA + 1 + Random.range(SANDS - 1)) % SANDS;
-			this.sands[0].src = 'sand_' + sandA + '.jpg';
-			this.sands[1].src = 'sand_' + sandB + '.jpg';
-			this.distributionMap.src = 'distribution.jpg';
-			this.wall.src = 'wall.png';
-			this.base.src = 'base.png';
-			this.ants[0].src = 'ant_0.png';
-			this.ants[1].src = 'ant_1.png';*/
-		},
-
-		complete: function() {
-			return true;
-/*			return this.wall.complete && this.base.complete
-				&& this.distributionMap.complete
-				&& this.sands[0].complete && this.sands[1].complete
-				&& this.ants[0].complete && this.ants[1].complete;*/
+function ImageManager() {
+	this.images = [];
+}
+ImageManager.prototype.request = function(source) {
+	var image = new Image();
+	image.src = source;
+	this.images.push(image);
+	return this.images.length - 1;
+};
+ImageManager.prototype.complete = function(id) {
+	if (id) {
+		return this.images[id].complete;
+	} else {
+		var result = true;
+		for (id = 0; id < this.images.length && result; id++) {
+			result &= this.images[id].complete;
 		}
-	},
+		return result;
+	}
+};
 
-	// reads URL parameters and stores them in the parameters object
-	parseUrl: function() {
-		var equalPos, value, parameter, i;
-		var parameters = window.location.href.split('?');
-		if (parameters.length > 1) {
-			parameters = parameters[1].split('#')[0].split('&');
-			for (i = 0; i < parameters.length; i++) {
-				equalPos = parameters[i].indexOf('=');
-				parameter = parameters[i].substr(0, equalPos);
-				value = parameters[i].substr(equalPos + 1);
-				this.parameters[parameter] = value;
+
+/**
+ * The main 'application' object that provides all necessary methods for the use
+ * in a web page.
+ * @param {Node} container the html element, that the visualizer will embed into
+ */
+function Visualizer(container) {
+	/**
+	 * any generated DOM elements will be placed here
+	 * @private
+	 */
+	this.container = container;
+	/**
+	 * the main canvas
+	 * @private
+	 */
+	this.canvas = document.createElement('canvas');
+	/**
+	 * ...and it's 2D context
+	 * @private
+	 */
+	this.ctx2d = this.canvas.getContext('2d');
+	/**
+	 * contains the backdrop for the map
+	 * @private
+	 */
+	this.canvasBackground = undefined;
+	/**
+	 * ...associated 2D context
+	 * @private
+	 */
+	this.ctx2dBackground = undefined;
+	/**
+	 * array of precomputed turn data
+	 * @private
+	 */
+	this.turns = undefined;
+	/**
+	 * handle to the redraw timer
+	 * @private
+	 */
+	this.intervalDraw = undefined;
+	/**
+	 * playback time is relative to this
+	 * @private
+	 */
+	this.timeOffset = undefined;
+	/**
+	 * used to find turn transitions
+	 * @private
+	 */
+	this.timeOld = undefined;
+	/**
+	 * set to a turn number if single stepping is in effect
+	 * @private
+	 */
+	this.turn = undefined;
+	/**
+	 * play direction (forward or backward)
+	 * @private
+	 */
+	this.playdir = PlayDir.FORWARD;
+	/**
+	 * usable width for the visualizer
+	 * @private
+	 */
+	this.w = undefined;
+	/**
+	 * usable height for the visualizer
+	 * @private
+	 */
+	this.h = undefined;
+	/**
+	 * size of an ant in pixels
+	 * @private
+	 */
+	this.scale = undefined;
+	/**
+	 * images used by the visualizer
+	 * @private
+	 */
+	this.images = new ImageManager();
+	/**
+	 * GET parameters from the URL
+	 * @private
+	 */
+	this.parameters = {};
+	// read URL parameters and store them in the parameters object
+	var equalPos, value, parameter, i;
+	var parameters = window.location.href.split('?');
+	if (parameters.length > 1) {
+		parameters = parameters[1].split('#')[0].split('&');
+		for (i = 0; i < parameters.length; i++) {
+			equalPos = parameters[i].indexOf('=');
+			parameter = parameters[i].substr(0, equalPos);
+			value = parameters[i].substr(equalPos + 1);
+			this.parameters[parameter] = value;
+		}
+	}
+}
+/**
+ * Loads a replay file located on the same server using a XMLHttpRequest.
+ * @param {string} file the relative file name
+ */
+Visualizer.prototype.loadReplayDataFromURI = function(file) {
+	window.clearInterval(this.intervalDraw);
+	this.intervalDraw = undefined;
+	this.timeOffset = undefined;
+	this.turn = undefined;
+	var p = new XMLHttpRequest();
+	p.open("GET", file, false);
+	p.send(null);
+	this.replay = p.responseText;
+};
+/**
+ * Places a paragraph with a message in the visualizer dom element.
+ * @param {string} text the message text
+ * @private
+ */
+Visualizer.prototype.errorOut = function(text) {
+	var errorParagraph = document.createElement("p");
+	text = text.split('\n');
+	for (var i = 0; i < text.length; i++) {
+		errorParagraph.appendChild(document.createTextNode(text[i]));
+		errorParagraph.appendChild(document.createElement("br"));
+	}
+	this.container.appendChild(errorParagraph);
+};
+/**
+ * Loads a replay file through the php site. This data has html special
+ * characters encoded and has a general structure of key=value.
+ * @param {string} data the encoded replay data
+ */
+Visualizer.prototype.loadReplayDataFromPHP = function(data) {
+	this.replay = undefined;
+	unquot = data.replace(/&lt;/g, '<').replace(/&gt;/g, '>')
+	unquot = unquot.replace(/&quot;/g, '"').replace(/&amp;/g, '&');
+	var matches = unquot.match(/[a-zA-Z_]+=.*((?!\n[a-zA-Z_]+=)\n.*)*(?=\n)/gm);
+	if (matches) {
+		for (var i = 0; i < matches.length; i++) {
+			var ep = matches[i].indexOf('=');
+			var key = matches[i].substr(0, ep);
+			var value = matches[i].substr(ep + 1);
+			if (key == 'playback_string') {
+				this.loadReplayData(value);
+			} else {
+				this.parameters[key] = value;
 			}
 		}
-	},
-
-	// loads the replay file named by the game_id parameter in the URL
-	loadReplayDataFromGameId: function() {
-		this.loadReplayDataFromFile(Const.REPLAY_PATH + this.parameters.game_id + '.replay');
-	},
-
-	loadReplayDataFromURI: function(file) {
-		window.clearInterval(this.intervalDraw);
-		this.intervalDraw = undefined;
-		this.timeOffset = undefined;
-		this.turn = undefined;
-		var p = new XMLHttpRequest();
-		p.open("GET", file, false);
-		p.send(null);
-		this.replay = new Replay(p.responseText);
-	},
-
-	loadReplay: function(data, unescape) {
-		window.clearInterval(this.intervalDraw);
-		this.intervalDraw = undefined;
-		this.timeOffset = undefined;
-		this.turn = undefined;
-		if (unescape) {
-			data = data.replace(/&lt;/g, '<').replace(/&gt;/g, '>')
-			data = data.replace(/&#0*39;/g, "'").replace(/&quot;/g, '"');
-			data = data.replace(/&amp;/g, '&').replace(/\\n/g, '\n');
+		if (!this.replay) {
+			this.errorOut('game_info.php did not feed any playback_string.');
 		}
-		this.replay = new Replay(data);
-	},
-
-	attach: function(container, width, height) {
-		this.w = width;
-		this.h = height;
-		this.replay.parse();
-		if (this.canvas === undefined) {
-			this.canvas = document.createElement('canvas');
-			document.getElementById(container).appendChild(this.canvas);
+	} else {
+		this.errorOut(data);
+	}
+};
+/**
+ * Loads a replay string directly.
+ * @param {string} data the replay string
+ */
+Visualizer.prototype.loadReplayData = function(data) {
+	this.replay = data;
+	window.clearInterval(this.intervalDraw);
+	this.intervalDraw = undefined;
+	this.timeOffset = undefined;
+	this.turn = undefined;
+};
+/**
+ * Places the visualizer in a given container.
+ * @param {number} width if defined, the maximum width in pixels
+ * @param {number} height if defined, the maximum height in pixels
+ */
+Visualizer.prototype.attach = function(width, height) {
+	this.w = width;
+	this.h = height;
+	// replace the replay string, by it's parsed counter part
+	if (this.replay) {
+		try {
+			this.replay = new Replay(this.replay);
+		} catch (error) {
+			this.errorOut('Replay cannot be parsed!\n' + error);
+			this.replay = undefined;
 		}
-		this.ctx2d = this.canvas.getContext('2d');
+	}
+	if (this.replay) {
+		if (!this.canvas.parentNode) {
+			this.container.appendChild(this.canvas);
+		}
 		document.onkeydown = function(event) {
 			if (event.keyCode == 37) {
 				visualizer.stepBw();
@@ -868,267 +997,285 @@ visualizer = {
 			//alert('resized the window');
 		}
 		this.initWaitForImages();
-	},
-
-	initRequestImages: function() {
-		this.images.request();
-	},
-
-	initWaitForImages: function() {
-		if (!this.images.complete()) {
-			window.setTimeout('visualizer.initWaitForImages()', 50);
-			return;
-		}
-		if (this.canvasBackground === undefined) {
-			this.canvasBackground = document.createElement('canvas');
-		}
-		var iw = (this.w ? this.w : window.innerWidth) - Const.LEFT_PANEL_W;
-		var ih = (this.h ? this.h : window.innerHeight) - Const.TOP_PANEL_H;
-		this.scale = Math.min(10, Math.max(1, Math.min(iw / this.replay.parameters.cols, ih / this.replay.parameters.rows))) | 0;
-		var pw = this.scale * this.replay.parameters.cols + Const.LEFT_PANEL_W;
-		var ph = this.scale * this.replay.parameters.rows + Const.TOP_PANEL_H;
-		this.canvasBackground.width = pw;
-		this.canvasBackground.height = ph;
-		this.ctx2dBackground = this.canvasBackground.getContext('2d');
-		this.ctx2dBackground.fillStyle = '#EEE';
-		this.ctx2dBackground.fillRect(0, 0, pw, ph);
-		this.ctx2dBackground.fillStyle = '#000';
-		for (var row = -1; row <= this.replay.parameters.rows; row++) {
-			for (var col = -1; col <= this.replay.parameters.cols; col++) {
-				if (this.replay.walls[(row + this.replay.parameters.rows) % this.replay.parameters.rows][(col + this.replay.parameters.cols) % this.replay.parameters.cols]) {
-					this.ctx2dBackground.fillRect(this.scale * col, this.scale * row, this.scale, this.scale);
-				}
+	}
+};
+/**
+ * @private
+ */
+Visualizer.prototype.initRequestImages = function() {
+	this.images.request();
+};
+/**
+ * @private
+ */
+Visualizer.prototype.initWaitForImages = function() {
+	//if (!this.images.complete()) {
+	//	window.setTimeout('visualizer.initWaitForImages()', 50);
+	//	return;
+	//}
+	if (this.canvasBackground === undefined) {
+		this.canvasBackground = document.createElement('canvas');
+	}
+	var iw = (this.w ? this.w : window.innerWidth) - Const.LEFT_PANEL_W;
+	var ih = (this.h ? this.h : window.innerHeight) - Const.TOP_PANEL_H;
+	this.scale = Math.min(10, Math.max(1, Math.min(iw / this.replay.parameters.cols, ih / this.replay.parameters.rows))) | 0;
+	var pw = this.scale * this.replay.parameters.cols + Const.LEFT_PANEL_W;
+	var ph = this.scale * this.replay.parameters.rows + Const.TOP_PANEL_H;
+	this.canvasBackground.width = pw;
+	this.canvasBackground.height = ph;
+	this.ctx2dBackground = this.canvasBackground.getContext('2d');
+	this.ctx2dBackground.fillStyle = '#EEE';
+	this.ctx2dBackground.fillRect(0, 0, pw, ph);
+	this.ctx2dBackground.fillStyle = '#000';
+	for (var row = -1; row <= this.replay.parameters.rows; row++) {
+		for (var col = -1; col <= this.replay.parameters.cols; col++) {
+			if (this.replay.walls[(row + this.replay.parameters.rows) % this.replay.parameters.rows][(col + this.replay.parameters.cols) % this.replay.parameters.cols]) {
+				this.ctx2dBackground.fillRect(this.scale * col, this.scale * row, this.scale, this.scale);
 			}
-		}
-		this.canvas.width = this.canvasBackground.width;
-		this.canvas.height = this.canvasBackground.height;
-		this.ctx2d.textAlign = 'center';
-		this.ctx2d.textBaseline = 'middle';
-		this.ctx2d.font = '10px sans-serif';
-		this.playdir = 0;
-		this.intervalDraw = window.setInterval('visualizer.draw()', Const.DRAW_INTERVAL);
-	},
-
-	drawColorBar: function(x, y, w, h, values, colors) {
-		var sum = 0;
-		for (var i = 0; i < values.length; i++) {
-			sum += values[i];
-		}
-		var useValues = values;
-		if (sum == 0) {
-			useValues = new Array(values.length);
-			for (i = 0; i < values.length; i++) {
-				useValues[i] = 1;
-			}
-			sum = values.length;
-		} 
-		var scale = h / sum;
-		var offset = y;
-		for (i = 0; i < useValues.length; i++) {
-			var amount = scale * useValues[i];
-			this.ctx2d.fillStyle = 'rgb(' + colors[i][0] + ', ' + colors[i][1] + ', ' + colors[i][2] + ')';
-			this.ctx2d.fillRect(x, offset, w, amount);
-			offset += amount;
-		}
-		this.ctx2d.textAlign = 'right';
-		this.ctx2d.textBaseline = 'top';
-		this.ctx2d.font = 'bold 20px sans-serif';
-		this.ctx2d.fillStyle = 'rgba(0,0,0,0.5)';
-		offset = y;
-		for (i = 0; i < useValues.length; i++) {
-			this.ctx2d.fillText(values[i], x + w, offset)
-			offset += scale * useValues[i];
-		}
-	},
-
-	draw: function() {
-		//~ var timeA = new Date().getTime();
-		//ctx2d.globalCompositeOperation = 'copy';
-		//ctx2d.globalCompositeOperation = 'source-over';
-		var time = new Date().getTime();
-		var drawOrder = new Array();
-		var transition, mx, my, anim;
-		if (this.timeOffset === undefined) {
-			this.timeOffset = time;
-			transition = true;
-		}
-		this.ctx2d.drawImage(this.canvasBackground, Const.LEFT_PANEL_W, Const.TOP_PANEL_H);
-		var turn;
-		if (this.intervalDraw === undefined) {
-			turn = this.turn;
-			time = turn - 1;
-			transition = true;
-		} else {
-			time = (time - this.timeOffset) / Const.TIME_PER_TURN;
-			if (time < 0 || time >= this.replay.turns.length - 2) {
-				/* The timer ran beyond the last turn or the clock changed to
-				 * an invalid time in the past. In any case we want to display
-				 * the end result of the game.
-				 */
-				turn = this.replay.turns.length - 1;
-				time = turn - 1;
-				anim = 0;
-				transition = true;
-				window.clearInterval(this.intervalDraw);
-				this.intervalDraw = undefined;
-			} else {
-				turn = (time | 0) + 1;
-				anim = time - (time | 0);
-				transition = transition || ((time | 0) != (this.timeOld | 0));
-			}
-		}
-		/* Repaint the map rows if we have a transition from on turn to
-		 * another.
-		 */
-		if (transition) {
-			//document.getElementById('lblTurn').innerHTML = ((turn > this.replay.turns.length - 2) ? 'end result' : turn + ' / ' + (this.replay.turns.length - 2));
-			var w = Const.LEFT_PANEL_W / 2;
-			var h = this.canvasBackground.height - 20 - Const.TOP_PANEL_H;
-			this.ctx2d.fillStyle = '#000';
-			this.ctx2d.fillRect(0, Const.TOP_PANEL_H, 2 * w, this.canvasBackground.height);
-			this.ctx2d.fillRect(0, 0, this.canvasBackground.width, Const.TOP_PANEL_H);
-			var colors = Const.PLAYER_COLORS;
-			this.ctx2d.textAlign = 'left';
-			this.ctx2d.textBaseline = 'top';
-			this.ctx2d.font = 'bold 20px sans-serif';
-			var x = 0;
-			for (i = 0; i < this.replay.players.length; i++) {
-				this.ctx2d.fillStyle = 'rgb(' + colors[i][0] + ', ' + colors[i][1] + ', ' + colors[i][2] + ')';
-				this.ctx2d.fillText(this.replay.players[i].name, x, 0);
-				x += this.ctx2d.measureText(this.replay.players[i].name).width;
-				if (i != this.replay.players.length - 1) {
-					this.ctx2d.fillStyle = '#888';
-					this.ctx2d.fillText(' vs ', x, 0);
-					x += this.ctx2d.measureText(' vs ').width;
-				}
-			}
-			this.ctx2d.fillStyle = '#FFF';
-			this.ctx2d.textAlign = 'center';
-			this.ctx2d.textBaseline = 'middle';
-			this.ctx2d.font = 'bold 12px sans-serif';
-			this.ctx2d.fillText('ants', w / 2, Const.TOP_PANEL_H + 10);
-			this.ctx2d.fillText('scores', 3 * w / 2, Const.TOP_PANEL_H + 10);
-			this.drawColorBar(2    , Const.TOP_PANEL_H + 20, w - 4, h - 2, this.replay.turns[turn].counts, Const.PLAYER_COLORS);
-			this.drawColorBar(2 + w, Const.TOP_PANEL_H + 20, w - 4, h - 2, this.replay.turns[turn].scores, Const.PLAYER_COLORS);
-		}
-		for (var i = 0; i < this.replay.turns[turn].ants.length; i++) {
-			var antObj = this.replay.turns[turn].ants[i].interpolate(time, Quality.LOW);
-			drawOrder.push(antObj);
-		}
-		this.ctx2dBackground.globalAlpha = 100 / Const.TIME_PER_TURN;
-		if (Math.random() < 0.5) {
-			this.ctx2dBackground.strokeStyle = '#222';
-		} else {
-			this.ctx2dBackground.strokeStyle = '#CA7';
-		}
-		this.ctx2dBackground.beginPath();
-		this.ctx2d.textBaseline = 'top';
-		for (var n = 0; n < drawOrder.length; n++) {
-			antObj = drawOrder[n];
-			this.ctx2d.save();
-			if (true) {
-				mx = Math.round(this.scale * antObj.x + Const.LEFT_PANEL_W);
-				my = Math.round(this.scale * antObj.y + Const.TOP_PANEL_H);
-				this.ctx2d.fillStyle = 'rgba(' + antObj.r + ', ' + antObj.g + ', ' + antObj.b + ', ' + antObj.a + ')';
-				this.ctx2d.fillRect(mx, my, this.scale, this.scale);
-			} else {
-				this.ctx2d.globalAlpha = antObj.alpha;
-				this.ctx2d.translate(10 + 20 * antObj.x, 10 + 20 * antObj.y);
-				this.ctx2d.rotate(antObj.angle + Math.sin(20 * time) * antObj.jitter);
-				this.ctx2d.drawImage(this.images.ants[antObj.type], -10, -10);
-				this.ctx2d.restore();
-				mx = 20 * antObj.x + 10 + 3 * Math.tan(2 * (Math.random() - 0.5));
-				my = 20 * antObj.y + 10 + 3 * Math.tan(2 * (Math.random() - 0.5));
-				if (antObj.alpha == 1) {
-					var sin = -Math.sin(antObj.angle);
-					var cos = +Math.cos(antObj.angle);
-					this.ctx2dBackground.moveTo(mx - sin, my - cos);
-					this.ctx2dBackground.lineTo(mx + sin, my + cos);
-				}
-			}
-		}
-		this.ctx2dBackground.stroke();
-		this.timeOld = time;
-		//~ var timeB = new Date().getTime();
-		//~ document.title = 'Render time: ' + (timeB - timeA) + ' ms';
-		//~ return;
-	},
-	
-	stepHelper: function(isForward) {
-		window.clearInterval(this.intervalDraw);
-		this.intervalDraw = undefined;
-		if (this.turn === undefined) {
-			var time = (new Date().getTime() - this.timeOffset) / Const.TIME_PER_TURN;
-			this.turn = (time | 0) + (isForward ? 1 : 2);
-		}
-	},
-
-	stepFw: function(steps) {
-		this.stepHelper(true);
-		this.turn += (steps === undefined) ? 1 : steps;
-		this.playdir = 0;
-		if (this.turn > this.replay.turns.length - 1) {
-			this.turn = this.replay.turns.length - 1;
-		}
-		this.draw();
-	},
-
-	stepBw: function(steps) {
-		this.stepHelper(false);
-		this.turn -= (steps === undefined) ? 1 : steps;
-		this.playdir = 1;
-		if (this.turn < 1) {
-			this.turn = 1;
-		} else if (this.turn > this.replay.turns.length - 2) {
-			this.turn = this.replay.turns.length - 2;
-		}
-		this.draw();
-	},
-	
-	first: function() {
-		this.stepHelper(false);
-		this.turn = 1;
-		this.draw();
-	},
-	
-	last: function() {
-		this.stepHelper(true);
-		this.turn = this.replay.turns.length - 1;
-		this.draw();
-	},
-
-	play: function() {
-		if (this.intervalDraw === undefined) {
-			if (this.turn === undefined || this.turn == this.replay.turns.length - 1) {
-				this.timeOffset = new Date().getTime();
-			} else {
-				this.timeOffset = new Date().getTime() - (this.turn - 1) * Const.TIME_PER_TURN;
-			}
-			this.turn = undefined;
-			this.intervalDraw = window.setInterval('visualizer.draw()', Const.DRAW_INTERVAL);
-			this.playdir = 0;
-		} else {
-			window.clearInterval(this.intervalDraw);
-			this.intervalDraw = undefined;
-			var time = (new Date().getTime() - this.timeOffset) / Const.TIME_PER_TURN;
-			this.turn = (time | 0) + 1 + this.playdir;
-			this.draw();
 		}
 	}
+	this.canvas.width = this.canvasBackground.width;
+	this.canvas.height = this.canvasBackground.height;
+	this.ctx2d.textAlign = 'center';
+	this.ctx2d.textBaseline = 'middle';
+	this.ctx2d.font = '10px sans-serif';
+	this.playdir = 0;
+	this.intervalDraw = window.setInterval('visualizer.draw()', Const.DRAW_INTERVAL);
+};
+/**
+ * @private
+ */
+Visualizer.prototype.drawColorBar = function(x, y, w, h, values, colors) {
+	var sum = 0;
+	for (var i = 0; i < values.length; i++) {
+		sum += values[i];
+	}
+	var useValues = values;
+	if (sum == 0) {
+		useValues = new Array(values.length);
+		for (i = 0; i < values.length; i++) {
+			useValues[i] = 1;
+		}
+		sum = values.length;
+	}
+	var scale = h / sum;
+	var offset = y;
+	for (i = 0; i < useValues.length; i++) {
+		var amount = scale * useValues[i];
+		this.ctx2d.fillStyle = 'rgb(' + colors[i][0] + ', ' + colors[i][1] + ', ' + colors[i][2] + ')';
+		this.ctx2d.fillRect(x, offset, w, amount);
+		offset += amount;
+	}
+	this.ctx2d.textAlign = 'right';
+	this.ctx2d.textBaseline = 'top';
+	this.ctx2d.font = 'bold 20px sans-serif';
+	this.ctx2d.fillStyle = 'rgba(0,0,0,0.5)';
+	offset = y;
+	for (i = 0; i < useValues.length; i++) {
+		this.ctx2d.fillText(values[i], x + w, offset)
+		offset += scale * useValues[i];
+	}
+};
+/**
+ * @private
+ */
+Visualizer.prototype.draw = function() {
+	//~ var timeA = new Date().getTime();
+	//ctx2d.globalCompositeOperation = 'copy';
+	//ctx2d.globalCompositeOperation = 'source-over';
+	var time = new Date().getTime();
+	var drawOrder = new Array();
+	var transition, mx, my, anim;
+	if (this.timeOffset === undefined) {
+		this.timeOffset = time;
+		transition = true;
+	}
+	this.ctx2d.drawImage(this.canvasBackground, Const.LEFT_PANEL_W, Const.TOP_PANEL_H);
+	var turn;
+	if (this.intervalDraw === undefined) {
+		turn = this.turn;
+		time = turn - 1;
+		transition = true;
+	} else {
+		time = (time - this.timeOffset) / Const.TIME_PER_TURN;
+		if (time < 0 || time >= this.replay.turns.length - 2) {
+			/* The timer ran beyond the last turn or the clock changed to
+			 * an invalid time in the past. In any case we want to display
+			 * the end result of the game.
+			 */
+			turn = this.replay.turns.length - 1;
+			time = turn - 1;
+			anim = 0;
+			transition = true;
+			window.clearInterval(this.intervalDraw);
+			this.intervalDraw = undefined;
+		} else {
+			turn = (time | 0) + 1;
+			anim = time - (time | 0);
+			transition = transition || ((time | 0) != (this.timeOld | 0));
+		}
+	}
+	/* Repaint the map rows if we have a transition from on turn to
+	 * another.
+	 */
+	if (transition) {
+		//document.getElementById('lblTurn').innerHTML = ((turn > this.replay.turns.length - 2) ? 'end result' : turn + ' / ' + (this.replay.turns.length - 2));
+		var w = Const.LEFT_PANEL_W / 2;
+		var h = this.canvasBackground.height - 20 - Const.TOP_PANEL_H;
+		this.ctx2d.fillStyle = '#000';
+		this.ctx2d.fillRect(0, Const.TOP_PANEL_H, 2 * w, this.canvasBackground.height);
+		this.ctx2d.fillRect(0, 0, this.canvasBackground.width, Const.TOP_PANEL_H);
+		var colors = Const.PLAYER_COLORS;
+		this.ctx2d.textAlign = 'left';
+		this.ctx2d.textBaseline = 'top';
+		this.ctx2d.font = 'bold 20px sans-serif';
+		var x = 0;
+		for (i = 0; i < this.replay.players.length; i++) {
+			this.ctx2d.fillStyle = 'rgb(' + colors[i][0] + ', ' + colors[i][1] + ', ' + colors[i][2] + ')';
+			this.ctx2d.fillText(this.replay.players[i].name, x, 0);
+			x += this.ctx2d.measureText(this.replay.players[i].name).width;
+			if (i != this.replay.players.length - 1) {
+				this.ctx2d.fillStyle = '#888';
+				this.ctx2d.fillText(' vs ', x, 0);
+				x += this.ctx2d.measureText(' vs ').width;
+			}
+		}
+		this.ctx2d.fillStyle = '#FFF';
+		this.ctx2d.textAlign = 'center';
+		this.ctx2d.textBaseline = 'middle';
+		this.ctx2d.font = 'bold 12px sans-serif';
+		this.ctx2d.fillText('ants', w / 2, Const.TOP_PANEL_H + 10);
+		this.ctx2d.fillText('scores', 3 * w / 2, Const.TOP_PANEL_H + 10);
+		this.drawColorBar(2    , Const.TOP_PANEL_H + 20, w - 4, h - 2, this.replay.turns[turn].counts, Const.PLAYER_COLORS);
+		this.drawColorBar(2 + w, Const.TOP_PANEL_H + 20, w - 4, h - 2, this.replay.turns[turn].scores, Const.PLAYER_COLORS);
+	}
+	for (var i = 0; i < this.replay.turns[turn].ants.length; i++) {
+		var antObj = this.replay.turns[turn].ants[i].interpolate(time, Quality.LOW);
+		drawOrder.push(antObj);
+	}
+	this.ctx2dBackground.globalAlpha = 100 / Const.TIME_PER_TURN;
+	if (Math.random() < 0.5) {
+		this.ctx2dBackground.strokeStyle = '#222';
+	} else {
+		this.ctx2dBackground.strokeStyle = '#CA7';
+	}
+	this.ctx2dBackground.beginPath();
+	this.ctx2d.textBaseline = 'top';
+	for (var n = 0; n < drawOrder.length; n++) {
+		antObj = drawOrder[n];
+		this.ctx2d.save();
+		if (true) {
+			mx = Math.round(this.scale * antObj.x + Const.LEFT_PANEL_W);
+			my = Math.round(this.scale * antObj.y + Const.TOP_PANEL_H);
+			this.ctx2d.fillStyle = 'rgba(' + antObj.r + ', ' + antObj.g + ', ' + antObj.b + ', ' + antObj.a + ')';
+			this.ctx2d.fillRect(mx, my, this.scale, this.scale);
+		} else {
+			this.ctx2d.globalAlpha = antObj.alpha;
+			this.ctx2d.translate(10 + 20 * antObj.x, 10 + 20 * antObj.y);
+			this.ctx2d.rotate(antObj.angle + Math.sin(20 * time) * antObj.jitter);
+			this.ctx2d.drawImage(this.images.ants[antObj.type], -10, -10);
+			this.ctx2d.restore();
+			mx = 20 * antObj.x + 10 + 3 * Math.tan(2 * (Math.random() - 0.5));
+			my = 20 * antObj.y + 10 + 3 * Math.tan(2 * (Math.random() - 0.5));
+			if (antObj.alpha == 1) {
+				var sin = -Math.sin(antObj.angle);
+				var cos = +Math.cos(antObj.angle);
+				this.ctx2dBackground.moveTo(mx - sin, my - cos);
+				this.ctx2dBackground.lineTo(mx + sin, my + cos);
+			}
+		}
+	}
+	this.ctx2dBackground.stroke();
+	this.timeOld = time;
+	//~ var timeB = new Date().getTime();
+	//~ document.title = 'Render time: ' + (timeB - timeA) + ' ms';
+	//~ return;
+};
+/**
+ * @private
+ */
+Visualizer.prototype.stepHelper = function(isForward) {
+	window.clearInterval(this.intervalDraw);
+	this.intervalDraw = undefined;
+	if (this.turn === undefined) {
+		var time = (new Date().getTime() - this.timeOffset) / Const.TIME_PER_TURN;
+		this.turn = (time | 0) + (isForward ? 1 : 2);
+	}
+};
 
+Visualizer.prototype.stepFw = function(steps) {
+	this.stepHelper(true);
+	this.turn += (steps === undefined) ? 1 : steps;
+	this.playdir = 0;
+	if (this.turn > this.replay.turns.length - 1) {
+		this.turn = this.replay.turns.length - 1;
+	}
+	this.draw();
+};
+
+Visualizer.prototype.stepBw = function(steps) {
+	this.stepHelper(false);
+	this.turn -= (steps === undefined) ? 1 : steps;
+	this.playdir = 1;
+	if (this.turn < 1) {
+		this.turn = 1;
+	} else if (this.turn > this.replay.turns.length - 2) {
+		this.turn = this.replay.turns.length - 2;
+	}
+	this.draw();
+};
+	
+Visualizer.prototype.first = function() {
+	this.stepHelper(false);
+	this.turn = 1;
+	this.draw();
+};
+	
+Visualizer.prototype.last = function() {
+	this.stepHelper(true);
+	this.turn = this.replay.turns.length - 1;
+	this.draw();
+};
+
+Visualizer.prototype.play = function() {
+	if (this.intervalDraw === undefined) {
+		if (this.turn === undefined || this.turn == this.replay.turns.length - 1) {
+			this.timeOffset = new Date().getTime();
+		} else {
+			this.timeOffset = new Date().getTime() - (this.turn - 1) * Const.TIME_PER_TURN;
+		}
+		this.turn = undefined;
+		this.intervalDraw = window.setInterval('visualizer.draw()', Const.DRAW_INTERVAL);
+		this.playdir = 0;
+	} else {
+		window.clearInterval(this.intervalDraw);
+		this.intervalDraw = undefined;
+		var time = (new Date().getTime() - this.timeOffset) / Const.TIME_PER_TURN;
+		this.turn = (time | 0) + 1 + this.playdir;
+		this.draw();
+	}
 };
 
 
-var Random = {
-
-	// returns an integer in the range [0..range[
+/**
+ * Random provides functions to generate random numbers in integer ranges.
+ */
+Random = {
+	/**
+	 * returns an integer in the range [0..range[
+	 * @param {number} range the exclusive limit of the range
+	 * @type number
+	 */
 	range: function(range) {
 		return Math.random() * range | 0;
 	},
-
-	// returns an integer in the range [from..to]
+	/**
+	 * returns an integer in the range [from..to]
+	 * @param {number} from the low value of the range (inclusive)
+	 * @param {number} to the high value of the range (inclusive)
+	 * @type number
+	 */
 	fromTo: function(from, to) {
 		return from + (Math.random() * (1 + to - from) | 0);
 	}
-
 };
