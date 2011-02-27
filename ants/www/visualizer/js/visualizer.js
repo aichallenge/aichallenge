@@ -1,16 +1,16 @@
 /**
  * @fileoverview This is a visualizer for the ai challenge ant game.
  * @author <a href="mailto:marco.leise@gmx.de">Marco Leise</a>
- * @todo fullscreen mode, onscroll="scroll(0,0)"
  * @todo animated single steps if possible
  * @todo playback controls
  * @todo fog of war option
- * @todo set player colors from replay file (awaiting answer)
- * @todo show when a bot crashed (awaiting answer)
  * @todo borders around the game board
  * @todo some nice graphics and transparency once the layout is good
  * @todo scrolling player names if too long; fade to the left and right
  * @todo zoom in to 20x20 squares with animated ants
+ * @todo save settings
+ * @todo set player colors from replay file (awaiting answer)
+ * @todo show when a bot crashed (awaiting answer)
  * @todo clickable player names (requires user_id)
  */
 
@@ -25,7 +25,7 @@ Const = {
 	TOP_PANEL_H: 30,         // height of top panel
 	FOOD_COLOR: [ 200, 200, 150 ],
 	PLAYER_COLORS: [
-		[ 255,   0,   0 ], [   0,   0, 255 ], [   0, 255,   0 ], [ 255, 255,   0 ],
+		[ 255,   0,   0 ], [   0,   0, 255 ], [   0, 180,   0 ], [ 255, 200,   0 ],
 		[ 255, 255, 255 ], [ 255, 255, 255 ], [ 255, 255, 255 ], [ 255, 255, 255 ],
 		[ 255, 255, 255 ], [ 255, 255, 255 ], [ 255, 255, 255 ], [ 255, 255, 255 ],
 		[ 255, 255, 255 ], [ 255, 255, 255 ], [ 255, 255, 255 ], [ 255, 255, 255 ],
@@ -79,7 +79,18 @@ ParameterType = {
 PlayDir = {
 	FORWARD: 0,
 	BACKWARD: 1
-}
+};
+
+
+Key = {
+	LEFT: 37,
+	RIGHT: 39,
+	SPACE: 32,
+	PGUP: 33,
+	PGDOWN: 34,
+	HOME: 36,
+	END: 35
+};
 
 
 function LoFiData(other) {
@@ -373,6 +384,101 @@ LineIterator.prototype.currentNum = function() {
 };
 
 
+/**
+ * keeps track of persistent configuration values
+ */
+function Config() {
+	this.fullscreen = false;
+	this.load();
+}
+/**
+ * checks if local storage is available
+ * @private
+ */
+Config.prototype.hasLocalStorage = function() {
+	try {
+		return 'localStorage' in window && window['localStorage'] !== null;
+	} catch (error) {
+		return error;
+	}
+};
+/**
+ * stores all keys to local storage if supported
+ * @return true, if successful, an error if not
+ */
+Config.prototype.save = function() {
+	if (this.hasLocalStorage() === true) {
+		for (key in this) {
+			if (this[key] === undefined) {
+				delete window.localStorage['visualizer.' + key];
+			} else if (this[key] === null) {
+				window.localStorage['visualizer.' + key] = "null";
+			} else {
+				var prefix = undefined;
+				switch (typeof this[key]) {
+					case 'number':
+						prefix = 'N';
+						break;
+					case 'boolean':
+						prefix = 'B';
+						break;
+					case 'string':
+						prefix = 'S';
+						break;
+					case 'function':
+						break;
+					default:
+						alert(key + ': ' + (typeof this[key]))
+						throw 'Only numbers, booleans and strings can be saved in the config';
+				}
+				if (prefix) {
+					window.localStorage['visualizer.' + key] = prefix + this[key];
+				}
+			}
+		}
+		return true;
+	} else {
+		return false;
+	}
+};
+/**
+ * Tries to load config values from local storage if available. Registred
+ * functions on value change will fire.
+ */
+Config.prototype.load = function() {
+	if (this.hasLocalStorage() === true) {
+		for (key in this) {
+			var val = window.localStorage['visualizer.' + key];
+			if (typeof this[key] != 'function' && val) {
+				if (val === 'null') {
+					this[key] = null;
+				} else {
+					switch (val.charAt(0)) {
+						case 'N':
+							this[key] = Number(val.substr(1));
+							break;
+						case 'B':
+							this[key] = (val == 'Btrue');
+							break;
+						case 'S':
+							this[key] = val.substr(1);
+							break;
+					}
+				}
+			}
+		}
+		return true;
+	} else {
+		return false;
+	}
+};
+Config.prototype.clear = function() {
+	if (this.hasLocalStorage() === true) {
+		window.localStorage.clear();
+	}
+}
+
+
 function Replay(replayStr) {
 	this.version = undefined;
 	this.players = undefined;
@@ -520,7 +626,7 @@ function Replay(replayStr) {
 			}
 		}
 	} catch (error) {
-		throw 'In line #' + lines.currentNum() + ' "' + lines.current() + '": ' + error;
+		//throw 'In line #' + lines.currentNum() + ' "' + lines.current() + '": ' + error;
 	}
 
 	// Add animation...
@@ -849,7 +955,7 @@ function Visualizer(container) {
 	 * play direction (forward or backward)
 	 * @private
 	 */
-	this.playdir = PlayDir.FORWARD;
+	this.playdir = undefined;
 	/**
 	 * usable width for the visualizer
 	 * @private
@@ -870,6 +976,11 @@ function Visualizer(container) {
 	 * @private
 	 */
 	this.images = new ImageManager();
+	/**
+	 * presistable configuration values
+	 * @private
+	 */
+	this.config = new Config();
 	/**
 	 * GET parameters from the URL
 	 * @private
@@ -893,28 +1004,10 @@ function Visualizer(container) {
  * @param {string} file the relative file name
  */
 Visualizer.prototype.loadReplayDataFromURI = function(file) {
-	window.clearInterval(this.intervalDraw);
-	this.intervalDraw = undefined;
-	this.timeOffset = undefined;
-	this.turn = undefined;
 	var p = new XMLHttpRequest();
 	p.open("GET", file, false);
 	p.send(null);
-	this.replay = p.responseText;
-};
-/**
- * Places a paragraph with a message in the visualizer dom element.
- * @param {string} text the message text
- * @private
- */
-Visualizer.prototype.errorOut = function(text) {
-	var errorParagraph = document.createElement("p");
-	text = text.split('\n');
-	for (var i = 0; i < text.length; i++) {
-		errorParagraph.appendChild(document.createTextNode(text[i]));
-		errorParagraph.appendChild(document.createElement("br"));
-	}
-	this.container.appendChild(errorParagraph);
+	this.loadReplayData(p.responseText);
 };
 /**
  * Loads a replay file through the php site. This data has html special
@@ -956,6 +1049,20 @@ Visualizer.prototype.loadReplayData = function(data) {
 	this.turn = undefined;
 };
 /**
+ * Places a paragraph with a message in the visualizer dom element.
+ * @param {string} text the message text
+ * @private
+ */
+Visualizer.prototype.errorOut = function(text) {
+	var errorParagraph = document.createElement("p");
+	text = text.split('\n');
+	for (var i = 0; i < text.length; i++) {
+		errorParagraph.appendChild(document.createTextNode(text[i]));
+		errorParagraph.appendChild(document.createElement("br"));
+	}
+	this.container.appendChild(errorParagraph);
+};
+/**
  * Places the visualizer in a given container.
  * @param {number} width if defined, the maximum width in pixels
  * @param {number} height if defined, the maximum height in pixels
@@ -976,26 +1083,48 @@ Visualizer.prototype.attach = function(width, height) {
 		if (!this.canvas.parentNode) {
 			this.container.appendChild(this.canvas);
 		}
+		// this will fire once in FireFox when a key is held down
 		document.onkeydown = function(event) {
-			if (event.keyCode == 37) {
-				visualizer.stepBw();
-			} else if (event.keyCode == 39) {
-				visualizer.stepFw();
-			} else if (event.keyCode == 32) {
-				visualizer.play();
-			} else if (event.keyCode == 33) {
-				visualizer.stepBw(10);
-			} else if (event.keyCode == 34) {
-				visualizer.stepFw(10);
-			} else if (event.keyCode == 36) {
-				visualizer.first();
-			} else if (event.keyCode == 35) {
-				visualizer.last();
+			var visualizer = Visualizer.prototype.focused;
+			switch(event.keyCode) {
+				case Key.SPACE:
+					visualizer.play();
+					break;
+				case Key.LEFT:
+					visualizer.stepBw();
+					break;
+				case Key.RIGHT:
+					visualizer.stepFw();
+					break;
+				case Key.PGUP:
+					visualizer.stepBw(10);
+					break;
+				case Key.PGDOWN:
+					visualizer.stepFw(10);
+					break;
+				case Key.HOME:
+					visualizer.gotoStart();
+					break;
+				case Key.END:
+					visualizer.gotoEnd();
+					break;
+				default:
+					var key = String.fromCharCode(event.keyCode);
+					switch (key) {
+						case 'F':
+							visualizer.setFullscreen(!visualizer.config.fullscreen);
+							break;
+					}
 			}
 		};
-		window.onresize = function(event) {
-			//alert('resized the window');
-		}
+		document.onkeyup = function() {
+		};
+		// this will fire repeatedly in all browsers
+		document.onkeypress = function() {
+		};
+		window.onresize = function() {
+			Visualizer.prototype.focused.resize();
+		};
 		this.initWaitForImages();
 	}
 };
@@ -1004,6 +1133,32 @@ Visualizer.prototype.attach = function(width, height) {
  */
 Visualizer.prototype.initRequestImages = function() {
 	this.images.request();
+};
+Visualizer.prototype.resize = function() {
+	var iw = (this.w && !this.config.fullscreen ? this.w : window.innerWidth) - Const.LEFT_PANEL_W;
+	var ih = (this.h && !this.config.fullscreen ? this.h : window.innerHeight) - Const.TOP_PANEL_H;
+	var newScale = Math.min(10, Math.max(1, Math.min(iw / this.replay.parameters.cols, ih / this.replay.parameters.rows))) | 0;
+	if (this.scale != newScale) {
+		this.scale = newScale;
+		var pw = this.scale * this.replay.parameters.cols + Const.LEFT_PANEL_W;
+		var ph = this.scale * this.replay.parameters.rows + Const.TOP_PANEL_H;
+		this.canvasBackground.width = pw;
+		this.canvasBackground.height = ph;
+		this.ctx2dBackground = this.canvasBackground.getContext('2d');
+		this.ctx2dBackground.fillStyle = '#EEE';
+		this.ctx2dBackground.fillRect(0, 0, pw, ph);
+		this.ctx2dBackground.fillStyle = '#000';
+		for (var row = -1; row <= this.replay.parameters.rows; row++) {
+			for (var col = -1; col <= this.replay.parameters.cols; col++) {
+				if (this.replay.walls[(row + this.replay.parameters.rows) % this.replay.parameters.rows][(col + this.replay.parameters.cols) % this.replay.parameters.cols]) {
+					this.ctx2dBackground.fillRect(this.scale * col, this.scale * row, this.scale, this.scale);
+				}
+			}
+		}
+		this.canvas.width = this.canvasBackground.width;
+		this.canvas.height = this.canvasBackground.height;
+		this.draw(true);
+	}
 };
 /**
  * @private
@@ -1016,31 +1171,10 @@ Visualizer.prototype.initWaitForImages = function() {
 	if (this.canvasBackground === undefined) {
 		this.canvasBackground = document.createElement('canvas');
 	}
-	var iw = (this.w ? this.w : window.innerWidth) - Const.LEFT_PANEL_W;
-	var ih = (this.h ? this.h : window.innerHeight) - Const.TOP_PANEL_H;
-	this.scale = Math.min(10, Math.max(1, Math.min(iw / this.replay.parameters.cols, ih / this.replay.parameters.rows))) | 0;
-	var pw = this.scale * this.replay.parameters.cols + Const.LEFT_PANEL_W;
-	var ph = this.scale * this.replay.parameters.rows + Const.TOP_PANEL_H;
-	this.canvasBackground.width = pw;
-	this.canvasBackground.height = ph;
-	this.ctx2dBackground = this.canvasBackground.getContext('2d');
-	this.ctx2dBackground.fillStyle = '#EEE';
-	this.ctx2dBackground.fillRect(0, 0, pw, ph);
-	this.ctx2dBackground.fillStyle = '#000';
-	for (var row = -1; row <= this.replay.parameters.rows; row++) {
-		for (var col = -1; col <= this.replay.parameters.cols; col++) {
-			if (this.replay.walls[(row + this.replay.parameters.rows) % this.replay.parameters.rows][(col + this.replay.parameters.cols) % this.replay.parameters.cols]) {
-				this.ctx2dBackground.fillRect(this.scale * col, this.scale * row, this.scale, this.scale);
-			}
-		}
-	}
-	this.canvas.width = this.canvasBackground.width;
-	this.canvas.height = this.canvasBackground.height;
-	this.ctx2d.textAlign = 'center';
-	this.ctx2d.textBaseline = 'middle';
-	this.ctx2d.font = '10px sans-serif';
-	this.playdir = 0;
+	this.playdir = PlayDir.FORWARD;
+	Visualizer.prototype.focused = this;
 	this.intervalDraw = window.setInterval('visualizer.draw()', Const.DRAW_INTERVAL);
+	this.setFullscreen(this.config.fullscreen);
 };
 /**
  * @private
@@ -1059,27 +1193,42 @@ Visualizer.prototype.drawColorBar = function(x, y, w, h, values, colors) {
 		sum = values.length;
 	}
 	var scale = h / sum;
-	var offset = y;
+	var offsetY = y;
 	for (i = 0; i < useValues.length; i++) {
 		var amount = scale * useValues[i];
 		this.ctx2d.fillStyle = 'rgb(' + colors[i][0] + ', ' + colors[i][1] + ', ' + colors[i][2] + ')';
-		this.ctx2d.fillRect(x, offset, w, amount);
-		offset += amount;
+		this.ctx2d.fillRect(x, offsetY, w, h - offsetY + y);
+		offsetY += amount;
 	}
 	this.ctx2d.textAlign = 'right';
 	this.ctx2d.textBaseline = 'top';
-	this.ctx2d.font = 'bold 20px sans-serif';
+	this.ctx2d.font = 'bold 20px Monospace';
 	this.ctx2d.fillStyle = 'rgba(0,0,0,0.5)';
-	offset = y;
+	var offsetX = x + w - 2;
+	offsetY = y + 2;
 	for (i = 0; i < useValues.length; i++) {
-		this.ctx2d.fillText(values[i], x + w, offset)
-		offset += scale * useValues[i];
+		this.ctx2d.fillText(Math.round(values[i]), offsetX, offsetY)
+		offsetY += scale * useValues[i];
 	}
 };
 /**
  * @private
  */
-Visualizer.prototype.draw = function() {
+Visualizer.prototype.interpolate = function(turn, time, array) {
+	if (time == (time | 0)) {
+		return this.replay.turns[time + 1][array];
+	}
+	var delta = turn - time;
+	var result = new Array(this.replay.turns[1][array].length);
+	for (var i = 0; i < result.length; i++) {
+		result[i] = delta * this.replay.turns[turn][array][i] + (1.0 - delta) * this.replay.turns[turn + 1][array][i];
+	}
+	return result;
+}
+/**
+ * @private
+ */
+Visualizer.prototype.draw = function(refresh) {
 	//~ var timeA = new Date().getTime();
 	//ctx2d.globalCompositeOperation = 'copy';
 	//ctx2d.globalCompositeOperation = 'source-over';
@@ -1104,6 +1253,7 @@ Visualizer.prototype.draw = function() {
 			 * the end result of the game.
 			 */
 			turn = this.replay.turns.length - 1;
+			this.turn = turn;
 			time = turn - 1;
 			anim = 0;
 			transition = true;
@@ -1118,25 +1268,25 @@ Visualizer.prototype.draw = function() {
 	/* Repaint the map rows if we have a transition from on turn to
 	 * another.
 	 */
-	if (transition) {
+	var w = Const.LEFT_PANEL_W / 2;
+	var h = this.canvasBackground.height - 20 - Const.TOP_PANEL_H;
+	var colors = Const.PLAYER_COLORS;
+	if (transition || refresh) {
 		//document.getElementById('lblTurn').innerHTML = ((turn > this.replay.turns.length - 2) ? 'end result' : turn + ' / ' + (this.replay.turns.length - 2));
-		var w = Const.LEFT_PANEL_W / 2;
-		var h = this.canvasBackground.height - 20 - Const.TOP_PANEL_H;
 		this.ctx2d.fillStyle = '#000';
 		this.ctx2d.fillRect(0, Const.TOP_PANEL_H, 2 * w, this.canvasBackground.height);
 		this.ctx2d.fillRect(0, 0, this.canvasBackground.width, Const.TOP_PANEL_H);
-		var colors = Const.PLAYER_COLORS;
 		this.ctx2d.textAlign = 'left';
 		this.ctx2d.textBaseline = 'top';
 		this.ctx2d.font = 'bold 20px sans-serif';
 		var x = 0;
 		for (i = 0; i < this.replay.players.length; i++) {
 			this.ctx2d.fillStyle = 'rgb(' + colors[i][0] + ', ' + colors[i][1] + ', ' + colors[i][2] + ')';
-			this.ctx2d.fillText(this.replay.players[i].name, x, 0);
+			this.ctx2d.fillText(this.replay.players[i].name, x, 2);
 			x += this.ctx2d.measureText(this.replay.players[i].name).width;
 			if (i != this.replay.players.length - 1) {
 				this.ctx2d.fillStyle = '#888';
-				this.ctx2d.fillText(' vs ', x, 0);
+				this.ctx2d.fillText(' vs ', x, 2);
 				x += this.ctx2d.measureText(' vs ').width;
 			}
 		}
@@ -1146,9 +1296,11 @@ Visualizer.prototype.draw = function() {
 		this.ctx2d.font = 'bold 12px sans-serif';
 		this.ctx2d.fillText('ants', w / 2, Const.TOP_PANEL_H + 10);
 		this.ctx2d.fillText('scores', 3 * w / 2, Const.TOP_PANEL_H + 10);
-		this.drawColorBar(2    , Const.TOP_PANEL_H + 20, w - 4, h - 2, this.replay.turns[turn].counts, Const.PLAYER_COLORS);
-		this.drawColorBar(2 + w, Const.TOP_PANEL_H + 20, w - 4, h - 2, this.replay.turns[turn].scores, Const.PLAYER_COLORS);
 	}
+	var counts = this.interpolate(turn, time, 'counts');
+	this.drawColorBar(2    , Const.TOP_PANEL_H + 20, w - 4, h - 2, counts, Const.PLAYER_COLORS);
+	var scores = this.interpolate(turn, time, 'scores');
+	this.drawColorBar(2 + w, Const.TOP_PANEL_H + 20, w - 4, h - 2, scores, Const.PLAYER_COLORS);
 	for (var i = 0; i < this.replay.turns[turn].ants.length; i++) {
 		var antObj = this.replay.turns[turn].ants[i].interpolate(time, Quality.LOW);
 		drawOrder.push(antObj);
@@ -1159,17 +1311,15 @@ Visualizer.prototype.draw = function() {
 	} else {
 		this.ctx2dBackground.strokeStyle = '#CA7';
 	}
-	this.ctx2dBackground.beginPath();
-	this.ctx2d.textBaseline = 'top';
 	for (var n = 0; n < drawOrder.length; n++) {
 		antObj = drawOrder[n];
-		this.ctx2d.save();
 		if (true) {
 			mx = Math.round(this.scale * antObj.x + Const.LEFT_PANEL_W);
 			my = Math.round(this.scale * antObj.y + Const.TOP_PANEL_H);
 			this.ctx2d.fillStyle = 'rgba(' + antObj.r + ', ' + antObj.g + ', ' + antObj.b + ', ' + antObj.a + ')';
 			this.ctx2d.fillRect(mx, my, this.scale, this.scale);
 		} else {
+			this.ctx2d.save();
 			this.ctx2d.globalAlpha = antObj.alpha;
 			this.ctx2d.translate(10 + 20 * antObj.x, 10 + 20 * antObj.y);
 			this.ctx2d.rotate(antObj.angle + Math.sin(20 * time) * antObj.jitter);
@@ -1185,7 +1335,6 @@ Visualizer.prototype.draw = function() {
 			}
 		}
 	}
-	this.ctx2dBackground.stroke();
 	this.timeOld = time;
 	//~ var timeB = new Date().getTime();
 	//~ document.title = 'Render time: ' + (timeB - timeA) + ' ms';
@@ -1225,13 +1374,13 @@ Visualizer.prototype.stepBw = function(steps) {
 	this.draw();
 };
 	
-Visualizer.prototype.first = function() {
+Visualizer.prototype.gotoStart = function() {
 	this.stepHelper(false);
 	this.turn = 1;
 	this.draw();
 };
 	
-Visualizer.prototype.last = function() {
+Visualizer.prototype.gotoEnd = function() {
 	this.stepHelper(true);
 	this.turn = this.replay.turns.length - 1;
 	this.draw();
@@ -1252,9 +1401,26 @@ Visualizer.prototype.play = function() {
 		this.intervalDraw = undefined;
 		var time = (new Date().getTime() - this.timeOffset) / Const.TIME_PER_TURN;
 		this.turn = (time | 0) + 1 + this.playdir;
-		this.draw();
 	}
+	this.draw();
 };
+
+Visualizer.prototype.setFullscreen = function(enable) {
+	this.config.fullscreen = enable;
+	var html = document.getElementsByTagName("html")[0];
+	if (enable) {
+		this.container.removeChild(this.canvas);
+		var tempBody = document.createElement("body");
+		tempBody.appendChild(this.canvas);
+		this.savedBody = html.replaceChild(tempBody, document.body);
+	} else if (this.savedBody) {
+		document.body.removeChild(this.canvas);
+		this.container.appendChild(this.canvas);
+		html.replaceChild(this.savedBody, document.body);
+		delete this.savedBody;
+	}
+	this.resize();
+}
 
 
 /**

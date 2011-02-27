@@ -3,13 +3,6 @@
 <head>
 	<title>Ant Canvas</title>
 	<script type="text/javascript" src="js/visualizer.js"></script>
-	<script type="text/javascript">
-		visualizer = new Visualizer('visualizerColumn');
-		function visualizePasted() {
-			visualizer.loadReplayData(txtReplay.value);
-			visualizer.attach(640);
-		}
-	</script>
 </head>
 <body>
 	<table style="font-family: 'arial'">
@@ -26,4 +19,11 @@
 		</tr>
 	</table>
 </body>
+<script type="text/javascript">
+	visualizer = new Visualizer(document.getElementById('visualizerColumn'));
+	function visualizePasted() {
+		visualizer.loadReplayData(txtReplay.value);
+		visualizer.attach(640);
+	}
+</script>
 </html>
