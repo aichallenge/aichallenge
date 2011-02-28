@@ -1,17 +1,20 @@
 /**
  * @fileoverview This is a visualizer for the ai challenge ant game.
  * @author <a href="mailto:marco.leise@gmx.de">Marco Leise</a>
- * @todo animated single steps if possible
  * @todo playback controls
  * @todo fog of war option
- * @todo borders around the game board
- * @todo some nice graphics and transparency once the layout is good
  * @todo scrolling player names if too long; fade to the left and right
  * @todo zoom in to 20x20 squares with animated ants
  * @todo save settings
  * @todo set player colors from replay file (awaiting answer)
  * @todo show when a bot crashed (awaiting answer)
  * @todo clickable player names (requires user_id)
+ * @todo animated single steps if possible (how?)
+ * @todo graph showing ants and scores
+ * @todo menu items: fullscreen, save, clear, show fog, show attack, show birth,
+ *     zoom, toggle graph/score bars, cpu use
+ * @todo focus button for each player
+ * @todo duplicate sprites that wrap around the map edge
  */
 
 /**
@@ -23,7 +26,8 @@ Const = {
 	TIME_PER_TURN: 250,      // in milli seconds
 	LEFT_PANEL_W: 100,       // width of left side panel
 	TOP_PANEL_H: 30,         // height of top panel
-	FOOD_COLOR: [ 200, 200, 150 ],
+	BOTTOM_PANEL_H: 64,      // height of bottom panel
+	FOOD_COLOR: [ 200, 150, 100 ],
 	PLAYER_COLORS: [
 		[ 255,   0,   0 ], [   0,   0, 255 ], [   0, 180,   0 ], [ 255, 200,   0 ],
 		[ 255, 255, 255 ], [ 255, 255, 255 ], [ 255, 255, 255 ], [ 255, 255, 255 ],
@@ -32,7 +36,10 @@ Const = {
 		[ 255, 255, 255 ], [ 255, 255, 255 ], [ 255, 255, 255 ], [ 255, 255, 255 ],
 		[ 255, 255, 255 ], [ 255, 255, 255 ], [ 255, 255, 255 ], [ 255, 255, 255 ],
 		[ 255, 255, 255 ], [ 255, 255, 255 ]
-	]
+	],
+	COLOR_WATER: '#133',
+	COLOR_SAND: '#FFD',
+	ZOOM_SCALE: 20
 };
 
 /**
@@ -114,6 +121,13 @@ LoFiData.prototype.interpolate = function(other, b) {
 	result.a = a * this.a + b * other.a;
 	return result;
 };
+LoFiData.prototype.copy = function() {
+	var result = new LoFiData();
+	for (var i in this) {
+		result[i] = this[i];
+	}
+	return result;
+}
 
 
 function HiFiData(other) {
@@ -131,6 +145,7 @@ HiFiData.prototype.interpolate = function(other, b) {
 	result.time = a * this.time + b * other.time;
 	return result;
 }
+
 
 /**
  * The constructor for on-screen ant objects initializes it with one key frame.
@@ -196,17 +211,47 @@ Ant.prototype.interpolate = function(time, quality) {
 		goFrom++;
 	}
 	if (goFrom == set.length - 1) {
-		return set[goFrom];
+		return set[goFrom].copy();
 	}
 	delta = (time - set[goFrom].time) / (set[goFrom + 1].time - set[goFrom].time);
 	if (delta == 0) {
-		return set[goFrom];
+		return set[goFrom].copy();
 	} else if (delta == 1) {
-		return set[goFrom + 1];
+		return set[goFrom + 1].copy();
 	}
 	return set[goFrom].interpolate(set[goFrom + 1], delta);
 };
+Ant.prototype.fade = function(quality, key, pairs) {
+	var i, k, av, bv, at, bt, mix;
+	var set = quality ? this.hi : this.lo;
+	var f = [];
+	// create the required frames
+	for (i = 0; i < pairs.length; i++) {
+		f[i] = this.frameAt(pairs[i].time, quality, true);
+		if (pairs[i].value !== undefined) {
+			f[i][key] = pairs[i].value;
+		}
+	}
+	// update frames inbetween
+	for (i = set.length - 1; i >= 0; i--) {
+		if (f[0].time === pairs[0].time) {
+			break;
+		}
+	}
+	i++;
+	for (k = 0; k < f.length - 1; k++) {
+		av = f[k][key];
+		bv = f[k + 1][key];
+		at = f[k].time;
+		bt = f[k + 1].time;
+		for (; i < set.length && set[i] != f[k + 1]; i++) {
+			mix = (set[i].time - at) / (bt - at);
+			set[i][key] = (1 - mix) * av + mix * bv;
+		}
+	}
+};
 // animates the ant ([{<time between 0 and 1>, {<attribute to set absolute>, ...}, {<attribute to set relative>, ...}}, ...])
+// currently unused
 Ant.prototype.animate = function(list) {
         var key, a, i;
 	var interpol = new Array(list.length);
@@ -251,7 +296,8 @@ Turn.prototype.food = function(data, id, prev) {
 	// check for food item refresh
 	for (var eid in this.existing) {
 		if (this.existing[eid].x == data.x && this.existing[eid].y == data.y && this.existing[eid].player === undefined) {
-			throw 'A duplicate food item was spawned at (' + data.x + ';' + data.y + ')';
+			//throw 'A duplicate food item was spawned at (' + data.x + ';' + data.y + ')';
+			return id;
 		}
 	}
 	if (prev !== undefined) {
@@ -273,12 +319,14 @@ Turn.prototype.ant = function(data, prev) {
 				// command is a refresh for an existing ant
 				return;
 			} else {
-				throw 'An existing ant was found at (' + data.x + ';' + data.y + ') found during ant conversion';
+				//throw 'An existing ant was found at (' + data.x + ';' + data.y + ') found during ant conversion';
+				return;
 			}
 		}
 	}
 	if (target == null) {
-		throw 'No food was found at (' + data.x + ';' + data.y + ') during ant conversion';
+		//throw 'No food was found at (' + data.x + ';' + data.y + ') during ant conversion';
+		return;
 	}
 	target.player = data.player;
 	prev.conversions.push({id: target.id, player: data.player});
@@ -299,24 +347,26 @@ Turn.prototype.kill = function(data, prev) {
 			return;
 		}
 	}
-	throw 'Nothing to kill at (' + data.x + ';' + data.y + ')';
+	//throw 'Nothing to kill at (' + data.x + ';' + data.y + ')';
 };
 Turn.prototype.order = function(data) {
-	var moves = 0;
+	var moves = false;
 	for (var id in this.existing) {
 		if (this.existing[id].x == data.x && this.existing[id].y == data.y) {
 			if (this.existing[id].player === undefined) {
-				throw 'Attempt to move a food item at (' + data.x + ';' + data.y + ')';
+				//throw 'Attempt to move a food item at (' + data.x + ';' + data.y + ')';
+				return;
 			}
 			this.orders.push({id: this.existing[id].id, direction: data.direction});
-			moves++;
+			if (moves) {
+				//throw 'More than one ant moved at (' + data.x + ';' + data.y + ')';
+			}
+			moves = true;
 		}
 	}
 	if (moves == 0) {
-		throw 'No ant to move at (' + data.x + ';' + data.y + ')';
-	} else if (moves > 1) {
-		throw 'More than one ant moved at (' + data.x + ';' + data.y + ')';
-	}		
+		//throw 'No ant to move at (' + data.x + ';' + data.y + ')';
+	}
 };
 // carry must be called first on a new turn
 Turn.prototype.carry = function(prev, width, height) {
@@ -397,7 +447,7 @@ function Config() {
  */
 Config.prototype.hasLocalStorage = function() {
 	try {
-		return 'localStorage' in window && window['localStorage'] !== null;
+		return !!window.localStorage;
 	} catch (error) {
 		return error;
 	}
@@ -486,7 +536,7 @@ function Replay(replayStr) {
 	this.walls = undefined;
 	this.turns = undefined;
 
-	var row, col, i, k, c, f1, f2, collision, spawn, order, conversion;
+	var row, col, i, k, m, c, f1, f2, collision, spawn, order, conversion;
 	var deathList, playerId, antObj;
 	var id = 0;      // 'auto-increment' value for ant ids
 	var tturns = []; // for each turn, contains a basic data structure containing all the information from <replayStr>
@@ -626,7 +676,8 @@ function Replay(replayStr) {
 			}
 		}
 	} catch (error) {
-		//throw 'In line #' + lines.currentNum() + ' "' + lines.current() + '": ' + error;
+		error.message =	'In line #' + lines.currentNum() + ' "' + lines.current();
+		throw error;
 	}
 
 	// Add animation...
@@ -661,8 +712,9 @@ function Replay(replayStr) {
 			antObj = antStates[order.id];
 			antObj.frameAt(t - 1, Quality.LOW, true);
 			f2 = antObj.frameAt(t - 0.5, Quality.LOW, true);
-			f2.x += order.direction.x;
-			f2.y += order.direction.y;
+			f2.x = Math.round(f2.x + order.direction.x);
+			f2.y = Math.round(f2.y + order.direction.y);
+			antObj.frameAt(t, Quality.LOW, true);
 			/*antObj.keyFrames[1].angle = offset.angle;
 			antObj.animate([{
 				time: 0.5,
@@ -737,15 +789,27 @@ function Replay(replayStr) {
 			collision = deathList.length > 1;
 			for (k = 0; k < deathList.length; k++) {
 				antObj = antStates[deathList[k]];
-				if (collision) {
-					antObj.frameAt(t - 0.75, Quality.LOW, true);
-					f2 = antObj.frameAt(t - 0.5, Quality.LOW, true);
-				} else {
-					antObj.frameAt(t - 0.25, Quality.LOW, true);
-					f2 = antObj.frameAt(t, Quality.LOW, true);
-				}
-				f2.a = 0.0;
+				c = collision ? t - 0.75 : t - 0.25;
+				antObj.fade(Quality.LOW, 'a', [
+					{ time: c       , value: undefined },
+					{ time: c + 0.25, value: 0.0 },
+					{ time: t       , value: 0.0 },
+				]);
 				delete antStates[deathList[k]];
+			}
+		}
+		// food
+		for (i in antStates) {
+			antObj = antStates[i];
+			if (antObj.player === undefined) {
+				c = (0.1 * (antObj.lo[0].x + antObj.lo[0].y + t)) % 1;
+				f1 = antObj.frameAt(t - c, Quality.LOW, true);
+				c = (c - 0.5) < 0 ? c + 0.5 : c - 0.5;
+				f2 = antObj.frameAt(t - c, Quality.LOW, true);
+				antObj.frameAt(t      , Quality.LOW, true);
+				f1.r = Const.FOOD_COLOR[0] + 50;
+				f1.g = Const.FOOD_COLOR[1] + 50;
+				f1.b = Const.FOOD_COLOR[2] + 50;
 			}
 		}
 		// Copy the last ant state to the next level
@@ -873,25 +937,45 @@ Replay.prototype.tokenize = function(line, parameterTypes, allowOthers) {
 };
 
 
-function ImageManager() {
+function ImageManager(baseDirectory) {
+	this.base = baseDirectory;
 	this.images = [];
+	this.patterns = [];
+	this.error = '';
+	this.pending = 0;
 }
 ImageManager.prototype.request = function(source) {
 	var image = new Image();
-	image.src = source;
+	var that = this;
+	image.onerror = function() {
+        if (that.error) {
+            that.error += '\n';
+        }
+        that.error += this.src + ' did not load.';
+	};
+	image.onabort = image.onerror;
+	image.onload = function() {
+        that.pending--;
+	};
+	this.pending++;
 	this.images.push(image);
+	this.patterns.push(null);
+	image.src = this.base + source;
 	return this.images.length - 1;
+};
+ImageManager.prototype.pattern = function(idx, ctx, repeat) {
+	if (!this.patterns[idx]) {
+		this.patterns[idx] = ctx.createPattern(this.images[idx], repeat);
+	}
+	ctx.fillStyle = this.patterns[idx];
 };
 ImageManager.prototype.complete = function(id) {
 	if (id) {
 		return this.images[id].complete;
-	} else {
-		var result = true;
-		for (id = 0; id < this.images.length && result; id++) {
-			result &= this.images[id].complete;
-		}
-		return result;
+	} else if (this.error !== '') {
+		throw this.error;
 	}
+	return this.pending === 0;
 };
 
 
@@ -899,18 +983,25 @@ ImageManager.prototype.complete = function(id) {
  * The main 'application' object that provides all necessary methods for the use
  * in a web page.
  * @param {Node} container the html element, that the visualizer will embed into
+ * @param {string} dataDir This relative path to the visualizer data files. You
+ *     will get an error message if you forget the tailing '/'.
  */
-function Visualizer(container) {
+function Visualizer(container, dataDir) {
 	/**
 	 * any generated DOM elements will be placed here
 	 * @private
 	 */
 	this.container = container;
 	/**
+	 * This field will be set to true by createCanvas() if we are running IE < 9
+	 * and cannot use all canvas features.
+	 */
+	this.vml = false;
+	/**
 	 * the main canvas
 	 * @private
 	 */
-	this.canvas = document.createElement('canvas');
+	this.canvas = this.createCanvas();
 	/**
 	 * ...and it's 2D context
 	 * @private
@@ -920,12 +1011,22 @@ function Visualizer(container) {
 	 * contains the backdrop for the map
 	 * @private
 	 */
-	this.canvasBackground = undefined;
+	this.cvsMap = undefined;
 	/**
 	 * ...associated 2D context
 	 * @private
 	 */
-	this.ctx2dBackground = undefined;
+	this.ctxMap = undefined;
+	/**
+	 * Caches the graphics of the map border
+	 * @private
+	 */
+	this.cvsBorder = undefined;
+	/**
+	 * ...associated 2D context
+	 * @private
+	 */
+	this.ctxBorder = undefined;
 	/**
 	 * array of precomputed turn data
 	 * @private
@@ -967,6 +1068,11 @@ function Visualizer(container) {
 	 */
 	this.h = undefined;
 	/**
+	 * locations of elements on the screen
+	 * @private
+	 */
+	this.loc = {};
+	/**
 	 * size of an ant in pixels
 	 * @private
 	 */
@@ -975,7 +1081,8 @@ function Visualizer(container) {
 	 * images used by the visualizer
 	 * @private
 	 */
-	this.images = new ImageManager();
+	this.imgMgr = new ImageManager((dataDir || '') + 'img/');
+	this.imgMgr.request('wood.jpg')
 	/**
 	 * presistable configuration values
 	 * @private
@@ -998,6 +1105,18 @@ function Visualizer(container) {
 			this.parameters[parameter] = value;
 		}
 	}
+}
+/**
+ * Creates a canvas element and binds Google's VML wrapper to it
+ * if the browser is IE < 9.
+ */
+Visualizer.prototype.createCanvas = function() {
+    var result = document.createElement('canvas');
+    if (!result.getContext) {
+		this.vml = true;
+        G_vmlCanvasManager.initElement(result);
+    }
+    return result;
 }
 /**
  * Loads a replay file located on the same server using a XMLHttpRequest.
@@ -1033,8 +1152,10 @@ Visualizer.prototype.loadReplayDataFromPHP = function(data) {
 		if (!this.replay) {
 			this.errorOut('game_info.php did not feed any playback_string.');
 		}
-	} else {
+	} else if (data) {
 		this.errorOut(data);
+	} else {
+		this.errorOut('no data');
 	}
 };
 /**
@@ -1060,6 +1181,9 @@ Visualizer.prototype.errorOut = function(text) {
 		errorParagraph.appendChild(document.createTextNode(text[i]));
 		errorParagraph.appendChild(document.createElement("br"));
 	}
+	while (this.container.childNodes.length > 0 ) {
+		this.container.removeChild(this.container.firstChild);
+	}
 	this.container.appendChild(errorParagraph);
 };
 /**
@@ -1075,16 +1199,20 @@ Visualizer.prototype.attach = function(width, height) {
 		try {
 			this.replay = new Replay(this.replay);
 		} catch (error) {
-			this.errorOut('Replay cannot be parsed!\n' + error);
+			this.errorOut('Replay cannot be parsed!\n\nStack trace:\n' + error.stack);
 			this.replay = undefined;
 		}
 	}
 	if (this.replay) {
-		if (!this.canvas.parentNode) {
+		if (this.canvas.parentNode !== this.container) {
 			this.container.appendChild(this.canvas);
 		}
 		// this will fire once in FireFox when a key is held down
 		document.onkeydown = function(event) {
+            if (!event) {
+                // IE doesn't pass this as an argument
+                event = window.event;
+            }
 			var visualizer = Visualizer.prototype.focused;
 			switch(event.keyCode) {
 				case Key.SPACE:
@@ -1131,51 +1259,143 @@ Visualizer.prototype.attach = function(width, height) {
 /**
  * @private
  */
-Visualizer.prototype.initRequestImages = function() {
-	this.images.request();
-};
-Visualizer.prototype.resize = function() {
-	var iw = (this.w && !this.config.fullscreen ? this.w : window.innerWidth) - Const.LEFT_PANEL_W;
-	var ih = (this.h && !this.config.fullscreen ? this.h : window.innerHeight) - Const.TOP_PANEL_H;
-	var newScale = Math.min(10, Math.max(1, Math.min(iw / this.replay.parameters.cols, ih / this.replay.parameters.rows))) | 0;
-	if (this.scale != newScale) {
-		this.scale = newScale;
-		var pw = this.scale * this.replay.parameters.cols + Const.LEFT_PANEL_W;
-		var ph = this.scale * this.replay.parameters.rows + Const.TOP_PANEL_H;
-		this.canvasBackground.width = pw;
-		this.canvasBackground.height = ph;
-		this.ctx2dBackground = this.canvasBackground.getContext('2d');
-		this.ctx2dBackground.fillStyle = '#EEE';
-		this.ctx2dBackground.fillRect(0, 0, pw, ph);
-		this.ctx2dBackground.fillStyle = '#000';
-		for (var row = -1; row <= this.replay.parameters.rows; row++) {
-			for (var col = -1; col <= this.replay.parameters.cols; col++) {
-				if (this.replay.walls[(row + this.replay.parameters.rows) % this.replay.parameters.rows][(col + this.replay.parameters.cols) % this.replay.parameters.cols]) {
-					this.ctx2dBackground.fillRect(this.scale * col, this.scale * row, this.scale, this.scale);
-				}
-			}
-		}
-		this.canvas.width = this.canvasBackground.width;
-		this.canvas.height = this.canvasBackground.height;
-		this.draw(true);
-	}
-};
-/**
- * @private
- */
 Visualizer.prototype.initWaitForImages = function() {
-	//if (!this.images.complete()) {
-	//	window.setTimeout('visualizer.initWaitForImages()', 50);
-	//	return;
-	//}
-	if (this.canvasBackground === undefined) {
-		this.canvasBackground = document.createElement('canvas');
+	try {
+		if (!this.imgMgr.complete()) {
+			window.setTimeout('visualizer.initWaitForImages()', 50);
+			return;
+		}
+	} catch (error) {
+		this.errorOut(error);
+		return;
+	}
+	if (!this.vml) {
+		this.cvsMap = this.createCanvas();
+		this.ctxMap = this.cvsMap.getContext('2d');
+		this.cvsBorder = this.createCanvas();
+		this.ctxBorder = this.cvsBorder.getContext('2d');
 	}
 	this.playdir = PlayDir.FORWARD;
 	Visualizer.prototype.focused = this;
 	this.intervalDraw = window.setInterval('visualizer.draw()', Const.DRAW_INTERVAL);
 	this.setFullscreen(this.config.fullscreen);
 };
+Visualizer.prototype.resize = function() {
+	var iw, ih;
+	if (typeof(window.innerWidth) == 'number' ) {
+		//Non-IE
+		iw = window.innerWidth;
+		ih = window.innerHeight;
+	} else if (document.documentElement && (document.documentElement.clientWidth || document.documentElement.clientHeight)) {
+		//IE 6+ in 'standards compliant mode'
+		iw = document.documentElement.clientWidth;
+		ih = document.documentElement.clientHeight;
+	} else if (document.body && (document.body.clientWidth || document.body.clientHeight)) {
+		//IE 4 compatible
+		iw = document.body.clientWidth;
+		ih = document.body.clientHeight;
+	}
+  	iw = (this.w && !this.config.fullscreen ? this.w : iw);
+	ih = (this.h && !this.config.fullscreen ? this.h : ih);
+	if (iw != this.canvas.width || ih != this.canvas.height) {
+		this.canvas.width = iw;
+		this.canvas.height = ih;
+		this.loc.vis = {
+			w: iw - Const.LEFT_PANEL_W,
+			h: ih - Const.TOP_PANEL_H - Const.BOTTOM_PANEL_H,
+			x: Const.LEFT_PANEL_W,
+			y: Const.TOP_PANEL_H
+		};
+		this.scale = Math.min(10, Math.max(1, Math.min(
+			(this.loc.vis.w - 2 * Const.ZOOM_SCALE) / (this.replay.parameters.cols),
+			(this.loc.vis.h - 2 * Const.ZOOM_SCALE) / (this.replay.parameters.rows)
+		))) | 0;
+		this.loc.map = {
+			w: this.scale * (this.replay.parameters.cols),
+			h: this.scale * (this.replay.parameters.rows)
+		};
+		this.loc.map.x = ((this.loc.vis.w - this.loc.map.w) / 2 + this.loc.vis.x) | 0;
+		this.loc.map.y = ((this.loc.vis.h - this.loc.map.h) / 2 + this.loc.vis.y) | 0;
+		if (!this.vml) {
+			this.cvsBorder.width = this.loc.map.w + 2 * Const.ZOOM_SCALE;
+			this.cvsBorder.height = this.loc.map.h + 2 * Const.ZOOM_SCALE;
+			this.renderBorder(this.ctxBorder);
+			this.cvsMap.width = this.loc.map.w;
+			this.cvsMap.height = this.loc.map.h;
+			this.renderMap(this.ctxMap, 0, 0);
+		} 
+		this.draw(true);
+	}
+};
+/**
+ * @private
+ */
+Visualizer.prototype.renderMap = function(ctx2d, x, y) {
+	ctx2d.fillStyle = Const.COLOR_SAND;
+	ctx2d.fillRect(x, y, this.loc.map.w, this.loc.map.h);
+	ctx2d.fillStyle = Const.COLOR_WATER;
+	for (var row = 0; row < this.replay.parameters.rows; row++) {
+		for (var col = 0; col < this.replay.parameters.cols; col++) {
+			if (this.replay.walls[(row + this.replay.parameters.rows) % this.replay.parameters.rows][(col + this.replay.parameters.cols) % this.replay.parameters.cols]) {
+				ctx2d.fillRect(this.scale * col + x, this.scale * row + y, this.scale, this.scale);
+			}
+		}
+	}
+}
+/**
+ * @private
+ */
+Visualizer.prototype.renderBorder = function(ctx2d) {
+	this.imgMgr.pattern(0, ctx2d, 'repeat');
+	with (ctx2d) with (this.loc.map) with (Const) {
+		save();
+			translate(ZOOM_SCALE, ZOOM_SCALE);
+			save();
+				beginPath();
+				moveTo(0, 0);
+				lineTo(w, 0);
+				lineTo(w + ZOOM_SCALE, -ZOOM_SCALE);
+				lineTo(-ZOOM_SCALE, -ZOOM_SCALE);
+				closePath();
+				clip();
+				fillRect(-ZOOM_SCALE, -ZOOM_SCALE, w + 2 * ZOOM_SCALE, ZOOM_SCALE);
+			restore();
+			save();
+				translate(0, h);
+				beginPath();
+				moveTo(0, 0);
+				lineTo(w, 0);
+				lineTo(w + ZOOM_SCALE, +ZOOM_SCALE);
+				lineTo(-ZOOM_SCALE, +ZOOM_SCALE);
+				closePath();
+				clip();
+				fillRect(-ZOOM_SCALE, 0, w + 2 * ZOOM_SCALE, ZOOM_SCALE);
+			restore();
+			rotate(0.5 * Math.PI);
+			save();
+				beginPath();
+				moveTo(0, 0);
+				lineTo(h, 0);
+				lineTo(h + ZOOM_SCALE, ZOOM_SCALE);
+				lineTo(-ZOOM_SCALE, ZOOM_SCALE);
+				closePath();
+				clip();
+				fillRect(-ZOOM_SCALE, + ZOOM_SCALE, h + 2 * ZOOM_SCALE, -ZOOM_SCALE);
+			restore();
+			save();
+				translate(0, -w);
+				beginPath();
+				moveTo(0, 0);
+				lineTo(h, 0);
+				lineTo(h + ZOOM_SCALE, -ZOOM_SCALE);
+				lineTo(-ZOOM_SCALE, -ZOOM_SCALE);
+				closePath();
+				clip();
+				fillRect(-ZOOM_SCALE, -ZOOM_SCALE, h + 2 * ZOOM_SCALE, ZOOM_SCALE);
+		   restore();
+		restore();
+	}
+}
 /**
  * @private
  */
@@ -1200,17 +1420,26 @@ Visualizer.prototype.drawColorBar = function(x, y, w, h, values, colors) {
 		this.ctx2d.fillRect(x, offsetY, w, h - offsetY + y);
 		offsetY += amount;
 	}
-	this.ctx2d.textAlign = 'right';
-	this.ctx2d.textBaseline = 'top';
-	this.ctx2d.font = 'bold 20px Monospace';
-	this.ctx2d.fillStyle = 'rgba(0,0,0,0.5)';
-	var offsetX = x + w - 2;
-	offsetY = y + 2;
-	for (i = 0; i < useValues.length; i++) {
-		this.ctx2d.fillText(Math.round(values[i]), offsetX, offsetY)
-		offsetY += scale * useValues[i];
+	if (!this.vml) {
+		this.ctx2d.textAlign = 'right';
+		this.ctx2d.textBaseline = 'top';
+		this.ctx2d.font = 'bold 20px Monospace';
+		this.ctx2d.fillStyle = 'rgba(0,0,0,0.5)';
+		var offsetX = x + w - 2;
+		offsetY = y + 2;
+		for (i = 0; i < useValues.length; i++) {
+			this.ctx2d.fillText(Math.round(values[i]), offsetX, offsetY);
+			offsetY += scale * useValues[i];
+		}
 	}
 };
+/**
+ * @private
+ */
+Visualizer.prototype.correctCoords = function(obj, w, h) {
+	obj.x -= Math.floor(obj.x / w) * w;
+	obj.y -= Math.floor(obj.y / h) * h;
+}
 /**
  * @private
  */
@@ -1229,17 +1458,24 @@ Visualizer.prototype.interpolate = function(turn, time, array) {
  * @private
  */
 Visualizer.prototype.draw = function(refresh) {
+	var cx, cy, transition, mx, my, anim;
 	//~ var timeA = new Date().getTime();
 	//ctx2d.globalCompositeOperation = 'copy';
 	//ctx2d.globalCompositeOperation = 'source-over';
 	var time = new Date().getTime();
 	var drawOrder = new Array();
-	var transition, mx, my, anim;
 	if (this.timeOffset === undefined) {
 		this.timeOffset = time;
 		transition = true;
 	}
-	this.ctx2d.drawImage(this.canvasBackground, Const.LEFT_PANEL_W, Const.TOP_PANEL_H);
+	if (this.vml) {
+		// Cannot use cached offscreen bitmap
+		this.ctx2d.clearRect();
+		this.renderMap(this.ctx2d);
+		refresh = true;
+	} else {
+		this.ctx2d.drawImage(this.cvsMap, this.loc.map.x, this.loc.map.y);
+	}
 	var turn;
 	if (this.intervalDraw === undefined) {
 		turn = this.turn;
@@ -1269,33 +1505,35 @@ Visualizer.prototype.draw = function(refresh) {
 	 * another.
 	 */
 	var w = Const.LEFT_PANEL_W / 2;
-	var h = this.canvasBackground.height - 20 - Const.TOP_PANEL_H;
+	var h = this.loc.vis.h - 20 - Const.TOP_PANEL_H;
 	var colors = Const.PLAYER_COLORS;
 	if (transition || refresh) {
 		//document.getElementById('lblTurn').innerHTML = ((turn > this.replay.turns.length - 2) ? 'end result' : turn + ' / ' + (this.replay.turns.length - 2));
 		this.ctx2d.fillStyle = '#000';
-		this.ctx2d.fillRect(0, Const.TOP_PANEL_H, 2 * w, this.canvasBackground.height);
-		this.ctx2d.fillRect(0, 0, this.canvasBackground.width, Const.TOP_PANEL_H);
-		this.ctx2d.textAlign = 'left';
-		this.ctx2d.textBaseline = 'top';
-		this.ctx2d.font = 'bold 20px sans-serif';
-		var x = 0;
-		for (i = 0; i < this.replay.players.length; i++) {
-			this.ctx2d.fillStyle = 'rgb(' + colors[i][0] + ', ' + colors[i][1] + ', ' + colors[i][2] + ')';
-			this.ctx2d.fillText(this.replay.players[i].name, x, 2);
-			x += this.ctx2d.measureText(this.replay.players[i].name).width;
-			if (i != this.replay.players.length - 1) {
-				this.ctx2d.fillStyle = '#888';
-				this.ctx2d.fillText(' vs ', x, 2);
-				x += this.ctx2d.measureText(' vs ').width;
+		this.ctx2d.fillRect(0, Const.TOP_PANEL_H, 2 * w, this.loc.vis.h);
+		this.ctx2d.fillRect(0, 0, this.loc.vis.w, Const.TOP_PANEL_H);
+		if (!this.vml) {
+			this.ctx2d.textAlign = 'left';
+			this.ctx2d.textBaseline = 'top';
+			this.ctx2d.font = 'bold 20px sans-serif';
+			var x = 0;
+			for (i = 0; i < this.replay.players.length; i++) {
+				this.ctx2d.fillStyle = 'rgb(' + colors[i][0] + ', ' + colors[i][1] + ', ' + colors[i][2] + ')';
+				this.ctx2d.fillText(this.replay.players[i].name, x, 2);
+				x += this.ctx2d.measureText(this.replay.players[i].name).width;
+				if (i != this.replay.players.length - 1) {
+					this.ctx2d.fillStyle = '#888';
+					this.ctx2d.fillText(' vs ', x, 2);
+					x += this.ctx2d.measureText(' vs ').width;
+				}
 			}
+			this.ctx2d.fillStyle = '#FFF';
+			this.ctx2d.textAlign = 'center';
+			this.ctx2d.textBaseline = 'middle';
+			this.ctx2d.font = 'bold 12px sans-serif';
+			this.ctx2d.fillText('ants', w / 2, Const.TOP_PANEL_H + 10);
+			this.ctx2d.fillText('scores', 3 * w / 2, Const.TOP_PANEL_H + 10);
 		}
-		this.ctx2d.fillStyle = '#FFF';
-		this.ctx2d.textAlign = 'center';
-		this.ctx2d.textBaseline = 'middle';
-		this.ctx2d.font = 'bold 12px sans-serif';
-		this.ctx2d.fillText('ants', w / 2, Const.TOP_PANEL_H + 10);
-		this.ctx2d.fillText('scores', 3 * w / 2, Const.TOP_PANEL_H + 10);
 	}
 	var counts = this.interpolate(turn, time, 'counts');
 	this.drawColorBar(2    , Const.TOP_PANEL_H + 20, w - 4, h - 2, counts, Const.PLAYER_COLORS);
@@ -1303,38 +1541,45 @@ Visualizer.prototype.draw = function(refresh) {
 	this.drawColorBar(2 + w, Const.TOP_PANEL_H + 20, w - 4, h - 2, scores, Const.PLAYER_COLORS);
 	for (var i = 0; i < this.replay.turns[turn].ants.length; i++) {
 		var antObj = this.replay.turns[turn].ants[i].interpolate(time, Quality.LOW);
+		this.correctCoords(antObj, this.replay.parameters.cols, this.replay.parameters.rows);
 		drawOrder.push(antObj);
 	}
+	/*
 	this.ctx2dBackground.globalAlpha = 100 / Const.TIME_PER_TURN;
 	if (Math.random() < 0.5) {
 		this.ctx2dBackground.strokeStyle = '#222';
 	} else {
 		this.ctx2dBackground.strokeStyle = '#CA7';
 	}
+	*/
 	for (var n = 0; n < drawOrder.length; n++) {
 		antObj = drawOrder[n];
-		if (true) {
-			mx = Math.round(this.scale * antObj.x + Const.LEFT_PANEL_W);
-			my = Math.round(this.scale * antObj.y + Const.TOP_PANEL_H);
-			this.ctx2d.fillStyle = 'rgba(' + antObj.r + ', ' + antObj.g + ', ' + antObj.b + ', ' + antObj.a + ')';
-			this.ctx2d.fillRect(mx, my, this.scale, this.scale);
-		} else {
+		if (this.config.zoom) {
 			this.ctx2d.save();
 			this.ctx2d.globalAlpha = antObj.alpha;
-			this.ctx2d.translate(10 + 20 * antObj.x, 10 + 20 * antObj.y);
+			cx = Const.ZOOM_SCALE * (antObj.x + 0.5);
+			cy = Const.ZOOM_SCALE * (antObj.y + 0.5);
+			this.ctx2d.translate(cx, cy);
 			this.ctx2d.rotate(antObj.angle + Math.sin(20 * time) * antObj.jitter);
-			this.ctx2d.drawImage(this.images.ants[antObj.type], -10, -10);
+			this.ctx2d.drawImage(this.imgMgr.ants[antObj.type], -10, -10);
 			this.ctx2d.restore();
-			mx = 20 * antObj.x + 10 + 3 * Math.tan(2 * (Math.random() - 0.5));
-			my = 20 * antObj.y + 10 + 3 * Math.tan(2 * (Math.random() - 0.5));
+			mx = cx + 3 * Math.tan(2 * (Math.random() - 0.5));
+			my = cy + 3 * Math.tan(2 * (Math.random() - 0.5));
 			if (antObj.alpha == 1) {
 				var sin = -Math.sin(antObj.angle);
 				var cos = +Math.cos(antObj.angle);
-				this.ctx2dBackground.moveTo(mx - sin, my - cos);
-				this.ctx2dBackground.lineTo(mx + sin, my + cos);
+				this.ctxMap.moveTo(mx - sin, my - cos);
+				this.ctxMap.lineTo(mx + sin, my + cos);
 			}
+		} else {
+			mx = Math.round(this.scale * antObj.x) + this.loc.map.x;
+			my = Math.round(this.scale * antObj.y) + this.loc.map.y;
+			this.ctx2d.fillStyle = 'rgba(' + antObj.r + ', ' + antObj.g + ', ' + antObj.b + ', ' + antObj.a + ')';
+			this.ctx2d.fillRect(mx, my, this.scale, this.scale);
 		}
 	}
+	// draw border over ants, that moved out of the map
+	this.ctx2d.drawImage(this.cvsBorder, this.loc.map.x - Const.ZOOM_SCALE, this.loc.map.y - Const.ZOOM_SCALE);
 	this.timeOld = time;
 	//~ var timeB = new Date().getTime();
 	//~ document.title = 'Render time: ' + (timeB - timeA) + ' ms';
@@ -1373,13 +1618,13 @@ Visualizer.prototype.stepBw = function(steps) {
 	}
 	this.draw();
 };
-	
+
 Visualizer.prototype.gotoStart = function() {
 	this.stepHelper(false);
 	this.turn = 1;
 	this.draw();
 };
-	
+
 Visualizer.prototype.gotoEnd = function() {
 	this.stepHelper(true);
 	this.turn = this.replay.turns.length - 1;

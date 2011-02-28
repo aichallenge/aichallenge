@@ -2,6 +2,7 @@
 <html>
 <head>
 	<title>Ant Canvas</title>
+	<!--[if lt IE 9]><script src="js/excanvas.js"></script><![endif]-->
 	<script type="text/javascript" src="js/visualizer.js"></script>
 </head>
 <body>
@@ -11,16 +12,17 @@
 				Game replay copy &amp; paste: <input type="button" value="Load text below" onClick="visualizePasted()"/><br/>
 				<textarea id="txtReplay" rows="27" cols="41"></textarea>
 			</td>
-			<td id ="visualizerColumn">
+			<td>
 				<input type="button" value="backward" onClick="visualizer.stepBw()"/>
 				<input type="button" value="forward" onClick="visualizer.stepFw()"/>
 				<input type="button" value="play" onClick="visualizer.play()"/><br/>
+				<div id="visualizerDiv"></div>
 			</td>
 		</tr>
 	</table>
 </body>
 <script type="text/javascript">
-	visualizer = new Visualizer(document.getElementById('visualizerColumn'));
+	var visualizer = new Visualizer(document.getElementById('visualizerDiv'));
 	function visualizePasted() {
 		visualizer.loadReplayData(txtReplay.value);
 		visualizer.attach(640);
