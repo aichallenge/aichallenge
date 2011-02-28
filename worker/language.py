@@ -4,10 +4,14 @@ import glob
 import itertools
 import os
 import re
+import shlex
 import shutil
 import signal
 import subprocess
 import time
+import traceback
+
+from worker.runner import Runner, TimeoutError
 
 SAFEPATH = re.compile('[a-zA-Z0-9_.$-]+$')
 
@@ -33,18 +37,19 @@ class CompileAction(object):
 class Chmod(CompileAction):
     """ For languages that are interpreted rather than compiled,
         we simply chmod their files to ensure they are there. """
-    def __call__(self, sources, subm):
+    def __call__(self, sources, subm, runner):
         for source in sources:
             try:
                 os.chmod(source, 0644)
             except Exception as e:
                 subm.compile_errors += "Error chmoding %s - %s\n" % (source, e)
+                return False
         subm.compile_output += "These scripts don't need to be compiled.\n"
         return True
 
 class System(CompileAction):
     """ An action that runs a given commandline argument. """
-    def __init__(self, sourceglobs=(), deepglobs=(), args=()):
+    def __init__(self, args=(), sourceglobs=(), deepglobs=()):
         """ args - the list of string arguments for this commandline action.
 
             If any argument is "{file}", the commandline is run individually
@@ -53,42 +58,34 @@ class System(CompileAction):
 
             Otherwise, the commandline is run once, appending all
             source files to the end of the argument list. """
-        self.sourceglobs = sourceglobs
-        self.deepglobs = deepglobs
+        CompileAction.__init__(self, sourceglobs, deepglobs)
+        if isinstance(args, str):
+            args = shlex.split(args)
         self.args = args
 
-    def __call__(self, sources, subm):
+    def __call__(self, sources, subm, runner):
         if "{file}" in self.args:
             success = True
             for source in sources:
-                cmd = [arg == "{file}" and repr(source) or arg
-                       for arg in self.args]
+                cmd = [arg.format(file=source, bot=BOT, path=os.getcwd())
+                        for arg in self.args]
                 subm.compile_output += ' '.join(cmd) + '\n'
-                proc = subprocess.Popen(cmd, stdout=subprocess.PIPE,
-                                        stderr=subprocess.PIPE)
-                # Attach the process so an external timer can kill it.
-                subm._proc = proc
-                out, err = proc.communicate()
-                del subm._proc
+                runner.run(cmd, should_stop=False)
+                out, err = runner.process.communicate()
                 subm.compile_output += out
                 subm.compile_errors += err
-                if proc.returncode != 0:
+                if runner.process.returncode != 0:
                     success = False
-                    # But continue this action on all files anyway
-                    # to generate as many errors to hand back to the user
             return success
         else:
-            cmd = self.args + [repr(s) for s in sources]
+            cmd = [arg.format(bot=BOT, path=os.getcwd())
+                    for arg in self.args] + sources
             subm.compile_output += ' '.join(cmd) + '\n'
-            proc = subprocess.Popen(cmd, stdout=subprocess.PIPE,
-                                    stderr=subprocess.PIPE)
-            subm._proc = proc
-            out, err = proc.communicate()
-            del subm._proc
+            runner.run(cmd, should_stop=False)
+            out, err = runner.process.communicate()
             subm.compile_output += out
             subm.compile_errors += err
-            return proc.returncode == 0
-
+            return runner.process.returncode == 0
 
 # The master list of languages!
 languages = {
@@ -106,19 +103,22 @@ languages = {
     #           If not present, the compilation will perform a Chmod on all
     #           source files that end in main_ext.
     # run - A string giving the command to run a bot in this language.
-    #       Should include up to one "%s" in which the path to
-    #       the executable/interpretable will be put. If the "%s" is omitted,
-    #       the command is used as given. If this key is not present, assumed
-    #       to be "%s" (i.e. the executable 'BOT').
-    # disabled - If present, disables the language from being used.
+    #       If omitted, it is assumbled that a binary named by the constant
+    #       BOT should be run (the default value is "{path}/{file}")
+    # disabled - If present, prevents the language from being used.
+    #
+    # The following substitutions will be made:
+    #   - {bot} will be substituted for the constant BOT in both the
+    #     System compile command and the run command
+    #   - {file} will be replaced with each individual file matched by the glob
+    #   - {path} will be replaced with the path from which the submission is
+    #     being run or compiled
     "C": {
         "main_ext": ".c",
         "nuke_globs": ["*.o", BOT],
         "compile": [
-            System(sourceglobs=["*.c"],
-                   args=["gcc", "-O3", "-c", "{file}"]),
-            System(sourceglobs=["*.o"],
-                   args=["gcc", "-O2", "-lm", "-o", BOT]),
+            System("gcc -O3 -c {file}", sourceglobs=["*.c"]),
+            System("gcc -O2 -lm -o {bot}", sourceglobs=["*.o"]),
         ],
     },
 
@@ -127,42 +127,38 @@ languages = {
         "output_ext": ".exe",
         "nuke_globs": [BOT + ".exe"],
         "compile": [
-            System(sourceglobs=["*.cs"],
-                   args=["gmcs", "-warn:0", "-out:%s.exe" % BOT]),
+            System("gmcs -warn:0 -out:{bot}", sourceglobs=["*.cs"]),
         ],
-        "run": "mono %s",
+        "run": "mono {bot}.exe",
     },
 
     "C++": {
         "main_ext": [".cc", ".cpp", ".cxx"],
         "nuke_globs": ["*.o", BOT],
         "compile": [
-            System(sourceglobs=["*.c", "*.cc", "*.cpp", "*.cxx"],
-                   args=["g++", "-O3", "-c", "{file}"]),
-            System(sourceglobs=["*.o"],
-                   args=["g++", "-O2", "-lm", "-o", BOT]),
+            System("g++ -O3 -c {file}",
+                   sourceglobs=["*.c", "*.cc", "*.cpp", "*.cxx"]),
+            System("g++ -O2 -lm -o {bot}", sourceglobs=["*.o"]),
         ],
     },
 
     "Clojure": {
         "main_ext": ".clj",
-        "run": "clojure %s",
+        "run": "clojure {bot}.clj",
         "disabled": True,
     },
 
     "CoffeeScript": {
         "main_ext": ".coffee",
-        "run": "coffee %s",
+        "run": "coffee {bot}.coffee",
     },
 
     "Go": {
         "main_ext": ".go",
         "nuke_globs": ["*.8", BOT],
         "compile": [
-            System(sourceglobs=["*.go"],
-                   args=["8g", "-o", "_go_.8"]),
-            System(sourceglobs=[],
-                   args=["8l", "-o", BOT, "_go_.8"]),
+            System("8g -o _go_.8", sourceglobs=["*.go"]),
+            System("8l -o {bot} _go_.8"),
         ],
     },
 
@@ -171,20 +167,18 @@ languages = {
         "output_ext": ".jar",
         "nuke_globs": ["*.class", "*.jar"],
         "compile": [
-            System(sourceglobs=["*.groovy"],
-                   args=["groovyc"]),
-            System(sourceglobs=["*.class"],
-                   args=["jar", "cfe", BOT + ".jar", BOT]),
+            System("groovyc", sourceglobs=["*.groovy"]),
+            System("jar cfe {bot}.jar {bot}", sourceglobs=["*.class"]),
         ],
-        "run": "java -cp %s:/usr/share/groovy/"
-               "embeddable/groovy-all-1.7.5.jar " + BOT,
+        "run": "java -cp {bot}.jar:/usr/share/groovy/"
+               "embeddable/groovy-all-1.7.5.jar {bot}",
     },
 
     "Haskell": {
         "main_ext": ".hs",
         "nuke_globs": [BOT],
         "compile": [
-            System(args=["ghc", "--make", BOT + ".hs", "-O2", "-v0"]),
+            System("ghc --make {bot}.hs -O2 -v0"),
         ],
     },
 
@@ -193,34 +187,31 @@ languages = {
         "output_ext": ".jar",
         "nuke_globs": ["*.class", "*.jar"],
         "compile": [
-            System(deepglobs=["*.java"],
-                   args=["javac"]),
-            System(deepglobs=["*.class"],
-                   args=["jar", "cfe", BOT + ".jar", BOT]),
+            System("javac", deepglobs=["*.java"]),
+            System("jar cfe {bot}.jar {bot}", deepglobs=["*.class"]),
         ],
-        "run": "java -jar %s",
+        "run": "java -jar {bot}",
     },
 
     "Javascript": {
         "main_ext": ".js",
-        "run": "node %s",
+        "run": "node {bot}.js",
     },
 
     "Lisp": {
         "main_ext": ".lisp",
         "nuke_globs": [BOT],
         "compile": [
-            System(args=["sbcl", "--end-runtime-options", "--no-sysinit",
-                         "--no-userinit", "--disable-debugger", "--load",
-                         BOT + ".lisp", "--eval",
-                         ('(save-lisp-and-die "%s" :executable t '
-                          ":toplevel #'pwbot::main)") % BOT]),
+            System("sbcl --end-runtime-options --no-sysinit --no-userinit "
+                         "--disable-debugger --load {bot}.lisp --eval "
+                         '"(save-lisp-and-die \"{bot}\" :executable t '
+                          ":toplevel #'pwbot::main)\""),
         ],
     },
 
     "Lua": {
         "main_ext": ".lua",
-        "run": "lua %s",
+        "run": "lua {bot}.lua",
         "disabled": True,
     },
 
@@ -229,29 +220,30 @@ languages = {
         "output_ext": ".native",
         "nuke_globs": [BOT + ".native"],
         "compile": [
-            System(args=["ocamlbuild", BOT + ".native"]),
+            System("ocamlbuild {bot}.native"),
         ],
+        "run": "{path}/{bot}.native"
     },
 
     "Perl": {
         "main_ext": ".pl",
-        "run": "perl %s",
+        "run": "perl {bot}.pl",
     },
 
     "PHP": {
         "main_ext": ".php",
-        "run": "php %s",
+        "run": "php {bot}.pl",
     },
 
     "Python": {
         "main_ext": ".py",
         "nuke_globs": ["*.pyc"],
-        "run": "python %s",
+        "run": "python {bot}.py",
     },
 
     "Ruby": {
         "main_ext": ".rb",
-        "run": "ruby %s",
+        "run": "ruby1.9.1 {bot}.rb",
     },
 
     "Scala": {
@@ -259,17 +251,16 @@ languages = {
         "output_ext": ".class",
         "nuke_globs": ["*.class", "*.jar"],
         "compile": [
-            System(sourceglobs=["*.scala"],
-                   args=["scalac"]),
+            System("scalac", sourceglobs=["*.scala"]),
         ],
         # needs the classname, not the name of the file
-        "run": "scala " + BOT,
+        "run": "scala {bot}",
     },
 
     "Scheme": {
         "main_ext": ".ss",
         # This is highly dependent on which Scheme interpreter is used.
-        "run": "scheme %s",
+        "run": "scheme {bot}.ss",
         "disabled": True,
     },
 }
@@ -283,44 +274,51 @@ for lg in languages:
 
 class Compiler(object):
     """ Stub base class for compilers. """
-    def __init__(self, output_file, nukeglobs, actions):
+    def __init__(self, origin, output_file, nukeglobs, actions):
         """ Every compiler has minimally the following:
-
+            origin - the location of the source files
             output_file - the file of the executable or
                           interpretable, eg. 'MyBot.py' or just 'MyBot'.
             nukeglobs - a list of glob syntax strings which describe
                         the files to be removed before compilation.
             actions - a list of CompileActions to be performed on the
                       submission. """
+        self.origin = origin
         self.output_file = output_file
         self.nukeglobs = nukeglobs
         self.actions = actions
         self.use_deepglob = any(action.deepglobs for action in actions)
+        self.runner = Runner(origin)
 
     def compile(self, subm):
         """ Attempt to compile the given submission. Any output or errors
             produced will be logged to the submission's compile_output or
             compile_errors values, respectively. """
-        for pattern in self.nukeglobs:
-            self.nukeglob(pattern)
-        for action in self.actions:
-            sources = (self.safeglob_multi(action.sourceglobs)
-                       + self.deepglob_multi(action.deepglobs))
-            if not action(sources, subm):
-                return False
-        if not os.path.exists(self.output_file):
-            subm.compile_errors += ("\nFailure: output file "
+        old_cwd = os.getcwd()
+        os.chdir(self.runner.working)
+        try:
+            for pattern in self.nukeglobs:
+                self.nukeglob(pattern)
+            for action in self.actions:
+                sources = (self.safeglob_multi(action.sourceglobs)
+                           + self.deepglob_multi(action.deepglobs))
+                if not action(sources, subm, self.runner):
+                    return False
+            if not os.path.exists(self.output_file):
+                subm.compile_errors += ("\nFailure: output file "
                                     + self.output_file + " was not created.\n")
-            return False
-        return True
-
+                return False
+            return True
+        finally:
+            os.chdir(old_cwd)
+    
     @staticmethod
     def safeglob(pattern):
         return [path for path in glob.glob(pattern) if SAFEPATH.match(path)]
 
     @classmethod
     def safeglob_multi(cls, patterns):
-        return list(itertools.chain([cls.safeglob(pat) for pat in patterns]))
+        return list(itertools.chain(*[cls.safeglob(pat) for pat in patterns]))
 
     @staticmethod
     def deepglob(pattern):
@@ -336,7 +334,7 @@ class Compiler(object):
 
     @classmethod
     def deepglob_multi(cls, patterns):
-        return list(itertools.chain([cls.deepglob(pat) for pat in patterns]))
+        return list(itertools.chain(*[cls.deepglob(pat) for pat in patterns]))
 
     def nukeglob(self, pattern):
         paths = (self.use_deepglob and self.deepglob(pattern)
@@ -351,22 +349,27 @@ class Compiler(object):
                 if e.errno != ENOENT:
                     raise
 
-        
-def compile_submission(subm, max_time=None):
+def detect_languages(subm):
+    old_cwd = os.getcwd()
+    os.chdir(subm.directory)
+    try:
+        for lg in languages:
+            if languages[lg].get("disabled"): continue
+            main_files = languages[lg]["main_file"]
+            if type(main_files) not in (list, tuple):
+                main_files = (main_files,)
+            for main_file in main_files:
+                if os.path.exists(main_file):
+                    yield (lg, main_file)
+    finally:
+        os.chdir(old_cwd)
+
+def compile_submission(subm, max_time=300):
     """ Determines which language the given submission is coded in, and
         compiles it. Optionally, a time limit may be specified to prevent
         overlong compilation times. """
-    def detect_languages():
-        for lg in languages:
-            if not languages[lg].get("disabled"):
-                if type(languages[lg]["main_file"]) in (list, tuple):
-                    for main_file in languages[lg]["main_file"]:
-                        if os.path.exists(main_file):
-                            yield (lg, main_file)
-                else:
-                    if os.path.exists(languages[lg]["main_file"]):
-                        yield (lg, languages[lg]["main_file"])
-    detected_languages = [(lg, mf) for (lg, mf) in detect_languages()]
+    detected_languages = list(detect_languages(subm))
+    
     if len(detected_languages) == 0:
         subm.compile_errors += (
             "The auto-compile environment could not locate your main code "
@@ -388,8 +391,9 @@ def compile_submission(subm, max_time=None):
         lg, mf = detected_languages[0]
         lgdict = languages[lg]
         subm.language = lg
-        subm.compile_output += ("Found " + mf + ". Compiling "
-                                "this entry as " + lg + ".\n")
+        message = "Found %s. Compiling this entry as %s.\n" % (mf, lg)
+        subm.compile_output += message
+        
         if "compile" in lgdict:
             subm.bot = BOT + lgdict.get("output_ext", "")
             actions = lgdict["compile"]
@@ -402,36 +406,50 @@ def compile_submission(subm, max_time=None):
             # If output_ext doesn't exist, main_ext is a string
             subm.bot = BOT + lgdict.get("output_ext", lgdict["main_ext"])
             actions = [chmod]
-        compiler = Compiler(subm.bot,
-                            lgdict.get("nuke_globs", ()),
-                            actions)
-        def stop_compiling(signum, frame):
-            signal.signal(signal.SIGALRM, signal.SIG_DFL)
-            if hasattr(subm, "_proc"):
-                os.kill(subm._proc.pid, signal.SIGKILL)
-            raise Exception("Compilation did not finish in %f seconds."
-                            % max_time)
-        signal.signal(signal.SIGALRM, stop_compiling)
+        nuke_globs = lgdict.get("nuke_globs", ())
+        
         t1 = time.time()
+        success = False
+        compiler = None
         try:
-            signal.alarm(max_time)
-            success = compiler.compile(subm)
-            signal.alarm(0)
-            signal.signal(signal.SIGALRM, signal.SIG_DFL)
+            compiler = Compiler(subm.directory, subm.bot, nuke_globs, actions)
+            with compiler.runner.time_limit(max_time):
+                success = compiler.compile(subm)
+        except TimeoutError:
+            subm.compile_errors += (
+                "Compilation timed out after %.2f seconds.\n" % max_time)
+            return False
         except Exception as e:
             subm.compile_errors += str(e) + "\n"
+            subm.compile_errors += traceback.format_exc()
             return False
+        finally:
+            if success:
+                # replace the origin directory
+                tmp = "%s.%d.tmp" % (compiler.runner.origin, time.time())
+                shutil.copytree(compiler.runner.working, tmp, True)
+                shutil.rmtree(compiler.runner.origin)
+                shutil.move(tmp, compiler.runner.origin)
+                
+                # tag the submission as compiled
+                meta_dir = compiler.runner.origin + "/.aichallenge"
+                if not os.path.exists(meta_dir):
+                    os.mkdir(meta_dir)
+                with open(meta_dir + "/compiled", 'w') as f:
+                    f.write(time.asctime())
+            if compiler is not None: compiler.runner.done()
+        
         if success:
-            subm.compile_output += ("Completed in %f seconds.\n"
-                                    % (time.time() - t1))
+            subm.compile_output += (
+                "Completed in %.2f seconds.\n" % (time.time() - t1))
             return True
         else:
-            subm.compile_errors += "Compilation failed.\n"
+            subm.compile_output += "Compilation failed.\n"
             return False
 
-def get_command(subm):
+def get_command(subm, directory):
     """ Return the command used to run the given submission. """
-    cmd = languages[subm.language].get("run", "%s/" + BOT)
-    if "%s" in cmd:
-        cmd = cmd % (subm.directory + '/' + subm.bot)
+    if subm.language not in languages: raise(ValueError, "unrecognized language")
+    cmd = languages[subm.language].get("run", "{path}/{bot}")
+    cmd = cmd.format(bot=BOT, path=directory)
     return cmd
