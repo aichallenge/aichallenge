@@ -34,3 +34,8 @@ class Game(models.Model):
     
     def __unicode__(self):
         return "Game between %s at %s" % (', '.join([submission.owner.username for submission in self.players.all()]), self.time)
+
+class UserProfile(models.Model):
+        user = models.OneToOneField(User, unique=True)
+        
+        bio = models.CharField(max_length=1024)
