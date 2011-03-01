@@ -12,3 +12,4 @@ Folder Contents
 * `www/` - Main website and frontend
 * `ants/` - Everything related to ants: engine, starter packages, maps/mapgen, visualizer
 * `planet-wars/` - Stuff that still needs to be organized and moved in the proper place
+* `sql/` - Files for creating an empty sql database
