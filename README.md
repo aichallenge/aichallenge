@@ -9,7 +9,9 @@ Epsilon is supposed to implement the ants game.
 Folder Contents
 ---------------
 
-* `www/` - Main website and frontend
 * `ants/` - Everything related to ants: engine, starter packages, maps/mapgen, visualizer
-* `planet-wars/` - Stuff that still needs to be organized and moved in the proper place
+* `integration_testing` - Anything related to testing/stress-testing the contest setup
+* `manager/` - Tournament manager which coordinates the workers and computes skill ratings
+* `worker/` - Standalone workers which run games (including compiler and sandbox)
 * `sql/` - Files for creating an empty sql database
+* `www/` - Main website and frontend
