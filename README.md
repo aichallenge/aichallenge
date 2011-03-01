@@ -15,17 +15,23 @@ Folder Contents
 * `worker/` - Standalone workers which run games (including compiler and sandbox)
 * `sql/` - Files for creating an empty sql database
 * `website/` - Main website and frontend
+* `trueskill/` - Trueskill submodule
+
+Initializing the git submodules:
+
+* `git submodule init`
+* `git submodule update`
 
 Installation
 ---------------
+
+### Main Server
 
 * Install Latest Ubuntu
 
 * Install Dependencies:
 
 `apt-get install subversion apache2 mysql-server php5 libapache2-mod-php5 php5-mysql python-mysqldb openssh-server build-essential`
-
-* For java bots `apt-get install openjdk-6-jre-headless openjdk-6-jdk`
 
 * Create mysql aichallenge user and database
 
@@ -41,12 +47,12 @@ Schema files are located in `sql/`, from that folder execute
 
 Change `www/check_submit.php` and `manager/compile_daemon.py` to point to the submissions directory
 
-* Regenerate jail users ssh key then create the users with:
-
-`sudo python create_jail_users.py 10`
-
-* Make sure private key `jail_id_rsa` has restricted permissions
-
 * Setup apache to serve up `www/` directory.
 
-* Bump hard nproc limit up to 15 so java bots can run in `/etc/security/limits.conf`
+### Worker
+
+* For java bots `apt-get install openjdk-6-jre-headless openjdk-6-jdk`
+
+* Create the users with:
+
+`sudo python create_jail_users.py 10`
