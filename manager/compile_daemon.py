@@ -126,7 +126,7 @@ def set_submission_language(submission_id, language_id):
 def compile_submission(submission_id, email_address):
   output_messages = ""
   error_messages = ""
-  path = "/home/contest/ai-contest/planet_wars/submissions/" + \
+  path = server_info["submissions_path"] + \
     str(submission_id) + "/"
   if os.path.exists(path):
     os.chdir(path)
@@ -138,7 +138,7 @@ def compile_submission(submission_id, email_address):
     error_messages += err
   if len(error_messages) == 0:
     comp_proc = Popen(['python',
-        '/home/contest/ai-contest/planet_wars/backend/compile_anything.py'],
+        os.path.join(server_info["root_path"], 'manager/compile_anything.py')],
       stdout=PIPE)
     stop_time = time.time() + 300
     while comp_proc.poll() is None and time.time() < stop_time:
