@@ -1,10 +1,10 @@
-<?php include 'header.php' ?>
-<?php include 'mysql_login.php'; ?>
-<?php include 'server_info.php'; ?>
+<?php
 
-<h2>Account Creation Closed</h2>
+include 'header.php';
+include 'mysql_login.php';
+include 'server_info.php';
 
-<?php if($server_info["submissions_open"]) { ?>
+if($server_info["submissions_open"]) { ?>
 <h2>Create Your Account</h2>
 <form name="create_account_form" method="post"
   action="process_registration.php">
@@ -126,6 +126,8 @@
 </table></form>
 
 <?php } else { ?>
+
+<h2>Account Creation Closed</h2>
 
 <p>Sorry, the final tournament is already in progress and no new submissions are
 allowed. Please do create a <a href="/forums">forum</a> account and give us
