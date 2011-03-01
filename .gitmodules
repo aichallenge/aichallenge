@@ -1,0 +1,3 @@
+[submodule "trueskill"]
+	path = trueskill
+	url = https://github.com/aichallenge/trueskill

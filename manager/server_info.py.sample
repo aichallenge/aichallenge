@@ -1,0 +1,9 @@
+server_info = {
+    "db_host": "localhost",
+    "db_username": "planetwars",
+    "db_password": "pwpass",
+    "db_name": "planetwars",
+    "mail_name": "test",
+    "mail_username": "",
+    "mail_password": "",
+}
