@@ -1,1 +1,1 @@
-ants/www/visualizer.php
+../ants/www/visualizer.php
