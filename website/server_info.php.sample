@@ -7,7 +7,8 @@ $server_info = array(
     "db_name" => "aichallenge",
     "mailer_address" => "donotsend",
     "mailer_password" => "",
-    "mailer_name" => ""
+    "mailer_name" => "",
+    "submissions_open" => True,
 );
 
 ?>

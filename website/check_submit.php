@@ -2,6 +2,7 @@
 include 'session.php';
 include 'file_system_util.php';
 include 'submission.php';
+include 'server_info.php';
 
 function ends_with($str, $sub) {
   return preg_match('/\Q' . $sub . '\E$/', $str);
@@ -51,8 +52,9 @@ if ($local_key != $_POST['submit_key']) {
   die('Bad submission key found.');
 }
 
-// Uncomment the following line to turn off new submissions.
-$errors[] = "Nuh-uh. The contest is over. No more submissions.";
+if(!$server_info["submissions_open"])
+    $errors[] = "Nuh-uh. The contest is over. No more submissions.";
+
 if (count($errors) == 0) {
   if (has_recent_submission()) {
     $errors[] = "Sorry your last submission was too recent.";
