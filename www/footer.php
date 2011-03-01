@@ -28,18 +28,11 @@
     <h1>Help</h1>
     <ul>
       <li><a href="faq.php">Frequently Asked Questions</a></li>
-      <li><a href="forum/">Forum</a></li>
-    </ul>
-    <h1>Galcon</h1>
-    <ul>
-      <li><a href="http://www.galcon.com">Galcon Home</a></li>
-      <li><a href="http://www.galcon.com/fusion/">Galcon for Desktop</a></li>
-      <li><a href="http://www.galcon.com/iphone/">Galcon for iPhone</a></li>
-      <li><a href="http://www.galcon.com/flash">Play Galcon Online for
-        Free</a></li>
+      <li><a href="forums/">Forum</a></li>
+      <li><a href="irc://irc.freenode.org/aichallenge">IRC</a> <a href="http://webchat.freenode.net/?channels=aichallenge&uio=d4">(webclient)</a></li>
     </ul>
     <form name="user_search_form" method="get" action="find_user.php">
-        Search for user:
+        User Search:
         <input name="username" type="text" style="width: 10em">
         <input type="submit" name="search" value="Go">
     </form>
