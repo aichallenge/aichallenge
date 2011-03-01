@@ -9,6 +9,7 @@ $server_info = array(
     "mailer_password" => "",
     "mailer_name" => "",
     "submissions_open" => True,
+    "submissions_path" => "/home/contest/aichallenge/submissions/",
 );
 
 ?>

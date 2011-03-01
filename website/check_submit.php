@@ -38,7 +38,7 @@ function upload_errors($errors) {
   return $errors;
 }
 
-$submission_directory = "/home/contest/ai-contest/planet_wars/submissions/";
+$submission_directory = $server_info["submissions_path"];
 if (!logged_in_with_valid_credentials()) {
   header('Location: index.php');
   die();
