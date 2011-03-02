@@ -126,8 +126,7 @@ def set_submission_language(submission_id, language_id):
 def compile_submission(submission_id, email_address):
   output_messages = ""
   error_messages = ""
-  path = server_info["submissions_path"] + \
-    str(submission_id) + "/"
+  path = os.path.join(server_info["submissions_path"], str(submission_id), '')
   if os.path.exists(path):
     os.chdir(path)
   else:

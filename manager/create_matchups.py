@@ -27,6 +27,8 @@ def get_submissions(cursor):
     cursor.execute("""SELECT MAX(leaderboard_id)
             FROM leaderboards WHERE complete=1""")
     leaderboard_id = cursor.fetchone()['MAX(leaderboard_id)']
+    if leaderboard_id == None:
+        leaderboard_id = 0
     log_message("latest leaderboard is %d" % leaderboard_id)
     cursor.execute("SELECT * FROM matchups")
     paired = cursor.rowcount * 2
@@ -118,14 +120,16 @@ def get_previous_opponents(cursor, p, num_opponents):
     return [r['opponent'] for r in cursor]
 
 def choose_opponent(p1, ranking, recent_ids):
+    orig_ranking = ranking
     if p1['last_game_timestamp'] == None:
         ranking = [s for s in ranking
                 if s == p1 or s['last_game_timestamp'] != None]
     recent_ids = set(recent_ids)
     ranking = [s for s in ranking if s['submission_id'] not in recent_ids]
     if len(ranking) < 2:
-        raise ValueError("No opponents left after removing recent, %s" % (
-            p1['submission_id']))
+        ranking = orig_ranking
+        #raise ValueError("No opponents left after removing recent, %s\n%s" % (
+        #    p1['submission_id'], ranking))
     p1_ix = ranking.index(p1)
     p2_ix = p1_ix
     while p1_ix == p2_ix:
@@ -225,7 +229,7 @@ def add_matches(cursor, max_matches, pairing_cutoff):
     pairing_start = time.time()
     while len(total_ranking) > 1 and num_matches < max_matches:
         p1 = player_order.pop()
-        recent = get_previous_opponents(cursor, p1, 50)
+        recent = get_previous_opponents(cursor, p1, min(50, len(total_ranking) - 2))
         p2 = choose_opponent(p1, total_ranking, recent)
         m, map_info = choose_map(cursor, p1, p2)
         p1_rank = p1['rank'] if p1['rank'] else -1

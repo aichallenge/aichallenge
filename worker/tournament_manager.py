@@ -1,6 +1,5 @@
 import logging
 import logging.handlers
-import MySQLdb
 import os
 import random
 import shutil
@@ -57,12 +56,12 @@ class GameAPIClient:
   
   def ensure_submission_is_local(self, submission_id, language_name, platform_specific_compilation):
     submission_id = int(submission_id)
-    submission_dir = "../submissions/%d" % submission_id
+    submission_dir = os.path.join(server_info["submissions_path"], str(submission_id))
     if os.path.exists(submission_dir):
       log_message("Submission %d is local" % submission_id)
       return
     log_message("Downloading %d " % submission_id)
-    download_dir = tempfile.mkdtemp(dir="../submissions/")
+    download_dir = tempfile.mkdtemp(dir=server_info["submissions_path"])
     os.chmod(download_dir, 0755)
     hash_url = self.base_url+'/api_get_submission_hash.php'
     hash_url += '?api_key=%s&submission_id=%d' % (self.api_key, submission_id)
@@ -80,10 +79,11 @@ class GameAPIClient:
 
     if int(platform_specific_compilation) == 1:
       log_message("Compiling %s " % submission_id)
+      main_dir = os.getcwd()
       os.chdir(download_dir)
       compile_log = Log()
       success = compile_function(language_name, compile_log)
-      os.chdir('../../backend')
+      os.chdir(main_dir)
       if not success:
         shutil.rmtree(download_dir)
         log_message(compile_log.err)
@@ -118,7 +118,7 @@ while time.time() - start_time < time_limit:
   matchup = cloud.get_matchup();
   player_one = matchup['players'][0]
   player_two = matchup['players'][1]
-  map_path = "../maps/" + matchup["map"]['name']
+  map_path = os.path.join(server_info["maps_path"], matchup["map"]['name'])
   log_message("%s vs %s" % (
       player_one["submission_id"],
       player_two["submission_id"]))
@@ -128,8 +128,8 @@ while time.time() - start_time < time_limit:
   
   
   # Invoke the game engine.
-  player_one_path = "../submissions/" + str(player_one["submission_id"]) + "/."
-  player_two_path = "../submissions/" + str(player_two["submission_id"]) + "/."
+  player_one_path = os.path.join(server_info["submissions_path"], str(player_one["submission_id"]), ".")
+  player_two_path = os.path.join(server_info["submissions_path"], str(player_two["submission_id"]), ".")
   players = [
     {"path" : player_one_path, "command" : player_one["command"], "submission_id": player_one["submission_id"]},
     {"path" : player_two_path, "command" : player_two["command"], "submission_id": player_two["submission_id"]}

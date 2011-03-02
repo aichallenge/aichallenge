@@ -6,6 +6,9 @@ server_info = {
     "mail_name": "test",
     "mail_username": "",
     "mail_password": "",
-    "submissions_path": "/home/contest/aichallenge/submissions",
-    "root_path": "/home/contest/aichallenge"
+    "submissions_path": "/home/worker/aichallenge/submissions/",
+    "root_path": "/home/worker/aichallenge/"
+    "maps_path": "/home/worker/aichallenge/maps/",
+    "api_base_url": "http://127.0.0.1/",
+    "api_key": "1"
 }
