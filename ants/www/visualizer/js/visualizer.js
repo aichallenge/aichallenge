@@ -1,31 +1,34 @@
 /**
  * @fileoverview This is a visualizer for the ai challenge ant game.
  * @author <a href="mailto:marco.leise@gmx.de">Marco Leise</a>
- * @todo playback controls
  * @todo fog of war option
  * @todo scrolling player names if too long; fade to the left and right
  * @todo zoom in to 20x20 squares with animated ants
  * @todo save settings
- * @todo set player colors from replay file (awaiting answer)
- * @todo show when a bot crashed (awaiting answer)
- * @todo clickable player names (requires user_id)
  * @todo animated single steps if possible (how?)
  * @todo graph showing ants and scores
  * @todo menu items: fullscreen, save, clear, show fog, show attack, show birth,
  *     zoom, toggle graph/score bars, cpu use
  * @todo focus button for each player
  * @todo duplicate sprites that wrap around the map edge
+ * @todo improve resource deallocation in case of errors; reset objects
+ * @todo keep a minimum size to allow the controls to render
+ * @todo setting for cpu usage
+ * @todo make loading multiple replays in sequence more reliable
+ * @todo set player colors from replay file (awaiting answer)
+ * @todo show when a bot crashed (awaiting answer)
+ * @todo clickable player names (requires user_id)
  */
+
+var cnt = 0;
 
 /**
  * This global contains constants used throughout the program. I collected them
  * here because NetBeans otherwise clutters the symbol viewer.
  */
 Const = {
-	DRAW_INTERVAL: 50,       // setInterval value
-	TIME_PER_TURN: 250,      // in milli seconds
-	LEFT_PANEL_W: 100,       // width of left side panel
-	TOP_PANEL_H: 30,         // height of top panel
+	LEFT_PANEL_W: 0,         // width of left side panel
+	TOP_PANEL_H: 50,         // height of top panel
 	BOTTOM_PANEL_H: 64,      // height of bottom panel
 	FOOD_COLOR: [ 200, 150, 100 ],
 	PLAYER_COLORS: [
@@ -39,7 +42,7 @@ Const = {
 	],
 	COLOR_WATER: '#133',
 	COLOR_SAND: '#FFD',
-	ZOOM_SCALE: 20
+	ZOOM_SCALE: 20,
 };
 
 /**
@@ -55,6 +58,17 @@ Img = {
 Quality = {
 	LOW: false,
 	HIGH: true
+};
+
+
+Buttons = {
+	GOTO_START: 0,
+	STEP_BW: 1,
+	BACKWARD: 2,
+	PLAY_PAUSE: 3,
+	FORWARD: 4,
+	STEP_FW: 5,
+	GOTO_END: 6
 };
 
 
@@ -80,12 +94,6 @@ ParameterType = {
 	LOCATION_PLAYER: 5,
 	LOCATION_NSEW: 6,
 	LOCATION_OPTION: 7
-};
-
-
-PlayDir = {
-	FORWARD: 0,
-	BACKWARD: 1
 };
 
 
@@ -458,7 +466,7 @@ Config.prototype.hasLocalStorage = function() {
  */
 Config.prototype.save = function() {
 	if (this.hasLocalStorage() === true) {
-		for (key in this) {
+		for (var key in this) {
 			if (this[key] === undefined) {
 				delete window.localStorage['visualizer.' + key];
 			} else if (this[key] === null) {
@@ -478,7 +486,6 @@ Config.prototype.save = function() {
 					case 'function':
 						break;
 					default:
-						alert(key + ': ' + (typeof this[key]))
 						throw 'Only numbers, booleans and strings can be saved in the config';
 				}
 				if (prefix) {
@@ -497,7 +504,7 @@ Config.prototype.save = function() {
  */
 Config.prototype.load = function() {
 	if (this.hasLocalStorage() === true) {
-		for (key in this) {
+		for (var key in this) {
 			var val = window.localStorage['visualizer.' + key];
 			if (typeof this[key] != 'function' && val) {
 				if (val === 'null') {
@@ -791,9 +798,9 @@ function Replay(replayStr) {
 				antObj = antStates[deathList[k]];
 				c = collision ? t - 0.75 : t - 0.25;
 				antObj.fade(Quality.LOW, 'a', [
-					{ time: c       , value: undefined },
-					{ time: c + 0.25, value: 0.0 },
-					{ time: t       , value: 0.0 },
+					{time: c       , value: undefined},
+					{time: c + 0.25, value: 0.0},
+					{time: t       , value: 0.0}
 				]);
 				delete antStates[deathList[k]];
 			}
@@ -1033,31 +1040,6 @@ function Visualizer(container, dataDir) {
 	 */
 	this.turns = undefined;
 	/**
-	 * handle to the redraw timer
-	 * @private
-	 */
-	this.intervalDraw = undefined;
-	/**
-	 * playback time is relative to this
-	 * @private
-	 */
-	this.timeOffset = undefined;
-	/**
-	 * used to find turn transitions
-	 * @private
-	 */
-	this.timeOld = undefined;
-	/**
-	 * set to a turn number if single stepping is in effect
-	 * @private
-	 */
-	this.turn = undefined;
-	/**
-	 * play direction (forward or backward)
-	 * @private
-	 */
-	this.playdir = undefined;
-	/**
 	 * usable width for the visualizer
 	 * @private
 	 */
@@ -1082,7 +1064,13 @@ function Visualizer(container, dataDir) {
 	 * @private
 	 */
 	this.imgMgr = new ImageManager((dataDir || '') + 'img/');
-	this.imgMgr.request('wood.jpg')
+	this.imgMgr.request('wood.jpg');
+	this.imgMgr.request('playback.png');
+	/**
+	 * manages playback commands and timing
+	 * @private
+	 */
+	this.director = new Director(this);
 	/**
 	 * presistable configuration values
 	 * @private
@@ -1105,10 +1093,20 @@ function Visualizer(container, dataDir) {
 			this.parameters[parameter] = value;
 		}
 	}
+	/**
+	 * buttons
+	 * @private
+	 */
+	this.btnMgr = new ButtonManager(this);
+	/**
+	 * @private
+	 */
+	this.fullRedraw = false;
 }
 /**
  * Creates a canvas element and binds Google's VML wrapper to it
- * if the browser is IE < 9.
+ * if the browser is IE less than 9.
+ * @private
  */
 Visualizer.prototype.createCanvas = function() {
     var result = document.createElement('canvas');
@@ -1135,7 +1133,7 @@ Visualizer.prototype.loadReplayDataFromURI = function(file) {
  */
 Visualizer.prototype.loadReplayDataFromPHP = function(data) {
 	this.replay = undefined;
-	unquot = data.replace(/&lt;/g, '<').replace(/&gt;/g, '>')
+	var unquot = data.replace(/&lt;/g, '<').replace(/&gt;/g, '>')
 	unquot = unquot.replace(/&quot;/g, '"').replace(/&amp;/g, '&');
 	var matches = unquot.match(/[a-zA-Z_]+=.*((?!\n[a-zA-Z_]+=)\n.*)*(?=\n)/gm);
 	if (matches) {
@@ -1164,10 +1162,6 @@ Visualizer.prototype.loadReplayDataFromPHP = function(data) {
  */
 Visualizer.prototype.loadReplayData = function(data) {
 	this.replay = data;
-	window.clearInterval(this.intervalDraw);
-	this.intervalDraw = undefined;
-	this.timeOffset = undefined;
-	this.turn = undefined;
 };
 /**
  * Places a paragraph with a message in the visualizer dom element.
@@ -1192,6 +1186,7 @@ Visualizer.prototype.errorOut = function(text) {
  * @param {number} height if defined, the maximum height in pixels
  */
 Visualizer.prototype.attach = function(width, height) {
+	var text;
 	this.w = width;
 	this.h = height;
 	// replace the replay string, by it's parsed counter part
@@ -1199,60 +1194,12 @@ Visualizer.prototype.attach = function(width, height) {
 		try {
 			this.replay = new Replay(this.replay);
 		} catch (error) {
-			this.errorOut('Replay cannot be parsed!\n\nStack trace:\n' + error.stack);
+			text = 'Replay cannot be parsed!\n\n' + (error.stack ? 'Stack trace:\n' + error.stack : error);
+			this.errorOut(text);
 			this.replay = undefined;
 		}
 	}
 	if (this.replay) {
-		if (this.canvas.parentNode !== this.container) {
-			this.container.appendChild(this.canvas);
-		}
-		// this will fire once in FireFox when a key is held down
-		document.onkeydown = function(event) {
-            if (!event) {
-                // IE doesn't pass this as an argument
-                event = window.event;
-            }
-			var visualizer = Visualizer.prototype.focused;
-			switch(event.keyCode) {
-				case Key.SPACE:
-					visualizer.play();
-					break;
-				case Key.LEFT:
-					visualizer.stepBw();
-					break;
-				case Key.RIGHT:
-					visualizer.stepFw();
-					break;
-				case Key.PGUP:
-					visualizer.stepBw(10);
-					break;
-				case Key.PGDOWN:
-					visualizer.stepFw(10);
-					break;
-				case Key.HOME:
-					visualizer.gotoStart();
-					break;
-				case Key.END:
-					visualizer.gotoEnd();
-					break;
-				default:
-					var key = String.fromCharCode(event.keyCode);
-					switch (key) {
-						case 'F':
-							visualizer.setFullscreen(!visualizer.config.fullscreen);
-							break;
-					}
-			}
-		};
-		document.onkeyup = function() {
-		};
-		// this will fire repeatedly in all browsers
-		document.onkeypress = function() {
-		};
-		window.onresize = function() {
-			Visualizer.prototype.focused.resize();
-		};
 		this.initWaitForImages();
 	}
 };
@@ -1269,18 +1216,116 @@ Visualizer.prototype.initWaitForImages = function() {
 		this.errorOut(error);
 		return;
 	}
+	if (this.canvas.parentNode !== this.container) {
+		this.container.appendChild(this.canvas);
+	}
+	// this will fire once in FireFox when a key is held down
+	var that = this;
+	document.onkeydown = function(event) {
+		if (!event) {
+			// IE doesn't pass this as an argument
+			event = window.event;
+		}
+		with (that.director) {
+			switch(event.keyCode) {
+				case Key.SPACE:
+					playStop();
+					break;
+				case Key.LEFT:
+					gotoTick(Math.ceil(position) - 1);
+					break;
+				case Key.RIGHT:
+					gotoTick(Math.floor(position) + 1);
+					break;
+				case Key.PGUP:
+					gotoTick(Math.ceil(position) - 10);
+					break;
+				case Key.PGDOWN:
+					gotoTick(Math.floor(position) + 10);
+					break;
+				case Key.HOME:
+					gotoTick(0);
+					break;
+				case Key.END:
+					gotoTick(duration);
+					break;
+				default:
+					switch (String.fromCharCode(event.keyCode)) {
+						case 'F':
+							visualizer.setFullscreen(!visualizer.config.fullscreen);
+							break;
+					}
+			}
+		}
+	};
+	document.onkeyup = function() {
+	};
+	// this will fire repeatedly in all browsers
+	document.onkeypress = function() {
+	};
+	this.canvas.onmousemove = function(event) {
+		var mx = 0;
+		var my = 0;
+		var obj = this;
+		if (this.offsetParent) do {
+			mx += obj.offsetLeft;
+			my += obj.offsetTop;
+		} while ((obj = obj.offsetParent));
+		with (event || window.event) {
+			mx = clientX - mx + ((window.scrollX === undefined) ? (document.body.parentNode.scrollLeft !== undefined) ? document.body.parentNode.scrollLeft : document.body.scrollLeft : window.scrollX);
+			my = clientY - my + ((window.scrollY === undefined) ? (document.body.parentNode.scrollTop !== undefined) ? document.body.parentNode.scrollTop : document.body.scrollTop : window.scrollY);
+		}
+		that.btnMgr.mouseMove(mx, my);
+	};
+	this.canvas.onmouseout = function() {
+		that.btnMgr.mouseMove(-1, -1);
+	};
+	this.canvas.onmousedown = function() {
+		that.btnMgr.mouseDown();
+	};
+	this.canvas.onmouseup = function() {
+		that.btnMgr.mouseUp();
+	};
+	window.onresize = function() {
+		that.resize();
+	};
 	if (!this.vml) {
 		this.cvsMap = this.createCanvas();
 		this.ctxMap = this.cvsMap.getContext('2d');
 		this.cvsBorder = this.createCanvas();
-		this.ctxBorder = this.cvsBorder.getContext('2d');
 	}
-	this.playdir = PlayDir.FORWARD;
+	if (!this.btnMgr.groups.playback) {
+		with (this.btnMgr.addGroup('playback', this.imgMgr.images[1], ButtonGroup.HORIZONTAL, true, 2)) {
+			addButton(3, function() {that.director.gotoTick(0)});
+			addSpace(32);
+			addButton(5, function() {that.director.gotoTick(Math.ceil(that.director.position) - 1)});
+			//drawImage(this.imgMgr.images[1], 0 * 64, 0, 64, 64, x + 2.5 * 64, y, 64, 64);
+			addSpace(64);
+			addButton(4, function() {that.director.playStop()});
+			//drawImage(this.imgMgr.images[1], 1 * 64, 0, 64, 64, x + 4.5 * 64, y, 64, 64);
+			addSpace(64);
+			addButton(6, function() {that.director.gotoTick(Math.floor(that.director.position) + 1)});
+			addSpace(32);
+			addButton(2, function() {that.director.gotoTick(that.director.duration)});
+		}
+	}
 	Visualizer.prototype.focused = this;
-	this.intervalDraw = window.setInterval('visualizer.draw()', Const.DRAW_INTERVAL);
 	this.setFullscreen(this.config.fullscreen);
+	// try to make the replays play 1 minute, but the turns take no more than a second
+	this.director.duration = this.replay.turns.length - 2;
+	this.director.defaultSpeed = Math.max(this.director.duration / 60, 1);
+	this.director.onstate = function() {
+		var btn = that.btnMgr.groups.playback.buttons[4];
+		btn.offset += (that.director.playing() ? 3 : -3) * that.imgMgr.images[1].height;
+		if (btn === that.btnMgr.nailed) {
+			that.btnMgr.nailed = null;
+		}
+		btn.down = false;
+		btn.draw();
+	};
+	this.director.play();
 };
-Visualizer.prototype.resize = function() {
+Visualizer.prototype.resize = function(forced) {
 	var iw, ih;
 	if (typeof(window.innerWidth) == 'number' ) {
 		//Non-IE
@@ -1296,8 +1341,8 @@ Visualizer.prototype.resize = function() {
 		ih = document.body.clientHeight;
 	}
   	iw = (this.w && !this.config.fullscreen ? this.w : iw);
-	ih = (this.h && !this.config.fullscreen ? this.h : ih);
-	if (iw != this.canvas.width || ih != this.canvas.height) {
+	ih = (this.h && !this.config.fullscreen ? this.h : ih - 4);
+	if (iw != this.canvas.width || ih != this.canvas.height || forced) {
 		this.canvas.width = iw;
 		this.canvas.height = ih;
 		this.loc.vis = {
@@ -1319,14 +1364,55 @@ Visualizer.prototype.resize = function() {
 		if (!this.vml) {
 			this.cvsBorder.width = this.loc.map.w + 2 * Const.ZOOM_SCALE;
 			this.cvsBorder.height = this.loc.map.h + 2 * Const.ZOOM_SCALE;
-			this.renderBorder(this.ctxBorder);
+			this.ctxBorder = undefined;
+			this.renderBorder();
 			this.cvsMap.width = this.loc.map.w;
 			this.cvsMap.height = this.loc.map.h;
 			this.renderMap(this.ctxMap, 0, 0);
-		} 
-		this.draw(true);
+		}
+		with (this.btnMgr.groups) {
+			playback.x = ((iw - 8 * 64) / 2) | 0;
+			playback.y = this.loc.vis.y + this.loc.vis.h;
+		}
+		this.redrawEverything();
 	}
 };
+/**
+ * @private
+ */
+Visualizer.prototype.redrawEverything = function() {
+	var ctx = this.drawContext();
+	if (!ctx) return;
+	this.btnMgr.draw();
+	with (ctx) {
+		// draw player names and captions
+		if (!this.vml) {
+			var colors = Const.PLAYER_COLORS;
+			textAlign = 'left';
+			textBaseline = 'top';
+			font = 'bold 20px sans-serif';
+			var x = 0;
+			for (i = 0; i < this.replay.players.length; i++) {
+				fillStyle = 'rgb(' + colors[i][0] + ', ' + colors[i][1] + ', ' + colors[i][2] + ')';
+				fillText(this.replay.players[i].name, x, 2);
+				x += this.ctx2d.measureText(this.replay.players[i].name).width;
+				if (i != this.replay.players.length - 1) {
+					fillStyle = '#888';
+					fillText(' vs ', x, 2);
+					x += measureText(' vs ').width;
+				}
+			}
+			var w = this.canvas.width;
+			fillStyle = '#000';
+			textAlign = 'center';
+			textBaseline = 'middle';
+			font = 'bold 12px sans-serif';
+			fillText('ants'  , 30          , Const.TOP_PANEL_H - 10);
+			fillText('scores', 30 + 0.5 * w, Const.TOP_PANEL_H - 10);
+		}
+	}
+	this.director.draw();
+}
 /**
  * @private
  */
@@ -1335,65 +1421,88 @@ Visualizer.prototype.renderMap = function(ctx2d, x, y) {
 	ctx2d.fillRect(x, y, this.loc.map.w, this.loc.map.h);
 	ctx2d.fillStyle = Const.COLOR_WATER;
 	for (var row = 0; row < this.replay.parameters.rows; row++) {
+		var start = undefined;
 		for (var col = 0; col < this.replay.parameters.cols; col++) {
-			if (this.replay.walls[(row + this.replay.parameters.rows) % this.replay.parameters.rows][(col + this.replay.parameters.cols) % this.replay.parameters.cols]) {
-				ctx2d.fillRect(this.scale * col + x, this.scale * row + y, this.scale, this.scale);
+			var isWall = this.replay.walls[row][col];
+			if (start === undefined && isWall) {
+				start = col;
+			} else if (start !== undefined && !isWall) {
+				ctx2d.fillRect(this.scale * start + x, this.scale * row + y, this.scale * (col - start), this.scale);
+				start = undefined;
 			}
+		}
+		if (start !== undefined) {
+			ctx2d.fillRect(this.scale * start + x, this.scale * row + y, this.scale * (col - start), this.scale);
 		}
 	}
 }
 /**
  * @private
  */
-Visualizer.prototype.renderBorder = function(ctx2d) {
-	this.imgMgr.pattern(0, ctx2d, 'repeat');
-	with (ctx2d) with (this.loc.map) with (Const) {
-		save();
-			translate(ZOOM_SCALE, ZOOM_SCALE);
+Visualizer.prototype.renderBorder = function() {
+	if (!this.ctxBorder) {
+		if (!this.vml) {
+			this.ctxBorder = this.cvsBorder.getContext('2d');
+		}
+		with (this.vml ? this.ctx2d : this.ctxBorder) with(Const) {
 			save();
-				beginPath();
-				moveTo(0, 0);
-				lineTo(w, 0);
-				lineTo(w + ZOOM_SCALE, -ZOOM_SCALE);
-				lineTo(-ZOOM_SCALE, -ZOOM_SCALE);
-				closePath();
-				clip();
-				fillRect(-ZOOM_SCALE, -ZOOM_SCALE, w + 2 * ZOOM_SCALE, ZOOM_SCALE);
+				if (this.vml) {
+					this.ctx2d.fillStyle = '#edb';
+					translate(this.loc.map.x, this.loc.map.y);
+				} else {
+					this.imgMgr.pattern(0, this.ctxBorder, 'repeat');
+					translate(ZOOM_SCALE, ZOOM_SCALE);
+				}
+				with (this.loc.map) {
+					save();
+						beginPath();
+						moveTo(0, 0);
+						lineTo(w, 0);
+						lineTo(w + ZOOM_SCALE, -ZOOM_SCALE);
+						lineTo(-ZOOM_SCALE, -ZOOM_SCALE);
+						closePath();
+						clip();
+						fillRect(-ZOOM_SCALE, -ZOOM_SCALE, w + 2 * ZOOM_SCALE, ZOOM_SCALE);
+					restore();
+					save();
+						translate(0, h);
+						beginPath();
+						moveTo(0, 0);
+						lineTo(w, 0);
+						lineTo(w + ZOOM_SCALE, +ZOOM_SCALE);
+						lineTo(-ZOOM_SCALE, +ZOOM_SCALE);
+						closePath();
+						clip();
+						fillRect(-ZOOM_SCALE, 0, w + 2 * ZOOM_SCALE, ZOOM_SCALE);
+					restore();
+					rotate(0.5 * Math.PI);
+					save();
+						beginPath();
+						moveTo(0, 0);
+						lineTo(h, 0);
+						lineTo(h + ZOOM_SCALE, ZOOM_SCALE);
+						lineTo(-ZOOM_SCALE, ZOOM_SCALE);
+						closePath();
+						clip();
+						fillRect(-ZOOM_SCALE, + ZOOM_SCALE, h + 2 * ZOOM_SCALE, -ZOOM_SCALE);
+					restore();
+					save();
+						translate(0, -w);
+						beginPath();
+						moveTo(0, 0);
+						lineTo(h, 0);
+						lineTo(h + ZOOM_SCALE, -ZOOM_SCALE);
+						lineTo(-ZOOM_SCALE, -ZOOM_SCALE);
+						closePath();
+						clip();
+						fillRect(-ZOOM_SCALE, -ZOOM_SCALE, h + 2 * ZOOM_SCALE, ZOOM_SCALE);
+				   restore();
+				}
 			restore();
-			save();
-				translate(0, h);
-				beginPath();
-				moveTo(0, 0);
-				lineTo(w, 0);
-				lineTo(w + ZOOM_SCALE, +ZOOM_SCALE);
-				lineTo(-ZOOM_SCALE, +ZOOM_SCALE);
-				closePath();
-				clip();
-				fillRect(-ZOOM_SCALE, 0, w + 2 * ZOOM_SCALE, ZOOM_SCALE);
-			restore();
-			rotate(0.5 * Math.PI);
-			save();
-				beginPath();
-				moveTo(0, 0);
-				lineTo(h, 0);
-				lineTo(h + ZOOM_SCALE, ZOOM_SCALE);
-				lineTo(-ZOOM_SCALE, ZOOM_SCALE);
-				closePath();
-				clip();
-				fillRect(-ZOOM_SCALE, + ZOOM_SCALE, h + 2 * ZOOM_SCALE, -ZOOM_SCALE);
-			restore();
-			save();
-				translate(0, -w);
-				beginPath();
-				moveTo(0, 0);
-				lineTo(h, 0);
-				lineTo(h + ZOOM_SCALE, -ZOOM_SCALE);
-				lineTo(-ZOOM_SCALE, -ZOOM_SCALE);
-				closePath();
-				clip();
-				fillRect(-ZOOM_SCALE, -ZOOM_SCALE, h + 2 * ZOOM_SCALE, ZOOM_SCALE);
-		   restore();
-		restore();
+		}
+	}
+	if (!this.vml) {
+		this.ctx2d.drawImage(this.cvsBorder, this.loc.map.x - Const.ZOOM_SCALE, this.loc.map.y - Const.ZOOM_SCALE);
 	}
 }
 /**
@@ -1401,36 +1510,45 @@ Visualizer.prototype.renderBorder = function(ctx2d) {
  */
 Visualizer.prototype.drawColorBar = function(x, y, w, h, values, colors) {
 	var sum = 0;
-	for (var i = 0; i < values.length; i++) {
-		sum += values[i];
-	}
-	var useValues = values;
-	if (sum == 0) {
-		useValues = new Array(values.length);
-		for (i = 0; i < values.length; i++) {
-			useValues[i] = 1;
+	with (this.ctx2d) {
+		save();
+		beginPath();
+		rect(x, y, w, h);
+		clip();
+		for (var i = 0; i < values.length; i++) {
+			sum += values[i];
 		}
-		sum = values.length;
-	}
-	var scale = h / sum;
-	var offsetY = y;
-	for (i = 0; i < useValues.length; i++) {
-		var amount = scale * useValues[i];
-		this.ctx2d.fillStyle = 'rgb(' + colors[i][0] + ', ' + colors[i][1] + ', ' + colors[i][2] + ')';
-		this.ctx2d.fillRect(x, offsetY, w, h - offsetY + y);
-		offsetY += amount;
-	}
-	if (!this.vml) {
-		this.ctx2d.textAlign = 'right';
-		this.ctx2d.textBaseline = 'top';
-		this.ctx2d.font = 'bold 20px Monospace';
-		this.ctx2d.fillStyle = 'rgba(0,0,0,0.5)';
-		var offsetX = x + w - 2;
-		offsetY = y + 2;
+		var useValues = values;
+		if (sum == 0) {
+			useValues = new Array(values.length);
+			for (i = 0; i < values.length; i++) {
+				useValues[i] = 1;
+			}
+			sum = values.length;
+		}
+		var scale = w / sum;
+		var offsetX = x;
 		for (i = 0; i < useValues.length; i++) {
-			this.ctx2d.fillText(Math.round(values[i]), offsetX, offsetY);
-			offsetY += scale * useValues[i];
+			var amount = scale * useValues[i];
+			fillStyle = 'rgb(' + colors[i][0] + ', ' + colors[i][1] + ', ' + colors[i][2] + ')';
+			fillRect(offsetX, y, w - offsetX + x, h);
+			offsetX += amount;
 		}
+		if (!this.vml) {
+			textAlign = 'right';
+			textBaseline = 'middle';
+			font = 'bold 16px Monospace';
+			fillStyle = 'rgba(0,0,0,0.5)';
+			var offsetY = y + 0.5 * h;
+			offsetX = x - 2;
+			for (i = 0; i < useValues.length; i++) {
+				if (useValues[i] != 0) {
+					fillText(Math.round(values[i]), offsetX, offsetY);
+				}
+				offsetX += scale * useValues[i];
+			}
+		}
+		restore();
 	}
 };
 /**
@@ -1457,101 +1575,33 @@ Visualizer.prototype.interpolate = function(turn, time, array) {
 /**
  * @private
  */
-Visualizer.prototype.draw = function(refresh) {
-	var cx, cy, transition, mx, my, anim;
-	//~ var timeA = new Date().getTime();
-	//ctx2d.globalCompositeOperation = 'copy';
-	//ctx2d.globalCompositeOperation = 'source-over';
-	var time = new Date().getTime();
-	var drawOrder = new Array();
-	if (this.timeOffset === undefined) {
-		this.timeOffset = time;
-		transition = true;
-	}
+Visualizer.prototype.draw = function(time, tick) {
+	// vml gets special treatment:
+	if (!this.drawContext()) return;
+	cnt++;
+	var cx, cy, mx, my;
+	var drawOrder = [];
+	var turn = (time | 0) + 1;
+	// draw the map background
 	if (this.vml) {
-		// Cannot use cached offscreen bitmap
-		this.ctx2d.clearRect();
-		this.renderMap(this.ctx2d);
-		refresh = true;
+		this.renderMap(this.ctx2d, this.loc.map.x, this.loc.map.y);
 	} else {
 		this.ctx2d.drawImage(this.cvsMap, this.loc.map.x, this.loc.map.y);
 	}
-	var turn;
-	if (this.intervalDraw === undefined) {
-		turn = this.turn;
-		time = turn - 1;
-		transition = true;
-	} else {
-		time = (time - this.timeOffset) / Const.TIME_PER_TURN;
-		if (time < 0 || time >= this.replay.turns.length - 2) {
-			/* The timer ran beyond the last turn or the clock changed to
-			 * an invalid time in the past. In any case we want to display
-			 * the end result of the game.
-			 */
-			turn = this.replay.turns.length - 1;
-			this.turn = turn;
-			time = turn - 1;
-			anim = 0;
-			transition = true;
-			window.clearInterval(this.intervalDraw);
-			this.intervalDraw = undefined;
-		} else {
-			turn = (time | 0) + 1;
-			anim = time - (time | 0);
-			transition = transition || ((time | 0) != (this.timeOld | 0));
-		}
-	}
-	/* Repaint the map rows if we have a transition from on turn to
-	 * another.
-	 */
-	var w = Const.LEFT_PANEL_W / 2;
+	var w = this.canvas.width;
 	var h = this.loc.vis.h - 20 - Const.TOP_PANEL_H;
-	var colors = Const.PLAYER_COLORS;
-	if (transition || refresh) {
+	if (tick !== undefined) {
 		//document.getElementById('lblTurn').innerHTML = ((turn > this.replay.turns.length - 2) ? 'end result' : turn + ' / ' + (this.replay.turns.length - 2));
-		this.ctx2d.fillStyle = '#000';
-		this.ctx2d.fillRect(0, Const.TOP_PANEL_H, 2 * w, this.loc.vis.h);
-		this.ctx2d.fillRect(0, 0, this.loc.vis.w, Const.TOP_PANEL_H);
-		if (!this.vml) {
-			this.ctx2d.textAlign = 'left';
-			this.ctx2d.textBaseline = 'top';
-			this.ctx2d.font = 'bold 20px sans-serif';
-			var x = 0;
-			for (i = 0; i < this.replay.players.length; i++) {
-				this.ctx2d.fillStyle = 'rgb(' + colors[i][0] + ', ' + colors[i][1] + ', ' + colors[i][2] + ')';
-				this.ctx2d.fillText(this.replay.players[i].name, x, 2);
-				x += this.ctx2d.measureText(this.replay.players[i].name).width;
-				if (i != this.replay.players.length - 1) {
-					this.ctx2d.fillStyle = '#888';
-					this.ctx2d.fillText(' vs ', x, 2);
-					x += this.ctx2d.measureText(' vs ').width;
-				}
-			}
-			this.ctx2d.fillStyle = '#FFF';
-			this.ctx2d.textAlign = 'center';
-			this.ctx2d.textBaseline = 'middle';
-			this.ctx2d.font = 'bold 12px sans-serif';
-			this.ctx2d.fillText('ants', w / 2, Const.TOP_PANEL_H + 10);
-			this.ctx2d.fillText('scores', 3 * w / 2, Const.TOP_PANEL_H + 10);
-		}
 	}
 	var counts = this.interpolate(turn, time, 'counts');
-	this.drawColorBar(2    , Const.TOP_PANEL_H + 20, w - 4, h - 2, counts, Const.PLAYER_COLORS);
+	this.drawColorBar(60,           Const.TOP_PANEL_H - 20, 0.5 * w - 60, 20, counts, Const.PLAYER_COLORS);
 	var scores = this.interpolate(turn, time, 'scores');
-	this.drawColorBar(2 + w, Const.TOP_PANEL_H + 20, w - 4, h - 2, scores, Const.PLAYER_COLORS);
+	this.drawColorBar(60 + 0.5 * w, Const.TOP_PANEL_H - 20, 0.5 * w - 60, 20, scores, Const.PLAYER_COLORS);
 	for (var i = 0; i < this.replay.turns[turn].ants.length; i++) {
 		var antObj = this.replay.turns[turn].ants[i].interpolate(time, Quality.LOW);
 		this.correctCoords(antObj, this.replay.parameters.cols, this.replay.parameters.rows);
 		drawOrder.push(antObj);
 	}
-	/*
-	this.ctx2dBackground.globalAlpha = 100 / Const.TIME_PER_TURN;
-	if (Math.random() < 0.5) {
-		this.ctx2dBackground.strokeStyle = '#222';
-	} else {
-		this.ctx2dBackground.strokeStyle = '#CA7';
-	}
-	*/
 	for (var n = 0; n < drawOrder.length; n++) {
 		antObj = drawOrder[n];
 		if (this.config.zoom) {
@@ -1579,75 +1629,7 @@ Visualizer.prototype.draw = function(refresh) {
 		}
 	}
 	// draw border over ants, that moved out of the map
-	this.ctx2d.drawImage(this.cvsBorder, this.loc.map.x - Const.ZOOM_SCALE, this.loc.map.y - Const.ZOOM_SCALE);
-	this.timeOld = time;
-	//~ var timeB = new Date().getTime();
-	//~ document.title = 'Render time: ' + (timeB - timeA) + ' ms';
-	//~ return;
-};
-/**
- * @private
- */
-Visualizer.prototype.stepHelper = function(isForward) {
-	window.clearInterval(this.intervalDraw);
-	this.intervalDraw = undefined;
-	if (this.turn === undefined) {
-		var time = (new Date().getTime() - this.timeOffset) / Const.TIME_PER_TURN;
-		this.turn = (time | 0) + (isForward ? 1 : 2);
-	}
-};
-
-Visualizer.prototype.stepFw = function(steps) {
-	this.stepHelper(true);
-	this.turn += (steps === undefined) ? 1 : steps;
-	this.playdir = 0;
-	if (this.turn > this.replay.turns.length - 1) {
-		this.turn = this.replay.turns.length - 1;
-	}
-	this.draw();
-};
-
-Visualizer.prototype.stepBw = function(steps) {
-	this.stepHelper(false);
-	this.turn -= (steps === undefined) ? 1 : steps;
-	this.playdir = 1;
-	if (this.turn < 1) {
-		this.turn = 1;
-	} else if (this.turn > this.replay.turns.length - 2) {
-		this.turn = this.replay.turns.length - 2;
-	}
-	this.draw();
-};
-
-Visualizer.prototype.gotoStart = function() {
-	this.stepHelper(false);
-	this.turn = 1;
-	this.draw();
-};
-
-Visualizer.prototype.gotoEnd = function() {
-	this.stepHelper(true);
-	this.turn = this.replay.turns.length - 1;
-	this.draw();
-};
-
-Visualizer.prototype.play = function() {
-	if (this.intervalDraw === undefined) {
-		if (this.turn === undefined || this.turn == this.replay.turns.length - 1) {
-			this.timeOffset = new Date().getTime();
-		} else {
-			this.timeOffset = new Date().getTime() - (this.turn - 1) * Const.TIME_PER_TURN;
-		}
-		this.turn = undefined;
-		this.intervalDraw = window.setInterval('visualizer.draw()', Const.DRAW_INTERVAL);
-		this.playdir = 0;
-	} else {
-		window.clearInterval(this.intervalDraw);
-		this.intervalDraw = undefined;
-		var time = (new Date().getTime() - this.timeOffset) / Const.TIME_PER_TURN;
-		this.turn = (time | 0) + 1 + this.playdir;
-	}
-	this.draw();
+	this.renderBorder();
 };
 
 Visualizer.prototype.setFullscreen = function(enable) {
@@ -1664,8 +1646,293 @@ Visualizer.prototype.setFullscreen = function(enable) {
 		html.replaceChild(this.savedBody, document.body);
 		delete this.savedBody;
 	}
-	this.resize();
+	this.resize(true);
 }
+
+Visualizer.prototype.drawContext = function() {
+	if (this.fullRedraw || !this.vml) {
+		return this.ctx2d;
+	} else {
+		var timeA = new Date().getTime();
+		cnt = 0;
+		this.fullRedraw = true;
+		this.ctx2d.clearRect();
+		this.redrawEverything();
+		this.fullRedraw = false;
+		var timeB = new Date().getTime();
+		document.title = 'Render time for ' + cnt + ' items: ' + (timeB - timeA) + ' ms';
+		return null;
+	}
+}
+
+
+/**
+ * The director is supposed to keep track of playback speed and position.
+ */
+function Director(client) {
+	this.speed = 0;
+	this.position = 0;
+	this.lastTime = undefined;
+	this.client = client;
+	this.duration = 0;
+	this.defaultSpeed = 1;
+	this.cpu = 0.5;
+	this.onstate = undefined;
+}
+/**
+ * When the director is in playback mode it has a lastTime. This is just a
+ * convenience method of querying the playback mode.
+ * @type boolean
+ */
+Director.prototype.playing = function() {
+	return this.lastTime !== undefined;
+};
+Director.prototype.playStop = function() {
+	this.playing() ? this.stop() : this.play();
+};
+Director.prototype.play = function() {
+	if (!this.playing()) {
+		if (this.position == this.duration) {
+			this.position = 0;
+		}
+		this.speed = this.defaultSpeed;
+		this.loop(false);
+		if (this.onstate) this.onstate();
+	}
+};
+Director.prototype.stop = function() {
+	if (this.playing()) {
+		this.speed = 0;
+		this.lastTime = undefined;
+		if (this.onstate) this.onstate();
+	}
+};
+Director.prototype.gotoTick = function(tick) {
+	this.stop();
+	if (tick < 0) {
+		tick = 0;
+	} else if (tick > this.duration) {
+		tick = this.duration;
+	}
+	if (this.position != tick) {
+		var oldTick = this.position | 0;
+		this.position = tick;
+		this.client.draw(this.position, oldTick !== tick);
+	}
+};
+Director.prototype.loop = function() {
+	if (this.speed === 0) {
+		return;
+	}
+	var lastTime = this.lastTime;
+	this.lastTime = new Date().getTime();
+	var goOn = true;
+	var oldTurn = this.position | 0;
+	if (lastTime === undefined) {
+		oldTurn = -1;
+	} else {
+		this.position += (this.lastTime - lastTime) * this.speed * 0.001;
+	}
+	if (this.position <= 0 && this.speed < 0) {
+		this.position = 0;
+		goOn = false;
+	} else if (this.position >= this.duration && this.speed > 0) {
+		this.position = this.duration;
+		goOn = false;
+	}
+	this.client.draw(this.position, (oldTurn != (this.position | 0)) ? this.position | 0 : undefined);
+	if (goOn) {
+		var that = this;
+		var cpuTime = new Date().getTime() - this.lastTime;
+		var delay = (this.cpu <= 0 || this.cpu > 1)
+			? 0 : Math.ceil(cpuTime / this.cpu - cpuTime);
+		window.setTimeout(function() {that.loop(true)}, delay);
+	} else {
+		this.stop();
+	}
+};
+/**
+ * Causes the visualizer to draw the current game state. For performance reasons
+ * this is not done when the visualizer is already playing back anyway.
+ */
+Director.prototype.draw = function() {
+	if (!this.playing() || this.client.vml) {
+		this.client.draw(this.position, this.position | 0);
+	}
+};
+
+
+function Button(group, offset, delta, action) {
+	this.group = group;
+	this.offset = offset;
+	this.delta = delta;
+	this.action = action;
+	this.hover = false;
+	this.down = false;
+}
+Button.prototype.draw = function() {
+	var ctx = this.group.manager.controller.drawContext();
+	if (!ctx) return;
+	var vml = this.group.manager.controller.vml;
+	with (this.group) with(ctx) {
+		var ix = x + (vertical ? 0 : this.delta);
+		var iy = y + (vertical ? this.delta : 0);
+		var n = 1;
+		var r = 10;
+		var d = 0.5 * Math.PI;
+		save();
+		translate(ix, iy);
+		// any clearRect call would erase the screen
+		if (!vml) clearRect(0, 0, size, size);
+		beginPath();
+		moveTo(0, 0);
+		lineTo(size, 0);
+		lineTo(size, size);
+		lineTo(0, size);
+		closePath();
+		clip();
+		if (this.hover) {
+			beginPath();
+			moveTo(r + n, n);
+			lineTo(size - r - n, n);
+			arc(size - r - n, r + n, r, -d, 0, false);
+			lineTo(size - n, size - r - n);
+			arc(size - r - n, size - r - n, r, 0, d, false);
+			lineTo(r + n, size - n);
+			arc(r + n, size - r - n, r, d, 2 * d, false);
+			lineTo(n, r + n);
+			arc(r + n, r + n, r, 2 * d, 3 * d, false);
+			fillStyle = this.down ? 'rgba(108, 200, 158, 0.5)' : 'rgba(108, 108, 158, 0.3)';
+			fill();
+			lineWidth = 2;
+			strokeStyle = 'rgba(0, 0, 0, 1)';
+			stroke();
+		}
+		shadowColor = 'rgba(0, 50, 200, 0.7)';
+		var bs = size - 2 * border;
+		var dy = (this.hover && this.down) ? 0 : -2;
+		if (dy) {
+			shadowBlur = 5;
+			shadowOffsetX = -2;
+			shadowOffsetY = +2;
+		} else {
+			shadowBlur = 1;
+		}
+		drawImage(img, this.offset, 0, bs, bs, border, border + dy, bs, bs);
+		restore();
+	}
+};
+
+
+function ButtonGroup(manager, img, layout, visible, border) {
+	this.manager = manager;
+	this.img = img;
+	this.vertical = layout;
+	this.visible = visible;
+	this.border = border ? border : 0;
+	this.x = 0;
+	this.y = 0;
+	this.size = (this.vertical ? img.width : img.height) + 2 * this.border;
+	this.w = (this.vertical) ? this.size : 0;
+	this.h = (this.vertical) ? 0 : this.size;
+	this.buttons = [];
+}
+ButtonGroup.prototype.HORIZONTAL = false;
+ButtonGroup.prototype.VERTICAL = true;
+ButtonGroup.prototype.addButton = function(idx, action) {
+	this.buttons.push(new Button(this, (this.size - 2 * this.border) * idx, (this.vertical) ? this.h : this.w, action));
+	this.vertical ? this.h += this.size : this.w += this.size;
+};
+ButtonGroup.prototype.addSpace = function(size) {
+	this.buttons.push({
+		delta: (this.vertical) ? this.h : this.w,
+		size: size
+	});
+	this.vertical ? this.h += size : this.w += size;
+};
+ButtonGroup.prototype.draw = function() {
+	for (var i = 0; i < this.buttons.length; i++) {
+		if (this.buttons[i].draw) this.buttons[i].draw();
+	}
+};
+ButtonGroup.prototype.mouseMove = function(mx, my) {
+	var delta = (this.vertical) ? my : mx;
+	for (var i = 0; i < this.buttons.length; i++) {
+		if (delta < this.buttons[i].delta + (this.buttons[i].size ? this.buttons[i].size : this.size)) {
+			return (this.buttons[i].draw) ? this.buttons[i] : null;
+		}
+	}
+	return null;
+};
+
+
+/**
+ * Manages buttons and their mouse events.
+ * @param controller the visualizer providing a redraw() method to accomodate
+ *     for the vml version (ExplorerCanvas)
+ */
+function ButtonManager(controller) {
+	this.controller = controller;
+	this.groups = {};
+	this.hover = null;
+	this.nailed = null;
+}
+ButtonManager.prototype.addGroup = function(name, img, layout, visible, border) {
+	return this.groups[name] = new ButtonGroup(this, img, layout, visible, border);
+};
+ButtonManager.prototype.draw = function() {
+	for (var name in this.groups) with (this.groups[name]) {
+		if (visible) {
+			draw();
+		}
+	}
+};
+ButtonManager.prototype.mouseMove = function(mx, my) {
+	var result = null;
+	for (var name in this.groups) with (this.groups[name]) {
+		if (my >= y && my < y + h && mx >= x && mx < x + w) {
+			mx -= x;
+			my -= y;
+			result = mouseMove(mx, my);
+			if (result !== null) {
+				break;
+			}
+		}
+	}
+	if ((this.hover ? result === null : result !== null) && this.hover !== result) {
+		if (this.hover) {
+			if (this.hover.hover) {
+				this.hover.hover = false;
+				this.hover.draw();
+			}
+		}
+		if (result) {
+			if (!result.hover) {
+				result.hover = true;
+				result.draw();
+			}
+		}
+		this.hover = result;
+	}
+	return result;
+};
+ButtonManager.prototype.mouseUp = function() {
+	if (this.nailed) {
+		this.nailed.down = false;
+		this.nailed.draw();
+		if (this.nailed == this.hover) {
+			this.nailed.action();
+		}
+		this.nailed = null;
+	}
+};
+ButtonManager.prototype.mouseDown = function() {
+	if (this.hover) {
+		this.hover.down = true;
+		this.hover.draw();
+		this.nailed = this.hover;
+	}
+};
 
 
 /**
@@ -1689,4 +1956,10 @@ Random = {
 	fromTo: function(from, to) {
 		return from + (Math.random() * (1 + to - from) | 0);
 	}
+};
+
+
+// Install an IE error trap
+window.onerror = function(msg, source, line) {
+	alert(msg + '\nsource ' + source + '\nline ' + line);
 };
