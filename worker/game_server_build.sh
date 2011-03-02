@@ -1,13 +1,7 @@
 #!/bin/sh
 # 
-# This should build a cloud game server.
-# 
-# ami-6836dc01 Ubuntu 8 HARDY LTS is the base ami used on Ec2 and this script
-# will setup a worker from it.
-#
-# ami-049b6c6d can now be used instead and has many of the packages preloaded.
-# This reduces worker initialization time on first boot from 12 to 14 minutes
-# down to 3 or 4 minutes.
+# This should build a cloud game server and is designed to run as root on a
+# fresh Ubuntu 10.10 install.
 #
 # If manually using the script, uncomment the two lines below
 
@@ -20,23 +14,10 @@ set -e -x # print commands to output - helpful for debugging
 export DEBIAN_FRONTEND=noninteractive
 aptitude update
 aptitude install -y openssh-server curl
-aptitude install -y htop subversion screen rrdtool collectd unzip pwgen vim
-aptitude install -y mysql-server mysql-client
+aptitude install -y htop screen rrdtool collectd unzip pwgen vim git
+aptitude install -y mysql-server mysql-client python-mysqldb python-simplejson
 echo $?
-aptitude install -y python2.5-mysqldb python2.5-simplejson
-echo $?
-aptitude install -y ruby1.9 php5-cli perl gcc g++ libssl-dev make glibc-2.7-1 common-lisp-controller ghc6 git-core haskell-utils ocaml openjdk-6-jre sbcl libboost-dev
-echo $?
-
-# add badgerports for latest mono
-if ! grep -q 'deb http://badgerports.org/ hardy main' /etc/apt/sources.list
-then
-  curl 'http://badgerports.org/directhex.ppa.asc' | apt-key add -
-  echo 'deb http://badgerports.org/ hardy main ' >> /etc/apt/sources.list
-fi
-
-aptitude update
-aptitude install -y mono-2.0-devel
+aptitude install -y ruby1.9 php5-cli perl gcc g++ libssl-dev make common-lisp-controller haskell-platform ocaml openjdk-6-jdk sbcl libboost-dev mono-2.0-devel
 echo $?
 
 #needed for golang build
@@ -59,7 +40,7 @@ then
   
   if [ ! -e /usr/local/src/go ]
   then
-    hg clone -r release.2010-10-20 https://go.googlecode.com/hg/ go
+    hg clone -r release.2011-02-24 https://go.googlecode.com/hg/ go
     echo 'export GOROOT=/usr/local/src/go' >> /root/.bashrc
     echo 'export GOBIN=/usr/local/bin' >> /root/.bashrc
   fi
@@ -74,8 +55,8 @@ fi
 if [ ! -e /usr/local/bin/node ]
 then
   cd /root/
-  curl 'http://nodejs.org/dist/node-v0.2.2.tar.gz' | tar -xz \
-  && cd node-v0.2.2/ \
+  curl 'http://nodejs.org/dist/node-v0.4.1.tar.gz' | tar -xz \
+  && cd node-v0.4.1/ \
   && ./configure && make && make install
 fi
 
@@ -83,17 +64,17 @@ fi
 if [ ! -e /usr/bin/groovy ]
 then
   cd /root/
-  curl 'http://dist.groovy.codehaus.org/distributions/installers/deb/groovy_1.7.5-1_all.deb' > groovy_1.7.5-1_all.deb
-  dpkg -i groovy_1.7.5-1_all.deb
+  curl 'http://dist.groovy.codehaus.org/distributions/installers/deb/groovy_1.7.8-1_all.deb' > groovy_1.7.8-1_all.deb
+  dpkg -i groovy_1.7.8-1_all.deb
 fi
 
 # install scala
 if [ ! -e /usr/bin/scala ]
 then
   cd /root/
-  curl "http://www.scala-lang.org/downloads/distrib/files/scala-2.8.0.final.tgz" > scala-2.8.0.final.tgz
-  tar xzf scala-2.8.0.final.tgz
-  mv scala-2.8.0.final /usr/share/scala
+  curl "http://www.scala-lang.org/downloads/distrib/files/scala-2.8.1.final.tgz" > scala-2.8.1.final.tgz
+  tar xzf scala-2.8.1.final.tgz
+  mv scala-2.8.1.final /usr/share/scala
   ln -s /usr/share/scala/bin/scala /usr/bin/scala
   ln -s /usr/share/scala/bin/scalac /usr/bin/scalac
 fi
@@ -136,17 +117,42 @@ then
   echo 'ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEAsLlstx9E6TiZZ1InY/d6r1Ykucjvcj0whesjURGstGgVcUhAmFC9EqheV7QniORpJFwBA7qBL00K1uGjiYpn4ykW6pPJMpw1cMztXA6u9ByejchUHPAbn5vy1e+1kxQsttTMe95rAYrdG91s1Uu0o4wxStluK90zdTukOX46Qjw5tcD7RujNoYCJnMWwWL2BYc+C1A1UeX6nrFlJJjLCgP1sb24BBCPgMoBnUCbH5+xPSaLKdQoAGicya6rVcsYLZqSxIOyQ43YHNXEEckYBxzRSMKJj5JzM7rhMNUb1HpsGZgxIVy74mCVRyO29TtlMrKZFjvcVIdt/UktG2lRETw== contest@ai-contest' >> $AUTHKEY_FILE
 fi
 
+if [ ! -e /home/contest/ ]
+then
 adduser contest --disabled-password --gecos ""
+fi
 
-cd /home/contest/; svn checkout https://ai-contest.googlecode.com/svn/branches/20100929-games-in-the-cloud ai-contest
-
-/etc/init.d/mysql start
+cd /home/contest/
+if [ ! -e /home/contest/aichallenge ]
+then
+git clone git://github.com/aichallenge/aichallenge.git
+else
+cd aichallenge
+git pull
+fi
 
 # Amazon specific. Disallow access to instance userdata (since it would contain the api registration key)
-route add -host 169.254.169.254 reject
+# route add -host 169.254.169.254 reject
+
+SUBMISSION_DIR=/home/contest/submissions
+if [ ! -e $SUBMISSION_DIR ]
+then
+mkdir $SUBMISSION_DIR
+chown -R contest:contest $SUBMISSION_DIR
+fi
+
+MAP_DIR=/home/contest/maps
+if [ ! -e $MAP_DIR ]
+then
+mkdir $MAP_DIR
+chown -R contest:contest $MAP_DIR
+fi
+
+cd /home/contest/aichallenge/worker/
 
 # Copy over the latest scripts
-cd /home/contest/ai-contest/planet_wars/backend/
+if [ ! -e /home/contest/aichallenge/worker/server_info.py ]
+then
     echo '
 server_info = {
   "db_username" : "root",
@@ -155,36 +161,49 @@ server_info = {
   "db_host" : "127.0.0.1",
   "mail_username" : "donotreply@ai-contest.com",
   "mail_name" : "AI Contest",
-  "mail_password" : ""
+  "mail_password" : "",
+  "root_path" : "/home/contest/aichallenge/",
+  "maps_path" : "'$MAP_DIR'",
+  "submissions_path" : "'$SUBMISSION_DIR'",
+  "api_base_url" : "'$api_base_url'",
+  "api_key" : "'$api_key'"
 }
     ' > server_info.py
-    echo "server_info['api_base_url']='$api_base_url'" >> server_info.py
-    echo "server_info['api_key']='$api_key'" >> server_info.py
     chmod 600 server_info.py
-    echo 'create database contest' | mysql
-    mysql contest < schema.sql
-    python create_jail_users.py 32
-    iptables-save > /etc/iptables.rules
-    chown -R contest:contest .
-    chmod 640 /etc/sudoers
-    echo 'contest ALL = (%jailusers) NOPASSWD: ALL' >> /etc/sudoers
-    chmod 440 /etc/sudoers
-cd /home/contest/ai-contest/planet_wars/submissions/; chown -R contest:contest .
+fi
 
+if ! mysql contest
+then
+echo 'create database contest' | mysql
+mysql contest < schema.sql
+fi
+
+if [ ! -e /home/jailuser1 ]
+then
+python create_jail_users.py 32
+chmod 640 /etc/sudoers
+echo 'contest ALL = (%jailusers) NOPASSWD: ALL' >> /etc/sudoers
+chmod 440 /etc/sudoers
+iptables-save > /etc/iptables.rules
+fi
+
+if [ ! -e /etc/network/if-pre-up.d/iptablesload ]
+then
 echo '#!/bin/sh
 iptables-restore < /etc/iptables.rules
 exit 0
 ' > /etc/network/if-pre-up.d/iptablesload
 chmod +x /etc/network/if-pre-up.d/iptablesload
+fi
 
-cd /home/contest/ai-contest/planet_wars/backend/
+chown -R contest:contest /home/contest/aichallenge/worker
 
 if [ ! -e /etc/cron.d/ai-games ]
 then
-echo '@reboot root /home/contest/ai-contest/planet_wars/backend/start_worker.sh' > /etc/cron.d/ai-games
+echo '@reboot root /home/contest/aichallenge/worker/start_worker.sh' > /etc/cron.d/ai-games
 fi
 
-/home/contest/ai-contest/planet_wars/backend/start_worker.sh
+/home/contest/aichallenge/worker/start_worker.sh
 
 # To run a single game, to check that it is working
 # sudo -u contest python tournament_manager.py 1
