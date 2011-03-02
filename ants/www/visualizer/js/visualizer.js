@@ -1,6 +1,7 @@
 /**
  * @fileoverview This is a visualizer for the ai challenge ant game.
  * @author <a href="mailto:marco.leise@gmx.de">Marco Leise</a>
+ * @todo focus button for each player
  * @todo fog of war option
  * @todo scrolling player names if too long; fade to the left and right
  * @todo zoom in to 20x20 squares with animated ants
@@ -9,7 +10,6 @@
  * @todo graph showing ants and scores
  * @todo menu items: fullscreen, save, clear, show fog, show attack, show birth,
  *     zoom, toggle graph/score bars, cpu use
- * @todo focus button for each player
  * @todo duplicate sprites that wrap around the map edge
  * @todo improve resource deallocation in case of errors; reset objects
  * @todo keep a minimum size to allow the controls to render
@@ -1535,12 +1535,12 @@ Visualizer.prototype.drawColorBar = function(x, y, w, h, values, colors) {
 			offsetX += amount;
 		}
 		if (!this.vml) {
-			textAlign = 'right';
+			textAlign = 'left';
 			textBaseline = 'middle';
 			font = 'bold 16px Monospace';
 			fillStyle = 'rgba(0,0,0,0.5)';
 			var offsetY = y + 0.5 * h;
-			offsetX = x - 2;
+			offsetX = x + 2;
 			for (i = 0; i < useValues.length; i++) {
 				if (useValues[i] != 0) {
 					fillText(Math.round(values[i]), offsetX, offsetY);
@@ -1956,10 +1956,4 @@ Random = {
 	fromTo: function(from, to) {
 		return from + (Math.random() * (1 + to - from) | 0);
 	}
-};
-
-
-// Install an IE error trap
-window.onerror = function(msg, source, line) {
-	alert(msg + '\nsource ' + source + '\nline ' + line);
 };
