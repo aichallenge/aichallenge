@@ -28,7 +28,8 @@ from
     inner join submissions s on s.submission_id = r.submission_id
     where
         s.user_id = '$user_id' and
-        leaderboard_id = 159501;
+        leaderboard_id = (select max(leaderboard_id) from leaderboards
+            where complete=1)
 EOT;
 $rankresult = mysql_query($rankquery);
 
@@ -222,7 +223,6 @@ EOT;
 }
     echo "<p><strong>Current Rank:</strong>&nbsp;$rank</p>";
 
-/*
     $query = "SELECT * FROM submissions
         WHERE user_id='$user_id' AND status = 40 and latest = 1";
     $result = mysql_query($query);
@@ -242,7 +242,7 @@ EOT;
             echo "<p>Next game should be played soon.</p>";
         }
     }
- */
+
     echo "<h3><span>Latest Games</span><div class=\"divider\" /></h3>";
     echo getGamesTableString($user_id, true, 15, "profile_games.php?user_id=$user_id");
     echo "<p></p>";

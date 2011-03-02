@@ -4,28 +4,71 @@
 	<title>Ant Canvas</title>
 	<!--[if lt IE 9]><script src="js/excanvas.js"></script><![endif]-->
 	<script type="text/javascript" src="js/visualizer.js"></script>
+	<script type="text/javascript">
+		var visualizer;
+		function visualizePasted() {
+			visualizer.loadReplayData(document.getElementById('txtReplay').value);
+			visualizer.attach(640);
+		}
+	</script>
+	<style type="text/css">
+		html { margin:0; padding:0; }
+		body { margin:0; padding:0; }
+	</style>
 </head>
-<body>
-	<table style="font-family: 'arial'">
+<body onload="visualizer = new Visualizer(document.getElementById('visualizerDiv'))">
+	<table style="font-family: 'arial'" cellpadding="0" cellspacing="0" >
 		<tr valign="top">
 			<td>
 				Game replay copy &amp; paste: <input type="button" value="Load text below" onClick="visualizePasted()"/><br/>
-				<textarea id="txtReplay" rows="27" cols="41"></textarea>
+				<textarea id="txtReplay" rows="27" cols="41">
+# same info sent to bots turn 0
+version 1
+turn 0
+cols 4
+rows 4
+players 4
+# extra info for visualizer, optional
+gameid 1
+gamelocation ai-contest.com
+player1name gill
+player2name phil
+player3name bill
+player4name jill
+player1submitid 5
+player2submitid 6
+# char map (not sent to bots), no starting food
+m %%%.
+m %..%
+m %a.%
+m ...b
+#
+turn 1
+score 0 0 0 0
+a 2 1 0
+a 3 3 1
+f 3 0
+# orders sent by bots turn 1
+o 2 1 s
+
+# next turn
+turn 2
+score 1 0 0 1
+a 3 0 0
+f 3 2
+# orders sent by bots turn 2
+o 3 1 w
+
+# after last turn
+end
+score 3847474 0 0 1
+a 3 2 1
+d 3 0 0
+d 3 0 0
+				</textarea>
 			</td>
-			<td>
-				<input type="button" value="backward" onClick="visualizer.stepBw()"/>
-				<input type="button" value="forward" onClick="visualizer.stepFw()"/>
-				<input type="button" value="play" onClick="visualizer.play()"/><br/>
-				<div id="visualizerDiv"></div>
-			</td>
+			<td id="visualizerDiv"/>
 		</tr>
 	</table>
 </body>
-<script type="text/javascript">
-	var visualizer = new Visualizer(document.getElementById('visualizerDiv'));
-	function visualizePasted() {
-		visualizer.loadReplayData(txtReplay.value);
-		visualizer.attach(640);
-	}
-</script>
 </html>
