@@ -201,7 +201,7 @@ comp_args = {
                ["/usr/local/bin/8l", "-o", BOT, "_go_.8"]],
   "Groovy"  : [["groovyc"],
                ["jar", "cfe", BOT + ".jar", BOT]],
-  "Haskell" : [["ghc", "--make", BOT + ".hs", "-O2", "-v0"]],
+  "Haskell" : [["ghc", "--make", BOT + ".hs", "-O", "-v0"]],
   "Java"    : [["javac"],
                ["jar", "cfe", BOT + ".jar", BOT]],
   "Lisp"    : [['sbcl', '--end-runtime-options', '--no-sysinit',
