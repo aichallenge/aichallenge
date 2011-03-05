@@ -10,7 +10,7 @@ $country_query = <<<EOT
 select
     *
 from
-    countries
+    country
 where
     country_id = '$country_id'
 EOT;

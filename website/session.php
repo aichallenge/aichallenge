@@ -11,7 +11,7 @@ include 'mysql_login.php';
 function check_credentials($username, $md5password) {
   $query = "
         SELECT * 
-        FROM users u 
+        FROM user u 
         WHERE
             username='$username' AND 
             password='$md5password' AND

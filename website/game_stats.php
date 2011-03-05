@@ -1,16 +1,16 @@
 <?php include 'header.php'; 
 
-$query = "select count(*) from users where activated=1 and created > (now() - interval 24 hour)";
+$query = "select count(*) from user where activated=1 and created > (now() - interval 24 hour)";
 $result = mysql_query($query);
 $row = mysql_fetch_row($result);
 $new_users = $row[0];
 
-$query = "select count(*) from submissions where timestamp > (now() - interval 24 hour)";
+$query = "select count(*) from submission where timestamp > (now() - interval 24 hour)";
 $result = mysql_query($query);
 $row = mysql_fetch_row($result);
 $submissions = $row[0];
 
-$query = "select count(*) from submissions where timestamp > (now() - interval 24 hour) and status = 40";
+$query = "select count(*) from submission where timestamp > (now() - interval 24 hour) and status = 40";
 $result = mysql_query($query);
 $row = mysql_fetch_row($result);
 $submissions_successful = $row[0];
@@ -20,27 +20,27 @@ if ($submissions) {
     $submissions_percentage = 0;
 }
 
-$query = "select count(*) from games where timestamp > (now() - interval 24 hour)";
+$query = "select count(*) from game where timestamp > (now() - interval 24 hour)";
 $result = mysql_query($query);
 $row = mysql_fetch_row($result);
 $games_played = $row[0];
 
 $games_per_minute = array();
 foreach(array(5,60,1444) as $minutes){
-  $sql = "select count(*)/$minutes from games where timestamp > timestampadd(minute, -$minutes, current_timestamp);";
+  $sql = "select count(*)/$minutes from game where timestamp > timestampadd(minute, -$minutes, current_timestamp);";
   $r = mysql_fetch_row(mysql_query($sql));
   $games_per_minute[$minutes] = $r[0];
 }
 
 $games_per_server = array();
-$sql = "select count(*)/5 as gpm, worker from games where timestamp > timestampadd(minute, -5, current_timestamp) group by worker;";
+$sql = "select count(*)/5 as gpm, worker from game where timestamp > timestampadd(minute, -5, current_timestamp) group by worker;";
 $q = mysql_query($sql);
 while($r = mysql_fetch_assoc($q)){
   $games_per_server[] = $r;
 }
 
 $errors_per_server = array();
-$sql = "select e.*, worker from errors e inner join games g on g.game_id = e.game_id where e.timestamp > timestampadd(minute, -5, current_timestamp) group by game_id order by worker,e.timestamp desc ;";
+$sql = "select e.*, worker from error e inner join game g on g.game_id = e.game_id where e.timestamp > timestampadd(minute, -5, current_timestamp) group by game_id order by worker,e.timestamp desc ;";
 $q = mysql_query($sql);
 while($r = mysql_fetch_assoc($q)){
   $errors_per_server[$r['worker']] +=1/5;
@@ -70,15 +70,15 @@ if (is_readable($PAIRCUT_FILE)) {
 
 <table class="bigstats">
   <tr>
-    <td><?=$new_users?></td>
-    <td><?=$submissions?></td>
-    <td><?=$submissions_successful?>
+    <td><?php echo $new_users?></td>
+    <td><?php echo $submissions?></td>
+    <td><?php echo $submissions_successful?>
       <span style="font-size: smaller">
-        (<?=number_format($submissions_percentage,0)?>%)
+        (<?php echo number_format($submissions_percentage,0)?>%)
       </span>
     </td>
-    <td><?=$games_played?></td>
-    <td><?=$pair_cutoff?></td>
+    <td><?php echo $games_played?></td>
+    <td><?php echo $pair_cutoff?></td>
   </tr>
   <tr>
     <th>New users</th>
@@ -93,9 +93,9 @@ if (is_readable($PAIRCUT_FILE)) {
 
 <table class="bigstats">
   <tr>
-    <td><?=number_format($games_per_minute[5],1)?></td>
-    <td><?=number_format($games_per_minute[60],1)?></td>
-    <td><?=number_format($games_per_minute[1444],1)?></td>
+    <td><?php echo number_format($games_per_minute[5],1)?></td>
+    <td><?php echo number_format($games_per_minute[60],1)?></td>
+    <td><?php echo number_format($games_per_minute[1444],1)?></td>
   </tr>
   <tr>
     <th>Last 5 minutes</th>
@@ -110,19 +110,19 @@ if (is_readable($PAIRCUT_FILE)) {
 <table class="bigstats">
   <tr>
   <?php foreach ($games_per_server as $server): ?>
-    <td><?=number_format($server['gpm'])?></td>
+    <td><?php echo number_format($server['gpm'])?></td>
   <?php endforeach ?>
   </tr>
   <tr>
   <?php foreach ($games_per_server as $server): ?>
-    <th>Server #<?=htmlspecialchars($server['worker'])?></th>
+    <th>Server #<?php echo htmlspecialchars($server['worker'])?></th>
   <?php endforeach ?>
   </tr>
   <tr>
   <?php foreach ($games_per_server as $server): ?>
     <th style="color:#ccc">
-      <?=number_format($errors_per_server[$server['worker']],1)?> EPM <br />
-      <?=number_format($error_percentage[$server['worker']],1)?>%
+      <?php echo number_format($errors_per_server[$server['worker']],1)?> EPM <br />
+      <?php echo number_format($error_percentage[$server['worker']],1)?>%
     </th>
   <?php endforeach ?>
   </tr>

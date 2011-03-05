@@ -15,11 +15,11 @@ if($game_id == 0){
       g.player_two as player_two_id,
       s1.user_id as user_one_id,
       s2.user_id as user_two_id
-    FROM games g
-    INNER JOIN submissions s1 ON g.player_one = s1.submission_id
-    INNER JOIN users u1 ON s1.user_id = u1.user_id
-    INNER JOIN submissions s2 ON g.player_two = s2.submission_id
-    INNER JOIN users u2 ON s2.user_id = u2.user_id
+    FROM game g
+    INNER JOIN submission s1 ON g.player_one = s1.submission_id
+    INNER JOIN user u1 ON s1.user_id = u1.user_id
+    INNER JOIN submission s2 ON g.player_two = s2.submission_id
+    INNER JOIN user u2 ON s2.user_id = u2.user_id
     WHERE g.game_id = $game_id";
     $result = mysql_query($query);
     if(!$result || mysql_num_rows($result) == 0){
@@ -65,7 +65,7 @@ function get_error_message($game_id){
     'UNPARSEABLE_ORDER' => 'issued an order that could not be parsed',
     );
   
-  $sql = "SELECT e.*, u.username from errors e inner join submissions s ON e.submission_id = s.submission_id inner join users u on u.user_id = s.user_id where game_id = '".addslashes($game_id)."'";
+  $sql = "SELECT e.*, u.username from error e inner join submission s ON e.submission_id = s.submission_id inner join user u on u.user_id = s.user_id where game_id = '".addslashes($game_id)."'";
   $q = mysql_query($sql);
   $out = array();
   while($result = mysql_fetch_assoc($q)){

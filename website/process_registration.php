@@ -10,7 +10,7 @@ include 'bad_words.php';
 include 'web_util.php';
 
 function check_valid_user_status_code($code) {
-  $query = "SELECT * FROM user_status_codes";
+  $query = "SELECT * FROM user_status_code";
   $result = mysql_query($query);
   while ($row = mysql_fetch_assoc($result)) {
     $status_id = $row['status_id'];
@@ -25,7 +25,7 @@ function check_valid_organization($code) {
   if ($code == 999) {
     return False;
   }
-  $query = "SELECT * FROM organizations";
+  $query = "SELECT * FROM organization";
   $result = mysql_query($query);
   while ($row = mysql_fetch_assoc($result)) {
     $org_id = $row['org_id'];
@@ -79,7 +79,7 @@ else
 }
 
 // Check if the username already exists.
-$sql="SELECT * FROM users WHERE username='$username'";
+$sql="SELECT * FROM user WHERE username='$username'";
 $result = mysql_query($sql);
 if (mysql_num_rows($result) > 0) {
   $errors[] = "The username $username is already in use. Please choose a different username.";
@@ -87,7 +87,7 @@ if (mysql_num_rows($result) > 0) {
 
 // Check if the email is already in use (except by an admin account or a donotsend account).
 if (strcmp($user_email, "donotsend") != 0) {
-  $sql="select u.email from users where u.email = '$user_email' and admin = 0";
+  $sql="select u.email from user where u.email = '$user_email' and admin = 0";
   $result = mysql_query($sql);
   if ($result && mysql_num_rows($result) > 0) {
     $errors[] = "The email $user_email is already in use. You are only allowed to have one account! It is easy for us to tell if you have two accounts, and you will be disqualified if you have two accounts! If there is some problem with your existing account, get in touch with the contest organizers by dropping by the Computer Science Club office and we will help you get up-and-running again!  :-)";
@@ -140,8 +140,8 @@ if (count($errors) <= 0) {
   $confirmation_code =
     md5($username . "d3j7k4nh8dvs0" . $password1 . $username);
   $query = "SELECT org.name AS name, COUNT(u.user_id) AS peers FROM " .
-    "organizations org " .
-    "LEFT OUTER JOIN users u ON u.org_id = org.org_id GROUP BY " .
+    "organization org " .
+    "LEFT OUTER JOIN user u ON u.org_id = org.org_id GROUP BY " .
     "org.org_id HAVING org.org_id = " . $user_org;
   $result = mysql_query($query);
   $peer_message = "";
@@ -164,7 +164,7 @@ if (count($errors) <= 0) {
       }
     }
   }
-  $query = "INSERT INTO users " .
+  $query = "INSERT INTO user " .
     "(username,password,email,status_id,activation_code,org_id,bio," .
     "country_id,created,activated,admin) VALUES " .
     "('$username','" . md5($password1) . "','$user_email',$user_status," .
@@ -194,7 +194,7 @@ if (count($errors) <= 0) {
     if (intval($mail_accepted) == 0) {
       $errors[] = "Failed to send confirmation email. Try again in a few " .
         "minutes.";
-      $query = "DELETE FROM users WHERE username='$username' and " .
+      $query = "DELETE FROM user WHERE username='$username' and " .
         "password='" . md5($password1) . "'";
       mysql_query($query);
     } else {

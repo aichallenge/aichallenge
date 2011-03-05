@@ -24,11 +24,11 @@ $rankquery = <<<EOT
 select
     r.rank
 from
-    rankings r
-    inner join submissions s on s.submission_id = r.submission_id
+    ranking r
+    inner join submission s on s.submission_id = r.submission_id
     where
         s.user_id = '$user_id' and
-        leaderboard_id = (select max(leaderboard_id) from leaderboards
+        leaderboard_id = (select max(leaderboard_id) from leaderboard
             where complete=1)
 EOT;
 $rankresult = mysql_query($rankquery);
@@ -47,9 +47,9 @@ select
   u.email,
   u.activation_code
 from
-  users u
-  left outer join organizations o on o.org_id = u.org_id
-  left outer join countries c on c.country_id = u.country_id
+  user u
+  left outer join organization o on o.org_id = u.org_id
+  left outer join country c on c.country_id = u.country_id
 where
   u.user_id = '$user_id'
 EOT;
@@ -137,7 +137,7 @@ echo <<<EOT
     <span id="countrychange" style="display: none">
       <select name="user_country" style="width:210px;">
 EOT;
-  $query = "SELECT * FROM countries ORDER BY country_id";
+  $query = "SELECT * FROM country ORDER BY country_id";
   $result = mysql_query($query);
   while ($row = mysql_fetch_assoc($result)) {
     $option_id = $row['country_id'];
@@ -171,7 +171,7 @@ echo <<<EOT
       <option value="1">University of Waterloo</option>
       <option value="999">---</option>
 EOT;
-  $query = "SELECT * FROM organizations WHERE org_id > 1 ORDER BY name";
+  $query = "SELECT * FROM organization WHERE org_id > 1 ORDER BY name";
   $result = mysql_query($query);
   while ($row = mysql_fetch_assoc($result)) {
     $option_id = $row['org_id'];
@@ -223,14 +223,14 @@ EOT;
 }
     echo "<p><strong>Current Rank:</strong>&nbsp;$rank</p>";
 
-    $query = "SELECT * FROM submissions
+    $query = "SELECT * FROM submission
         WHERE user_id='$user_id' AND status = 40 and latest = 1";
     $result = mysql_query($query);
     if ($row = mysql_fetch_assoc($result)) {
         $sub_id = $row['submission_id'];
-        $query = "SELECT count(1) FROM submissions
+        $query = "SELECT count(1) FROM submission
             WHERE last_game_timestamp < (SELECT last_game_timestamp
-                FROM submissions WHERE submission_id = '$sub_id')
+                FROM submission WHERE submission_id = '$sub_id')
             AND status = 40 AND latest = 1";
         $result = mysql_query($query);
         $row = mysql_fetch_assoc($result);

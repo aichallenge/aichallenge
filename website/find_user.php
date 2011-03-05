@@ -10,7 +10,7 @@ if (!isset($username)) {
 
 $username .= "%";
 
-$query = "SELECT user_id, username FROM users
+$query = "SELECT user_id, username FROM user
     WHERE username LIKE \"$username\" ORDER BY username";
 $result = mysql_query($query);
 if (!$result) {

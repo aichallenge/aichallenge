@@ -13,7 +13,7 @@ if($worker==false){
  */
  
 function valid_worker($api_key,$ip_address){
-   $sql = "SELECT * FROM workers WHERE api_key = '".addslashes($api_key)."';";
+   $sql = "SELECT * FROM worker WHERE api_key = '".addslashes($api_key)."';";
    $r = mysql_query($sql);
    if(!$r || mysql_num_rows($r) == 0){
      return false;

@@ -21,7 +21,7 @@ function getCountryRankingsTableString($top)
 select
     u.country_id
 from
-    users u
+    user u
 where
     username = '$username'
 EOT;
@@ -43,11 +43,11 @@ select
     count(*) as num_leaders
 from
     rankings r
-    inner join submissions s on s.submission_id = r.submission_id
-    inner join users u on u.user_id = s.user_id
-    inner join countries c on c.country_id = u.country_id
+    inner join submission s on s.submission_id = r.submission_id
+    inner join user u on u.user_id = s.user_id
+    inner join country c on c.country_id = u.country_id
 where
-    r.leaderboard_id = (select max(leaderboard_id) from leaderboards
+    r.leaderboard_id = (select max(leaderboard_id) from leaderboard
         where complete=1)
     and r.rank <= $top 
 group by u.country_id

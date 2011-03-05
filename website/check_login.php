@@ -31,7 +31,7 @@ $username = mysql_real_escape_string(stripslashes($_POST['username']));
 $md5password = md5(mysql_real_escape_string(stripslashes($_POST['password'])));
 $naive_ip = $_SERVER['REMOTE_ADDR'];
 $real_ip = getRealIpAddr();
-$query = "INSERT INTO login_attempts (timestamp,username,password,naive_ip," .
+$query = "INSERT INTO login_attempt (timestamp,username,password,naive_ip," .
   "real_ip) VALUES (CURRENT_TIMESTAMP,'$username','$md5password','$naive_ip'," .
   "'$real_ip')";
 $result = mysql_query($query);

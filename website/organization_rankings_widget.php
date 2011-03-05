@@ -21,7 +21,7 @@ function getOrganizationRankingsTableString($top)
 select
     u.org_id
 from
-    users u
+    user u
 where
     username = '$username'
 EOT;
@@ -41,17 +41,17 @@ select
     o.name as org_name,
     count(*) as num_leaders
 from
-    rankings r
-    inner join submissions s on s.submission_id = r.submission_id
-    inner join users u on u.user_id = s.user_id
-    inner join organizations o on o.org_id = u.org_id
+    ranking r
+    inner join submission s on s.submission_id = r.submission_id
+    inner join user u on u.user_id = s.user_id
+    inner join organization o on o.org_id = u.org_id
 where
-    r.leaderboard_id = (select max(leaderboard_id) from leaderboards
+    r.leaderboard_id = (select max(leaderboard_id) from leaderboard
         WHERE complete = 1)
     and r.rank <= $top
     and o.org_id <> 0
 group by o.org_id
-order by num_leaders desc
+order by num_leader desc
 EOT;
     $rankings_results = mysql_query($rankings_query);
 
