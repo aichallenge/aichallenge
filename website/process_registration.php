@@ -137,8 +137,7 @@ if (strlen($country_id) <= 0) {
 
 if (count($errors) <= 0) {
   // Add the user to the database, with no permissions.
-  $confirmation_code =
-    md5($username . $email . $password1 . salt());
+  $confirmation_code = md5(salt(64));
   $query = "SELECT org.name AS name, COUNT(u.user_id) AS peers FROM " .
     "organization org " .
     "LEFT OUTER JOIN user u ON u.org_id = org.org_id GROUP BY " .
