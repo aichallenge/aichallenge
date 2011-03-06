@@ -77,6 +77,7 @@ CREATE TABLE `login_attempt` (
 DROP TABLE IF EXISTS `map`;
 CREATE TABLE `map` (
   `map_id` int(11) NOT NULL AUTO_INCREMENT,
+  `players` int(11) NOT NULL,
   `filename` varchar(256) DEFAULT NULL,
   `priority` int(11) DEFAULT NULL,
   PRIMARY KEY (`map_id`)
