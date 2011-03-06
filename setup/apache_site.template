@@ -1,0 +1,26 @@
+<VirtualHost *:80>
+	ServerAdmin webmaster@localhost
+    ServerName {web_hostname}
+    ServerAlias www.{web_hostname}
+
+	DocumentRoot {web_root}
+	<Directory />
+		Options FollowSymLinks
+		AllowOverride None
+	</Directory>
+	<Directory {web_root}>
+		Options Indexes FollowSymLinks MultiViews
+		AllowOverride None
+		Order allow,deny
+		allow from all
+	</Directory>
+
+	ErrorLog {log_dir}/error.log
+
+	# Possible values include: debug, info, notice, warn, error, crit,
+	# alert, emerg.
+	LogLevel warn
+
+	CustomLog {log_dir}/access.log combined
+
+</VirtualHost>

@@ -209,7 +209,7 @@ def setup_contest_files(contest_root, api_url, api_key):
                 si_file.write(si_contents)
             run_cmd("chmod 600 server_info.py")
             try:
-                run_cmd("mysql contest")
+                run_cmd("echo 'quit' | mysql worker")
             except CmdError:
                 run_cmd("echo 'create database worker' | mysql")
                 run_cmd("mysql worker < schema.sql")
