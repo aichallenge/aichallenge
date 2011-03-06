@@ -36,6 +36,7 @@ func (s *State) Start() os.Error {
 		if err != nil {
 			return err
 		}
+		line = line[:len(line) - 1] //remove the delimiter
 		
 		if line == "" {
 			continue
@@ -47,6 +48,7 @@ func (s *State) Start() os.Error {
 		
 		words := strings.Split(line, " ", 2)
 		if len(words) != 2 {
+			panic(`"` + line + `"`)
 			return os.NewError("invalid command format: " + line)
 		}
 		
@@ -65,6 +67,7 @@ func (s *State) Start() os.Error {
 			case "turn":			s.Turn = param
 			
 			default:
+				panic(1)
 				return os.NewError("unknown command: " + line)
 		}
 	}
@@ -85,8 +88,10 @@ func (s *State) Loop(b Bot) os.Error {
 	for {
 		line, err := stdin.ReadString('\n')
 		if err != nil {
+			panic(2)
 			return err
 		}
+		line = line[:len(line) - 1] //remove the delimiter
 		
 		if line == "" {
 			continue
@@ -106,8 +111,9 @@ func (s *State) Loop(b Bot) os.Error {
 			break
 		}
 		
-		words := strings.Split(line, " ", 2)
+		words := strings.Split(line, " ", 5)
 		if len(words) < 2 {
+			panic(3)
 			return os.NewError("invalid command format: " + line)
 		}
 		
@@ -115,6 +121,7 @@ func (s *State) Loop(b Bot) os.Error {
 			case "turn":
 				turn, _ := strconv.Atoi(words[1])
 				if turn != s.Turn + 1 {
+					panic(4)
 					return os.NewError("Somehow turn number got out of sync")
 				}
 				s.Turn = turn
@@ -143,6 +150,10 @@ func (s *State) Loop(b Bot) os.Error {
 				Ant, _ := strconv.Atoi(words[3])
 				loc := s.Map.FromXY(X, Y)
 				s.Map.AddAnt(loc, Item(Ant))
+				
+				if Item(Ant) == MY_ANT {
+					s.Map.AddLand(loc, s.ViewRadius2)
+				}
 			case "d":
 				if len(words) < 4 {
 					panic("not enough parameters for dead ant!")
@@ -163,14 +174,14 @@ func (s *State) IssueOrderXY(X, Y int, d Direction) {
 	loc := s.Map.FromXY(X, Y)
 	dest := s.Map.Move(loc, d)
 	s.Map.AddDestination(dest)
-	fmt.Fprintf(os.Stdout, "o %d %d %s", X, Y, d)
+	fmt.Fprintf(os.Stdout, "o %d %d %s\n", X, Y, d)
 }
 
 func (s *State) IssueOrderLoc(loc Location, d Direction) {
 	X, Y := s.Map.FromLocation(loc)
 	dest := s.Map.Move(loc, d)
 	s.Map.AddDestination(dest)
-	fmt.Fprintf(os.Stdout, "o %d %d %s", X, Y, d)
+	fmt.Fprintf(os.Stdout, "o %d %d %s\n", X, Y, d)
 }
 
 func (s *State) endTurn() {

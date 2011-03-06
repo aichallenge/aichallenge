@@ -38,10 +38,10 @@ const (
 
 func (o Item) Symbol() byte {
 	switch o {
-		case UNKNOWN:	return '?'
+		case UNKNOWN:	return '.'
 		case WATER:		return '%'
 		case FOOD:		return '*'
-		case LAND:		return '.'
+		case LAND:		return ' '
 		case DEAD:		return '!'
 	}
 	
@@ -54,10 +54,10 @@ func (o Item) Symbol() byte {
 
 func FromSymbol(ch byte) Item {
 	switch ch {
-		case '?':	return UNKNOWN
+		case '.':	return UNKNOWN
 		case '%':	return WATER
 		case '*':	return FOOD
-		case '.':	return LAND
+		case ' ':	return LAND
 		case '!':	return DEAD
 	}
 	if ch < 'a' || ch > 'z' {
@@ -85,7 +85,7 @@ func (m *Map) String() string {
 	str := ""
 	for j := 0; j < m.Rows; j++ {
 		for i := 0; i < m.Cols; i++ {
-			s := m.data[j * m.Rows + i].Symbol()
+			s := m.data[j * m.Cols + i].Symbol()
 			str += string([]byte{s}) + " "
 		}
 		str += "\n"
@@ -93,7 +93,7 @@ func (m *Map) String() string {
 	return str
 }
 
-func NewMap(Rows, Cols int) *Map {
+func NewMap(Cols, Rows int) *Map {
 	m := &Map{
 		Rows: Rows, 
 		Cols: Cols,
@@ -130,6 +130,23 @@ func (m *Map) AddAnt(loc Location, ant Item) {
 	m.data[loc] = ant
 }
 
+func (m *Map) AddLand(center Location, viewrad2 int) {
+	x1, y1 := m.FromLocation(center)
+	for x := 0; x < m.Cols; x++ {
+		for y := 0; y < m.Rows; y++ {
+			loc := m.FromXY(x, y)
+			if m.data[loc] != UNKNOWN {
+				continue
+			}
+			xΔ := x - x1
+			yΔ := y - y1
+			if xΔ * xΔ + yΔ * yΔ < viewrad2 {
+				m.data[loc] = LAND
+			}
+		}
+	}
+}
+
 func (m *Map) AddDeadAnt(loc Location, ant Item) {
 	m.Dead[loc] = ant
 	m.data[loc] = DEAD
@@ -150,12 +167,12 @@ func (m *Map) FromXY(X, Y int) Location {
 	for Y < 0 {Y += m.Rows}
 	for Y >= m.Rows {Y -= m.Rows}
 	
-	return Location(Y * m.Rows + X)
+	return Location(Y * m.Cols + X)
 }
 
 func (m *Map) FromLocation(loc Location) (X, Y int) {
-	X = int(loc) % m.Rows
-	Y = int(loc) / m.Rows
+	X = int(loc) % m.Cols
+	Y = int(loc) / m.Cols
 	return
 }
 

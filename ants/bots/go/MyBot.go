@@ -3,12 +3,15 @@ package main
 import (
 	"os"
 	"rand"
+	"fmt"
 )
 
 type MyBot struct {
 }
 
 func (mb *MyBot) DoTurn(s *State) os.Error {
+	
+	fmt.Println(s.Map)
 	
 	dirs := []Direction{North, East, South, West}
 	
@@ -19,11 +22,12 @@ func (mb *MyBot) DoTurn(s *State) os.Error {
 		
 		//try each direction in a random order
 		p := rand.Perm(4)
-		for i := range p {
+		for _, i := range p {
 			d := dirs[i]
 			
 			loc2 := s.Map.Move(loc, d)
-			if !s.Map.Destinations[loc2] {
+			_, water := s.Map.Water[loc2]
+			if !s.Map.Destinations[loc2] && !water {
 				s.IssueOrderLoc(loc, d)
 				break
 			}
