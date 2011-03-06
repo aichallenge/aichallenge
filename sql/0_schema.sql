@@ -10,6 +10,7 @@ CREATE TABLE `country` (
 DROP TABLE IF EXISTS `game`;
 CREATE TABLE `game` (
   `game_id` int(11) NOT NULL AUTO_INCREMENT,
+  `seed_id` int(11) NOT NULL,
   `map_id` int(11) NOT NULL,
   `timestamp` datetime NOT NULL,
   `worker` smallint(5) unsigned NOT NULL,
@@ -35,6 +36,7 @@ CREATE TABLE `game_player` (
   `user_id` int(11) NOT NULL,
   `submission_id` int(11) NOT NULL,
   `player_id` int(11) NOT NULL,
+  `valid` tinyint(4) NOT NULL DEFAULT '1',
   `errors` varchar(1024) DEFAULT NULL,
   `stderr` varchar(1024) DEFAULT NULL,
   `rank_before` int(11) NOT NULL,
