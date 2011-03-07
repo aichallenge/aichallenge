@@ -1,5 +1,4 @@
 <?php
-
 // include guard
 if (!isset($JPC_CONTEST_CHECK_LOGIN_PHP__)) {
 $JPC_CONTEST_CHECK_LOGIN_PHP__ = 1;
@@ -28,25 +27,25 @@ function getRealIpAddr()
 
 // Log this login attempt
 $username = mysql_real_escape_string(stripslashes($_POST['username']));
-$md5password = md5(mysql_real_escape_string(stripslashes($_POST['password'])));
+$password = mysql_real_escape_string(stripslashes($_POST['password']));
 $naive_ip = $_SERVER['REMOTE_ADDR'];
 $real_ip = getRealIpAddr();
-$query = "INSERT INTO login_attempt (timestamp,username,password,naive_ip," .
-  "real_ip) VALUES (CURRENT_TIMESTAMP,'$username','$md5password','$naive_ip'," .
+$query = "INSERT INTO login_attempt (timestamp,username,naive_ip," .
+  "real_ip) VALUES (CURRENT_TIMESTAMP,'$username','$naive_ip'," .
   "'$real_ip')";
 $result = mysql_query($query);
 if (!$result) {
   echo "<p>Could not write to log: " . htmlspecialchars(mysql_error()) . "</p>";
 }
 
-if (check_credentials($username, $md5password)) {
-  header("location:index.php");
+if (check_credentials($username, $password)) {
+  	header("location:index.php");
 } else {
-  unset($_SESSION['username']);
-  unset($_SESSION['password']);
-  unset($_SESSION['admin']);
-  unset($_SESSION['user_id']);
-  header("location:login_failed.php");
+	unset($_SESSION['username']);
+	unset($_SESSION['password']);
+	unset($_SESSION['admin']);
+	unset($_SESSION['user_id']);
+    header("location:login_failed.php");
 }
 
 }  // include guard

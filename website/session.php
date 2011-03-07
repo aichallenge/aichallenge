@@ -8,25 +8,6 @@ session_start();
 
 include 'mysql_login.php';
 
-function check_credentials($username, $md5password) {
-  $query = "
-        SELECT * 
-        FROM user u 
-        WHERE
-            username='$username' AND 
-            password='$md5password' AND
-            activated = 1";
-  $result = mysql_query($query);
-    if( $user = mysql_fetch_assoc( $result ) ) {
-        $_SESSION['username']   = $user['username'];
-        $_SESSION['admin']      = $user['admin'];
-        $_SESSION['user_id']    = $user['user_id'];
-        return true;
-    } else {
-        return false;
-    }
-}
-
 function logged_in_with_valid_credentials() {
     return isset($_SESSION['user_id']);
 }

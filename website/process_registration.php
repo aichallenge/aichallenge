@@ -137,8 +137,7 @@ if (strlen($country_id) <= 0) {
 
 if (count($errors) <= 0) {
   // Add the user to the database, with no permissions.
-  $confirmation_code =
-    md5($username . "d3j7k4nh8dvs0" . $password1 . $username);
+  $confirmation_code = md5(salt(64));
   $query = "SELECT org.name AS name, COUNT(u.user_id) AS peers FROM " .
     "organization org " .
     "LEFT OUTER JOIN user u ON u.org_id = org.org_id GROUP BY " .
@@ -167,7 +166,7 @@ if (count($errors) <= 0) {
   $query = "INSERT INTO user " .
     "(username,password,email,status_id,activation_code,org_id,bio," .
     "country_id,created,activated,admin) VALUES " .
-    "('$username','" . md5($password1) . "','$user_email',$user_status," .
+    "('$username','" . crypt($password1, '$6$rounds=54321$' . salt() . '$') . "','$user_email',$user_status," .
     "'$confirmation_code',$user_org,'$bio',$country_id,CURRENT_TIMESTAMP,0,0)";
   if (mysql_query($query)) {
     // Send confirmation mail to user.
