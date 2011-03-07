@@ -9,7 +9,7 @@ sql = {
     "select_latest_submissions": "select submission_id from submission where latest = 1",
     
     # used in snapshot_rankings.py
-    "insert_rankings_detail": """select
+    "select_rankings_detail": """select
     @leader := (select max(leaderboard_id) from leaderboard) as leaderboard_id, 
     s.user_id, s.submission_id, s.version,
     @count1 := @count1 + 1 as seq,

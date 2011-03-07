@@ -1,5 +1,4 @@
 <?php
-
 // include guard
 if (!isset($JPC_CONTEST_CHECK_LOGIN_PHP__)) {
 $JPC_CONTEST_CHECK_LOGIN_PHP__ = 1;
@@ -40,13 +39,13 @@ if (!$result) {
 }
 
 if (check_credentials($username, $password)) {
-  header("location:index.php");
+  	header("location:index.php");
 } else {
-  unset($_SESSION['username']);
-  unset($_SESSION['password']);
-  unset($_SESSION['admin']);
-  unset($_SESSION['user_id']);
-  header("location:login_failed.php");
+	unset($_SESSION['username']);
+	unset($_SESSION['password']);
+	unset($_SESSION['admin']);
+	unset($_SESSION['user_id']);
+    header("location:login_failed.php");
 }
 
 }  // include guard

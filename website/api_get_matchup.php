@@ -1,4 +1,4 @@
-<?
+<?php
 require_once('api_functions.php');
 
 /*

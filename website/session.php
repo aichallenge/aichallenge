@@ -8,39 +8,6 @@ session_start();
 
 include 'mysql_login.php';
 
-// salty function, used for passwords in crypt with SHA
-function salt($len=16) {
-	$pool = range('!', '~');
-	$high = count($pool) - 1;
-	$tmp = '';
-	for ($c = 0; $c < $len; $c++) {
-		$tmp .= $pool[rand(0, $high)];
-	}
-	return $tmp;
-}
-
-function check_credentials($username, $password) {
-  $query = "
-        SELECT * 
-        FROM user u 
-        WHERE
-            username='$username' AND
-            activated = 1";
-  $result = mysql_query($query);
-    if( $user = mysql_fetch_assoc( $result ) ) {
-    	if (crypt($password, $user['password']) == $user['password']) {
-	        $_SESSION['username']   = $user['username'];
-	        $_SESSION['admin']      = $user['admin'];
-	        $_SESSION['user_id']    = $user['user_id'];
-	        return true;
-    	} else {
-    		return false;
-    	}
-    } else {
-        return false;
-    }
-}
-
 function logged_in_with_valid_credentials() {
     return isset($_SESSION['user_id']);
 }
