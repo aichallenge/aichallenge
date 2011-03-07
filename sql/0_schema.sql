@@ -10,6 +10,7 @@ CREATE TABLE `country` (
 DROP TABLE IF EXISTS `game`;
 CREATE TABLE `game` (
   `game_id` int(11) NOT NULL AUTO_INCREMENT,
+  `seed_id` int(11) NOT NULL,
   `map_id` int(11) NOT NULL,
   `timestamp` datetime NOT NULL,
   `worker` smallint(5) unsigned NOT NULL,
@@ -32,10 +33,13 @@ CREATE TABLE `game_archive` (
 DROP TABLE IF EXISTS `game_player`;
 CREATE TABLE `game_player` (
   `game_id` int(11) NOT NULL,
+  `user_id` int(11) NOT NULL,
   `submission_id` int(11) NOT NULL,
-  `rank` int(11) NOT NULL,
+  `player_id` int(11) NOT NULL,
+  `valid` tinyint(4) NOT NULL DEFAULT '1',
   `errors` varchar(1024) DEFAULT NULL,
   `stderr` varchar(1024) DEFAULT NULL,
+  `rank_before` int(11) NOT NULL,
   `sigma_before` float NOT NULL,
   `sigma_after` float DEFAULT NULL,
   `mu_before` float NOT NULL,
@@ -77,20 +81,10 @@ CREATE TABLE `login_attempt` (
 DROP TABLE IF EXISTS `map`;
 CREATE TABLE `map` (
   `map_id` int(11) NOT NULL AUTO_INCREMENT,
-  `players` int(11) NOT NULL,
-  `filename` varchar(256) DEFAULT NULL,
-  `priority` int(11) DEFAULT NULL,
+  `filename` varchar(256) NOT NULL,
+  `priority` int(11) NOT NULL DEFAULT '1',
+  `players` int(11) NOT NULL
   PRIMARY KEY (`map_id`)
-);
-
-DROP TABLE IF EXISTS `matchup`;
-CREATE TABLE `matchup` (
-  `matchup_id` int(11) NOT NULL AUTO_INCREMENT,
-  `player_one` int(11) NOT NULL,
-  `player_two` int(11) NOT NULL,
-  `map_id` int(11) NOT NULL,
-  `dispatch_time` datetime DEFAULT NULL,
-  PRIMARY KEY (`matchup_id`)
 );
 
 DROP TABLE IF EXISTS `organization`;
@@ -98,14 +92,6 @@ CREATE TABLE `organization` (
   `org_id` int(11) NOT NULL AUTO_INCREMENT,
   `name` varchar(128) DEFAULT NULL,
   PRIMARY KEY (`org_id`)
-);
-
-DROP TABLE IF EXISTS `player_rank`;
-CREATE TABLE `player_rank` (
-  `submission_id` int(11) NOT NULL,
-  `sigma` float NOT NULL DEFAULT '16.6667',
-  `mu` float NOT NULL DEFAULT '50',
-  UNIQUE KEY `user_id_UNIQUE` (`submission_id`)
 );
 
 DROP TABLE IF EXISTS `ranking`;
@@ -127,14 +113,18 @@ CREATE TABLE `ranking` (
 );
 
 DROP TABLE IF EXISTS `ranking_archive`;
-CREATE TABLE `ranking_archive` (
+CREATE TABLE `ranking` (
   `leaderboard_id` int(11) NOT NULL,
+  `user_id` int(11) DEFAULT NULL,
   `submission_id` int(11) NOT NULL,
+  `version` int(11) NOT NULL,
   `rank` int(11) NOT NULL,
-  `wins` int(11) DEFAULT NULL,
-  `losses` int(11) DEFAULT NULL,
-  `draws` int(11) DEFAULT NULL,
-  `score` double DEFAULT '13',
+  `seq` int(11) NOT NULL,
+  `rank_change` int(11) NOT NULL,
+  `skill` float NOT NULL,
+  `skill_change` float NOT NULL,
+  `latest` tinyint(4) NOT NULL,
+  `age` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   KEY `leaderboard_id` (`leaderboard_id`),
   KEY `submission_id` (`submission_id`),
   KEY `leaderboard_id_2` (`leaderboard_id`,`submission_id`,`rank`)
