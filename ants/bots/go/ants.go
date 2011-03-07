@@ -78,8 +78,10 @@ func (s *State) Start() os.Error {
 	return nil
 }
 
-
-func (s *State) Loop(b Bot) os.Error {
+//b's DoWork function gets called each turn after the map has been setup
+//BetweenTurnWork gets called after a turn but before the map is reset. It is 
+//meant to do debugging work.
+func (s *State) Loop(b Bot, BetweenTurnWork func()) os.Error {
 	
 	//indicate we're ready
 	os.Stdout.Write([]byte("go\n"))
@@ -88,7 +90,10 @@ func (s *State) Loop(b Bot) os.Error {
 	for {
 		line, err := stdin.ReadString('\n')
 		if err != nil {
-			panic(2)
+			if err == os.EOF {
+				return err
+			}
+			Panicf("ReadString returns an error: %s", err)
 			return err
 		}
 		line = line[:len(line) - 1] //remove the delimiter
@@ -103,6 +108,8 @@ func (s *State) Loop(b Bot) os.Error {
 			//end turn
 			s.endTurn()
 			
+			BetweenTurnWork()
+				
 			s.Map.Reset()
 			continue
 		}
@@ -113,21 +120,19 @@ func (s *State) Loop(b Bot) os.Error {
 		
 		words := strings.Split(line, " ", 5)
 		if len(words) < 2 {
-			panic(3)
-			return os.NewError("invalid command format: " + line)
+			Panicf("Invalid command format: \"%s\"", line)
 		}
 		
 		switch words[0] {
 			case "turn":
 				turn, _ := strconv.Atoi(words[1])
 				if turn != s.Turn + 1 {
-					panic(4)
-					return os.NewError("Somehow turn number got out of sync")
+					Panicf("Turn number out of sync, expected %v got %v", s.Turn + 1, turn)
 				}
 				s.Turn = turn
 			case "f":
 				if len(words) < 3 {
-					panic("not enough parameters for food!")
+					Panicf("Invalid command format (not enough parameters for food): \"%s\"", line)
 				}
 				X, _ := strconv.Atoi(words[1])
 				Y, _ := strconv.Atoi(words[2])
@@ -135,7 +140,7 @@ func (s *State) Loop(b Bot) os.Error {
 				s.Map.AddFood(loc)
 			case "w":
 				if len(words) < 3 {
-					panic("not enough parameters for water!")
+					Panicf("Invalid command format (not enough parameters for water): \"%s\"", line)
 				}
 				X, _ := strconv.Atoi(words[1])
 				Y, _ := strconv.Atoi(words[2])
@@ -143,20 +148,21 @@ func (s *State) Loop(b Bot) os.Error {
 				s.Map.AddWater(loc)
 			case "a":
 				if len(words) < 4 {
-					panic("not enough parameters for ant!")
+					Panicf("Invalid command format (not enough parameters for ant): \"%s\"", line)
 				}
 				X, _ := strconv.Atoi(words[1])
 				Y, _ := strconv.Atoi(words[2])
 				Ant, _ := strconv.Atoi(words[3])
 				loc := s.Map.FromXY(X, Y)
 				s.Map.AddAnt(loc, Item(Ant))
+				s.Map.AddDestination(loc)
 				
 				if Item(Ant) == MY_ANT {
 					s.Map.AddLand(loc, s.ViewRadius2)
 				}
 			case "d":
 				if len(words) < 4 {
-					panic("not enough parameters for dead ant!")
+					Panicf("Invalid command format (not enough parameters for dead ant): \"%s\"", line)
 				}
 				X, _ := strconv.Atoi(words[1])
 				Y, _ := strconv.Atoi(words[2])
@@ -173,6 +179,7 @@ func (s *State) Loop(b Bot) os.Error {
 func (s *State) IssueOrderXY(X, Y int, d Direction) {
 	loc := s.Map.FromXY(X, Y)
 	dest := s.Map.Move(loc, d)
+	s.Map.RemoveDestination(loc)
 	s.Map.AddDestination(dest)
 	fmt.Fprintf(os.Stdout, "o %d %d %s\n", X, Y, d)
 }
@@ -180,6 +187,7 @@ func (s *State) IssueOrderXY(X, Y int, d Direction) {
 func (s *State) IssueOrderLoc(loc Location, d Direction) {
 	X, Y := s.Map.FromLocation(loc)
 	dest := s.Map.Move(loc, d)
+	s.Map.RemoveDestination(loc)
 	s.Map.AddDestination(dest)
 	fmt.Fprintf(os.Stdout, "o %d %d %s\n", X, Y, d)
 }

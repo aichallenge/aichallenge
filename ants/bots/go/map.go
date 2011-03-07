@@ -1,5 +1,9 @@
 package main
 
+import (
+	"image"
+)
+
 type Item int8
 
 const (
@@ -46,7 +50,7 @@ func (o Item) Symbol() byte {
 	}
 	
 	if o < MY_ANT || o > PLAYER25 {
-		panic("invalid item")
+		Panicf("invalid item: %v", o)
 	}
 	
 	return byte(o) + 'a'
@@ -61,7 +65,7 @@ func FromSymbol(ch byte) Item {
 		case '!':	return DEAD
 	}
 	if ch < 'a' || ch > 'z' {
-		panic("invalid item symbol")
+		Panicf("invalid item symbol: %v", ch)
 	}
 	return Item(ch) + 'a'
 }
@@ -97,13 +101,10 @@ func NewMap(Cols, Rows int) *Map {
 	m := &Map{
 		Rows: Rows, 
 		Cols: Cols,
-		Ants: make(map[Location]Item),
-		Dead: make(map[Location]Item),
-		Food: make(map[Location]Item),
 		Water: make(map[Location]Item),
-		Destinations: make(map[Location]bool),
 		data: make([]Item, Rows * Cols),
 	}
+	m.Reset()
 	return m
 }
 
@@ -161,6 +162,20 @@ func (m *Map) AddDestination(loc Location) {
 	m.Destinations[loc] = true
 }
 
+func (m *Map) RemoveDestination(loc Location) {
+	m.Destinations[loc] = false, false
+}
+
+func (m *Map) SafeDestination(loc Location) bool {
+	if _, exists := m.Water[loc]; exists {
+		return false
+	}
+	if occupied := m.Destinations[loc]; occupied {
+		return false
+	}
+	return true
+}
+
 func (m *Map) FromXY(X, Y int) Location {
 	for X < 0 {X += m.Cols}
 	for X >= m.Cols {X -= m.Cols}
@@ -175,6 +190,38 @@ func (m *Map) FromLocation(loc Location) (X, Y int) {
 	Y = int(loc) / m.Cols
 	return
 }
+
+//implement Image
+func (m *Map) ColorModel() image.ColorModel {
+	return image.NRGBAColorModel
+}
+
+func (m *Map) Bounds() image.Rectangle {
+	return image.Rect(0, 0, m.Cols * 4, m.Rows * 4)
+}
+
+func (m *Map) At(x, y int) image.Color {
+	loc := m.FromXY(x / 4, y / 4)
+	switch m.data[loc] {
+		case UNKNOWN:	return image.NRGBAColor{0xb0, 0xb0, 0xb0, 0xff}
+		case WATER: 	return image.NRGBAColor{0x10, 0x10, 0x50, 0xff}
+		case FOOD:		return image.NRGBAColor{0xe0, 0xe0, 0xc0, 0xff}
+		case LAND:		return image.NRGBAColor{0x8b, 0x45, 0x13, 0xff}
+		case DEAD:		return image.NRGBAColor{0x69, 0x33, 0x05, 0xff}
+		case MY_ANT:	return image.NRGBAColor{0xf0, 0x00, 0x00, 0xff}
+		case PLAYER1:	return image.NRGBAColor{0xf0, 0xf0, 0x00, 0xff}
+		case PLAYER2:	return image.NRGBAColor{0x00, 0xf0, 0x00, 0xff}
+		case PLAYER3:	return image.NRGBAColor{0x00, 0x00, 0xf0, 0xff}
+		case PLAYER4:	return image.NRGBAColor{0xf0, 0x00, 0xf0, 0xff}
+		case PLAYER5:	return image.NRGBAColor{0xf0, 0xf0, 0xf0, 0xff}
+		case PLAYER6:	return image.NRGBAColor{0x80, 0x80, 0x00, 0xff}
+		case PLAYER7:	return image.NRGBAColor{0x00, 0x80, 0x80, 0xff}
+		case PLAYER8:	return image.NRGBAColor{0x80, 0x00, 0x80, 0xff}
+		case PLAYER9:	return image.NRGBAColor{0x80, 0x00, 0xf0, 0xff}
+	}
+	return image.NRGBAColor{0x00, 0x00, 0x00, 0xff}
+}
+
 
 type Direction int
 const (
@@ -191,7 +238,7 @@ func (d Direction) String() string {
 		case West:	return "w"
 		case East:	return "e"
 	}
-	panic("not a valid direction")
+	Panicf("%v is not a valid direction", d)
 	return ""
 }
 
@@ -202,7 +249,7 @@ func (m *Map) Move(loc Location, d Direction) Location {
 		case South:		Y += 1
 		case West:		X -= 1
 		case East:		X += 1
-		default: panic("not a valid direction")
+		default: Panicf("%v is not a valid direction", d)
 	}
 	return m.FromXY(X, Y) //this will handle wrapping out-of-bounds numbers
 }

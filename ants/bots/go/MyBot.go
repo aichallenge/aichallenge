@@ -3,7 +3,7 @@ package main
 import (
 	"os"
 	"rand"
-	"fmt"
+	//"fmt"
 )
 
 type MyBot struct {
@@ -11,7 +11,8 @@ type MyBot struct {
 
 func (mb *MyBot) DoTurn(s *State) os.Error {
 	
-	fmt.Println(s.Map)
+	//for testing, if you want to see the map:
+	//fmt.Println(s.Map)
 	
 	dirs := []Direction{North, East, South, West}
 	
@@ -26,8 +27,7 @@ func (mb *MyBot) DoTurn(s *State) os.Error {
 			d := dirs[i]
 			
 			loc2 := s.Map.Move(loc, d)
-			_, water := s.Map.Water[loc2]
-			if !s.Map.Destinations[loc2] && !water {
+			if s.Map.SafeDestination(loc2) {
 				s.IssueOrderLoc(loc, d)
 				break
 			}
@@ -39,20 +39,3 @@ func (mb *MyBot) DoTurn(s *State) os.Error {
 	return nil
 }
 
-
-
-func main() {
-	var s State
-	
-	err := s.Start()
-	if err != nil {
-		panic(err)
-	}
-	
-	mb := &MyBot{}
-	
-	err = s.Loop(mb)
-	if err != nil {
-		panic(err)
-	}
-}
