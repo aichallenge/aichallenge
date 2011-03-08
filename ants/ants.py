@@ -531,9 +531,9 @@ class Ants:
             bots starting location and place food there. If the spot is not
             land, find the closest land to that spot and place the food there.
         """
-        dr = randrange(self.height//2)
-        dc = randrange(self.width//2)
         for f in range(amount):
+            dr = -self.height//4 + randrange(self.height//2)
+            dc = -self.width//4  + randrange(self.width//2)
             for col, row in self.initial_ant_list:
                 col = (col+dc)%self.width
                 row = (row+dr)%self.height
