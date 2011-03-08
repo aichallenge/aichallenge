@@ -138,42 +138,42 @@ func (s *State) Loop(b Bot, BetweenTurnWork func()) os.Error {
 				if len(words) < 3 {
 					Panicf("Invalid command format (not enough parameters for food): \"%s\"", line)
 				}
-				X, _ := strconv.Atoi(words[1])
-				Y, _ := strconv.Atoi(words[2])
-				loc := s.Map.FromXY(X, Y)
+				Row, _ := strconv.Atoi(words[1])
+				Col, _ := strconv.Atoi(words[2])
+				loc := s.Map.FromRowCol(Row, Col)
 				s.Map.AddFood(loc)
 			case "w":
 				if len(words) < 3 {
 					Panicf("Invalid command format (not enough parameters for water): \"%s\"", line)
 				}
-				X, _ := strconv.Atoi(words[1])
-				Y, _ := strconv.Atoi(words[2])
-				loc := s.Map.FromXY(X, Y)
+				Row, _ := strconv.Atoi(words[1])
+				Col, _ := strconv.Atoi(words[2])
+				loc := s.Map.FromRowCol(Row, Col)
 				s.Map.AddWater(loc)
 			case "a":
 				if len(words) < 4 {
 					Panicf("Invalid command format (not enough parameters for ant): \"%s\"", line)
 				}
-				X, _ := strconv.Atoi(words[1])
-				Y, _ := strconv.Atoi(words[2])
+				Row, _ := strconv.Atoi(words[1])
+				Col, _ := strconv.Atoi(words[2])
 				Ant, _ := strconv.Atoi(words[3])
-				loc := s.Map.FromXY(X, Y)
+				loc := s.Map.FromRowCol(Row, Col)
 				s.Map.AddAnt(loc, Item(Ant))
-				s.Map.AddDestination(loc)
 				
 				//if it turns out that you don't actually use the visible radius for anything,
 				//feel free to comment this out. It's needed for the image debugging, though.
 				if Item(Ant) == MY_ANT {
+					s.Map.AddDestination(loc)
 					s.Map.AddLand(loc, s.ViewRadius2)
 				}
 			case "d":
 				if len(words) < 4 {
 					Panicf("Invalid command format (not enough parameters for dead ant): \"%s\"", line)
 				}
-				X, _ := strconv.Atoi(words[1])
-				Y, _ := strconv.Atoi(words[2])
+				Row, _ := strconv.Atoi(words[1])
+				Col, _ := strconv.Atoi(words[2])
 				Ant, _ := strconv.Atoi(words[3])
-				loc := s.Map.FromXY(X, Y)
+				loc := s.Map.FromRowCol(Row, Col)
 				s.Map.AddDeadAnt(loc, Item(Ant))
 			
 		}
@@ -182,22 +182,22 @@ func (s *State) Loop(b Bot, BetweenTurnWork func()) os.Error {
 	return nil
 }
 
-//Call IssueOrderXY to issue an order for an ant at (X, Y)
-func (s *State) IssueOrderXY(X, Y int, d Direction) {
-	loc := s.Map.FromXY(X, Y)
+//Call IssueOrderRowCol to issue an order for an ant at (Row, Col)
+func (s *State) IssueOrderRowCol(Row, Col int, d Direction) {
+	loc := s.Map.FromRowCol(Row, Col)
 	dest := s.Map.Move(loc, d)
 	s.Map.RemoveDestination(loc)
 	s.Map.AddDestination(dest)
-	fmt.Fprintf(os.Stdout, "o %d %d %s\n", X, Y, d)
+	fmt.Fprintf(os.Stdout, "o %d %d %s\n", Row, Col, d)
 }
 
-//Call IssueOrderXY to issue an order for an ant at loc
+//Call IssueOrderLoc to issue an order for an ant at loc
 func (s *State) IssueOrderLoc(loc Location, d Direction) {
-	X, Y := s.Map.FromLocation(loc)
+	Row, Col := s.Map.FromLocation(loc)
 	dest := s.Map.Move(loc, d)
 	s.Map.RemoveDestination(loc)
 	s.Map.AddDestination(dest)
-	fmt.Fprintf(os.Stdout, "o %d %d %s\n", X, Y, d)
+	fmt.Fprintf(os.Stdout, "o %d %d %s\n", Row, Col, d)
 }
 
 //endTurn is called by Loop, you don't need to call it.

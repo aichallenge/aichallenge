@@ -2,6 +2,7 @@ package main
 
 import (
 	"image"
+	"fmt"
 )
 
 //Item represents all the various items that may be on the map
@@ -72,14 +73,14 @@ func FromSymbol(ch byte) Item {
 	return Item(ch) + 'a'
 }
 
-//Location combines (X, Y) coordinate pairs for use as keys in maps (and in a 1d array)
+//Location combines (Row, Col) coordinate pairs for use as keys in maps (and in a 1d array)
 type Location int
 
 type Map struct {
 	Rows int
 	Cols int
 	
-	data []Item
+	itemGrid []Item
 	
 	Ants map[Location]Item
 	Dead map[Location]Item
@@ -88,12 +89,12 @@ type Map struct {
 	Destinations map[Location]bool
 }
 
-//String implements the stringizer (stringer?) interface. It returns an ascii diagram of the map.
+//String returns an ascii diagram of the map.
 func (m *Map) String() string {
 	str := ""
-	for j := 0; j < m.Rows; j++ {
-		for i := 0; i < m.Cols; i++ {
-			s := m.data[j * m.Cols + i].Symbol()
+	for row := 0; row < m.Rows; row++ {
+		for col := 0; col < m.Cols; col++ {
+			s := m.itemGrid[row * m.Cols + col].Symbol()
 			str += string([]byte{s}) + " "
 		}
 		str += "\n"
@@ -102,12 +103,12 @@ func (m *Map) String() string {
 }
 
 //NewMap returns a newly constructed blank map.
-func NewMap(Cols, Rows int) *Map {
+func NewMap(Rows, Cols int) *Map {
 	m := &Map{
 		Rows: Rows, 
 		Cols: Cols,
 		Water: make(map[Location]Item),
-		data: make([]Item, Rows * Cols),
+		itemGrid: make([]Item, Rows * Cols),
 	}
 	m.Reset()
 	return m
@@ -115,11 +116,11 @@ func NewMap(Cols, Rows int) *Map {
 
 //Reset clears the map (except for water) for the next turn
 func (m *Map) Reset() {
-	for i := range m.data {
-		m.data[i] = UNKNOWN
+	for i := range m.itemGrid {
+		m.itemGrid[i] = UNKNOWN
 	}
 	for i, val := range m.Water {
-		m.data[i] = val
+		m.itemGrid[i] = val
 	}
 	m.Ants = make(map[Location]Item)
 	m.Dead = make(map[Location]Item)
@@ -129,27 +130,27 @@ func (m *Map) Reset() {
 
 func (m *Map) AddWater(loc Location) {
 	m.Water[loc] = WATER
-	m.data[loc] = WATER
+	m.itemGrid[loc] = WATER
 }
 
 func (m *Map) AddAnt(loc Location, ant Item) {
 	m.Ants[loc] = ant
-	m.data[loc] = ant
+	m.itemGrid[loc] = ant
 }
 
 //AddLand adds a circle of land centered on the given location
 func (m *Map) AddLand(center Location, viewrad2 int) {
-	x1, y1 := m.FromLocation(center)
-	for x := 0; x < m.Cols; x++ {
-		for y := 0; y < m.Rows; y++ {
-			loc := m.FromXY(x, y)
-			if m.data[loc] != UNKNOWN {
+	row1, col1 := m.FromLocation(center)
+	for row := 0; row < m.Rows; row++ {
+		for col := 0; col < m.Cols; col++ {
+			loc := m.FromRowCol(row, col)
+			if m.itemGrid[loc] != UNKNOWN {
 				continue
 			}
-			xΔ := x - x1
-			yΔ := y - y1
-			if xΔ * xΔ + yΔ * yΔ < viewrad2 {
-				m.data[loc] = LAND
+			rowΔ := row - row1
+			colΔ := col - col1
+			if rowΔ * rowΔ + colΔ * colΔ < viewrad2 {
+				m.itemGrid[loc] = LAND
 			}
 		}
 	}
@@ -157,15 +158,18 @@ func (m *Map) AddLand(center Location, viewrad2 int) {
 
 func (m *Map) AddDeadAnt(loc Location, ant Item) {
 	m.Dead[loc] = ant
-	m.data[loc] = DEAD
+	m.itemGrid[loc] = DEAD
 }
 
 func (m *Map) AddFood(loc Location) {
 	m.Food[loc] = FOOD
-	m.data[loc] = FOOD
+	m.itemGrid[loc] = FOOD
 }
 
 func (m *Map) AddDestination(loc Location) {
+	if m.Destinations[loc] {
+		Panicf("Already have something at that destination!")
+	}
 	m.Destinations[loc] = true
 }
 
@@ -186,20 +190,20 @@ func (m *Map) SafeDestination(loc Location) bool {
 	return true
 }
 
-//FromXY returns a Location given an (X, Y) pair
-func (m *Map) FromXY(X, Y int) Location {
-	for X < 0 {X += m.Cols}
-	for X >= m.Cols {X -= m.Cols}
-	for Y < 0 {Y += m.Rows}
-	for Y >= m.Rows {Y -= m.Rows}
+//FromRowCol returns a Location given an (Row, Col) pair
+func (m *Map) FromRowCol(Row, Col int) Location {
+	for Row < 0 {Row += m.Rows}
+	for Row >= m.Rows {Row -= m.Rows}
+	for Col < 0 {Col += m.Cols}
+	for Col >= m.Cols {Col -= m.Cols}
 	
-	return Location(Y * m.Cols + X)
+	return Location(Row * m.Cols + Col)
 }
 
-//FromLocation returns an (X, Y) pair given a Location
-func (m *Map) FromLocation(loc Location) (X, Y int) {
-	X = int(loc) % m.Cols
-	Y = int(loc) / m.Cols
+//FromLocation returns an (Row, Col) pair given a Location
+func (m *Map) FromLocation(loc Location) (Row, Col int) {
+	Row = int(loc) / m.Cols
+	Col = int(loc) % m.Cols
 	return
 }
 
@@ -211,8 +215,8 @@ func (m *Map) Bounds() image.Rectangle {
 	return image.Rect(0, 0, m.Cols * 4, m.Rows * 4)
 }
 func (m *Map) At(x, y int) image.Color {
-	loc := m.FromXY(x / 4, y / 4)
-	switch m.data[loc] {
+	loc := m.FromRowCol(y / 4, x / 4)
+	switch m.itemGrid[loc] {
 		case UNKNOWN:	return image.NRGBAColor{0xb0, 0xb0, 0xb0, 0xff}
 		case WATER: 	return image.NRGBAColor{0x10, 0x10, 0x50, 0xff}
 		case FOOD:		return image.NRGBAColor{0xe0, 0xe0, 0xc0, 0xff}
@@ -255,15 +259,68 @@ func (d Direction) String() string {
 
 //Move returns a new location which is one step in the specified direction from the specified location.
 func (m *Map) Move(loc Location, d Direction) Location {
-	X, Y := m.FromLocation(loc)
+	Row, Col := m.FromLocation(loc)
 	switch d {
-		case North:		Y -= 1
-		case South:		Y += 1
-		case West:		X -= 1
-		case East:		X += 1
+		case North:		Row -= 1
+		case South:		Row += 1
+		case West:		Col -= 1
+		case East:		Col += 1
 		default: Panicf("%v is not a valid direction", d)
 	}
-	return m.FromXY(X, Y) //this will handle wrapping out-of-bounds numbers
+	return m.FromRowCol(Row, Col) //this will handle wrapping out-of-bounds numbers
 }
 
 
+
+
+
+//a few test functions
+func TestMap() {
+	m := NewMap(4, 3)
+	
+	m.Reset()
+	
+	if m.String() != `. . . 
+. . . 
+. . . 
+. . . 
+` {
+		Panicf("map is wrong size, got `%s`", m)
+	}
+	
+	loc := m.FromRowCol(3, 2)
+	row, col := m.FromLocation(loc)
+	
+	if row != 3 || col != 2 {
+		Panicf("conversion broken, got (%v, %v), wanted (3, 2)", row, col)
+	}
+	
+	loc2 := m.FromRowCol(3, -1)
+	
+	if loc2 != loc {
+		Panicf("from xy broken, got (%v), wanted (%v)", loc2, loc)
+	}
+	
+	n := m.FromRowCol(2, 2)
+	s := m.FromRowCol(4, 2)
+	e := m.FromRowCol(3, 3)
+	w := m.FromRowCol(3, 1)
+	
+	if n != m.Move(loc, North) {Panicf("Move north is broken")}
+	if s != m.Move(loc, South) {Panicf("Move south is broken")}
+	if e != m.Move(loc, East) {Panicf("Move east is broken")}
+	if w != m.Move(loc, West) {Panicf("Move west is broken")}
+	
+	m.AddAnt(n, MY_ANT)
+	m.AddAnt(s, MY_ANT)
+	
+	if m.String() != `. . a 
+. . . 
+. . a 
+. . . 
+` {
+		Panicf("map put ants in wrong place, got `%s`", m)
+	}
+	
+	fmt.Println("TestMap PASS")
+}

@@ -12,6 +12,9 @@ import (
 //subdirectory, make sure you create the directory first. (e.g., -imgprefix="images/bot0")
 var imageOutPrefix *string = flag.String("imgprefix", "", "prefix for helpful debugging images")
 
+//runs a test to make sure the map object does what we expect
+var runTests *bool = flag.Bool("test-suite", false, "set this to run the tests")
+
 
 //call Panicf to halt the program with a stack trace. Use it like fmt.Sprintf
 func Panicf(format string, args ...interface {}) {
@@ -24,6 +27,14 @@ func main() {
 	var s State
 	
 	flag.Parse()
+	
+	if *runTests {
+		//We can't use go's built-in test framework for the main package, 
+		//and we can't split it into separate packages because the contest doesn't use makefiles.
+		//(I did provide a makefile for your convienience, though)
+		TestMap()
+		return
+	}
 	
 	err := s.Start()
 	if err != nil {

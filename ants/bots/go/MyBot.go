@@ -39,7 +39,7 @@ func (mb *MyBot) DoTurn(s *State) os.Error {
 			loc2 := s.Map.Move(loc, d)
 			if s.Map.SafeDestination(loc2) {
 				s.IssueOrderLoc(loc, d)
-				//there's also an s.IssueOrderXY if you don't have a Location handy
+				//there's also an s.IssueOrderRowCol if you don't have a Location handy
 				break
 			}
 		}
