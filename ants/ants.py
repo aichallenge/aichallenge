@@ -436,7 +436,7 @@ class Ants:
 
     def offset_location(self, coord, direction):
         dr, dc = AIM[direction]
-        return ((coord[0]+dr)%self.height, (coord[1]+dc)%self.width)
+        return ((coord[0]+dc)%self.width, (coord[1]+dr)%self.height)
 
     def access_map(self):
         """
@@ -450,7 +450,7 @@ class Ants:
         # (where food can be placed)
         for i, row in enumerate(self.map):
             for j, cell in enumerate(row):
-                coord = (i,j)
+                coord = (j, i)
                 if cell >= 0:
                     distances[coord] = 0
                     players[coord].add(cell)
@@ -492,7 +492,7 @@ class Ants:
             Return None if no square is found
         """
 
-        if self.map[coord[0]][coord[1]] == LAND:
+        if self.map[coord[1]][coord[0]] == LAND:
             return coord
 
         visited = set()
@@ -505,7 +505,7 @@ class Ants:
                 n_loc = self.offset_location(c_loc, d)
                 if n_loc in visited: continue
 
-                if self.map[n_loc[0]][n_loc[1]] == LAND:
+                if self.map[n_loc[1]][n_loc[0]] == LAND:
                     return n_loc
 
                 cell_queue.append(n_loc)
@@ -535,12 +535,12 @@ class Ants:
         dc = randrange(self.width//2)
         for f in range(amount):
             for col, row in self.initial_ant_list:
-                row = (row+dr)%self.height
                 col = (col+dc)%self.width
-                coord = self.find_closest_land((row,col))
+                row = (row+dr)%self.height
+                coord = self.find_closest_land((col,row))
                 if coord:
-                    self.map[coord[0]][coord[1]] = FOOD
-                    self.food_list.append((coord[1], coord[0]))
+                    self.map[coord[1]][coord[0]] = FOOD
+                    self.food_list.append(coord)
 
     def do_food_sections(self, amount=1):
         """
@@ -551,7 +551,7 @@ class Ants:
             for p in range(self.num_players):
                 squares = self.initial_access_map[p]
                 for t in range(10):
-                    row, col = choice(squares)
+                    col, row = choice(squares)
                     if self.map[row][col] == LAND:
                         self.map[row][col] = FOOD
                         self.food_list.append((col, row))
