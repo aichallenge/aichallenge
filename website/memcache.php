@@ -1,4 +1,5 @@
 <?php
+
 $memcache = false;
 if (extension_loaded ('memcache')) {
 	try {

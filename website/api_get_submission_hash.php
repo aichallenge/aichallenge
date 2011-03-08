@@ -27,8 +27,8 @@ if (file_exists("entry.zip")) {
 }
 
 header("Content-type: application/json");
-echo "{ 'hash': '";
+echo "{ \"hash\": \"";
 passthru($server_info["manager_path"] . 'submission_hash.py ' . $file);
-echo "' }\n";
+echo "\" }\n";
 
 ?>
