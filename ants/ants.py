@@ -508,6 +508,7 @@ class Ants:
                 if self.map[n_loc[1]][n_loc[0]] == LAND:
                     return n_loc
 
+                visited.add(n_loc)
                 cell_queue.append(n_loc)
 
         return None
