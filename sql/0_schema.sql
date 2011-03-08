@@ -13,8 +13,8 @@ CREATE TABLE `game` (
   `seed_id` int(11) NOT NULL,
   `map_id` int(11) NOT NULL,
   `timestamp` datetime NOT NULL,
-  `worker` smallint(5) unsigned NOT NULL,
-  `replay_path` varchar(255) DEFAULT NULL,
+  `worker` int(11) unsigned NOT NULL,
+  `replay_path` varchar(255) NOT NULL,
   PRIMARY KEY (`game_id`),
   KEY `timestamp` (`timestamp`),
   KEY `worker` (`worker`,`timestamp`)
@@ -23,6 +23,7 @@ CREATE TABLE `game` (
 DROP TABLE IF EXISTS `game_archive`;
 CREATE TABLE `game_archive` (
   `game_id` int(11) NOT NULL,
+  `seed_id` int(11) NOT NULL,
   `map_id` int(11) NOT NULL,
   `timestamp` datetime NOT NULL,
   `worker` int(11) NOT NULL,
@@ -36,15 +37,33 @@ CREATE TABLE `game_player` (
   `user_id` int(11) NOT NULL,
   `submission_id` int(11) NOT NULL,
   `player_id` int(11) NOT NULL,
-  `valid` tinyint(4) NOT NULL DEFAULT '1',
+  `valid` tinyint(1) NOT NULL DEFAULT '1',
+  `errors` varchar(1024) DEFAULT NULL,
+  `stderr` varchar(1024) DEFAULT NULL,
+  `game_rank` int(11) NOT NULL,
+  `game_score` int(11) NOT NULL,
+  `sigma_before` float NOT NULL,
+  `sigma_after` float NOT NULL,
+  `mu_before` float NOT NULL,
+  `mu_after` float NOT NULL,
+  UNIQUE KEY `game_player_idx` (`game_id`,`submission_id`)
+);
+
+DROP TABLE IF EXISTS `game_player_archive`;
+CREATE TABLE `game_player` (
+  `game_id` int(11) NOT NULL,
+  `user_id` int(11) NOT NULL,
+  `submission_id` int(11) NOT NULL,
+  `player_id` int(11) NOT NULL,
+  `valid` tinyint(1) NOT NULL,
   `errors` varchar(1024) DEFAULT NULL,
   `stderr` varchar(1024) DEFAULT NULL,
   `rank_before` int(11) NOT NULL,
   `sigma_before` float NOT NULL,
-  `sigma_after` float DEFAULT NULL,
+  `sigma_after` float NOT NULL,
   `mu_before` float NOT NULL,
-  `mu_after` float DEFAULT NULL,
-  UNIQUE KEY `game_player_idx` (`game_id`,`submission_id`)
+  `mu_after` float NOT NULL,
+  UNIQUE KEY `game_player_archive_idx` (`game_id`,`submission_id`)
 );
 
 DROP TABLE IF EXISTS `language`;
@@ -53,7 +72,7 @@ CREATE TABLE `language` (
   `name` varchar(64) NOT NULL,
   `main_code_file` varchar(64) NOT NULL,
   `command` varchar(128) NOT NULL,
-  `platform_specific_compilation` tinyint(4) NOT NULL DEFAULT '0',
+  `platform_specific_compilation` tinyint(1) NOT NULL DEFAULT '0',
   PRIMARY KEY (`language_id`)
 );
 
@@ -63,7 +82,7 @@ CREATE TABLE `leaderboard` (
   `timestamp` datetime NOT NULL,
   `algorithm_name` varchar(64) DEFAULT NULL,
   `calculation_time` bigint(20) DEFAULT '0',
-  `complete` tinyint(4) NOT NULL DEFAULT '0',
+  `complete` tinyint(1) NOT NULL DEFAULT '0',
   PRIMARY KEY (`leaderboard_id`),
   KEY `timestamp` (`timestamp`)
 );
@@ -87,6 +106,23 @@ CREATE TABLE `map` (
   PRIMARY KEY (`map_id`)
 );
 
+DROP TABLE IF EXISTS `match`;
+CREATE TABLE `match` (
+  `match_id` int(11) NOT NULL AUTO_INCREMENT,
+  `seed_id` int(11) NOT NULL,
+  `map_id` int(11) NOT NULL,
+  `worker_id` int(11) DEFAULT NULL,
+  PRIMARY KEY (`match_id`)
+);
+
+DROP TABLE IF EXISTS `match_player`;
+CREATE TABLE `match_player` (
+  `match_id` int(11) NOT NULL,
+  `user_id` int(11) NOT NULL,
+  `submission_id` int(11) NOT NULL,
+  `player_id` int(11) NOT NULL
+);
+
 DROP TABLE IF EXISTS `organization`;
 CREATE TABLE `organization` (
   `org_id` int(11) NOT NULL AUTO_INCREMENT,
@@ -97,16 +133,16 @@ CREATE TABLE `organization` (
 DROP TABLE IF EXISTS `ranking`;
 CREATE TABLE `ranking` (
   `leaderboard_id` int(11) NOT NULL,
-  `user_id` int(11) DEFAULT NULL,
+  `user_id` int(11) NOT NULL,
   `submission_id` int(11) NOT NULL,
   `version` int(11) NOT NULL,
-  `rank` int(11) NOT NULL,
   `seq` int(11) NOT NULL,
+  `rank` int(11) NOT NULL,
   `rank_change` int(11) NOT NULL,
   `skill` float NOT NULL,
   `skill_change` float NOT NULL,
-  `latest` tinyint(4) NOT NULL,
-  `age` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `latest` tinyint(1) NOT NULL,
+  `age` timestamp NOT NULL,
   KEY `leaderboard_id` (`leaderboard_id`),
   KEY `submission_id` (`submission_id`),
   KEY `leaderboard_id_2` (`leaderboard_id`,`submission_id`,`rank`)
@@ -115,16 +151,16 @@ CREATE TABLE `ranking` (
 DROP TABLE IF EXISTS `ranking_archive`;
 CREATE TABLE `ranking` (
   `leaderboard_id` int(11) NOT NULL,
-  `user_id` int(11) DEFAULT NULL,
+  `user_id` int(11) NOT NULL,
   `submission_id` int(11) NOT NULL,
   `version` int(11) NOT NULL,
-  `rank` int(11) NOT NULL,
   `seq` int(11) NOT NULL,
+  `rank` int(11) NOT NULL,
   `rank_change` int(11) NOT NULL,
   `skill` float NOT NULL,
   `skill_change` float NOT NULL,
   `latest` tinyint(4) NOT NULL,
-  `age` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `age` timestamp NOT NULL ,
   KEY `leaderboard_id` (`leaderboard_id`),
   KEY `submission_id` (`submission_id`),
   KEY `leaderboard_id_2` (`leaderboard_id`,`submission_id`,`rank`)
@@ -149,9 +185,10 @@ CREATE TABLE `submission` (
   `comments` varchar(4096) DEFAULT NULL,
   `language_id` int(11) NOT NULL,
   `last_game_timestamp` datetime DEFAULT NULL,
-  `latest` tinyint(4) NOT NULL DEFAULT '1',
+  `latest` tinyint(1) NOT NULL DEFAULT '1',
   `sigma` float NOT NULL DEFAULT '16.6667',
   `mu` float NOT NULL DEFAULT '50',
+  `worker_id` int(11) DEFAULT NULL,
   PRIMARY KEY (`submission_id`),
   KEY `language_id` (`language_id`),
   KEY `submission_id` (`submission_id`,`user_id`),
@@ -190,8 +227,8 @@ CREATE TABLE `user_status_code` (
 DROP TABLE IF EXISTS `worker`;
 CREATE TABLE `worker` (
   `worker_id` int(11) NOT NULL AUTO_INCREMENT,
-  `ip_address` char(15) NOT NULL,
-  `api_key` char(64) NOT NULL,
+  `ip_address` varchar(15) NOT NULL,
+  `api_key` varchar(256) NOT NULL,
   PRIMARY KEY (`worker_id`),
   UNIQUE KEY `api_key` (`api_key`)
 );
