@@ -9,6 +9,16 @@ import (
 type MyBot struct {
 }
 
+//NewBot creates a new instance of your bot
+func NewBot() Bot {
+	mb := &MyBot{
+		//do any necessary initialization here
+	}
+	
+	return mb
+}
+
+//DoTurn is where you should do your bot's actual work.
 func (mb *MyBot) DoTurn(s *State) os.Error {
 	
 	//for testing, if you want to see the map:
@@ -29,6 +39,7 @@ func (mb *MyBot) DoTurn(s *State) os.Error {
 			loc2 := s.Map.Move(loc, d)
 			if s.Map.SafeDestination(loc2) {
 				s.IssueOrderLoc(loc, d)
+				//there's also an s.IssueOrderXY if you don't have a Location handy
 				break
 			}
 		}

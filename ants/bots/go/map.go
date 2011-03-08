@@ -4,8 +4,8 @@ import (
 	"image"
 )
 
+//Item represents all the various items that may be on the map
 type Item int8
-
 const (
 	UNKNOWN Item = iota - 5
 	WATER
@@ -40,6 +40,7 @@ const (
 	PLAYER25
 )
 
+//Symbol returns the symbol for the ascii diagram
 func (o Item) Symbol() byte {
 	switch o {
 		case UNKNOWN:	return '.'
@@ -56,6 +57,7 @@ func (o Item) Symbol() byte {
 	return byte(o) + 'a'
 }
 
+//FromSymbol reverses Symbol
 func FromSymbol(ch byte) Item {
 	switch ch {
 		case '.':	return UNKNOWN
@@ -70,6 +72,7 @@ func FromSymbol(ch byte) Item {
 	return Item(ch) + 'a'
 }
 
+//Location combines (X, Y) coordinate pairs for use as keys in maps (and in a 1d array)
 type Location int
 
 type Map struct {
@@ -85,6 +88,7 @@ type Map struct {
 	Destinations map[Location]bool
 }
 
+//String implements the stringizer (stringer?) interface. It returns an ascii diagram of the map.
 func (m *Map) String() string {
 	str := ""
 	for j := 0; j < m.Rows; j++ {
@@ -97,6 +101,7 @@ func (m *Map) String() string {
 	return str
 }
 
+//NewMap returns a newly constructed blank map.
 func NewMap(Cols, Rows int) *Map {
 	m := &Map{
 		Rows: Rows, 
@@ -108,6 +113,7 @@ func NewMap(Cols, Rows int) *Map {
 	return m
 }
 
+//Reset clears the map (except for water) for the next turn
 func (m *Map) Reset() {
 	for i := range m.data {
 		m.data[i] = UNKNOWN
@@ -131,6 +137,7 @@ func (m *Map) AddAnt(loc Location, ant Item) {
 	m.data[loc] = ant
 }
 
+//AddLand adds a circle of land centered on the given location
 func (m *Map) AddLand(center Location, viewrad2 int) {
 	x1, y1 := m.FromLocation(center)
 	for x := 0; x < m.Cols; x++ {
@@ -166,6 +173,9 @@ func (m *Map) RemoveDestination(loc Location) {
 	m.Destinations[loc] = false, false
 }
 
+//SafeDestination will tell you if the given location is a 
+//safe place to dispatch an ant. It considers water and both
+//ants that have already sent an order and those that have not.
 func (m *Map) SafeDestination(loc Location) bool {
 	if _, exists := m.Water[loc]; exists {
 		return false
@@ -176,6 +186,7 @@ func (m *Map) SafeDestination(loc Location) bool {
 	return true
 }
 
+//FromXY returns a Location given an (X, Y) pair
 func (m *Map) FromXY(X, Y int) Location {
 	for X < 0 {X += m.Cols}
 	for X >= m.Cols {X -= m.Cols}
@@ -185,21 +196,20 @@ func (m *Map) FromXY(X, Y int) Location {
 	return Location(Y * m.Cols + X)
 }
 
+//FromLocation returns an (X, Y) pair given a Location
 func (m *Map) FromLocation(loc Location) (X, Y int) {
 	X = int(loc) % m.Cols
 	Y = int(loc) / m.Cols
 	return
 }
 
-//implement Image
+//implement Image for fancy image debugging
 func (m *Map) ColorModel() image.ColorModel {
 	return image.NRGBAColorModel
 }
-
 func (m *Map) Bounds() image.Rectangle {
 	return image.Rect(0, 0, m.Cols * 4, m.Rows * 4)
 }
-
 func (m *Map) At(x, y int) image.Color {
 	loc := m.FromXY(x / 4, y / 4)
 	switch m.data[loc] {
@@ -223,6 +233,7 @@ func (m *Map) At(x, y int) image.Color {
 }
 
 
+//Direction represents the direction concept for issuing orders.
 type Direction int
 const (
 	North Direction = iota
@@ -242,6 +253,7 @@ func (d Direction) String() string {
 	return ""
 }
 
+//Move returns a new location which is one step in the specified direction from the specified location.
 func (m *Map) Move(loc Location, d Direction) Location {
 	X, Y := m.FromLocation(loc)
 	switch d {

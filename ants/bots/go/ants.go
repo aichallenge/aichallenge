@@ -8,12 +8,14 @@ import (
 	"fmt"
 )
 
+//Bot interface defines what we need from a bot
 type Bot interface {
 	DoTurn(s *State) os.Error
 }
 
 var stdin = bufio.NewReader(os.Stdin)
 
+//State keeps track of everything we need to know about the state of the game
 type State struct {
 	LoadTime		int	//in milliseconds
 	TurnTime		int	//in milliseconds
@@ -29,6 +31,7 @@ type State struct {
 	Map				*Map
 }
 
+//Start takes the initial parameters from stdin
 func (s *State) Start() os.Error {
 	
 	for {
@@ -78,6 +81,7 @@ func (s *State) Start() os.Error {
 	return nil
 }
 
+//Loop handles the majority of communication between your bot and the server.
 //b's DoWork function gets called each turn after the map has been setup
 //BetweenTurnWork gets called after a turn but before the map is reset. It is 
 //meant to do debugging work.
@@ -157,6 +161,8 @@ func (s *State) Loop(b Bot, BetweenTurnWork func()) os.Error {
 				s.Map.AddAnt(loc, Item(Ant))
 				s.Map.AddDestination(loc)
 				
+				//if it turns out that you don't actually use the visible radius for anything,
+				//feel free to comment this out. It's needed for the image debugging, though.
 				if Item(Ant) == MY_ANT {
 					s.Map.AddLand(loc, s.ViewRadius2)
 				}
@@ -176,6 +182,7 @@ func (s *State) Loop(b Bot, BetweenTurnWork func()) os.Error {
 	return nil
 }
 
+//Call IssueOrderXY to issue an order for an ant at (X, Y)
 func (s *State) IssueOrderXY(X, Y int, d Direction) {
 	loc := s.Map.FromXY(X, Y)
 	dest := s.Map.Move(loc, d)
@@ -184,6 +191,7 @@ func (s *State) IssueOrderXY(X, Y int, d Direction) {
 	fmt.Fprintf(os.Stdout, "o %d %d %s\n", X, Y, d)
 }
 
+//Call IssueOrderXY to issue an order for an ant at loc
 func (s *State) IssueOrderLoc(loc Location, d Direction) {
 	X, Y := s.Map.FromLocation(loc)
 	dest := s.Map.Move(loc, d)
@@ -192,6 +200,7 @@ func (s *State) IssueOrderLoc(loc Location, d Direction) {
 	fmt.Fprintf(os.Stdout, "o %d %d %s\n", X, Y, d)
 }
 
+//endTurn is called by Loop, you don't need to call it.
 func (s *State) endTurn() {
 	os.Stdout.Write([]byte("go\n"))
 }
