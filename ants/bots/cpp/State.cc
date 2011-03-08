@@ -33,14 +33,16 @@ void State::reset()
 //outputs move information to the engine
 void State::makeMove(const Location &loc, int direction)
 {
-    cout << loc.row << " " << loc.col << " " << CDIRECTIONS[direction] << endl;
+    cout << "o " << loc.row << " " << loc.col << " " << CDIRECTIONS[direction] << endl;
 };
 
 //returns the euclidean distance between two locations with the edges wrapped
 double State::distance(const Location &loc1, const Location &loc2)
 {
-    int dr = min(abs(loc1.row-loc2.row), rows-abs(loc1.row-loc2.row)),
-        dc = min(abs(loc1.col-loc2.col), cols-abs(loc1.col-loc2.col));
+    int d1 = abs(loc1.row-loc2.row),
+        d2 = abs(loc1.col-loc2.col),
+        dr = min(d1, rows-d1),
+        dc = min(d2, cols-d2);
     return sqrt(dr*dr + dc*dc);
 };
 
