@@ -434,19 +434,6 @@ class Ants:
                                                 (e_col, e_row, ant_group))
         self.score = map(operator.add, self.score, score)
 
-    def do_food_random(self, amount=1):
-        """
-            Place food randomly on the map
-        """
-        for f in range(amount):
-            for t in range(10):
-                row = randrange(self.height)
-                col = randrange(self.width)
-                if self.map[row][col] == LAND:
-                    self.map[row][col] = FOOD
-                    self.food_list.append((col, row))
-                    break
-
     def offset_location(self, coord, direction):
         dr, dc = AIM[direction]
         return ((coord[0]+dr)%self.height, (coord[1]+dc)%self.width)
@@ -499,12 +486,25 @@ class Ants:
 
         return access_map
 
+    def do_food_random(self, amount=1):
+        """
+            Place food randomly on the map
+        """
+        for f in range(amount*self.num_players):
+            for t in range(10):
+                row = randrange(self.height)
+                col = randrange(self.width)
+                if self.map[row][col] == LAND:
+                    self.map[row][col] = FOOD
+                    self.food_list.append((col, row))
+                    break
+
     def do_food_sections(self, amount=1):
         """
             Split the map into sections that each ant can access 
             first at the start of the game. Place food evenly into each space.
         """
-        for f in range(amount//self.num_players):
+        for f in range(amount):
             for p in range(self.num_players):
                 squares = self.initial_access_map[p]
                 for t in range(10):
