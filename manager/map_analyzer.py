@@ -11,7 +11,7 @@ def get_loc(loc, direction, rows, cols):
 def analyze_map(map_location):
     #variables
     rows = cols = no_players = 0
-    map = []
+    map_data = []
     players = []
 
     given_no_players = -1
@@ -32,28 +32,28 @@ def analyze_map(map_location):
             player_line_given = True
             given_no_players = int(tokens[1])
         elif tokens[0] == "m":
-            map.append(tokens[1])
+            map_data.append(tokens[1])
     map_file.close()
 
     #checks to see that the map is of the correct dimensions
-    if len(map) != rows:
+    if len(map_data) != rows:
         raise ValueError("incorrect number of rows given")
-    for row in range(len(map)):
-        if len(map[row]) != cols:
+    for row in range(len(map_data)):
+        if len(map_data[row]) != cols:
             raise ValueError("incorrect number of columns in row " + str(row))
             
     #gets information about the map
-    for row in range(len(map)):
-        for col in range(len(map[row])):
-            if map[row][col] == '.':
+    for row in range(len(map_data)):
+        for col in range(len(map_data[row])):
+            if map_data[row][col] == '.':
                 no_land_squares += 1
-            elif map[row][col] == '%':
+            elif map_data[row][col] == '%':
                 no_water_squares += 1
-            elif map[row][col] == '*':
+            elif map_data[row][col] == '*':
                 no_food_squares += 1
-            elif map[row][col] >= 'a' and map[row][col] <= 'z':
-                if not map[row][col] in players:
-                    players.append(map[row][col])
+            elif map_data[row][col] >= 'a' and map_data[row][col] <= 'z':
+                if not map_data[row][col] in players:
+                    players.append(map_data[row][col])
                     no_players += 1
             else:
                 raise ValueError("incorrect square value given")
@@ -75,10 +75,10 @@ def analyze_map(map_location):
     access_map = [ [ [-1, [] ] for c in range(cols)] for r in range(rows) ]
     square_queue = deque([])
 
-    for row in range(len(map)):
-        for col in range(len(map[row])):
-            if map[row][col] >= 'a' and map[row][col] <= 'z':
-                p = ord(map[row][col])-97
+    for row in range(len(map_data)):
+        for col in range(len(map_data[row])):
+            if map_data[row][col] >= 'a' and map_data[row][col] <= 'z':
+                p = ord(map_data[row][col])-97
                 ant_counts[p] += 1
                 access_map[row][col] = [0, [p], [ [row, col] ] ]
                 square_queue.append( [row, col] )
@@ -86,27 +86,27 @@ def analyze_map(map_location):
 
     #finds information about who can reach what land and food squares first	
     while len(square_queue) > 0:
-        cLoc = square_queue.popleft()
-        cPlayers = access_map[cLoc[0] ][cLoc[1] ][1]
+        c_loc = square_queue.popleft()
+        c_players = access_map[c_loc[0] ][c_loc[1] ][1]
         
         for d in directions:
-            nLoc = get_loc(cLoc, d, rows, cols)
+            n_loc = get_loc(c_loc, d, rows, cols)
             
-            if map[nLoc[0] ][nLoc[1] ] != '%':
-                if access_map[nLoc[0] ][nLoc[1] ][0] == -1: #first time reached
-                    access_map[nLoc[0]][nLoc[1]][0] = access_map[cLoc[0]][cLoc[1]][0] + 1
-                    access_map[nLoc[0] ][nLoc[1] ][1] += cPlayers
-                    square_queue.append(nLoc)
-                elif access_map[nLoc[0]][nLoc[1]][0] == access_map[cLoc[0]][cLoc[1]][0] + 1:
-                    for p in cPlayers:
-                        if not p in access_map[nLoc[0]][nLoc[1]][1]:
-                            access_map[nLoc[0] ][nLoc[1] ][1].append(p)
-                    access_map[nLoc[0]][nLoc[1]][1].sort()
+            if map_data[n_loc[0] ][n_loc[1] ] != '%':
+                if access_map[n_loc[0] ][n_loc[1] ][0] == -1: #first time reached
+                    access_map[n_loc[0]][n_loc[1]][0] = access_map[c_loc[0]][c_loc[1]][0] + 1
+                    access_map[n_loc[0] ][n_loc[1] ][1] += c_players
+                    square_queue.append(n_loc)
+                elif access_map[n_loc[0]][n_loc[1]][0] == access_map[c_loc[0]][c_loc[1]][0] + 1:
+                    for p in c_players:
+                        if not p in access_map[n_loc[0]][n_loc[1]][1]:
+                            access_map[n_loc[0] ][n_loc[1] ][1].append(p)
+                    access_map[n_loc[0]][n_loc[1]][1].sort()
 
-    #outputs the partitioned map						
+    #outputs the partitioned map_data						
     '''for row in range(len(access_map)):
         for col in range(len(access_map[row])):
-            if map[row][col] == '%':
+            if map_data[row][col] == '%':
                 print '%',
             elif len(access_map[row][col][1]) == 1:
                 print chr(int(access_map[row][col][1][0]) + 97),
