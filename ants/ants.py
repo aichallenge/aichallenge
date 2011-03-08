@@ -486,6 +486,32 @@ class Ants:
 
         return access_map
 
+    def find_closest_land(self, coord):
+        """
+            Find the closest square to coord which is a land square using BFS
+            Return None if no square is found
+        """
+
+        if self.map[coord[0]][coord[1]] == LAND:
+            return coord
+
+        visited = set()
+        cell_queue = deque([coord])
+
+        while cell_queue:
+            c_loc = cell_queue.popleft()
+
+            for d in AIM:
+                n_loc = self.offset_location(c_loc, d)
+                if n_loc in visited: continue
+
+                if self.map[n_loc[0]][n_loc[1]] == LAND:
+                    return n_loc
+
+                cell_queue.append(n_loc)
+
+        return None
+
     def do_food_random(self, amount=1):
         """
             Place food randomly on the map
@@ -498,6 +524,23 @@ class Ants:
                     self.map[row][col] = FOOD
                     self.food_list.append((col, row))
                     break
+
+    def do_food_offset(self, amount=1):
+        """
+            Pick a col/row offset each turn. Calculate this offset for each 
+            bots starting location and place food there. If the spot is not
+            land, find the closest land to that spot and place the food there.
+        """
+        dr = randrange(self.height//2)
+        dc = randrange(self.width//2)
+        for f in range(amount):
+            for col, row in self.initial_ant_list:
+                row = (row+dr)%self.height
+                col = (col+dc)%self.width
+                coord = self.find_closest_land((row,col))
+                if coord:
+                    self.map[coord[0]][coord[1]] = FOOD
+                    self.food_list.append((coord[1], coord[0]))
 
     def do_food_sections(self, amount=1):
         """
