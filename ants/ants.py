@@ -1,8 +1,8 @@
 #!/usr/bin/env python
-from random import randrange
+from random import randrange, choice
 from math import sqrt
 import os
-from collections import deque
+from collections import deque, defaultdict
 from fractions import Fraction
 import operator
 
@@ -63,7 +63,7 @@ class Ants:
                 self.render = self.render_changes
             elif options['communication'] == 'map':
                 self.render = self.render_map
-        self.do_food = self.do_food_random
+        self.do_food = self.do_food_sections
 
         self.width = None   # the map
         self.height = None
@@ -87,6 +87,10 @@ class Ants:
             self.load_text(filename)
         else:
             raise Exception("map", "Invalid map file extension: %s" % os.path.splitext(filename)[1].lower())
+
+        # used to remember where the ants started
+        self.initial_ant_list = dict(self.ant_list)
+        self.initial_access_map = self.access_map()
 
         # used to track dead players, ants may still exist, but order are not processed
         self.killed = [False for i in range(self.num_players)]
@@ -431,6 +435,9 @@ class Ants:
         self.score = map(operator.add, self.score, score)
 
     def do_food_random(self, amount=1):
+        """
+            Place food randomly on the map
+        """
         for f in range(amount):
             for t in range(10):
                 row = randrange(self.height)
@@ -439,6 +446,73 @@ class Ants:
                     self.map[row][col] = FOOD
                     self.food_list.append((col, row))
                     break
+
+    def offset_location(self, coord, direction):
+        dr, dc = AIM[direction]
+        return ((coord[0]+dr)%self.height, (coord[1]+dc)%self.width)
+
+    def access_map(self):
+        """
+            Determine the list of locations that each player is closest to
+        """
+        distances = {}
+        players = defaultdict(set)
+        cell_queue = deque()
+
+        # determine the starting cells and valid squares 
+        # (where food can be placed)
+        for i, row in enumerate(self.map):
+            for j, cell in enumerate(row):
+                coord = (i,j)
+                if cell >= 0:
+                    distances[coord] = 0
+                    players[coord].add(cell)
+                    cell_queue.append(coord)
+                elif cell != WATER:
+                    distances[coord] = None
+
+        # use bfs to determine who can reach each cell first
+        while cell_queue:
+            c_loc = cell_queue.popleft()
+
+            for d in AIM:
+                n_loc = self.offset_location(c_loc, d)
+                if n_loc not in distances: continue # wall
+
+                if distances[n_loc] is None:
+                    # first visit to this cell
+                    distances[n_loc] = distances[c_loc] + 1
+                    players[n_loc].update(players[c_loc])
+                    cell_queue.append(n_loc)
+                elif distances[n_loc] == distances[c_loc] + 1:
+                    # we've seen this cell before, but the distance is
+                    # the same - therefore combine the players that can
+                    # reach this cell
+                    players[n_loc].update(players[c_loc])
+
+        # summarise the final results of the cells that are closest
+        # to a single unique player
+        access_map = defaultdict(list)
+        for coord, player_set in players.items():
+            if len(player_set) != 1: continue
+            access_map[player_set.pop()].append(coord)
+
+        return access_map
+
+    def do_food_sections(self, amount=1):
+        """
+            Split the map into sections that each ant can access 
+            first at the start of the game. Place food evenly into each space.
+        """
+        for f in range(amount//self.num_players):
+            for p in range(self.num_players):
+                squares = self.initial_access_map[p]
+                for t in range(10):
+                    row, col = choice(squares)
+                    if self.map[row][col] == LAND:
+                        self.map[row][col] = FOOD
+                        self.food_list.append((col, row))
+                        break
 
     def remaining_players(self):
         return sum(self.is_alive(p) for p in range(self.num_players))
