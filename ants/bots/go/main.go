@@ -41,7 +41,7 @@ func main() {
 		Panicf("Start() failed (%s)", err)
 	}
 	
-	mb := NewBot()
+	mb := NewBot(s)
 	
 	err = s.Loop(mb, func () {
 		if *imageOutPrefix != "" {

@@ -10,7 +10,7 @@ type MyBot struct {
 }
 
 //NewBot creates a new instance of your bot
-func NewBot() Bot {
+func NewBot(s *State) Bot {
 	mb := &MyBot{
 		//do any necessary initialization here
 	}
