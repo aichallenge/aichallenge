@@ -25,7 +25,7 @@
             when end-of-game-p do (loop-finish)
             do (logmsg "~&[start] " (current-date-time-string) "~%")
                (bot-think)
-               (end-of-turn (output *state*))
+               (end-of-turn)
                (let ((wall-time (wall-time)))
                  (logmsg "~&[  end] move took " (- wall-time move-start-time)
                          " seconds (" (- move-end-time wall-time)

@@ -21,47 +21,6 @@
   (parse-integer (subseq string (position #\space string) (length string))))
 
 
-(defun parse-ant (string)
-  "Modifies *STATE*."
-  (let* ((split (split-state-string string))
-         (row (parse-integer (elt split 1)))
-         (col (parse-integer (elt split 2)))
-         (owner (parse-integer (elt split 3))))
-    (if (= owner 0)
-        (push (list col row) (slot-value *state* 'my-ants))
-        (push (list col row owner) (slot-value *state* 'enemy-ants)))
-    (setf (aref (game-map *state*) row col) (+ owner 100))))
-
-
-(defun parse-dead (string)
-  "Modifies *STATE*."
-  (let* ((split (split-state-string string))
-         (row (parse-integer (elt split 1)))
-         (col (parse-integer (elt split 2)))
-         (owner (parse-integer (elt split 3))))
-    (setf (aref (game-map *state*) row col) (+ owner 200))))
-
-
-(defun parse-end-game ()
-  "Modifies *STATE*."
-  (reset-game-map (game-map *state*))
-  (loop for line = (read-line (input *state*) nil)
-        until (starts-with line "go")
-        do (cond ((starts-with line "f ") (parse-food line))
-                 ((starts-with line "w ") (parse-water line))
-                 ((starts-with line "a ") (parse-ant line))
-                 ((starts-with line "d ") (parse-dead line)))))
-
-
-(defun parse-food (string)
-  "Modifies *STATE*."
-  (let* ((split (split-state-string string))
-         (row (parse-integer (elt split 1)))
-         (col (parse-integer (elt split 2))))
-    (push (list col row) (slot-value *state* 'food))
-    (setf (aref (game-map *state*) row col) 2)))
-
-
 (defun parse-game-parameters ()
   "Modifies *STATE*."
   (loop for line = (read-line (input *state*) nil)
@@ -96,7 +55,7 @@
   (loop for line = (read-line (input *state*) nil)
         until (> (length line) 0)
         finally (cond ((starts-with line "end")
-                       (parse-end-game)
+                       (parse-turn)
                        (return-from parse-game-state t))  ; TODO return?
                       ((starts-with line "turn 0")
                        (setf (slot-value *state* 'turn) 0)
@@ -110,21 +69,13 @@
 
 (defun parse-turn ()
   "Modifies *STATE* indirectly through RESET-GAME-MAP and PARSE-*."
-  (reset-game-map (game-map *state*))
+  (reset-game-map)
   (loop for line = (read-line (input *state*) nil)
         until (starts-with line "go")
-        do (cond ((starts-with line "f ") (parse-food line))
-                 ((starts-with line "w ") (parse-water line))
-                 ((starts-with line "a ") (parse-ant line))
-                 ((starts-with line "d ") (parse-dead line)))))
-
-
-(defun parse-water (string)
-  "Modifies *STATE*."
-  (let* ((split (split-state-string string))
-         (row (parse-integer (elt split 1)))
-         (col (parse-integer (elt split 2))))
-    (setf (aref (game-map *state*) row col) 1)))
+        do (cond ((starts-with line "f ") (set-food line))
+                 ((starts-with line "w ") (set-water line))
+                 ((starts-with line "a ") (set-ant line))
+                 ((starts-with line "d ") (set-dead line)))))
 
 
 (defun print-game-map (game-map &optional (stream *debug-io*))
@@ -141,8 +92,10 @@
            (terpri stream)))
 
 
-(defun reset-game-map (game-map)
-  (loop with dim = (array-dimensions game-map)
+(defun reset-game-map ()
+  "Modifies *STATE*."
+  (loop with game-map = (game-map *state*)
+        with dim = (array-dimensions game-map)
         for y from 0 below (first dim)
         do (loop for x from 0 below (second dim)
                  when (> (aref game-map y x) 1)
@@ -154,6 +107,44 @@
   (setf (slot-value *state* 'enemy-ants) nil
         (slot-value *state* 'my-ants)    nil
         (slot-value *state* 'food)       nil))
+
+
+(defun set-ant (string)
+  "Modifies *STATE*."
+  (let* ((split (split-state-string string))
+         (row (parse-integer (elt split 1)))
+         (col (parse-integer (elt split 2)))
+         (owner (parse-integer (elt split 3))))
+    (if (= owner 0)
+        (push (list col row) (slot-value *state* 'my-ants))
+        (push (list col row owner) (slot-value *state* 'enemy-ants)))
+    (setf (aref (game-map *state*) row col) (+ owner 100))))
+
+
+(defun set-dead (string)
+  "Modifies *STATE*."
+  (let* ((split (split-state-string string))
+         (row (parse-integer (elt split 1)))
+         (col (parse-integer (elt split 2)))
+         (owner (parse-integer (elt split 3))))
+    (setf (aref (game-map *state*) row col) (+ owner 200))))
+
+
+(defun set-food (string)
+  "Modifies *STATE*."
+  (let* ((split (split-state-string string))
+         (row (parse-integer (elt split 1)))
+         (col (parse-integer (elt split 2))))
+    (push (list col row) (slot-value *state* 'food))
+    (setf (aref (game-map *state*) row col) 2)))
+
+
+(defun set-water (string)
+  "Modifies *STATE*."
+  (let* ((split (split-state-string string))
+         (row (parse-integer (elt split 1)))
+         (col (parse-integer (elt split 2))))
+    (setf (aref (game-map *state*) row col) 1)))
 
 
 (defun split-state-string (string)
