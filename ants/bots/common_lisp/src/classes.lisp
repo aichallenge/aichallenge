@@ -14,6 +14,7 @@
    (spawn-radius2 :reader spawn-radius2 :initform nil)
    (turn :reader turn :initform nil)
    (turns :reader turns :initform nil)
+   (turn-start-time :reader turn-start-time :initform nil)
    (turn-time :reader turn-time :initform nil)
    (view-radius2 :reader view-radius2 :initform nil)
    (cols :reader cols :initform nil)

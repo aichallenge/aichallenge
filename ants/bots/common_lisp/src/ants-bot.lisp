@@ -24,19 +24,14 @@
     (handler-bind ((sb-sys:interactive-interrupt #'interrupted-by-user))
       (loop while (handler-case (peek-char nil (input *state*) nil)
                     (sb-int:simple-stream-error nil))
-            for move-start-time = (wall-time)
-            ;; order of the next two matters since turn-time needs to be set
             for end-of-game-p = (parse-game-state)
-            for move-end-time = (+ move-start-time (turn-time *state*))
             when end-of-game-p do (loop-finish)
             do (logmsg "--- turn: " (turn *state*) " ---~%")
                (logmsg "~&[start] " (current-date-time-string) "~%")
                (bot-think)
                (end-of-turn)
-               (let ((wall-time (wall-time)))
-                 (logmsg "~&[  end] move took " (- wall-time move-start-time)
-                         " seconds (" (- move-end-time wall-time)
-                         " left).~%"))))))
+               (logmsg "~&[  end] move took " (turn-time-used) " seconds ("
+                       (turn-time-remaining) " left).~%")))))
 
 
 ;; This MAIN is called when you use the Makefile locally.

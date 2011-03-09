@@ -50,6 +50,7 @@
 
 (defun parse-game-state ()
   "Modifies *STATE*."
+  (setf (slot-value *state* 'turn-start-time) (wall-time))
   (reset-some-state)
   (loop for line = (read-line (input *state*) nil)
         until (> (length line) 0)
