@@ -5,7 +5,7 @@
 
 ;;; Classes
 
-(defclass bot ()
+(defclass state ()
   ((input :reader input :initarg :input :initform *standard-input*)
    (output :reader output :initarg :output :initform *standard-output*)
    (attack-radius2 :reader attack-radius2 :initform nil)

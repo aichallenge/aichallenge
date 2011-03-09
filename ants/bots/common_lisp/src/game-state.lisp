@@ -21,102 +21,110 @@
   (parse-integer (subseq string (position #\space string) (length string))))
 
 
-(defun parse-ant (bot string)
+(defun parse-ant (string)
+  "Modifies *STATE*."
   (let* ((split (split-state-string string))
          (row (parse-integer (elt split 1)))
          (col (parse-integer (elt split 2)))
          (owner (parse-integer (elt split 3))))
     (if (= owner 0)
-        (push (list col row) (slot-value bot 'my-ants))
-        (push (list col row owner) (slot-value bot 'enemy-ants)))
-    (setf (aref (game-map bot) row col) (+ owner 100))))
+        (push (list col row) (slot-value *state* 'my-ants))
+        (push (list col row owner) (slot-value *state* 'enemy-ants)))
+    (setf (aref (game-map *state*) row col) (+ owner 100))))
 
 
-(defun parse-dead (bot string)
+(defun parse-dead (string)
+  "Modifies *STATE*."
   (let* ((split (split-state-string string))
          (row (parse-integer (elt split 1)))
          (col (parse-integer (elt split 2)))
          (owner (parse-integer (elt split 3))))
-    (setf (aref (game-map bot) row col) (+ owner 200))))
+    (setf (aref (game-map *state*) row col) (+ owner 200))))
 
 
-(defun parse-end-game (bot)
-  (reset-game-map (game-map bot))
-  (loop for line = (read-line (input bot) nil)
+(defun parse-end-game ()
+  "Modifies *STATE*."
+  (reset-game-map (game-map *state*))
+  (loop for line = (read-line (input *state*) nil)
         until (starts-with line "go")
-        do (cond ((starts-with line "f ") (parse-food bot line))
-                 ((starts-with line "w ") (parse-water bot line))
-                 ((starts-with line "a ") (parse-ant bot line))
-                 ((starts-with line "d ") (parse-dead bot line)))))
+        do (cond ((starts-with line "f ") (parse-food line))
+                 ((starts-with line "w ") (parse-water line))
+                 ((starts-with line "a ") (parse-ant line))
+                 ((starts-with line "d ") (parse-dead line)))))
 
 
-(defun parse-food (bot string)
+(defun parse-food (string)
+  "Modifies *STATE*."
   (let* ((split (split-state-string string))
          (row (parse-integer (elt split 1)))
          (col (parse-integer (elt split 2))))
-    (push (list col row) (slot-value bot 'food))
-    (setf (aref (game-map bot) row col) 2)))
+    (push (list col row) (slot-value *state* 'food))
+    (setf (aref (game-map *state*) row col) 2)))
 
 
-(defun parse-game-parameters (bot)
-  (loop for line = (read-line (input bot) nil)
+(defun parse-game-parameters ()
+  "Modifies *STATE*."
+  (loop for line = (read-line (input *state*) nil)
         until (starts-with line "ready")
         do (cond ((starts-with line "attackradius2 ")
-                  (setf (slot-value bot 'attack-radius2) (par-value line)))
+                  (setf (slot-value *state* 'attack-radius2) (par-value line)))
                  ((starts-with line "cols ")
-                  (setf (slot-value bot 'cols) (par-value line)))
+                  (setf (slot-value *state* 'cols) (par-value line)))
                  ((starts-with line "loadtime ")
-                  (setf (slot-value bot 'load-time)
+                  (setf (slot-value *state* 'load-time)
                         (/ (par-value line) 1000.0)))
                  ((starts-with line "rows ")
-                  (setf (slot-value bot 'rows) (par-value line)))
+                  (setf (slot-value *state* 'rows) (par-value line)))
                  ((starts-with line "spawnradius2 ")
-                  (setf (slot-value bot 'spawn-radius2) (par-value line)))
+                  (setf (slot-value *state* 'spawn-radius2) (par-value line)))
                  ((starts-with line "turns ")
-                  (setf (slot-value bot 'turns) (par-value line)))
+                  (setf (slot-value *state* 'turns) (par-value line)))
                  ((starts-with line "turntime ")
-                  (setf (slot-value bot 'turn-time)
+                  (setf (slot-value *state* 'turn-time)
                         (/ (par-value line) 1000.0)))
                  ((starts-with line "viewradius2 ")
-                  (setf (slot-value bot 'view-radius2) (par-value line)))))
-  (setf (slot-value bot 'game-map)
-        (make-array (list (rows bot) (cols bot)) :element-type 'fixnum
+                  (setf (slot-value *state* 'view-radius2) (par-value line)))))
+  (setf (slot-value *state* 'game-map)
+        (make-array (list (rows *state*) (cols *state*)) :element-type 'fixnum
                     :initial-element 0)))
 
 
-(defun parse-game-state (bot)
-  (reset-some-state bot)
+(defun parse-game-state ()
+  "Modifies *STATE*."
+  (reset-some-state)
   (logmsg "~&Receiving game state...~%")
-  (loop for line = (read-line (input bot) nil)
+  (loop for line = (read-line (input *state*) nil)
         until (> (length line) 0)
         finally (cond ((starts-with line "end")
-                       (parse-end-game bot)
-                       (return-from parse-game-state t))
+                       (parse-end-game)
+                       (return-from parse-game-state t))  ; TODO return?
                       ((starts-with line "turn 0")
-                       (setf (slot-value bot 'turn) 0)
-                       (parse-game-parameters bot)
+                       (setf (slot-value *state* 'turn) 0)
+                       (parse-game-parameters)
                        (return-from parse-game-state nil))
                       ((starts-with line "turn ")
-                       (setf (slot-value bot 'turn) (par-value line))
-                       (parse-turn bot)
+                       (setf (slot-value *state* 'turn) (par-value line))
+                       (parse-turn)
                        (return-from parse-game-state nil)))))
 
 
-(defun parse-turn (bot)
-  (reset-game-map (game-map bot))
-  (loop for line = (read-line (input bot) nil)
+(defun parse-turn ()
+  "Modifies *STATE* indirectly through RESET-GAME-MAP and PARSE-*."
+  (reset-game-map (game-map *state*))
+  (loop for line = (read-line (input *state*) nil)
         until (starts-with line "go")
-        do (cond ((starts-with line "f ") (parse-food bot line))
-                 ((starts-with line "w ") (parse-water bot line))
-                 ((starts-with line "a ") (parse-ant bot line))
-                 ((starts-with line "d ") (parse-dead bot line)))))
+        do (cond ((starts-with line "f ") (parse-food line))
+                 ((starts-with line "w ") (parse-water line))
+                 ((starts-with line "a ") (parse-ant line))
+                 ((starts-with line "d ") (parse-dead line)))))
 
 
-(defun parse-water (bot string)
+(defun parse-water (string)
+  "Modifies *STATE*."
   (let* ((split (split-state-string string))
          (row (parse-integer (elt split 1)))
          (col (parse-integer (elt split 2))))
-    (setf (aref (game-map bot) row col) 1)))
+    (setf (aref (game-map *state*) row col) 1)))
 
 
 (defun print-game-map (game-map &optional (stream *debug-io*))
@@ -141,10 +149,11 @@
                    do (setf (aref game-map y x) 0))))
 
 
-(defun reset-some-state (bot)
-  (setf (slot-value bot 'enemy-ants) nil
-        (slot-value bot 'my-ants)    nil
-        (slot-value bot 'food)       nil))
+(defun reset-some-state ()
+  "Modifies *STATE*."
+  (setf (slot-value *state* 'enemy-ants) nil
+        (slot-value *state* 'my-ants)    nil
+        (slot-value *state* 'food)       nil))
 
 
 (defun split-state-string (string)

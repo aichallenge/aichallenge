@@ -9,11 +9,11 @@
 
 ;;; Functions
 
-(defun bot-think (bot)
-  (loop for ant in (my-ants bot)
+(defun bot-think ()
+  (loop for ant in (my-ants *state*)
         for x = (elt ant 0)
         for y = (elt ant 1)
-        do (cond ((not (waterp :north bot x y)) (move-ant bot x y :north))
-                 ((not (waterp :east  bot x y)) (move-ant bot x y :east))
-                 ((not (waterp :south bot x y)) (move-ant bot x y :south))
-                 ((not (waterp :west  bot x y)) (move-ant bot x y :west)))))
+        do (cond ((not (water? x y :north)) (move-ant x y :north))
+                 ((not (water? x y :east))  (move-ant x y :east))
+                 ((not (water? x y :south)) (move-ant x y :south))
+                 ((not (water? x y :west))  (move-ant x y :west)))))

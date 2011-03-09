@@ -3,11 +3,7 @@
 (in-package :ants-bot)
 
 
-;;; 'Constants'
+;;; Both shadowed in MAIN, never assign to directly!
 
-(defparameter +max-turn-time+ 0.95)
-
-
-;;; Variables
-
-(defparameter *verbose* nil)
+(defvar *state* nil)
+(defvar *verbose* nil)
