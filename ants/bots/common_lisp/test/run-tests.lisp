@@ -31,7 +31,9 @@
 (define-test par-value
   (assert-equal 1 (par-value "a 1"))
   (assert-equal 234 (par-value "bc 234"))
-  (assert-equal 1 (par-value " 1"))  ; feature ;-)
+  ;; Ought to be an error but it isn't for now.  Added test so we know when
+  ;; the implementation changes.
+  (assert-equal 1 (par-value " 1"))
   (assert-error 'type-error (par-value "")))
 
 #+sbcl (define-test par-value-sbcl
