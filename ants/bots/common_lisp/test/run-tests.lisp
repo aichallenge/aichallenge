@@ -64,7 +64,7 @@
 
 ;;; Run the tests.
 
-(format t "--- Running Tests ---~%")
+(format t "--- running tests ---~%")
 (run-tests)
 (format t "~&")
 (cl-user::quit)
