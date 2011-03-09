@@ -152,7 +152,7 @@ class Ants():
                 d.append('w')
         return d
 
-    def render_text(self):
+    def render_text_map(self):
         tmp = ''
         for row in self.map:
             tmp += '# %s\n' % ''.join([MAP_RENDER[col] for col in row])
