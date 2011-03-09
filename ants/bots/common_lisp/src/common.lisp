@@ -20,9 +20,8 @@
 
 (defun logmsg (&rest args)
   (when *verbose*
-    (format *debug-io* (with-output-to-string (s)
-                         (dolist (a args)
-                           (princ a s))))))
+    (format (log-stream *state*) (apply #'mkstr args))
+    (force-output (log-stream *state*))))
 
 
 (defun mkstr (&rest args)

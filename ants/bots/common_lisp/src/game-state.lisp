@@ -51,7 +51,6 @@
 (defun parse-game-state ()
   "Modifies *STATE*."
   (reset-some-state)
-  (logmsg "~&Receiving game state...~%")
   (loop for line = (read-line (input *state*) nil)
         until (> (length line) 0)
         finally (cond ((starts-with line "end")
