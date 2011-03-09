@@ -1,0 +1,5 @@
+#!/usr/bin/sbcl --script
+
+(setf asdf:*central-registry* (list *default-pathname-defaults*))
+(asdf:oos 'asdf:load-op :ants-bot)
+(ants-bot::main :verbose nil)
