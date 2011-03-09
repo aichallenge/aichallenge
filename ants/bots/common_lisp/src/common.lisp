@@ -41,12 +41,3 @@
   (defun wall-time (&key (offset 0))
     (+ (* (get-internal-real-time) time-units)
        offset)))
-
-
-(defun turn-time-remaining ()
-  (- (wall-time)
-     (+ (turn-start-time *state*) (turn-time *state*))))
-
-
-(defun turn-time-used ()
-  (- (wall-time) (turn-start-time *state*)))

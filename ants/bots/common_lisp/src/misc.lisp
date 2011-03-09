@@ -5,6 +5,15 @@
 
 ;;; Functions
 
+;; TODO hasn't been tested very well yet
+(defun distance (x1 y1 x2 y2)
+  (let* ((dx (abs (- x1 x2)))
+         (dy (abs (- y1 y2)))
+         (minx (min dx (- (cols *state*) dx)))
+         (miny (min dy (- (rows *state*) dy))))
+    (sqrt (+ (* minx minx) (* miny miny)))))
+
+
 (defun end-of-turn ()
   (format (output *state*) "~&go~%"))
 
@@ -18,6 +27,32 @@
                 (:east  "E")
                 (:south "S")
                 (:west  "W")))))
+
+
+;; TODO hasn't been tested very well yet
+(defun new-location (src-x src-y direction)
+  (if (not (member direction '(:north :east :south :west)))
+      (progn (errmsg "[new-location] Illegal direction: " direction)
+             (list src-x src-y))
+      (let ((dst-x (cond ((equal direction :east)
+                          (if (<= src-x 0)
+                              (- (cols *state*) 1)
+                              (- src-x 1)))
+                         ((equal direction :west)
+                          (if (>= (+ src-x 1) (cols *state*))
+                              0
+                              (+ src-x 1)))
+                         (t src-x)))
+            (dst-y (cond ((equal direction :north)
+                          (if (<= src-y 0)
+                              (- (rows *state*) 1)
+                              (- src-y 1)))
+                         ((equal direction :south)
+                          (if (>= (+ src-y 1) (rows *state*))
+                              0
+                              (+ src-y 1)))
+                         (t src-y))))
+        (list dst-x dst-y))))
 
 
 (defun print-game-map (game-map &optional (stream *debug-io*))
@@ -34,26 +69,18 @@
            (terpri stream)))
 
 
+;; TODO hasn't been tested very well yet
+(defun turn-time-remaining ()
+  (- (wall-time)
+     (+ (turn-start-time *state*) (turn-time *state*))))
+
+
+;; TODO hasn't been tested very well yet
+(defun turn-time-used ()
+  (- (wall-time) (turn-start-time *state*)))
+
+
+;; TODO hasn't been tested very well yet
 (defun water? (x y direction)
-  (case direction
-    (:north (= 1 (aref (game-map *state*)
-                       (if (= y 0)
-                           (- (rows *state*) 1)
-                           (- y 1))
-                       x)))
-    (:east (= 1 (aref (game-map *state*)
-                      y
-                      (if (>= (+ x 1) (cols *state*))
-                          0
-                          (+ x 1)))))
-    (:south (= 1 (aref (game-map *state*)
-                       (if (>= (+ y 1) (rows *state*))
-                           0
-                           (+ y 1))
-                       x)))
-    (:west (= 1 (aref (game-map *state*)
-                      y
-                      (if (= x 0)
-                          (- (cols *state*) 1)
-                          (- x 1)))))
-    (otherwise (error "Unknown direction ~S" direction))))
+  (let ((nl (new-location x y direction)))
+    (= 1 (aref (game-map *state*) (elt nl 1) (elt nl 0)))))
