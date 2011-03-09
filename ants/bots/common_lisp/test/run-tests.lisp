@@ -28,6 +28,12 @@
 (define-test mkstr
   (assert-equal "abc1de23fG456HI" (mkstr "abc" 1 "de" 23 "f" 'g 456 'hi)))
 
+(define-test move-ant
+  (assert-equal (format nil "~&o 1 1 N~%") (move-ant 1 1 :north))
+  (assert-equal (format nil "~&o 2 2 E~%") (move-ant 2 2 :east))
+  (assert-equal (format nil "~&o 3 2 S~%") (move-ant 2 3 :south))
+  (assert-equal (format nil "~&o 2 3 W~%") (move-ant 3 2 :west)))
+
 (define-test par-value
   (assert-equal 1 (par-value "a 1"))
   (assert-equal 234 (par-value "bc 234"))
@@ -60,6 +66,66 @@
   ;(assert-false (starts-with "" ""))  ; undefined
   (assert-false (starts-with "" "a"))
   (assert-false (starts-with "" "ab")))
+
+
+;;; Manipulating *STATE*
+
+(setf (slot-value *state* 'input) (make-string-input-stream turn-0))
+(parse-game-state)
+
+(define-test game-parameters
+  (assert-equal 6 (attack-radius2 *state*))
+  (assert-equal 7 (cols *state*))
+  (assert-equal 2.5 (load-time *state*))
+  (assert-equal 4 (rows *state*))
+  (assert-equal 6 (spawn-radius2 *state*))
+  ;; This is somewhat counter-intuitive, but RUN-TESTS is run later and in the
+  ;; meantime (TURN *STATE*) has been further modified.
+  (assert-equal 1 (turn *state*))
+  (assert-equal 500 (turns *state*))
+  (assert-equal 2.0 (turn-time *state*))
+  (assert-equal 93 (view-radius2 *state*)))
+
+(setf (slot-value *state* 'input) (make-string-input-stream turn-1))
+(parse-game-state)
+
+(define-test distance
+  (assert-equal 0.0 (distance 0 0 0 0))
+  (assert-equal 1.0 (distance 0 0 0 1))
+  (assert-equal 1.0 (distance 0 0 1 0))
+  (assert-equal 1.4142135 (distance 0 0 1 1))
+  (assert-equal 1.0 (distance 0 0 6 0))
+  (assert-equal 1.0 (distance 0 0 0 3))
+  (assert-equal 1.4142135 (distance 0 0 6 3))
+  (assert-equal 3.0 (distance 0 0 3 0))
+  (assert-equal 3.0 (distance 0 0 4 0))
+  (assert-equal 2.236068 (distance 0 0 2 1))
+  (assert-equal 3.6055512 (distance 0 0 3 2))
+  (assert-equal 3.6055512 (distance 0 0 4 2))
+  (assert-equal 2.236068 (distance 0 0 5 3)))
+
+(define-test game-map-food
+  (assert-equal '((1 2) (5 1)) (food *state*))
+  (assert-equal 2 (aref (game-map *state*) 2 1))
+  (assert-equal 2 (aref (game-map *state*) 1 5)))
+
+(define-test game-map-land
+  (assert-equal 0 (aref (game-map *state*) 1 0))
+  (assert-equal 0 (aref (game-map *state*) 3 4)))
+
+(define-test game-map-water
+  (assert-equal 1 (aref (game-map *state*) 0 1))
+  (assert-equal 1 (aref (game-map *state*) 1 3)))
+
+(define-test water?
+  (assert-true (water? 1 1 :north))
+  (assert-true (water? 4 1 :west))
+  (assert-true (water? 2 3 :south))
+  (assert-true (water? 0 0 :east))
+  (assert-false (water? 1 3 :north))
+  (assert-false (water? 0 0 :west))
+  (assert-false (water? 1 1 :south))
+  (assert-false (water? 5 0 :east)))
 
 
 ;;; Run the tests.
