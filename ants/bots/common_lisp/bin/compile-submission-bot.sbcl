@@ -1,0 +1,5 @@
+#!/usr/bin/sbcl --script
+
+(setf asdf:*central-registry* (list *default-pathname-defaults*))
+(asdf:oos 'asdf:load-op :ants-bot)
+(save-lisp-and-die "ants-bot" :toplevel #'ants-bot::main :executable t)
