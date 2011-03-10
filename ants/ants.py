@@ -72,10 +72,8 @@ class Ants:
         self.water_area = 0
         self.land_area = 0
 
-        self.ant_list = {}  # indexed list of ant locations for speed
+        self.ant_store = AntStore()
         self.food_list = [] # indexed list of food locations for speed
-        self.conflict_list = {}
-
 
         #self.center = [] # used to scroll the map so that a player's
         #                 #   starting ant is in the center
@@ -90,7 +88,7 @@ class Ants:
             raise Exception("map", "Invalid map file extension: %s" % os.path.splitext(filename)[1].lower())
 
         # used to remember where the ants started
-        self.initial_ant_list = dict(self.ant_list)
+        self.initial_ant_list = dict(self.ant_store.ants())
         self.initial_access_map = self.access_map()
 
         # used to track dead players, ants may still exist, but order are not processed
@@ -142,7 +140,7 @@ class Ants:
                             #    self.center[value] = (last_row, col)
                         value = players.index(c)
                         self.map[-1].append(value)
-                        self.ant_list[(row, col)] = value
+                        self.ant_store.add((row,col), value)
                         self.land_area += 1
                     elif c == '*':
                         self.map[-1].append(FOOD)
@@ -170,7 +168,7 @@ class Ants:
     def get_vision(self, player, radius=96):
         vision = [[False for col in range(self.width)] for row in range(self.height)]
         squaresToCheck = deque()
-        for row, col in self.player_ants(player):
+        for row, col in self.ant_store.player_ants(player):
             squaresToCheck.append(((row,col),(row,col)))
         while len(squaresToCheck) > 0:
             (a_row, a_col), (v_row, v_col) = squaresToCheck.popleft()
@@ -217,7 +215,7 @@ class Ants:
                 if self.map[row][col] ==  WATER:
                     tmp += 'w %s %s\n' % (row, col)
         # send visible ants
-        for (row, col), owner in self.ant_list.items():
+        for (row, col), owner in self.ant_store.ants():
             if player == None:
                 tmp += 'a %s %s %s\n' % (row, col, owner)
             elif v[row][col]:
@@ -229,14 +227,12 @@ class Ants:
                 tmp += 'f %s %s\n' % (row, col)
                 if player != None:
                     self.revealed[player][row][col] = False
-        # send visible conflict
-        for row in range(self.height):
-            for col in range(self.width):
-                if ((player == None or v[row][col])) and self.map[row][col] == CONFLICT:
-                    for owner in self.conflict_list[(row, col)]:
-                        tmp += 'd %s %s %s\n' % (row, col, owner)
-                        if player != None:
-                            self.revealed[player][row][col] = False
+        # send visible dead ants 
+        for (row,col), owner in self.ant_store.killed_ants():
+            if player == None or v[row][col]:
+                tmp += 'd %s %s %s\n' % (row, col, owner)
+                if player != None:
+                    self.revealed[player][row][col] = False
         return tmp
 
     def render_map(self, player=None):
@@ -248,10 +244,6 @@ class Ants:
         for row in m:
             tmp += 'm ' + ''.join([MAP_RENDER[col] for col in row]) + '\n'
         return tmp
-
-    def player_ants(self, player):
-        return [(row, col) for (row, col), owner
-                in self.ant_list.items() if player == owner]
 
     # min and max are defined as sum of directions squared, so 9 is dist 3
     # default values 1-2 are the 8 spaces around a square
@@ -297,71 +289,32 @@ class Ants:
 
     # process orders 1 player at a time
     def do_orders(self, player, orders):
-        # orders have already been parsed, so they are in row, col format
-        src = {}
-        dest = {}
         # process orders ignoring bad or duplicates
         for order in orders:
+            row2, col2 = self.destination(*order)
             row1, col1, d = order
-            row2 = (row1 + AIM[d][0]) % self.height
-            col2 = (col1 + AIM[d][1]) % self.width
-            if src.has_key((row1, col1)): # order already given
-                continue
+
             if self.map[row1][col1] != player: # must move *your* ant
                 continue
-            src[(row1, col1)] = True
-            if self.map[row2][col2] in (FOOD, WATER): # blocking things
-                if dest.has_key((row1, col1)):
-                    dest[(row1, col1)].append((row1, col1))
-                else:
-                    dest[(row1, col1)] = [(row1, col1)]
-            else: # good order
-                if dest.has_key((row2, col2)):
-                    dest[(row2, col2)].append((row1, col1))
-                else:
-                    dest[(row2, col2)] = [(row1, col1)]
-        # check for unordered ants and give them hold orders
-        for pos in self.player_ants(player):
-            if not src.has_key(pos):
-                if dest.has_key(pos):
-                    dest[pos].append(pos)
-                else:
-                    dest[pos] = [pos]
-        for row1, col1 in src.keys():
-            self.map[row1][col1] = LAND
-            try:
-                del self.ant_list[(row1, col1)]
-            except:
-                raise Exception("Delete ant error",
-                                "Ant not found at (%s, %s), found %s" %
-                                (row1, col1, self.map[row1][col1]))
-        # check for conflicts
-        for (row2, col2), srcs in dest.items():
-            if (len(srcs) > 1 or (self.map[row2][col2] >= ANTS and
-                    self.map[row2][col2] != player)
-                    or self.map[row2][col2] == CONFLICT):
-                self.map[row2][col2] = CONFLICT
-                if (row2, col2) in self.conflict_list:
-                    self.conflict_list[(row2, col2)].append(player)
-                else:
-                    self.conflict_list[(row2, col2)] = [player]                    
-                if self.ant_list.has_key((row2, col2)):
-                    del self.ant_list[(row2, col2)]
-            else:
-                self.map[row2][col2] = player
-                self.ant_list[(row2, col2)] = player
+
+            if self.map[row2][col2] not in (FOOD, WATER): # good orders
+                self.ant_store.move((row1, col1), (row2, col2))
 
     def resolve_orders(self):
-        for row in range(self.height):
-            for col in range(self.width):
-                if self.map[row][col] == CONFLICT:
-                    self.map[row][col] = LAND
-        self.conflict_list.clear()
+        # remove current ants from map
+        for (row, col), owner in self.ant_store.ants():
+            self.map[row][col] = LAND
+
+        # process moves
+        self.ant_store.resolve_moves()
+
+        # new ants to map
+        for (row, col), owner in self.ant_store.ants():
+            self.map[row][col] = owner
 
     # must have only 1 force near the food to create a new ant
     #  and food in contention is eliminated
     def do_spawn(self):
-        new_ants = {}
         for f_row, f_col in self.food_list[:]:
             owner = None
             for (n_row, n_col), n_owner in self.nearby_ants(f_row, f_col, None, 1, 9):
@@ -373,17 +326,16 @@ class Ants:
                     break
             else:
                 if owner != None:
-                    new_ants[(f_row, f_col)] = owner
                     self.food_list.remove((f_row, f_col))
                     self.map[f_row][f_col] = owner
-                    self.ant_list[(f_row, f_col)] = owner
+                    self.ant_store.add((f_row,f_col), owner)
 
     # ants kill enemies of less or equally occupied
     # TODO: update function to mark conflict for dead ant info
     # TODO: write function correctly, don't kill any ant until end
     def do_attack_occupied(self):
         score = [Fraction(0, 1) for i in range(self.num_players)]
-        for (a_row, a_col), a_owner in self.ant_list.items():
+        for (a_row, a_col), a_owner in self.ant_store.ants():
             killers = []
             enemies = self.nearby_ants(a_row, a_col, a_owner, 1, 2)
             occupied = len(enemies)
@@ -394,7 +346,7 @@ class Ants:
                     killers.append(e_owner)
             if len(killers) > 0:
                 self.map[a_col][a_row] = LAND
-                del self.ant_list[(a_row, a_col)]
+                self.ant_store.kill((a_row, a_col))
                 score_share = len(killers)
                 for e_owner in killers:
                     score[e_owner] += Fraction(1, score_share)
@@ -411,7 +363,7 @@ class Ants:
                     ant_group[(n_row, n_col)] = n_owner
                     find_enemy(n_row, n_col, n_owner, min_d, max_d)
         for distance in range(1, 10):
-            for (a_row, a_col), a_owner in self.ant_list.items():
+            for (a_row, a_col), a_owner in self.ant_store.ants():
                 if self.map[a_row][a_col] != LAND:
                     ant_group = {(a_row, a_col): a_owner}
                     find_enemy(a_row, a_col, a_owner, distance, distance)
@@ -419,22 +371,13 @@ class Ants:
                         score_share = len(ant_group)
                         for (e_row, e_col), e_owner in ant_group.items():
                             score[e_owner] += Fraction(1, score_share)
-                            self.map[e_row][e_col] = CONFLICT
-                            if (e_row, e_col) in self.conflict_list:
-                                self.conflict_list[(e_row, e_col)].append(e_owner)
-                            else:
-                                self.conflict_list[(e_row, e_col)] = [e_owner]                    
-                            try:
-                                del self.ant_list[(e_row, e_col)]
-                            except:
-                                raise Exception("Delete ant error",
-                                                "Ant not found at (%s, %s), kill_group %s" %
-                                                (e_row, e_col, ant_group))
+                            self.map[e_row][e_col] = LAND
+                            self.ant_store.kill((e_row,e_col))
         self.score = map(operator.add, self.score, score)
 
     def destination(self, row, col, direction):
         d_row, d_col = AIM[direction]
-        return ((row + d_row) % self.height, (col + d_col) % self.width)        
+        return ((row + d_row) % self.height, (col + d_col) % self.width)
 
     def access_map(self):
         """
@@ -573,10 +516,10 @@ class Ants:
 
     def start_turn(self):
         self.turn += 1
-        self.resolve_orders()
 
     def finish_turn(self):
         self.turn_reveal= [[] for i in range(self.num_players)]
+        self.resolve_orders()
         self.do_attack()
         self.do_spawn()
         self.do_food()
@@ -587,7 +530,6 @@ class Ants:
 
     # used for turn 0, sending minimal info for bot to load
     def get_player_start(self, player=None):
-        
         tmp = ('turn 0\nloadtime %s\nturntime %s\nrows %s\ncols %s\nturns %s\n' +
                 'viewradius2 %s\nattackradius2 %s\nspawnradius2 %s\n') % (
                 self.loadtime, self.turntime, self.height, self.width,
@@ -606,12 +548,7 @@ class Ants:
         if self.killed[player]:
             return False
         else:
-            for (row, col), owner in self.ant_list.items():
-                if owner == player:
-                    return True
-                    break
-            else:
-                return False
+            return bool(self.ant_store.player_ants(player))
 
     # used to report error that kicked a player from game
     def get_error(self, player):
@@ -651,6 +588,72 @@ class Ants:
         result.append([self.render_map()])
 
         return "\n".join(" ".join(row) for row in result)
+
+class AntStore:
+    def __init__(self):
+        self._current_loc = {}
+        self._next_loc = defaultdict(list)
+        self._moved = set()
+        self._killed = []
+
+    def add(self, loc, owner):
+        if loc in self._current_loc:
+            raise Exception("Add ant error",
+                            "Ant already found at %s" %(loc,))
+        self._current_loc[loc] = owner
+
+    def move(self, src, dst):
+        # ignore duplicate moves
+        if src in self._moved:
+            return
+
+        # execute the move (if possible)
+        try:
+            self._next_loc[dst].append(self._current_loc[src])
+            self._moved.add(src)
+        except KeyError:
+            raise Exception("Move ant error",
+                            "Ant not found at %s" %(src,))
+
+    def resolve_moves(self):
+        # reset killed ants
+        self._killed = []
+
+        # hold any ants which haven't moved
+        for loc, owner in self._current_loc.items():
+            if loc not in self._moved:
+                self._next_loc[loc].append(owner)
+
+        # if ant is sole occupant of a new square then it 
+        # survives to the next round
+        new_loc = {}
+        for loc, owners in self._next_loc.items():
+            if len(owners) == 1:
+                new_loc[loc] = owners[0]
+            else:
+                self._killed.extend((loc,owner) for owner in owner)
+
+        # update data structures
+        self._moved.clear()
+        self._next_loc.clear()
+        self._current_loc = new_loc
+
+    def kill(self, loc):
+        try:
+            self._killed.append((loc,self._current_loc[loc]))
+            del self._current_loc[loc]
+        except KeyError:
+            raise Exception("Kill ant error",
+                            "Ant not found at %s" %(loc,))
+
+    def ants(self):
+        return self._current_loc.items()
+
+    def player_ants(self, player):
+        return [loc for loc, owner in self._current_loc.items() if player == owner]
+
+    def killed_ants(self):
+        return self._killed
 
 if __name__ == '__main__':
 
