@@ -1,7 +1,7 @@
 server_info = {{
-  "db_username": "root",
-  "db_password": "",
-  "db_name": "contest",
+  "db_username": "{database_user}",
+  "db_password": "{database_password}",
+  "db_name": "{database_name}",
   "db_host": "127.0.0.1",
   "mail_username": "donotreply@ai-contest.com",
   "mail_name": "AI Contest",
