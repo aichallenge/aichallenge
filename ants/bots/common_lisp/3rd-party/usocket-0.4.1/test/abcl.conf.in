@@ -1,0 +1,10 @@
+# lisp binary test setup file
+
+args=
+
+# lisp_bin is required!
+lisp_bin=~/src/abcl-0.0.9/abcl
+lisp_name=ArmedBear
+
+# lisp_exit is required!
+lisp_exit="(quit :status result)"

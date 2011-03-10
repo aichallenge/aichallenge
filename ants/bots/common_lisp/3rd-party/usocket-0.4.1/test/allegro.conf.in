@@ -1,0 +1,10 @@
+# lisp binary test setup file
+
+args="-batch"
+
+# lisp_bin is required!
+lisp_bin="~/src/acl/acl70_trial/alisp"
+lisp_name=Allegro
+
+# lisp_exit is required!
+lisp_exit="(exit result :no-unwind t)"
