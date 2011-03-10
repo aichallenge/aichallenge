@@ -3,6 +3,7 @@ import json
 import urllib
 import tempfile
 import logging
+import shutil
 
 from server_info import server_info
 from submission_hash import hash_file_sha
@@ -78,10 +79,14 @@ class GameAPIClient:
                 log_message("After downloading submission %s to %s hash didn't match" %
                         (submission_id, download_dir))
                 raise Exception()
-        
-        
-def compile():
-    
+            try:
+              os.rename(download_dir, submission_dir)
+            except OSError:
+              # the submission directory was probably already created by another
+              # manager, if not reraise the exception
+              if not os.path.exists(submission_dir):
+                raise
+              shutil.rmtree(download_dir)
 
 def game():
     pass
