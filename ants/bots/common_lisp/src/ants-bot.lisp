@@ -1,9 +1,4 @@
 ;;;; ants-bot.lisp
-;;;;
-;;;;  author: Erik Winkels (aerique@xs4all.nl)
-;;;; created: 2011-03-01
-;;;; license: Apache Software License
-;;;;   notes: tested on SBCL 1.0.45.debian
 
 (in-package :ants-bot)
 
@@ -39,7 +34,6 @@
   (main :log log :verbose verbose))
 
 
-;; TODO fix proxy-bot for Ant Wars
 ;; This MAIN is for the Slime REPL with bin/play-proxy-game.sh.
 (defun main-for-proxybot (&key (log "ants-bot-proxied.log") (verbose t))
   (let (client socket stream)
