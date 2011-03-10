@@ -22,17 +22,34 @@ LIMIT 1
 	
 	# Arguments: user_id (of "seed" user)
 	"best_player_count": """
-SELECT m.players as players
-FROM submission AS s
-     JOIN game_player AS gp
-     ON s.submission_id = gp.submission_id
-     JOIN game AS g
-     ON gp.game_id = g.game_id
-     RIGHT JOIN map AS m
-     ON g.map_id = m.map_id
-WHERE s.user_id IS NULL OR s.user_id = %(seed_user_id)s
-GROUP BY m.players
-ORDER BY COUNT(s.user_id) ASC, MAX(g.timestamp) ASC
+SELECT m.players as best_player_count
+FROM map AS m
+     LEFT JOIN (SELECT g.map_id AS map_id,
+                       gp.user_id AS user_id,
+                       g.seed_id AS seed_id,
+                       g.game_id AS game_id
+                FROM game AS g
+                     JOIN game_player AS gp
+                       ON g.game_id = gp.game_id
+                WHERE gp.user_id = %(seed_user_id)s
+               ) AS j1
+            ON m.map_id = j1.map_id
+WHERE m.players <= (SELECT COUNT(DISTINCT u.user_id)
+                    FROM user AS u
+                         JOIN submission AS s
+                         ON u.user_id = s.user_id
+                   )
+GROUP BY best_player_count
+ORDER BY CASE
+          WHEN COUNT(j1.user_id) = 0 THEN 1
+          WHEN COUNT(CASE
+                      WHEN j1.seed_id = j1.user_id
+                      THEN j1.user_id
+                     END) = 0
+               THEN 2
+          ELSE 3
+         END ASC,
+         MAX(j1.game_id) ASC, MIN(m.map_id) ASC
 LIMIT 1
 ;
 """,
