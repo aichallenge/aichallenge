@@ -1,0 +1,13 @@
+Continuous integration:
+  Does the visualizer recover from a failed attempt to load an image?
+   - offline.html, move image, load, restore image, load
+   - once with canvas and applet version
+  Do all major browsers load both versions?
+   - Chrom(e/ium), Firefox, IE, Opera, Safari
+  Do all ways to load a replay work?
+   - direct, PHP, XmlHttpRequest
+  Do the buttons and keys work as expected?
+
+Test once:
+  Does the applet version start automatically IE 8 and older?
+

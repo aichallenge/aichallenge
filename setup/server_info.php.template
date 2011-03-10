@@ -1,0 +1,16 @@
+<?php
+
+$server_info = array(
+    "db_host" => "localhost",
+    "db_username" => "root",
+    "db_password" => "",
+    "db_name" => "contest",
+    "mailer_address" => "donotreply@ai-contest.com",
+    "mailer_name" => "AI Contest",
+    "mailer_password" => "",
+    "submissions_open" => True,
+    "submissions_path" => "{sub_dir}",
+);
+
+?>
+
