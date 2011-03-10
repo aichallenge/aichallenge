@@ -1,5 +1,5 @@
 #!/usr/bin/sbcl --script
 
-(setf asdf:*central-registry* (list *default-pathname-defaults*))
+(load (merge-pathnames "3rd-party/asdf-init.lisp" *default-pathname-defaults*))
 (asdf:oos 'asdf:load-op :ants-bot)
 (ants-bot::main-for-local)

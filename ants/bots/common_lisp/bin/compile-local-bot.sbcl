@@ -1,12 +1,6 @@
 #!/usr/bin/sbcl --script
 
-(let ((dpd *default-pathname-defaults*))
-  (setf asdf:*central-registry*
-        (list dpd
-              (merge-pathnames "3rd-party/split-sequence-20011114.1/" dpd)
-              (merge-pathnames "3rd-party/usocket-0.4.1/" dpd))))
-
+(load (merge-pathnames "3rd-party/asdf-init.lisp" *default-pathname-defaults*))
 (asdf:oos 'asdf:load-op :ants-bot)
-
 (save-lisp-and-die "ants-bot" :toplevel #'ants-bot::main-for-local
                    :executable t)

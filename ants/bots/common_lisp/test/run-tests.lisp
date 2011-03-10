@@ -10,7 +10,7 @@
 (load "test/lisp-unit")
 
 (format t "Loading ant-bot...~%")
-(setf asdf:*central-registry* (list *default-pathname-defaults*))
+(load (merge-pathnames "3rd-party/asdf-init.lisp" *default-pathname-defaults*))
 (asdf:oos 'asdf:load-op :ants-bot)
 
 (in-package :ants-bot)
@@ -21,9 +21,6 @@
 
 
 ;;; Tests
-
-(define-test end-of-turn
-  (assert-equal (format nil "~&go~%") (end-of-turn)))
 
 (define-test mkstr
   (assert-equal "abc1de23fG456HI" (mkstr "abc" 1 "de" 23 "f" 'g 456 'hi)))
