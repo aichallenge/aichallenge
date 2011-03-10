@@ -5,6 +5,7 @@ import os
 from collections import deque, defaultdict
 from fractions import Fraction
 import operator
+import string
 
 ANTS = 0
 LAND = -1
@@ -13,7 +14,7 @@ WATER = -3
 CONFLICT = -4
 UNSEEN = -5
 
-MAP_RENDER = 'abcdefghijklmnopqrstuvwxyz?!%*.'
+MAP_RENDER = string.ascii_lowercase + '?!%*.'
 
 AIM = {'n': (-1, 0),
        'e': (0, 1),
@@ -134,8 +135,7 @@ class Ants:
                                     row, len(data[1]), self.width))
                 self.map.append([])
                 for col, c in enumerate(data[1]):
-                    if c in 'abcdefghijklmnopqrstuvwxyz':
-                        c = c
+                    if c in string.ascii_lowercase:
                         if not c in players:
                             players.append(c)
                             #if self.center[value] == None:
@@ -638,6 +638,19 @@ class Ants:
         for row, col, owner in self.ants():
             ant_count[owner] += 1
         return {'ant_count': ant_count}
+
+    def __str__(self):
+        result = []
+
+        results.append(['v ants 1'])
+
+        results.append(['players', self.num_players])
+        for p in range(self.num_players):
+            result.append(['player_name', p+1, string.ascii_lowercase[p]])
+
+        result.append([self.render_map()])
+
+        return "\n".join(" ".join(row) for row in result)
 
 if __name__ == '__main__':
 
