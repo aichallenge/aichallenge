@@ -12,5 +12,5 @@
 
 (defun interrupted-by-user (arg)
   (declare (ignore arg))
-  (logmsg "~&Interrupted by user... Aborting.~%")
+  (logmsg "~&Interrupted by user. Aborting...~%")
   (quit))

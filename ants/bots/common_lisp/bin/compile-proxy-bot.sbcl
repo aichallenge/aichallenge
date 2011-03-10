@@ -1,0 +1,5 @@
+#!/usr/bin/sbcl --script
+
+(setf asdf:*central-registry* (list *default-pathname-defaults*))
+(asdf:oos 'asdf:load-op :proxy-bot)
+(save-lisp-and-die "proxy-bot" :toplevel #'aw-proxy-bot::main :executable t)
