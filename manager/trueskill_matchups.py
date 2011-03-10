@@ -7,32 +7,16 @@ from server_info import server_info
 SQL = {
 	# No arguments.
 	"seed_user_id": """
-SELECT u.user_id
-FROM
-(
-(
-SELECT 1 as prio, s.user_id as user_id
-FROM submission AS s
+SELECT u.user_id AS seed_user_id
+FROM user AS u
+     JOIN submission AS s
+       ON u.user_id = s.user_id
      LEFT JOIN game_player AS gp
-     ON gp.submission_id = s.submission_id
-WHERE gp.game_id IS NULL
-  AND s.latest = 1
+            ON s.submission_id = gp.submission_id
+GROUP BY seed_user_id
+ORDER BY CASE WHEN MAX(gp.game_id) IS NULL THEN 1 ELSE 2 END ASC,
+         MAX(gp.game_id) ASC, u.user_id ASC
 LIMIT 1
-)
-UNION ALL
-(
-SELECT 2 as prio, s.user_id as user_id
-FROM submission AS s
-     JOIN game_player AS gp
-     ON gp.submission_id = s.submission_id
-     JOIN game AS g
-     ON g.game_id = gp.game_id
-ORDER BY g.timestamp ASC
-LIMIT 1
-)
-ORDER BY prio ASC
-LIMIT 1
-) AS u
 ;
 """,
 	
