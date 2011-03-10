@@ -93,8 +93,7 @@
                                (force-output stream)))
                (logmsg "Receiving bot response... ")
                (loop with checksum = (list 0 0)
-                     ;; TODO why "nil nil" here and not just "nil" like above?
-                     for line = (read-line stream nil nil)
+                     for line = (read-line stream nil)
                      until (or (starts-with line "go")
                                end-of-game-p)
                      do (when line
