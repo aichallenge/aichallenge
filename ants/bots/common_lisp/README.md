@@ -63,4 +63,7 @@ There are also a few initial unit tests which can be run by issuing
 
 ## Platforms
 
-The code has so far only been tested on x86 using SBCL 1.0.45.debian.
+The code has been tested on the following platforms:
+
+* x86: SBCL 1.0.45.debian
+* x86: SBCL 1.0.40 on Ubuntu 10.10
