@@ -6,7 +6,7 @@ submission-bot: ants-bot.asd src/*.lisp
 local-bot: ants-bot.asd src/*.lisp
 	sbcl --script bin/compile-local-bot.sbcl;
 
-proxy-bot: proxy-bot.asd src/proxy-bot.lisp
+proxy-bot: proxy-bot.asd src-proxy-bot/proxy-bot.lisp
 	sbcl --script bin/compile-proxy-bot.sbcl;
 
 submission-zip: ants-bot.asd src/*.lisp
