@@ -6,9 +6,16 @@ import traceback
 import os
 
 def run_game(game, botcmds, options, gameid=0):
-    output_dir = options.output_dir
-    log_input = options.log_input
-    log_output = options.log_output
+    if 'output_dir' in options:
+        output_dir = options["output_dir"]
+    else:
+        output_dir = None
+    log_input = options["log_input"]
+    log_output = options["log_output"]
+    turns = int(options["turns"])
+    loadtime = float(options["loadtime"]) / 1000
+    turntime = float(options["turntime"]) / 1000
+    verbose = bool(options["verbose"])
     try:
         if output_dir:
             if log_input:
@@ -30,8 +37,8 @@ def run_game(game, botcmds, options, gameid=0):
             # TODO: write player names and crap
             of.flush()
 
-        print('running for %s turns' % options.turns)
-        for turn in range(options.turns+1):
+        print('running for %s turns' % turns)
+        for turn in range(turns+1):
             print('turn %s' % turn)
             try:
                 if turn == 0:
@@ -62,9 +69,9 @@ def run_game(game, botcmds, options, gameid=0):
 
                 # get moves from each player
                 if turn == 0:
-                    time_limit = float(options.loadtime) / 1000
+                    time_limit = loadtime
                 else:
-                    time_limit = float(options.turntime) / 1000
+                    time_limit = turntime
                 start_time = time.time()
                 bot_finished = [not game.is_alive(b) for b in range(len(bots))]
                 bot_moves = [[] for b in bots]
@@ -136,7 +143,7 @@ def run_game(game, botcmds, options, gameid=0):
                 print("Got an error running the bots.")
                 raise
 
-            if options.verbose:
+            if verbose:
                 stats = game.get_stats()
                 s = 'turn %4d stats: '
                 for key, values in stats:

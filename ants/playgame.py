@@ -92,7 +92,7 @@ def main(argv):
             "serial": opts.serial,
             "verbose": opts.verbose }
         for round in range(opts.rounds):
-            map_file = open(options.map, 'r')
+            map_file = open(opts.map, 'r')
             game_options["map"] = map_file.read()
             map_file.close()
             game = Ants(game_options)

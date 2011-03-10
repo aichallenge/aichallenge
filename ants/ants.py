@@ -74,7 +74,7 @@ class Ants:
 
         # load map and get number of players from map
         #   will fill in center data
-        self.load_map(map_text)
+        self.load_text(map_text)
 
         # used to remember where the ants started
         self.initial_ant_list = dict(self.ant_list)
