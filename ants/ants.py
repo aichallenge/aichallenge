@@ -300,13 +300,16 @@ class Ants:
                 continue
 
             if self.map[row2][col2] not in (FOOD, WATER): # good orders
-                self.ant_store.move((row1, col1), (row2, col2))
+                self.ant_store.move((row1, col1), (row2, col2), d)
 
     def resolve_orders(self):
         # remove current ants from map
-        for ant in self.ant_store:
-            row, col = ant.loc
-            self.map[row][col] = LAND
+        # TODO: Make this more efficient so (can't use ant_store because 
+        #       it has all the new locations now)
+        for row in self.map:
+            for i, cell in enumerate(row):
+                if cell >= ANTS:
+                    row[i] = LAND
 
         # process moves
         self.ant_store.resolve_moves()
@@ -601,28 +604,11 @@ class Ant:
     def __init__(self, loc, owner, spawn_turn=0):
         self.loc = loc
         self.owner = owner
+        self.moved = False
 
         self._initial_loc = loc
         self._spawn_turn = spawn_turn
         self.orders = []
-
-    def move(self, new_loc):
-        # update location
-        cur_loc = self.loc
-        self.loc = new_loc
-
-        # handle "emtpy" order
-        # if cur_loc == new_loc:
-        #     orders.append('-')
-        #     return
-
-        # d_row = d_col = 0
-        # if cur_loc[0] == new_loc[0]:
-        #     if cur_loc[1] = cur_loc[0]
-        # elif cur_loc[1] == new_loc[1]:
-        # else:
-        #     raise Exception("Could not determine order",
-        #                     "Ant moving from %s to %s" %(cur_loc, new_loc))
 
 class AntStore:
     def __init__(self):
@@ -637,15 +623,17 @@ class AntStore:
                             "Ant already found at %s" %(loc,))
         self._current_loc[ant.loc] = ant
 
-    def move(self, src, dst):
-        # ignore duplicate moves
-        if src in self._moved:
-            return
-
-        # execute the move (if possible)
+    def move(self, src, dst, direction='-'):
         try:
-            self._next_loc[dst].append(self._current_loc[src])
-            self._moved.add(src)
+            ant = self._current_loc[src]
+
+            # ignore duplicate moves
+            if ant.moved: return
+
+            ant.moved = True
+            ant.loc = dst
+            ant.orders.append(direction)
+            self._next_loc[dst].append(ant)
         except KeyError:
             raise Exception("Move ant error",
                             "Ant not found at %s" %(src,))
@@ -655,18 +643,15 @@ class AntStore:
         self._killed = []
 
         # hold any ants which haven't moved
-        for loc, ant in self._current_loc.items():
-            if loc not in self._moved:
-                self._next_loc[loc].append(ant)
+        for ant in self:
+            if not ant.moved:
+                self.move(ant.loc, ant.loc)
+            ant.moved = False
 
         # if ant is sole occupant of a new square then it 
         # survives to the next round
         new_loc = {}
         for loc, ants in self._next_loc.items():
-            # update ant data
-            for ant in ants:
-                ant.move(loc)
-
             if len(ants) == 1:
                 new_loc[loc] = ants[0]
             else:
