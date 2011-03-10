@@ -57,7 +57,7 @@ welcome.
 Run `bin/run-ants-bot.sbcl` and paste the sample input from the
 [Ants Game Specification](http://github.com/aichallenge/aichallenge/wiki/Ants-Game-Specification).
 
-There are also a few initial unit tests which can be run by issueing
+There are also a few initial unit tests which can be run by issuing
 `bin/run-tests.sh`.
 
 
