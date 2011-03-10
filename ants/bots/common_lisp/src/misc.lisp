@@ -15,7 +15,8 @@
 
 
 (defun end-of-turn ()
-  (format (output *state*) "~&go~%"))
+  (format (output *state*) "~&go~%")
+  (force-output (output *state*)))
 
 
 (defun move-ant (ant-x ant-y direction)

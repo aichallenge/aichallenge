@@ -1,23 +1,11 @@
 ;;;; proxy-bot.lisp
 ;;;;
-;;;; TODO replace (equal line X) with (starts-with line X)
-;;;;
 ;;;; Possible problem: once the proxy bot has send the end turn to the real
 ;;;; bot it doesn't send the bot response back to the game engine.
-
-;;; Packages
-
-(require :sb-bsd-sockets)  ; takes a second or so, so we need to be compiled
-
-(defpackage :aw-proxy-bot
-  (:use :cl :sb-bsd-sockets))
-
-(in-package :aw-proxy-bot)
 
 
 ;;; Parameters
 
-;(defparameter *verbose* t)
 (defparameter *verbose* nil)  ; bot seems to work well, turning logging off
 
 (defparameter *input* *standard-input*)
@@ -50,22 +38,17 @@
             year month day hour min sec)))
 
 
+(defun starts-with (sequence subsequence)
+  (let ((sublen (length subsequence)))
+    (when (and (> sublen 0)
+               (<= sublen (length sequence)))
+      (equal (subseq sequence 0 sublen) subsequence))))
+
+
 ;;; Handlers
 
-(defun connection-refused (&optional arg)
-  (declare (ignore arg))
-  (logmsg "~&Connection refused. Aborting...~%")
-  (cl-user::quit :unix-status 111))
-
-
-(defun connection-reset (&optional arg)
-  (declare (ignore arg))
-  (logmsg "~&Connection reset by peer. Aborting...~%")
-  (cl-user::quit :unix-status 104))
-
-
 (defun error-handler (&optional arg)
-  (logmsg "~&Error: " arg ".  Aborting...~%")
+  (logmsg "~&" arg " Aborting...~%")
   (cl-user::quit :unix-status 1))
 
 
@@ -79,27 +62,26 @@
 
 (defun main ()
   (open-log)
-  (let ((socket (make-instance 'inet-socket :type :stream :protocol :tcp)))
+  (let (socket)
     (logmsg "~&~%=== ProxyBot started: " (current-date-time-string) " ===~%")
     (logmsg "Connecting to real bot at 127.0.0.1:41807...~%")
-    (handler-bind ((connection-refused-error #'connection-refused))
-      (socket-connect socket #(127 0 0 1) 41807))
-    (handler-bind ((sb-sys:interactive-interrupt #'interrupted-by-user)
-                   (sb-int:simple-stream-error #'connection-reset)
+    (handler-bind (#+sbcl (sb-sys:interactive-interrupt #'interrupted-by-user)
                    (error #'error-handler))
+      (setf socket (usocket:socket-connect #-allegro #(127 0 0 1)
+                                           #+allegro "localhost"
+                                           41807))
       (loop with end-of-game-p = nil
-            with stream = (socket-make-stream socket :input t :output t
-                                              :element-type 'character
-                                              :buffering :line)
+            with stream = (usocket:socket-stream socket)
             while (peek-char nil *input* nil)  ; run until we receive EOF
             for turn from 0
             do (logmsg "--- turn: " turn " ---~%")
                (logmsg "Sending game state... ")
                (loop with checksum = (list 0 0)
                      for line = (read-line *input* nil)
-                     until (or (equal line "go") (equal line "ready"))
+                     until (or (starts-with line "go")
+                               (starts-with line "ready"))
                      do (when line
-                          (when (equal line "end")
+                          (when (starts-with line "end")
                             (setf end-of-game-p t))
                           (incf (first checksum) (length line))
                           (incf (second checksum))
@@ -111,8 +93,10 @@
                                (force-output stream)))
                (logmsg "Receiving bot response... ")
                (loop with checksum = (list 0 0)
+                     ;; TODO why "nil nil" here and not just "nil" like above?
                      for line = (read-line stream nil nil)
-                     until (or (equal line "go") end-of-game-p)
+                     until (or (starts-with line "go")
+                               end-of-game-p)
                      do (when line
                           (incf (first checksum) (length line))
                           (incf (second checksum))
@@ -124,5 +108,5 @@
                                (force-output *output*)))
                (when end-of-game-p
                  (loop-finish)))
-      (socket-close socket))
-    (close-log)))
+      (ignore-errors (usocket:socket-close socket))))
+  (close-log))

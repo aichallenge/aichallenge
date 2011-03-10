@@ -42,24 +42,19 @@
 ;; TODO fix proxy-bot for Ant Wars
 ;; This MAIN is for the Slime REPL with bin/play-proxy-game.sh.
 (defun main-for-proxybot (&key (log "ants-bot-proxied.log") (verbose t))
-  (let ((socket (make-instance 'inet-socket :type :stream :protocol :tcp))
-        client input output stream)
+  (let (client socket stream)
     (handler-bind ((address-in-use-error #'address-in-use))
-      (socket-bind socket #(127 0 0 1) 41807)
-      (socket-listen socket 0)
+      (setf socket (socket-listen #-allegro #(127 0 0 1) #+allegro "localhost"
+                                  41807 :reuse-address t))
       (format *debug-io* "Waiting for connection...~%")
       (force-output)
       (setf client (socket-accept socket)
-            stream (socket-make-stream client :input t :output t
-                                       :element-type 'character
-                                       :buffering :line)
-            input stream
-            output stream)
+            stream (socket-stream client))
       (format *debug-io* "Connected. Playing game...~%")
       (force-output))
     (unwind-protect
-         (main :state (make-instance 'state :input input :output output)
+         (main :state (make-instance 'state :input stream :output stream)
                :log log :verbose verbose)
-      (socket-close client)
-      (socket-close socket)
+      (ignore-errors (socket-close client)  ; TODO actually test these
+                     (socket-close socket))
       (format *debug-io* "Game finished. Connection closed...~%"))))

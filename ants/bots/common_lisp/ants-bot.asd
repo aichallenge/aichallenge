@@ -14,4 +14,4 @@
                              (:file "game-state")
                              (:file "bot-think")
                              (:file "ants-bot"))))
-  :depends-on (:sb-bsd-sockets))
+  :depends-on (:usocket))

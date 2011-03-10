@@ -1,5 +1,11 @@
 #!/usr/bin/sbcl --script
 
-(setf asdf:*central-registry* (list *default-pathname-defaults*))
+(let ((dpd *default-pathname-defaults*))
+  (setf asdf:*central-registry*
+        (list dpd
+              (merge-pathnames "3rd-party/split-sequence-20011114.1/" dpd)
+              (merge-pathnames "3rd-party/usocket-0.4.1/" dpd))))
+
 (asdf:oos 'asdf:load-op :proxy-bot)
-(save-lisp-and-die "proxy-bot" :toplevel #'aw-proxy-bot::main :executable t)
+
+(save-lisp-and-die "proxy-bot" :toplevel #'main :executable t)

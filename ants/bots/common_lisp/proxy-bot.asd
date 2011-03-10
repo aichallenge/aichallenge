@@ -6,4 +6,4 @@
   :components ((:module src
                 :serial t
                 :components ((:file "proxy-bot"))))
-  :depends-on (:sb-bsd-sockets))
+  :depends-on (:usocket))
