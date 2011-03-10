@@ -2,4 +2,4 @@
 
 (load (merge-pathnames "3rd-party/asdf-init.lisp" *default-pathname-defaults*))
 (asdf:oos 'asdf:load-op :proxy-bot)
-(save-lisp-and-die "proxy-bot" :toplevel #'main :executable t)
+(save-lisp-and-die "proxy-bot" :toplevel #'ants-proxy-bot::main :executable t)

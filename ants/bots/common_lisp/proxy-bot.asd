@@ -5,5 +5,6 @@
 (asdf:defsystem :proxy-bot
   :components ((:module src-proxy-bot
                 :serial t
-                :components ((:file "proxy-bot"))))
+                :components ((:file "package")
+                             (:file "proxy-bot"))))
   :depends-on (:usocket))

@@ -3,6 +3,8 @@
 ;;;; Possible problem: once the proxy bot has send the end turn to the real
 ;;;; bot it doesn't send the bot response back to the game engine.
 
+(in-package :ants-proxy-bot)
+
 
 ;;; Parameters
 
@@ -67,11 +69,10 @@
     (logmsg "Connecting to real bot at 127.0.0.1:41807...~%")
     (handler-bind (#+sbcl (sb-sys:interactive-interrupt #'interrupted-by-user)
                    (error #'error-handler))
-      (setf socket (usocket:socket-connect #-allegro #(127 0 0 1)
-                                           #+allegro "localhost"
-                                           41807))
+      (setf socket (socket-connect #-allegro #(127 0 0 1) #+allegro "localhost"
+                                   41807))
       (loop with end-of-game-p = nil
-            with stream = (usocket:socket-stream socket)
+            with stream = (socket-stream socket)
             while (peek-char nil *input* nil)  ; run until we receive EOF
             for turn from 0
             do (logmsg "--- turn: " turn " ---~%")
@@ -107,5 +108,5 @@
                                (force-output *output*)))
                (when end-of-game-p
                  (loop-finish)))
-      (ignore-errors (usocket:socket-close socket))))
+      (ignore-errors (socket-close socket))))
   (close-log))
