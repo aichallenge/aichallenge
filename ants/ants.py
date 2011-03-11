@@ -76,8 +76,8 @@ class Ants:
         self.killed_ants = []  # ants which were killed this turn
         self.all_ants = []     # all ants that have been created
 
-        self.all_food = {}
-        self.current_food = {}
+        self.all_food = {}     # all food created
+        self.current_food = {} # food currently in game
 
         #self.center = [] # used to scroll the map so that a player's
         #                 #   starting ant is in the center
@@ -113,7 +113,8 @@ class Ants:
                          for i in range(self.num_players)]
 
         # used to track scores
-        self.score = [Fraction(0,1) for i in range(self.num_players)]
+        self.score = [Fraction(0,1)]*self.num_players
+        self.score_history = [[s] for s in self.score]
         self.turn = 0
 
     def load_text(self, filename):
@@ -586,6 +587,8 @@ class Ants:
         self.do_attack()
         self.do_spawn()
         self.do_food()
+        for i, s in enumerate(self.score):
+            self.score_history[i].append(s)
 
     # used for 'map hack' playback
     def get_state(self):
