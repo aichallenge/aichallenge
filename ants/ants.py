@@ -320,6 +320,11 @@ class Ants:
                 ant.move(ant.loc)
             next_loc[ant.loc].append(ant)
 
+        # set old ant locations to land
+        for ant in self.current_ants.values():
+            row, col = ant.prev_loc
+            self.map[row][col] = LAND
+
         # if ant is sole occupant of a new square then it survives
         self.current_ants = {}
         for loc, ants in next_loc.items():
@@ -327,11 +332,6 @@ class Ants:
                 self.current_ants[loc] = ants[0]
             else:
                 self.killed_ants.extend(ants)
-
-        # set old ant locations to land
-        for ant in self.current_ants.values():
-            row, col = ant.prev_loc
-            self.map[row][col] = LAND
 
         # set new ant locations
         for ant in self.current_ants.values():
