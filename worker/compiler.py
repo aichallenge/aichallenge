@@ -1,4 +1,4 @@
-# compile_anything.py
+# compiler.py
 # Author: Jeff Cameron (jeff@jpcameron.com)
 #
 # Auto-detects the language of the entry based on the extension,
@@ -321,9 +321,8 @@ def get_programming_languages():
     connection.close()
     return programming_languages
 
-# Autodetects the language of the entry in the current working directory and
-# compiles it.
-def compile_anything(programming_languages=None):
+def detect_language(programming_languages):
+    # Autodetects the language of the entry in the current working directory
     log = Log()
     if programming_languages == None:
         programming_languages = get_programming_languages()
@@ -331,6 +330,8 @@ def compile_anything(programming_languages=None):
         lang for lang in programming_languages \
             if os.path.exists(lang["main_code_file"])
     ]
+    print os.listdir(os.getcwd())
+    print detected_langs
     # If no language was detected
     if len(detected_langs) == 0:
         log.err += "The auto-compile environment could not locate your main code\n"
@@ -352,11 +353,18 @@ def compile_anything(programming_languages=None):
         log.err += "auto-compile environment can figure out which programming\n"
         log.err += "language you are trying to use.\n"
         return log.out, log.err, "NULL"
+    return detected_langs[0]
+
+# Autodetects the language of the entry in the current working directory and
+# compiles it.
+def compile_anything(programming_languages=None):
+    log = Log()
     # If we get this far, then we have successfully auto-detected the language
     # that this contestant is using.
-    main_code_file = detected_langs[0]["main_code_file"]
-    detected_lang = detected_langs[0]["name"]
-    language_id = detected_langs[0]["language_id"]
+    detected_language = detect_language(programming_languages)
+    main_code_file = detected_language["main_code_file"]
+    detected_lang = detected_language["name"]
+    language_id = detected_language["language_id"]
     log.out += "Found " + main_code_file + ". Compiling this entry as " + \
         detected_lang + "\n"
     t1 = time.time()

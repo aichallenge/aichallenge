@@ -5,8 +5,11 @@ import os
 import time
 from optparse import OptionParser
 
-from engine import run_game
 from ants import Ants
+
+# get engine from worker dir
+sys.path.append("../worker")
+from engine import run_game
 
 def main(argv):
     usage ="Usage: %prog [options] map bot1 bot2\n\nYou must specify a map file."
@@ -26,6 +29,9 @@ def main(argv):
     # it will also contain the bot input/output logs, if requested
     parser.add_option("-o", "--output_dir", dest="output_dir",
                       help="Directory to dump replay files to.")
+    parser.add_option("-j", "--output_json", dest="output_json",
+                      action="store_true", default=False,
+                      help="Return json result from engine.")
     parser.add_option("-I", "--log_input", dest="log_input",
                        action="store_true", default=False,
                        help="Log input streams sent to bots")
@@ -87,6 +93,7 @@ def main(argv):
             "map_file": opts.map,
             "turns": opts.turns,
             "output_dir": opts.output_dir,
+            "output_json": opts.output_json,
             "log_input": opts.log_input,
             "log_output": opts.log_output,
             "serial": opts.serial,
@@ -102,7 +109,9 @@ def main(argv):
                       (game.num_players, len(bots)))
                 break
             print('playgame round %s' % round)
-            run_game(game, bots, engine_options, round)
+            result = run_game(game, bots, engine_options, round)
+            if opts.output_json:
+                print result
 
     except Exception:
         traceback.print_exc()

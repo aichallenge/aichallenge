@@ -34,8 +34,8 @@ def hash_file_md5sum(filename):
 def hash_file_sha(filename):
     READ_SIZE = 4096 * 2500
     fhash = sha1()
-    fhash.update(os.path.basename(filename))
-    f = open(filename, 'r')
+    #fhash.update(os.path.basename(filename))
+    f = open(filename, 'rb')
     content = f.read(READ_SIZE)
     while len(content) != 0:
         fhash.update(content)

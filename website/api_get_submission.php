@@ -20,15 +20,15 @@ if (!chdir($server_info["submissions_path"].$submission_id)) {
 
 // set correct content headers based on compression type
 if (file_exists("entry.zip")) {
-	header("Content-disposition: attachment; filename=$submission_id.zip");
+	header("Content-disposition: attachment; filename=entry.zip");
 	header("Content-type: application/zip");
 	$file = getcwd() . "/entry.zip";
 } else if (file_exists("entry.tgz")) {
-	header("Content-disposition: attachment; filename=$submission_id.tgz");
+	header("Content-disposition: attachment; filename=entry.tgz");
 	header("Content-type: application/x-compressed");
 	$file = getcwd() . "/entry.tgz";
 } else if (file_exists("entry.tar.gz")) {
-	header("Content-disposition: attachment; filename=$submission_id.tgz");
+	header("Content-disposition: attachment; filename=entry.tgz");
 	header("Content-type: application/x-compressed");
 	$file = getcwd() . "/entry.tar.gz";
 } else {

@@ -4,6 +4,7 @@
 
 require_once('memcache.php');
 require_once('mysql_login.php');
+require_once('server_info.php');
 
 if (!isset($_GET['api_key'])) {
     header('HTTP/1.0 401 Unauthorized');
@@ -55,4 +56,11 @@ function valid_worker($api_key,$ip_address) {
 	}	
 }
 
+function api_log($message) {
+	global $server_info;
+	$message = str_replace("\n", "", $message);
+	$message = str_replace("\r", "", $message);
+	$message = sprintf("%s - %s", date(DATE_ATOM), $message) . "\n";
+	error_log($message, 3, $server_info["api_log"]);
+}
 ?>
