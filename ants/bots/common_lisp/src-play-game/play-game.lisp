@@ -52,6 +52,60 @@
 
 ;;; Functions
 
+(defun do-turn (turn)
+  (loop for proc in *procs*
+        for i from 0
+        for bot = (elt *bots* i)
+        for pin = (sb-ext:process-input proc)
+        for pout = (sb-ext:process-output proc)
+        do  (if (equal :running (sb-ext:process-status proc))
+                (send-game-state i pin turn)
+                (logmsg i ":" bot " has stopped running...~%"))
+           (let ((turn-start (wall-time)))
+             (wait-for-output pout turn-start)
+             (loop ;while (wait-for-output pout start)  ; no return values
+                   with end-loop = nil
+                   until end-loop
+                   do (cond ((no-turn-time-left-p turn-start)
+                             (logmsg i ":" bot " took too long.~%")
+                             (setf end-loop t))
+                            ((listen pout)
+                             (let ((line (read-line pout nil)))
+                               (when (starts-with line "go")
+                                 (loop-finish))
+                               (logmsg i ":" bot ": " line "~%")
+                               (when (starts-with line "o ")
+                                 (move-ant i line)))))))))
+
+
+(defun move-ant (botid line)
+  (let* ((split (split-sequence #\space (string-upcase line)))
+         (row (parse-integer (elt split 1)))
+         (col (parse-integer (elt split 2)))
+         (dir (elt split 3)))
+    (setf (aref *map-array* row col) 0)
+    (cond ((equal dir "N")
+           (setf (aref *map-array*
+                       (if (= row 0) (- *map-rows* 1) (- row 1))
+                       col)
+                 (+ botid 100)))
+          ((equal dir "E")
+           (setf (aref *map-array*
+                       row
+                       (if (= col (- *map-cols* 1)) 0 (+ col 1)))
+                 (+ botid 100)))
+          ((equal dir "S")
+           (setf (aref *map-array*
+                       (if (= row (- *map-rows* 1)) 0 (+ row 1))
+                       col)
+                 (+ botid 100)))
+          ((equal dir "W")
+           (setf (aref *map-array*
+                       row
+                       (if (= col 0) (- *map-cols 1) (- col 1)))
+                 (+ botid 100))))))
+
+
 (defun parse-map (map)
   (with-open-file (f map)
     (loop with rows = 0
@@ -151,6 +205,27 @@
                                  :input :stream :output :stream))))
 
 
+(defun send-game-state (botid input turn)
+  (format input "turn ~D~%" turn)
+  (loop for row from 0 below *map-rows*
+        do (loop for col from 0 below *map-cols*
+                 for sq = (aref *map-array* row col)
+                 do (cond ((= sq 1) (format input "w ~D ~D~%" row col))
+                          ((= sq 2) (format input "f ~D ~D~%" row col))
+                          ((>= sq 200)
+                           (format input "d ~D ~D ~D~%" row col
+                                   (cond ((= botid (- sq 200)) 0)
+                                         ((< botid (- sq 200)) (- sq 200))
+                                         ((> botid (- sq 200)) (- sq 199)))))
+                          ((>= sq 100)
+                           (format input "a ~D ~D ~D~%" row col
+                                   (cond ((= botid (- sq 100)) 0)
+                                         ((< botid (- sq 100)) (- sq 100))
+                                         ((> botid (- sq 100)) (- sq 99))))))))
+  (format input "go~%")
+  (force-output input))
+
+
 (defun send-initial-game-state ()
   (loop for proc in *procs*
         for i from 0
@@ -162,21 +237,30 @@
                  (format pin "turn 0~%loadtime ~D~%turntime ~D~%rows ~D~%cols ~D~%turns ~D~%viewradius2 93~%attackradius2 6~%spawnradius2 6~%ready~%"
                          *load-time* *turn-time* *map-rows* *map-cols* *turns*)
                  (force-output pin))
-               (logmsg "Bot " i ":" bot " has stopped running...~%"))
-           (loop with turn-start = (wall-time)
-                 initially (loop until (or (listen pout)
-                                           (> (- (wall-time) turn-start)
-                                              (/ *turn-time* 1000))))
-                 ;; TODO needs a listen since put stays open (so no EOF/turn)
-                 for line = (read-line pout nil)
-                 while (and line (< (- (wall-time) turn-start)
-                                    (/ *turn-time* 1000)))
-                 do (when (> (- (wall-time) turn-start)
-                             (/ *turn-time* 1000))
-                      (logmsg "Bot " i ":" bot " took too long.~%"))
-                    (when (starts-with line "go")
-                      (logmsg "Bot " i ":" bot " is ready.~%")
-                      (loop-finish)))))
+               (logmsg i ":" bot " has stopped running...~%"))
+           ;; TODO don't do this when bot has stopped running
+           (let ((turn-start (wall-time)))
+             (wait-for-output pout turn-start)
+             (cond ((no-turn-time-left-p turn-start)
+                    (logmsg i ":" bot " took too long.~%"))
+                   ((listen pout)
+                    (let ((line (read-line pout nil)))
+                      (unless (starts-with line "go")
+                        (logmsg i ":" bot " sent junk: " line "~%"))))))))
+
+
+(defun no-turn-time-left-p (turn-start-time)
+  (not (turn-time-left-p turn-start-time)))
+
+
+(defun turn-time-left-p (turn-start-time)
+  (<= (- (wall-time) turn-start-time)
+      (/ *turn-time* 1000)))
+
+
+(defun wait-for-output (output turn-start-time)
+  (loop until (or (listen output)
+                  (no-turn-time-left-p turn-start-time))))
 
 
 ;;; Main Program
@@ -239,6 +323,5 @@
              (when (= turn 0)
                (send-initial-game-state))
              (when (> turn 0)
-
-               )))
+               (do-turn turn))))
   (logmsg "[  end] " (current-date-time-string) "~%"))
