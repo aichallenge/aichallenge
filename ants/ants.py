@@ -297,7 +297,9 @@ class Ants:
             row1, col1, d = order
 
             ant = self.ant_store[(row1, col1)]
-            if ant.owner != player:
+            if ant.owner != player: # must move your *own* ant
+                continue
+            if ant.moved:           # ignore duplicate orders
                 continue
 
             if self.map[row2][col2] not in (FOOD, WATER): # good orders
@@ -612,7 +614,10 @@ class Ant:
 
     def move(self, new_loc, direction='-'):
         # ignore duplicate moves
-        if self.moved: return
+        if self.moved:
+            raise Exception("Move ant error",
+                            "This ant was already moved from %s to %s"
+                            %(self.prev_loc, self.loc))
 
         self.prev_loc = self.loc
         self.loc = new_loc
@@ -655,7 +660,7 @@ class AntStore:
             if len(ants) == 1:
                 self._current_loc[loc] = ants[0]
             else:
-                self._killed.extend((loc,ant) for ant in ants)
+                self._killed.extend(ant)
 
     def kill(self, loc):
         try:
@@ -678,7 +683,7 @@ class AntStore:
                             "Ant not found at %s" %(loc,))
 
     def player_ants(self, player):
-        return [ant for ant in self._current_loc.values() if player == ant.owner]
+        return [ant for ant in self if player == ant.owner]
 
     def killed_ants(self):
         return self._killed
