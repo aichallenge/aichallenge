@@ -76,7 +76,7 @@ class Ants:
         self.killed_ants = []  # ants which were killed this turn
         self.all_ants = []     # all ants that have been created
 
-        self.all_food = {}     # all food created
+        self.all_food = []     # all food created
         self.current_food = {} # food currently in game
 
         #self.center = [] # used to scroll the map so that a player's
@@ -357,13 +357,14 @@ class Ants:
             raise Exception("Add food error",
                             "Food already found at %s" %(loc,))
         self.map[loc[0]][loc[1]] = FOOD
-        self.current_food[loc] = self.turn
-        self.all_food[(loc,self.turn)] = None
+        food = Food(loc, self.turns)
+        self.current_food[loc] = food
+        self.all_food.append(food)
 
     def remove_food(self, loc):
         try:
             self.map[loc[0]][loc[1]] = LAND
-            self.all_food[(loc,self.current_food[loc])] = self.turns
+            self.current_food[loc].end_turn = self.turns
             del self.current_food[loc]
         except KeyError:
             raise Exception("Remove food error",
@@ -665,6 +666,12 @@ class Ant:
         self.loc = new_loc
         self.moved = True
         self.orders.append(direction)
+
+class Food:
+    def __init__(self, loc, start_turn):
+        self.loc = loc
+        self.start_turn = start_turn
+        self.end_turn = None
 
 if __name__ == '__main__':
 
