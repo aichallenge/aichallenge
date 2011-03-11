@@ -10,7 +10,7 @@
 ;;; Functions
 
 (defun bot-think ()
-  (loop for ant in (my-ants *state*)
+  (loop for ant in (reverse (my-ants *state*))
         for x = (elt ant 0)
         for y = (elt ant 1)
         do (cond ((not (water? x y :north)) (move-ant x y :north))
