@@ -8,7 +8,7 @@
 
 ;;; Parameters
 
-(defparameter *verbose* nil)  ; bot seems to work well, turning logging off
+(defparameter *verbose* nil)
 
 (defparameter *input* *standard-input*)
 (defparameter *output* *standard-output*)
@@ -42,10 +42,12 @@
   (cond ((or (getopt :short-name "?") (getopt :short-name "h"))
          (help)
          (exit))
-        ((getopt :short-name "v")
+        ((getopt :short-name "r")
          (format t "~&proxy-bot (Ant Wars) version ~A~%" +version+)
          (exit)))
   (do-cmdline-options (option name value source)
+    (when (or (equal name "v") (equal name "verbose"))
+      (setf *verbose* t))
     (when (or (equal name "p") (equal name "port"))
       (setf *port* (parse-integer value)))))
 
@@ -68,15 +70,18 @@
 (defsynopsis ()
   (text :contents "Proxy bot for Ant Wars.
 ")
+  (group (:header "Connection options:")
+    (stropt :short-name "p" :long-name "port" :argument-name "PORT"
+            :description "Port to connect to (default: 41807)."))
+  (group (:header "Debug options:")
+    (flag :short-name "v" :long-name "verbose"
+      :description "Verbose logging to \"proxy-bot.log\"."))
   (group (:header "Immediate exit options:")
     (flag :short-name "?" :description "Print this help and exit.")
     (flag :short-name "h" :long-name "help"
           :description "Print this help and exit.")
-    (flag :short-name "v" :description "Print version number and exit."))
-  (group (:header "Connection options:")
-    (stropt :short-name "p" :long-name "port" :argument-name "PORT"
-            :description "Port to connect to (default: 41807)."
-      )))
+    (flag :short-name "r" :long-name "release"
+          :description "Print version/release number and exit.")))
 
 
 (defun main ()
