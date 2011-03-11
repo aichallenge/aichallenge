@@ -3,6 +3,7 @@ import traceback
 import sys
 import os
 import time
+import random
 from engine import run_game
 
 from ants import Ants
@@ -54,12 +55,16 @@ def main(argv):
     parser.add_option("-r", "--rounds", dest="rounds",
                       default=1, type="int",
                       help="Number of rounds to play")
+    parser.add_option("--seed", dest="seed",
+                      default=None,
+                      help="Seed for the random number generator")
 
     (opts, args) = parser.parse_args(argv)
     if opts.map is None:
         print("Please specify a map to start with")
         return -1
     try:
+        random.seed(opts.seed)
         options = {"map": opts.map,
                    "attack": opts.attack,
                    "loadtime": opts.loadtime,

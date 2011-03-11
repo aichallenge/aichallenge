@@ -2,7 +2,7 @@ all: playback/movie.gif
 
 
 playback/frame_00000.png: *.py
-	python playgame.py --timeout_ms 3000 -t 100 -m maps/big.txt "python bots/HunterBot.py" "python bots/MyBot.py" "python bots/LeftyBot.py" "python bots/MyBot.py"
+	python playgame.py -t 100 -m maps/big.txt "python bots/HunterBot.py" "python bots/MyBot.py" "python bots/LeftyBot.py" "python bots/MyBot.py"
 
 game: playback/frame_00000.png
 
