@@ -73,7 +73,7 @@ class Ants:
         self.land_area = 0
 
         self.ant_store = AntStore()
-        self.food_list = [] # indexed list of food locations for speed
+        self.food_store = FoodStore()
 
         #self.center = [] # used to scroll the map so that a player's
         #                 #   starting ant is in the center
@@ -144,7 +144,7 @@ class Ants:
                         self.land_area += 1
                     elif c == '*':
                         self.map[-1].append(FOOD)
-                        self.food_list.append((row, col))
+                        self.food_store.add((row, col))
                         self.land_area += 1
                     elif c == '%':
                         self.map[-1].append(WATER)
@@ -223,7 +223,7 @@ class Ants:
                 tmp += 'a %s %s %s\n' % (row, col, self.switch[player][ant.owner])
                 self.revealed[player][row][col] = False
         # send visible food
-        for row, col in self.food_list:
+        for row, col in self.food_store:
             if player == None or v[row][col]:
                 tmp += 'f %s %s\n' % (row, col)
                 if player != None:
@@ -321,18 +321,18 @@ class Ants:
     # must have only 1 force near the food to create a new ant
     #  and food in contention is eliminated
     def do_spawn(self):
-        for f_row, f_col in self.food_list[:]:
+        for f_row, f_col in self.food_store:
             owner = None
             for (n_row, n_col), n_owner in self.nearby_ants(f_row, f_col, None, 1, 9):
                 if owner == None:
                     owner = n_owner
                 elif owner != n_owner:
                     self.map[f_row][f_col] = LAND
-                    self.food_list.remove((f_row, f_col))
+                    self.food_store.remove((f_row, f_col))
                     break
             else:
                 if owner != None:
-                    self.food_list.remove((f_row, f_col))
+                    self.food_store.remove((f_row, f_col))
                     self.map[f_row][f_col] = owner
                     self.ant_store.add(Ant((f_row,f_col), owner))
 
@@ -473,7 +473,7 @@ class Ants:
                 col = randrange(self.width)
                 if self.map[row][col] == LAND:
                     self.map[row][col] = FOOD
-                    self.food_list.append((row, col))
+                    self.food_store.add((row, col))
                     break
 
     def do_food_offset(self, amount=1):
@@ -491,7 +491,7 @@ class Ants:
                 coord = self.find_closest_land((row, col))
                 if coord:
                     self.map[coord[1]][coord[0]] = FOOD
-                    self.food_list.append(coord)
+                    self.food_store.add(coord)
 
     def do_food_sections(self, amount=1):
         """
@@ -505,7 +505,7 @@ class Ants:
                     row, col = choice(squares)
                     if self.map[row][col] == LAND:
                         self.map[row][col] = FOOD
-                        self.food_list.append((row, col))
+                        self.food_store.add((row, col))
                         break
 
     def remaining_players(self):
@@ -641,7 +641,7 @@ class AntStore:
     def add(self, ant):
         if ant.loc in self._current_loc:
             raise Exception("Add ant error",
-                            "Ant already found at %s" %(loc,))
+                            "Ant already found at %s" %(ant.loc,))
         ant.spawn_turn = self._turn
         self.ants.append(ant)
         self._current_loc[ant.loc] = ant
@@ -687,6 +687,34 @@ class AntStore:
 
     def killed_ants(self):
         return self._killed
+
+class FoodStore:
+    def __init__(self):
+        self.food = {}         # all food created in the game
+                               #   ((loc, spawn_turn) => remove_turn)
+        self._current_loc = {} # current food in game (loc => spawn_turn)
+        self._turn = 0
+
+    def start_turn(self, turn):
+        self._turn = turn
+
+    def add(self, loc):
+        if loc in self._current_loc:
+            raise Exception("Add food error",
+                            "Food already found at %s" %(loc,))
+        self._current_loc[loc] = self._turn
+        self.food[(loc,self._turn)] = None
+
+    def remove(self, loc):
+        try:
+            self.food[(loc,self._current_loc[loc])] = self._turn
+            del self._current_loc[loc]
+        except KeyError:
+            raise Exception("Remove food error",
+                            "Food not found at %s" %(loc,))
+
+    def __iter__(self):
+        return iter(self._current_loc.keys())
 
 if __name__ == '__main__':
 
