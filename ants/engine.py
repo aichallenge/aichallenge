@@ -159,6 +159,10 @@ def run_game(game, botcmds, turntime, loadtime, turns=5000,
             of.write(game.get_state())
             of.flush()
 
+            replay = open(os.path.join(output_dir, '%s.replay.new' % gameid), "w")
+            replay.write(str(game))
+            replay.close()
+
     except Exception:
         traceback.print_exc()
     finally:

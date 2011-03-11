@@ -79,6 +79,8 @@ class Ants:
         self.all_food = []     # all food created
         self.current_food = {} # food currently in game
 
+        self.turn = 0
+
         #self.center = [] # used to scroll the map so that a player's
         #                 #   starting ant is in the center
 
@@ -115,7 +117,6 @@ class Ants:
         # used to track scores
         self.score = [Fraction(0,1)]*self.num_players
         self.score_history = [[s] for s in self.score]
-        self.turn = 0
 
     def load_text(self, filename):
         players = []
@@ -357,14 +358,14 @@ class Ants:
             raise Exception("Add food error",
                             "Food already found at %s" %(loc,))
         self.map[loc[0]][loc[1]] = FOOD
-        food = Food(loc, self.turns)
+        food = Food(loc, self.turn)
         self.current_food[loc] = food
         self.all_food.append(food)
 
     def remove_food(self, loc):
         try:
             self.map[loc[0]][loc[1]] = LAND
-            self.current_food[loc].end_turn = self.turns
+            self.current_food[loc].end_turn = self.turn
             del self.current_food[loc]
         except KeyError:
             raise Exception("Remove food error",
@@ -374,7 +375,7 @@ class Ants:
         if loc in self.current_ants:
             raise Exception("Add ant error",
                             "Ant already found at %s" %(loc,))
-        ant = Ant(loc, owner, self.turns)
+        ant = Ant(loc, owner, self.turn)
         row, col = loc
         self.map[row][col] = owner
         self.all_ants.append(ant)
@@ -642,6 +643,47 @@ class Ants:
         for row, col, owner in self.ants():
             ant_count[owner] += 1
         return {'ant_count': ant_count}
+
+    def __str__(self):
+        result = []
+        # required params
+        result.append(['v', 'ants', '1'])
+        result.append(['players', self.num_players])
+
+        # optional params
+        result.append(['loadtime', self.loadtime])
+        result.append(['turntime', self.turntime])
+        result.append(['rows', self.height])
+        result.append(['cols', self.width])
+        result.append(['turns', self.turns])
+        result.append(['viewradius2', self.viewradius])
+        result.append(['attackradius2', self.attackradius])
+        result.append(['spawnradius2', self.spawnradius])
+
+        # map
+        result.append([self.render_map()])
+
+        # food
+        for f in self.all_food:
+            food_data = ['f', f.loc[0], f.loc[1], f.start_turn]
+            if f.end_turn:
+                food_data.append(f.end_turn)
+            result.append(food_data)
+
+        # ants
+        for a in self.all_ants:
+            result.append([
+                'a', a.owner, a.loc[0], a.loc[1], 
+                a.spawn_turn, ''.join(a.orders)
+            ])
+
+        # scores
+        for s in self.score_history:
+            result.append(['s'] + map(int, s))
+
+        result.append([]) # final new line
+
+        return '\n'.join(' '.join(map(str,s)) for s in result)
 
 class Ant:
     def __init__(self, loc, owner, spawn_turn=None):
