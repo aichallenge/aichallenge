@@ -33,20 +33,6 @@
                            :if-does-not-exist :create)))))
 
 
-(defun current-date-time-string ()
-  (multiple-value-bind (sec min hour day month year)
-      (get-decoded-time)
-    (format nil "~D-~2,'0D-~2,'0D ~2,'0D:~2,'0D:~2,'0D"
-            year month day hour min sec)))
-
-
-(defun starts-with (sequence subsequence)
-  (let ((sublen (length subsequence)))
-    (when (and (> sublen 0)
-               (<= sublen (length sequence)))
-      (equal (subseq sequence 0 sublen) subsequence))))
-
-
 ;;; Handlers
 
 (defun error-handler (&optional arg)

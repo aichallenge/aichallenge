@@ -7,4 +7,4 @@
                 :serial t
                 :components ((:file "package")
                              (:file "proxy-bot"))))
-  :depends-on (:usocket))
+  :depends-on (:ants-common :usocket))
