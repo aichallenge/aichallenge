@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 from sandbox import Sandbox
-from ants import Ants
 import time
 import traceback
 import os
+import sys
 
 def run_game(game, botcmds, options, gameid=0):
     if 'output_dir' in options:
