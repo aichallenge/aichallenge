@@ -5,7 +5,6 @@
 
 ;;; Functions
 
-;; TODO hasn't been tested very well yet
 (defun distance (x1 y1 x2 y2)
   (let* ((dx (abs (- x1 x2)))
          (dy (abs (- y1 y2)))
@@ -42,7 +41,6 @@
                 (:west  "W")))))
 
 
-;; TODO hasn't been tested very well yet
 (defun new-location (src-x src-y direction)
   (if (not (member direction '(:north :east :south :west)))
       (progn (errmsg "[new-location] Illegal direction: " direction)
@@ -68,18 +66,15 @@
         (list dst-x dst-y))))
 
 
-;; TODO hasn't been tested very well yet
 (defun turn-time-remaining ()
-  (- (wall-time)
-     (+ (turn-start-time *state*) (turn-time *state*))))
+  (- (+ (turn-start-time *state*) (turn-time *state*))
+     (wall-time)))
 
 
-;; TODO hasn't been tested very well yet
 (defun turn-time-used ()
   (- (wall-time) (turn-start-time *state*)))
 
 
-;; TODO hasn't been tested very well yet
 (defun water? (x y direction)
   (let ((nl (new-location x y direction)))
     (= 1 (aref (game-map *state*) (elt nl 1) (elt nl 0)))))
