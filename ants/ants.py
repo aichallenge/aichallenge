@@ -296,25 +296,22 @@ class Ants:
             row2, col2 = self.destination(*order)
             row1, col1, d = order
 
-            if self.map[row1][col1] != player: # must move *your* ant
+            ant = self.ant_store[(row1, col1)]
+            if ant.owner != player:
                 continue
 
             if self.map[row2][col2] not in (FOOD, WATER): # good orders
-                self.ant_store.move((row1, col1), (row2, col2), d)
+                ant.move((row2, col2), d)
 
     def resolve_orders(self):
-        # remove current ants from map
-        # TODO: Make this more efficient so (can't use ant_store because 
-        #       it has all the new locations now)
-        for row in self.map:
-            for i, cell in enumerate(row):
-                if cell >= ANTS:
-                    row[i] = LAND
-
-        # process moves
         self.ant_store.resolve_moves()
 
-        # new ants to map
+        # set old ant location to land
+        for ant in self.ant_store:
+            row, col = ant.prev_loc
+            self.map[row][col] = LAND
+
+        # set new ant locations
         for ant in self.ant_store:
             row, col = ant.loc
             self.map[row][col] = ant.owner
@@ -335,7 +332,7 @@ class Ants:
                 if owner != None:
                     self.food_list.remove((f_row, f_col))
                     self.map[f_row][f_col] = owner
-                    self.ant_store.add(Ant((f_row,f_col), owner, self.turn))
+                    self.ant_store.add(Ant((f_row,f_col), owner))
 
     # ants kill enemies of less or equally occupied
     # TODO: update function to mark conflict for dead ant info
@@ -527,6 +524,7 @@ class Ants:
 
     def start_turn(self):
         self.turn += 1
+        self.ant_store.start_turn(self.turn)
 
     def finish_turn(self):
         self.turn_reveal= [[] for i in range(self.num_players)]
@@ -601,66 +599,63 @@ class Ants:
         return "\n".join(" ".join(row) for row in result)
 
 class Ant:
-    def __init__(self, loc, owner, spawn_turn=0):
+    def __init__(self, loc, owner, spawn_turn=None):
         self.loc = loc
         self.owner = owner
+
+        self.prev_loc = None
+        self.initial_loc = loc
+        self.spawn_turn = spawn_turn
+        self.orders = []
+
         self.moved = False
 
-        self._initial_loc = loc
-        self._spawn_turn = spawn_turn
-        self.orders = []
+    def move(self, new_loc, direction='-'):
+        # ignore duplicate moves
+        if self.moved: return
+
+        self.prev_loc = self.loc
+        self.loc = new_loc
+        self.moved = True
+        self.orders.append(direction)
 
 class AntStore:
     def __init__(self):
-        self._current_loc = {}             # ants indexed by current location
-        self._next_loc = defaultdict(list) # ants indexed by destinations
-        self._moved = set()                # locations of moves ants
-        self._killed = []                  # ants killed this turn
+        self.ants = []         # list of all ants created in the game
+
+        self._current_loc = {} # ants indexed by current location
+        self._killed = []      # ants killed this turn
+        self._turn = 0
+
+    def start_turn(self, turn):
+        self._turn = turn
+        self._killed = []
+        for ant in self:
+            ant.moved = False
 
     def add(self, ant):
         if ant.loc in self._current_loc:
             raise Exception("Add ant error",
                             "Ant already found at %s" %(loc,))
+        ant.spawn_turn = self._turn
+        self.ants.append(ant)
         self._current_loc[ant.loc] = ant
 
-    def move(self, src, dst, direction='-'):
-        try:
-            ant = self._current_loc[src]
-
-            # ignore duplicate moves
-            if ant.moved: return
-
-            ant.moved = True
-            ant.loc = dst
-            ant.orders.append(direction)
-            self._next_loc[dst].append(ant)
-        except KeyError:
-            raise Exception("Move ant error",
-                            "Ant not found at %s" %(src,))
-
     def resolve_moves(self):
-        # reset killed ants
-        self._killed = []
-
-        # hold any ants which haven't moved
+        # hold any ants that haven't moved and determine new locations
+        next_loc = defaultdict(list)
         for ant in self:
             if not ant.moved:
-                self.move(ant.loc, ant.loc)
-            ant.moved = False
+                ant.move(ant.loc)
+            next_loc[ant.loc].append(ant)
 
-        # if ant is sole occupant of a new square then it 
-        # survives to the next round
-        new_loc = {}
-        for loc, ants in self._next_loc.items():
+        # if ant is sole occupant of a new square then it survives
+        self._current_loc = {}
+        for loc, ants in next_loc.items():
             if len(ants) == 1:
-                new_loc[loc] = ants[0]
+                self._current_loc[loc] = ants[0]
             else:
                 self._killed.extend((loc,ant) for ant in ants)
-
-        # update data structures
-        self._moved.clear()
-        self._next_loc.clear()
-        self._current_loc = new_loc
 
     def kill(self, loc):
         try:
@@ -674,6 +669,13 @@ class AntStore:
         # Note: can't used itervalues because we want to be able to change
         #       the ant store as we iterate
         return iter(self._current_loc.values())
+
+    def __getitem__(self, loc):
+        try:
+            return self._current_loc[loc]
+        except:
+            raise Exception("Ant not found",
+                            "Ant not found at %s" %(loc,))
 
     def player_ants(self, player):
         return [ant for ant in self._current_loc.values() if player == ant.owner]
