@@ -639,19 +639,6 @@ class Ants:
             ant_count[owner] += 1
         return {'ant_count': ant_count}
 
-    def __str__(self):
-        result = []
-
-        results.append(['v ants 1'])
-
-        results.append(['players', self.num_players])
-        for p in range(self.num_players):
-            result.append(['player_name', p+1, string.ascii_lowercase[p]])
-
-        result.append([self.render_map()])
-
-        return "\n".join(" ".join(row) for row in result)
-
 class Ant:
     def __init__(self, loc, owner, spawn_turn=None):
         self.loc = loc
