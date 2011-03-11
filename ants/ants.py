@@ -48,6 +48,7 @@ class Ants:
         self.turns = options['turns']
         self.loadtime = options['loadtime']
         self.turntime = options['turntime']
+        self.seed = options['seed']
         self.viewradius = 96
         self.attackradius = 5
         self.spawnradius = 2
@@ -603,6 +604,8 @@ class Ants:
                 self.loadtime, self.turntime, self.height, self.width,
                 self.turns, self.viewradius, self.attackradius,
                 self.spawnradius)
+        if self.seed is not None:
+            tmp += 'seed %d\n' %(self.seed,)
         if player == None:
             tmp += self.render_map()
         return tmp
@@ -659,6 +662,8 @@ class Ants:
         result.append(['viewradius2', self.viewradius])
         result.append(['attackradius2', self.attackradius])
         result.append(['spawnradius2', self.spawnradius])
+        if self.seed is not None:
+            result.append(['seed', self.seed])
 
         # map
         result.append([self.render_map()])

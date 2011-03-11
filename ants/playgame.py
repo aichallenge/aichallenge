@@ -56,7 +56,7 @@ def main(argv):
                       default=1, type="int",
                       help="Number of rounds to play")
     parser.add_option("--seed", dest="seed",
-                      default=None,
+                      default=None, type="int",
                       help="Seed for the random number generator")
 
     (opts, args) = parser.parse_args(argv)
@@ -69,7 +69,8 @@ def main(argv):
                    "attack": opts.attack,
                    "loadtime": opts.loadtime,
                    "turntime": opts.turntime,
-                   "turns": opts.turns }
+                   "turns": opts.turns,
+                   "seed": opts.seed}
         for round in range(opts.rounds):
             game = Ants(options)
             bots = [('.', arg) for arg in args]
