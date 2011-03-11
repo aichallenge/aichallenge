@@ -40,33 +40,35 @@ def create_contest_user(username):
     except CmdError:
         run_cmd('adduser --disabled-password --gecos "" ' + username)
 
+def setup_local_repo(opts):
+    """ Create or update the local source repository as needed """
+    with CD(opts.root_dir):
+        if not os.path.exists(os.path.join(opts.root_dir, opts.local_repo)):
+            run_cmd("git clone -b %s %s %s" % (opts.src_branch,
+                opts.src_repo, opts.local_repo))
+        else:
+            with CD(os.path.join(opts.root_dir, opts.local_repo)):
+                run_cmd("git pull %s %s" % (opts.src_repo, opts.src_branch))
+
 def setup_base_files(opts):
     """ Setup all the contest specific files and directories """
-    contest_root = opts.root_dir
-    with CD(contest_root):
-        if not os.path.exists(os.path.join(contest_root, opts.local_repo)):
-            run_cmd("git clone -b %s %s %s" % (opts.src_branch, opts.src_repo,
-                opts.local_repo))
-        else:
-            with CD(os.path.join(contest_root, opts.local_repo)):
-                run_cmd("git pull %s %s" % (opts.src_repo, opts.src_branch))
-    sub_dir = os.path.join(contest_root, "submissions")
+    sub_dir = os.path.join(opts.root_dir, "submissions")
     if not os.path.exists(sub_dir):
         os.mkdir(sub_dir)
         run_cmd("chown {0}:{0} {1}".format(opts.username, sub_dir))
-    map_dir = os.path.join(contest_root, "maps")
+    map_dir = os.path.join(opts.root_dir, "maps")
     if not os.path.exists(map_dir):
         os.mkdir(map_dir)
         run_cmd("chown {0}:{0} {1}".format(opts.username, map_dir))
     si_filename = os.path.join(TEMPLATE_DIR, "server_info.py.template")
     with open(si_filename, 'r') as si_file:
         si_template = si_file.read()
-    si_contents = si_template.format(contest_root=contest_root,
+    si_contents = si_template.format(contest_root=opts.root_dir,
             database_user=opts.database_user,
             database_password=opts.database_password,
             database_name=opts.database_name,
             map_dir=map_dir, sub_dir=sub_dir)
-    manager_dir = os.path.join(contest_root, opts.local_repo, "manager")
+    manager_dir = os.path.join(opts.root_dir, opts.local_repo, "manager")
     with CD(manager_dir):
         if not os.path.exists("server_info.py"):
             with open("server_info.py", "w") as si_file:
@@ -114,7 +116,7 @@ def setup_database(opts):
                 password_opt, opts.database_name, sf))
         """ This should work with McLeopold's new schema naming system
             in branch epsilon-new-schema
-        schema_dir = os.path.join(contest_root, local_repo, "sql")
+        schema_dir = os.path.join(opts.root_dir, local_repo, "sql")
         schema_files = os.listdir(schema_dir)
         schema_files = [f for f in schema_files if f.endswith(".sql")]
         for sf in schema_files:
@@ -180,30 +182,56 @@ def get_options(argv):
         "root_dir": "/home/$user/ants",
         "src_repo": "git://github.com/aichallenge/aichallenge.git",
         "src_branch": "epsilon",
+        "update_local_repo": True,
         "local_repo": "aichallenge",
         "website_as_default": False,
         "website_hostname": "ai-contest.com",
     }
+
+    # check if we are running from a repo and default to using it if so
+    have_local_repo = True
+    top_level = os.path.abspath(os.path.join(TEMPLATE_DIR, ".."))
+    expected_repo_dirs = [".git", "manager", "website"]
+    for expected in expected_repo_dirs:
+        if not os.path.exists(os.path.join(top_level, expected)):
+            have_local_repo = False
+            break
+    if have_local_repo:
+        root_dir, local_repo = os.path.split(top_level)
+        default_install['root_dir'] = root_dir
+        default_install['local_repo'] = local_repo
+        default_install['update_local_repo'] = False
+
     full_install = {
         "create_user": True, "username": "contest",
         "database_user": "contest", "database_password": "",
         "database_name": "contest",
         "root_dir": "/home/$user",
+        "update_local_repo": True,
+        "local_repo": "aichallenge",
         "website_as_default": True,
     }
 
     def replace_options(option, opt_str, value, parser, replacements):
-        for option, value in replacements:
+        for option, value in replacements.items():
             setattr(parser.values, option, value)
 
     parser = OptionParser()
     parser.set_defaults(**default_install)
-    parser.add_option("--full", action="callback", callback=replace_options,
-            callback_args = (full_install,),
-            help="Do a complete install with layout used for the contest")
+    parser.add_option("--take-over-server", action="callback",
+            callback=replace_options, callback_args = (full_install,),
+            help="Do a complete install as used for the contest")
     parser.add_option("-r", "--contest_root", action="store", type="string",
             dest="root_dir",
             help="Set the directory where all contest files live")
+    parser.add_option("--packages-only", action="store_true",
+            dest="packages_only",
+            help="Only install required packages and exit")
+    parser.add_option("-u", "--username", action="store", dest="username",
+            help="User account for the contest")
+    parser.add_option("--create-user", action="store_true",
+            dest="create_user",
+            help="Create the contest user if it doesn't already exist")
     options, args = parser.parse_args(argv)
     return options
 
@@ -212,12 +240,16 @@ def main(argv=["server_setup.py"]):
     with Environ("DEBIAN_FRONTEND", "noninteractive"):
         for install in opts.installs:
             install()
+    if opts.packages_only:
+        return
     if opts.create_user:
         create_contest_user(opts.username)
     root_dir = opts.root_dir.replace("$user", opts.username)
     if not os.path.exists(root_dir):
         os.makedirs(root_dir)
     opts.root_dir = root_dir
+    if opts.update_local_repo:
+        setup_local_repo(opts)
     setup_base_files(opts)
     setup_database(opts)
     setup_website(opts)
