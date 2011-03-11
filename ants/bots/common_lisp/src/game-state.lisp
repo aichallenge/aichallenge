@@ -17,10 +17,6 @@
 
 ;;; Functions
 
-(defun par-value (string)
-  (parse-integer (subseq string (position #\space string) (length string))))
-
-
 (defun parse-game-parameters ()
   "Modifies *STATE*."
   (loop for line = (read-line (input *state*) nil)

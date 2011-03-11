@@ -68,20 +68,6 @@
         (list dst-x dst-y))))
 
 
-(defun print-game-map (game-map &optional (stream *debug-io*))
-  (loop with dim = (array-dimensions game-map)
-        for y from 0 below (first dim)
-        do (loop for x from 0 below (second dim)
-                 for val = (aref game-map y x)
-                 do (cond ((= val 0) (princ #\. stream))
-                          ((= val 1) (princ #\% stream))
-                          ((= val 2) (princ #\* stream))
-                          ((>= val 200) (princ (code-char (- val 135)) stream))
-                          ((>= val 100) (princ (code-char (- val 3)) stream))
-                          (t (princ #\? stream))))
-           (terpri stream)))
-
-
 ;; TODO hasn't been tested very well yet
 (defun turn-time-remaining ()
   (- (wall-time)
