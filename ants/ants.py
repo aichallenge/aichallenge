@@ -50,14 +50,20 @@ class Ants:
         self.viewradius = int(options["viewradius2"])
         self.attackradius = int(options["attackradius2"])
         self.spawnradius = int(options["spawnradius2"])
+        print("Starting game with view=%s, attack=%s and spawn=%s" % (self.viewradius, self.attackradius, self.spawnradius))
         self.do_attack = self.do_attack_closest
         if 'attack' in options:
             if options['attack'] == 'occupied':
                 self.do_attack = self.do_attack_occupied
             elif options['attack'] == 'closest':
                 self.do_attack = self.do_attack_closest
-        self.render = self.render_changes
         self.do_food = self.do_food_sections
+        if 'food' in options:
+            if options['food'] == 'none':
+                self.do_food = self.do_food_none
+            elif options['food'] == 'sections':
+                self.do_food = self.do_food_sections
+        self.render = self.render_changes
 
         self.width = None   # the map
         self.height = None
@@ -154,7 +160,7 @@ class Ants:
         d_y = min(abs(y1 - y2), self.height - abs(y1 - y2))
         return d_x + d_y
 
-    def get_vision(self, player, radius=96):
+    def get_vision(self, player):
         vision = [[False for col in range(self.width)] for row in range(self.height)]
         squaresToCheck = deque()
         for row, col in self.player_ants(player):
@@ -168,7 +174,7 @@ class Ants:
                 d_row = min(d_row, self.height - d_row)
                 d_col = abs(a_col - n_col)
                 d_col = min(d_col, self.width - d_col)
-                if not vision[n_row][n_col] and (d_row**2 + d_col**2) <= radius:
+                if not vision[n_row][n_col] and (d_row**2 + d_col**2) <= self.viewradius:
                     vision[n_row][n_col] = True
                     if not self.revealed[player][n_row][n_col]:
                         self.turn_reveal[player].append((n_row, n_col))
@@ -180,8 +186,8 @@ class Ants:
                     squaresToCheck.append(((a_row,a_col),(n_row,n_col)))
         return vision
 
-    def get_perspective(self, player, radius=96):
-        v = self.get_vision(player, radius)
+    def get_perspective(self, player):
+        v = self.get_vision(player, self.viewradius)
         #start_row = self.center[player][1] - self.height // 2
         #stop_row = start_row + self.height
         #start_col = self.center[player][0] - self.width // 2
@@ -350,7 +356,7 @@ class Ants:
         new_ants = {}
         for f_row, f_col in self.food_list[:]:
             owner = None
-            for (n_row, n_col), n_owner in self.nearby_ants(f_row, f_col, None, 1, 9):
+            for (n_row, n_col), n_owner in self.nearby_ants(f_row, f_col, None, 1, self.spawnradius):
                 if owner == None:
                     owner = n_owner
                 elif owner != n_owner:
@@ -371,7 +377,7 @@ class Ants:
         score = [Fraction(0, 1) for i in range(self.num_players)]
         for (a_row, a_col), a_owner in self.ant_list.items():
             killers = []
-            enemies = self.nearby_ants(a_row, a_col, a_owner, 1, 2)
+            enemies = self.nearby_ants(a_row, a_col, a_owner, 1, self.attackradius)
             occupied = len(enemies)
             for (e_row, e_col), e_owner in enemies:
                 e_occupied = len(self.nearby_ants(e_row, e_col, e_owner, 1, 2))
@@ -396,7 +402,7 @@ class Ants:
                 if not (n_row, n_col) in ant_group:
                     ant_group[(n_row, n_col)] = n_owner
                     find_enemy(n_row, n_col, n_owner, min_d, max_d)
-        for distance in range(1, 10):
+        for distance in range(1, self.attackradius):
             for (a_row, a_col), a_owner in self.ant_list.items():
                 if self.map[a_row][a_col] != LAND:
                     ant_group = {(a_row, a_col): a_owner}
@@ -495,6 +501,9 @@ class Ants:
                 cell_queue.append(n_loc)
 
         return None
+
+    def do_food_none(self, amount=0):
+        pass
 
     def do_food_random(self, amount=1):
         """
