@@ -1,5 +1,7 @@
 ;;;; run-tests.lisp
 
+(require :asdf)
+
 ;; lisp-unit generates some style warnings when being compiled
 (setf *muffled-warnings* 'style-warning)
 
