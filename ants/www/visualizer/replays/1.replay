@@ -1,43 +1,42 @@
-# same info sent to bots turn 0
-version 1
-turn 0
-cols 4
-rows 4
-players 4
-# extra info for visualizer, optional
-gameid 1
-gamelocation ai-contest.com
-player1name gill
-player2name phil
-player3name bill
-player4name jill
-player1submitid 5
-player2submitid 6
-# char map (not sent to bots), no starting food
-m %%%.
-m %..%
-m %a.%
-m ...b
-#
-turn 1
-score 0 0 0 0
-a 2 1 0
-a 3 3 1
-f 3 0
-# orders sent by bots turn 1
-o 2 1 s
+# The version comes first, but we can have a comment here, maybe even a unix style '#!/usr/local/bin/visualizer'
+v ants 1
+# empty lines are ok anywhere
 
-# next turn
-turn 2
-score 1 0 0 1
-a 3 0 0
-f 3 2
-# orders sent by bots turn 2
-o 3 1 w
-
-# after last turn
-end
-score 3847474 0 0 1
-a 3 2 1
-d 3 0 0
-d 3 0 0
+players 3
+  # indentation can be used and the order of parameters is not strict
+  playername 0 phil
+  playername 2 bill
+  playername 1 gill
+gameid 12
+gamelocation http://ai-contest.com/ants/visualizer.php
+gameidparam game_id
+turns 200
+turntime 500
+loadtime 2000
+# set the radii to 10, 3 and 2
+viewradius2 100
+attackradius2 9
+spawnradius2 4
+antvalue 1
+# define the map, only '%' are important
+m ..%%*.
+m %a..b.
+m %...%%
+m *.c%*.
+f 0 4 0
+# this food item disappears in turn 4
+f 3 0 0 4
+f 3 4 0
+# this food item spaws in turn 2
+f 0 1 2
+# player 1 has an ant that moves around a little and lives for 5 turns
+a 0 1 1 0 sense
+# player 2 has an ant that does nothing
+a 1 1 5 0 -----
+a 2 3 2 0 wnee-
+# this is an ant that spawns from the disappearing food in turn 4
+a 2 3 0 4 w
+s 0 1 2 3 4 5 10.2 12.3
+s 0 1 2 3 4 5.5 6 8
+# player 3 is out of the game after five turns
+s 0 1 2 3 4 5

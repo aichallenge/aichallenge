@@ -4,7 +4,6 @@
 
 <?php include "footer.php"; ?>
 
-<!--[if lt IE 9]><script src="visualizer/js/excanvas.js"></script><![endif]-->
 <script type="text/javascript" src="visualizer/js/visualizer.js"></script>
 <script type="text/javascript">
 <?php
