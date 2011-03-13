@@ -339,18 +339,25 @@ class Ants:
     # must have only 1 force near the food to create a new ant
     #  and food in contention is eliminated
     def do_spawn(self):
-        for f_row, f_col in self.current_food.keys():
+        # Determine new ant locations
+        new_ant_locations = {}
+        for f_loc in self.current_food.keys():
+            f_row, f_col = f_loc
             owner = None
             for (n_row, n_col), n_owner in self.nearby_ants(f_row, f_col, None, 1, self.spawnradius):
                 if owner == None:
                     owner = n_owner
                 elif owner != n_owner:
-                    self.remove_food((f_row, f_col))
+                    self.remove_food(f_loc)
                     break
             else:
                 if owner != None:
-                    self.remove_food((f_row, f_col))
-                    self.add_ant( (f_row,f_col), owner )
+                    self.remove_food(f_loc)
+                    new_ant_locations[f_loc] = owner
+
+        # Create new ants
+        for loc, owner in new_ant_locations.items():
+            self.add_ant(loc, owner)
 
     def add_food(self, loc):
         if loc in self.current_food:
