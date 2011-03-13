@@ -678,7 +678,7 @@ class Ants:
         # ants
         for a in self.all_ants:
             result.append([
-                'a', a.owner, a.loc[0], a.loc[1], 
+                'a', a.owner, a.initial_loc[0], a.initial_loc[1], 
                 a.spawn_turn, ''.join(a.orders)
             ])
 
@@ -693,6 +693,7 @@ class Ants:
 class Ant:
     def __init__(self, loc, owner, spawn_turn=None):
         self.loc = loc
+        self.initial_loc = loc
         self.owner = owner
 
         self.prev_loc = None
