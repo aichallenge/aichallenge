@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"image"
 	"image/png"
 	"os"
 	"fmt"
@@ -19,7 +20,39 @@ var runTests *bool = flag.Bool("test-suite", false, "set this to run the tests")
 //call Panicf to halt the program with a stack trace. Use it like fmt.Sprintf
 func Panicf(format string, args ...interface {}) {
 	panic(fmt.Sprintf(format, args...))
-} 
+}
+
+
+type ImageHelper struct {
+	m *Map
+	pixel func(row, col int) image.NRGBAColor
+}
+func (ih ImageHelper) ColorModel() image.ColorModel {
+	return image.NRGBAColorModel
+}
+func (ih ImageHelper) Bounds() image.Rectangle {
+	return image.Rect(0, 0, ih.m.Cols * 4, ih.m.Rows * 4)
+}
+func (ih ImageHelper) At(x, y int) image.Color {
+	return ih.pixel(y / 4, x / 4)
+}
+func (s *State) WriteDebugImage(Desc string, At func(row, col int) image.NRGBAColor) {
+	if imageOutPrefix == nil {
+		return
+	}
+	
+	fname := fmt.Sprintf("%s.%s.%3.3d.png", *imageOutPrefix, Desc, s.Turn)
+	//fmt.Printf("making image: %s\n", fname)
+	f, err := os.Open(fname, os.O_WRONLY | os.O_CREATE, 0666)
+	if err != nil {
+		Panicf("Couldn't open %s (%s)", fname, err)
+	}
+	defer f.Close()
+	err = png.Encode(f, ImageHelper{s.Map, At})
+	if err != nil {
+		Panicf("Couldn't encode png (%s)", err)
+	}
+}
 
 
 //main initializes the state and starts the processing loop
@@ -41,10 +74,14 @@ func main() {
 		Panicf("Start() failed (%s)", err)
 	}
 	
-	mb := NewBot(s)
+	mb := NewBot(&s)
 	
 	err = s.Loop(mb, func () {
-		if *imageOutPrefix != "" {
+		
+		//I added a mechanism to make customizing image output a lot easier, see 
+		//the use of WriteDebugImage in MyBot.go
+		//I'll leave this here for reference, since it works also
+		/*if *imageOutPrefix != "" {
 			fname := fmt.Sprintf("%s.%d.png", *imageOutPrefix, s.Turn)
 			//fmt.Printf("making image: %s\n", fname)
 			f, err := os.Open(fname, os.O_WRONLY | os.O_CREATE, 0666)
@@ -56,9 +93,9 @@ func main() {
 			if err != nil {
 				Panicf("Couldn't encode png (%s)", err)
 			}
-		}
+		}*/
 		
-		//if you want to do other between-turn debugging things, this is where to do them
+		//if you want to do other between-turn debugging things, you can do them here
 	})
 	
 	if err != nil && err != os.EOF {

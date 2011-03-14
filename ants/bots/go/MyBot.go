@@ -3,6 +3,7 @@ package main
 import (
 	"os"
 	"rand"
+	"image"
 	//"fmt"
 )
 
@@ -23,6 +24,19 @@ func (mb *MyBot) DoTurn(s *State) os.Error {
 	
 	//for testing, if you want to see the map:
 	//fmt.Println(s.Map)
+	
+	//if you want to visualize some data, I've provided a helper function.
+	//to use this, execute your bot with "-imgprefix xxxx" command line parameter,
+	//and then the following will get made into an image called xxxx.fieldofview.turn#.png
+	//You can output as many images as you want.
+	s.WriteDebugImage("fieldofview", func (row, col int) image.NRGBAColor {
+		//to construct an image.NRGBAColor, do this:
+		//return image.NRGBAColor{red, green, blue, alpha}
+		//where all four values are uint8's (0-255), and alpha represents transparency
+		
+		//for now, we'll just return the default color for each item.
+		return s.Map.Item(s.Map.FromRowCol(row, col)).Color()
+	})
 	
 	dirs := []Direction{North, East, South, West}
 	
