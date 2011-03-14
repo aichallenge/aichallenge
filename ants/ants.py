@@ -406,22 +406,26 @@ class Ants:
     # TODO: write function correctly, don't kill any ant until end
     def do_attack_occupied(self):
         score = [Fraction(0, 1) for i in range(self.num_players)]
+        ants_to_kill = []
         for ant in self.current_ants.values():
             a_row, a_col = ant.loc
             a_owner = ant.owner
             killers = []
-            enemies = self.nearby_ants(a_row, a_col, a_owner, 1, self.attackradius)
+            enemies = list(self.nearby_ants(a_row, a_col, a_owner, 1, self.attackradius))
             occupied = len(enemies)
             for (e_row, e_col), e_owner in enemies:
-                e_occupied = len(self.nearby_ants(e_row, e_col, e_owner, 1, 2))
+                e_occupied = len(list(self.nearby_ants(e_row, e_col, e_owner, 1, 2)))
                 if e_occupied <= occupied:
                     # kill ant
                     killers.append(e_owner)
             if len(killers) > 0:
-                self.kill_ant((a_row, a_col))
+                ants_to_kill.append(ant)
                 score_share = len(killers)
                 for e_owner in killers:
                     score[e_owner] += Fraction(1, score_share)
+        for ant in ants_to_kill:
+            if not ant.killed:
+                self.kill_ant(ant.loc)
         self.score = map(operator.add, self.score, score)
 
     # 1:1 kill ratio, almost, match closest groups and eliminate iteratively
