@@ -389,7 +389,9 @@ class Ants:
 
     def kill_ant(self, loc):
         try:
-            self.killed_ants.append(self.current_ants[loc])
+            ant = self.current_ants[loc]
+            self.killed_ants.append(ant)
+            ant.killed = True
             del self.current_ants[loc]
         except KeyError:
             raise Exception("Kill ant error",
@@ -433,18 +435,21 @@ class Ants:
                     ant_group[(n_row, n_col)] = n_owner
                     find_enemy(n_row, n_col, n_owner, min_d, max_d)
         for distance in range(1, 10):
+            ants_to_kill = []
             for ant in self.current_ants.values():
                 a_row, a_col = ant.loc
                 a_owner = ant.owner
-                if self.map[a_row][a_col] != LAND:
-                    ant_group = {(a_row, a_col): a_owner}
-                    find_enemy(a_row, a_col, a_owner, distance, distance)
-                    if len(ant_group) > 1:
-                        score_share = len(ant_group)
-                        for (e_row, e_col), e_owner in ant_group.items():
-                            score[e_owner] += Fraction(1, score_share)
-                            self.map[e_row][e_col] = LAND
-                            self.kill_ant((e_row,e_col))
+                ant_group = {(a_row, a_col): a_owner}
+                find_enemy(a_row, a_col, a_owner, distance, distance)
+                if len(ant_group) > 1:
+                    score_share = len(ant_group)
+                    for (e_row, e_col), e_owner in ant_group.items():
+                        score[e_owner] += Fraction(1, score_share)
+                        ants_to_kill.append(ant)
+            for ant in ants_to_kill:
+                if not ant.killed:
+                    self.kill_ant(ant.loc)
+
         self.score = map(operator.add, self.score, score)
 
     def destination(self, row, col, direction):
@@ -703,6 +708,7 @@ class Ant:
         self.loc = loc
         self.initial_loc = loc
         self.owner = owner
+        self.killed = False
 
         self.prev_loc = None
         self.initial_loc = loc
