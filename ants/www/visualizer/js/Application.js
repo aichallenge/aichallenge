@@ -1,8 +1,6 @@
 /**
  * @fileoverview This is a visualizer for the ant game.
  * @author <a href="mailto:marco.leise@gmx.de">Marco Leise</a>
- * @todo focus button for each player
- * @todo fog of war option
  * @todo scrolling player names if too long; fade to the left and right
  * @todo zoom in to 20x20 squares with animated ants
  * @todo save settings
@@ -345,11 +343,12 @@ Visualizer.prototype.loadReplayData = function(data) {
  * @private
  */
 Visualizer.prototype.loadParseReplay = function() {
-	if (this.replay && this.replay instanceof Replay) return;
 	var vis = this;
 	this.progress('Parsing the replay...', function() {
 		if (!vis.replay) {
 			throw new Error('Replay is undefined.');
+		} else if (vis.replay instanceof Replay) { // has just been parsed
+			return;
 		} else if (typeof vis.replay == 'string') { // string only
 			vis.replay = new Replay(vis.replay);
 		} else if (vis.replay instanceof XMLHttpRequest) {
