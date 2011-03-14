@@ -184,6 +184,7 @@ function Visualizer(container, dataDir, codebase, w, h, java) {
 	/**
 	 * @private
 	 */
+	this.fog = undefined;
 	this.loading = LoadingState.IDLE;
 	// If we use a Java applet, we have to delay the image requests until we
 	// can pass the image URLs over to it.
@@ -201,7 +202,7 @@ Visualizer.prototype.progress = function(log, func) {
 			func();
 		} catch (error) {
 			// (for Firefox Java errors:) if error is just a string, wrap it into an object
-			if (typeof error == 'string') error = { message: error };
+			if (typeof error == 'string') error = {message: error};
 			var msg = '';
 			for(var key in error) {
 				msg += '<p><u><b>Error ' + key + ':</b></u>\n' + error[key] + '</p>';
@@ -250,6 +251,7 @@ Visualizer.prototype.cleanUp = function() {
 			this.container.removeChild(this.main.element);
 		}
 	}
+	this.fog = undefined;
 	document.onkeydown = null;
 	document.onkeyup = null;
 	document.onkeypress = null;
@@ -457,10 +459,17 @@ Visualizer.prototype.tryStart = function() {
 			// generate fog images
 			var colors = [[255, 255, 255]].concat(Const.PLAYER_COLORS.slice(0, this.replay.players.length));
 			this.imgMgr.colorize(2, colors);
-			var bg = this.btnMgr.addGroup('fog', this.imgMgr.patterns[2], ButtonGroup.VERTICAL, ButtonGroup.MODE_HIDDEN, 2);
+			var bg = this.btnMgr.addGroup('fog', this.imgMgr.patterns[2], ButtonGroup.VERTICAL, ButtonGroup.MODE_RADIO, 2);
 			bg.y = Const.TOP_PANEL_H;
 			for (var i = 0; i < colors.length; i++) {
-				bg.addButton(i, function() { /*vis.showFog(i);*/ });
+				var buttonAdder = function(fog) {
+					return bg.addButton(i, function() { vis.showFog(fog); });
+				}
+				if (i == 0) {
+					buttonAdder(undefined).down = true;
+				} else {
+					buttonAdder(i - 1);
+				}
 			}
 			// try to make the replays play 1 minute, but the turns take no more than a second
 			this.director.duration = this.replay.turns.length - 1;
@@ -546,7 +555,7 @@ Visualizer.prototype.createCanvas = function(obj) {
 		}
 	}
 	if (!obj.ctx) {
-			obj.ctx = obj.canvas.getContext('2d');
+		obj.ctx = obj.canvas.getContext('2d');
 	}
 };
 Visualizer.prototype.setFullscreen = function(enable) {
@@ -714,6 +723,48 @@ Visualizer.prototype.renderBorder = function() {
 		ctx.restore();
 	}
 };
+Visualizer.prototype.renderFog = function(turn) {
+	this.border.ctx.clearRect(Const.ZOOM_SCALE, Const.ZOOM_SCALE, this.scale * this.replay.cols, this.scale * this.replay.rows);
+	if (this.fog) {
+		if (!this.fog.ctx) {
+			this.createCanvas(this.fog);
+			this.fog.canvas.width = 2;
+			this.fog.canvas.height = 2;
+			var color = Const.PLAYER_COLORS[this.fog.player];
+			this.fog.ctx.fillStyle = 'rgb(' + color[0] + ',' + color[1] + ',' + color[2] + ')';
+			this.fog.ctx.fillRect(0, 0, 1, 1);
+			this.fog.ctx.fillRect(1, 1, 1, 1);
+			this.fog.ptrn = this.border.ctx.createPattern(this.fog.canvas, 'repeat');
+		}
+		this.border.ctx.fillStyle = this.fog.ptrn;
+		for (var row = 0; row < this.replay.rows; row++) {
+			var y = Const.ZOOM_SCALE + row * this.scale;
+			var start = undefined;
+			for (var col = 0; col < this.replay.cols; col++) {
+				var x = Const.ZOOM_SCALE + col * this.scale;
+				var isFog = this.replay.turns[turn].fogs[this.fog.player][row][col];
+				if (start === undefined && isFog) {
+					start = x;
+				} else if (start !== undefined && !isFog) {
+					this.border.ctx.fillRect(start, y, x - start, this.scale);
+					start = undefined;
+				}
+			}
+			if (start !== undefined) {
+				this.border.ctx.fillRect(start, y, Const.ZOOM_SCALE + this.replay.cols * this.scale - start, this.scale);
+			}
+		}
+	}
+};
+Visualizer.prototype.showFog = function(fog) {
+	if (fog === undefined) {
+		this.fog = undefined;
+		this.renderFog(this.director.position | 0);
+	} else {
+		this.fog = { player: fog };
+	}
+	this.director.draw();
+};
 /**
  * @private
  */
@@ -790,6 +841,7 @@ Visualizer.prototype.draw = function(time, tick) {
 	var w = this.main.canvas.width;
 	if (tick !== undefined) {
 		//document.getElementById('lblTurn').innerHTML = ((turn > this.replay.turns.length - 2) ? 'end result' : turn + ' / ' + (this.replay.turns.length - 2));
+		if (this.fog !== undefined) this.renderFog(turn);
 	}
 	var counts = this.interpolate(turn, time, 'counts');
 	this.drawColorBar(60,           Const.TOP_PANEL_H - 20, 0.5 * w - 60, 20, counts, Const.PLAYER_COLORS);

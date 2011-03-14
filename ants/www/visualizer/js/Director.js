@@ -89,13 +89,10 @@ Director.prototype.cleanUp = function() {
 	this.position = 0;
 };
 /**
- * Causes the visualizer to draw the current game state. For performance reasons
- * this is not done when the visualizer is already playing back anyway.
+ * Causes the visualizer to draw the current game state.
  */
 Director.prototype.draw = function() {
-	if (!this.playing()) {
-		this.vis.draw(this.position, this.position | 0);
-	}
+	this.vis.draw(this.position, this.position | 0);
 };
 /**
  * When an applet goes fullscreen it is detached and reinitialized. We need to

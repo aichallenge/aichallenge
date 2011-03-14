@@ -105,8 +105,10 @@ ButtonGroup.MODE_HIDDEN = 0;
 ButtonGroup.MODE_NORMAL = 1;
 ButtonGroup.MODE_RADIO = 2;
 ButtonGroup.prototype.addButton = function(idx, action) {
-	this.buttons.push(new Button(this, (this.size - 2 * this.border) * idx, (this.vertical) ? this.h : this.w, action));
+	var btn = new Button(this, (this.size - 2 * this.border) * idx, (this.vertical) ? this.h : this.w, action);
+	this.buttons.push(btn);
 	this.vertical ? this.h += this.size : this.w += this.size;
+	return btn;
 };
 ButtonGroup.prototype.addSpace = function(size) {
 	this.buttons.push({
@@ -177,7 +179,7 @@ ButtonManager.prototype.mouseMove = function(mx, my) {
 		if (result && (!this.nailed || this.nailed === result)) {
 			if (!result.hover) {
 				result.hover = true;
-				result.down = (result === this.nailed) || (result.down && this.hover.group.mode == ButtonGroup.MODE_RADIO);
+				result.down = (result === this.nailed) || (result.down && (!this.hover || this.hover.group.mode == ButtonGroup.MODE_RADIO));
 				result.draw();
 			}
 		}

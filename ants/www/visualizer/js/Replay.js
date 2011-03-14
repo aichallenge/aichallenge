@@ -142,17 +142,20 @@ function Replay(replayStr, parameters) {
 		this.parameters = parameters || {};
 		tl = lit.gimmeNext();
 		while (tl.keyword !== 'm') {
-			if (tl.keyword === 'playername') {
-				tl.as([DataType.UINT, DataType.STRING]);
+			if (tl.keyword.substr(0, 6) === 'player') {
+				var slot = tl.keyword.substr(6);
+				var args = [DataType.UINT, DataType.STRING];
+				if (slot === 'color') args[1] = DataType.COLOR;
+				tl.as(args);
 				var player = this.getPlayer(tl.params[0]);
-				player.name = tl.params[1];
-			} else if (tl.keyword === 'playercolor') {
-				tl.as([DataType.UINT, DataType.COLOR]);
-				player = this.getPlayer(tl.params[0]);
-				player.color = tl.params[1];
-			} else if (tl.keyword === 'turns') {
-				tl.as([DataType.POSINT]);
-				this.parameters.turns = tl.params[0];
+				player[slot] = tl.params[1];
+			} else {
+				args = [DataType.STRING];
+				if (tl.keyword === 'viewradius2') {
+					args[0] = DataType.UINT;
+				}
+				tl.as(args);
+				this.parameters[tl.keyword] = tl.params[0];
 			}
 			tl = lit.gimmeNext();
 		}
@@ -199,7 +202,7 @@ function Replay(replayStr, parameters) {
 				throw new Error(item + ' spawned outside of map at row ' + row + ' / col ' + col);
 			}
 			while (this.turns.length < end + 1) {
-				this.turns.push(new Turn(this.players.length));
+				this.turns.push(new Turn(this.players.length, this.rows, this.cols));
 			}
 			// for a conversion, try to find previous food item
 			var ant = null;
@@ -249,6 +252,8 @@ function Replay(replayStr, parameters) {
 			// must have full opacity by the start of the turn
 			f.a = 1.0;
 			// do moves
+			var x = col;
+			var y = row;
 			if (orders) for (i = 0; i < orders.length; i++) {
 				var dir = orders[i];
 				if (dir) {
@@ -287,7 +292,10 @@ function Replay(replayStr, parameters) {
 							}
 						}
 					}*/
+					x += dir.x;
+					y += dir.y;
 				}
+				this.turns[start + i].clearFog(owner, y, x, this.rows, this.cols, this.parameters.viewradius2);
 			}
 			tl = lit.gimmeNext();
 		}
@@ -534,12 +542,37 @@ TokenLine.prototype.expectLE = function(idx, value) {
 	}
 };
 
-function Turn(playerCnt) {
+function Turn(playerCnt, rows, cols) {
 	this.scores = new Array(playerCnt);
 	this.counts = new Array(playerCnt);
-	for (var i = 0; i < playerCnt; i++) this.counts[i] = 0;
+	this.fogs = new Array(playerCnt);
+	for (var i = 0; i < playerCnt; i++) {
+		this.counts[i] = 0;
+		this.fogs[i] = new Array(rows);
+		for (var k = 0; k < rows; k++) {
+			this.fogs[i][k] = new Array(cols);
+			for (var m = 0; m < cols; m++) {
+				this.fogs[i][k][m] = true;
+			}
+		}
+	}
 	this.ants = [];
 }
+Turn.prototype.clearFog = function(player, row, col, rows, cols, radius2) {
+	var fog = this.fogs[player];
+	var radius = Math.ceil(Math.sqrt(radius2));
+	for (var row_a = row - radius; row_a <= row + radius; row_a++) {
+		var row_delta = row_a - row;
+		var row_b = row_a - Math.floor(row_a / rows) * rows;
+		for (var col_a = col - radius; col_a <= col + radius; col_a++) {
+			var col_delta = col_a - col;
+			if (row_delta * row_delta + col_delta * col_delta <= radius2) {
+				var col_b = col_a - Math.floor(col_a / cols) * cols;
+				fog[row_b][col_b] = false;
+			}
+		}
+	}
+};
 
 function AntLife(ant, start, end, tl) {
 	this.ant = ant;
