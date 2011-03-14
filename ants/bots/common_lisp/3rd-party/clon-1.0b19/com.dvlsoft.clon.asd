@@ -30,7 +30,7 @@
 (in-package :cl-user)
 
 (eval-when (:load-toplevel :execute)
-  #+sbcl  (require :sb-grovel)
+  #+(and sbcl (not win32)) (require :sb-grovel)
   #+clisp (handler-case (asdf:operate 'asdf:load-op :cffi-grovel)
 	    (asdf:missing-component ()
 	      (format *error-output* "~
@@ -159,14 +159,13 @@ The most important features of Clon are:
   :depends-on (#+sbcl             :sb-posix
 	       #+(and clisp cffi) :cffi)
   :components ((:file "package")
-	       #+sbcl
-	       (:module "sbcl"
-		 :depends-on ("package")
-		 :serial t
-		 :components ((sb-grovel:grovel-constants-file
-			       "constants" :package :com.dvlsoft.clon)
-			      (:file "util")))
-
+               #+(and sbcl (not win32))
+               (:module "sbcl"
+                :depends-on ("package")
+                :serial t
+                :components ((sb-grovel:grovel-constants-file
+                              "constants" :package :com.dvlsoft.clon)
+                             (:file "util")))
 	       #+(and clisp cffi)
 	       (:module "clisp"
 		 :depends-on ("package")
@@ -174,7 +173,7 @@ The most important features of Clon are:
 		 :components ((cffi-grovel:grovel-file "constants")
 			      (:file "util")))
 	       (module "src"
-		 :depends-on (#+sbcl "sbcl"
+		 :depends-on (#+(and sbcl (not win32)) "sbcl"
 			      #+(and clisp cffi) "clisp"
 			      "package")
 		 :components ((:file "util")

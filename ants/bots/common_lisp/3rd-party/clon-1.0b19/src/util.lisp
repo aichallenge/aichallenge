@@ -385,8 +385,8 @@ Return two values:
   ;; and the other which are real errors and need to be reported.
   ;; #### PORTME.
   #+abcl (declare (ignore stream))
-  #+sbcl
-  (sbcl/stream-line-width stream)
+  #+(and sbcl (not win32)) (sbcl/stream-line-width stream)
+  #+(and sbcl win32) nil
   #+cmu
   (locally (declare (optimize (ext:inhibit-warnings 3)))
     (alien:with-alien ((winsize (alien:struct unix:winsize)))
