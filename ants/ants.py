@@ -389,6 +389,7 @@ class Ants:
 
     def kill_ant(self, loc):
         try:
+            self.map[loc[0]][loc[1]] = LAND
             ant = self.current_ants[loc]
             self.killed_ants.append(ant)
             ant.killed = True
@@ -417,7 +418,6 @@ class Ants:
                     # kill ant
                     killers.append(e_owner)
             if len(killers) > 0:
-                self.map[a_col][a_row] = LAND
                 self.kill_ant((a_row, a_col))
                 score_share = len(killers)
                 for e_owner in killers:
