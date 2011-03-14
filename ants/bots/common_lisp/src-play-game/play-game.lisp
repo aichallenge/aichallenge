@@ -102,7 +102,7 @@
           ((equal dir "W")
            (setf (aref *map-array*
                        row
-                       (if (= col 0) (- *map-cols 1) (- col 1)))
+                       (if (= col 0) (- *map-cols* 1) (- col 1)))
                  (+ botid 100))))))
 
 
