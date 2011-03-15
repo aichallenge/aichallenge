@@ -35,11 +35,12 @@
 
 
 ;; This MAIN is for the Slime REPL with bin/play-proxy-game.sh.
-(defun main-for-proxybot (&key (log "ants-bot-proxied.log") (verbose t))
+(defun main-for-proxybot (&key (log "ants-bot-proxied.log")
+                          (host #-allegro #(127 0 0 1) #+allegro "localhost")
+                          (port 41807) (verbose t))
   (let (client socket stream)
     (handler-bind ((address-in-use-error #'address-in-use))
-      (setf socket (socket-listen #-allegro #(127 0 0 1) #+allegro "localhost"
-                                  41807 :reuse-address t))
+      (setf socket (socket-listen host port :reuse-address t))
       (format *debug-io* "Waiting for connection...~%")
       (force-output)
       (setf client (socket-accept socket)

@@ -12,6 +12,13 @@
             year month day hour min sec)))
 
 
+(defun host2str (host)
+  (cond ((and (vectorp host) (= 4 (length host)))
+         (format nil "~D.~D.~D.~D" (elt host 0) (elt host 1) (elt host 2)
+                 (elt host 3)))
+        (t host)))
+
+
 (defun mkstr (&rest args)
   (with-output-to-string (s)
     (dolist (a args)
