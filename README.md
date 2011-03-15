@@ -15,7 +15,6 @@ Folder Contents
 * `worker/` - Standalone workers which run games (including compiler and sandbox)
 * `sql/` - Files for creating an empty sql database
 * `website/` - Main website and frontend
-* `trueskill/` - Trueskill submodule
 
 Initializing the git submodules:
 
