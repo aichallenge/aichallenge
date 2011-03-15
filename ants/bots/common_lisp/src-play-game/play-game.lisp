@@ -78,11 +78,45 @@
                                  (move-ant i line)))))))))
 
 
+(defun new-location (src-x src-y direction)
+  (if (not (member direction '(:north :east :south :west)))
+      (progn (logmsg "[new-location] Illegal direction: " direction)
+             (list src-x src-y))
+      (let ((dst-x (cond ((equal direction :east)
+                          (if (>= (+ src-x 1) *map-cols*)
+                              0
+                              (+ src-x 1)))
+                         ((equal direction :west)
+                          (if (<= src-x 0)
+                              (- *map-cols* 1)
+                              (- src-x 1)))
+                         (t src-x)))
+            (dst-y (cond ((equal direction :north)
+                          (if (<= src-y 0)
+                              (- *map-rows* 1)
+                              (- src-y 1)))
+                         ((equal direction :south)
+                          (if (>= (+ src-y 1) *map-rows*)
+                              0
+                              (+ src-y 1)))
+                         (t src-y))))
+        (list dst-x dst-y))))
+
+
 (defun move-ant (botid line)
   (let* ((split (split-sequence #\space (string-upcase line)))
          (row (parse-integer (elt split 1)))
          (col (parse-integer (elt split 2)))
          (dir (elt split 3)))
+    (when (/= (+ botid 100) (aref *map-array* row col))
+      (logmsg "Bot " botid " issued an order for a position it doesn't "
+              "occupy. Ignoring...~%")
+      (return-from move-ant))
+    (when (water? col row (cond ((equal dir "N") :north)
+                                ((equal dir "E") :east)
+                                ((equal dir "S") :south)
+                                ((equal dir "W") :west)))
+      (logmsg "Bot " botid " ordered an ant into water. Ignoring...~%"))
     (setf (aref *map-array* row col) 0)
     (cond ((equal dir "N")
            (setf (aref *map-array*
@@ -119,19 +153,19 @@
                     (setf *map-players* (par-value line)))
                    ((and (starts-with line "m ") (null *map-cols*))
                     (logmsg "~&Map missing \"cols n\" line. Aborting...~%")
-                    (exit))
+                    (exit 1))
                    ((and (starts-with line "m ") (null *map-rows*))
                     (logmsg "~&Map missing \"rows n\" line. Aborting...~%")
-                    (exit))
+                    (exit 1))
                    ((and (starts-with line "m ") (null *map-players*))
                     (logmsg "~&Map missing \"players n\" line. Aborting...~%")
-                    (exit))
+                    (exit 1))
                    ((and (starts-with line "m ")
                          (< (length *bots*) *map-players*))
                     (logmsg "~&Map needs " *map-players* " players but only "
                             (length *bots*) " were entered on the "
                             "command-line. Aborting...~%")
-                    (exit))
+                    (exit 1))
                    ((and (starts-with line "m ") (null *map-array*))
                     (setf *map-array*
                           (make-array (list *map-rows* *map-cols*)
@@ -145,15 +179,15 @@
                        (logmsg "~&Actual map rows (" rows ") not equal to "
                                "specified number of rows (" *map-rows* "). "
                                "Aborting...~%")
-                       (exit)))))
+                       (exit 1)))))
 
 
 (defun parse-map-line (map-array string row)
   (when (/= (- (length string) 2) *map-cols*)
     (logmsg "~&Actual map columns (" (- (length string) 2) ") for this line "
-            "not equal to specified number of columns (" *map-cols* ") for "
+            "not equal to specified number of~%columns (" *map-cols* ") for "
             "this map. Aborting...~%")
-    (exit))
+    (exit 1))
   (loop for c across (subseq string 2)
         for col from 0
         do (setf (aref map-array row col)
@@ -190,6 +224,13 @@
     (help)
     (exit))
   (setf *bots* (loop for bot in (remainder) collect bot)))
+
+
+(defun random-elt (sequence)
+  "Returns a random element from SEQUENCE."
+  (let ((length (length sequence)))
+    (when (> length 0)
+      (elt sequence (random length)))))
 
 
 (defun run-program (program &optional (args nil))
@@ -249,6 +290,22 @@
                         (logmsg i ":" bot " sent junk: " line "~%"))))))))
 
 
+;; Very simple random food spawning.  Collects all land tile's coordinates
+;; and randomly picks a number of tiles equal to the number of players.
+(defun spawn-food ()
+  (let ((food (loop for row from 0 below *map-rows*
+                    append (loop for col from 0 below *map-cols*
+                                 when (= 0 (aref *map-array* row col))
+                                   collect (list row col))
+                      into result
+                    finally (return (loop repeat *map-players*
+                                          collect (random-elt result))))))
+    (loop for rc in food
+          for row = (elt rc 0)
+          for col = (elt rc 1)
+          do (setf (aref *map-array* row col) 2))))
+
+
 (defun no-turn-time-left-p (turn-start-time)
   (not (turn-time-left-p turn-start-time)))
 
@@ -261,6 +318,11 @@
 (defun wait-for-output (output turn-start-time)
   (loop until (or (listen output)
                   (no-turn-time-left-p turn-start-time))))
+
+
+(defun water? (x y direction)
+  (let ((nl (new-location x y direction)))
+    (= 1 (aref *map-array* (elt nl 1) (elt nl 0)))))
 
 
 ;;; Main Program
@@ -319,9 +381,8 @@
           finally (setf *procs* procs))
     (loop for turn from 0 to *turns*
           do (logmsg "--- turn: " turn " ---~%")
+             (when (> turn 0) (spawn-food))
              (when *verbose* (print-game-map *map-array* *debug*))
-             (when (= turn 0)
-               (send-initial-game-state))
-             (when (> turn 0)
-               (do-turn turn))))
+             (when (= turn 0) (send-initial-game-state))
+             (when (> turn 0) (do-turn turn))))
   (logmsg "[  end] " (current-date-time-string) "~%"))
