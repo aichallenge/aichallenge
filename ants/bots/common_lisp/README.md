@@ -38,8 +38,7 @@ is a brief summary.
 ## Common Lisp Starter Package Specific Information
 
 This rest of this file contains specific information about the Common
-Lisp (CL) starter package for the
-[Ant Wars Google AI Challenge](http://ai-contest.com/).
+Lisp (CL) starter package for the [Ant Wars Google AI Challenge](http://ai-contest.com/).
 
 It is assumed you are using [SBCL](http://www.sbcl.org/), since that
 is what the challenge server will be using as well.
@@ -54,13 +53,30 @@ welcome.
 
 ## Usage
 
-Run `bin/run-ants-bot.sbcl` and paste the sample input from the
-[Ants Game Specification](http://github.com/aichallenge/aichallenge/wiki/Ants-Game-Specification).
+Run `bin/run-ants-bot.sbcl` and paste the sample input from the [Ants Game Specification](http://github.com/aichallenge/aichallenge/wiki/Ants-Game-Specification).
 
 There are also a few initial unit tests which can be run by issuing
 `bin/run-tests.sh`.
 
+### Windows / MSYS Note
+
+You're probably best of putting a symbolic link `sbcl` in /usr/bin
+pointing to wherever SBCL is installed on your system.
+
 
 ## Platforms
 
-The code has so far only been tested on x86 using SBCL 1.0.45.debian.
+The code has been tested on the following platforms:
+
+* x86: SBCL 1.0.45.debian
+* x86: [Experimental SBCL 1.0.45 with threads](https://sites.google.com/site/dmitryvksite/sbcl-distr) for Windows using [MSYS](http://www.mingw.org/node/18)
+* x86: SBCL 1.0.40 on an [Ubuntu 10.10 VirtualBox image](http://virtualboxes.org/images/ubuntu/)
+
+### Windows Note
+
+If you're running Windows it is assumed you are running [MSYS](http://www.mingw.org/node/18).
+
+At the time of this writing if you're using Windows you *must* use the
+Clon package that comes with this example bot since it contains some
+fixes to make it work on SBCL on Windows.  You could ofcourse check to
+see whether Clon has been updated in the meantime.

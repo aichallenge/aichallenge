@@ -6,11 +6,18 @@
 ;;; Functions
 
 (defun address-in-use (arg)
-  (errmsg "~&~S~%" arg)
+  (declare (ignore arg))
+  (errmsg "~&Address already in use. Aborting...~%")
+  (quit :unix-status 98))
+
+
+(defun user-interrupt (arg)
+  (declare (ignore arg))
+  (logmsg "~&User interrupt. Aborting...~%")
   (quit))
 
 
-(defun interrupted-by-user (arg)
+(defun socket-error-handler (arg)
   (declare (ignore arg))
-  (logmsg "~&Interrupted by user. Aborting...~%")
+  (errmsg "~&Socket error (trying to use a port < 1024?). Aborting...~%")
   (quit))
