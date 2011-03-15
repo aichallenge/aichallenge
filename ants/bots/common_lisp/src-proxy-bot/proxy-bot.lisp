@@ -1,7 +1,4 @@
 ;;;; proxy-bot.lisp
-;;;;
-;;;; Possible problem: once the proxy bot has send the end turn to the real
-;;;; bot it doesn't send the bot response back to the game engine.
 
 (in-package :ants-proxy-bot)
 
@@ -54,14 +51,26 @@
 
 ;;; Handlers
 
+(defun connection-lost (arg)
+  (declare (ignore arg))
+  (logmsg "~&Connection lost. Aborting...~%")
+  (exit 103))
+
+
+(defun connection-refused (arg)
+  (declare (ignore arg))
+  (logmsg "~&Connection refused. Aborting...~%")
+  (exit 111))
+
+
 (defun error-handler (&optional arg)
   (logmsg "~&" arg " Aborting...~%")
   (exit 1))
 
 
-(defun interrupted-by-user (arg)
+(defun user-interrupt (arg)
   (declare (ignore arg))
-  (logmsg "~&Interrupted by user. Aborting...~%")
+  (logmsg "~&User interrupt. Aborting...~%")
   (exit))
 
 
@@ -90,46 +99,41 @@
   (open-log)
   (let (socket)
     (logmsg "~&~%=== ProxyBot started: " (current-date-time-string) " ===~%")
-    (logmsg "Connecting to real bot at " *host* ":" *port* "...~%")
-    (handler-bind (#+sbcl (sb-sys:interactive-interrupt #'interrupted-by-user)
-                   (error #'error-handler))
-      (setf socket (socket-connect *host* *port*))
-      (loop with end-of-game-p = nil
-            with stream = (socket-stream socket)
-            while (peek-char nil *input* nil)  ; run until we receive EOF
-            for turn from 0
-            do (logmsg "--- turn: " turn " ---~%")
-               (logmsg "Sending game state... ")
-               (loop with checksum = (list 0 0)
-                     for line = (read-line *input* nil)
-                     until (or (starts-with line "go")
-                               (starts-with line "ready"))
-                     do (when line
-                          (when (starts-with line "end")
-                            (setf end-of-game-p t))
-                          (incf (first checksum) (length line))
-                          (incf (second checksum))
-                          (write-line line stream)
-                          (force-output stream))
-                     finally (logmsg "checksum = " checksum ".~%")
-                             (when line
+    (logmsg "Connecting to real bot at " (host2str *host*) ":" *port* "...~%")
+    (unwind-protect
+         (handler-bind (#+sbcl (sb-int:simple-stream-error #'connection-lost)
+                        #+sbcl (sb-sys:interactive-interrupt #'user-interrupt)
+                        (usocket:connection-refused-error #'connection-refused)
+                        (error #'error-handler))
+           (setf socket (socket-connect *host* *port*))
+           (loop with end-of-game-p = nil
+                 with stream = (socket-stream socket)
+                 while (peek-char nil *input* nil)  ; run until we receive EOF
+                 for turn from 0
+                 do (logmsg "--- turn: " turn " ---~%")
+                    (logmsg "Sending game state... ")
+                    (loop for line = (read-line *input* nil)
+                          until (or (starts-with line "go")
+                                    (starts-with line "ready"))
+                          do (when line
+                               (when (starts-with line "end")
+                                 (setf end-of-game-p t))
                                (write-line line stream)
-                               (force-output stream)))
-               (logmsg "Receiving bot response... ")
-               (loop with checksum = (list 0 0)
-                     for line = (read-line stream nil)
-                     until (or (starts-with line "go")
-                               end-of-game-p)
-                     do (when line
-                          (incf (first checksum) (length line))
-                          (incf (second checksum))
-                          (write-line line *output*)
-                          (force-output *output*))
-                     finally (logmsg "checksum = " checksum ".~%")
-                             (when line
+                               (force-output stream))
+                          finally (when line
+                                    (write-line line stream)
+                                    (force-output stream)))
+                    (logmsg "Receiving bot response... ")
+                    (loop for line = (read-line stream nil)
+                          until (or (starts-with line "go")
+                                    end-of-game-p)
+                          do (when line
                                (write-line line *output*)
-                               (force-output *output*)))
-               (when end-of-game-p
-                 (loop-finish)))
+                               (force-output *output*))
+                          finally (when line
+                                    (write-line line *output*)
+                                    (force-output *output*)))
+                    (when end-of-game-p
+                      (loop-finish))))
       (ignore-errors (socket-close socket))))
   (close-log))
