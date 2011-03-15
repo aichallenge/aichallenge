@@ -4,7 +4,7 @@ include 'mysql_login.php';
 include 'header.php';
 
 function get_username_from_confirmation_code($confirmation_code) {
-  $query = "SELECT username FROM users WHERE " .
+  $query = "SELECT username FROM user WHERE " .
     "activation_code = '$confirmation_code'";
   $result = mysql_query($query);
   if ($row = mysql_fetch_assoc($result)) {

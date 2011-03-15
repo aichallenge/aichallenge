@@ -1,4 +1,4 @@
-<?
+<?php
 require_once('api_functions.php');
 
 /*
@@ -11,8 +11,8 @@ function get_matchup() {
         "/home/contest/ai-contest/planet_wars/backend";
     $matchup = NULL;
     while ($matchup === NULL) {
-        $sql = "SELECT * FROM matchups
-            WHERE matchup_id = (SELECT MIN(matchup_id) FROM matchups
+        $sql = "SELECT * FROM matchup
+            WHERE matchup_id = (SELECT MIN(matchup_id) FROM matchup
                 WHERE dispatch_time IS NULL
                     OR dispatch_time < (NOW() - INTERVAL 15 MINUTE))";
         $result = mysql_query($sql);
@@ -26,7 +26,7 @@ function get_matchup() {
         $row = mysql_fetch_assoc($result);
         $matchup_id = $row['matchup_id'];
         $dispatch_time = $row['dispatch_time'];
-        $sql = "UPDATE matchups SET dispatch_time = NOW()
+        $sql = "UPDATE matchup SET dispatch_time = NOW()
             WHERE matchup_id=".$matchup_id;
         if ($dispatch_time === NULL) {
             $sql = $sql." AND dispatch_time IS NULL";
@@ -41,7 +41,7 @@ function get_matchup() {
 
 function get_submission($sub_id) {
     $sql = "SELECT s.*, l.*, l.name as language_name                
-        FROM submissions s INNER JOIN languages l
+        FROM submission s INNER JOIN language l
             ON l.language_id = s.language_id
         WHERE s.submission_id=".$sub_id;
     $result = mysql_query($sql);
@@ -53,7 +53,7 @@ while (True) {
     $submission_one = get_submission($matchup['player_one']);
     $submission_two = get_submission($matchup['player_two']);
     if ($submission_one['latest'] != 1 or $submission_two['latest'] != 1) {
-        mysql_query("DELETE FROM matchups
+        mysql_query("DELETE FROM matchup
             WHERE player_one='".$matchup['player_one']."'
                AND '".$matchup['player_two']."'");
         continue;
@@ -61,7 +61,7 @@ while (True) {
     break;
 }
 
-$sql = "SELECT * FROM maps WHERE map_id=".$matchup['map_id'];
+$sql = "SELECT * FROM map WHERE map_id=".$matchup['map_id'];
 $result = mysql_query($sql);
 $row = mysql_fetch_assoc($result);
 $map_name = $row['path'];
@@ -74,7 +74,7 @@ echo json_encode(array(
 # update last game timestamp of players
 # doing it here as the game is handed out instead of when the game is
 # turned in avoids bias against players that take a longer time to play
-$sql = "UPDATE submissions set last_game_timestamp = current_timestamp
+$sql = "UPDATE submission set last_game_timestamp = current_timestamp
     WHERE submission_id = '".$matchup['player_one']."'
         OR submission_id = '".$matchup['player_two']."'";
 mysql_query($sql);

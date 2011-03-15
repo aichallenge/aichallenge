@@ -2,7 +2,7 @@
 include 'header.php';
 include 'mysql_login.php';
 echo "<h2>User List</h2>";
-$query = "SELECT * FROM users";
+$query = "SELECT * FROM user";
 $result = mysql_query($query);
 if ($result) {
   echo "<ul>";

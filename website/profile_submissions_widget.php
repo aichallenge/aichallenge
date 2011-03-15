@@ -28,9 +28,9 @@ $rowcount_query = <<<EOT
 select
     count(1)
 from
-    submissions r
-    inner join submissions s on s.submission_id = r.submission_id
-    inner join users u on u.user_id = s.user_id
+    submission r
+    inner join submission s on s.submission_id = r.submission_id
+    inner join user u on u.user_id = s.user_id
 where
     u.user_id = $user_id
 EOT;
@@ -49,10 +49,10 @@ select
     date_format(s.timestamp,'%b %D %H:%i:%S') as timestamp,
     l.name as language
 from
-    submissions r
-    inner join submissions s on s.submission_id = r.submission_id
-    inner join users u on u.user_id = s.user_id
-    inner join languages l on l.language_id = s.language_id
+    submission r
+    inner join submission s on s.submission_id = r.submission_id
+    inner join user u on u.user_id = s.user_id
+    inner join language l on l.language_id = s.language_id
 where
     u.user_id = $user_id
     order by s.timestamp desc

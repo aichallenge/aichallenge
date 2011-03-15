@@ -34,13 +34,13 @@ def hash_file_md5sum(filename):
 def hash_file_sha(filename):
     READ_SIZE = 4096 * 2500
     fhash = sha1()
-    fhash.update(os.path.basename(filename))
-    f = open(filename, 'r')
+    #fhash.update(os.path.basename(filename))
+    f = open(filename, 'rb')
     content = f.read(READ_SIZE)
     while len(content) != 0:
         fhash.update(content)
         content = f.read(READ_SIZE)
-    return fhash.digest()
+    return fhash.hexdigest()
 
 # this was only around 20-25% faster than the full hash
 def hash_file_size(filename):
@@ -62,9 +62,8 @@ def hash_submission(submission_dir):
 
 if __name__ == "__main__":
     if len(sys.argv) != 2:
-        print "usage: submission_hash.py <submission_id>"
+        print "usage: submission_hash.py <submission_file>"
         sys.exit(1)
-    submission_id = sys.argv[1]
-    submission_dir = os.path.join(SUB_PATH, submission_id)
-    print hash_submission(submission_dir)
+    if os.path.exists(sys.argv[1]):
+        sys.stdout.write(hash_file_sha(sys.argv[1]))
 

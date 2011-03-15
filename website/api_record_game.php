@@ -1,4 +1,5 @@
 <?
+
 require_once('api_functions.php');
 
 /* 
@@ -8,7 +9,7 @@ require_once('api_functions.php');
 
 $gamedata = json_decode(file_get_contents('php://input'));
 
-$sql = "SELECT count(1) FROM games
+$sql = "SELECT count(1) FROM game
     WHERE player_one = ".$gamedata->player_one."
         AND player_two = ".$gamedata->player_two."
         AND map_id = ".$gamedata->map_id;
@@ -18,7 +19,7 @@ if ($row['count(1)'] != 0) {
   die("Appears this pairing and map are already in the database");
 }
 
-$sql = "INSERT INTO games (winner,loser,map_id,draw,timestamp,".
+$sql = "INSERT INTO game (winner,loser,map_id,draw,timestamp,".
           "player_one,player_two,worker) 
           VALUES (".
             "'".addslashes($gamedata->winner) . "', ".
@@ -44,7 +45,7 @@ $r=mysql_query($sql);
 
 if(isset($gamedata->errors)){
   foreach($gamedata->errors as $error){
-    $sql = "INSERT INTO errors (submission_id,game_id,turn,`error`,timestamp)".
+    $sql = "INSERT INTO error (submission_id,game_id,turn,`error`,timestamp)".
             "VALUES (".
                 "'".addslashes($error->submission_id) . "', ".
                 "'".addslashes($game_id) . "', ".
@@ -57,7 +58,7 @@ if(isset($gamedata->errors)){
 }
 
 # remove the matchup from the queue
-$sql = "DELETE FROM matchups
+$sql = "DELETE FROM matchup
     WHERE player_one='".addslashes($gamedata->player_one)."'
         AND player_two='".addslashes($gamedata->player_two)."'";
 mysql_query($sql);

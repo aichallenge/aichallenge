@@ -5,34 +5,29 @@ import sys
 
 import MySQLdb
 from server_info import server_info
+from sql import sql
 
-def main(map_dir):
-    map_files = os.listdir(map_dir)
-    map_files = [m for m in map_files
-            if m.startswith("map") and m.endswith(".txt")]
+def main():
+    # get list of all map files
+    map_files = os.listdir(server_info["maps_path"])
+    map_files = set([m for m in map_files if m.endswith(".map")])
+    
+    # get list of maps in database
     connection = MySQLdb.connect(host = server_info["db_host"],
                                  user = server_info["db_username"],
                                  passwd = server_info["db_password"],
                                  db = server_info["db_name"])
-    cursor = connection.cursor(MySQLdb.cursors.DictCursor)
-    values = []
-    for map in map_files:
-        cursor.execute("SELECT count(1) FROM maps WHERE path ='%s'" % (map,))
-        count = cursor.fetchone()['count(1)']
-        if count > 0:
-            continue
-        values.append((os.path.splitext(map)[0], map, 1))
-    if len(values) == 0:
-        print "No new maps found"
-        sys.exit()
-    print "Adding %d maps to database" % (len(values),)
-    values = ["('%s','%s','%s')" % (n,m,p) for n,m,p in values]
-    values = ",".join(values)
-    cursor.execute("INSERT INTO maps (name,path,priority) VALUES "+ values)
+    cursor = connection.cursor()
+    cursor.execute(sql["select_map_filenames"])
+    db_maps = set([row[0] for row in cursor.fetchall()])
+    
+    # get maps not in database
+    new_maps = map_files.difference(db_maps)
+    
+    # add new maps to database with top priority
+    cursor.execute(sql["update_map_priorities"])
+    cursor.execute(sql["insert_map_filenames"], new_maps)
 
 if __name__ == "__main__":
-    if len(sys.argv) < 2:
-        print "usage: %s <map directory>" % sys.argv[0]
-        sys.exit()
-    main(sys.argv[1])
+    main()
 

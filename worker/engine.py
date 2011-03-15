@@ -1,412 +1,206 @@
-import math
-import os
-import signal
-import shlex
-import subprocess
-import sys
+#!/usr/bin/env python
+from sandbox import Sandbox
 import time
-from user_sadbox import Sadbox
+import traceback
+import os
+import sys
 
-# Reads a text file that contains a game state, and returns the game state. A
-# game state is composed of a list of fleets and a list of planets.
-#   map: an absolute or relative filename that point to a text file.
-def read_map_file(map):
-  fleets = []
-  planets = []
-  f = open(map)
-  for line in f:
-    tokens = line.lower().strip().split(" ")
-    if len(tokens) == 0:
-      pass
-    elif tokens[0] == "p":
-      planets.append({
-        "x" : float(tokens[1]),
-        "y" : float(tokens[2]),
-        "owner" : int(tokens[3]),
-        "num_ships" : int(tokens[4]),
-        "growth_rate" : int(tokens[5])
-      })
-    elif tokens[0] == "f":
-      fleets.append({
-        "owner" : int(tokens[1]),
-        "num_ships" : int(tokens[2]),
-        "source" : int(tokens[3]),
-        "destination" : int(tokens[4]),
-        "total_trip_length" : int(tokens[5]),
-        "turns_remaining" : int(tokens[6])
-    })
-  return planets, fleets
-
-# Carries out the point-of-view switch operation, so that each player can
-# always assume that he is player number 1. There are three cases.
-# 1. If pov < 0 then no pov switching is being used. Return player_id.
-# 2. If player_id == pov then return 1 so that each player thinks he is
-#    player number 1.
-# 3. If player_id == 1 then return pov so that the real player 1 looks like
-#    he is player number "pov".
-# 4. Otherwise return player_id, since players other than 1 and pov are
-#    unaffected by the pov switch.
-def switch_pov(player_id, pov):
-  if pov < 0:
-    return player_id
-  if player_id == pov:
-    return 1
-  if player_id == 1:
-    return pov
-  return player_id
-
-# Generates a string representation of a planet. This is used to send data
-# about the planets to the client programs.
-def serialize_planet(p, pov):
-  owner = switch_pov(int(p["owner"]), pov)
-  message = "P " + str(p["x"]) + " " + str(p["y"]) + " " + str(owner) + \
-    " " + str(int(p["num_ships"])) + " " + str(int(p["growth_rate"]))
-  return message.replace(".0 ", " ")
-
-# Generates a string representation of a fleet. This is used to send data
-# about the fleets to the client programs.
-def serialize_fleet(f, pov):
-  owner = switch_pov(int(f["owner"]), pov)
-  message = "F " + str(owner) + " " + str(int(f["num_ships"])) + " " + \
-    str(int(f["source"])) + " " + str(int(f["destination"])) + " " + \
-    str(int(f["total_trip_length"])) + " " + str(int(f["turns_remaining"]))
-  return message.replace(".0 ", " ")
-
-# Takes a string which contains an order and parses it, returning the order in
-# dictionary format. If the order can't be parsed, return None.
-def parse_order_string(s):
-  tokens = s.split(" ")
-  if len(tokens) == 3:
-    try:
-      return {
-        "source" : int(tokens[0]),
-        "destination" : int(tokens[1]),
-        "num_ships" : int(tokens[2])
-      }
-    except:
-      return None
-  else:
-    return None
-
-# Calculates the travel time between two planets. This is the cartesian
-# distance, rounded up to the nearest integer.
-def travel_time(a, b):
-  dx = b["x"] - a["x"]
-  dy = b["y"] - a["y"]
-  return int(math.ceil(math.sqrt(dx * dx + dy * dy)))
-
-# Processes the given order, as if it was given by the given player_id. If
-# everything goes well, returns True. Otherwise, returns False.
-def issue_order(order, player_id, planets, fleets, temp_fleets):
-  src = order["source"]
-  dest = order["destination"]
-  if src < 0 or src >= len(planets):
-    return False
-  if dest < 0 or dest >= len(planets):
-    return False
-  source_planet = planets[src]
-  owner = source_planet["owner"]
-  num_ships = order["num_ships"]
-  if owner != player_id:
-    return False
-  if num_ships > source_planet["num_ships"]:
-    return False
-  if num_ships < 0:
-    return False
-  source_planet["num_ships"] -= num_ships
-  if src not in temp_fleets:
-    temp_fleets[src] = {}
-  if dest not in temp_fleets[src]:
-    temp_fleets[src][dest] = 0
-  temp_fleets[src][dest] += num_ships
-  return True
-
-# Processes fleets launched this turn into the normal
-# fleets array.
-def process_new_fleets(planets, fleets, temp_fleets):
-  for src, destd in temp_fleets.iteritems():
-    source_planet = planets[src]
-    owner = source_planet["owner"]
-    if owner == 0:
-      # player launched fleets then died, so "erase" these fleets
-      continue
-    for dest, num_ships in destd.iteritems():
-      if num_ships > 0:
-        destination_planet = planets[dest]
-        t = travel_time(source_planet, destination_planet)
-        fleets.append({
-          "source" : src,
-          "destination" : dest,
-          "num_ships" : num_ships,
-          "owner" : owner,
-          "total_trip_length" : t,
-          "turns_remaining" : t
-        })
-
-# "a" is an array. This method returns the number of non-zero elements in a.
-def num_non_zero(a):
-  return len([x for x in a if x != 0])
-
-# Resolves the battle at planet p, if there is one.
-# * removes all fleets involved in the battle
-# * sets the number of ships and owner of the planet according the outcome
-def fight_battle(pid, p, fleets):
-  participants = {p["owner"]: p["num_ships"]}
-  for i in range (len(fleets) - 1, -1, -1):
-    f = fleets[i]
-    ow = f["owner"]
-    if f["turns_remaining"] <= 0 and f["destination"] == pid:
-      if ow in participants:
-        participants[ow] += f["num_ships"]
-      else:
-        participants[ow] = f["num_ships"]
-      del fleets[i]
-
-  winner = {"owner": 0, "ships": 0}
-  second = {"owner": 0, "ships": 0}
-  for owner, ships in participants.items():
-    if ships >= second["ships"]:
-      if ships >= winner["ships"]:
-        second = winner
-        winner = {"owner": owner, "ships": ships}
-      else:
-        second = {"owner": owner, "ships": ships}
-
-  if winner["ships"] > second["ships"]:
-    p["num_ships"] = winner["ships"] - second["ships"]
-    p["owner"] = winner["owner"]
-  else:
-   p["num_ships"] = 0
-
-# Performs the logic needed to advance the state of the game by one turn.
-# Fleets move forward one tick. Any fleets reaching their destinations are
-# dealt with. If there are any battles to be resolved, then they're taken
-# care of.
-def do_time_step(planets, fleets):
-  for p in planets:
-    if p["owner"] > 0:
-      p["num_ships"] += p["growth_rate"]
-  for f in fleets:
-    f["turns_remaining"] -= 1
-  for i in range(len(planets)):
-   fight_battle(i, planets[i], fleets)
-
-  return planets, fleets
-
-# Calculates the number of players remaining
-def remaining_players(planets, fleets):
-  players = set()
-  for p in planets:
-    players.add(p["owner"])
-  for f in fleets:
-    players.add(f["owner"])
-  players.discard(0)
-  return players
-
-# Returns a string representation of the entire game state.
-def serialize_game_state(planets, fleets, pov):
-  message = "\n".join([serialize_planet(p, pov) for p in planets]) + \
-    "\n" + "\n".join([serialize_fleet(f, pov) for f in fleets]) + "\ngo\n"
-  return message.replace("\n\n", "\n")
-
-# Turns a list of planets into a string in playback format. This is the initial
-# game state part of a game playback string.
-def planet_to_playback_format(planets):
-  planet_strings = []
-  for p in planets:
-    planet_strings.append(str(p["x"]) + "," + str(p["y"]) + "," + \
-      str(p["owner"]) + "," + str(p["num_ships"]) + "," + \
-      str(p["growth_rate"]))
-  return ":".join(planet_strings)
-
-# Returns True if and only if all the elements of list are True. Otherwise
-# return False.
-def all_true(list):
-  for item in list:
-    if item == False:
-      return False
-  return True
-
-# Kicks the given player from the game. All their fleets disappear. All their
-# planets become neutral, and keep the same number of ships.
-def kick_player_from_game(player_number, planets, fleets):
-  for f in fleets:
-    if f["owner"] == player_number:
-      f["turns_remaining"] = 1
-      f["owner"] = 0
-      f["num_ships"] = 0
-  for p in planets:
-    if p["owner"] == player_number:
-      p["owner"] = 0
-
-# Turns a list of planets into a string in playback format. This is the initial
-# game state part of a game playback string.
-def fleets_to_playback_format(fleets):
-  fleet_strings = []
-  for p in fleets:
-    fleet_strings.append(str(p["owner"]) + "." + str(p["num_ships"]) + "." + \
-      str(p["source"]) + "." + str(p["destination"]) + "." + \
-      str(p["total_trip_length"]) + "." + str(p["turns_remaining"]))
-  return ",".join(fleet_strings)
-
-# Represents the game state in frame format. Represents one frame.
-def frame_representation(planets, fleets):
-  planet_string = \
-    ",".join([str(p["owner"]) + "." + str(p["num_ships"]) for p in planets])
-  return planet_string + "," + fleets_to_playback_format(fleets)
-
-def num_ships_for_player(planets, fleets, player_id):
-  return sum([p["num_ships"] for p in planets if p["owner"] == player_id]) + \
-    sum([f["num_ships"] for f in fleets if f["owner"] == player_id])
-
-def player_with_most_ships(planets, fleets):
-  max_player = 0
-  max_ships = 0
-  for player in remaining_players(planets, fleets):
-    ships = num_ships_for_player(planets, fleets, player)
-    if ships == max_ships:
-      max_player = 0
-    elif ships > max_ships:
-      max_ships = ships
-      max_player = player
-  return max_player
-  
-def error(submission_id, error_type, turn=1):
-  return {'submission_id':submission_id, 'error': error_type, 'turn':turn-1}
-
-# Plays a game of Planet Wars.
-#   map: a full or relative path to a text file containing the map that this
-#        game should be played on.
-#   max_turn_time: the maximum amount of time each player gets to finish each
-#                  turn. A player forfeits the game if they run over their
-#                  time allocation.
-#   max_turns: the max length of a game in turns. If the game isn't over after
-#              this many turns, the player with the most ships wins.
-#   players: a list of dictionaries, each of which has information about one
-#            of the players. Each dictionary should have the following keys:
-#            path: the path where the player's files are located
-#            command: the command that invokes the player, assuming the given
-#                     path is the current working directory.
-def play_game(map, max_turn_time, max_turns, players, debug=False):
-  planets, fleets = read_map_file(map)
-  playback = planet_to_playback_format(planets) + "|"
-  clients = []
-  errors_data = []
-  killed = {}
-  if debug:
-    sys.stderr.write("starting client programs\n")
-  for i, p in enumerate(players):
-    client = Sadbox(working_directory=p["path"],
-                    shell_command=p["command"],
-                    security_on=True)
-    if client.is_alive:
-      if debug:
-        sys.stderr.write("    started player " + str(i+1) + "\n")
-      clients.append(client)
+def run_game(game, botcmds, options, gameid=0):
+    output_json = bool('output_json' in options)
+    error = ''
+    if 'output_dir' in options:
+        output_dir = options["output_dir"]
     else:
-      if debug:
-        sys.stderr.write("    failed to start player " + str(i+1) + "\n")
-      return {"error" : "failure_to_start_client", 'errors_data':[error(p['submission_id'],'STARTUP_FAILURE')]}
-  if debug:
-    sys.stderr.write("waiting for players to spin up\n")
-  time.sleep(0.05) # Changed from 2 seconds, since this meant that we waste a guaranteed 2 seconds each game.
-                   # When a tournament manager is playing 15 games a minute, this adds up
-  turn_number = 1
-  turn_strings = []
-  outcome = dict()
-  remaining = remaining_players(planets, fleets)
-  while turn_number <= max_turns and len(remaining) > 1:
-    temp_fleets = {}
-    for i, c in enumerate(clients):
-      if (i+1) not in remaining:
-        continue
-      message = serialize_game_state(planets, fleets, i+1)
-      if debug:
-        sys.stderr.write("engine > player" + str(i+1) + ":\n")
-        sys.stderr.write(message)
-      c.write(message)
-    client_done = [False] * len(clients)
-    start_time = time.time()
-    time_limit = float(max_turn_time) / 1000
-    if turn_number <= 2:           # Add a little extra time for clients to spin up
-      time_limit = time_limit * 3  # and for avoiding timeout errors
-                                   # For bot coders reading this, don't count on this time
-                                   # It may be removed at any time!
-    # Get orders from players
-    while not all_true(client_done) and time.time() - start_time < time_limit:
-      for i, c in enumerate(clients):
-        if client_done[i] or not c.is_alive or (i+1) not in remaining:
-          continue
-        line = c.read_line()
-        if line is None:
-          continue
-        line = line.strip().lower()
-        if line == "go":
-          client_done[i] = True
+        output_dir = None
+    log_input = bool('log_input' in options)
+    log_output = bool('log_output' in options)
+    turns = int(options["turns"])
+    loadtime = float(options["loadtime"]) / 1000
+    turntime = float(options["turntime"]) / 1000
+    verbose = bool('verbose' in options)
+    try:
+        if output_dir:
+            if log_input:
+                bot_input_log = [open(os.path.join(output_dir, '%s.bot%s.input' % (gameid, i)), "w") 
+                                 for i in range(len(botcmds))]
+            if log_output:
+                bot_output_log = [open(os.path.join(output_dir, '%s.bot%s.output' % (gameid, i)), "w") 
+                                  for i in range(len(botcmds))]
+        # create bot sandboxes
+        bots = [Sandbox(*bot) for bot in botcmds]
+        for b, bot in enumerate(bots):
+            if not bot.is_alive:
+                if verbose:
+                    print('bot %s did not start' % botcmds[b])
+                game.kill_player(b)
+
+        if output_dir:
+            of = open(os.path.join(output_dir, '%s.replay' % gameid), "w")
+            of.write(game.get_player_start())
+            # TODO: write player names and crap
+            of.flush()
+
+        if verbose:
+            print('running for %s turns' % turns)
+        for turn in range(turns+1):
+            if verbose:
+                print('turn %s' % turn)
+            try:
+                if turn == 0:
+                    game.start_game()
+
+                # send game state to each player
+                for b, bot in enumerate(bots):
+                    if game.is_alive(b):
+                        if turn == 0:
+                            start = game.get_player_start(b) + 'ready\n'
+                            bot.write(start)
+                            if output_dir and log_input:
+                                    bot_input_log[b].write(start)
+                                    bot_input_log[b].flush()
+                        else:
+                            state = 'turn ' + str(turn) + '\n' + game.get_player_state(b) + 'go\n'
+                            bot.write(state)
+                            if output_dir and log_input:
+                                bot_input_log[b].write(state)
+                                bot_input_log[b].flush()
+                if turn > 0:
+                    if output_dir:
+                        of.write('turn %s\n' % turn)
+                        of.write('score %s\n' % ' '.join([str(s) for s in game.get_scores()]))
+                        of.write(game.get_state())
+                        of.flush()
+                    game.start_turn()
+
+                # get moves from each player
+                if turn == 0:
+                    time_limit = loadtime
+                else:
+                    time_limit = turntime
+                start_time = time.time()
+                bot_finished = [not game.is_alive(b) for b in range(len(bots))]
+                bot_moves = [[] for b in bots]
+
+                # loop until received all bots send moves or are dead
+                #   or when time is up
+                while (sum(bot_finished) < len(bot_finished) and
+                        time.time() - start_time < time_limit):
+                    time.sleep(0.01)
+                    for b, bot in enumerate(bots):
+                        if bot_finished[b]:
+                            continue # already got bot moves
+                        if not bot.is_alive:
+                            if verbose:
+                                print('bot %s died' % b)
+                            bot_finished[b] = True
+                            game.kill_player(b)
+                            continue # bot is dead
+                        line = bot.read_line()
+                        while line != None:
+                            line = line.strip()
+                            if line.lower() == 'go':
+                                bot_finished[b] = True
+                                break
+                            else:
+                                bot_moves[b].append(line)
+                            line = bot.read_line()
+
+                # kill timed out bots
+                for b, finished in enumerate(bot_finished):
+                    if not finished:
+                        if verbose:
+                            print("bot %s timed out" % b)
+                        if output_dir:
+                            of.write('# bot %s timed out\n' % b)
+                        game.kill_player(b)
+                        bots[b].kill()
+                                            
+                # process all moves
+                bot_alive = [game.is_alive(b) for b in range(len(bots))]
+                if turn > 0 and not game.game_over():
+                    for b, moves in enumerate(bot_moves):
+                        if game.is_alive(b):
+                            valid, invalid = game.do_moves(b, moves) 
+                            if output_dir and log_output:
+                                bot_output_log[b].write('# turn %s\n' % turn)
+                                if len(valid) > 0:
+                                    tmp = '\n'.join(valid) + '\n'
+                                    bot_output_log[b].write(tmp)
+                                    bot_output_log[b].flush()
+                                    of.write(tmp)
+                                    of.flush()
+
+                    game.finish_turn()
+                    
+                # send ending info to eliminated bots
+                for b, alive in enumerate(bot_alive):
+                    if alive and not game.is_alive(b):
+                        if verbose:
+                            print("bot %s eliminated" % b)
+                        if output_dir:
+                            of.write('# bot %s eliminated\n' % b)
+                        end_line = 'end\nscore %s\n' % ' '.join([str(s) for s in game.get_scores()])
+                        end_line += game.get_player_state(b)
+                        bots[b].write(end_line)
+                        if output_dir and log_output:
+                            bot_output_log[b].write(end_line)
+                            bot_output_log[b].flush()
+
+            except:
+                raise
+
+            if verbose:
+                stats = game.get_stats()
+                s = 'turn %4d stats: '
+                for key, values in stats:
+                    s += '%s: %s' % (key, values)
+                print("\r%-50s" % s)
+
+            alive = [game.is_alive(b) for b in range(len(bots))]
+            if sum(alive) <= 1:
+                break
+
+        # send bots final state and score, output to replay file
+        game.finish_game()
+        score_line = 'end\n'
+        score_line += 'players %s\n' % len(bots)
+        score_line +='score %s\n' % ' '.join([str(s) for s in game.get_scores()])
+        for b, bot in enumerate(bots):
+            if game.is_alive(b):
+                state = score_line + game.get_player_state(b) + 'go\n'
+                bot.write(state)
+                if output_dir and log_input:
+                    bot_input_log[b].write(state)
+                    bot_input_log[b].flush()
+        if output_dir:
+            of.write(score_line)
+            of.write(game.get_state())
+            of.flush()
+
+    except Exception:
+        error = traceback.format_exc()
+        if verbose:
+            print(error)
+    finally:
+        for bot in bots:
+            if bot.is_alive:
+                bot.kill()
+        if output_dir:
+            of.close()
+            if log_input:
+                for log in bot_input_log:
+                    log.close()
+            if log_output:
+                for log in bot_output_log:
+                    log.close()
+    if output_json:
+        # this isn't actually json yet, the worker will encode it
+        json_response = {}
+        if error:
+            json_response["error"] = error
         else:
-          order = parse_order_string(line)
-          if order is None:
-            sys.stderr.write("player " + str(i+1) + " kicked for making " + \
-              "an unparseable order: " + line + "\n")
-            errors_data.append(error(players[i]['submission_id'],'UNPARSEABLE_ORDER',turn_number))
-            killed[i]=True
-            c.kill()
-            kick_player_from_game(i+1, planets, fleets)
-          else:
-            if not issue_order(order, i+1, planets, fleets, temp_fleets):
-              if int(i) not in killed:
-                errors_data.append(error(players[i]['submission_id'],'BAD_ORDER',turn_number))
-                killed[int(i)]=True
-              sys.stderr.write("player %d bad order: %s\n" % (i+1, line))
-              c.kill()
-              kick_player_from_game(i+1, planets, fleets)
-            elif debug:
-              sys.stderr.write("player " + str(i+1) + " order: " + line + "\n")
-      time.sleep(0.002) # added this since this while loop would use up 33% of the CPU
-                        # it's still quite bad CPU wise
-                        # Really needs to use select or the like to wait on bot input.
-    process_new_fleets(planets, fleets, temp_fleets)
-    # Kick players that took too long to move.
-    for i, c in enumerate(clients):
-      if (i+1) not in remaining or client_done[i]:
-        continue
-      if int(i) not in killed:
-        errors_data.append(error(players[i]['submission_id'],'TIMEOUT',turn_number))
-        killed[int(i)]=True
-      sys.stderr.write("player " + str(i+1) + " kicked for taking too " + \
-        "long to move\n")
-      if "timeout" not in outcome:
-        outcome["timeout"] = []
-      outcome["timeout"].append(i+1)
-      c.kill()
-      kick_player_from_game(i+1, planets, fleets)
-    planets, fleets = do_time_step(planets, fleets)
-    turn_strings.append(frame_representation(planets, fleets))
-    remaining = remaining_players(planets, fleets)
-    turn_number += 1
-  for i, c in enumerate(clients):
-    if not c.is_alive:
-      if int(i) not in killed:
-        errors_data.append(error(players[i]['submission_id'],'QUIT',turn_number))
-        killed[int(i)]=True
-      if "fail" not in outcome:
-        outcome["fail"] = []
-      outcome["fail"].append(i+1)
-    c.kill()
-  playback += ":".join(turn_strings)
-  outcome["winner"] = player_with_most_ships(planets, fleets)
-  outcome["playback"] = playback
-  if errors_data:
-    outcome["errors_data"] = errors_data
-  return outcome
-
-def main():
-  players = [
-    {"path" : "../submissions/123443/.", "command" : "./MyBot"},
-    {"path" : "../submissions/123429/.", "command" : "java -jar MyBot.jar"}
-  ]
-  print "game result: " + \
-    str(play_game("../maps/map7.txt", 1000, 10, players, True))
-
-if __name__ == "__main__":
-  main()
+            scores = game.get_scores()
+            json_response['score'] = scores
+            json_response['rank'] = [sorted(set(scores)).index(x) for x in scores]
+            json_response['player_info'] = [{} for x in range(len(bots))]
+        return json_response

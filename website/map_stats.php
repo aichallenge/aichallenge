@@ -9,7 +9,7 @@ while ($row = mysql_fetch_assoc($result)) {
     $latest[$row['map_id']] = $row['MAX(game_id)'];
 }
 
-$query = "SELECT map_id, count(1) FROM games WHERE draw = 1 GROUP BY map_id";
+$query = "SELECT map_id, count(1) FROM game WHERE draw = 1 GROUP BY map_id";
 $result = mysql_query($query);
 $draws = array();
 while ($row = mysql_fetch_assoc($result)) {
@@ -17,8 +17,8 @@ while ($row = mysql_fetch_assoc($result)) {
 }
 
 # this could pull a partial leaderboard with less than 100 players
-$query = "SELECT submission_id FROM rankings
-    WHERE leaderboard_id = (SELECT MAX(leaderboard_id) FROM leaderboards
+$query = "SELECT submission_id FROM ranking
+    WHERE leaderboard_id = (SELECT MAX(leaderboard_id) FROM leaderboard
         WHERE complete = 1)
     ORDER BY rank LIMIT 100";
 $result = mysql_query($query);
@@ -28,7 +28,7 @@ while ($row = mysql_fetch_assoc($result)) {
 }
 $top_players = substr($top_players, 1);
 
-$query = "SELECT map_id, count(1) FROM games
+$query = "SELECT map_id, count(1) FROM game
     WHERE player_one in ($top_players) AND player_two in ($top_players)
     GROUP BY map_id";
 $result = mysql_query($query);
@@ -38,7 +38,7 @@ while ($row = mysql_fetch_assoc($result))
     $top_played[$row['map_id']] = $row['count(1)'];
 }
 
-$query = "SELECT map_id, count(1) FROM games
+$query = "SELECT map_id, count(1) FROM game
     WHERE player_one in ($top_players) AND player_two in ($top_players)
         AND draw = 1
     GROUP BY map_id";
@@ -48,7 +48,7 @@ while ($row = mysql_fetch_assoc($result)) {
     $top_draws[$row['map_id']] = $row['count(1)'];
 }
 
-$query = "SELECT * FROM maps";
+$query = "SELECT * FROM map";
 $result = mysql_query($query);
 $map_info = array();
 while ($row = mysql_fetch_assoc($result)) {
@@ -103,6 +103,6 @@ $table .= "</tbody></table>\n";
 
 <h2>Map Stats</h2>
 
-<?=$table?>
+<?php echo $table?>
 
 <?php include 'footer.php'; ?>

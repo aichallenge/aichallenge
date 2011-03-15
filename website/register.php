@@ -47,7 +47,7 @@ if($server_info["submissions_open"]) { ?>
     <td>
       <select name="user_status">
 <?php
-  $query = "SELECT * FROM user_status_codes";
+  $query = "SELECT * FROM user_status_code";
   $result = mysql_query($query);
   while ($row = mysql_fetch_assoc($result)) {
     $status_id = $row['status_id'];
@@ -69,7 +69,7 @@ if($server_info["submissions_open"]) { ?>
       <option value="1">University of Waterloo</option>
       <option value="999">---</option>
 <?php
-  $query = "SELECT * FROM organizations WHERE org_id > 1 ORDER BY name";
+  $query = "SELECT * FROM organization WHERE org_id > 1 ORDER BY name";
   $result = mysql_query($query);
   while ($row = mysql_fetch_assoc($result)) {
     $status_id = $row['org_id'];
@@ -90,7 +90,7 @@ if($server_info["submissions_open"]) { ?>
       <select name="user_country" style="width:210px">
       <option value="">&nbsp;</option>
 <?php
-  $query = "SELECT * FROM countries ORDER BY country_id";
+  $query = "SELECT * FROM country ORDER BY country_id";
   $result = mysql_query($query);
   while ($row = mysql_fetch_assoc($result)) {
     $country_id = $row['country_id'];

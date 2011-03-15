@@ -21,7 +21,7 @@ $username_query = <<<EOT
 select
     u.username
 from
-    users u
+    user u
 where
     u.user_id = '$user_id'
 EOT;

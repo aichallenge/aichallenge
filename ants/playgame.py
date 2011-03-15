@@ -3,14 +3,17 @@ import traceback
 import sys
 import os
 import time
-from engine import run_game
+from optparse import OptionParser
 
 from ants import Ants
 
+# get engine from worker dir
+sys.path.append("../worker")
+from engine import run_game
+
 def main(argv):
-    from optparse import OptionParser
-    usage ="Usage: %prog [options] bot1 bot2"
-    parser = OptionParser()
+    usage ="Usage: %prog [options] map bot1 bot2\n\nYou must specify a map file."
+    parser = OptionParser(usage=usage)
 
     # map to be played
     # number of players is determined by the map file
@@ -26,6 +29,9 @@ def main(argv):
     # it will also contain the bot input/output logs, if requested
     parser.add_option("-o", "--output_dir", dest="output_dir",
                       help="Directory to dump replay files to.")
+    parser.add_option("-j", "--output_json", dest="output_json",
+                      action="store_true", default=False,
+                      help="Return json result from engine.")
     parser.add_option("-I", "--log_input", dest="log_input",
                        action="store_true", default=False,
                        help="Log input streams sent to bots")
@@ -48,34 +54,68 @@ def main(argv):
     parser.add_option("--loadtime", dest="loadtime",
                       default=3000, type="int",
                       help="Amount of time to give for load, in milliseconds")
-    parser.add_option("--attack", dest="attack",
-                      default="closest",
-                      help="Attack method to use for engine. (closest, occupied)")
     parser.add_option("-r", "--rounds", dest="rounds",
                       default=1, type="int",
                       help="Number of rounds to play")
 
+    # ants specific game options
+    parser.add_option("--attack", dest="attack",
+                      default="closest",
+                      help="Attack method to use for engine. (closest, occupied)")
+    parser.add_option("--food", dest="food",
+                      default="sections",
+                      help="Food spawning method. (none, random, sections)")
+    parser.add_option("--viewradius2", dest="viewradius2",
+                      default=96, type="int",
+                      help="Vision radius of ants squared")
+    parser.add_option("--spawnradius2", dest="spawnradius2",
+                      default=2, type="int",
+                      help="Spawn radius of ants squared")
+    parser.add_option("--attackradius2", dest="attackradius2",
+                      default=5, type="int",
+                      help="Attack radius of ants squared")
+
     (opts, args) = parser.parse_args(argv)
-    if opts.map is None:
-        print("Please specify a map to start with")
+    if opts.map is None or not os.path.exists(opts.map):
+        parser.print_help()
         return -1
     try:
-        options = {"map": opts.map,
-                   "attack": opts.attack,
-                   "loadtime": opts.loadtime,
-                   "turntime": opts.turntime,
-                   "turns": opts.turns }
+        # this split of options is not needed, but left for documentation
+        game_options = {
+            "map": opts.map,
+            "attack": opts.attack,
+            "food": opts.food,
+            "viewradius2": opts.viewradius2,
+            "attackradius2": opts.attackradius2,
+            "spawnradius2": opts.spawnradius2,
+            "loadtime": opts.loadtime,
+            "turntime": opts.turntime,
+            "turns": opts.turns }
+        engine_options = {
+            "loadtime": opts.loadtime,
+            "turntime": opts.turntime,
+            "map_file": opts.map,
+            "turns": opts.turns,
+            "output_dir": opts.output_dir,
+            "output_json": opts.output_json,
+            "log_input": opts.log_input,
+            "log_output": opts.log_output,
+            "serial": opts.serial,
+            "verbose": opts.verbose }
         for round in range(opts.rounds):
-            game = Ants(options)
+            map_file = open(opts.map, 'r')
+            game_options["map"] = map_file.read()
+            map_file.close()
+            game = Ants(game_options)
             bots = [('.', arg) for arg in args]
             if game.num_players != len(bots):
                 print("Incorrect number of bots for map.  Need %s, got %s" % 
                       (game.num_players, len(bots)))
                 break
             print('playgame round %s' % round)
-            run_game(game, bots, opts.turntime, opts.loadtime,
-                     opts.turns, opts.output_dir,
-                     opts.verbose, opts.serial, round)
+            result = run_game(game, bots, engine_options, round)
+            if opts.output_json:
+                print result
 
     except Exception:
         traceback.print_exc()

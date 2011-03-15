@@ -26,13 +26,13 @@ function create_new_submission_for_current_user() {
   if ($username = NULL) {
     return FALSE;
   }
-  $query = "INSERT INTO submissions (" .
+  $query = "INSERT INTO submission (" .
     "user_id,status,timestamp) VALUES (" .
     current_user_id() . "," .
     "10,CURRENT_TIMESTAMP)";
   $successfull = mysql_query($query);
   if($successfull){
-    mysql_query("UPDATE submissions SET latest = 0 WHERE user_id ='".current_user_id()."'");
+    mysql_query("UPDATE submission SET latest = 0 WHERE user_id ='".current_user_id()."'");
   }
   return $successfull;
 }
@@ -42,7 +42,7 @@ function current_submission_id() {
   if ($user_id == NULL) {
     return -1;
   }
-  $query = "SELECT * FROM submissions " .
+  $query = "SELECT * FROM submission " .
     "WHERE user_id = " . $user_id . " ORDER BY timestamp DESC LIMIT 1";
   $result = mysql_query($query);
   if (!$result) {
@@ -62,7 +62,7 @@ function current_submission_status() {
   if ($user_id = NULL) {
     return -1;
   }
-  $query = "SELECT TOP 1 * FROM submissions " .
+  $query = "SELECT TOP 1 * FROM submission " .
     "WHERE user_id = " . $user_id . " ORDER BY timestamp DESC";
   $result = mysql_query($query);
   if ($row = mysql_fetch_assoc($result)) {
@@ -82,7 +82,7 @@ function has_recent_submission() {
   if ($user_id == NULL) {
     return FALSE;
   }
-  $query = "SELECT COUNT(*) FROM submissions WHERE user_id='".$user_id."' AND
+  $query = "SELECT COUNT(*) FROM submission WHERE user_id='".$user_id."' AND
     (status < 30 OR (status=40 AND timestamp >= (NOW() - INTERVAL 10 MINUTE)))";
   $result = mysql_query($query);
   if (!$row = mysql_fetch_row($result)) {
@@ -95,7 +95,7 @@ function has_recent_submission() {
 }
 
 function submission_status($submission_id) {
-  $query = "SELECT * FROM submissions " . "WHERE submission_id = " . $submission_id;
+  $query = "SELECT * FROM submission " . "WHERE submission_id = " . $submission_id;
   $result = mysql_query($query);
   if ($row = mysql_fetch_assoc($result)) {
     return $row['status'];
@@ -115,7 +115,7 @@ function update_current_submission_status($new_status) {
     print "<p>user_id = " . $user_id . "</p>";
     return FALSE;
   }
-  $query = "UPDATE submissions SET status = " . $new_status .
+  $query = "UPDATE submission SET status = " . $new_status .
     " WHERE submission_id = " . $submission_id . " AND user_id = " . $user_id;
   //print "<p>query = " . $query . "</p>";
   return mysql_query($query);

@@ -1,31 +1,35 @@
 import MySQLdb
 import os
 from server_info import server_info
+from sql import sql
 import sys
+import platform
 
-if len(sys.argv) != 2:
-  print "USAGE: python delete_some_old_submissions.py <number-to-delete>"
-  sys.exit(1)
+def main():
+    # get list of cached submissions
+    cached_submissions = set(os.listdir(server_info["submissions_path"]))
+    
+    # get list of latest submissions
+    connection = MySQLdb.connect(host = server_info["db_host"],
+                                 user = server_info["db_username"],
+                                 passwd = server_info["db_password"],
+                                 db = server_info["db_name"])
+    cursor = connection.cursor()
+    cursor.execute(sql["get_latest_submissions"])
+    latest_submissions = set([str(row[0]) for row in cursor.fetchall()])
+    
+    # get list of submissions to delete
+    old_submissions = cached_submissions.different(latest_submissions)
+    
+    for id in old_submissions:
+        if platform.system() == 'Windows':
+            cmd = "rmdir /s /q " + os.path.join(server_info["submissions_path"], id)
+            print cmd
+            os.system(cmd)
+        else:
+            cmd = "rm -rf " + os.path.join(server_info["submissions_path"], id)
+            print cmd
+            os.system(cmd)
 
-connection = MySQLdb.connect(host = server_info["db_host"],
-                             user = server_info["db_username"],
-                             passwd = server_info["db_password"],
-                             db = server_info["db_name"])
-cursor = connection.cursor(MySQLdb.cursors.DictCursor)
-cursor.execute("""
-  select min(submission_id) as id
-  from submissions
-  where cleanup_status = 0
-  group by user_id
-  having min(submission_id) <> max(submission_id)
-  limit """ + str(sys.argv[1]))
-submissions = list(cursor.fetchall()) 
-for s in submissions:
-  id = s["id"]
-  cmd = "rm -rf /home/contest/ai-contest/planet_wars/submissions/" + str(id)
-  print cmd
-  query = "update submissions set cleanup_status = 1 where " + \
-    "submission_id = " + str(id)
-  print query
-  os.system(cmd)
-  cursor.execute(query)
+if __name__ == '__main__':
+    main()

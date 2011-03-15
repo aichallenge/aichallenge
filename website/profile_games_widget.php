@@ -29,7 +29,7 @@ $submission_query = <<<EOT
 select
     max(s.submission_id) as id
 from
-    submissions s
+    submission s
 where
     s.user_id = $user_id
 EOT;
@@ -46,7 +46,7 @@ $rowcount_query = <<<EOT
 select
     count(1)
 from
-    games g 
+    game g 
 where
     (g.player_one = $submission or g.player_two = $submission)
 EOT;
@@ -69,9 +69,9 @@ $games_query = <<<EOT
     g.timestamp,
     if( g.draw = 0, 'Win', 'Draw' ) as outcome
     from
-    games g USE INDEX (winner_3)
-    inner join submissions s USE INDEX (submission_id) on s.submission_id = g.loser
-    inner join users u USE INDEX (user_id) on u.user_id = s.user_id
+    game g USE INDEX (winner_3)
+    inner join submission s USE INDEX (submission_id) on s.submission_id = g.loser
+    inner join user u USE INDEX (user_id) on u.user_id = s.user_id
     where g.winner = $submission
     )
 union
@@ -84,9 +84,9 @@ union
     g.timestamp,
     if( g.draw = 0, 'Loss', 'Draw' ) as outcome
    from
-    games g USE INDEX (loser_3)
-    inner join submissions s USE INDEX (submission_id) on s.submission_id = g.winner
-    inner join users u USE INDEX (user_id) on u.user_id = s.user_id
+    game g USE INDEX (loser_3)
+    inner join submission s USE INDEX (submission_id) on s.submission_id = g.winner
+    inner join user u USE INDEX (user_id) on u.user_id = s.user_id
     where g.loser = $submission 
     )
 union
@@ -99,10 +99,10 @@ union
     g.timestamp,
     'Draw' as outcome
    from
-    games g
-    inner join submissions s USE INDEX (submission_id)
+    game g
+    inner join submission s USE INDEX (submission_id)
         on s.submission_id = g.player_two
-    inner join users u USE INDEX (user_id) on u.user_id = s.user_id
+    inner join user u USE INDEX (user_id) on u.user_id = s.user_id
     where g.player_one = $submission AND g.draw = 1
     )
 union
@@ -116,9 +116,9 @@ union
     'Draw' as outcome
    from
     games g
-    inner join submissions s USE INDEX (submission_id)
+    inner join submission s USE INDEX (submission_id)
         on s.submission_id = g.player_one
-    inner join users u USE INDEX (user_id) on u.user_id = s.user_id
+    inner join user u USE INDEX (user_id) on u.user_id = s.user_id
     where g.player_two = $submission AND g.draw = 1
     )
 order by

@@ -1,3 +1,4 @@
+-- this file is named with a .txt extension so it is skipped if the database is created with a mysql < *.sql
 -- migrate user_status_code
 delete from aichallenge.user_status_code;
 alter table aichallenge.user_status_code auto_increment = 0;

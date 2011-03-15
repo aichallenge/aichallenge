@@ -7,7 +7,7 @@ if (!logged_in_as_admin()) {
     die("Must be logged in as an admin to access this page");
 }
 
-$query = "SELECT u1.* FROM users AS u1 JOIN (SELECT email FROM users
+$query = "SELECT u1.* FROM user AS u1 JOIN (SELECT email FROM user
         GROUP BY email HAVING COUNT(*) > 1
     ) AS u2 ON u1.email = u2.email WHERE password != ''
     ORDER BY email, user_id";

@@ -47,11 +47,11 @@ $rowcount_query = <<<EOT
 select
     count(1)
 from
-    rankings r 
-    inner join submissions s on s.submission_id = r.submission_id
-    inner join users u on u.user_id = s.user_id
-    left outer join organizations o on o.org_id = u.org_id
-    left outer join countries c on c.country_id = u.country_id
+    ranking r 
+    inner join submission s on s.submission_id = r.submission_id
+    inner join user u on u.user_id = s.user_id
+    left outer join organization o on o.org_id = u.org_id
+    left outer join country c on c.country_id = u.country_id
     inner join languages l on l.language_id = s.language_id
 where
     leaderboard_id = $leaderboard_id
@@ -82,12 +82,12 @@ select
     l.name as programming_language,
     round(((r.wins + 0.5*r.draws)/(r.wins+r.draws+r.losses))*100, 2) as rank_percent
 from
-    rankings r 
-    inner join submissions s on s.submission_id = r.submission_id
-    inner join users u on u.user_id = s.user_id
-    left outer join organizations o on o.org_id = u.org_id
-    left outer join countries c on c.country_id = u.country_id
-    inner join languages l on l.language_id = s.language_id
+    ranking r 
+    inner join submission s on s.submission_id = r.submission_id
+    inner join user u on u.user_id = s.user_id
+    left outer join organization o on o.org_id = u.org_id
+    left outer join country c on c.country_id = u.country_id
+    inner join language l on l.language_id = s.language_id
 where
     leaderboard_id = $leaderboard_id
     $filter_text
