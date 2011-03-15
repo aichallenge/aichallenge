@@ -16,8 +16,8 @@ ParameterType = {
  * @constructor
  */
 function Direction(x, y) {
-	this.x = x;
-	this.y = y;
+	this['x'] = x;
+	this['y'] = y;
 	this.angle = Math.atan2(x, -y);
 }
 
@@ -226,7 +226,7 @@ function Replay(replayStr, parameters) {
 			var ant = null;
 			if (isAnt) {
 				for (var id in ants) {
-					if (ants[id].ant.lo[0].x === col && ants[id].ant.lo[0].y === row && ants[id].end === start) {
+					if (ants[id].ant.lo[0]['x'] === col && ants[id].ant.lo[0]['y'] === row && ants[id].end === start) {
 						ant = ants[id].ant;
 						ants[id].end = end;
 						ants[id].tl = tl;
@@ -235,50 +235,62 @@ function Replay(replayStr, parameters) {
 				}
 			}
 			if (ant === null) {
-				ant = new Ant(autoinc++, start - 1);
-				var f = ant.frameAt(start - 1, Quality.LOW, false);
-				f.x = col;
-				f.y = row;
-				f.r = FOOD_COLOR[0];
-				f.g = FOOD_COLOR[1];
-				f.b = FOOD_COLOR[2];
-				f.a = 0.0;
+				var color = (owner === undefined) ?
+					FOOD_COLOR : PLAYER_COLORS[owner];
+				var firstf = (start === 0) ? start : start - 1;
+				ant = new Ant(autoinc++, firstf);
+				ants[ant.id] = new AntLife(ant, firstf, end, tl);
+				var f = ant.frameAt(firstf, Quality.LOW, false);
+				f['x'] = col;
+				f['y'] = row;
+				f['r'] = color[0];
+				f['g'] = color[1];
+				f['b'] = color[2];
+				if (start !== 0) {
+					f = ant.frameAt(start - 0.25, Quality.LOW, true);
+					f = ant.frameAt(start, Quality.LOW, true);
+					f['size'] = 1.0;
+					f = ant.frameAt(start + 0.125, Quality.LOW, true);
+					f['size'] = 1.5;
+					f = ant.frameAt(start + 0.25, Quality.LOW, true);
+					f['size'] = 0.7;
+					f = ant.frameAt(start + 0.5, Quality.LOW, true);
+				}
+				f['size'] = 1;
 				ant.owner = undefined;
 				ants[ant.id] = new AntLife(ant, start - 1, end, tl);
 			}
-			if (end && !isAnt && start === end) {
+			if (start === end && !isAnt) {
 				throw new Error('Food has no lifespan.');
 			}
 			// perform conversion only in the last 25% of turn time
 			if (isAnt && start > 0) {
-				ant.frameAt(start - 1, Quality.LOW);
+				ant.frameAt(start - 1, Quality.LOW, true);
 				ant.frameAt(start - 0.25, Quality.LOW, true);
 			}
 			if (end) for (i = start; i < end; i++) {
 				if (isAnt) this.turns[i].counts[owner]++;
 			}
 			// in case of conversion, fade in the color
-			f = ant.frameAt(start, Quality.LOW, true);
-			if (isAnt) {
+			if (isAnt && start !== 0) {
 				ant.owner = owner;
-				ant.frameAt(start - 0.25, Quality.LOW, true);
-				f = ant.frameAt(start, Quality.LOW, true);
-				f.r = PLAYER_COLORS[owner][0];
-				f.g = PLAYER_COLORS[owner][1];
-				f.b = PLAYER_COLORS[owner][2];
+				ant.fade(Quality.LOW, 'r', 255, start - 0.5, start - 0.25);
+				ant.fade(Quality.LOW, 'g', 255, start - 0.5, start - 0.25);
+				ant.fade(Quality.LOW, 'b', 255, start - 0.5, start - 0.25);
+				ant.fade(Quality.LOW, 'r', PLAYER_COLORS[owner][0], start - 0.25, start);
+				ant.fade(Quality.LOW, 'g', PLAYER_COLORS[owner][1], start - 0.25, start);
+				ant.fade(Quality.LOW, 'b', PLAYER_COLORS[owner][2], start - 0.25, start);
 			}
-			// must have full opacity by the start of the turn
-			f.a = 1.0;
 			// do moves
 			var x = col;
 			var y = row;
 			if (orders) for (i = 0; i < orders.length; i++) {
 				var dir = orders[i];
 				if (dir) {
-					ant.frameAt(start + i, Quality.LOW, true);
-					f = ant.frameAt(start + i + 0.5, Quality.LOW, true);
-					f.x = Math.round(f.x + dir.x);
-					f.y = Math.round(f.y + dir.y);
+					x += dir.x;
+					y += dir.y;
+					ant.fade(Quality.LOW, 'x', x, start + i, start + i + 0.5);
+					ant.fade(Quality.LOW, 'y', y, start + i, start + i + 0.5);
 					/*antObj.keyFrames[1].angle = offset.angle;
 					antObj.animate([{
 						time: 0.5,
@@ -304,14 +316,12 @@ function Replay(replayStr, parameters) {
 							antObj.keyFrames[2].jitter = 0;
 							if (Math.abs(angle) < 0.9 * Math.PI) {
 								var sq = 1 / Math.sqrt(2);
-								antObj.keyFrames[2].x = antObj.keyFrames[1].x + 0.5 * (offset.x * sq + (1 - sq) * nextDir.x);
-								antObj.keyFrames[2].y = antObj.keyFrames[1].y + 0.5 * (offset.y * sq + (1 - sq) * nextDir.y);
+								antObj.keyFrames[2]['x'] = antObj.keyFrames[1]['x'] + 0.5 * (offset['x'] * sq + (1 - sq) * nextDir.x);
+								antObj.keyFrames[2]['y'] = antObj.keyFrames[1]['y'] + 0.5 * (offset['y'] * sq + (1 - sq) * nextDir.y);
 								antObj.keyFrames[2].angle += 0.5 * angle;
 							}
 						}
 					}*/
-					x += dir.x;
-					y += dir.y;
 				}
 				this.turns[start + i].clearFog(owner, y, x, this.rows, this.cols, this.parameters['viewradius2']);
 			}
@@ -331,6 +341,7 @@ function Replay(replayStr, parameters) {
 			}
 			if (i != this.players.length - 1) tl = lit.gimmeNext();
 		}
+		// end of life
 		for (id in ants) {
 			item = ants[id];
 			tl = item.tl;
@@ -343,11 +354,10 @@ function Replay(replayStr, parameters) {
 				} else {
 					var collision = false;
 					dir = collision ? item.end - 0.75 : item.end - 0.25;
-					item.ant.fade(Quality.LOW, 'a', [
-						{time: dir       , value: undefined},
-						{time: dir + 0.25, value: 0.0},
-						{time: item.end  , value: 0.0}
-					]);
+					item.ant.fade(Quality.LOW, 'size', 0.0, dir, dir + 0.25);
+					item.ant.fade(Quality.LOW, 'r', 0.0, dir, dir + 0.25);
+					item.ant.fade(Quality.LOW, 'g', 0.0, dir, dir + 0.25);
+					item.ant.fade(Quality.LOW, 'b', 0.0, dir, dir + 0.25);
 				}
 			}
 			for (i = Math.max(0, item.start); i <= item.end; i++) {
@@ -377,117 +387,6 @@ Replay.prototype.getPlayer = function(n) {
 		throw new Error('Player number ' + n + ' is out of range for per player parameter.');
 	}
 	return this.players[n];
-};
-/**
- * Adds x and y to a result object by reading tokens 0 and 1.
- * @private
- */
-Replay.prototype.parseLocation = function(tokens, result) {
-	result.y = parseInt(tokens[0]);
-	if (isNaN(result.y) || result.y < 0 || result.y >= this.parameters.rows) {
-		throw 'Y is not an integer within map borders';
-	}
-	result.x = parseInt(tokens[1]);
-	if (isNaN(result.x) || result.x < 0 || result.x >= this.parameters.cols) {
-		throw 'X is not an integer within map borders';
-	}
-};
-/**
- * Splits the currently selected line into tokens and checks if the parameters
- * are valid.
- * @private
- */
-Replay.prototype.tokenize = function(line, parameterTypes, allowOthers) {
-	// get command type first
-	var sp = line.indexOf(' ');
-	if (sp == -1) {
-		sp = line.length;
-	}
-	var result = {};
-	result.type = line.substr(0, sp).toLowerCase();
-	line = line.substr(sp).replace(/^\s\s*/, '').replace(/\s\s*$/, '');
-	// parse the rest
-	var i;
-	var tokens = line.split(' ');
-	var parameterType = parameterTypes[result.type];
-	if (parameterType === undefined) {
-		if (!allowOthers) {
-			tokens = [];
-			for (parameterType in parameterTypes) {
-				tokens.push(parameterType);
-			}
-			throw 'Unexpected token: ' + result.type + '\n'
-				+ 'Valid tokens: ' + tokens;
-		}
-		parameterType = ParameterType.STRING;
-	}
-	switch(parameterType) {
-		case ParameterType.NONE:
-			if (line != '') {
-				throw 'No parameter expected';
-			}
-			break;
-		case ParameterType.STRING:
-			result.value = line;
-			break;
-		case ParameterType.UINT:
-			result.value = parseInt(line);
-			if (isNaN(result.value) || result.value < 0) {
-				throw 'Unsigned integer expected';
-			}
-			break;
-		case ParameterType.SCORES:
-			result.scores = new Array(tokens.length);
-			if (result.scores.length != this.players.length) {
-				throw 'Number of scores doesn\' match player count';
-			}
-			for (i = 0; i < tokens.length; i++) {
-				result.scores[i] = parseInt(tokens[i]);
-				if (isNaN(result.scores[i])) {
-					throw 'Integer scores expected';
-				}
-			}
-			break;
-		case ParameterType.LOCATION:
-			if (tokens.length != 2) {
-				throw 'Location expected';
-			}
-			this.parseLocation(tokens, result);
-			break;
-		case ParameterType.LOCATION_PLAYER:
-			if (tokens.length != 3) {
-				throw 'Location and player id expected';
-			}
-			this.parseLocation(tokens, result);
-			result.player = parseInt(tokens[2]);
-			if (isNaN(result.player) || result.player < 0 || result.player >= this.players.count) {
-				throw 'Player id is out of range';
-			}
-			break;
-		case ParameterType.LOCATION_OPTION:
-			if (tokens.length < 2 || tokens.length > 3) {
-				throw 'Location and optional player id expected';
-			}
-			this.parseLocation(tokens, result);
-			if (tokens.length == 3) {
-				result.player = parseInt(tokens[2]);
-				if (isNaN(result.player) || result.player < 0 || result.player >= this.players.count) {
-					throw 'Player id is out of range';
-				}
-			}
-			break;
-		case ParameterType.LOCATION_NSEW:
-			if (tokens.length != 3) {
-				throw 'Location and direction expected';
-			}
-			this.parseLocation(tokens, result);
-			result.direction = Directions[tokens[2].toUpperCase()];
-			if (result.direction === undefined) {
-				throw 'Direction ' + tokens[2] + ' is undefined';
-			}
-			break;
-	}
-	return result;
 };
 
 /**
