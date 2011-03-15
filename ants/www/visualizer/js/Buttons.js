@@ -1,3 +1,6 @@
+/**
+ * @constructor
+ */
 function Button(group, offset, delta, action) {
 	this.group = group;
 	this.offset = offset;
@@ -33,59 +36,60 @@ Button.prototype.mouseUp = function() {
 };
 Button.prototype.draw = function() {
 	var ctx = this.group.manager.vis.main.ctx;
-	with (this.group) {
-		var ix = x + (vertical ? 0 : this.delta);
-		var iy = y + (vertical ? this.delta : 0);
-		var n = 1;
-		var r = 0.2 * this.group.size;
-		var d = 0.5 * Math.PI;
-		ctx.save();
-		ctx.translate(ix, iy);
-		ctx.clearRect(0, 0, size, size);
+	var g = this.group;
+	var ix = g.x + (g.vertical ? 0 : this.delta);
+	var iy = g.y + (g.vertical ? this.delta : 0);
+	var n = 1;
+	var r = 0.2 * this.group.size;
+	var d = 0.5 * Math.PI;
+	ctx.save();
+	ctx.translate(ix, iy);
+	ctx.clearRect(0, 0, g.size, g.size);
+	ctx.beginPath();
+	ctx.moveTo(0, 0);
+	ctx.lineTo(g.size, 0);
+	ctx.lineTo(g.size, g.size);
+	ctx.lineTo(0, g.size);
+	ctx.closePath();
+	ctx.clip();
+	if (this.hover || this.down) {
 		ctx.beginPath();
-		ctx.moveTo(0, 0);
-		ctx.lineTo(size, 0);
-		ctx.lineTo(size, size);
-		ctx.lineTo(0, size);
-		ctx.closePath();
-		ctx.clip();
-		if (this.hover || this.down) {
-			ctx.beginPath();
-			ctx.moveTo(r + n, n);
-			ctx.lineTo(size - r - n, n);
-			ctx.arc(size - r - n, r + n, r, -d, 0, false);
-			ctx.lineTo(size - n, size - r - n);
-			ctx.arc(size - r - n, size - r - n, r, 0, d, false);
-			ctx.lineTo(r + n, size - n);
-			ctx.arc(r + n, size - r - n, r, d, 2 * d, false);
-			ctx.lineTo(n, r + n);
-			ctx.arc(r + n, r + n, r, 2 * d, 3 * d, false);
-			ctx.fillStyle = this.down ? 'rgba(108, 200, 158, 0.5)' : 'rgba(108, 108, 158, 0.3)';
-			ctx.fill();
-		}
-		ctx.save();
-		ctx.shadowColor = 'rgba(0, 50, 200, 0.7)';
-		var bs = size - 2 * border;
-		var dy = (this.down) ? 0 : -2;
-		if (dy) {
-			ctx.shadowBlur = 5;
-			ctx.shadowOffsetX = -2;
-			ctx.shadowOffsetY = +2;
-		} else {
-			ctx.shadowBlur = 1;
-		}
-		ctx.drawImage(img, this.offset, 0, bs, bs, border, border + dy, bs, bs);
-		ctx.restore();
-		if (this.hover || this.down) {
-			ctx.lineWidth = 2;
-			ctx.strokeStyle = 'rgba(0, 0, 0, 1)';
-			ctx.stroke();
-		}
-		ctx.restore();
+		ctx.moveTo(r + n, n);
+		ctx.lineTo(g.size - r - n, n);
+		ctx.arc(g.size - r - n, r + n, r, -d, 0, false);
+		ctx.lineTo(g.size - n, g.size - r - n);
+		ctx.arc(g.size - r - n, g.size - r - n, r, 0, d, false);
+		ctx.lineTo(r + n, g.size - n);
+		ctx.arc(r + n, g.size - r - n, r, d, 2 * d, false);
+		ctx.lineTo(n, r + n);
+		ctx.arc(r + n, r + n, r, 2 * d, 3 * d, false);
+		ctx.fillStyle = this.down ? 'rgba(108, 200, 158, 0.5)' : 'rgba(108, 108, 158, 0.3)';
+		ctx.fill();
 	}
+	ctx.save();
+	ctx.shadowColor = 'rgba(0, 50, 200, 0.7)';
+	var bs = g.size - 2 * g.border;
+	var dy = (this.down) ? 0 : -2;
+	if (dy) {
+		ctx.shadowBlur = 5;
+		ctx.shadowOffsetX = -2;
+		ctx.shadowOffsetY = +2;
+	} else {
+		ctx.shadowBlur = 1;
+	}
+	ctx.drawImage(g.img, this.offset, 0, bs, bs, g.border, g.border + dy, bs, bs);
+	ctx.restore();
+	if (this.hover || this.down) {
+		ctx.lineWidth = 2;
+		ctx.strokeStyle = 'rgba(0, 0, 0, 1)';
+		ctx.stroke();
+	}
+	ctx.restore();
 };
 
-
+/**
+ * @constructor
+ */
 function ButtonGroup(manager, img, layout, mode, border) {
 	this.manager = manager;
 	this.img = img;
@@ -136,6 +140,7 @@ ButtonGroup.prototype.mouseMove = function(mx, my) {
 /**
  * Manages buttons and their mouse events.
  * @param {Visualizer} vis the visualizer
+ * @constructor
  */
 function ButtonManager(vis) {
 	this.vis = vis;
@@ -150,19 +155,20 @@ ButtonManager.prototype.addGroup = function(name, img, layout, mode, border) {
 	return this.groups[name] = new ButtonGroup(this, img, layout, mode, border);
 };
 ButtonManager.prototype.draw = function() {
-	for (var name in this.groups) with (this.groups[name]) {
-		if (mode != ButtonGroup.MODE_HIDDEN) {
-			draw();
+	for (var name in this.groups) {
+		if (this.groups[name].mode != ButtonGroup.MODE_HIDDEN) {
+			this.groups[name].draw();
 		}
 	}
 };
 ButtonManager.prototype.mouseMove = function(mx, my) {
 	var result = null;
-	for (var name in this.groups) with (this.groups[name]) {
-		if (mode != ButtonGroup.MODE_HIDDEN && my >= y && my < y + h && mx >= x && mx < x + w) {
-			mx -= x;
-			my -= y;
-			result = mouseMove(mx, my);
+	for (var name in this.groups) {
+		var bg = this.groups[name];
+		if (bg.mode != ButtonGroup.MODE_HIDDEN && my >= bg.y && my < bg.y + bg.h && mx >= bg.x && mx < bg.x + bg.w) {
+			mx -= bg.x;
+			my -= bg.y;
+			result = bg.mouseMove(mx, my);
 			if (result !== null) {
 				break;
 			}
@@ -209,7 +215,7 @@ ButtonManager.prototype.mouseDown = function() {
  * @private
  */
 ButtonManager.prototype.repaintCheck = function() {
-	if (this.vis.options.java) {
-		this.vis.main.element.repaint();
+	if (this.vis.options['java']) {
+		this.vis.main.element['repaint']();
 	}
 };

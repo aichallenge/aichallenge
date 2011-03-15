@@ -1,7 +1,3 @@
-$import('Ant');
-$import('Const');
-$import('LongText');
-
 ParameterType = {
 	NONE: 0,
 	STRING: 1,
@@ -17,6 +13,7 @@ ParameterType = {
  * Constructs a new direction from the given coordinates. X points to the rigtht
  * and Y points to the bottom. Up is 0°, Right is 90° and so on.
  * @class A compass direction
+ * @constructor
  */
 function Direction(x, y) {
 	this.x = x;
@@ -96,14 +93,32 @@ DataType = {
 	},
 	ORDERS: function(p) {
 		p = p.match(DataType.MATCH);
-		p[1] = p[1].toUpperCase().split('');
+		p[1] = p[1].split('');
 		p[0] = new Array(p[1].length);
 		for (var turn = 0; turn < p[1].length; turn++) {
-			var c = p[1][turn];
-			if (c !== 'N' && c !== 'E' && c !== 'S' && c !== 'W' && c !== '-') {
-				throw new Error('Invalid character in orders line: ' + c);
+			switch (p[1][turn]) {
+				case 'n':
+				case 'N':
+					p[0][turn] = Directions.N;
+					break;
+				case 'e':
+				case 'E':
+					p[0][turn] = Directions.E;
+					break;
+				case 's':
+				case 'S':
+					p[0][turn] = Directions.S;
+					break;
+				case 'w':
+				case 'W':
+					p[0][turn] = Directions.W;
+					break;
+				case '-':
+					p[0][turn] = null;
+					break;
+				default:
+					throw new Error('Invalid character in orders line: ' + p[1][turn]);
 			}
-			p[0][turn] = Directions[c];
 		}
 		return [ p[0], p[2] ];
 	},
@@ -120,6 +135,9 @@ DataType = {
 	MATCH: /(\S*)\s*(.*)/
 };
 
+/**
+ * @constructor
+ */
 function Replay(replayStr, parameters) {
 	var tl;
 	var lit = new LineIterator(replayStr);
@@ -221,9 +239,9 @@ function Replay(replayStr, parameters) {
 				var f = ant.frameAt(start - 1, Quality.LOW, false);
 				f.x = col;
 				f.y = row;
-				f.r = Const.FOOD_COLOR[0];
-				f.g = Const.FOOD_COLOR[1];
-				f.b = Const.FOOD_COLOR[2];
+				f.r = FOOD_COLOR[0];
+				f.g = FOOD_COLOR[1];
+				f.b = FOOD_COLOR[2];
 				f.a = 0.0;
 				ant.owner = undefined;
 				ants[ant.id] = new AntLife(ant, start - 1, end, tl);
@@ -245,9 +263,9 @@ function Replay(replayStr, parameters) {
 				ant.owner = owner;
 				ant.frameAt(start - 0.25, Quality.LOW, true);
 				f = ant.frameAt(start, Quality.LOW, true);
-				f.r = Const.PLAYER_COLORS[owner][0];
-				f.g = Const.PLAYER_COLORS[owner][1];
-				f.b = Const.PLAYER_COLORS[owner][2];
+				f.r = PLAYER_COLORS[owner][0];
+				f.g = PLAYER_COLORS[owner][1];
+				f.b = PLAYER_COLORS[owner][2];
 			}
 			// must have full opacity by the start of the turn
 			f.a = 1.0;
@@ -295,7 +313,7 @@ function Replay(replayStr, parameters) {
 					x += dir.x;
 					y += dir.y;
 				}
-				this.turns[start + i].clearFog(owner, y, x, this.rows, this.cols, this.parameters.viewradius2);
+				this.turns[start + i].clearFog(owner, y, x, this.rows, this.cols, this.parameters['viewradius2']);
 			}
 			tl = lit.gimmeNext();
 		}
@@ -477,6 +495,7 @@ Replay.prototype.tokenize = function(line, parameterTypes, allowOthers) {
  *     lines and comment lines, trims and splits each line in two after the
  *     keyword. It processes a 220 KB file with over 27,000 lines in
  *     about 18 ms in Chromium on a 2,0 Ghz Core 2 Duo.
+ * @constructor
  */
 function LineIterator(text) {
 	// we keep a backup copy of the original for debugging purposes
@@ -500,6 +519,9 @@ LineIterator.prototype.moar = function() {
 	return this.pos < this.tokenLines.length;
 };
 
+/**
+ * @constructor
+ */
 function TokenLine(line) {
 	this.line = line;
 	var match = line.match(TokenLine.KEYWORD_REGEXP);
@@ -542,6 +564,9 @@ TokenLine.prototype.expectLE = function(idx, value) {
 	}
 };
 
+/**
+ * @constructor
+ */
 function Turn(playerCnt, rows, cols) {
 	this.scores = new Array(playerCnt);
 	this.counts = new Array(playerCnt);
@@ -574,6 +599,9 @@ Turn.prototype.clearFog = function(player, row, col, rows, cols, radius2) {
 	}
 };
 
+/**
+ * @constructor
+ */
 function AntLife(ant, start, end, tl) {
 	this.ant = ant;
 	this.start = start;

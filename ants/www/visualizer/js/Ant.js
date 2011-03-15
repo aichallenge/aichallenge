@@ -1,3 +1,5 @@
+
+
 /**
  * The enum for standard graphics is referred to by the imgA and imgB fields of
  * HiFiData and read in the drawing routine of the visualizer.
@@ -12,16 +14,19 @@ Quality = {
 	HIGH: true
 };
 
+
+
 /**
  * The constructor for on-screen ant objects initializes it with one key frame.
- * @param {number} id the unique object id
- * @param {number} time the time in which the object appears in turn units
+ * @param {number} id This is the unique object id of the new ant.
+ * @param {number} time Sets the time in which the object appears in turn units.
+ * @constructor
  */
 function Ant(id, time) {
 	this.id = id;
-	this.lo = [ new LoFiData() ];
+	this.lo = [new LoFiData()];
 	this.lo[0].time = time;
-	this.hi = [ new HiFiData() ];
+	this.hi = [new HiFiData()];
 	this.hi[0].time = time;
 	this.player = undefined;
 	/** @private */
@@ -29,6 +34,13 @@ function Ant(id, time) {
 	/** @private */
 	this.hiLookup = [];
 }
+/**
+ * Returns a keyframe for the ant at the given time. If it is newly created and
+ * inbetween two existing frames it will be the result of a linear interpolation
+ * of those. If the time is beyond the last keyframe, the result is a copy of
+ * the last keyframe. It is an error to specify a time before the first
+ * keyframe.
+ */
 Ant.prototype.frameAt = function(time, quality, create) {
 	var set = quality ? this.hi : this.lo;
 	var frame;
@@ -140,6 +152,9 @@ Ant.prototype.animate = function(list) {
 	}
 };
 
+/**
+ * @constructor
+ */
 function LoFiData(other) {
 	this.time = other ? other.time : 0;
 	this.x = other ? other.x : 0;
@@ -169,6 +184,9 @@ LoFiData.prototype.copy = function() {
 	return result;
 };
 
+/**
+ * @constructor
+ */
 function HiFiData(other) {
 	this.time = other ? other.time : 0;
 	this.x = other ? other.x : 0;

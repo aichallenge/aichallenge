@@ -5,7 +5,6 @@ Random = {
 	/**
 	 * returns an integer in the range [0..range[
 	 * @param {number} range the exclusive limit of the range
-	 * @type number
 	 */
 	range: function(range) {
 		return Math.random() * range | 0;
@@ -14,7 +13,6 @@ Random = {
 	 * returns an integer in the range [from..to]
 	 * @param {number} from the low value of the range (inclusive)
 	 * @param {number} to the high value of the range (inclusive)
-	 * @type number
 	 */
 	fromTo: function(from, to) {
 		return from + (Math.random() * (1 + to - from) | 0);

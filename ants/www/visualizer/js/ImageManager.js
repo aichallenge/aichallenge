@@ -1,8 +1,14 @@
+/**
+ * @constructor
+ */
 function ImageInfo(src) {
 	this.src = src;
 	this.success = undefined;
 }
 
+/**
+ * @constructor
+ */
 function ImageManager(dataDir, vis, callback) {
 	this.dataDir = dataDir;
 	this.vis = vis;
@@ -30,7 +36,7 @@ ImageManager.prototype.add = function(source) {
  * handles these cases internally.
  */
 ImageManager.prototype.cleanUp = function() {
-	if (!this.vis.options.java) {
+	if (!this.vis.options['java']) {
 		for (var i = 0; i < this.images.length; i++) {
 			if (this.info[i].success === false) {
 				this.info[i].success = undefined;
@@ -47,7 +53,7 @@ ImageManager.prototype.startRequests = function() {
 	for (var i = 0; i < this.images.length; i++) {
 		if (this.info[i].success === undefined && !this.images[i]) {
 			if (this.javaApplet) {
-				this.images[i] = this.javaApplet.imgRequest(this.info[i].src);
+				this.images[i] = this.javaApplet['imgRequest'](this.info[i].src);
 			} else {
 				img = new Image();
 				this.images[i] = img;
@@ -65,7 +71,7 @@ ImageManager.prototype.startRequests = function() {
 		}
 	}
 	if (this.javaApplet) {
-		this.javaApplet.imgWaitFor(this);
+		this.javaApplet['imgWaitFor'](this);
 	}
 };
 /**
@@ -84,7 +90,7 @@ ImageManager.prototype.imgHandler = function(img, success) {
 	}
 	this.info[i].success = success;
 	if (--this.pending == 0) {
-		this.vis[this.callback](this.error);
+		this.callback.apply(this.vis, [this.error]);
 	}
 };
 /**
@@ -112,7 +118,7 @@ ImageManager.prototype.colorize = function(idx, colors) {
 	if (this.javaApplet) {
 		// technically this is not neccesary, but it in praxis it would take
 		// ages to manipulate pixels through LiveConnect
-		this.javaApplet.imageOps.colorize(ctx, colors);
+		this.javaApplet['imageOps']['colorize'](ctx, colors);
 	} else {
 		var data = ctx.getImageData(0, 0, obj.canvas.width, obj.canvas.height);
 		var d = data.data;
@@ -135,3 +141,6 @@ ImageManager.prototype.colorize = function(idx, colors) {
 		ctx.putImageData(data, 0, 0);
 	}
 };
+
+// make some exported functions known to Closure Compiler
+ImageManager.prototype['imgHandler'] = ImageManager.prototype.imgHandler;

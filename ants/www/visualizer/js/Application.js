@@ -1,7 +1,9 @@
 /**
  * @fileoverview This is a visualizer for the ant game.
  * @author <a href="mailto:marco.leise@gmx.de">Marco Leise</a>
- * @todo scrolling player names if too long; fade to the left and right
+ */
+
+/* @todo scrolling player names if too long; fade to the left and right
  * @todo zoom in to 20x20 squares with animated ants
  * @todo save settings
  * @todo animated single steps if possible (how?)
@@ -17,13 +19,6 @@
  * @todo show when a bot crashed (awaiting answer)
  * @todo clickable player names (requires user_id)
  */
-
-$import('Director');
-$import('Config');
-$import('Buttons');
-$import('ImageManager');
-$import('AppletManager');
-$import('Replay');
 
 LoadingState = {
 	IDLE: 0,
@@ -44,6 +39,7 @@ Key = {
 /**
  * @class The main 'application' object that provides all necessary methods for
  *     the use in a web page.
+ * @constructor
  * @param {Node} container the html element, that the visualizer will embed into
  * @param {String} dataDir This relative path to the visualizer data files. You
  *     will get an error message if you forget the tailing '/'.
@@ -53,7 +49,7 @@ Key = {
  * @param {Boolean} java if set to true or false, this overrides the
  *     auto-detection of the Java mode
  */
-function Visualizer(container, dataDir, codebase, w, h, java) {
+Visualizer = function(container, dataDir, codebase, w, h, java) {
 	/**
 	 * any generated DOM elements will be placed here
 	 * @private
@@ -109,9 +105,9 @@ function Visualizer(container, dataDir, codebase, w, h, java) {
 	 * @private
 	 */
 	this.options = {};
-	this.options.java = java;
-	this.options.data_dir = dataDir;
-	this.options.codebase = codebase;
+	this.options['java'] = java;
+	this.options['data_dir'] = dataDir;
+	this.options['codebase'] = codebase;
 	// read URL parameters and store them in the parameters object
 	var equalPos, value, key, i;
 	var parameters = window.location.href.split('?');
@@ -143,8 +139,8 @@ function Visualizer(container, dataDir, codebase, w, h, java) {
 		if (key == "java") {
 			text += '(Display method: ';
 			if (value === undefined) {
-				this.options.java = !document.createElement('canvas').getContext;
-				text += (this.options.java ? 'Java Applet [autodetected]' : 'HTML Canvas [autodetected]') + ')';
+				this.options['java'] = !document.createElement('canvas').getContext;
+				text += (this.options['java'] ? 'Java Applet [autodetected]' : 'HTML Canvas [autodetected]') + ')';
 			} else {
 				text += (value ? 'Java Applet' : 'HTML Canvas') + ')';
 			}
@@ -165,7 +161,7 @@ function Visualizer(container, dataDir, codebase, w, h, java) {
 	 * images used by the visualizer
 	 * @private
 	 */
-	this.imgMgr = new ImageManager((dataDir || '') + 'img/', this, 'completedImages');
+	this.imgMgr = new ImageManager((dataDir || '') + 'img/', this, this.completedImages);
 	this.imgMgr.add('wood.jpg');
 	this.imgMgr.add('playback.png');
 	this.imgMgr.add('fog.png');
@@ -186,7 +182,7 @@ function Visualizer(container, dataDir, codebase, w, h, java) {
 	this.loading = LoadingState.IDLE;
 	// If we use a Java applet, we have to delay the image requests until we
 	// can pass the image URLs over to it.
-	if (!this.options.java) this.imgMgr.startRequests();
+	if (!this.options['java']) this.imgMgr.startRequests();
 }
 /**
  * @private
@@ -244,7 +240,7 @@ Visualizer.prototype.cleanUp = function() {
 	this.director.cleanUp();
 	if (this.replay && this.replay instanceof XMLHttpRequest) this.replay.abort();
 	this.replay = undefined;
-	if (this.main.element && !this.options.java) {
+	if (this.main.element && !this.options['java']) {
 		if (this.container.firstChild === this.main.element) {
 			this.container.removeChild(this.main.element);
 		}
@@ -370,11 +366,11 @@ Visualizer.prototype.loadCanvas = function(prompt) {
 	this.progress(prompt ? 'Creating canvas...' : undefined, function() {
 		var size = vis.calculateCanvasSize();
 		if (!vis.main.element) {
-			if (vis.options.java) {
+			if (vis.options['java']) {
 				var token = appletManager.add(vis);
 				var e = document.createElement('applet');
 				vis.main.element = e;
-				e.setAttribute('codebase', vis.options.codebase);
+				e.setAttribute('codebase', vis.options['codebase']);
 				e.setAttribute('code', 'com.aicontest.visualizer.CanvasApplet');
 				e.setAttribute('width', size.width);
 				e.setAttribute('height', size.height);
@@ -386,7 +382,7 @@ Visualizer.prototype.loadCanvas = function(prompt) {
 					e.appendChild(p);
 					e.setAttribute(name, value);
 				}
-				if (vis.options.debug) {
+				if (vis.options['debug']) {
 					param('separate_jvm', 'true');
 					param('classloader_cache', 'false');
 					param('debug', true);
@@ -408,20 +404,19 @@ Visualizer.prototype.loadCanvas = function(prompt) {
 		}
 		vis.createCanvas(vis.map);
 		vis.createCanvas(vis.border);
-		if (!vis.btnMgr.groups.playback) {
-			with (vis.btnMgr.addGroup('playback', vis.imgMgr.images[1], ButtonGroup.HORIZONTAL, ButtonGroup.MODE_NORMAL, 2)) {
-				addButton(3, function() {vis.director.gotoTick(0)});
-				addSpace(32);
-				addButton(5, function() {vis.director.gotoTick(Math.ceil(vis.director.position) - 1)});
-				//drawImage(this.imgMgr.images[1], 0 * 64, 0, 64, 64, x + 2.5 * 64, y, 64, 64);
-				addSpace(64);
-				addButton(4, function() {vis.director.playStop()});
-				//drawImage(this.imgMgr.images[1], 1 * 64, 0, 64, 64, x + 4.5 * 64, y, 64, 64);
-				addSpace(64);
-				addButton(6, function() {vis.director.gotoTick(Math.floor(vis.director.position) + 1)});
-				addSpace(32);
-				addButton(2, function() {vis.director.gotoTick(vis.director.duration)});
-			}
+		if (!vis.btnMgr.groups['playback']) {
+			var bg = vis.btnMgr.addGroup('playback', vis.imgMgr.images[1], ButtonGroup.HORIZONTAL, ButtonGroup.MODE_NORMAL, 2);
+			bg.addButton(3, function() {vis.director.gotoTick(0)});
+			bg.addSpace(32);
+			bg.addButton(5, function() {vis.director.gotoTick(Math.ceil(vis.director.position) - 1)});
+			//drawImage(this.imgMgr.images[1], 0 * 64, 0, 64, 64, x + 2.5 * 64, y, 64, 64);
+			bg.addSpace(64);
+			bg.addButton(4, function() {vis.director.playStop()});
+			//drawImage(this.imgMgr.images[1], 1 * 64, 0, 64, 64, x + 4.5 * 64, y, 64, 64);
+			bg.addSpace(64);
+			bg.addButton(6, function() {vis.director.gotoTick(Math.floor(vis.director.position) + 1)});
+			bg.addSpace(32);
+			bg.addButton(2, function() {vis.director.gotoTick(vis.director.duration)});
 		}
 		vis.tryStart();
 	});
@@ -430,7 +425,7 @@ Visualizer.prototype.loadCanvas = function(prompt) {
  * Called by the AppletManager when the applet is initialized
  */
 Visualizer.prototype.initializedApplet = function() {
-	this.main.canvas = this.main.element.getMainCanvas();
+	this.main.canvas = this.main.element['getMainCanvas']();
 	this.imgMgr.javaApplet = this.main.element;
 	this.imgMgr.startRequests();
 	this.loadCanvas(false);
@@ -456,13 +451,13 @@ Visualizer.prototype.tryStart = function() {
 		if (this.main.ctx && !this.imgMgr.error && !this.imgMgr.pending) {
 			var vis = this;
 			// generate fog images
-			var colors = [[255, 255, 255]].concat(Const.PLAYER_COLORS.slice(0, this.replay.players.length));
+			var colors = [[255, 255, 255]].concat(PLAYER_COLORS.slice(0, this.replay.players.length));
 			this.imgMgr.colorize(2, colors);
 			var bg = this.btnMgr.addGroup('fog', this.imgMgr.patterns[2], ButtonGroup.VERTICAL, ButtonGroup.MODE_RADIO, 2);
-			bg.y = Const.TOP_PANEL_H;
+			bg.y = TOP_PANEL_H;
 			for (var i = 0; i < colors.length; i++) {
 				var buttonAdder = function(fog) {
-					return bg.addButton(i, function() { vis.showFog(fog); });
+					return bg.addButton(i, function() {vis.showFog(fog);});
 				}
 				if (i == 0) {
 					buttonAdder(undefined).down = true;
@@ -474,7 +469,7 @@ Visualizer.prototype.tryStart = function() {
 			this.director.duration = this.replay.turns.length - 1;
 			this.director.defaultSpeed = Math.max(this.director.duration / 60, 1);
 			this.director.onstate = function() {
-				var btn = vis.btnMgr.groups.playback.buttons[4];
+				var btn = vis.btnMgr.groups['playback'].buttons[4];
 				btn.offset = (vis.director.playing() ? 7 : 4) * vis.imgMgr.images[1].height;
 				if (btn === vis.btnMgr.nailed) {
 					vis.btnMgr.nailed = null;
@@ -489,8 +484,8 @@ Visualizer.prototype.tryStart = function() {
 				}
 				vis.keyPressed(event.keyCode);
 			};
-			if (this.options.java) {
-				this.main.element.setInputHandler(this);
+			if (this.options['java']) {
+				this.main.element['setInputHandler'](this);
 			} else {
 				// setup mouse handlers
 				this.main.element.onmousemove = function(event) {
@@ -501,10 +496,8 @@ Visualizer.prototype.tryStart = function() {
 						mx += obj.offsetLeft;
 						my += obj.offsetTop;
 					} while ((obj = obj.offsetParent));
-					with (event || window.event) {
-						mx = clientX - mx + ((window.scrollX === undefined) ? (document.body.parentNode.scrollLeft !== undefined) ? document.body.parentNode.scrollLeft : document.body.scrollLeft : window.scrollX);
-						my = clientY - my + ((window.scrollY === undefined) ? (document.body.parentNode.scrollTop !== undefined) ? document.body.parentNode.scrollTop : document.body.scrollTop : window.scrollY);
-					}
+					mx = (event || window.event).clientX - mx + ((window.scrollX === undefined) ? (document.body.parentNode.scrollLeft !== undefined) ? document.body.parentNode.scrollLeft : document.body.scrollLeft : window.scrollX);
+					my = (event || window.event).clientY - my + ((window.scrollY === undefined) ? (document.body.parentNode.scrollTop !== undefined) ? document.body.parentNode.scrollTop : document.body.scrollTop : window.scrollY);
 					vis.mouseMoved(mx, my);
 				};
 				this.main.element.onmouseout = function() {
@@ -547,8 +540,8 @@ Visualizer.prototype.calculateCanvasSize = function() {
 };
 Visualizer.prototype.createCanvas = function(obj) {
 	if (!obj.canvas) {
-		if (this.options.java) {
-			obj.canvas = this.main.element.createCanvas();
+		if (this.options['java']) {
+			obj.canvas = this.main.element['createCanvas']();
 		} else {
 			obj.canvas = document.createElement('canvas');
 		}
@@ -558,7 +551,7 @@ Visualizer.prototype.createCanvas = function(obj) {
 	}
 };
 Visualizer.prototype.setFullscreen = function(enable) {
-	if (!this.options.java) {
+	if (!this.options['java']) {
 		var html = document.getElementsByTagName("html")[0];
 		this.config.fullscreen = enable;
 		if (enable) {
@@ -586,19 +579,19 @@ Visualizer.prototype.resize = function(forced) {
 		if (resizing) {
 			this.main.element.setAttribute('width', news.width);
 			this.main.element.setAttribute('height', news.height);
-			if (this.options.java) {
-				this.main.element.setSize(news.width, news.height);
+			if (this.options['java']) {
+				this.main.element['setSize'](news.width, news.height);
 			}
 		}
 		this.loc.vis = {
-			w: news.width - Const.LEFT_PANEL_W,
-			h: news.height - Const.TOP_PANEL_H - Const.BOTTOM_PANEL_H,
-			x: Const.LEFT_PANEL_W,
-			y: Const.TOP_PANEL_H
+			w: news.width - LEFT_PANEL_W,
+			h: news.height - TOP_PANEL_H - BOTTOM_PANEL_H,
+			x: LEFT_PANEL_W,
+			y: TOP_PANEL_H
 		};
 		this.scale = Math.min(10, Math.max(1, Math.min(
-			(this.loc.vis.w - 2 * Const.ZOOM_SCALE) / (this.replay.cols),
-			(this.loc.vis.h - 2 * Const.ZOOM_SCALE) / (this.replay.rows)
+			(this.loc.vis.w - 2 * ZOOM_SCALE) / (this.replay.cols),
+			(this.loc.vis.h - 2 * ZOOM_SCALE) / (this.replay.rows)
 		))) | 0;
 		this.loc.map = {
 			w: this.scale * (this.replay.cols),
@@ -606,21 +599,21 @@ Visualizer.prototype.resize = function(forced) {
 		};
 		this.loc.map.x = ((this.loc.vis.w - this.loc.map.w) / 2 + this.loc.vis.x) | 0;
 		this.loc.map.y = ((this.loc.vis.h - this.loc.map.h) / 2 + this.loc.vis.y) | 0;
-		this.border.canvas.width = this.loc.map.w + 2 * Const.ZOOM_SCALE;
-		this.border.canvas.height = this.loc.map.h + 2 * Const.ZOOM_SCALE;
+		this.border.canvas.width = this.loc.map.w + 2 * ZOOM_SCALE;
+		this.border.canvas.height = this.loc.map.h + 2 * ZOOM_SCALE;
 		this.renderBorder();
 		this.map.canvas.width = this.loc.map.w;
 		this.map.canvas.height = this.loc.map.h;
 		this.renderMap();
-		with (this.btnMgr.groups) {
-			playback.x = ((news.width - 8 * 64) / 2) | 0;
-			playback.y = this.loc.vis.y + this.loc.vis.h;
-			fog.y = (this.loc.vis.y + (this.loc.vis.h - fog.h) / 2) | 0
-		}
+		var bg = this.btnMgr.groups['playback'];
+		bg.x = ((news.width - 8 * 64) / 2) | 0;
+		bg.y = this.loc.vis.y + this.loc.vis.h;
+		bg = this.btnMgr.groups['fog'];
+		bg.y = (this.loc.vis.y + (this.loc.vis.h - this.btnMgr.groups['fog'].h) / 2) | 0;
 		// redraw everything
 		this.btnMgr.draw();
 		// draw player names and captions
-		var colors = Const.PLAYER_COLORS;
+		var colors = PLAYER_COLORS;
 		this.main.ctx.textAlign = 'left';
 		this.main.ctx.textBaseline = 'top';
 		this.main.ctx.font = 'bold 20px Arial';
@@ -640,8 +633,8 @@ Visualizer.prototype.resize = function(forced) {
 		this.main.ctx.textAlign = 'center';
 		this.main.ctx.textBaseline = 'middle';
 		this.main.ctx.font = 'bold 12px Arial';
-		this.main.ctx.fillText('ants'  , 30          , Const.TOP_PANEL_H - 10);
-		this.main.ctx.fillText('scores', 30 + 0.5 * w, Const.TOP_PANEL_H - 10);
+		this.main.ctx.fillText('ants'  , 30          , TOP_PANEL_H - 10);
+		this.main.ctx.fillText('scores', 30 + 0.5 * w, TOP_PANEL_H - 10);
 		this.director.draw();
 	}
 };
@@ -650,9 +643,9 @@ Visualizer.prototype.resize = function(forced) {
  */
 Visualizer.prototype.renderMap = function() {
 	var ctx = this.map.ctx;
-	ctx.fillStyle = Const.COLOR_SAND;
+	ctx.fillStyle = COLOR_SAND;
 	ctx.fillRect(0, 0, this.loc.map.w, this.loc.map.h);
-	ctx.fillStyle = Const.COLOR_WATER;
+	ctx.fillStyle = COLOR_WATER;
 	for (var row = 0; row < this.replay.rows; row++) {
 		var start = undefined;
 		for (var col = 0; col < this.replay.cols; col++) {
@@ -674,62 +667,59 @@ Visualizer.prototype.renderMap = function() {
  */
 Visualizer.prototype.renderBorder = function() {
 	var ctx = this.border.ctx;
-	with(Const) {
+	ctx.save();
+		this.imgMgr.pattern(0, ctx, 'repeat');
+		ctx.translate(ZOOM_SCALE, ZOOM_SCALE);
+		var m = this.loc.map;
 		ctx.save();
-			this.imgMgr.pattern(0, ctx, 'repeat');
-			ctx.translate(ZOOM_SCALE, ZOOM_SCALE);
-			with (this.loc.map) {
-				ctx.save();
-					ctx.beginPath();
-					ctx.moveTo(0, 0);
-					ctx.lineTo(w, 0);
-					ctx.lineTo(w + ZOOM_SCALE, -ZOOM_SCALE);
-					ctx.lineTo(-ZOOM_SCALE, -ZOOM_SCALE);
-					ctx.closePath();
-					ctx.fill();
-				ctx.restore();
-				ctx.save();
-					ctx.translate(0, h);
-					ctx.beginPath();
-					ctx.moveTo(0, 0);
-					ctx.lineTo(w, 0);
-					ctx.lineTo(w + ZOOM_SCALE, +ZOOM_SCALE);
-					ctx.lineTo(-ZOOM_SCALE, +ZOOM_SCALE);
-					ctx.closePath();
-					ctx.fill();
-				ctx.restore();
-				ctx.rotate(0.5 * Math.PI);
-				ctx.save();
-					ctx.beginPath();
-					ctx.moveTo(0, 0);
-					ctx.lineTo(h, 0);
-					ctx.lineTo(h + ZOOM_SCALE, ZOOM_SCALE);
-					ctx.lineTo(-ZOOM_SCALE, ZOOM_SCALE);
-					ctx.closePath();
-					ctx.fill();
-				ctx.restore();
-				ctx.save();
-					ctx.translate(0, -w);
-					ctx.beginPath();
-					ctx.moveTo(0, 0);
-					ctx.lineTo(h, 0);
-					ctx.lineTo(h + ZOOM_SCALE, -ZOOM_SCALE);
-					ctx.lineTo(-ZOOM_SCALE, -ZOOM_SCALE);
-					ctx.closePath();
-					ctx.fill();
-			   ctx.restore();
-			}
+			ctx.beginPath();
+			ctx.moveTo(0, 0);
+			ctx.lineTo(m.w, 0);
+			ctx.lineTo(m.w + ZOOM_SCALE, -ZOOM_SCALE);
+			ctx.lineTo(-ZOOM_SCALE, -ZOOM_SCALE);
+			ctx.closePath();
+			ctx.fill();
 		ctx.restore();
-	}
+		ctx.save();
+			ctx.translate(0, m.h);
+			ctx.beginPath();
+			ctx.moveTo(0, 0);
+			ctx.lineTo(m.w, 0);
+			ctx.lineTo(m.w + ZOOM_SCALE, +ZOOM_SCALE);
+			ctx.lineTo(-ZOOM_SCALE, +ZOOM_SCALE);
+			ctx.closePath();
+			ctx.fill();
+		ctx.restore();
+		ctx.rotate(0.5 * Math.PI);
+		ctx.save();
+			ctx.beginPath();
+			ctx.moveTo(0, 0);
+			ctx.lineTo(m.h, 0);
+			ctx.lineTo(m.h + ZOOM_SCALE, ZOOM_SCALE);
+			ctx.lineTo(-ZOOM_SCALE, ZOOM_SCALE);
+			ctx.closePath();
+			ctx.fill();
+		ctx.restore();
+		ctx.save();
+			ctx.translate(0, -m.w);
+			ctx.beginPath();
+			ctx.moveTo(0, 0);
+			ctx.lineTo(m.h, 0);
+			ctx.lineTo(m.h + ZOOM_SCALE, -ZOOM_SCALE);
+			ctx.lineTo(-ZOOM_SCALE, -ZOOM_SCALE);
+			ctx.closePath();
+			ctx.fill();
+	   ctx.restore();
+	ctx.restore();
 };
 Visualizer.prototype.renderFog = function(turn) {
-	this.border.ctx.clearRect(Const.ZOOM_SCALE, Const.ZOOM_SCALE, this.scale * this.replay.cols, this.scale * this.replay.rows);
+	this.border.ctx.clearRect(ZOOM_SCALE, ZOOM_SCALE, this.scale * this.replay.cols, this.scale * this.replay.rows);
 	if (this.fog) {
 		if (!this.fog.ctx) {
 			this.createCanvas(this.fog);
 			this.fog.canvas.width = 2;
 			this.fog.canvas.height = 2;
-			var color = Const.PLAYER_COLORS[this.fog.player];
+			var color = PLAYER_COLORS[this.fog.player];
 			this.fog.ctx.fillStyle = 'rgb(' + color[0] + ',' + color[1] + ',' + color[2] + ')';
 			this.fog.ctx.fillRect(0, 0, 1, 1);
 			this.fog.ctx.fillRect(1, 1, 1, 1);
@@ -737,10 +727,10 @@ Visualizer.prototype.renderFog = function(turn) {
 		}
 		this.border.ctx.fillStyle = this.fog.ptrn;
 		for (var row = 0; row < this.replay.rows; row++) {
-			var y = Const.ZOOM_SCALE + row * this.scale;
+			var y = ZOOM_SCALE + row * this.scale;
 			var start = undefined;
 			for (var col = 0; col < this.replay.cols; col++) {
-				var x = Const.ZOOM_SCALE + col * this.scale;
+				var x = ZOOM_SCALE + col * this.scale;
 				var isFog = this.replay.turns[turn].fogs[this.fog.player][row][col];
 				if (start === undefined && isFog) {
 					start = x;
@@ -750,7 +740,7 @@ Visualizer.prototype.renderFog = function(turn) {
 				}
 			}
 			if (start !== undefined) {
-				this.border.ctx.fillRect(start, y, Const.ZOOM_SCALE + this.replay.cols * this.scale - start, this.scale);
+				this.border.ctx.fillRect(start, y, ZOOM_SCALE + this.replay.cols * this.scale - start, this.scale);
 			}
 		}
 	}
@@ -760,7 +750,7 @@ Visualizer.prototype.showFog = function(fog) {
 		this.fog = undefined;
 		this.renderFog(this.director.position | 0);
 	} else {
-		this.fog = { player: fog };
+		this.fog = {player: fog};
 	}
 	this.director.draw();
 };
@@ -816,14 +806,11 @@ Visualizer.prototype.correctCoords = function(obj, w, h) {
 /**
  * @private
  */
-Visualizer.prototype.interpolate = function(turn, time, array) {
-	if (time == (time | 0)) {
-		return this.replay.turns[time][array];
-	}
-	var delta = time - turn;
-	var result = new Array(this.replay.turns[0][array].length);
+Visualizer.prototype.interpolate = function(array1, array2, delta) {
+	if (delta === 0) return array1;
+	var result = new Array(array1.length);
 	for (var i = 0; i < result.length; i++) {
-		result[i] = (1.0 - delta) * this.replay.turns[turn][array][i] + delta * this.replay.turns[turn + 1][array][i];
+		result[i] = (1.0 - delta) * array1[i] + delta * array2[i];
 	}
 	return result;
 };
@@ -842,10 +829,12 @@ Visualizer.prototype.draw = function(time, tick) {
 		//document.getElementById('lblTurn').innerHTML = ((turn > this.replay.turns.length - 2) ? 'end result' : turn + ' / ' + (this.replay.turns.length - 2));
 		if (this.fog !== undefined) this.renderFog(turn);
 	}
-	var counts = this.interpolate(turn, time, 'counts');
-	this.drawColorBar(60,           Const.TOP_PANEL_H - 20, 0.5 * w - 60, 20, counts, Const.PLAYER_COLORS);
-	var scores = this.interpolate(turn, time, 'scores');
-	this.drawColorBar(60 + 0.5 * w, Const.TOP_PANEL_H - 20, 0.5 * w - 60, 20, scores, Const.PLAYER_COLORS);
+	var array1 = this.replay.turns[turn];
+	var array2 = (time === turn) ? array1 : this.replay.turns[turn + 1];
+	var counts = this.interpolate(array1.counts, array2.counts, time - turn);
+	this.drawColorBar(60,           TOP_PANEL_H - 20, 0.5 * w - 60, 20, counts, PLAYER_COLORS);
+	var scores = this.interpolate(array1.scores, array2.scores, time - turn);
+	this.drawColorBar(60 + 0.5 * w, TOP_PANEL_H - 20, 0.5 * w - 60, 20, scores, PLAYER_COLORS);
 	for (var i = 0; i < this.replay.turns[turn].ants.length; i++) {
 		var antObj = this.replay.turns[turn].ants[i].interpolate(time, Quality.LOW);
 		this.correctCoords(antObj, this.replay.cols, this.replay.rows);
@@ -856,8 +845,8 @@ Visualizer.prototype.draw = function(time, tick) {
 		if (this.config.zoom) {
 			this.main.ctx.save();
 			this.main.ctx.globalAlpha = antObj.alpha;
-			cx = Const.ZOOM_SCALE * (antObj.x + 0.5);
-			cy = Const.ZOOM_SCALE * (antObj.y + 0.5);
+			cx = ZOOM_SCALE * (antObj.x + 0.5);
+			cy = ZOOM_SCALE * (antObj.y + 0.5);
 			this.main.ctx.translate(cx, cy);
 			this.main.ctx.rotate(antObj.angle + Math.sin(20 * time) * antObj.jitter);
 			this.main.ctx.drawImage(this.imgMgr.ants[antObj.type], -10, -10);
@@ -878,9 +867,9 @@ Visualizer.prototype.draw = function(time, tick) {
 		}
 	}
 	// draw border over ants, that moved out of the map
-	this.main.ctx.drawImage(this.border.canvas, this.loc.map.x - Const.ZOOM_SCALE, this.loc.map.y - Const.ZOOM_SCALE);
-	if (this.options.java) {
-		this.main.element.repaint();
+	this.main.ctx.drawImage(this.border.canvas, this.loc.map.x - ZOOM_SCALE, this.loc.map.y - ZOOM_SCALE);
+	if (this.options['java']) {
+		this.main.element['repaint']();
 	}
 };
 Visualizer.prototype.mouseMoved = function(mx, my) {
@@ -901,7 +890,7 @@ Visualizer.prototype.mouseEntered = function(mx, my, down) {
 };
 Visualizer.prototype.keyPressed = function(key) {
 	var d = this.director;
-	switch(key) {
+	switch (key) {
 		case Key.SPACE:
 			d.playStop();
 			break;
@@ -933,3 +922,15 @@ Visualizer.prototype.keyPressed = function(key) {
 };
 Visualizer.prototype.keyReleased = function() {
 };
+
+// make some exported functions known to Closure Compiler
+Visualizer.prototype['loadReplayData'] = Visualizer.prototype.loadReplayData;
+Visualizer.prototype['loadReplayDataFromPHP'] = Visualizer.prototype.loadReplayDataFromPHP;
+Visualizer.prototype['loadReplayDataFromURI'] = Visualizer.prototype.loadReplayDataFromURI;
+Visualizer.prototype['mouseEntered'] = Visualizer.prototype.mouseEntered;
+Visualizer.prototype['mouseExited'] = Visualizer.prototype.mouseExited;
+Visualizer.prototype['mouseMoved'] = Visualizer.prototype.mouseMoved;
+Visualizer.prototype['mousePressed'] = Visualizer.prototype.mousePressed;
+Visualizer.prototype['mouseReleased'] = Visualizer.prototype.mouseReleased;
+Visualizer.prototype['keyPressed'] = Visualizer.prototype.keyPressed;
+Visualizer.prototype['keyReleased'] = Visualizer.prototype.keyReleased;

@@ -1,5 +1,6 @@
 /**
  * keeps track of persistent configuration values
+ * @constructor
  */
 function Config() {
 	this.fullscreen = false;

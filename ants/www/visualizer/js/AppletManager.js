@@ -1,3 +1,6 @@
+/**
+ * @constructor
+ */
 function AppletManager() {
 	/**
 	 * @private
@@ -47,3 +50,7 @@ AppletManager.prototype.callAfterExecutionUnit = function(thisArg, func, varArgs
 };
 
 appletManager = new AppletManager();
+
+// make some exported functions known to Closure Compiler
+AppletManager.prototype['callAfterExecutionUnit'] = AppletManager.prototype.callAfterExecutionUnit;
+AppletManager.prototype['appletInitialized'] = AppletManager.prototype.appletInitialized;

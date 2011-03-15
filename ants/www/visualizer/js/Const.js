@@ -1,13 +1,26 @@
 /**
- * This global contains constants used throughout the program. I collected them
- * here because NetBeans otherwise clutters the symbol viewer.
+ * width of left side panel
+ * @const
  */
-Const = {
-	LEFT_PANEL_W: 48,        // width of left side panel
-	TOP_PANEL_H: 50,         // height of top panel
-	BOTTOM_PANEL_H: 64,      // height of bottom panel
-	FOOD_COLOR: [ 200, 150, 100 ],
-	PLAYER_COLORS: [
+var LEFT_PANEL_W = 48;
+/**
+ * height of top panel
+ * @const
+ */
+var TOP_PANEL_H = 50;
+/**
+ * height of bottom panel
+ * @const
+ */
+var BOTTOM_PANEL_H = 64;
+/**
+ * @const
+ */
+var FOOD_COLOR = [ 200, 150, 100 ];
+/**
+ * @const
+ */
+var PLAYER_COLORS = [
 		[ 255,   0,   0 ], [   0,   0, 255 ], [   0, 180,   0 ], [ 255, 200,   0 ],
 		[ 255, 255, 255 ], [ 255, 255, 255 ], [ 255, 255, 255 ], [ 255, 255, 255 ],
 		[ 255, 255, 255 ], [ 255, 255, 255 ], [ 255, 255, 255 ], [ 255, 255, 255 ],
@@ -15,8 +28,16 @@ Const = {
 		[ 255, 255, 255 ], [ 255, 255, 255 ], [ 255, 255, 255 ], [ 255, 255, 255 ],
 		[ 255, 255, 255 ], [ 255, 255, 255 ], [ 255, 255, 255 ], [ 255, 255, 255 ],
 		[ 255, 255, 255 ], [ 255, 255, 255 ]
-	],
-	COLOR_WATER: '#134',
-	COLOR_SAND: '#FFD',
-	ZOOM_SCALE: 20,
-};
+	];
+/**
+ * @const
+ */
+var COLOR_WATER = '#134';
+/**
+ * @const
+ */
+var COLOR_SAND = '#FFD';
+/**
+ * @const
+ */
+var ZOOM_SCALE = 20;

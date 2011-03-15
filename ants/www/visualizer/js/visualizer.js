@@ -1,4 +1,12 @@
+$import('Ant');
+$import('AppletManager');
 ﻿$import('Application');
+$import('Buttons');
+$import('Config');
+$import('Const');
+$import('Director');
+$import('ImageManager');
+$import('Replay');
 
 var $import_base;
 

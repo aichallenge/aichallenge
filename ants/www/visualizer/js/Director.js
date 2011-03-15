@@ -1,5 +1,6 @@
 /**
  * @class The director is supposed to keep track of playback speed and position.
+ * @constructor
  */
 function Director(vis) {
 	this.speed = 0;
