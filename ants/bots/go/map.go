@@ -73,6 +73,27 @@ func FromSymbol(ch byte) Item {
 	return Item(ch) + 'a'
 }
 
+func (o Item) Color() image.NRGBAColor {
+	switch o {
+		case UNKNOWN:	return image.NRGBAColor{0xb0, 0xb0, 0xb0, 0xff}
+		case WATER: 	return image.NRGBAColor{0x10, 0x10, 0x50, 0xff}
+		case FOOD:		return image.NRGBAColor{0xe0, 0xe0, 0xc0, 0xff}
+		case LAND:		return image.NRGBAColor{0x8b, 0x45, 0x13, 0xff}
+		case DEAD:		return image.NRGBAColor{0x69, 0x33, 0x05, 0xff}
+		case MY_ANT:	return image.NRGBAColor{0xf0, 0x00, 0x00, 0xff}
+		case PLAYER1:	return image.NRGBAColor{0xf0, 0xf0, 0x00, 0xff}
+		case PLAYER2:	return image.NRGBAColor{0x00, 0xf0, 0x00, 0xff}
+		case PLAYER3:	return image.NRGBAColor{0x00, 0x00, 0xf0, 0xff}
+		case PLAYER4:	return image.NRGBAColor{0xf0, 0x00, 0xf0, 0xff}
+		case PLAYER5:	return image.NRGBAColor{0xf0, 0xf0, 0xf0, 0xff}
+		case PLAYER6:	return image.NRGBAColor{0x80, 0x80, 0x00, 0xff}
+		case PLAYER7:	return image.NRGBAColor{0x00, 0x80, 0x80, 0xff}
+		case PLAYER8:	return image.NRGBAColor{0x80, 0x00, 0x80, 0xff}
+		case PLAYER9:	return image.NRGBAColor{0x80, 0x00, 0xf0, 0xff}
+	}
+	return image.NRGBAColor{0x00, 0x00, 0x00, 0xff}
+}
+
 //Location combines (Row, Col) coordinate pairs for use as keys in maps (and in a 1d array)
 type Location int
 
@@ -84,9 +105,21 @@ type Map struct {
 	
 	Ants map[Location]Item
 	Dead map[Location]Item
-	Water map[Location]Item
-	Food map[Location]Item
+	Water map[Location]bool
+	Food map[Location]bool
 	Destinations map[Location]bool
+}
+
+//NewMap returns a newly constructed blank map.
+func NewMap(Rows, Cols int) *Map {
+	m := &Map{
+		Rows: Rows, 
+		Cols: Cols,
+		Water: make(map[Location]bool),
+		itemGrid: make([]Item, Rows * Cols),
+	}
+	m.Reset()
+	return m
 }
 
 //String returns an ascii diagram of the map.
@@ -102,34 +135,29 @@ func (m *Map) String() string {
 	return str
 }
 
-//NewMap returns a newly constructed blank map.
-func NewMap(Rows, Cols int) *Map {
-	m := &Map{
-		Rows: Rows, 
-		Cols: Cols,
-		Water: make(map[Location]Item),
-		itemGrid: make([]Item, Rows * Cols),
-	}
-	m.Reset()
-	return m
-}
-
 //Reset clears the map (except for water) for the next turn
 func (m *Map) Reset() {
 	for i := range m.itemGrid {
 		m.itemGrid[i] = UNKNOWN
 	}
 	for i, val := range m.Water {
-		m.itemGrid[i] = val
+		if val {
+			m.itemGrid[i] = WATER
+		}
 	}
 	m.Ants = make(map[Location]Item)
 	m.Dead = make(map[Location]Item)
-	m.Food = make(map[Location]Item)
+	m.Food = make(map[Location]bool)
 	m.Destinations = make(map[Location]bool)
 }
 
+//Item returns the item at a given location
+func (m *Map) Item(loc Location) Item {
+	return m.itemGrid[loc]
+}
+
 func (m *Map) AddWater(loc Location) {
-	m.Water[loc] = WATER
+	m.Water[loc] = true
 	m.itemGrid[loc] = WATER
 }
 
@@ -140,17 +168,22 @@ func (m *Map) AddAnt(loc Location, ant Item) {
 
 //AddLand adds a circle of land centered on the given location
 func (m *Map) AddLand(center Location, viewrad2 int) {
+	m.DoInRad(center, viewrad2, func (row, col int) {
+		loc := m.FromRowCol(row, col)
+		if m.itemGrid[loc] == UNKNOWN {
+			m.itemGrid[loc] = LAND
+		}
+	})
+}
+
+func (m *Map) DoInRad(center Location, rad2 int, Action func(row, col int)) {
 	row1, col1 := m.FromLocation(center)
-	for row := 0; row < m.Rows; row++ {
-		for col := 0; col < m.Cols; col++ {
-			loc := m.FromRowCol(row, col)
-			if m.itemGrid[loc] != UNKNOWN {
-				continue
-			}
+	for row := row1 - m.Rows / 2; row < row1 + m.Rows / 2; row++ {
+		for col := col1 - m.Cols / 2; col < col1 + m.Cols / 2; col++ {
 			rowΔ := row - row1
 			colΔ := col - col1
-			if rowΔ * rowΔ + colΔ * colΔ < viewrad2 {
-				m.itemGrid[loc] = LAND
+			if rowΔ * rowΔ + colΔ * colΔ < rad2 {
+				Action(row, col)
 			}
 		}
 	}
@@ -162,7 +195,7 @@ func (m *Map) AddDeadAnt(loc Location, ant Item) {
 }
 
 func (m *Map) AddFood(loc Location) {
-	m.Food[loc] = FOOD
+	m.Food[loc] = true
 	m.itemGrid[loc] = FOOD
 }
 
@@ -216,24 +249,7 @@ func (m *Map) Bounds() image.Rectangle {
 }
 func (m *Map) At(x, y int) image.Color {
 	loc := m.FromRowCol(y / 4, x / 4)
-	switch m.itemGrid[loc] {
-		case UNKNOWN:	return image.NRGBAColor{0xb0, 0xb0, 0xb0, 0xff}
-		case WATER: 	return image.NRGBAColor{0x10, 0x10, 0x50, 0xff}
-		case FOOD:		return image.NRGBAColor{0xe0, 0xe0, 0xc0, 0xff}
-		case LAND:		return image.NRGBAColor{0x8b, 0x45, 0x13, 0xff}
-		case DEAD:		return image.NRGBAColor{0x69, 0x33, 0x05, 0xff}
-		case MY_ANT:	return image.NRGBAColor{0xf0, 0x00, 0x00, 0xff}
-		case PLAYER1:	return image.NRGBAColor{0xf0, 0xf0, 0x00, 0xff}
-		case PLAYER2:	return image.NRGBAColor{0x00, 0xf0, 0x00, 0xff}
-		case PLAYER3:	return image.NRGBAColor{0x00, 0x00, 0xf0, 0xff}
-		case PLAYER4:	return image.NRGBAColor{0xf0, 0x00, 0xf0, 0xff}
-		case PLAYER5:	return image.NRGBAColor{0xf0, 0xf0, 0xf0, 0xff}
-		case PLAYER6:	return image.NRGBAColor{0x80, 0x80, 0x00, 0xff}
-		case PLAYER7:	return image.NRGBAColor{0x00, 0x80, 0x80, 0xff}
-		case PLAYER8:	return image.NRGBAColor{0x80, 0x00, 0x80, 0xff}
-		case PLAYER9:	return image.NRGBAColor{0x80, 0x00, 0xf0, 0xff}
-	}
-	return image.NRGBAColor{0x00, 0x00, 0x00, 0xff}
+	return m.itemGrid[loc].Color()
 }
 
 
@@ -244,6 +260,8 @@ const (
 	East
 	South
 	West
+	
+	NoMovement
 )
 
 func (d Direction) String() string {
@@ -252,6 +270,7 @@ func (d Direction) String() string {
 		case South:	return "s"
 		case West:	return "w"
 		case East:	return "e"
+		case NoMovement: return "-"
 	}
 	Panicf("%v is not a valid direction", d)
 	return ""
@@ -265,6 +284,7 @@ func (m *Map) Move(loc Location, d Direction) Location {
 		case South:		Row += 1
 		case West:		Col -= 1
 		case East:		Col += 1
+		case NoMovement: //do nothing
 		default: Panicf("%v is not a valid direction", d)
 	}
 	return m.FromRowCol(Row, Col) //this will handle wrapping out-of-bounds numbers

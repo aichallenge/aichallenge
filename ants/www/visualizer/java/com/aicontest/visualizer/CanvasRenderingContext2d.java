@@ -151,10 +151,11 @@ public class CanvasRenderingContext2d extends RenderingContext2dState {
 		return new CanvasPattern(image.getImage(), repetition, canvas.applet);
 	}
 
+	public CanvasPattern createPattern(HTMLCanvasElement cvs, String repetition) {
+		return new CanvasPattern(cvs.getPixmap(), repetition, canvas.applet);
+	}
+
 	/*
-	 * CanvasPattern createPattern(HTMLCanvasElement image, String repetition) {
-	 * return null; }
-	 * 
 	 * CanvasPattern createPattern(HTMLVideoElement image, String repetition) {
 	 * return null; }
 	 * 
@@ -407,10 +408,10 @@ public class CanvasRenderingContext2d extends RenderingContext2dState {
 		int[] data = new int[imagedata.data.length / 4];
 		int p = 0;
 		for (int i = 0; i < imagedata.data.length; i += 4, p++) {
-			data[p]  = imagedata.data[i  ] << 16;
-			data[p] |= imagedata.data[i+1] <<  8;
-			data[p] |= imagedata.data[i+2] <<  0;
-			data[p] |= imagedata.data[i+3] << 24;
+			data[p] = imagedata.data[i] << 16;
+			data[p] |= imagedata.data[i + 1] << 8;
+			data[p] |= imagedata.data[i + 2] << 0;
+			data[p] |= imagedata.data[i + 3] << 24;
 		}
 		canvas.getPixmap().setRGB(dx, dy, imagedata.width, imagedata.height,
 				data, 0, imagedata.width);
