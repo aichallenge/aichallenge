@@ -35,9 +35,9 @@
 
 
 ;; This MAIN is for the Slime REPL with bin/play-proxy-game.sh.
-(defun main-for-proxybot (&key (log "ants-bot-proxied.log")
+(defun main-for-proxybot (&key (log "ants-bot-proxied.log") (verbose t)
                           (host #-allegro #(127 0 0 1) #+allegro "localhost")
-                          (port 41807) (verbose t))
+                          (port 41807))
   (let (client socket stream)
     (unwind-protect
          (handler-bind (#+sbcl (sb-bsd-sockets:socket-error

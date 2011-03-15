@@ -313,8 +313,8 @@
   (let ((cdts (current-date-time-string)))
     (logmsg "~&=== New Match: " cdts " ===~%")
     (logmsg "[start] " cdts "~%"))
-  (handler-bind (#+sbcl (sb-sys:interactive-interrupt #'interrupted-by-user)
-                 (error #'error-handler))
+  (handler-bind (#+sbcl (sb-sys:interactive-interrupt #'interrupted-by-user))
+                 ;(error #'error-handler))
     (loop for bot in *bots* collect (run-program bot) into procs
           finally (setf *procs* procs))
     (loop for turn from 0 to *turns*
