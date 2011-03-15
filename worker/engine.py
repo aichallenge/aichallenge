@@ -6,16 +6,18 @@ import os
 import sys
 
 def run_game(game, botcmds, options, gameid=0):
+    output_json = bool('output_json' in options)
+    error = ''
     if 'output_dir' in options:
         output_dir = options["output_dir"]
     else:
         output_dir = None
-    log_input = options["log_input"]
-    log_output = options["log_output"]
+    log_input = bool('log_input' in options)
+    log_output = bool('log_output' in options)
     turns = int(options["turns"])
     loadtime = float(options["loadtime"]) / 1000
     turntime = float(options["turntime"]) / 1000
-    verbose = bool(options["verbose"])
+    verbose = bool('verbose' in options)
     try:
         if output_dir:
             if log_input:
@@ -28,7 +30,8 @@ def run_game(game, botcmds, options, gameid=0):
         bots = [Sandbox(*bot) for bot in botcmds]
         for b, bot in enumerate(bots):
             if not bot.is_alive:
-                print('bot %s did not start' % botcmds[b])
+                if verbose:
+                    print('bot %s did not start' % botcmds[b])
                 game.kill_player(b)
 
         if output_dir:
@@ -37,9 +40,11 @@ def run_game(game, botcmds, options, gameid=0):
             # TODO: write player names and crap
             of.flush()
 
-        print('running for %s turns' % turns)
+        if verbose:
+            print('running for %s turns' % turns)
         for turn in range(turns+1):
-            print('turn %s' % turn)
+            if verbose:
+                print('turn %s' % turn)
             try:
                 if turn == 0:
                     game.start_game()
@@ -85,7 +90,8 @@ def run_game(game, botcmds, options, gameid=0):
                         if bot_finished[b]:
                             continue # already got bot moves
                         if not bot.is_alive:
-                            print('bot %s died' % b)
+                            if verbose:
+                                print('bot %s died' % b)
                             bot_finished[b] = True
                             game.kill_player(b)
                             continue # bot is dead
@@ -102,7 +108,8 @@ def run_game(game, botcmds, options, gameid=0):
                 # kill timed out bots
                 for b, finished in enumerate(bot_finished):
                     if not finished:
-                        print("bot %s timed out" % b)
+                        if verbose:
+                            print("bot %s timed out" % b)
                         if output_dir:
                             of.write('# bot %s timed out\n' % b)
                         game.kill_player(b)
@@ -128,7 +135,8 @@ def run_game(game, botcmds, options, gameid=0):
                 # send ending info to eliminated bots
                 for b, alive in enumerate(bot_alive):
                     if alive and not game.is_alive(b):
-                        print("bot %s eliminated" % b)
+                        if verbose:
+                            print("bot %s eliminated" % b)
                         if output_dir:
                             of.write('# bot %s eliminated\n' % b)
                         end_line = 'end\nscore %s\n' % ' '.join([str(s) for s in game.get_scores()])
@@ -139,8 +147,6 @@ def run_game(game, botcmds, options, gameid=0):
                             bot_output_log[b].flush()
 
             except:
-                traceback.print_exc()
-                print("Got an error running the bots.")
                 raise
 
             if verbose:
@@ -172,7 +178,9 @@ def run_game(game, botcmds, options, gameid=0):
             of.flush()
 
     except Exception:
-        traceback.print_exc()
+        error = traceback.format_exc()
+        if verbose:
+            print(error)
     finally:
         for bot in bots:
             if bot.is_alive:
@@ -185,3 +193,14 @@ def run_game(game, botcmds, options, gameid=0):
             if log_output:
                 for log in bot_output_log:
                     log.close()
+    if output_json:
+        # this isn't actually json yet, the worker will encode it
+        json_response = {}
+        if error:
+            json_response["error"] = error
+        else:
+            scores = game.get_scores()
+            json_response['score'] = scores
+            json_response['rank'] = [sorted(set(scores)).index(x) for x in scores]
+            json_response['player_info'] = [{} for x in range(len(bots))]
+        return json_response

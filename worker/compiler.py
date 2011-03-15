@@ -48,6 +48,18 @@ from server_info import server_info
 BOT = "MyBot"
 SAFEPATH = re.compile('[a-zA-Z0-9_.$-]+$')
 
+class CD(object):
+    def __init__(self, new_dir):
+        self.new_dir = new_dir
+
+    def __enter__(self):
+        self.org_dir = os.getcwd()
+        os.chdir(self.new_dir)
+        return self.new_dir
+
+    def __exit__(self, type, value, traceback):
+        os.chdir(self.org_dir)
+        
 def safeglob(pattern):
     safepaths = []
     paths = glob.glob(pattern)
@@ -217,84 +229,160 @@ targets = {
     "C"     : { ".c" : ".o" },
     "C++" : { ".c" : ".o", ".cpp" : ".o", ".cc" : ".o" },
     }
-
+   
+# TODO: turn these into objects or dicts
 languages = {
-    # lang : (output extension, [nukeglobs], [(source glob, compiler), ...])
-    #                The compilers are run in the order given.
-    #                If the extension is "" it means the output file is just BOT
-    #                If a source glob is "" it means the source is part of the
-    #                    compiler arguments.
-    "C"                     : ("",
-                                     ["*.o", BOT],
-                                     [(["*.c"], TargetCompiler(comp_args["C"][0], targets["C"])),
-                                        (["*.o"], ExternalCompiler(comp_args["C"][1]))]),
-    "C#"                    : (".exe",
-                                     [BOT + ".exe"],
-                                     [(["*.cs"], ExternalCompiler(comp_args["C#"][0]))]),
-    "C++"                 : ("",
-                                     ["*.o", BOT],
-                                     [(["*.c", "*.cpp", "*.cc"],
-                                         TargetCompiler(comp_args["C++"][0], targets["C++"])),
-                                        (["*.o"], ExternalCompiler(comp_args["C++"][1]))]),
-    "Clojure"         : (".clj",
-                                     [],
-                                     [(["*.clj"], ChmodCompiler("Clojure"))]),
-    "CoffeeScript": (".coffee",
-                                     [],
-                                     [(["*.coffee"], ChmodCompiler("CoffeeScript"))]),
-    "Go"                    : ("",
-                                     ["*.8", BOT],
-                                     [(["*.go"], ExternalCompiler(comp_args["Go"][0])),
-                                        ([""], ExternalCompiler(comp_args["Go"][1]))]),
-    "Groovy"            : (".jar",
-                                     ["*.class, *.jar"],
-                                     [(["*.groovy"], ExternalCompiler(comp_args["Groovy"][0])),
-                                        (["*.class"], ExternalCompiler(comp_args["Groovy"][1]))]),
-    "Haskell"         : ("",
-                                     [BOT],
-                                     [([""], ExternalCompiler(comp_args["Haskell"][0]))]),
-    "Java"                : (".jar",
-                                     ["*.class", "*.jar"],
-                                     [(["*.java"], JavaCompiler(comp_args["Java"][0])),
-                                        (["*.class"], JavaCompiler(comp_args["Java"][1]))]),
-    "Javascript"    : (".js",
-                                     [],
-                                     [(["*.js"], ChmodCompiler("Javascript"))]),
-    "Lisp"                : ("",
-                                     [BOT],
-                                     [([""], ExternalCompiler(comp_args["Lisp"][0]))]),
-    "Lua"                 : (".lua",
-                                     [],
-                                     [(["*.lua"], ChmodCompiler("Lua"))]),
-    "OCaml"             : (".native",
-                                     [BOT + ".native"],
-                                     [([""], ExternalCompiler(comp_args["OCaml"][0]))]),
-    "Perl"                : (".pl",
-                                     [],
-                                     [(["*.pl"], ChmodCompiler("Perl"))]),
-    "PHP"                 : (".php",
-                                     [],
-                                     [(["*.php"], ChmodCompiler("PHP"))]),
-    "Python"            : (".py",
-                                     ["*.pyc"],
-                                     [(["*.py"], ChmodCompiler("Python"))]),
-    "Ruby"                : (".rb",
-                                     [],
-                                     [(["*.rb"], ChmodCompiler("Ruby"))]),
-    "Scala"             : (".class",
-                                     ["*.class, *.jar"],
-                                     [(["*.scala"], ExternalCompiler(comp_args["Scala"][0]))]),
-    "Scheme"            : (".ss",
-                                     [],
-                                     [(["*.ss"], ChmodCompiler("Scheme"))]),
+    # lang :
+    #     (output extension,
+    #      command_line
+    #      [nukeglobs],
+    #      [(source glob, compiler), ...])
+    #
+    # The compilers are run in the order given.
+    # If the extension is "" it means the output file is just BOT
+    # If a source glob is "" it means the source is part of the compiler
+    #   arguments.
+    "C":
+        ("",
+         "MyBot.c",
+         "./MyBot",
+         ["*.o", BOT],
+         [(["*.c"], TargetCompiler(comp_args["C"][0], targets["C"])),
+          (["*.o"], ExternalCompiler(comp_args["C"][1]))]
+        ),
+    "C#":
+        (".exe",
+         "MyBot.cs",
+         "mono MyBot.exe",
+         [BOT + ".exe"],
+         [(["*.cs"], ExternalCompiler(comp_args["C#"][0]))]
+        ),
+    "C++": 
+        ("",
+         "MyBot.cc",
+         "./MyBot",
+         ["*.o", BOT],
+         [(["*.c", "*.cpp", "*.cc"], TargetCompiler(comp_args["C++"][0], targets["C++"])),
+          (["*.o"], ExternalCompiler(comp_args["C++"][1]))]
+         ),
+    "Clojure":
+        (".clj",
+         "?",
+         "?",
+         [],
+         [(["*.clj"], ChmodCompiler("Clojure"))]
+        ),
+    "CoffeeScript":
+        (".coffee",
+         "MyBot.coffee",
+         "coffee MyBot.coffee",
+         [],
+         [(["*.coffee"], ChmodCompiler("CoffeeScript"))]
+        ),
+    "Go":
+        ("",
+         "MyBot.go",
+         "./MyBot",
+         ["*.8", BOT],
+         [(["*.go"], ExternalCompiler(comp_args["Go"][0])),
+          ([""], ExternalCompiler(comp_args["Go"][1]))]
+        ),
+    "Groovy":
+        (".jar",
+         "MyBot.groovy",
+         "java -cp MyBot.jar:/usr/share/groovy/embeddable/groovy-all-1.7.5.jar MyBot",
+         ["*.class, *.jar"],
+         [(["*.groovy"], ExternalCompiler(comp_args["Groovy"][0])),
+         (["*.class"], ExternalCompiler(comp_args["Groovy"][1]))]
+        ),
+    "Haskell":
+        ("",
+         "MyBot.hs",
+         "./MyBot",
+         [BOT],
+         [([""], ExternalCompiler(comp_args["Haskell"][0]))]
+        ),
+    "Java": 
+        (".jar",
+         "MyBot.java",
+         "java -jar MyBot.jar",
+         ["*.class", "*.jar"],
+         [(["*.java"], JavaCompiler(comp_args["Java"][0])),
+         (["*.class"], JavaCompiler(comp_args["Java"][1]))]
+        ),
+    "Javascript":
+        (".js",
+         "MyBot.js",
+         "node MyBot.js",
+         [],
+         [(["*.js"], ChmodCompiler("Javascript"))]
+        ),
+    "Lisp": 
+        ("",
+         "MyBot.lisp",
+         "./MyBot",
+        [BOT],
+        [([""], ExternalCompiler(comp_args["Lisp"][0]))]),
+    "Lua":
+        (".lua",
+         "MyBot.lua",
+         "?",
+         [],
+         [(["*.lua"], ChmodCompiler("Lua"))]
+        ),
+    "OCaml":
+        (".native",
+         "MyBot.ml",
+         "./MyBot.native",
+         [BOT + ".native"],
+         [([""], ExternalCompiler(comp_args["OCaml"][0]))]
+        ),
+    "Perl":
+        (".pl",
+         "MyBot.pl",
+         "perl MyBot.pl",
+         [],
+         [(["*.pl"], ChmodCompiler("Perl"))]
+        ),
+    "PHP":
+        (".php",
+         "MyBot.php",
+         "php MyBot.php",
+         [],
+         [(["*.php"], ChmodCompiler("PHP"))]
+        ),
+    "Python":
+        (".py",
+         "MyBot.py",
+         "python MyBot.py",
+        ["*.pyc"],
+        [(["*.py"], ChmodCompiler("Python"))]),
+    "Ruby": 
+        (".rb",
+         "MyBot.rb",
+         "ruby MyBot.rb",
+         [],
+         [(["*.rb"], ChmodCompiler("Ruby"))]
+        ),
+    "Scala": 
+        (".class",
+         "MyBot.class",
+         "?",
+         ["*.class, *.jar"],
+         [(["*.scala"], ExternalCompiler(comp_args["Scala"][0]))]
+        ),
+    "Scheme":
+        (".ss",
+         "MyBot.ss",
+         "./MyBot",
+         [],
+         [(["*.ss"], ChmodCompiler("Scheme"))]
+        ),
     }
 
 
 def compile_function(language, log):
-    info = languages[language]
-    extension = info[0]
-    nukeglobs = info[1]
-    compilers = info[2]
+    extension, main_code_file, command, nukeglobs, compilers = languages[language]
 
     if language == "Java":
         for glob in nukeglobs:
@@ -309,70 +397,61 @@ def compile_function(language, log):
 
     return check_path(BOT + extension, log)
 
-def get_programming_languages():
-    connection = MySQLdb.connect(host = server_info["db_host"],
-                                 user = server_info["db_username"],
-                                 passwd = server_info["db_password"],
-                                 db = server_info["db_name"])
-    cursor = connection.cursor(MySQLdb.cursors.DictCursor)
-    cursor.execute("SELECT * FROM language where language_id > 0")
-    programming_languages = cursor.fetchall()
-    cursor.close()
-    connection.close()
-    return programming_languages
-
-def detect_language(programming_languages):
-    # Autodetects the language of the entry in the current working directory
-    log = Log()
-    if programming_languages == None:
-        programming_languages = get_programming_languages()
-    detected_langs = [
-        lang for lang in programming_languages \
-            if os.path.exists(lang["main_code_file"])
-    ]
-    print os.listdir(os.getcwd())
-    print detected_langs
-    # If no language was detected
-    if len(detected_langs) == 0:
-        log.err += "The auto-compile environment could not locate your main code\n"
-        log.err += "file. This is probably because you accidentally changed the\n"
-        log.err += "name of your main code file. You must include exactly one file"
-        log.err += "\nwith one of the following names:\n"
-        for lang in programming_languages:
-            log.err += "     * " + lang["main_code_file"] + " (" + lang["name"] + ")\n"
-        log.err += "This is to help the auto-compile environment figure out which"
-        log.err += "\nprogramming language you are using.\n"
-        return log.out, log.err, "NULL"
-    # If more than one language was detected
-    if len(detected_langs) > 1:
-        log.err = "The auto-compile environment found more than one main code "
-        log.err += "file:\n"
-        for lang in detected_langs:
-            log.err += "     * " + lang["main_code_file"] + " (" + lang["name"] + ")\n"
-        log.err += "You must submit only one of these files so that the\n"
-        log.err += "auto-compile environment can figure out which programming\n"
-        log.err += "language you are trying to use.\n"
-        return log.out, log.err, "NULL"
-    return detected_langs[0]
+def detect_language(submission_dir=None):
+    if submission_dir == None:
+        submission_dir = os.getcwd()
+    with CD(submission_dir):
+        # Autodetects the language of the entry in the current working directory
+        log = Log()
+        detected_langs = [
+            lang_data + (lang_name,) for lang_name, lang_data
+            in languages.items() if os.path.exists(lang_data[1])
+        ]
+        #print os.getcwd()
+        #print os.listdir(os.getcwd())
+        #print detected_langs
+        # If no language was detected
+        if len(detected_langs) == 0:
+            log.err += "The auto-compile environment could not locate your main code\n"
+            log.err += "file. This is probably because you accidentally changed the\n"
+            log.err += "name of your main code file. You must include exactly one file"
+            log.err += "\nwith one of the following names:\n"
+            for lang_name, lang_data in languages.items():
+                log.err += "     * " + lang_data[1] + " (" + lang_name + ")\n"
+            log.err += "This is to help the auto-compile environment figure out which"
+            log.err += "\nprogramming language you are using.\n"
+            return None
+            #return log.out, log.err, "NULL"
+        # If more than one language was detected
+        if len(detected_langs) > 1:
+            log.err = "The auto-compile environment found more than one main code "
+            log.err += "file:\n"
+            for lang in detected_langs:
+                log.err += "     * " + lang[1] + " (" + lang[-1] + ")\n"
+            log.err += "You must submit only one of these files so that the\n"
+            log.err += "auto-compile environment can figure out which programming\n"
+            log.err += "language you are trying to use.\n"
+            return None
+            #return log.out, log.err, "NULL"
+        return detected_langs[0]
 
 # Autodetects the language of the entry in the current working directory and
 # compiles it.
-def compile_anything(programming_languages=None):
-    log = Log()
-    # If we get this far, then we have successfully auto-detected the language
-    # that this contestant is using.
-    detected_language = detect_language(programming_languages)
-    main_code_file = detected_language["main_code_file"]
-    detected_lang = detected_language["name"]
-    language_id = detected_language["language_id"]
-    log.out += "Found " + main_code_file + ". Compiling this entry as " + \
-        detected_lang + "\n"
-    t1 = time.time()
-    if compile_function(detected_lang, log):
-        log.out += "Completed in %f seconds.\n" % (time.time() - t1)
-    else:
-        log.err += "Compilation failed.\n"
-    return log.out, log.err, language_id
+def compile_anything(submission_dir):
+    with CD(submission_dir):
+        log = Log()
+        # If we get this far, then we have successfully auto-detected the language
+        # that this contestant is using.
+        detected_language = detect_language()
+        main_code_file = detected_language[1]
+        detected_lang = detected_language[-1]
+        log.out += "Found " + main_code_file + ". Compiling this entry as " + \
+            detected_lang + "\n"
+        t1 = time.time()
+        if compile_function(detected_lang, log):
+            return detected_lang
+        else:
+            return None
 
 if __name__ == '__main__':
     import json

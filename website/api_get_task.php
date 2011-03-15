@@ -26,22 +26,26 @@ if ($compile_result) {
 }
 		
 // look for match
-$match_result = mysql_query(sprintf($sql["select_next_match"],
+$match_result = mysql_query(sprintf($sql["select_next_matchup"],
                                     $worker["worker_id"]));
 if ($match_result) {                               
 	while ($match_row = mysql_fetch_assoc($match_result)) {
 		$json = array( "task" => "game",
-		               "match_id" => $match_row["match_id"],
-		               "map_url" => $match_row["filename"],
+		               "matchup_id" => $match_row["matchup_id"],
+		               "map_filename" => $match_row["filename"],
 		               "players" => array());
 		
-		$player_result = mysql_query(sprintf($sql["select_match_players"],
-		                                     $row["match_id"]));
-		while ($player_row = mysql_fetch_assoc($player_result)) {
-			$json["players"][] = $player_row["submission_id"];
+		$player_result = mysql_query(sprintf($sql["select_matchup_players"],
+		                                     $match_row["matchup_id"]));
+		if ($player_result) {
+			while ($player_row = mysql_fetch_assoc($player_result)) {
+				$json["players"][] = $player_row["submission_id"];
+			}
+			echo json_encode($json);
+			die();
+		} else {
+			api_log(sprintf("Error selecting matchup players: %s", mysql_error()));
 		}
-		echo json_encode($json);
-		die();
 	}
 } else {
 	api_log(sprintf("Error selected next match: %s", mysql_error()));
@@ -49,5 +53,4 @@ if ($match_result) {
 
 // nothing to do
 echo json_encode(array( "task" => "expand lolcode specification" ));
-
 ?>

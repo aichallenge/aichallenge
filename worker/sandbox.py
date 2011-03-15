@@ -48,7 +48,7 @@ class Sandbox:
     #                                            directory are copied into the VM before the shell
     #                                            command is executed.
     #     shell_command: the shell command to launch inside the sandbox.
-    def __init__(self, working_directory, shell_command):
+    def __init__(self, working_directory, shell_command, jailuser=None):
         shell_command = shell_command.replace('\\','/')
         self.is_alive = False
         self.command_process = None
