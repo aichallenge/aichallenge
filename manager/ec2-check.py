@@ -9,14 +9,7 @@ from subprocess import Popen, PIPE
 API_KEY = os.getenv("AI_QUERY_KEY")
 STORE_FILE = "instance_data"
 
-try:
-    import json
-except ImportError:
-    try:
-        import json
-    except ImportError:
-        print "Need access to a json module"
-        sys.exit(1)
+import json
 
 def get_ec2_instances():
     data = {}
