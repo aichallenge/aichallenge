@@ -91,7 +91,7 @@ class Ants:
 
         # load map and get number of players from map
         #   will fill in center data
-        self.load_text(map_text)
+        self.load_map(map_text)
 
         # used to remember where the ants started
         self.initial_ant_list = dict((ant.loc, ant.owner) for ant in self.current_ants.values())
@@ -118,7 +118,7 @@ class Ants:
         self.score = [Fraction(0,1)]*self.num_players
         self.score_history = [[s] for s in self.score]
 
-    def load_text(self, map_text):
+    def load_map(self, map_text):
         players = []
         self.map = []
         row = 0
@@ -145,7 +145,10 @@ class Ants:
                             #    self.center[value] = (last_row, col)
                         value = players.index(c)
                         self.map[-1].append(value)
-                        self.add_ant((row,col), value)
+                        # starting ant gets a food entry for the replay format
+                        self.add_food((row, col))
+                        self.remove_food((row, col))
+                        self.add_ant((row, col), value)
                         self.land_area += 1
                     elif c == '*':
                         self.map[-1].append(FOOD)
@@ -406,6 +409,7 @@ class Ants:
             ant = self.current_ants[loc]
             self.killed_ants.append(ant)
             ant.killed = True
+            ant.die_turn = self.turn
             del self.current_ants[loc]
         except KeyError:
             raise Exception("Kill ant error",
@@ -623,7 +627,7 @@ class Ants:
         for i, s in enumerate(self.score):
             self.score_history[i].append(s)
 
-    # used for 'map hack' playback
+    # used for 'map hack' streaming playback
     def get_state(self):
         updates = self.get_state_updates()
         updates.append([]) # newline
@@ -680,7 +684,7 @@ class Ants:
             ant_count[ant.owner] += 1
         return {'ant_count': ant_count}
 
-    def get_compact_replay(self):
+    def get_replay(self):
         result = []
         # required params
         result.append(['v', 'ants', '1'])
@@ -701,22 +705,38 @@ class Ants:
         # map
         result.append([self.render_map()])
 
-        # food
+        #for f in self.all_food:
+        #    print("food: %s" % f)
+        #for a in self.all_ants:
+        #    print("ants: %s" % a)
+            
+        # food and ants combined
         for f in self.all_food:
-            food_data = ['f', f.loc[0], f.loc[1], f.start_turn]
-            if f.end_turn:
-                food_data.append(f.end_turn)
-            result.append(food_data)
-
-        # ants
-        for a in self.all_ants:
-            orders = ''.join(a.orders)
-            if not a.killed:
-                orders += '*'
-            result.append([
-                'a', a.owner, a.initial_loc[0], a.initial_loc[1],
-                a.spawn_turn, orders
-            ])
+            ant_data = ['a', f.loc[0], f.loc[1], f.start_turn]
+            if f.end_turn == None:
+                ant_data.append(self.turn + 1)
+            else:
+                # find ant that was converted
+                ant = None
+                for a in self.all_ants:
+                    if a.initial_loc == f.loc and a.spawn_turn == f.end_turn:
+                        ant = a
+                        break
+                    #else:
+                    #    print('a%s != f%s or %s != %s' % (a.initial_loc, f.loc, a.spawn_turn, f.end_turn))
+                else:
+                    # food disappears
+                    ant_data.append(f.end_turn)
+                if ant != None:
+                    # find if ant survives to end
+                    ant_data.append(ant.spawn_turn)
+                    if not ant.killed:
+                        ant_data.append(self.turn + 1)
+                    else:
+                        ant_data.append(ant.die_turn)
+                    ant_data.append(ant.owner)
+                    ant_data.append(''.join(ant.orders))
+            result.append(ant_data)
 
         # scores
         for s in self.score_history:
@@ -729,18 +749,20 @@ class Ants:
 class Ant:
     def __init__(self, loc, owner, spawn_turn=None):
         self.loc = loc
-        self.initial_loc = loc
         self.owner = owner
-        self.killed = False
 
         self.prev_loc = None
         self.initial_loc = loc
         self.spawn_turn = spawn_turn
+        self.die_turn = None
         self.orders = []
         self.killed = False
 
         self.moved = False
 
+    def __str__(self):
+        return '(%s, %s, %s, %s, %s)' % (self.initial_loc, self.owner, self.spawn_turn, self.die_turn, ''.join(self.orders))
+    
     def move(self, new_loc, direction='-'):
         # ignore duplicate moves
         if self.moved:
@@ -759,3 +781,6 @@ class Food:
         self.start_turn = start_turn
         self.end_turn = None
 
+    def __str__(self):
+        return '(%s, %s, %s)' % (self.loc, self.start_turn, self.end_turn)
+    

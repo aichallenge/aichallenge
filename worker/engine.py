@@ -35,7 +35,7 @@ def run_game(game, botcmds, options, gameid=0):
                 game.kill_player(b)
 
         if output_dir:
-            of = open(os.path.join(output_dir, '%s.replay' % gameid), "w")
+            of = open(os.path.join(output_dir, '%s.stream' % gameid), "w")
             of.write(game.get_player_start())
             # TODO: write player names and crap
             of.flush()
@@ -177,8 +177,8 @@ def run_game(game, botcmds, options, gameid=0):
             of.write(game.get_state())
             of.flush()
 
-            cof = open(os.path.join(output_dir, '%s.compact_replay' % gameid), "w")
-            cof.write(game.get_compact_replay())
+            cof = open(os.path.join(output_dir, '%s.replay' % gameid), "w")
+            cof.write(game.get_replay())
             cof.close()
 
     except Exception:
@@ -210,5 +210,5 @@ def run_game(game, botcmds, options, gameid=0):
             json_response['score'] = scores
             json_response['rank'] = [sorted(set(scores)).index(x) for x in scores]
             json_response['player_info'] = [{} for x in range(len(bots))]
-            json_response['replay'] = "" #game.get_replay()
+            json_response['replay'] = game.get_replay()
         return json_response
