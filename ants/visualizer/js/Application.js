@@ -66,6 +66,11 @@ Visualizer = function(container, dataDir, codebase, w, h, java) {
 	 */
 	this.border = {};
 	/**
+	 * Caches the score graph
+	 * @private
+	 */
+	this.scores = {};
+	/**
 	 * array of precomputed turn data
 	 * @private
 	 */
@@ -404,6 +409,7 @@ Visualizer.prototype.loadCanvas = function(prompt) {
 		}
 		vis.createCanvas(vis.map);
 		vis.createCanvas(vis.border);
+		vis.createCanvas(vis.scores);
 		if (!vis.btnMgr.groups['playback']) {
 			var bg = vis.btnMgr.addGroup('playback', vis.imgMgr.images[1], ButtonGroup.HORIZONTAL, ButtonGroup.MODE_NORMAL, 2);
 			bg.addButton(3, function() {vis.director.gotoTick(0)});
@@ -602,6 +608,13 @@ Visualizer.prototype.resize = function(forced) {
 		this.border.canvas.width = this.loc.map.w + 2 * ZOOM_SCALE;
 		this.border.canvas.height = this.loc.map.h + 2 * ZOOM_SCALE;
 		this.renderBorder();
+		this.loc.scores = {
+			x: (0.5 * (1 + news.width)) | 0,
+			y: 0
+		};
+		this.scores.canvas.width = (0.5 * news.width) | 0;
+		this.scores.canvas.height = TOP_PANEL_H;
+		this.renderScores();
 		this.map.canvas.width = this.loc.map.w;
 		this.map.canvas.height = this.loc.map.h;
 		this.renderMap();
@@ -634,7 +647,6 @@ Visualizer.prototype.resize = function(forced) {
 		this.main.ctx.textBaseline = 'middle';
 		this.main.ctx.font = 'bold 12px Arial';
 		this.main.ctx.fillText('ants'  , 30          , TOP_PANEL_H - 10);
-		this.main.ctx.fillText('scores', 30 + 0.5 * w, TOP_PANEL_H - 10);
 		this.director.draw();
 	}
 };
@@ -712,6 +724,46 @@ Visualizer.prototype.renderBorder = function() {
 	   ctx.restore();
 	ctx.restore();
 };
+/**
+ * @private
+ */
+Visualizer.prototype.renderScores = function() {
+	var ctx = this.scores.ctx;
+	var w = this.scores.canvas.width - 1;
+	var h = this.scores.canvas.height - 1;
+	ctx.fillStyle = '#FFF';
+	ctx.fillRect(0, 0, w + 1, h + 1);
+	// find lowest and highest value
+	var min = +Infinity;
+	var max = -Infinity;
+	for (var i = 0; i < this.replay.turns.length; i++) {
+		var turn = this.replay.turns[i];
+		for (var k = 0; k < turn.scores.length; k++) {
+			if (min > turn.scores[k]) {
+				min = turn.scores[k];
+			}
+			if (max < turn.scores[k]) {
+				max = turn.scores[k];
+			}
+		}
+	}
+	// draw lines
+	var scaleX = w / (this.replay.turns.length - 1);
+	var scaleY = h / (max - min);
+	for (i = 0; i < this.replay.players.length; i++) {
+		var color = PLAYER_COLORS[i];
+		ctx.strokeStyle = 'rgb(' + color[0] + ',' + color[1] + ',' + color[2] + ')';
+		ctx.beginPath();
+		ctx.moveTo(0.5, 0.5 + scaleY * (max - this.replay.turns[0].scores[i]));
+		for (k = 1; k < this.replay.turns.length; k++) {
+			ctx.lineTo(0.5 + scaleX * k, 0.5 + scaleY * (max - this.replay.turns[k].scores[i]));
+		}
+		ctx.stroke();
+	}
+};
+/**
+ * @private
+ */
 Visualizer.prototype.renderFog = function(turn) {
 	this.border.ctx.clearRect(ZOOM_SCALE, ZOOM_SCALE, this.scale * this.replay.cols, this.scale * this.replay.rows);
 	if (this.fog) {
@@ -818,13 +870,13 @@ Visualizer.prototype.interpolate = function(array1, array2, delta) {
  * @private
  */
 Visualizer.prototype.draw = function(time, tick) {
-	var cx, cy, mx, my;
+	var x, y, w, d;
 	var drawOrder = [];
 	var turn = (time | 0);
 	// draw the map background
 	this.main.ctx.fillStyle = '#ff3';
 	this.main.ctx.drawImage(this.map.canvas, this.loc.map.x, this.loc.map.y);
-	var w = this.main.canvas.width;
+	w = this.main.canvas.width;
 	if (tick !== undefined) {
 		//document.getElementById('lblTurn').innerHTML = ((turn > this.replay.turns.length - 2) ? 'end result' : turn + ' / ' + (this.replay.turns.length - 2));
 		if (this.fog !== undefined) this.renderFog(turn);
@@ -832,9 +884,12 @@ Visualizer.prototype.draw = function(time, tick) {
 	var array1 = this.replay.turns[turn];
 	var array2 = (time === turn) ? array1 : this.replay.turns[turn + 1];
 	var counts = this.interpolate(array1.counts, array2.counts, time - turn);
-	this.drawColorBar(60,           TOP_PANEL_H - 20, 0.5 * w - 60, 20, counts, PLAYER_COLORS);
-	var scores = this.interpolate(array1.scores, array2.scores, time - turn);
-	this.drawColorBar(60 + 0.5 * w, TOP_PANEL_H - 20, 0.5 * w - 60, 20, scores, PLAYER_COLORS);
+	this.drawColorBar(60, TOP_PANEL_H - 20, 0.5 * w - 60, 20, counts, PLAYER_COLORS);
+	this.main.ctx.drawImage(this.scores.canvas, this.loc.scores.x, 0);
+	this.main.ctx.beginPath();
+	this.main.ctx.moveTo(this.loc.scores.x + 0.5 + (w / 2 - 1) * time / (this.replay.turns.length - 1), 0.5);
+	this.main.ctx.lineTo(this.loc.scores.x + 0.5 + (w / 2 - 1) * time / (this.replay.turns.length - 1), TOP_PANEL_H - 0.5);
+	this.main.ctx.stroke();
 	for (var i = 0; i < this.replay.turns[turn].ants.length; i++) {
 		var antObj = this.replay.turns[turn].ants[i].interpolate(time, Quality.LOW);
 		this.correctCoords(antObj, this.replay.cols, this.replay.rows);
@@ -845,25 +900,32 @@ Visualizer.prototype.draw = function(time, tick) {
 		if (this.config.zoom) {
 			this.main.ctx.save();
 			this.main.ctx.globalAlpha = antObj.alpha;
-			cx = ZOOM_SCALE * (antObj.x + 0.5);
-			cy = ZOOM_SCALE * (antObj.y + 0.5);
-			this.main.ctx.translate(cx, cy);
+			x = ZOOM_SCALE * (antObj.x + 0.5);
+			y = ZOOM_SCALE * (antObj.y + 0.5);
+			this.main.ctx.translate(x, y);
 			this.main.ctx.rotate(antObj.angle + Math.sin(20 * time) * antObj.jitter);
 			this.main.ctx.drawImage(this.imgMgr.ants[antObj.type], -10, -10);
 			this.main.ctx.restore();
-			mx = cx + 3 * Math.tan(2 * (Math.random() - 0.5));
-			my = cy + 3 * Math.tan(2 * (Math.random() - 0.5));
+			x += 3 * Math.tan(2 * (Math.random() - 0.5));
+			y += 3 * Math.tan(2 * (Math.random() - 0.5));
 			if (antObj.alpha == 1) {
 				var sin = -Math.sin(antObj.angle);
 				var cos = +Math.cos(antObj.angle);
-				this.ctxMap.moveTo(mx - sin, my - cos);
-				this.ctxMap.lineTo(mx + sin, my + cos);
+				this.ctxMap.moveTo(x - sin, y - cos);
+				this.ctxMap.lineTo(x + sin, y + cos);
 			}
 		} else {
-			mx = Math.round(this.scale * antObj.x) + this.loc.map.x;
-			my = Math.round(this.scale * antObj.y) + this.loc.map.y;
-			this.main.ctx.fillStyle = 'rgba(' + antObj.r + ', ' + antObj.g + ', ' + antObj.b + ', ' + antObj.a + ')';
-			this.main.ctx.fillRect(mx, my, this.scale, this.scale);
+			x = Math.round(this.scale * antObj['x']) + this.loc.map.x;
+			y = Math.round(this.scale * antObj['y']) + this.loc.map.y;
+			w = this.scale;
+			if (antObj['size'] !== 1) {
+				d = 0.5 * (1.0 - antObj['size']) * this.scale;
+				x += d;
+				y += d;
+				w *= antObj['size'];
+			}
+			this.main.ctx.fillStyle = 'rgb(' + antObj['r'] + ', ' + antObj['g'] + ', ' + antObj['b'] + ')';
+			this.main.ctx.fillRect(x, y, w, w);
 		}
 	}
 	// draw border over ants, that moved out of the map

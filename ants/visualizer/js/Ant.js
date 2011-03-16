@@ -98,39 +98,29 @@ Ant.prototype.interpolate = function(time, quality) {
 	}
 	return set[goFrom].interpolate(set[goFrom + 1], delta);
 };
-Ant.prototype.fade = function(quality, key, pairs) {
-	var i, k, av, bv, at, bt, mix;
+Ant.prototype.fade = function(quality, key, valueb, timea, timeb) {
+	var i, valuea, mix, f0, f1;
 	var set = quality ? this.hi : this.lo;
-	var f = [];
-	// create the required frames
-	for (i = 0; i < pairs.length; i++) {
-		f[i] = this.frameAt(pairs[i].time, quality, true);
-		if (pairs[i].value !== undefined) {
-			f[i][key] = pairs[i].value;
-		}
-	}
+	// create and adjust the start and end frames
+	f0 = this.frameAt(timea, quality, true);
+	f1 = this.frameAt(timeb, quality, true);
 	// update frames inbetween
 	for (i = set.length - 1; i >= 0; i--) {
-		if (f[0].time === pairs[0].time) {
+		if (set[i].time === timea) {
 			break;
 		}
 	}
-	i++;
-	for (k = 0; k < f.length - 1; k++) {
-		av = f[k][key];
-		bv = f[k + 1][key];
-		at = f[k].time;
-		bt = f[k + 1].time;
-		for (; i < set.length && set[i] != f[k + 1]; i++) {
-			mix = (set[i].time - at) / (bt - at);
-			set[i][key] = (1 - mix) * av + mix * bv;
-		}
+	valuea = f0[key];
+	for (i++; set[i] !== f1; i++) {
+		mix = (set[i].time - timea) / (timeb - timea);
+		set[i][key] = (1 - mix) * valuea + mix * valueb;
 	}
+	for (; i < set.length; i++) set[i][key] = valueb;
 };
 // animates the ant ([{<time between 0 and 1>, {<attribute to set absolute>, ...}, {<attribute to set relative>, ...}}, ...])
 // currently unused
 Ant.prototype.animate = function(list) {
-        var key, a, i;
+	var key, a, i;
 	var interpol = new Array(list.length);
 	for (i = 0; i < list.length; i++) {
 		var time = this.keyFrames[0].time + list[i].time;
@@ -157,23 +147,23 @@ Ant.prototype.animate = function(list) {
  */
 function LoFiData(other) {
 	this.time = other ? other.time : 0;
-	this.x = other ? other.x : 0;
-	this.y = other ? other.y : 0;
-	this.r = other ? other.r : 0;
-	this.g = other ? other.g : 0;
-	this.b = other ? other.b : 0;
-	this.a = other ? other.a : 0.0;
+	this['x'] = other ? other['x'] : 0;
+	this['y'] = other ? other['y'] : 0;
+	this['r'] = other ? other['r'] : 0;
+	this['g'] = other ? other['g'] : 0;
+	this['b'] = other ? other['b'] : 0;
+	this['size'] = other ? other['size'] : 0.0;
 }
 LoFiData.prototype.interpolate = function(other, b) {
 	var a = 1.0 - b;
 	var result = new LoFiData();
 	result.time = a * this.time + b * other.time;
-	result.x = a * this.x + b * other.x;
-	result.y = a * this.y + b * other.y;
-	result.r = (a * this.r + b * other.r) | 0;
-	result.g = (a * this.g + b * other.g) | 0;
-	result.b = (a * this.b + b * other.b) | 0;
-	result.a = a * this.a + b * other.a;
+	result['x'] = a * this['x'] + b * other['x'];
+	result['y'] = a * this['y'] + b * other['y'];
+	result['r'] = (a * this['r'] + b * other['r']) | 0;
+	result['g'] = (a * this['g'] + b * other['g']) | 0;
+	result['b'] = (a * this['b'] + b * other['b']) | 0;
+	result['size'] = a * this['size'] + b * other['size'];
 	return result;
 };
 LoFiData.prototype.copy = function() {
@@ -189,8 +179,8 @@ LoFiData.prototype.copy = function() {
  */
 function HiFiData(other) {
 	this.time = other ? other.time : 0;
-	this.x = other ? other.x : 0;
-	this.y = other ? other.y : 0;
+	this['x'] = other ? other['x'] : 0;
+	this['y'] = other ? other['y'] : 0;
 	this.angle = other ? other.angle : Math.random() * 2 * Math.PI;
 	this.imgA = other ? other.imgA : Img.EMPTY;
 	this.imgB = other ? other.imgB : Img.FOOD;
