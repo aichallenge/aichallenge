@@ -461,7 +461,10 @@ Visualizer.prototype.tryStart = function() {
 		if (this.main.ctx && !this.imgMgr.error && !this.imgMgr.pending) {
 			var vis = this;
 			// generate fog images
-			var colors = [null].concat(PLAYER_COLORS.slice(0, this.replay.players.length));
+			var colors = [null];
+			for (i = 0; i < this.replay.players.length; i++) {
+				colors.push(this.replay.players[i]['color']);
+			}
 			if (this.highestPlayerCount < this.replay.players.length) {
 				this.highestPlayerCount = this.replay.players.length;
 				this.imgMgr.colorize(2, colors);
@@ -633,13 +636,13 @@ Visualizer.prototype.resize = function(forced) {
 		// redraw everything
 		this.btnMgr.draw();
 		// draw player names and captions
-		var colors = PLAYER_COLORS;
 		this.main.ctx.textAlign = 'left';
 		this.main.ctx.textBaseline = 'top';
 		this.main.ctx.font = 'bold 20px Arial';
 		var x = 0;
 		for (var i = 0; i < this.replay.players.length; i++) {
-			this.main.ctx.fillStyle = 'rgb(' + colors[i][0] + ', ' + colors[i][1] + ', ' + colors[i][2] + ')';
+			var color = this.replay.players[i]['color'];
+			this.main.ctx.fillStyle = 'rgb(' + color[0] + ', ' + color[1] + ', ' + color[2] + ')';
 			this.main.ctx.fillText(this.replay.players[i].name, x, 2);
 			x += this.main.ctx.measureText(this.replay.players[i].name).width;
 			if (i != this.replay.players.length - 1) {
@@ -758,7 +761,7 @@ Visualizer.prototype.renderScores = function() {
 	var scaleX = w / (this.replay.turns.length - 1);
 	var scaleY = h / (max - min);
 	for (i = 0; i < this.replay.players.length; i++) {
-		var color = PLAYER_COLORS[i];
+		var color = this.replay.players[i]['color'];
 		ctx.strokeStyle = 'rgb(' + color[0] + ',' + color[1] + ',' + color[2] + ')';
 		ctx.beginPath();
 		ctx.moveTo(0.5, 0.5 + scaleY * (max - this.replay.turns[0].scores[i]));
@@ -778,7 +781,7 @@ Visualizer.prototype.renderFog = function(turn) {
 			this.createCanvas(this.fog);
 			this.fog.canvas.width = 2;
 			this.fog.canvas.height = 2;
-			var color = PLAYER_COLORS[this.fog.player];
+			var color = this.replay.players[this.fog.player]['color'];
 			this.fog.ctx.fillStyle = 'rgb(' + color[0] + ',' + color[1] + ',' + color[2] + ')';
 			this.fog.ctx.fillRect(0, 0, 1, 1);
 			this.fog.ctx.fillRect(1, 1, 1, 1);
@@ -816,7 +819,7 @@ Visualizer.prototype.showFog = function(fog) {
 /**
  * @private
  */
-Visualizer.prototype.drawColorBar = function(x, y, w, h, values, colors) {
+Visualizer.prototype.drawColorBar = function(x, y, w, h, values) {
 	var sum = 0;
 	this.main.ctx.save();
 	this.main.ctx.beginPath();
@@ -837,7 +840,8 @@ Visualizer.prototype.drawColorBar = function(x, y, w, h, values, colors) {
 	var offsetX = x;
 	for (i = 0; i < useValues.length; i++) {
 		var amount = scale * useValues[i];
-		this.main.ctx.fillStyle = 'rgb(' + colors[i][0] + ', ' + colors[i][1] + ', ' + colors[i][2] + ')';
+		var color = this.replay.players[i]['color'];
+		this.main.ctx.fillStyle = 'rgb(' + color[0] + ', ' + color[1] + ', ' + color[2] + ')';
 		this.main.ctx.fillRect(offsetX, y, w - offsetX + x, h);
 		offsetX += amount;
 	}
@@ -891,7 +895,7 @@ Visualizer.prototype.draw = function(time, tick) {
 	var array1 = this.replay.turns[turn];
 	var array2 = (time === turn) ? array1 : this.replay.turns[turn + 1];
 	var counts = this.interpolate(array1.counts, array2.counts, time - turn);
-	this.drawColorBar(60, TOP_PANEL_H - 20, 0.5 * w - 60, 20, counts, PLAYER_COLORS);
+	this.drawColorBar(60, TOP_PANEL_H - 20, 0.5 * w - 60, 20, counts);
 	this.main.ctx.drawImage(this.scores.canvas, this.loc.scores.x, 0);
 	this.main.ctx.beginPath();
 	this.main.ctx.moveTo(this.loc.scores.x + 0.5 + (w / 2 - 1) * time / (this.replay.turns.length - 1), 0.5);

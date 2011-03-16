@@ -73,6 +73,7 @@ DataType = {
 		var chars = (p[1].length / 3) | 0;
 		for (var i = 0; i < 3; i++) {
 			p[0][i] = parseInt(p[1].substr(1 + chars * i, chars), 16);
+			if (chars === 1) p[0][i] *= 17;
 		}
 		return [ p[0], p[2] ];
 	},
@@ -174,11 +175,13 @@ function Replay(replayStr, parameters) {
 		tl = lit.gimmeNext().kw('players').as([DataType.POSINT]);
 		tl.expectLE(0, 26);     // player count <= 26
 		this.players = new Array(tl.params[0]);
-		for (var i = 0; i < this.players.length; i++) {
-			this.players[i] = {name: 'player ' + (i + 1)};
-		}
 		// parameters
 		this.parameters = parameters || {};
+		for (var i = 0; i < this.players.length; i++) {
+			this.players[i] = {};
+			this.players[i]['name'] = 'player ' + (i + 1);
+			this.players[i]['color'] = PLAYER_COLORS[i];
+		}
 		tl = lit.gimmeNext();
 		while (tl.keyword !== 'm') {
 			if (tl.keyword.substr(0, 6) === 'player') {
@@ -261,7 +264,7 @@ function Replay(replayStr, parameters) {
 			}
 			if (ant === null) {
 				var color = (owner === undefined) ?
-					FOOD_COLOR : PLAYER_COLORS[owner];
+					FOOD_COLOR : this.players[owner]['color'];
 				var firstf = (start === 0) ? start : start - 1;
 				ant = new Ant(autoinc++, firstf);
 				ants[ant.id] = new AntLife(ant, firstf, end, tl);
@@ -299,12 +302,13 @@ function Replay(replayStr, parameters) {
 			// in case of conversion, fade in the color
 			if (isAnt && start !== 0) {
 				ant.owner = owner;
+				color = this.players[owner]['color'];
 				ant.fade(Quality.LOW, 'r', 255, start - 0.5, start - 0.25);
 				ant.fade(Quality.LOW, 'g', 255, start - 0.5, start - 0.25);
 				ant.fade(Quality.LOW, 'b', 255, start - 0.5, start - 0.25);
-				ant.fade(Quality.LOW, 'r', PLAYER_COLORS[owner][0], start - 0.25, start);
-				ant.fade(Quality.LOW, 'g', PLAYER_COLORS[owner][1], start - 0.25, start);
-				ant.fade(Quality.LOW, 'b', PLAYER_COLORS[owner][2], start - 0.25, start);
+				ant.fade(Quality.LOW, 'r', color[0], start - 0.25, start);
+				ant.fade(Quality.LOW, 'g', color[1], start - 0.25, start);
+				ant.fade(Quality.LOW, 'b', color[2], start - 0.25, start);
 			}
 			// do moves
 			var x = col;
