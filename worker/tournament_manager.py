@@ -9,7 +9,7 @@ import tempfile
 import time
 import zlib
 import urllib
-import simplejson as json
+import json
 import traceback
 from subprocess import Popen, PIPE
 

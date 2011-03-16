@@ -13,7 +13,7 @@ try:
     import json
 except ImportError:
     try:
-        import simplejson as json
+        import json
     except ImportError:
         print "Need access to a json module"
         sys.exit(1)
