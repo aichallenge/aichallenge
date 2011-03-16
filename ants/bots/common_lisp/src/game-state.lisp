@@ -79,10 +79,10 @@
   "Modifies *STATE*."
   (loop with game-map = (game-map *state*)
         with dim = (array-dimensions game-map)
-        for y from 0 below (first dim)
-        do (loop for x from 0 below (second dim)
-                 when (> (aref game-map y x) 1)
-                   do (setf (aref game-map y x) 0))))
+        for row from 0 below (first dim)
+        do (loop for col from 0 below (second dim)
+                 when (> (aref game-map row col) 1)
+                   do (setf (aref game-map row col) 0))))
 
 
 (defun reset-some-state ()
@@ -99,8 +99,8 @@
          (col (parse-integer (elt split 2)))
          (owner (parse-integer (elt split 3))))
     (if (= owner 0)
-        (push (list col row) (slot-value *state* 'my-ants))
-        (push (list col row owner) (slot-value *state* 'enemy-ants)))
+        (push (list row col) (slot-value *state* 'my-ants))
+        (push (list row col owner) (slot-value *state* 'enemy-ants)))
     (setf (aref (game-map *state*) row col) (+ owner 100))))
 
 

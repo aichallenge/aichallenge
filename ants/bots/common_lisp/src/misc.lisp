@@ -5,12 +5,12 @@
 
 ;;; Functions
 
-(defun distance (x1 y1 x2 y2)
-  (let* ((dx (abs (- x1 x2)))
-         (dy (abs (- y1 y2)))
-         (minx (min dx (- (cols *state*) dx)))
-         (miny (min dy (- (rows *state*) dy))))
-    (sqrt (+ (* minx minx) (* miny miny)))))
+(defun distance (row1 col1 row2 col2)
+  (let* ((drow (abs (- row1 row2)))
+         (dcol (abs (- col1 col2)))
+         (minrow (min drow (- (rows *state*) drow)))
+         (mincol (min dcol (- (cols *state*) dcol))))
+    (sqrt (+ (* minrow minrow) (* mincol mincol)))))
 
 
 (defun end-of-turn ()
@@ -30,10 +30,10 @@
     (force-output (log-stream *state*))))
 
 
-(defun move-ant (ant-x ant-y direction)
+(defun move-ant (row col direction)
   (if (not (member direction '(:north :east :south :west)))
       (errmsg "[move-ant] Illegal direction: " direction)
-      (format (output *state*) "~&o ~D ~D ~A~%" ant-y ant-x
+      (format (output *state*) "~&o ~D ~D ~A~%" row col
               (case direction
                 (:north "N")
                 (:east  "E")
@@ -41,29 +41,29 @@
                 (:west  "W")))))
 
 
-(defun new-location (src-x src-y direction)
+(defun new-location (row col direction)
   (if (not (member direction '(:north :east :south :west)))
       (progn (errmsg "[new-location] Illegal direction: " direction)
-             (list src-x src-y))
-      (let ((dst-x (cond ((equal direction :east)
-                          (if (>= (+ src-x 1) (cols *state*))
-                              0
-                              (+ src-x 1)))
-                         ((equal direction :west)
-                          (if (<= src-x 0)
-                              (- (cols *state*) 1)
-                              (- src-x 1)))
-                         (t src-x)))
-            (dst-y (cond ((equal direction :north)
-                          (if (<= src-y 0)
-                              (- (rows *state*) 1)
-                              (- src-y 1)))
-                         ((equal direction :south)
-                          (if (>= (+ src-y 1) (rows *state*))
-                              0
-                              (+ src-y 1)))
-                         (t src-y))))
-        (list dst-x dst-y))))
+             (list row col))
+      (let ((dst-row (cond ((equal direction :north)
+                            (if (<= row 0)
+                                (- (rows *state*) 1)
+                                (- row 1)))
+                           ((equal direction :south)
+                            (if (>= (+ row 1) (rows *state*))
+                                0
+                                (+ row 1)))
+                           (t row)))
+            (dst-col (cond ((equal direction :east)
+                            (if (>= (+ col 1) (cols *state*))
+                                0
+                                (+ col 1)))
+                           ((equal direction :west)
+                            (if (<= col 0)
+                                (- (cols *state*) 1)
+                                (- col 1)))
+                           (t col))))
+        (list dst-row dst-col))))
 
 
 (defun turn-time-remaining ()
@@ -75,6 +75,6 @@
   (- (wall-time) (turn-start-time *state*)))
 
 
-(defun water? (x y direction)
-  (let ((nl (new-location x y direction)))
-    (= 1 (aref (game-map *state*) (elt nl 1) (elt nl 0)))))
+(defun water? (row col direction)
+  (let ((nl (new-location row col direction)))
+    (= 1 (aref (game-map *state*) (elt nl 0) (elt nl 1)))))
