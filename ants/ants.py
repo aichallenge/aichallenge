@@ -14,7 +14,8 @@ WATER = -3
 CONFLICT = -4
 UNSEEN = -5
 
-MAP_RENDER = string.ascii_lowercase + '?!%*.'
+PLAYER_CHARS = string.ascii_lowercase
+MAP_RENDER = PLAYER_CHARS + '?!%*.'
 
 AIM = {'n': (-1, 0),
        'e': (0, 1),
@@ -69,7 +70,6 @@ class Ants:
                 self.do_food = self.do_food_none
             elif options['food'] == 'sections':
                 self.do_food = self.do_food_sections
-        self.render = self.render_changes
 
         self.width = None   # the map
         self.height = None
@@ -138,7 +138,7 @@ class Ants:
                                     row, len(data[1]), self.width))
                 self.map.append([])
                 for col, c in enumerate(data[1]):
-                    if c in string.ascii_lowercase:
+                    if c in PLAYER_CHARS:
                         if not c in players:
                             players.append(c)
                             #if self.center[value] == None:
@@ -210,37 +210,50 @@ class Ants:
                 for row in range(self.height)]
 
     # communication to bot is in x, y coords
-    def render_changes(self, player=None):
-        if player != None:
-            v = self.get_vision(player)
-        # send new water
-        tmp = ''
-        if player != None:
-            for row, col in self.turn_reveal[player]:
-                if self.map[row][col] ==  WATER:
-                    tmp += 'w %s %s\n' % (row, col)
-        # send visible ants
-        for ant in self.current_ants.values():
-            row, col = ant.loc
-            if player == None:
-                tmp += 'a %s %s %s\n' % (row, col, ant.owner)
-            elif v[row][col]:
-                tmp += 'a %s %s %s\n' % (row, col, self.switch[player][ant.owner])
+    def render_changes(self, player):
+        updates = self.get_state_updates()
+        v = self.get_vision(player)
+        visible_updates = []
+
+        # first add unseen water
+        for row, col in self.turn_reveal[player]:
+            if self.map[row][col] == WATER:
+                visible_updates.append(['w', row, col])
+
+        # next list all transient objects
+        for update in updates:
+            type, row, col = update[0:3]
+
+            # only include visible updates
+            if v[row][col]:
+                visible_updates.append(update)
+
+                # we want to ensure that players are notified about the
+                #  new value of the square next turn
+                # TODO: Why is this required? Land is not explicitly sent
                 self.revealed[player][row][col] = False
-        # send visible food
+
+                # switch player perspective of player numbers
+                if type in ['a','d']:
+                    update[-1] = self.switch[player][update[-1]]
+
+        visible_updates.append([]) # newline
+        return '\n'.join(' '.join(map(str,s)) for s in visible_updates)
+
+    def get_state_updates(self):
+        updates = []
+
+        # current ants
+        for ant in self.current_ants.values():
+            updates.append(['a', ant.loc[0], ant.loc[1], ant.owner])
+        # visible food
         for row, col in self.current_food:
-            if player == None or v[row][col]:
-                tmp += 'f %s %s\n' % (row, col)
-                if player != None:
-                    self.revealed[player][row][col] = False
-        # send visible dead ants 
+            updates.append(['f', row, col])
+        # dead ants 
         for ant in self.killed_ants:
-            row, col = ant.loc
-            if player == None or v[row][col]:
-                tmp += 'd %s %s %s\n' % (row, col, ant.owner)
-                if player != None:
-                    self.revealed[player][row][col] = False
-        return tmp
+            updates.append(['d', ant.loc[0], ant.loc[1], ant.owner])
+
+        return updates
 
     def render_map(self, player=None):
         tmp = ''
@@ -255,7 +268,8 @@ class Ants:
     # min and max are defined as sum of directions squared, so 9 is dist 3
     # default values 1-2 are the 8 spaces around a square
     # this avoids the sqrt function
-    def nearby_ants(self, row, col, exclude=None, min_dist=1, max_dist=2):
+    def nearby_ants(self, loc, exclude=None, min_dist=1, max_dist=2):
+        row, col = loc
         mx = SQRT[max_dist]
         for d_row in range(-mx,mx+1):
             for d_col in range(-mx,mx+1):
@@ -263,9 +277,9 @@ class Ants:
                 if d >= min_dist and d <= max_dist:
                     n_row = (row + d_row) % self.height
                     n_col = (col + d_col) % self.width
-                    owner = self.map[n_row][n_col]
-                    if owner >= ANTS and owner != exclude:
-                        yield ((n_row, n_col), owner)
+                    ant = self.current_ants.get((n_row, n_col), None)
+                    if ant and ant.owner != exclude:
+                        yield ant
 
     def parse_orders(self, player, orders):
         new_orders = []
@@ -339,18 +353,24 @@ class Ants:
     # must have only 1 force near the food to create a new ant
     #  and food in contention is eliminated
     def do_spawn(self):
-        for f_row, f_col in self.current_food.keys():
+        # Determine new ant locations
+        new_ant_locations = {}
+        for f_loc in self.current_food.keys():
             owner = None
-            for (n_row, n_col), n_owner in self.nearby_ants(f_row, f_col, None, 1, self.spawnradius):
+            for ant in self.nearby_ants(f_loc, None, 1, self.spawnradius):
                 if owner == None:
-                    owner = n_owner
-                elif owner != n_owner:
-                    self.remove_food((f_row, f_col))
+                    owner = ant.owner
+                elif owner != ant.owner:
+                    self.remove_food(f_loc)
                     break
             else:
                 if owner != None:
-                    self.remove_food((f_row, f_col))
-                    self.add_ant( (f_row,f_col), owner )
+                    self.remove_food(f_loc)
+                    new_ant_locations[f_loc] = owner
+
+        # Create new ants
+        for loc, owner in new_ant_locations.items():
+            self.add_ant(loc, owner)
 
     def add_food(self, loc):
         if loc in self.current_food:
@@ -382,7 +402,10 @@ class Ants:
 
     def kill_ant(self, loc):
         try:
-            self.killed_ants.append(self.current_ants[loc])
+            self.map[loc[0]][loc[1]] = LAND
+            ant = self.current_ants[loc]
+            self.killed_ants.append(ant)
+            ant.killed = True
             del self.current_ants[loc]
         except KeyError:
             raise Exception("Kill ant error",
@@ -396,48 +419,54 @@ class Ants:
     # TODO: write function correctly, don't kill any ant until end
     def do_attack_occupied(self):
         score = [Fraction(0, 1) for i in range(self.num_players)]
+        ants_to_kill = []
         for ant in self.current_ants.values():
-            a_row, a_col = ant.loc
             a_owner = ant.owner
             killers = []
-            enemies = self.nearby_ants(a_row, a_col, a_owner, 1, self.attackradius)
+            enemies = list(self.nearby_ants(ant.loc, ant.owner, 1, self.attackradius))
             occupied = len(enemies)
-            for (e_row, e_col), e_owner in enemies:
-                e_occupied = len(self.nearby_ants(e_row, e_col, e_owner, 1, 2))
+            for enemy in enemies:
+                e_occupied = len(list(self.nearby_ants(enemy.loc, enemy.owner, 1, 2)))
                 if e_occupied <= occupied:
-                    # kill ant
-                    killers.append(e_owner)
+                    killers.append(enemies)
             if len(killers) > 0:
-                self.map[a_col][a_row] = LAND
-                self.kill_ant((a_row, a_col))
+                ants_to_kill.append(ant)
                 score_share = len(killers)
-                for e_owner in killers:
-                    score[e_owner] += Fraction(1, score_share)
+                for enemy in killers:
+                    score[enemy.owner] += Fraction(1, score_share)
+        for ant in ants_to_kill:
+            if not ant.killed:
+                self.kill_ant(ant.loc)
         self.score = map(operator.add, self.score, score)
 
     # 1:1 kill ratio, almost, match closest groups and eliminate iteratively
     def do_attack_closest(self):
         score = [Fraction(0, 1) for i in range(self.num_players)]
         ant_group = []
-        def find_enemy(row, col, owner, min_d, max_d):
-            for (n_row, n_col), n_owner in self.nearby_ants(row, col, owner,
-                                                          min_d, max_d):
-                if not (n_row, n_col) in ant_group:
-                    ant_group[(n_row, n_col)] = n_owner
-                    find_enemy(n_row, n_col, n_owner, min_d, max_d)
+        def find_enemy(ant, min_d, max_d):
+            for enemy in self.nearby_ants(ant.loc, ant.owner, min_d, max_d):
+                if enemy.loc not in ant_group:
+                    ant_group[enemy.loc] = enemy.owner
+                    find_enemy(enemy, min_d, max_d)
         for distance in range(1, 10):
+            ants_to_kill = []
             for ant in self.current_ants.values():
-                a_row, a_col = ant.loc
-                a_owner = ant.owner
-                if self.map[a_row][a_col] != LAND:
-                    ant_group = {(a_row, a_col): a_owner}
-                    find_enemy(a_row, a_col, a_owner, distance, distance)
-                    if len(ant_group) > 1:
-                        score_share = len(ant_group)
-                        for (e_row, e_col), e_owner in ant_group.items():
-                            score[e_owner] += Fraction(1, score_share)
-                            self.map[e_row][e_col] = LAND
-                            self.kill_ant((e_row,e_col))
+                # TODO: Finding the entire ant group once for each ant is not efficient
+                #       Find all groups first, then determine kills
+                ant_group = {ant.loc: ant.owner}
+                find_enemy(ant, distance, distance)
+                if len(ant_group) > 1:
+                    score_share = len(ant_group)
+                    for e_loc, e_owner in ant_group.items():
+                        # TODO: Is sharing scores this way really sensible?
+                        #       Seems like in the end each ant's share is always 1
+                        score[e_owner] += Fraction(1, score_share)
+                    # all ants in the group will get to this line in their own iteration
+                    ants_to_kill.append(ant)
+            for ant in ants_to_kill:
+                if not ant.killed:
+                    self.kill_ant(ant.loc)
+
         self.score = map(operator.add, self.score, score)
 
     def destination(self, row, col, direction):
@@ -596,7 +625,10 @@ class Ants:
 
     # used for 'map hack' playback
     def get_state(self):
-        return self.render_changes()
+        updates = self.get_state_updates()
+        updates.append([]) # newline
+
+        return '\n'.join(' '.join(map(str,s)) for s in updates)
 
     # used for turn 0, sending minimal info for bot to load
     def get_player_start(self, player=None):
@@ -613,7 +645,7 @@ class Ants:
 
     # used for sending state to bots for each turn
     def get_player_state(self, player):
-        return self.render(player)
+        return self.render_changes(player)
 
     # used by engine to determine players still in game
     def is_alive(self, player):
@@ -648,7 +680,7 @@ class Ants:
             ant_count[ant.owner] += 1
         return {'ant_count': ant_count}
 
-    def __str__(self):
+    def get_compact_replay(self):
         result = []
         # required params
         result.append(['v', 'ants', '1'])
@@ -678,9 +710,12 @@ class Ants:
 
         # ants
         for a in self.all_ants:
+            orders = ''.join(a.orders)
+            if not a.killed:
+                orders += '*'
             result.append([
-                'a', a.owner, a.initial_loc[0], a.initial_loc[1], 
-                a.spawn_turn, ''.join(a.orders)
+                'a', a.owner, a.initial_loc[0], a.initial_loc[1],
+                a.spawn_turn, orders
             ])
 
         # scores
@@ -696,11 +731,13 @@ class Ant:
         self.loc = loc
         self.initial_loc = loc
         self.owner = owner
+        self.killed = False
 
         self.prev_loc = None
         self.initial_loc = loc
         self.spawn_turn = spawn_turn
         self.orders = []
+        self.killed = False
 
         self.moved = False
 

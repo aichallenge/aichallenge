@@ -177,6 +177,10 @@ def run_game(game, botcmds, options, gameid=0):
             of.write(game.get_state())
             of.flush()
 
+            cof = open(os.path.join(output_dir, '%s.compact_replay' % gameid), "w")
+            cof.write(game.get_compact_replay())
+            cof.close()
+
     except Exception:
         error = traceback.format_exc()
         if verbose:
