@@ -1,4 +1,6 @@
 ;;;; play-game.lisp
+;;;;
+;;;; This is really a hack job currently.
 
 (in-package :play-game)
 
@@ -19,9 +21,12 @@
 (defparameter *map-players* nil)
 (defparameter *map* nil)
 (defparameter *map-array* nil)
+(defparameter *orders* nil)
 (defparameter *turns* 200)
 (defparameter *load-time* 3000)
 (defparameter *turn-time* 1000)
+(defparameter *attack-radius* (sqrt 6))
+(defparameter *spawn-radius* (sqrt 6))
 
 (defparameter +version+ "0.1a")
 
@@ -52,7 +57,124 @@
 
 ;;; Functions
 
+(defun ants-within-attack-range ()
+  (loop with all = (loop for row from 0 below *map-rows*
+                         append (loop for col from 0 below *map-cols*
+                                      for value = (aref *map-array* row col)
+                                      when (and (>= value 100) (<= value 199))
+                                        collect (list value row col)))
+        for ant-a in all
+        for aid = (elt ant-a 0)
+        for arow = (elt ant-a 1)
+        for acol = (elt ant-a 2)
+        append (loop for ant-b in (remove ant-a all)
+                     for bid = (elt ant-b 0)
+                     for brow = (elt ant-b 1)
+                     for bcol = (elt ant-b 2)
+                     for dist = (distance acol arow bcol brow)
+                     when (and (/= aid bid)
+                               (<= dist *attack-radius*))
+                       collect (list :a-row arow :a-col acol
+                                     :b-row brow :b-col bcol
+                                     :distance dist))
+          into result
+        finally (return (sort result #'< :key (lambda (plist)
+                                                (getf plist :distance))))))
+
+
+;; This implements battle resolution 2 as described here:
+;; - https://github.com/aichallenge/aichallenge/wiki/Ants-Game-Specification
+(defun battle-resolution2 ()
+  (loop for awar = (ants-within-attack-range)
+        for battle = (first awar)
+        while battle
+        for arow = (getf battle :a-row)
+        for acol = (getf battle :a-col)
+        for aid = (when battle (- (aref *map-array* arow acol) 99))
+        for brow = (getf battle :b-row)
+        for bcol = (getf battle :b-col)
+        for bid = (when battle (- (aref *map-array* brow bcol) 99))
+        do (logmsg "Ants " aid ":" arow ":" acol " and " bid ":" brow ":" bcol
+                   " fought...~%")
+           (setf (aref *map-array* arow acol) (+ aid 199)
+                 (aref *map-array* brow bcol) (+ bid 199))))
+
+
+(defun battle-resolution ()
+  (battle-resolution2))
+
+
+;; TODO fix inefficient algorithm
+(defun check-collisions ()
+  (loop for order-a in (copy-seq *orders*)
+        for bot-a-id = (getf order-a :bot-id)
+        for srow-a = (getf order-a :src-y)
+        for scol-a = (getf order-a :src-x)
+        for row-a = (getf order-a :dst-y)
+        for col-a = (getf order-a :dst-x)
+        do (loop for order-b in (remove order-a (copy-seq *orders*))
+                 for bot-b-id = (getf order-b :bot-id)
+                 for srow-b = (getf order-b :src-y)
+                 for scol-b = (getf order-b :src-x)
+                 for row-b = (getf order-b :dst-y)
+                 for col-b = (getf order-b :dst-x)
+                 do (when (and (= row-a row-b)
+                               (= col-a col-b))
+                      (logmsg "Ants " bot-a-id ":" srow-a ":" scol-a " and "
+                              bot-b-id ":" srow-b ":" scol-b " collided. "
+                              "Killing ants...~%")
+                      (setf (aref *map-array* srow-a scol-a) 0
+                            (aref *map-array* srow-b scol-b) 0
+                            *orders* (remove order-b
+                                             (remove order-a *orders*)))))))
+
+
+(defun check-positions ()
+  (loop for order in (copy-seq *orders*)
+        for bot-id = (getf order :bot-id)
+        for row = (getf order :src-y)
+        for col = (getf order :src-x)
+        do (when (/= (+ bot-id 100) (aref *map-array* row col))
+             (logmsg "Bot " bot-id " issued an order for a position it "
+                     "doesn't occupy. Ignoring...~%")
+             (setf *orders* (remove order *orders*)))))
+
+
+(defun check-water ()
+  (loop for order in (copy-seq *orders*)
+        for bot-id = (getf order :bot-id)
+        for row = (getf order :src-y)
+        for col = (getf order :src-x)
+        for dir = (getf order :direction)
+        do (when (water? col row dir)
+             (logmsg "Bot " bot-id " ordered an ant into water. Ignoring...~%")
+             (setf *orders* (remove order *orders*)))))
+
+
+(defun clear-dead-ants ()
+  (loop for row from 0 below *map-rows*
+        do (loop for col from 0 below *map-cols*
+                 do (when (>= (aref *map-array* row col) 200)
+                      (setf (aref *map-array* row col) 0)))))
+
+
+(defun dir2key (direction)
+  (cond ((equal direction "N") :north)
+        ((equal direction "E") :east)
+        ((equal direction "S") :south)
+        ((equal direction "W") :west)))
+
+
+(defun distance (x1 y1 x2 y2)
+  (let* ((dx (abs (- x1 x2)))
+         (dy (abs (- y1 y2)))
+         (minx (min dx (- *map-cols* dx)))
+         (miny (min dy (- *map-rows* dy))))
+    (sqrt (+ (* minx minx) (* miny miny)))))
+
+
 (defun do-turn (turn)
+  (setf *orders* nil)
   (loop for proc in *procs*
         for i from 0
         for bot = (elt *bots* i)
@@ -72,15 +194,34 @@
                             ((listen pout)
                              (let ((line (read-line pout nil)))
                                (when (starts-with line "go")
+                                 ;(logmsg i ":" bot ": go~%")
                                  (loop-finish))
-                               (logmsg i ":" bot ": " line "~%")
+                               ;(logmsg i ":" bot ": " line "~%")
                                (when (starts-with line "o ")
-                                 (move-ant i line)))))))))
+                                 (queue-ant-order i line))))))))
+  (move-ants))
+
+
+(defun move-ants ()
+  (clear-dead-ants)
+  (check-positions)
+  (check-water)
+  (check-collisions)
+  (loop for order in *orders*
+        for bot-id = (getf order :bot-id)
+        for src-row = (getf order :src-y)
+        for src-col = (getf order :src-x)
+        for dst-row = (getf order :dst-y)
+        for dst-col = (getf order :dst-x)
+        do (setf (aref *map-array* src-row src-col) 0)
+           (setf (aref *map-array* dst-row dst-col) (+ bot-id 100)))
+  (battle-resolution)
+  (spawn-ants))
 
 
 (defun new-location (src-x src-y direction)
   (if (not (member direction '(:north :east :south :west)))
-      (progn (logmsg "[new-location] Illegal direction: " direction)
+      (progn (logmsg "[new-location] Illegal direction: " direction "~%")
              (list src-x src-y))
       (let ((dst-x (cond ((equal direction :east)
                           (if (>= (+ src-x 1) *map-cols*)
@@ -101,43 +242,6 @@
                               (+ src-y 1)))
                          (t src-y))))
         (list dst-x dst-y))))
-
-
-(defun move-ant (botid line)
-  (let* ((split (split-sequence #\space (string-upcase line)))
-         (row (parse-integer (elt split 1)))
-         (col (parse-integer (elt split 2)))
-         (dir (elt split 3)))
-    (when (/= (+ botid 100) (aref *map-array* row col))
-      (logmsg "Bot " botid " issued an order for a position it doesn't "
-              "occupy. Ignoring...~%")
-      (return-from move-ant))
-    (when (water? col row (cond ((equal dir "N") :north)
-                                ((equal dir "E") :east)
-                                ((equal dir "S") :south)
-                                ((equal dir "W") :west)))
-      (logmsg "Bot " botid " ordered an ant into water. Ignoring...~%"))
-    (setf (aref *map-array* row col) 0)
-    (cond ((equal dir "N")
-           (setf (aref *map-array*
-                       (if (= row 0) (- *map-rows* 1) (- row 1))
-                       col)
-                 (+ botid 100)))
-          ((equal dir "E")
-           (setf (aref *map-array*
-                       row
-                       (if (= col (- *map-cols* 1)) 0 (+ col 1)))
-                 (+ botid 100)))
-          ((equal dir "S")
-           (setf (aref *map-array*
-                       (if (= row (- *map-rows* 1)) 0 (+ row 1))
-                       col)
-                 (+ botid 100)))
-          ((equal dir "W")
-           (setf (aref *map-array*
-                       row
-                       (if (= col 0) (- *map-cols* 1) (- col 1)))
-                 (+ botid 100))))))
 
 
 (defun parse-map (map)
@@ -226,6 +330,17 @@
   (setf *bots* (loop for bot in (remainder) collect bot)))
 
 
+(defun queue-ant-order (bot-id string)
+  (let* ((split (split-sequence #\space (string-upcase string)))
+         (row (parse-integer (elt split 1)))
+         (col (parse-integer (elt split 2)))
+         (dir (dir2key (elt split 3)))
+         (nl (new-location col row dir)))
+    (push (list :bot-id bot-id :src-x col :src-y row :dst-x (elt nl 0)
+                :dst-y (elt nl 1) :direction dir)
+          *orders*)))
+
+
 (defun random-elt (sequence)
   "Returns a random element from SEQUENCE."
   (let ((length (length sequence)))
@@ -246,7 +361,7 @@
                                  :input :stream :output :stream))))
 
 
-(defun send-game-state (botid input turn)
+(defun send-game-state (bot-id input turn)
   (format input "turn ~D~%" turn)
   (loop for row from 0 below *map-rows*
         do (loop for col from 0 below *map-cols*
@@ -255,14 +370,14 @@
                           ((= sq 2) (format input "f ~D ~D~%" row col))
                           ((>= sq 200)
                            (format input "d ~D ~D ~D~%" row col
-                                   (cond ((= botid (- sq 200)) 0)
-                                         ((< botid (- sq 200)) (- sq 200))
-                                         ((> botid (- sq 200)) (- sq 199)))))
+                                   (cond ((= bot-id (- sq 200)) 0)
+                                         ((< bot-id (- sq 200)) (- sq 200))
+                                         ((> bot-id (- sq 200)) (- sq 199)))))
                           ((>= sq 100)
                            (format input "a ~D ~D ~D~%" row col
-                                   (cond ((= botid (- sq 100)) 0)
-                                         ((< botid (- sq 100)) (- sq 100))
-                                         ((> botid (- sq 100)) (- sq 99))))))))
+                                   (cond ((= bot-id (- sq 100)) 0)
+                                         ((< bot-id (- sq 100)) (- sq 100))
+                                         ((> bot-id (- sq 100)) (- sq 99))))))))
   (format input "go~%")
   (force-output input))
 
@@ -288,6 +403,36 @@
                     (let ((line (read-line pout nil)))
                       (unless (starts-with line "go")
                         (logmsg i ":" bot " sent junk: " line "~%"))))))))
+
+
+;; TODO very innefficient: fix
+(defun spawn-ants ()
+  (let ((ants (loop for row from 0 below *map-rows*
+                    append (loop for col from 0 below *map-cols*
+                                 for value = (aref *map-array* row col)
+                                 when (and (>= value 100) (<= value 199))
+                                   collect (list value row col))))
+        (foods (loop for row from 0 below *map-rows*
+                     append (loop for col from 0 below *map-cols*
+                                  when (= 2 (aref *map-array* row col))
+                                    collect (list row col)))))
+    (loop for food in foods
+          for frow = (elt food 0)
+          for fcol = (elt food 1)
+          for nearby-ant-ids = nil
+          do (loop for ant in ants
+                   for aid = (elt ant 0)
+                   for arow = (elt ant 1)
+                   for acol = (elt ant 2)
+                   do (when (<= (distance fcol frow acol arow) *spawn-radius*)
+                        (pushnew aid nearby-ant-ids))
+                   finally (cond ((= 1 (length nearby-ant-ids))
+                                  (setf (aref *map-array* frow fcol)
+                                        (first nearby-ant-ids)))
+                                 ((> (length nearby-ant-ids) 1)
+                                  ;(logmsg "Multiple contestants for food at "
+                                  ;        frow ":" fcol ". Removing...~%")
+                                  (setf (aref *map-array* frow fcol) 0)))))))
 
 
 ;; Very simple random food spawning.  Collects all land tile's coordinates
