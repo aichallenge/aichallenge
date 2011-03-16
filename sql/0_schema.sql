@@ -102,7 +102,7 @@ CREATE TABLE `map` (
   `map_id` int(11) NOT NULL AUTO_INCREMENT,
   `filename` varchar(256) NOT NULL,
   `priority` int(11) NOT NULL DEFAULT '1',
-  `players` int(11) NOT NULL
+  `players` int(11) NOT NULL,
   PRIMARY KEY (`map_id`)
 );
 
