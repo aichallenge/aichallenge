@@ -14,7 +14,8 @@ WATER = -3
 CONFLICT = -4
 UNSEEN = -5
 
-MAP_RENDER = string.ascii_lowercase + '?!%*.'
+PLAYER_CHARS = string.ascii_lowercase
+MAP_RENDER = PLAYER_CHARS + '?!%*.'
 
 AIM = {'n': (-1, 0),
        'e': (0, 1),
@@ -138,7 +139,7 @@ class Ants:
                                     row, len(data[1]), self.width))
                 self.map.append([])
                 for col, c in enumerate(data[1]):
-                    if c in string.ascii_lowercase:
+                    if c in PLAYER_CHARS:
                         if not c in players:
                             players.append(c)
                             #if self.center[value] == None:
