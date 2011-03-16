@@ -444,13 +444,18 @@ class Ants:
             for ant in self.current_ants.values():
                 a_row, a_col = ant.loc
                 a_owner = ant.owner
+                # TODO: Finding the entire ant group once for each ant is not efficient
+                #       Find all groups first, then determine kills
                 ant_group = {(a_row, a_col): a_owner}
                 find_enemy(a_row, a_col, a_owner, distance, distance)
                 if len(ant_group) > 1:
                     score_share = len(ant_group)
-                    for (e_row, e_col), e_owner in ant_group.items():
+                    for e_loc, e_owner in ant_group.items():
+                        # TODO: Is sharing scores this way really sensible?
+                        #       Seems like in the end each ant's share is always 1
                         score[e_owner] += Fraction(1, score_share)
-                        ants_to_kill.append(ant)
+                    # all ants in the group will get to this line in their own iteration
+                    ants_to_kill.append(ant)
             for ant in ants_to_kill:
                 if not ant.killed:
                     self.kill_ant(ant.loc)
