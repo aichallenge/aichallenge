@@ -4,6 +4,7 @@ import sys
 import os
 import time
 from optparse import OptionParser
+import random
 
 from ants import Ants
 
@@ -57,6 +58,9 @@ def main(argv):
     parser.add_option("-r", "--rounds", dest="rounds",
                       default=1, type="int",
                       help="Number of rounds to play")
+    parser.add_option("--seed", dest="seed",
+                      default=None, type="int",
+                      help="Seed for the random number generator")
 
     # ants specific game options
     parser.add_option("--attack", dest="attack",
@@ -102,6 +106,7 @@ def main(argv):
             "log_output": opts.log_output,
             "serial": opts.serial,
             "verbose": opts.verbose }
+        random.seed(opts.seed)
         for round in range(opts.rounds):
             map_file = open(opts.map, 'r')
             game_options["map"] = map_file.read()

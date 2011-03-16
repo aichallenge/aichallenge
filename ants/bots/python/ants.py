@@ -51,6 +51,8 @@ class Ants():
                     self.width = int(tokens[1])
                 elif key == 'rows':
                     self.height = int(tokens[1])
+                elif key == 'seed':
+                    random.seed(int(tokens[1]))
         self.map = [[LAND for col in range(self.width)]
                     for row in range(self.height)]
 
