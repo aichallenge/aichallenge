@@ -356,8 +356,8 @@ Visualizer.prototype.loadParseReplay = function() {
 			return;
 		} else if (typeof vis.replay == 'string') { // string only
 			vis.replay = new Replay(vis.replay);
-		} else if (vis.replay instanceof XMLHttpRequest) {
-			throw new Error('Attempted to manualy trigger the replay parsing process while waiting for the download.');
+		} else if (vis.replay instanceof XMLHttpRequest) { // wait for the reply
+			return;
 		} else if (vis.replay instanceof Object) { // string + param
 			vis.replay = new Replay(vis.replay.replay, vis.replay.parameters);
 		} else {
