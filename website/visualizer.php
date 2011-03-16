@@ -7,13 +7,8 @@
 <script type="text/javascript" src="visualizer/js/visualizer.js"></script>
 <script type="text/javascript">
 <?php
-ob_start();
-include('game_info.php');
-$data = ob_get_clean();
-$data = htmlspecialchars($data, ENT_COMPAT); // encode '<', '>', '&' and '"'
-$data = str_replace("\\", "\\\\", $data);    // escape eixsting back slashes
-$data = str_replace("\n", "\\n", $data);     // escape line breaks (must be Unix!)
+$replay = "games/" . (int)($_GET["game_id"] / 10000) . "/" . $_GET["game_id"] . ".replay";
 ?>
 visualizer = new Visualizer(document.getElementById('visualizerDiv'), 'visualizer/', 'visualizer/java/', 640, undefined);
-visualizer.loadReplayDataFromPHP("<?php echo $data ?>");
+visualizer.loadReplayDataFromURI('<?php echo $replay; ?>');
 </script>

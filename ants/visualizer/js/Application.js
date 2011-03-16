@@ -279,9 +279,8 @@ Visualizer.prototype.loadReplayDataFromURI = function(file) {
 	if (this.preload()) return;
 	var vis = this;
 	this.progress('Fetching replay from: <i>' + file + '</i>...', function() {
-		var vis = this;
-		this.replay = new XMLHttpRequest();
-		this.replay.onreadystatechange = function() {
+		vis.replay = new XMLHttpRequest();
+		vis.replay.onreadystatechange = function() {
 			if (vis.replay.readyState === 4) {
 				if (vis.loading === LoadingState.LOADING) {
 					if (vis.replay.status === 200) {
@@ -293,9 +292,9 @@ Visualizer.prototype.loadReplayDataFromURI = function(file) {
 				}
 			}
 		};
-		this.replay.open("GET", file);
-		this.replay.send(null);
-		this.loadCanvas(true);
+		vis.replay.open("GET", file);
+		vis.replay.send(null);
+		vis.loadCanvas(true);
 	});
 };
 /**
