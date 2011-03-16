@@ -256,7 +256,8 @@ class Ants:
     # min and max are defined as sum of directions squared, so 9 is dist 3
     # default values 1-2 are the 8 spaces around a square
     # this avoids the sqrt function
-    def nearby_ants(self, row, col, exclude=None, min_dist=1, max_dist=2):
+    def nearby_ants(self, loc, exclude=None, min_dist=1, max_dist=2):
+        row, col = loc
         mx = SQRT[max_dist]
         for d_row in range(-mx,mx+1):
             for d_col in range(-mx,mx+1):
@@ -264,9 +265,9 @@ class Ants:
                 if d >= min_dist and d <= max_dist:
                     n_row = (row + d_row) % self.height
                     n_col = (col + d_col) % self.width
-                    owner = self.map[n_row][n_col]
-                    if owner >= ANTS and owner != exclude:
-                        yield ((n_row, n_col), owner)
+                    ant = self.current_ants.get((n_row, n_col), None)
+                    if ant and ant.owner != exclude:
+                        yield ant
 
     def parse_orders(self, player, orders):
         new_orders = []
@@ -343,12 +344,11 @@ class Ants:
         # Determine new ant locations
         new_ant_locations = {}
         for f_loc in self.current_food.keys():
-            f_row, f_col = f_loc
             owner = None
-            for (n_row, n_col), n_owner in self.nearby_ants(f_row, f_col, None, 1, self.spawnradius):
+            for ant in self.nearby_ants(f_loc, None, 1, self.spawnradius):
                 if owner == None:
-                    owner = n_owner
-                elif owner != n_owner:
+                    owner = ant.owner
+                elif owner != ant.owner:
                     self.remove_food(f_loc)
                     break
             else:
@@ -409,21 +409,19 @@ class Ants:
         score = [Fraction(0, 1) for i in range(self.num_players)]
         ants_to_kill = []
         for ant in self.current_ants.values():
-            a_row, a_col = ant.loc
             a_owner = ant.owner
             killers = []
-            enemies = list(self.nearby_ants(a_row, a_col, a_owner, 1, self.attackradius))
+            enemies = list(self.nearby_ants(ant.loc, ant.owner, 1, self.attackradius))
             occupied = len(enemies)
-            for (e_row, e_col), e_owner in enemies:
-                e_occupied = len(list(self.nearby_ants(e_row, e_col, e_owner, 1, 2)))
+            for enemy in enemies:
+                e_occupied = len(list(self.nearby_ants(enemy.loc, enemy.owner, 1, 2)))
                 if e_occupied <= occupied:
-                    # kill ant
-                    killers.append(e_owner)
+                    killers.append(enemies)
             if len(killers) > 0:
                 ants_to_kill.append(ant)
                 score_share = len(killers)
-                for e_owner in killers:
-                    score[e_owner] += Fraction(1, score_share)
+                for enemy in killers:
+                    score[enemy.owner] += Fraction(1, score_share)
         for ant in ants_to_kill:
             if not ant.killed:
                 self.kill_ant(ant.loc)
@@ -433,21 +431,18 @@ class Ants:
     def do_attack_closest(self):
         score = [Fraction(0, 1) for i in range(self.num_players)]
         ant_group = []
-        def find_enemy(row, col, owner, min_d, max_d):
-            for (n_row, n_col), n_owner in self.nearby_ants(row, col, owner,
-                                                          min_d, max_d):
-                if not (n_row, n_col) in ant_group:
-                    ant_group[(n_row, n_col)] = n_owner
-                    find_enemy(n_row, n_col, n_owner, min_d, max_d)
+        def find_enemy(ant, min_d, max_d):
+            for enemy in self.nearby_ants(ant.loc, ant.owner, min_d, max_d):
+                if enemy.loc not in ant_group:
+                    ant_group[enemy.loc] = enemy.owner
+                    find_enemy(enemy, min_d, max_d)
         for distance in range(1, 10):
             ants_to_kill = []
             for ant in self.current_ants.values():
-                a_row, a_col = ant.loc
-                a_owner = ant.owner
                 # TODO: Finding the entire ant group once for each ant is not efficient
                 #       Find all groups first, then determine kills
-                ant_group = {(a_row, a_col): a_owner}
-                find_enemy(a_row, a_col, a_owner, distance, distance)
+                ant_group = {ant.loc: ant.owner}
+                find_enemy(ant, distance, distance)
                 if len(ant_group) > 1:
                     score_share = len(ant_group)
                     for e_loc, e_owner in ant_group.items():
