@@ -24,6 +24,8 @@ Initializing the git submodules:
 Installation
 ---------------
 
+This is out of date stuff. You might want to consult with `setup/server_setup.py` and the IRC.
+
 ### Main Server
 
 * Install Latest Ubuntu
