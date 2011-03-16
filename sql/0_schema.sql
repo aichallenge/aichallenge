@@ -13,11 +13,11 @@ CREATE TABLE `game` (
   `seed_id` int(11) NOT NULL,
   `map_id` int(11) NOT NULL,
   `timestamp` datetime NOT NULL,
-  `worker` int(11) unsigned NOT NULL,
+  `worker_id` int(11) unsigned NOT NULL,
   `replay_path` varchar(255) NOT NULL,
   PRIMARY KEY (`game_id`),
   KEY `timestamp` (`timestamp`),
-  KEY `worker` (`worker`,`timestamp`)
+  KEY `worker_id` (`worker_id`,`timestamp`)
 );
 
 DROP TABLE IF EXISTS `game_archive`;
@@ -26,7 +26,7 @@ CREATE TABLE `game_archive` (
   `seed_id` int(11) NOT NULL,
   `map_id` int(11) NOT NULL,
   `timestamp` datetime NOT NULL,
-  `worker` int(11) NOT NULL,
+  `worker_id` int(11) NOT NULL,
   `replay_path` varchar(255) NOT NULL,
   UNIQUE KEY `game_id_UNIQUE` (`game_id`)
 );
@@ -37,7 +37,6 @@ CREATE TABLE `game_player` (
   `user_id` int(11) NOT NULL,
   `submission_id` int(11) NOT NULL,
   `player_id` int(11) NOT NULL,
-  `valid` tinyint(1) NOT NULL DEFAULT '1',
   `errors` varchar(1024) DEFAULT NULL,
   `stderr` varchar(1024) DEFAULT NULL,
   `game_rank` int(11) NOT NULL,
@@ -46,6 +45,8 @@ CREATE TABLE `game_player` (
   `sigma_after` float NOT NULL,
   `mu_before` float NOT NULL,
   `mu_after` float NOT NULL,
+  `valid` tinyint(1) NOT NULL DEFAULT '1',
+  PRIMARY KEY (`game_id`,`user_id`),
   UNIQUE KEY `game_player_idx` (`game_id`,`submission_id`)
 );
 
@@ -70,9 +71,6 @@ DROP TABLE IF EXISTS `language`;
 CREATE TABLE `language` (
   `language_id` int(11) NOT NULL AUTO_INCREMENT,
   `name` varchar(64) NOT NULL,
-  `main_code_file` varchar(64) NOT NULL,
-  `command` varchar(128) NOT NULL,
-  `platform_specific_compilation` tinyint(1) NOT NULL DEFAULT '0',
   PRIMARY KEY (`language_id`)
 );
 
@@ -106,21 +104,23 @@ CREATE TABLE `map` (
   PRIMARY KEY (`map_id`)
 );
 
-DROP TABLE IF EXISTS `match`;
-CREATE TABLE `match` (
-  `match_id` int(11) NOT NULL AUTO_INCREMENT,
+DROP TABLE IF EXISTS `matchup`;
+CREATE TABLE `matchup` (
+  `matchup_id` int(11) NOT NULL AUTO_INCREMENT,
   `seed_id` int(11) NOT NULL,
   `map_id` int(11) NOT NULL,
   `worker_id` int(11) DEFAULT NULL,
-  PRIMARY KEY (`match_id`)
+  PRIMARY KEY (`matchup_id`)
 );
 
-DROP TABLE IF EXISTS `match_player`;
-CREATE TABLE `match_player` (
-  `match_id` int(11) NOT NULL,
+DROP TABLE IF EXISTS `matchup_player`;
+CREATE TABLE `matchup_player` (
+  `matchup_id` int(11) NOT NULL,
   `user_id` int(11) NOT NULL,
   `submission_id` int(11) NOT NULL,
-  `player_id` int(11) NOT NULL
+  `player_id` int(11) NOT NULL,
+  PRIMARY KEY (`matchup_id`,`user_id`),
+  UNIQUE KEY `matchup_player_idx` (`matchup_id`,`submission_id`)
 );
 
 DROP TABLE IF EXISTS `organization`;
