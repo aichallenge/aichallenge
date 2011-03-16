@@ -27,12 +27,6 @@ def install_website_packages():
     pkg_list = ["apache2", "php5", "libapache2-mod-php5", "php5-mysql"]
     install_apt_packages(pkg_list)
 
-def install_basic_languages():
-    """ Install base set of submission languages,
-        currently C, C++, Java and Python """
-    pkg_list = ["gcc", "g++", "openjdk-6-jdk", "python-dev"]
-    install_apt_packages(pkg_list)
-
 def create_contest_user(username):
     """ Create the contest user that all manager scripts run under """
     try:
@@ -107,22 +101,17 @@ def setup_database(opts):
                         % (opts.database_user,))
                 cursor.execute(SETUP_SQL["database_perms"]
                         % (opts.database_name, opts.database_user))
-        # remove from here to comment to switch to new schema layout
-        sf = os.path.join(opts.root_dir, opts.local_repo, "sql/000_schema.sql")
         password_opt = ""
         if opts.database_password:
             password_opt = "-p'%s'" % (opts.database_password,)
-        run_cmd("mysql -u %s %s %s < %s" % (opts.database_user,
-                password_opt, opts.database_name, sf))
-        """ This should work with McLeopold's new schema naming system
-            in branch epsilon-new-schema
-        schema_dir = os.path.join(opts.root_dir, local_repo, "sql")
+        schema_dir = os.path.join(opts.root_dir, opts.local_repo, "sql")
         schema_files = os.listdir(schema_dir)
         schema_files = [f for f in schema_files if f.endswith(".sql")]
+        schema_files.sort()
         for sf in schema_files:
             sp = os.path.join(schema_dir, sf)
-            run_cmd("mysql contest < " + sp)
-        """
+            run_cmd("mysql -u %s %s %s < %s" % (opts.database_user,
+                password_opt, opts.database_name, sp))
 
 def setup_website(opts):
     """ Configure apache to serve the website and set a server_info.php """
@@ -172,8 +161,7 @@ def get_options(argv):
     """ Get all the options required for the installation """
     current_username = os.environ.get("SUDO_USER", getpass.getuser())
     default_install = {
-        "installs": set([install_manager_packages, install_website_packages,
-            install_basic_languages]),
+        "installs": set([install_manager_packages, install_website_packages]),
         "packages_only": False,
         "create_user": False, "username": current_username,
         "database_root_password": "",
@@ -232,6 +220,8 @@ def get_options(argv):
     parser.add_option("--create-user", action="store_true",
             dest="create_user",
             help="Create the contest user if it doesn't already exist")
+    parser.add_option("--src-repo", action="store", dest="src_repo",
+            help="Set the source repository to pull the contest code from")
     options, args = parser.parse_args(argv)
     return options
 
