@@ -50,7 +50,7 @@ CREATE TABLE `game_player` (
 );
 
 DROP TABLE IF EXISTS `game_player_archive`;
-CREATE TABLE `game_player` (
+CREATE TABLE `game_player_archive` (
   `game_id` int(11) NOT NULL,
   `user_id` int(11) NOT NULL,
   `submission_id` int(11) NOT NULL,
@@ -149,7 +149,7 @@ CREATE TABLE `ranking` (
 );
 
 DROP TABLE IF EXISTS `ranking_archive`;
-CREATE TABLE `ranking` (
+CREATE TABLE `ranking_archive` (
   `leaderboard_id` int(11) NOT NULL,
   `user_id` int(11) NOT NULL,
   `submission_id` int(11) NOT NULL,
