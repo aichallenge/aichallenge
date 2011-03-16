@@ -70,7 +70,6 @@ class Ants:
                 self.do_food = self.do_food_none
             elif options['food'] == 'sections':
                 self.do_food = self.do_food_sections
-        self.render = self.render_changes
 
         self.width = None   # the map
         self.height = None
@@ -211,37 +210,50 @@ class Ants:
                 for row in range(self.height)]
 
     # communication to bot is in x, y coords
-    def render_changes(self, player=None):
-        if player != None:
-            v = self.get_vision(player)
-        # send new water
-        tmp = ''
-        if player != None:
-            for row, col in self.turn_reveal[player]:
-                if self.map[row][col] ==  WATER:
-                    tmp += 'w %s %s\n' % (row, col)
-        # send visible ants
-        for ant in self.current_ants.values():
-            row, col = ant.loc
-            if player == None:
-                tmp += 'a %s %s %s\n' % (row, col, ant.owner)
-            elif v[row][col]:
-                tmp += 'a %s %s %s\n' % (row, col, self.switch[player][ant.owner])
+    def render_changes(self, player):
+        updates = self.get_state_updates()
+        v = self.get_vision(player)
+        visible_updates = []
+
+        # first add unseen water
+        for row, col in self.turn_reveal[player]:
+            if self.map[row][col] == WATER:
+                visible_updates.append(['w', row, col])
+
+        # next list all transient objects
+        for update in updates:
+            type, row, col = update[0:3]
+
+            # only include visible updates
+            if v[row][col]:
+                visible_updates.append(update)
+
+                # we want to ensure that players are notified about the
+                #  new value of the square next turn
+                # TODO: Why is this required? Land is not explicitly sent
                 self.revealed[player][row][col] = False
-        # send visible food
+
+                # switch player perspective of player numbers
+                if type in ['a','d']:
+                    update[-1] = self.switch[player][update[-1]]
+
+        visible_updates.append([]) # newline
+        return '\n'.join(' '.join(map(str,s)) for s in visible_updates)
+
+    def get_state_updates(self):
+        updates = []
+
+        # current ants
+        for ant in self.current_ants.values():
+            updates.append(['a', ant.loc[0], ant.loc[1], ant.owner])
+        # visible food
         for row, col in self.current_food:
-            if player == None or v[row][col]:
-                tmp += 'f %s %s\n' % (row, col)
-                if player != None:
-                    self.revealed[player][row][col] = False
-        # send visible dead ants 
+            updates.append(['f', row, col])
+        # dead ants 
         for ant in self.killed_ants:
-            row, col = ant.loc
-            if player == None or v[row][col]:
-                tmp += 'd %s %s %s\n' % (row, col, ant.owner)
-                if player != None:
-                    self.revealed[player][row][col] = False
-        return tmp
+            updates.append(['d', ant.loc[0], ant.loc[1], ant.owner])
+
+        return updates
 
     def render_map(self, player=None):
         tmp = ''
@@ -613,7 +625,10 @@ class Ants:
 
     # used for 'map hack' playback
     def get_state(self):
-        return self.render_changes()
+        updates = self.get_state_updates()
+        updates.append([]) # newline
+
+        return '\n'.join(' '.join(map(str,s)) for s in updates)
 
     # used for turn 0, sending minimal info for bot to load
     def get_player_start(self, player=None):
@@ -630,7 +645,7 @@ class Ants:
 
     # used for sending state to bots for each turn
     def get_player_state(self, player):
-        return self.render(player)
+        return self.render_changes(player)
 
     # used by engine to determine players still in game
     def is_alive(self, player):
