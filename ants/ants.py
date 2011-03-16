@@ -383,6 +383,7 @@ class Ants:
     def kill_ant(self, loc):
         try:
             self.killed_ants.append(self.current_ants[loc])
+            self.killed_ants[-1].killed = True
             del self.current_ants[loc]
         except KeyError:
             raise Exception("Kill ant error",
@@ -648,7 +649,7 @@ class Ants:
             ant_count[ant.owner] += 1
         return {'ant_count': ant_count}
 
-    def __str__(self):
+    def get_compact_replay(self):
         result = []
         # required params
         result.append(['v', 'ants', '1'])
@@ -678,9 +679,12 @@ class Ants:
 
         # ants
         for a in self.all_ants:
+            orders = ''.join(a.orders)
+            if not a.killed:
+                orders += '*'
             result.append([
-                'a', a.owner, a.initial_loc[0], a.initial_loc[1], 
-                a.spawn_turn, ''.join(a.orders)
+                'a', a.owner, a.initial_loc[0], a.initial_loc[1],
+                a.spawn_turn, orders
             ])
 
         # scores
@@ -701,6 +705,7 @@ class Ant:
         self.initial_loc = loc
         self.spawn_turn = spawn_turn
         self.orders = []
+        self.killed = False
 
         self.moved = False
 
