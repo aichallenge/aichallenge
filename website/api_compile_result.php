@@ -19,7 +19,7 @@ if ($compiledata->status_id == 40) {
 		api_log(sprintf("Error updating successful compile: %s", mysql_error()));
 	}
 } else {
-	if (mysql_query(sprintf($sql["update_compile_result"],
+	if (mysql_query(sprintf($sql["update_submission_failure"],
 	                        $compiledata->status_id,
 	                        $worker["worker_id"],
 	                        $compiledata->submission_id))) {

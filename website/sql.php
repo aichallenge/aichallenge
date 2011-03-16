@@ -4,11 +4,11 @@ $sql = array(
     "select_next_compile" => "select submission_id
                               from submission
                               where status = 20
-                              or (status = 24 and worker_id = %s)
+                              or (status = 30 and worker_id = %s)
                               order by submission_id asc
                               limit 1;",
     "update_submission_compiling" => "update submission
-                                      set status = 24,
+                                      set status = 30,
                                           worker_id = %s
                                       where submission_id = %s;",
     "update_submission_success" => "update submission

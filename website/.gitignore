@@ -1,2 +1,4 @@
 server_info.php
 *.log
+games*
+maps*

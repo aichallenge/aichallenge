@@ -10,6 +10,7 @@ import hashlib
 import time
 import stat
 import platform
+import traceback
 
 from optparse import OptionParser
 
@@ -21,10 +22,11 @@ from engine import run_game
 
 # Set up logging
 log = logging.getLogger('worker')
-log.setLevel(logging.INFO)
+log.setLevel(logging.DEBUG)
 handler = logging.handlers.RotatingFileHandler("worker.log",
                                                maxBytes=1000000,
                                                backupCount=5)
+handler.setLevel(logging.DEBUG)
 handler2 = logging.StreamHandler()
 formatter = logging.Formatter("%(asctime)s - " + str(os.getpid()) +
                               " - %(levelname)s - %(message)s")
@@ -136,6 +138,7 @@ class GameAPIClient:
             if response.getcode() == 200:
                 data = response.read()
                 try:
+                    log.debug(data)
                     data = json.loads(data)["hash"]
                     log.info("Server returned hash: %s" % data)
                     if hash == data:
@@ -154,6 +157,7 @@ class Worker:
     def __init__(self):
         self.cloud = GameAPIClient( server_info['api_base_url'], server_info['api_key'])
         self.post_id = 0
+        self.test_map = None
 
     def submission_dir(self, submission_id):
         return os.path.join(server_info["submissions_path"], "c" + str(submission_id))
@@ -258,8 +262,12 @@ class Worker:
             download_dir = self.download_dir(submission_id)
             if os.path.exists(submission_dir):
                 log.info("Already compiled: %s" % submission_id)
-                report(STATUS_RUNABLE)
-                return True
+                if self.functional_test(submission_id):
+                    report(STATUS_RUNABLE)
+                    return True
+                else:
+                    report(STATUS_TEST_ERROR)
+                    return False
             if not os.path.exists(download_dir):
                 if not self.download_submission(submission_id):
                     report(STATUS_DOWNLOAD_ERROR)
@@ -276,14 +284,18 @@ class Worker:
             if not success:
                 shutil.rmtree(download_dir)
                 log.error(compile_log.err)
-                log.error("ERROR: could not compile submission")
                 report(STATUS_COMPILE_ERROR);
                 log.error("Compile Error")
                 return False
             else:
                 os.rename(download_dir, submission_dir)
-                report(STATUS_RUNABLE);
-                return True
+                if self.functional_test(submission_id):
+                    report(STATUS_RUNABLE)
+                    return True
+                else:
+                    log.error("Functional Test Error")
+                    report(STATUS_TEST_ERROR)
+                    return False
 
     def check_hash(self, submission_id):
         try:
@@ -308,6 +320,32 @@ class Worker:
             f.close()
         return data
     
+    def get_test_map(self):
+        if self.test_map == None:
+            f = open('../ants/submission_test/test.map', 'r')
+            self.test_map = f.read()
+            f.close()
+        return self.test_map
+    
+    def functional_test(self, submission_id):
+        self.post_id += 1
+        try:
+            matchup_id = 0
+            log.info("Running functional test for %s" % submission_id)
+            options = server_info["game_options"]
+            options["map"] = self.get_test_map()
+            options["output_json"] = True
+            game = Ants(options)
+            submission_dir = self.submission_dir(submission_id)
+            bots = [("../ants/submission_test/", "python TestBot.py"),
+                    (submission_dir, compiler.detect_language(submission_dir)[2])]
+            result = run_game(game, bots, options, matchup_id)
+            log.info(result)
+            return True
+        except Exception as ex:
+            log.error(traceback.format_exc())
+            return False
+        
     def game(self, task, report_status=False):
         self.post_id += 1
         try:
@@ -348,9 +386,6 @@ class Worker:
                       "matchup_id": matchup_id,
                       "error": str(ex) }
             self.cloud.post_result('api_game_result', result)
-        #finally:
-            #for run_dir, run_cmd in bots:
-            #    shutil.rmtree(run_dir)
             
     def task(self):
         task = self.cloud.get_task()
@@ -361,6 +396,8 @@ class Worker:
                 self.compile(submission_id, True)
             elif task['task'] == 'game':
                 self.game(task, True)
+            else:
+                time.sleep(20)
         else:
             log.error("Error retrieving task from server.")
 

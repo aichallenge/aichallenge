@@ -206,7 +206,5 @@ def run_game(game, botcmds, options, gameid=0):
             json_response['score'] = scores
             json_response['rank'] = [sorted(set(scores)).index(x) for x in scores]
             json_response['player_info'] = [{} for x in range(len(bots))]
-            of = open(os.path.join(output_dir, '%s.replay' % gameid), "r")
-            json_response['replay'] = of.read()
-            of.close()
+            json_response['replay'] = "" #game.get_replay()
         return json_response
