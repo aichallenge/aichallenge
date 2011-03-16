@@ -94,7 +94,8 @@ def main(argv):
             "spawnradius2": opts.spawnradius2,
             "loadtime": opts.loadtime,
             "turntime": opts.turntime,
-            "turns": opts.turns }
+            "turns": opts.turns,
+            "seed": opts.seed }
         engine_options = {
             "loadtime": opts.loadtime,
             "turntime": opts.turntime,
