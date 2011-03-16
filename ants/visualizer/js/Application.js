@@ -170,6 +170,11 @@ Visualizer = function(container, dataDir, codebase, w, h, java) {
 	this.imgMgr.add('wood.jpg');
 	this.imgMgr.add('playback.png');
 	this.imgMgr.add('fog.png');
+	/**
+	 * the highest player count in a previous replay to avoid button repaints
+	 * @private
+	 */
+	this.highestPlayerCount = 0;
 	// state information that must be reset on error/reload
 	/**
 	 * @private
@@ -457,8 +462,11 @@ Visualizer.prototype.tryStart = function() {
 		if (this.main.ctx && !this.imgMgr.error && !this.imgMgr.pending) {
 			var vis = this;
 			// generate fog images
-			var colors = [[255, 255, 255]].concat(PLAYER_COLORS.slice(0, this.replay.players.length));
-			this.imgMgr.colorize(2, colors);
+			var colors = [null].concat(PLAYER_COLORS.slice(0, this.replay.players.length));
+			if (this.highestPlayerCount < this.replay.players.length) {
+				this.highestPlayerCount = this.replay.players.length;
+				this.imgMgr.colorize(2, colors);
+			}
 			var bg = this.btnMgr.addGroup('fog', this.imgMgr.patterns[2], ButtonGroup.VERTICAL, ButtonGroup.MODE_RADIO, 2);
 			bg.y = TOP_PANEL_H;
 			for (var i = 0; i < colors.length; i++) {
@@ -622,7 +630,7 @@ Visualizer.prototype.resize = function(forced) {
 		bg.x = ((news.width - 8 * 64) / 2) | 0;
 		bg.y = this.loc.vis.y + this.loc.vis.h;
 		bg = this.btnMgr.groups['fog'];
-		bg.y = (this.loc.vis.y + (this.loc.vis.h - this.btnMgr.groups['fog'].h) / 2) | 0;
+		bg.y = this.loc.vis.y;
 		// redraw everything
 		this.btnMgr.draw();
 		// draw player names and captions

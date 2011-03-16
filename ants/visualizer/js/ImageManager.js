@@ -19,6 +19,8 @@ function ImageManager(dataDir, vis, callback) {
 	this.patterns = [];
 	this.error = '';
 	this.pending = 0;
+	this.askSecurity = true;
+	this.restrictSecurity = false;
 }
 /**
  * Announces an image that must be loaded. Calling this method after
@@ -119,20 +121,38 @@ ImageManager.prototype.colorize = function(idx, colors) {
 		// technically this is not neccesary, but it in praxis it would take
 		// ages to manipulate pixels through LiveConnect
 		this.javaApplet['imageOps']['colorize'](ctx, colors);
-	} else {
-		var data = ctx.getImageData(0, 0, obj.canvas.width, obj.canvas.height);
+	} else if (!this.restrictSecurity) {
+		try {
+			var data = ctx.getImageData(0, 0, obj.canvas.width, obj.canvas.height);
+		} catch (error1) {
+			try {
+				var privilegeManager = netscape.security.PrivilegeManager;
+				if (this.askSecurity) {
+					alert('Accept the next dialog to have colorized button graphics.');
+					this.askSecurity = false;
+				}
+				privilegeManager.enablePrivilege("UniversalBrowserRead");
+				data = ctx.getImageData(0, 0, obj.canvas.width, obj.canvas.height);
+				data = ctx.getImageData(0, 0, obj.canvas.width, obj.canvas.height);
+			} catch (error2) {
+				this.restrictSecurity = true;
+				return;
+			}
+		}
 		var d = data.data;
 		var ox = 0;
 		var dx = 4 * this.images[idx].width;
 		for (var i = 0; i < colors.length; i++) {
 			var c = colors[i];
-			for (var y = 0; y < 4 * data.width * data.height; y += 4 * data.width) {
-				for (var p = y + ox; p < y + ox + dx; p += 4) {
-					if (d[p] === d[p+1] && d[p] === d[p+2]) {
-						// only gray pixels
-						d[p+0] = (d[p+0] + c[0]) >> 1;
-						d[p+1] = (d[p+1] + c[1]) >> 1;
-						d[p+2] = (d[p+2] + c[2]) >> 1;
+			if (c) {
+				for (var y = 0; y < 4 * data.width * data.height; y += 4 * data.width) {
+					for (var p = y + ox; p < y + ox + dx; p += 4) {
+						if (d[p] === d[p+1] && d[p] === d[p+2]) {
+							// only gray pixels
+							d[p+0] = (d[p+0] * c[0]) >> 8;
+							d[p+1] = (d[p+1] * c[1]) >> 8;
+							d[p+2] = (d[p+2] * c[2]) >> 8;
+						}
 					}
 				}
 			}
