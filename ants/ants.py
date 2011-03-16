@@ -51,6 +51,10 @@ class Ants:
         self.viewradius = int(options["viewradius2"])
         self.attackradius = int(options["attackradius2"])
         self.spawnradius = int(options["spawnradius2"])
+        if "seed" in options:
+            self.seed = options["seed"]
+        else:
+            self.seed = None
         #print("Starting game with view=%s, attack=%s and spawn=%s" % (self.viewradius, self.attackradius, self.spawnradius))
 
         self.do_attack = self.do_attack_closest
@@ -640,8 +644,8 @@ class Ants:
     # used for stats
     def get_stats(self):
         ant_count = [0 for i in range(self.num_players)]
-        for row, col, owner in self.ants():
-            ant_count[owner] += 1
+        for loc, ant in self.current_ants.items():
+            ant_count[ant.owner] += 1
         return {'ant_count': ant_count}
 
     def __str__(self):

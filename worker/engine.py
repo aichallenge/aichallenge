@@ -151,8 +151,8 @@ def run_game(game, botcmds, options, gameid=0):
 
             if verbose:
                 stats = game.get_stats()
-                s = 'turn %4d stats: '
-                for key, values in stats:
+                s = 'turn %4d stats: ' % turn
+                for key, values in stats.items():
                     s += '%s: %s' % (key, values)
                 print("\r%-50s" % s)
 

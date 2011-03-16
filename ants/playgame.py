@@ -46,7 +46,7 @@ def main(argv):
                       help="Run bots in serial, instead of parallel.")
 
     parser.add_option("-v", "--verbose", dest="verbose",
-                      action="store_true",
+                      action="store_true", default=False,
                       help="Print out status as game goes.")
 
     parser.add_option("--turntime", dest="turntime",
