@@ -186,7 +186,10 @@ def run_game(game, botcmds, options, gameid=0):
             if bot.is_alive:
                 bot.kill()
         if output_dir:
-            of.close()
+            try:
+                of.close()
+            except:
+                pass
             if log_input:
                 for log in bot_input_log:
                     log.close()
@@ -203,4 +206,7 @@ def run_game(game, botcmds, options, gameid=0):
             json_response['score'] = scores
             json_response['rank'] = [sorted(set(scores)).index(x) for x in scores]
             json_response['player_info'] = [{} for x in range(len(bots))]
+            of = open(os.path.join(output_dir, '%s.replay' % gameid), "r")
+            json_response['replay'] = of.read()
+            of.close()
         return json_response

@@ -130,7 +130,7 @@ class GameAPIClient:
             log.info(url)
             json_data = json.dumps(result)
             hash = hashlib.md5(json_data).hexdigest()
-            log.info("Posting result %s: %s" % (method, json_data))
+            log.debug("Posting result %s: %s" % (method, json_data))
             log.info("Posting hash: %s" % hash)
             response = urllib.urlopen(url, json.dumps(result))
             if response.getcode() == 200:
