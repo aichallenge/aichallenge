@@ -12,11 +12,21 @@
             year month day hour min sec)))
 
 
+(defun errmsg (&rest args)
+  (declare (ignore args))
+  (error "You need to redefine ERRMSG in your own package."))
+
+
 (defun host2str (host)
   (cond ((and (vectorp host) (= 4 (length host)))
          (format nil "~D.~D.~D.~D" (elt host 0) (elt host 1) (elt host 2)
                  (elt host 3)))
         (t host)))
+
+
+(defun logmsg (&rest args)
+  (declare (ignore args))
+  (error "You need to redefine LOGMSG in your own package."))
 
 
 (defun mkstr (&rest args)

@@ -49,31 +49,6 @@
       (setf *port* (parse-integer value)))))
 
 
-;;; Handlers
-
-(defun connection-lost (arg)
-  (declare (ignore arg))
-  (logmsg "~&Connection lost. Aborting...~%")
-  (exit 103))
-
-
-(defun connection-refused (arg)
-  (declare (ignore arg))
-  (logmsg "~&Connection refused. Aborting...~%")
-  (exit 111))
-
-
-(defun error-handler (&optional arg)
-  (logmsg "~&" arg " Aborting...~%")
-  (exit 1))
-
-
-(defun user-interrupt (arg)
-  (declare (ignore arg))
-  (logmsg "~&User interrupt. Aborting...~%")
-  (exit))
-
-
 ;;; Main Program
 
 (defsynopsis ()

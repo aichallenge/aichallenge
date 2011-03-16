@@ -33,6 +33,11 @@
 
 ;;; Common Functions
 
+;; This is for the handlers in src-common/handlers.lisp.
+(defun errmsg (&rest args)
+  (apply #'logmsg args))
+
+
 (defun logmsg (&rest args)
   (when *verbose*
     (let ((str (with-output-to-string (s)
@@ -40,19 +45,6 @@
                    (princ a s)))))
       (format *debug* str)
       (force-output *debug*))))
-
-
-;;; Handlers
-
-(defun error-handler (&optional arg)
-  (logmsg "~&" arg " Aborting...~%")
-  (exit 1))
-
-
-(defun interrupted-by-user (arg)
-  (declare (ignore arg))
-  (logmsg "~&Interrupted by user. Aborting...~%")
-  (exit))
 
 
 ;;; Functions
@@ -520,7 +512,7 @@
   (let ((cdts (current-date-time-string)))
     (logmsg "~&=== New Match: " cdts " ===~%")
     (logmsg "[start] " cdts "~%"))
-  (handler-bind (#+sbcl (sb-sys:interactive-interrupt #'interrupted-by-user))
+  (handler-bind (#+sbcl (sb-sys:interactive-interrupt #'user-interrupt))
                  ;(error #'error-handler))
     (loop for bot in *bots* collect (run-program bot) into procs
           finally (setf *procs* procs))

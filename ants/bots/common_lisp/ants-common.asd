@@ -6,4 +6,5 @@
   :components ((:module src-common
                 :serial t
                 :components ((:file "package")
+                             (:file "handlers")
                              (:file "common")))))
