@@ -116,6 +116,12 @@ DataType = {
 				case '-':
 					p[0][turn] = null;
 					break;
+				case '*':
+					if (turn !== p[1].length - 1) {
+						throw new Error('* must be the last character in the line.');
+					}
+					p[0][turn] = undefined;
+					break;
 				default:
 					throw new Error('Invalid character in orders line: ' + p[1][turn]);
 			}
@@ -139,11 +145,26 @@ DataType = {
  * @constructor
  */
 function Replay(replayStr, parameters) {
-	var tl;
+	var tl, owner;
 	var lit = new LineIterator(replayStr);
 	this.turns = [];
 	var ants = {};
 	var autoinc = 0;
+	var durationSetter = null;
+	var that = this;
+	var setReplayDuration = function(duration, fixed) {
+		if (durationSetter) {
+			if (!fixed && that.turns.length < duration + 1 || fixed && that.turns.length !== duration + 1) {
+				throw new Error('Replay duration was previously set to ' + (that.turns.length - 1) + ' by the line "' + durationSetter.line + '" and is now redefined to be ' + duration);
+			}
+		} else {
+			while (that.turns.length < duration + 1) {
+				that.turns.push(new Turn(that.players.length, that.rows, that.cols));
+			}
+			if (fixed) durationSetter = tl;
+		}
+	};
+
 	try {
 		// version check
 		tl = lit.gimmeNext().kw('v').as([DataType.IDENT, DataType.POSINT]);
@@ -196,33 +217,37 @@ function Replay(replayStr, parameters) {
 		this.cols = this.walls[0].length;
 		// food / ant
 		while (tl.keyword === 'f' || tl.keyword === 'a') {
+			// try to treat food/ants the same more or less and parse the line
 			var isAnt = (tl.keyword === 'a');
-			var owner = undefined;
 			if (isAnt) {
 				tl.as([DataType.UINT, DataType.UINT, DataType.UINT, DataType.UINT, DataType.ORDERS]);
 				owner = tl.params[0];
 				if (owner >= this.players.length) throw new Error('Player index out of range.');
 			} else {
 				tl.as([DataType.UINT, DataType.UINT, DataType.UINT, DataType.UINT], 1);
+				owner = undefined;
 			}
 			var row = tl.params[isAnt ? 1 : 0];
 			var col = tl.params[isAnt ? 2 : 1];
 			var start = tl.params[isAnt ? 3 : 2];
 			if (isAnt) {
+				// an ant survives if the command string ends with '*'
 				var orders = tl.params[4];
+				var survives = orders.length !== 0 && orders[orders.length - 1] === undefined;
 				var end = start + orders.length;
 				var item = 'Ant';
+				setReplayDuration(end - (survives ? 1 : 0), survives);
 			} else {
+				// food survives if no end is defined
 				end = tl.params[3];
+				survives = (end === undefined);
 				item = 'Food';
+				if (!survives) setReplayDuration(end, false);
 			}
 			if (row >= this.rows || col >= this.cols) {
 				throw new Error(item + ' spawned outside of map at row ' + row + ' / col ' + col);
 			}
-			while (this.turns.length < end + 1) {
-				this.turns.push(new Turn(this.players.length, this.rows, this.cols));
-			}
-			// for a conversion, try to find previous food item
+			// for a conversion, try to find the previous food item
 			var ant = null;
 			if (isAnt) {
 				for (var id in ants) {
@@ -330,9 +355,7 @@ function Replay(replayStr, parameters) {
 		// score
 		for (i = 0; i < this.players.length; i++) {
 			var scores = tl.kw('s').as([DataType.SCORES]).params[0];
-			while (this.turns.length < scores.length) {
-				this.turns.push(new Turn(this.players.length));
-			}
+			setReplayDuration(scores.length - 1, false);
 			for (var k = 0; k < scores.length; k++) {
 				this.turns[k].scores[i] = scores[k];
 			}
