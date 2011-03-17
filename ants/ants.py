@@ -596,6 +596,25 @@ class Ants:
                         self.add_food((row, col))
                         break
 
+    def do_food_symmetric(self, amount=1):
+        """
+            Split the map into sections that each ant can access 
+            first at the start of the game. Place food evenly into each space.
+        """
+        ant1, ant2 = self.initial_ant_list[0:2] # assumed one ant per player
+        row_t = abs(ant1.loc[0] - ant2.loc[0])
+        col_t = abs(ant1.loc[1] - ant2.loc[1])
+        for f in range(amount):
+            row = randrange(self.height)
+            col = randrange(self.width)
+
+            for p in range(self.num_players):
+                row = (row + row_t)%self.height
+                col = (col + col_t)%self.width
+                loc = self.find_closest_land((row, col))
+                if loc:
+                    self.add_food(loc)
+
     def remaining_players(self):
         return sum(self.is_alive(p) for p in range(self.num_players))
 
