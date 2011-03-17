@@ -14,8 +14,13 @@ How to implement your bot
 -------------------------
 
 Create a class (without any package) that extends `Bot`. There is a single method to implement.
-
     def ordersFrom(gameState: Game): Set[Order]
+
+You also need to create a main class for your Bot. For example:
+
+    object HunterBot extends Application {
+      new AntsGame().run(new HunterBot)
+    }
 
 Your bot can use the information contained in `gameState` to derive a set of orders. Your bot may maintain state
 between calls.

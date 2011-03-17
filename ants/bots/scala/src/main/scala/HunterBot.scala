@@ -1,5 +1,5 @@
 object HunterBot extends Application {
-  new AntsGame(System.in).run(new HunterBot)
+  new AntsGame().run(new HunterBot)
 }
 
 class HunterBot extends Bot {
