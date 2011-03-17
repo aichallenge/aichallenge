@@ -1,6 +1,6 @@
-;;;; config.lisp
+;;;; specials.lisp
 
-(in-package :ants-bot)
+(in-package :ants-common)
 
 
 ;;; Both shadowed in MAIN, never assign to directly!

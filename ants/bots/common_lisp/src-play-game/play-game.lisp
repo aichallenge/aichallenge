@@ -130,14 +130,6 @@
         ((equal direction "W") :west)))
 
 
-(defun distance (row1 col1 row2 col2)
-  (let* ((drow (abs (- row1 row2)))
-         (dcol (abs (- col1 col2)))
-         (minrow (min drow (- (rows *state*) drow)))
-         (mincol (min dcol (- (cols *state*) dcol))))
-    (sqrt (+ (* minrow minrow) (* mincol mincol)))))
-
-
 (defun do-turn (turn)
   (setf (orders *state*) nil)
   (loop for proc in (procs *state*)
@@ -182,31 +174,6 @@
            (setf (aref (game-map *state*) dst-row dst-col) (+ bot-id 100)))
   (battle-resolution)
   (spawn-ants))
-
-
-(defun new-location (row col direction)
-  (if (not (member direction '(:north :east :south :west)))
-      (progn (logmsg "[new-location] Illegal direction: " direction "~%")
-             (list row col))
-      (let ((dst-row (cond ((equal direction :north)
-                            (if (<= row 0)
-                                (- (rows *state*) 1)
-                                (- row 1)))
-                           ((equal direction :south)
-                            (if (>= (+ row 1) (rows *state*))
-                                0
-                                (+ row 1)))
-                           (t row)))
-            (dst-col (cond ((equal direction :east)
-                            (if (>= (+ col 1) (cols *state*))
-                                0
-                                (+ col 1)))
-                           ((equal direction :west)
-                            (if (<= col 0)
-                                (- (cols *state*) 1)
-                                (- col 1)))
-                           (t col))))
-        (list dst-row dst-col))))
 
 
 (defun parse-map (file-name)
@@ -434,11 +401,6 @@
 (defun wait-for-output (output turn-start-time)
   (loop until (or (listen output)
                   (no-turn-time-left-p turn-start-time))))
-
-
-(defun water? (row col direction)
-  (let ((nl (new-location row col direction)))
-    (= 1 (aref (game-map *state*) (elt nl 0) (elt nl 1)))))
 
 
 ;;; Main Program

@@ -12,6 +12,14 @@
             year month day hour min sec)))
 
 
+(defun distance (row1 col1 row2 col2)
+  (let* ((drow (abs (- row1 row2)))
+         (dcol (abs (- col1 col2)))
+         (minrow (min drow (- (rows *state*) drow)))
+         (mincol (min dcol (- (cols *state*) dcol))))
+    (sqrt (+ (* minrow minrow) (* mincol mincol)))))
+
+
 (defun errmsg (&rest args)
   (declare (ignore args))
   (error "You need to redefine ERRMSG in your own package."))
@@ -33,6 +41,31 @@
   (with-output-to-string (s)
     (dolist (a args)
       (princ a s))))
+
+
+(defun new-location (row col direction)
+  (if (not (member direction '(:north :east :south :west)))
+      (progn (logmsg "[new-location] Illegal direction: " direction "~%")
+             (list row col))
+      (let ((dst-row (cond ((equal direction :north)
+                            (if (<= row 0)
+                                (- (rows *state*) 1)
+                                (- row 1)))
+                           ((equal direction :south)
+                            (if (>= (+ row 1) (rows *state*))
+                                0
+                                (+ row 1)))
+                           (t row)))
+            (dst-col (cond ((equal direction :east)
+                            (if (>= (+ col 1) (cols *state*))
+                                0
+                                (+ col 1)))
+                           ((equal direction :west)
+                            (if (<= col 0)
+                                (- (cols *state*) 1)
+                                (- col 1)))
+                           (t col))))
+        (list dst-row dst-col))))
 
 
 (defun par-value (string)
@@ -84,3 +117,8 @@
   (defun wall-time (&key (offset 0))
     (+ (* (get-internal-real-time) time-units)
        offset)))
+
+
+(defun water? (row col direction)
+  (let ((nl (new-location row col direction)))
+    (= 1 (aref (game-map *state*) (elt nl 0) (elt nl 1)))))
