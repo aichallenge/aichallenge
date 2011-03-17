@@ -315,8 +315,8 @@ class Ants:
     def do_orders(self, player, orders):
         # process orders ignoring bad or duplicates
         for order in orders:
-            row2, col2 = self.destination(*order)
             row1, col1, d = order
+            row2, col2 = self.destination((row1, col1), d)
 
             ant = self.current_ants[(row1, col1)]
             if ant.owner != player: # must move your *own* ant
@@ -473,9 +473,13 @@ class Ants:
 
         self.score = map(operator.add, self.score, score)
 
-    def destination(self, row, col, direction):
-        d_row, d_col = AIM[direction]
-        return ((row + d_row) % self.height, (col + d_col) % self.width)
+    def destination(self, loc, d):
+        if d in AIM:
+            d = AIM[d]
+        elif d == '-':
+            d = (0, 0)
+
+        return ((loc[0] + d[0]) % self.height, (loc[1] + d[1]) % self.width)
 
     def access_map(self):
         """
@@ -501,7 +505,7 @@ class Ants:
         while cell_queue:
             c_loc = cell_queue.popleft()
             for d in AIM:
-                n_loc = self.destination(c_loc[0], c_loc[1], d)
+                n_loc = self.destination(c_loc, d)
                 if n_loc not in distances: continue # wall
 
                 if distances[n_loc] is None:
@@ -537,10 +541,10 @@ class Ants:
         cell_queue = deque([coord])
 
         while cell_queue:
-            c_row, c_col = cell_queue.popleft()
+            c_loc = cell_queue.popleft()
 
             for d in AIM:
-                n_loc = self.destination(c_row, c_col, d)
+                n_loc = self.destination(c_loc, d)
                 if n_loc in visited: continue
 
                 if self.map[n_loc[0]][n_loc[1]] == LAND:
