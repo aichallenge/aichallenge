@@ -1,0 +1,17 @@
+*.sh    eol=lf
+*.c text
+*.h text
+*.cc text
+*.cpp text
+*.sql text
+*.d text
+*.py text
+*.scala text
+*.lol text
+*.txt text
+*.lisp text
+*.php text
+*.java text
+*.go text
+*.pl text
+*.pm text
