@@ -110,7 +110,7 @@ class Ants:
                           for row in range(self.height)]
                          for p in range(self.num_players)]
         # used to track per turn for bot communication
-        self.turn_reveal = [[] for i in range(self.num_players)]
+        self.revealed_water = [[] for i in range(self.num_players)]
 
         # used to give a different ordering of players to each player
         #   to help hide total number of players
@@ -194,8 +194,9 @@ class Ants:
                 if not vision[n_row][n_col] and (d_row**2 + d_col**2) <= self.viewradius:
                     vision[n_row][n_col] = True
                     if not self.revealed[player][n_row][n_col]:
-                        self.turn_reveal[player].append((n_row, n_col))
                         self.revealed[player][n_row][n_col] = True
+                        if self.map[n_row][n_col] == WATER:
+                            self.revealed_water[player].append((n_row, n_col))
                     value = self.map[n_row][n_col]
                     if (value >= ANTS and self.switch[player][value] == None):
                         self.switch[player][value] = (self.num_players -
@@ -223,9 +224,8 @@ class Ants:
         visible_updates = []
 
         # first add unseen water
-        for row, col in self.turn_reveal[player]:
-            if self.map[row][col] == WATER:
-                visible_updates.append(['w', row, col])
+        for row, col in self.revealed_water[player]:
+            visible_updates.append(['w', row, col])
 
         # next list all transient objects
         for update in updates:
@@ -234,11 +234,6 @@ class Ants:
             # only include visible updates
             if v[row][col]:
                 visible_updates.append(update)
-
-                # we want to ensure that players are notified about the
-                #  new value of the square next turn
-                # TODO: Why is this required? Land is not explicitly sent
-                self.revealed[player][row][col] = False
 
                 # switch player perspective of player numbers
                 if type in ['a','d']:
@@ -652,7 +647,7 @@ class Ants:
                     visited[loc[0]][loc[1]] = True
 
                 # we only care about sets where none of the locations hit water
-                if all(self.map[l[0]][l[1]] != WATER for l in locations):
+                if all(self.map[loc[0]][loc[1]] != WATER for loc in locations):
                     food_sets.append(locations)
 
         shuffle(food_sets)
@@ -681,7 +676,7 @@ class Ants:
             ant.moved = False
 
     def finish_turn(self):
-        self.turn_reveal= [[] for i in range(self.num_players)]
+        self.revealed_water = [[] for i in range(self.num_players)]
         self.resolve_orders()
         self.do_attack()
         self.do_spawn()
