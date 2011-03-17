@@ -1,3 +1,4 @@
+import annotation.tailrec
 import io.Source
 import java.io.InputStream
 
@@ -7,12 +8,20 @@ class AntsGame(in: InputStream) {
 
   def run(bot: Bot) = {
     try {
-      while (true) {
-        val gameState = Parser.parse(source)
-        val orders = bot.ordersFrom(gameState)
-        orders.map(_.inServerSpeak).foreach(println)
-        println("go")
+
+      @tailrec
+      def playNextTurn(game: Game): Unit = {
+        val newGameState = Parser.parse(source)
+        if (newGameState.gameOver) Unit
+        else {
+          val orders = bot.ordersFrom(newGameState)
+          orders.map(_.inServerSpeak).foreach(println)
+          println("go")
+          playNextTurn(newGameState)
+        }
       }
+      playNextTurn(GameInProgress())
+
     } catch {
       case t => t.printStackTrace
     }

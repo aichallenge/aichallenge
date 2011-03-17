@@ -4,7 +4,7 @@ import util.matching.Regex
 
 object Parser {
 
-  private val regularExpressions: Map[Regex, (Game, Seq[Int]) => Game] = Map(
+  private val regularExpressions: Map[Regex, (GameInProgress, Seq[Int]) => GameInProgress] = Map(
     "a (\\d+ \\d+ \\d+)".r -> ((state, values: Seq[Int]) => state.copy(board = state.board.add(Ant(Tile(values(0), values(1)), values(2) == 0)))),
     "w (\\d+ \\d+)".r -> ((state, values: Seq[Int]) => state.copy(board = state.board.add(Water(Tile(values(0), values(1)))))),
     "f (\\d+ \\d+)".r -> ((state, values: Seq[Int]) => state.copy(board = state.board.add(Food(Tile(values(0), values(1)))))),
@@ -24,12 +24,12 @@ object Parser {
     val lines = source.getLines
 
     @tailrec
-    def parseInternal(state: Game): Game = {
+    def parseInternal(state: GameInProgress): Game = {
       val line = lines.next.trim
       line match {
         case "" => parseInternal(state)
         case "go" | "ready" => state
-        case "end" => state.copy()
+        case "end" => GameOver(turn = state.turn, parameters = state.parameters, board = state.board)
         case _ => {
           regularExpressions.find{case(regex, _) =>
             line.matches(regex.toString)
@@ -42,6 +42,6 @@ object Parser {
       }
     }
 
-    parseInternal(Game(parameters = params))
+    parseInternal(GameInProgress(parameters = params))
   }
 }

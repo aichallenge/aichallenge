@@ -1,6 +1,5 @@
 import io.Source
-import java.io.ByteArrayInputStream
-import org.scalacheck.{Arbitrary, Gen, Prop}
+import org.scalacheck.{Arbitrary, Gen}
 import org.specs2.mutable.Specification
 import org.specs2.ScalaCheck
 
@@ -32,7 +31,7 @@ class ParserSpec extends Specification with ScalaCheck {
           ready""".format(params.loadTime, params.turnTime, params.rows, params.columns, params.turns,
           params.viewRadius, params.attackRadius, params.spawnRadius)
         val actualGame = Parser.parse(Source.fromString(input))
-        actualGame must_== Game(parameters = params)
+        actualGame must_== GameInProgress(parameters = params)
     }
 
     "parse valid turn +n data" in {
@@ -45,7 +44,7 @@ class ParserSpec extends Specification with ScalaCheck {
         a 10 9 0
         go"""
       val actualGame = Parser.parse(Source.fromString(input))
-      actualGame must_== Game(turn = 1, board = Board(Map(
+      actualGame must_== GameInProgress(turn = 1, board = Board(Map(
         Tile(6,5) -> Food(Tile(6,5)),
         Tile(7,6) -> Water(Tile(7,6)),
         Tile(7,9) -> Ant(Tile(7,9), false),

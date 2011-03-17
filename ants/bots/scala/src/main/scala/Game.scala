@@ -1,6 +1,17 @@
 import scala.math.{abs,min,pow}
 
-case class Game(turn: Int = 0, parameters: GameParameters = GameParameters(), board: Board = Board()) {
+case class GameInProgress(turn: Int = 0, parameters: GameParameters = GameParameters(), board: Board = Board()) extends Game {
+  val gameOver = false
+}
+case class GameOver(turn: Int = 0, parameters: GameParameters = GameParameters(), board: Board = Board()) extends Game {
+  val gameOver = true
+}
+
+sealed trait Game {
+  val turn: Int
+  val parameters: GameParameters
+  val board: Board
+  val gameOver: Boolean
 
   def distanceFrom(one: Tile) = new {
     def to(another: Tile) = {
@@ -38,5 +49,5 @@ case class Game(turn: Int = 0, parameters: GameParameters = GameParameters(), bo
       }
     }
   }
-
 }
+
