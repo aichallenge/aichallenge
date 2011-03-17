@@ -206,19 +206,21 @@ Ants.showIlks = function (changes) {
 }
 
 // initialize visualizer
-$(function () {
+var init = function () {
     $('#replay_form')[0].reset();
-    $.get('0.replay', function (response) {
+    $.get('0.stream', function (response) {
         Ants.init({data: response, canvas: $('#map')[0]});
         Ants.viewTurn(0);
         animate();
     });
+    /*
     $("#replay_file").change(function (evt) {
         var response = evt.target.files[0].getAsText('utf-8');
         Ants.init({data: response, canvas: $('#map')[0]});
         Ants.viewTurn(0);
         animate();
     });
+    */
 
     var running = true;
     var speed = 500;
@@ -285,4 +287,15 @@ $(function () {
         }
         return false;
     });
-});
+};
+
+//used to stop ie from starting before the canvas is loaded
+var ready = true;
+var kick_start = function () {
+    if (ready) {
+        init();
+    } else {
+        setTimeout(kick_start, 250);
+    }
+}
+$(kick_start);
