@@ -4,8 +4,13 @@
 
 (defpackage :ants-common
   (:use :cl)
-  (:import-from :cl-user :quit)
-  (:export :address-in-use :connection-lost :connection-refused
-           :current-date-time-string :errmsg :error-handler :host2str :logmsg
-           :mkstr :par-value :print-game-map :socket-error-handler :starts-with
-           :user-interrupt :wall-time))
+  (:export ;; classes and accessors / readers
+           :state :attack-radius2 :cols :enemy-ants :food :game-map :input
+           :load-time :log-stream :my-ants :output :rows :spawn-radius2 :turn
+           :turn-start-time :turn-time :turns :view-radius2
+           ;; handlers
+           :address-in-use :connection-lost :connection-refused :error-handler
+           :socket-error-handler :user-interrupt
+           ;; functions
+           :current-date-time-string :errmsg :host2str :logmsg :mkstr
+           :par-value :print-game-map :quit :starts-with :wall-time))

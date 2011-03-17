@@ -61,6 +61,18 @@
            (terpri stream)))
 
 
+;; grabbed from Clon
+(defun quit (&optional (status 0))
+  "Quit the current application with STATUS."
+  #+sbcl  (sb-ext:quit :unix-status status)
+  #+cmu   (unix:unix-exit status)
+  #+ccl   (ccl:quit status)
+  #+ecl   (ext:quit status)
+  #+clisp (ext:exit status)
+  #+abcl  (extensions:exit :status status)
+  #-(and sbcl cmu ccl ecl clisp abcl) (cl-user::quit))
+
+
 (defun starts-with (sequence subsequence)
   (let ((sublen (length subsequence)))
     (when (and (> sublen 0)
