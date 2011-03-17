@@ -117,12 +117,6 @@ DataType = {
 				case '-':
 					p[0][turn] = null;
 					break;
-				case '*':
-					if (turn !== p[1].length - 1) {
-						throw new Error('* must be the last character in the line.');
-					}
-					p[0][turn] = undefined;
-					break;
 				default:
 					throw new Error('Invalid character in orders line: ' + p[1][turn]);
 			}
@@ -149,7 +143,6 @@ function Replay(replayStr, parameters) {
 	var tl, owner;
 	var lit = new LineIterator(replayStr);
 	this.turns = [];
-	var ants = {};
 	var autoinc = 0;
 	var durationSetter = null;
 	var that = this;
@@ -219,140 +212,130 @@ function Replay(replayStr, parameters) {
 		this.rows = this.walls.length;
 		this.cols = this.walls[0].length;
 		// food / ant
-		while (tl.keyword === 'f' || tl.keyword === 'a') {
-			// try to treat food/ants the same more or less and parse the line
-			var isAnt = (tl.keyword === 'a');
-			if (isAnt) {
-				tl.as([DataType.UINT, DataType.UINT, DataType.UINT, DataType.UINT, DataType.ORDERS]);
-				owner = tl.params[0];
-				if (owner >= this.players.length) throw new Error('Player index out of range.');
-			} else {
-				tl.as([DataType.UINT, DataType.UINT, DataType.UINT, DataType.UINT], 1);
-				owner = undefined;
+		while (tl.keyword === 'a') {
+			//     row            col            start          conversion
+			tl.as([DataType.UINT, DataType.UINT, DataType.UINT, DataType.UINT,
+				DataType.UINT, DataType.UINT, DataType.ORDERS], 3);
+			//  end            owner          orders            # optional
+			var row = tl.params[0];
+			if (row >= this.rows) throw new Error('Row exceeds map width.');
+			var col = tl.params[1];
+			if (col >= this.cols) throw new Error('Col exceeds map height.');
+			var start = tl.params[2];
+			var conv = tl.params[3];
+			var end = tl.params[4];
+			if (end === undefined) end = conv;
+			owner = tl.params[5];
+			var isAnt = owner !== undefined;
+			if (isAnt && owner >= this.players.length) {
+				throw new Error('Player index out of range.');
 			}
-			var row = tl.params[isAnt ? 1 : 0];
-			var col = tl.params[isAnt ? 2 : 1];
-			var start = tl.params[isAnt ? 3 : 2];
+			var orders = tl.params[6] || '';
 			if (isAnt) {
-				// an ant survives if the command string ends with '*'
-				var orders = tl.params[4];
-				var survives = orders.length !== 0 && orders[orders.length - 1] === undefined;
-				var end = start + orders.length;
-				var item = 'Ant';
-				setReplayDuration(end - (survives ? 1 : 0), survives);
-			} else {
-				// food survives if no end is defined
-				end = tl.params[3];
-				survives = (end === undefined);
-				item = 'Food';
-				if (!survives) setReplayDuration(end, false);
-			}
-			if (row >= this.rows || col >= this.cols) {
-				throw new Error(item + ' spawned outside of map at row ' + row + ' / col ' + col);
-			}
-			// for a conversion, try to find the previous food item
-			var ant = null;
-			if (isAnt) {
-				for (var id in ants) {
-					if (ants[id].ant.lo[0]['x'] === col && ants[id].ant.lo[0]['y'] === row && ants[id].end === start) {
-						ant = ants[id].ant;
-						ants[id].end = end;
-						ants[id].tl = tl;
-						break;
-					}
+				var fixed = orders.length !== end - conv;
+				if (fixed && orders.length + 1 !== end - conv) {
+					throw new Error('Number of orders does not match life span.');
 				}
+				setReplayDuration(end - 1, fixed);
+			} else {
+				setReplayDuration(conv - 1, false);
 			}
-			if (ant === null) {
-				var color = (owner === undefined) ?
-					FOOD_COLOR : this.players[owner]['color'];
-				var firstf = (start === 0) ? start : start - 1;
-				ant = new Ant(autoinc++, firstf);
-				ants[ant.id] = new AntLife(ant, firstf, end, tl);
-				var f = ant.frameAt(firstf, Quality.LOW, false);
-				f['x'] = col;
-				f['y'] = row;
-				f['r'] = color[0];
-				f['g'] = color[1];
-				f['b'] = color[2];
-				if (start !== 0) {
-					f = ant.frameAt(start - 0.25, Quality.LOW, true);
-					f = ant.frameAt(start, Quality.LOW, true);
-					f['size'] = 1.0;
-					f = ant.frameAt(start + 0.125, Quality.LOW, true);
-					f['size'] = 1.5;
-					f = ant.frameAt(start + 0.25, Quality.LOW, true);
-					f['size'] = 0.7;
-					f = ant.frameAt(start + 0.5, Quality.LOW, true);
+			// create ant
+			var ant = new Ant(autoinc++, start - 0.25);
+			ant.owner = owner;
+			var f = ant.frameAt(start - 0.25, Quality.LOW, false);
+			f['x'] = col;
+			f['y'] = row;
+			f['r'] = FOOD_COLOR[0];
+			f['g'] = FOOD_COLOR[1];
+			f['b'] = FOOD_COLOR[2];
+			if (start !== 0) {
+				f = ant.frameAt(start, Quality.LOW, true);
+				f['size'] = 1.0;
+				f = ant.frameAt(start + 0.125, Quality.LOW, true);
+				f['size'] = 1.5;
+				f = ant.frameAt(start + 0.25, Quality.LOW, true);
+				f['size'] = 0.7;
+				f = ant.frameAt(start + 0.5, Quality.LOW, true);
+			}
+			f['size'] = 1;
+			// fade to player color
+			if (isAnt) {
+				var color = this.players[owner]['color'];
+				if (conv > start) {
+					ant.fade(Quality.LOW, 'r', 255, conv - 0.5, conv - 0.25);
+					ant.fade(Quality.LOW, 'g', 255, conv - 0.5, conv - 0.25);
+					ant.fade(Quality.LOW, 'b', 255, conv - 0.5, conv - 0.25);
 				}
-				f['size'] = 1;
-				ant.owner = undefined;
-				ants[ant.id] = new AntLife(ant, start - 1, end, tl);
-			}
-			if (start === end && !isAnt) {
-				throw new Error('Food has no lifespan.');
-			}
-			// perform conversion only in the last 25% of turn time
-			if (isAnt && start > 0) {
-				ant.frameAt(start - 1, Quality.LOW, true);
-				ant.frameAt(start - 0.25, Quality.LOW, true);
-			}
-			if (end) for (i = start; i < end; i++) {
-				if (isAnt) this.turns[i].counts[owner]++;
-			}
-			// in case of conversion, fade in the color
-			if (isAnt && start !== 0) {
-				ant.owner = owner;
-				color = this.players[owner]['color'];
-				ant.fade(Quality.LOW, 'r', 255, start - 0.5, start - 0.25);
-				ant.fade(Quality.LOW, 'g', 255, start - 0.5, start - 0.25);
-				ant.fade(Quality.LOW, 'b', 255, start - 0.5, start - 0.25);
-				ant.fade(Quality.LOW, 'r', color[0], start - 0.25, start);
-				ant.fade(Quality.LOW, 'g', color[1], start - 0.25, start);
-				ant.fade(Quality.LOW, 'b', color[2], start - 0.25, start);
+				ant.fade(Quality.LOW, 'r', color[0], conv - 0.25, conv);
+				ant.fade(Quality.LOW, 'g', color[1], conv - 0.25, conv);
+				ant.fade(Quality.LOW, 'b', color[2], conv - 0.25, conv);
 			}
 			// do moves
 			var x = col;
 			var y = row;
-			if (orders) for (i = 0; i < orders.length; i++) {
-				var dir = orders[i];
-				if (dir) {
-					x += dir.x;
-					y += dir.y;
-					ant.fade(Quality.LOW, 'x', x, start + i, start + i + 0.5);
-					ant.fade(Quality.LOW, 'y', y, start + i, start + i + 0.5);
-					/*antObj.keyFrames[1].angle = offset.angle;
-					antObj.animate([{
-						time: 0.5,
-						absolute: {
-							x: antObj.keyFrames[1].x,
-							y: antObj.keyFrames[1].y//,
-							//angle: offset.angle
-						},
-						relative: {}
-					}]);
-					// only in zoom mode: < movement time reduced to 0.5, pay attention when uncommenting >
-					/*
-					nextDir = nextAntDirection(antObj.id, t);
-					if (nextDir) {
-						var angle = nextDir.angle - offset.angle;
-						if (angle < -Math.PI) {
-							angle += 2 * Math.PI;
-						} else if (angle > +Math.PI) {
-							angle -= 2 * Math.PI;
-						}
-						if (angle != 0) {
-							antObj.keyFrames[1].jitter = 0;
-							antObj.keyFrames[2].jitter = 0;
-							if (Math.abs(angle) < 0.9 * Math.PI) {
-								var sq = 1 / Math.sqrt(2);
-								antObj.keyFrames[2]['x'] = antObj.keyFrames[1]['x'] + 0.5 * (offset['x'] * sq + (1 - sq) * nextDir.x);
-								antObj.keyFrames[2]['y'] = antObj.keyFrames[1]['y'] + 0.5 * (offset['y'] * sq + (1 - sq) * nextDir.y);
-								antObj.keyFrames[2].angle += 0.5 * angle;
+			if (isAnt) {
+				for (i = 0; i < orders.length; i++) {
+					var dir = orders[i];
+					this.turns[conv + i].clearFog(owner, y, x, this.rows,
+							this.cols, this.parameters['viewradius2']);
+					if (dir) {
+						x += dir.x;
+						y += dir.y;
+						ant.fade(Quality.LOW, 'x', x, conv + i, conv + i + 0.5);
+						ant.fade(Quality.LOW, 'y', y, conv + i, conv + i + 0.5);
+						/*antObj.keyFrames[1].angle = offset.angle;
+						antObj.animate([{
+							time: 0.5,
+							absolute: {
+								x: antObj.keyFrames[1].x,
+								y: antObj.keyFrames[1].y//,
+								//angle: offset.angle
+							},
+							relative: {}
+						}]);
+						// only in zoom mode: < movement time reduced to 0.5, pay attention when uncommenting >
+						/*
+						nextDir = nextAntDirection(antObj.id, t);
+						if (nextDir) {
+							var angle = nextDir.angle - offset.angle;
+							if (angle < -Math.PI) {
+								angle += 2 * Math.PI;
+							} else if (angle > +Math.PI) {
+								angle -= 2 * Math.PI;
 							}
-						}
-					}*/
+							if (angle != 0) {
+								antObj.keyFrames[1].jitter = 0;
+								antObj.keyFrames[2].jitter = 0;
+								if (Math.abs(angle) < 0.9 * Math.PI) {
+									var sq = 1 / Math.sqrt(2);
+									antObj.keyFrames[2]['x'] = antObj.keyFrames[1]['x'] + 0.5 * (offset['x'] * sq + (1 - sq) * nextDir.x);
+									antObj.keyFrames[2]['y'] = antObj.keyFrames[1]['y'] + 0.5 * (offset['y'] * sq + (1 - sq) * nextDir.y);
+									antObj.keyFrames[2].angle += 0.5 * angle;
+								}
+							}
+						}*/
+					}
 				}
-				this.turns[start + i].clearFog(owner, y, x, this.rows, this.cols, this.parameters['viewradius2']);
+				if (end !== conv + orders.length) {
+					// account for survivors
+					this.turns[end - 1].clearFog(owner, y, x, this.rows,
+							this.cols, this.parameters['viewradius2']);
+				}
+			}
+			// end of life
+			var collision = false;
+			dir = collision ? end - 0.75 : end - 0.25;
+			ant.fade(Quality.LOW, 'size', 0.0, dir, dir + 0.25);
+			ant.fade(Quality.LOW, 'r', 0.0, dir, dir + 0.25);
+			ant.fade(Quality.LOW, 'g', 0.0, dir, dir + 0.25);
+			ant.fade(Quality.LOW, 'b', 0.0, dir, dir + 0.25);
+			// account ant to the owner
+			for (i = conv; i < end; i++) {
+				this.turns[i].counts[owner]++;
+			}
+			for (i = Math.max(0, start); i < end; i++) {
+				this.turns[i].ants.push(ant);
 			}
 			tl = lit.gimmeNext();
 		}
@@ -367,29 +350,6 @@ function Replay(replayStr, parameters) {
 				this.turns[k].scores[i] = scores[scores.length - 1];
 			}
 			if (i != this.players.length - 1) tl = lit.gimmeNext();
-		}
-		// end of life
-		for (id in ants) {
-			item = ants[id];
-			tl = item.tl;
-			if (item.end === this.turns.length - 1 || item.end === undefined) {
-				item.end = this.turns.length - 1;
-				this.turns[this.turns.length - 1].counts[item.ant.owner]++;
-			} else {
-				if (item.start === item.end) {
-					throw new Error('Found an ant with no lifespan. Birth and death in turn ' + (item.start + 1) + '.');
-				} else {
-					var collision = false;
-					dir = collision ? item.end - 0.75 : item.end - 0.25;
-					item.ant.fade(Quality.LOW, 'size', 0.0, dir, dir + 0.25);
-					item.ant.fade(Quality.LOW, 'r', 0.0, dir, dir + 0.25);
-					item.ant.fade(Quality.LOW, 'g', 0.0, dir, dir + 0.25);
-					item.ant.fade(Quality.LOW, 'b', 0.0, dir, dir + 0.25);
-				}
-			}
-			for (i = Math.max(0, item.start); i <= item.end; i++) {
-				this.turns[i].ants.push(item.ant);
-			}
 		}
 		if (lit.moar()) {
 			tl = lit.gimme();
@@ -524,13 +484,3 @@ Turn.prototype.clearFog = function(player, row, col, rows, cols, radius2) {
 		}
 	}
 };
-
-/**
- * @constructor
- */
-function AntLife(ant, start, end, tl) {
-	this.ant = ant;
-	this.start = start;
-	this.end = end;
-	this.tl = tl;
-}

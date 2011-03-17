@@ -535,7 +535,7 @@ Visualizer.prototype.tryStart = function() {
 			this.log.style.display = 'none';
 			this.loading = LoadingState.IDLE;
 		}
-	} else {
+	} else if (this.replay && !(this.replay instanceof XMLHttpRequest)) {
 		this.loadParseReplay();
 	}
 };
