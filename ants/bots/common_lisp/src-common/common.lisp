@@ -21,8 +21,8 @@
 
 
 (defun errmsg (&rest args)
-  (declare (ignore args))
-  (error "You need to redefine ERRMSG in your own package."))
+  (format (error-stream *state*) (apply #'mkstr args))
+  (force-output *error-output*))
 
 
 (defun host2str (host)
@@ -33,8 +33,9 @@
 
 
 (defun logmsg (&rest args)
-  (declare (ignore args))
-  (error "You need to redefine LOGMSG in your own package."))
+  (when *verbose*
+    (format (log-stream *state*) (apply #'mkstr args))
+    (force-output (log-stream *state*))))
 
 
 (defun mkstr (&rest args)

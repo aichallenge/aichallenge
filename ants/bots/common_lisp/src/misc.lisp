@@ -10,17 +10,6 @@
   (force-output (output *state*)))
 
 
-(defun errmsg (&rest args)
-  (format *error-output* (apply #'mkstr args))
-  (force-output *error-output*))
-
-
-(defun logmsg (&rest args)
-  (when *verbose*
-    (format (log-stream *state*) (apply #'mkstr args))
-    (force-output (log-stream *state*))))
-
-
 (defun move-ant (row col direction)
   (if (not (member direction '(:north :east :south :west)))
       (errmsg "[move-ant] Illegal direction: " direction)

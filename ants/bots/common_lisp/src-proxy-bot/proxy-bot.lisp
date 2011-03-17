@@ -1,4 +1,6 @@
 ;;;; proxy-bot.lisp
+;;;;
+;;;; TODO use STATE class
 
 (in-package :ants-proxy-bot)
 

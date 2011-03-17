@@ -9,6 +9,8 @@
 (defclass state ()
   ((input :reader input :initarg :input :initform *standard-input*)
    (output :reader output :initarg :output :initform *standard-output*)
+   (error-stream :reader error-stream :initarg :error-stream
+                 :initform *error-output*)
    (log-stream :reader log-stream :initform nil)  ; TODO? *debug-io*
    (turn :reader turn :initform nil)
    (turn-start-time :reader turn-start-time :initform nil)

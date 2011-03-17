@@ -5,22 +5,6 @@
 (in-package :play-game)
 
 
-;;; Common Functions
-
-;; This is for the handlers in src-common/handlers.lisp.
-(defun errmsg (&rest args)
-  (apply #'logmsg args))
-
-
-(defun logmsg (&rest args)
-  (when *verbose*
-    (let ((str (with-output-to-string (s)
-                 (dolist (a args)
-                   (princ a s)))))
-      (format (log-stream *state*) str)
-      (force-output (log-stream *state*)))))
-
-
 ;;; Functions
 
 (defun ants-within-attack-range ()
@@ -448,7 +432,7 @@
 
 (defun main ()
   (make-context)
-  (let ((*state* (make-instance 'play-game-state))
+  (let ((*state* (make-instance 'play-game-state :error-stream *debug-io*))
         (*verbose* nil))
     (process-cmdline-options)
     (parse-map (map-file *state*))
