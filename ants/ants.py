@@ -94,7 +94,7 @@ class Ants:
         self.load_map(map_text)
 
         # used to remember where the ants started
-        self.initial_ant_list = dict((ant.loc, ant.owner) for ant in self.current_ants.values())
+        self.initial_ant_list = sorted(self.current_ants.values(), key=operator.attrgetter('owner'))
         self.initial_access_map = self.access_map()
 
         # used to track dead players, ants may still exist, but order are not processed
@@ -530,7 +530,7 @@ class Ants:
             Return None if no square is found
         """
 
-        if self.map[coord[1]][coord[0]] == LAND:
+        if self.map[coord[0]][coord[1]] == LAND:
             return coord
 
         visited = set()
@@ -543,7 +543,7 @@ class Ants:
                 n_loc = self.destination(c_row, c_col, d)
                 if n_loc in visited: continue
 
-                if self.map[n_loc[1]][n_loc[0]] == LAND:
+                if self.map[n_loc[0]][n_loc[1]] == LAND:
                     return n_loc
 
                 visited.add(n_loc)
@@ -575,9 +575,9 @@ class Ants:
         for f in range(amount):
             dr = -self.height//4 + randrange(self.height//2)
             dc = -self.width//4  + randrange(self.width//2)
-            for row, col in self.initial_ant_list:
-                col = (col+dc)%self.width
-                row = (row+dr)%self.height
+            for ant in self.initial_ant_list: # assumes one ant per player
+                row = (ant.loc[0]+dr)%self.height
+                col = (ant.loc[1]+dc)%self.width
                 coord = self.find_closest_land((row, col))
                 if coord:
                     self.add_food(coord)
