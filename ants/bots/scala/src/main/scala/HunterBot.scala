@@ -1,3 +1,7 @@
+object HunterBot extends Application {
+  new AntsGame(System.in).run(new HunterBot)
+}
+
 class HunterBot extends Bot {
 
   def ordersFrom(game: Game): Set[Order] = {
