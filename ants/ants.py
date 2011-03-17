@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-from random import randrange, choice
+from random import randrange, choice, shuffle
 from math import sqrt
 import os
 from collections import deque, defaultdict
@@ -68,8 +68,12 @@ class Ants:
         if 'food' in options:
             if options['food'] == 'none':
                 self.do_food = self.do_food_none
+            elif options['food'] == 'random':
+                self.do_food = self.do_food_random
             elif options['food'] == 'sections':
                 self.do_food = self.do_food_sections
+            elif options['food'] == 'symmetric':
+                self.do_food = self.do_food_symmetric
 
         self.width = None   # the map
         self.height = None
@@ -605,19 +609,54 @@ class Ants:
             Split the map into sections that each ant can access 
             first at the start of the game. Place food evenly into each space.
         """
+        if not hasattr(self, 'food_sets'):
+            self.food_sets = self.get_symmetric_food_sets()
+
+        for f in range(amount):
+            for t in range(10):
+                s = self.food_sets[0]
+                self.food_sets.rotate()
+                # only add food if all locations are free
+                if all(self.map[loc[0]][loc[1]] == LAND for loc in s):
+                    for loc in s:
+                        self.add_food(loc)
+                    break
+
+    def get_symmetric_food_sets(self):
         ant1, ant2 = self.initial_ant_list[0:2] # assumed one ant per player
         row_t = abs(ant1.loc[0] - ant2.loc[0])
         col_t = abs(ant1.loc[1] - ant2.loc[1])
-        for f in range(amount):
-            row = randrange(self.height)
-            col = randrange(self.width)
+        food_sets = []
+        visited = [[False for col in range(self.width)]
+                          for row in range(self.height)]
 
-            for p in range(self.num_players):
-                row = (row + row_t)%self.height
-                col = (col + col_t)%self.width
-                loc = self.find_closest_land((row, col))
-                if loc:
-                    self.add_food(loc)
+        for row, squares in enumerate(visited):
+            for col, square in enumerate(squares):
+                # if this square has been visited then we don't need to process
+                if square:
+                    continue
+
+                # possible food locations
+                locations = [
+                    self.destination((row, col), (n*row_t, n*col_t))
+                    for n in range(self.num_players)
+                ]
+
+                # set locations to visited
+                for loc in locations:
+                    # we should not have visited these locations yet
+                    # this also catches duplicates in the current list
+                    if visited[loc[0]][loc[1]]:
+                        raise Exception("Invalid map",
+                                        "This map does not support symmetric food placement")
+                    visited[loc[0]][loc[1]] = True
+
+                # we only care about sets where none of the locations hit water
+                if all(self.map[l[0]][l[1]] != WATER for l in locations):
+                    food_sets.append(locations)
+
+        shuffle(food_sets)
+        return deque(food_sets)
 
     def remaining_players(self):
         return sum(self.is_alive(p) for p in range(self.num_players))
