@@ -191,9 +191,6 @@ class Ants:
                             #    self.center[value] = (last_row, col)
                         value = players.index(c)
                         self.map[-1].append(value)
-                        # starting ant gets a food entry for the replay format
-                        self.add_food((row, col))
-                        self.remove_food((row, col))
                         self.add_ant((row, col), value)
                         self.land_area += 1
                     elif c == '*':
@@ -387,7 +384,7 @@ class Ants:
     #  and food in contention is eliminated
     def do_spawn(self):
         # Determine new ant locations
-        new_ant_locations = {}
+        new_ant_locations = []
         for f_loc in self.current_food.keys():
             owner = None
             for ant in self.nearby_ants(f_loc, None, 1, self.spawnradius):
@@ -398,12 +395,12 @@ class Ants:
                     break
             else:
                 if owner != None:
-                    self.remove_food(f_loc)
-                    new_ant_locations[f_loc] = owner
+                    food = self.remove_food(f_loc)
+                    new_ant_locations.append((food, owner))
 
         # Create new ants
-        for loc, owner in new_ant_locations.items():
-            self.add_ant(loc, owner)
+        for food, owner in new_ant_locations:
+            self.add_ant(food, owner)
 
     def add_food(self, loc):
         if loc in self.current_food:
@@ -413,17 +410,27 @@ class Ants:
         food = Food(loc, self.turn)
         self.current_food[loc] = food
         self.all_food.append(food)
+        return food
 
     def remove_food(self, loc):
         try:
             self.map[loc[0]][loc[1]] = LAND
-            self.current_food[loc].end_turn = self.turn
+            food = self.current_food[loc]
+            food.end_turn = self.turn
             del self.current_food[loc]
+            return food
         except KeyError:
             raise Exception("Remove food error",
                             "Food not found at %s" %(loc,))
 
-    def add_ant(self, loc, owner):
+    def add_ant(self, food, owner):
+        # if we weren't given a Food object then create a dummy food
+        if not isinstance(food, Food):
+            loc = food
+            self.add_food(loc)
+            food = self.remove_food(loc)
+
+        loc = food.loc
         if loc in self.current_ants:
             raise Exception("Add ant error",
                             "Ant already found at %s" %(loc,))
@@ -432,6 +439,8 @@ class Ants:
         self.map[row][col] = owner
         self.all_ants.append(ant)
         self.current_ants[loc] = ant
+        food.ant = ant
+        return ant
 
     def kill_ant(self, loc):
         try:
@@ -441,6 +450,7 @@ class Ants:
             ant.killed = True
             ant.die_turn = self.turn
             del self.current_ants[loc]
+            return ant
         except KeyError:
             raise Exception("Kill ant error",
                             "Ant not found at %s" %(loc,))
@@ -850,7 +860,7 @@ class Ant:
 
     def __str__(self):
         return '(%s, %s, %s, %s, %s)' % (self.initial_loc, self.owner, self.spawn_turn, self.die_turn, ''.join(self.orders))
-    
+
     def move(self, new_loc, direction='-'):
         # ignore duplicate moves
         if self.moved:
@@ -868,7 +878,8 @@ class Food:
         self.loc = loc
         self.start_turn = start_turn
         self.end_turn = None
+        self.ant = None
 
     def __str__(self):
         return '(%s, %s, %s)' % (self.loc, self.start_turn, self.end_turn)
-    
+
