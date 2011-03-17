@@ -4,6 +4,22 @@
 import MySQLdb
 from server_info import server_info
 
+Sql = {"seed_user": """
+
+select u.user_id, s.submission_id
+from user u
+inner join submission s on s.user_id = u.user_id and s.latest = 1
+order by
+( select max(matchup_id)
+  from matchup m
+  where m.seed_id = u.user_id ) asc,
+( select max(game_id)
+  from game g
+  where g.seed_id = u.user_id ) asc,
+u.user_id asc
+
+"""}
+
 SQL = {
 	# No arguments.
 	"seed_user_id": """
@@ -270,4 +286,5 @@ def main():
 		cursor.execute(SQL["drop_opp_data"])
 
 if __name__ == "__main__":
+	print SQL.keys()
 	main()
