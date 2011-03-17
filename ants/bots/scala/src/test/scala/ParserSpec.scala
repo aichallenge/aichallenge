@@ -34,5 +34,24 @@ class ParserSpec extends Specification with ScalaCheck {
         val actualGame = Parser.parse(Source.fromInputStream(new ByteArrayInputStream(input.getBytes)))
         actualGame must_== Game(parameters = params)
     }
+
+    "parse valid turn +n data" in {
+      val input = """
+        turn 1
+        f 6 5
+        w 7 6
+        a 7 9 1
+        a 10 8 0
+        a 10 9 0
+        go"""
+      val actualGame = Parser.parse(Source.fromInputStream(new ByteArrayInputStream(input.getBytes)))
+      actualGame must_== Game(turn = 1, board = Board(Map(
+        Tile(6,5) -> Food(Tile(6,5)),
+        Tile(7,6) -> Water(Tile(7,6)),
+        Tile(7,9) -> Ant(Tile(7,9), false),
+        Tile(10,8) -> Ant(Tile(10,8), true),
+        Tile(10,9) -> Ant(Tile(10,9), true)
+      )))
+    }
   }
 }
