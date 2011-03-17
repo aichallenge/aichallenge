@@ -1,7 +1,3 @@
-trait Bot extends Application {
-
+trait Bot {
   def ordersFrom(gameState: Game): Set[Order]
-
-  new AntsGame().run(this)
-
 }
