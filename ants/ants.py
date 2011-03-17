@@ -201,16 +201,13 @@ class Ants:
 
     def get_perspective(self, player):
         v = self.get_vision(player, self.viewradius)
-        #start_row = self.center[player][1] - self.height // 2
-        #stop_row = start_row + self.height
-        #start_col = self.center[player][0] - self.width // 2
-        #stop_col = start_col + self.width
-        return [[self.switch[player][self.map[row % self.height][col % self.width]]
-                    if v[row % self.height][col % self.width] else UNSEEN
-                #    for col in range(start_row, stop_row + 1)]
-                #for row in range(start_col, stop_col + 1)]
-                    for col in range(self.width)]
-                for row in range(self.height)]
+        result = []
+        for row, squares in enumerate(self.map):
+            result.append([
+                self.switch[player][square] if v[row][col] else UNSEEN
+                for col, square in enumerate(squares)
+            ])
+        return result
 
     # communication to bot is in x, y coords
     def render_changes(self, player):
