@@ -1,6 +1,9 @@
 ;;;; play-game.lisp
 ;;;;
 ;;;; This is really a hack job currently.
+;;;;
+;;;; We should keep seperate lists of ants for each player and also for food
+;;;; so resolutions can be checked quicker than going over the map every time.
 
 (in-package :play-game)
 
