@@ -113,14 +113,56 @@ class Ants:
         self.revealed_water = [[] for i in range(self.num_players)]
 
         # used to give a different ordering of players to each player
-        #   to help hide total number of players
-        self.switch = [[0 if j == i else None
-                             for j in range(self.num_players)] + range(-5,0)
-                         for i in range(self.num_players)]
+        self.switch = self.get_switch()
 
         # used to track scores
         self.score = [Fraction(0,1)]*self.num_players
         self.score_history = [[s] for s in self.score]
+
+    def distance(self, x, y):
+        """ Returns distance between x and y squared """
+        d_row = abs(x[0] - y[0])
+        d_row = min(d_row, self.height - d_row)
+        d_col = abs(x[1] - y[1])
+        d_col = min(d_col, self.width - d_col)
+        return d_row**2 + d_col**2
+
+    def get_switch(self):
+        """ Used to give a different ordering of players to each player
+
+            Player is always 0, closest enemy 1 and so on.
+            This helps hide total number of players.
+        """
+
+        # sort ants by player
+        player_ants = defaultdict(list)
+        for ant in self.initial_ant_list:
+            player_ants[ant.owner].append(ant)
+
+        switch = []
+        for i in range(self.num_players):
+            distances = []
+            for j in range(self.num_players):
+                # distance of player to another player is the minimum
+                #   distance between any two of their ants
+                distance = min(
+                    self.distance(a.loc, b.loc)
+                    for a in player_ants[i]
+                    for b in player_ants[j]
+                )
+                distances.append((distance,j))
+
+            # set the order of players with closest distance first
+            switch_row = [None]*self.num_players
+            for new_value, (distance, player) in enumerate(sorted(distances)):
+                switch_row[player] = new_value
+
+            # account for non-player squares
+            switch_row.extend(range(-5,0))
+
+            switch.append(switch_row)
+
+        return switch
 
     def load_map(self, map_text):
         players = []
@@ -193,9 +235,6 @@ class Ants:
                         if self.map[n_row][n_col] == WATER:
                             self.revealed_water[player].append((n_row, n_col))
                     value = self.map[n_row][n_col]
-                    if (value >= ANTS and self.switch[player][value] == None):
-                        self.switch[player][value] = (self.num_players -
-                            self.switch[player][:self.num_players].count(None))
                     squaresToCheck.append(((a_row,a_col),(n_row,n_col)))
         return vision
 
