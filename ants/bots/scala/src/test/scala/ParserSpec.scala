@@ -60,5 +60,11 @@ class ParserSpec extends Specification with ScalaCheck {
       val game = Parser.parse(Source.fromString("go"))
       game.parameters must_== GameParameters()
     }
+
+    "use the provided parameters" in {
+      val expectedParams = GameParameters(1,2,3,4,5,6,7,8)
+      val game = Parser.parse(Source.fromString("go"), expectedParams)
+      game.parameters must_== expectedParams
+    }
   }
 }
