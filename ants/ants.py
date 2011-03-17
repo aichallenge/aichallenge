@@ -803,37 +803,26 @@ class Ants:
         # map
         result.append([self.render_map()])
 
-        #for f in self.all_food:
-        #    print("food: %s" % f)
-        #for a in self.all_ants:
-        #    print("ants: %s" % a)
-            
         # food and ants combined
         for f in self.all_food:
             ant_data = ['a', f.loc[0], f.loc[1], f.start_turn]
             if f.end_turn == None:
+                # food survives to end of game
                 ant_data.append(self.turn + 1)
+            elif food.ant == None:
+                # food disappears
+                ant_data.append(f.end_turn)
             else:
-                # find ant that was converted
-                ant = None
-                for a in self.all_ants:
-                    if a.initial_loc == f.loc and a.spawn_turn == f.end_turn:
-                        ant = a
-                        break
-                    #else:
-                    #    print('a%s != f%s or %s != %s' % (a.initial_loc, f.loc, a.spawn_turn, f.end_turn))
+                # food got converted to an ant
+                ant = food.ant
+                ant_data.append(ant.spawn_turn)
+                if not ant.killed:
+                    ant_data.append(self.turn + 1)
                 else:
-                    # food disappears
-                    ant_data.append(f.end_turn)
-                if ant != None:
-                    # find if ant survives to end
-                    ant_data.append(ant.spawn_turn)
-                    if not ant.killed:
-                        ant_data.append(self.turn + 1)
-                    else:
-                        ant_data.append(ant.die_turn)
-                    ant_data.append(ant.owner)
-                    ant_data.append(''.join(ant.orders))
+                    ant_data.append(ant.die_turn)
+                ant_data.append(ant.owner)
+                ant_data.append(''.join(ant.orders))
+
             result.append(ant_data)
 
         # scores
