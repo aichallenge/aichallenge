@@ -172,11 +172,6 @@ class Ants:
         self.num_players = len(players)
         return True
 
-    def distance(self, x1, y1, x2, y2):
-        d_x = min(abs(x1 - x2), self.width - abs(x1 - x2))
-        d_y = min(abs(y1 - y2), self.height - abs(y1 - y2))
-        return d_x + d_y
-
     def get_vision(self, player):
         vision = [[False for col in range(self.width)] for row in range(self.height)]
         squaresToCheck = deque()
