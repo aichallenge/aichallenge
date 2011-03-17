@@ -31,7 +31,7 @@ class ParserSpec extends Specification with ScalaCheck {
           spawnradius2 %d
           ready""".format(params.loadTime, params.turnTime, params.rows, params.columns, params.turns,
           params.viewRadius, params.attackRadius, params.spawnRadius)
-        val actualGame = Parser.parse(Source.fromInputStream(new ByteArrayInputStream(input.getBytes)))
+        val actualGame = Parser.parse(Source.fromString(input))
         actualGame must_== Game(parameters = params)
     }
 
@@ -44,7 +44,7 @@ class ParserSpec extends Specification with ScalaCheck {
         a 10 8 0
         a 10 9 0
         go"""
-      val actualGame = Parser.parse(Source.fromInputStream(new ByteArrayInputStream(input.getBytes)))
+      val actualGame = Parser.parse(Source.fromString(input))
       actualGame must_== Game(turn = 1, board = Board(Map(
         Tile(6,5) -> Food(Tile(6,5)),
         Tile(7,6) -> Water(Tile(7,6)),
@@ -52,6 +52,13 @@ class ParserSpec extends Specification with ScalaCheck {
         Tile(10,8) -> Ant(Tile(10,8), true),
         Tile(10,9) -> Ant(Tile(10,9), true)
       )))
+    }
+  }
+
+  "The parser" should {
+    "assign default parameters if none are provided" in {
+      val game = Parser.parse(Source.fromString("go"))
+      game.parameters must_== GameParameters()
     }
   }
 }

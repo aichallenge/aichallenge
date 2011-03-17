@@ -20,7 +20,7 @@ object Parser {
     "spawnradius2 (\\d+)".r -> ((state, values: Seq[Int]) => state.copy(parameters = state.parameters.copy(spawnRadius = values(0))))
   )
 
-  def parse(source: Source) = {
+  def parse(source: Source, params: GameParameters = GameParameters()) = {
     val lines = source.getLines
 
     @tailrec
@@ -42,6 +42,6 @@ object Parser {
       }
     }
 
-    parseInternal(Game())
+    parseInternal(Game(parameters = params))
   }
 }
