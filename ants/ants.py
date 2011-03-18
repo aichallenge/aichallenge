@@ -804,14 +804,14 @@ class Ants:
         result.append([self.render_map()])
 
         # food and ants combined
-        for f in self.all_food:
-            ant_data = ['a', f.loc[0], f.loc[1], f.start_turn]
-            if f.end_turn == None:
+        for food in self.all_food:
+            ant_data = ['a', food.loc[0], food.loc[1], food.start_turn]
+            if food.end_turn == None:
                 # food survives to end of game
                 ant_data.append(self.turn + 1)
             elif food.ant == None:
                 # food disappears
-                ant_data.append(f.end_turn)
+                ant_data.append(food.end_turn)
             else:
                 # food got converted to an ant
                 ant = food.ant
