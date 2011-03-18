@@ -44,7 +44,6 @@ for r in range(101):
 class Ants:
     def __init__(self, options=None):
         # setup options
-        # attack method
         map_text = options['map']
         self.turns = int(options['turns'])
         self.loadtime = int(options['loadtime'])
@@ -56,7 +55,6 @@ class Ants:
             self.seed = options["seed"]
         else:
             self.seed = None
-        #print("Starting game with view=%s, attack=%s and spawn=%s" % (self.viewradius, self.attackradius, self.spawnradius))
 
         self.do_attack = self.do_attack_closest
         if 'attack' in options:
@@ -90,9 +88,6 @@ class Ants:
 
         self.turn = 0
 
-        #self.center = [] # used to scroll the map so that a player's
-        #                 #   starting ant is in the center
-
         # load map and get number of players from map
         #   will fill in center data
         self.load_map(map_text)
@@ -109,8 +104,10 @@ class Ants:
         self.revealed = [[[False for col in range(self.width)]
                           for row in range(self.height)]
                          for p in range(self.num_players)]
-        # used to track per turn for bot communication
-        self.revealed_water = [[] for i in range(self.num_players)]
+        # used to track what a player can see
+        self.vision = [self.get_vision(i) for i in range(self.num_players)]
+        # used to track new water squares that the player can see
+        self.revealed_water = self.update_revealed()
 
         # used to give a different ordering of players to each player
         self.switch = self.get_switch()
@@ -212,6 +209,8 @@ class Ants:
         return True
 
     def get_vision(self, player):
+        """ Determine which squares are visible to the given player """
+
         vision = [[False for col in range(self.width)] for row in range(self.height)]
         squares_to_check = deque()
         for ant in self.player_ants(player):
@@ -223,15 +222,28 @@ class Ants:
                 n_row, n_col = n_loc
                 if not vision[n_row][n_col] and self.distance(a_loc, n_loc) <= self.viewradius:
                     vision[n_row][n_col] = True
-                    if not self.revealed[player][n_row][n_col]:
-                        self.revealed[player][n_row][n_col] = True
-                        if self.map[n_row][n_col] == WATER:
-                            self.revealed_water[player].append(n_loc)
                     squares_to_check.append((a_loc, n_loc))
         return vision
 
+    def update_revealed(self):
+        """ Update self.revealed to reflect the updated vision
+            Return a list of all new water squares that are visible
+        """
+        revealed_water = []
+        for player in range(self.num_players):
+            water = []
+            revealed = self.revealed[player]
+            for row, squares in enumerate(self.vision[player]):
+                for col, visible in enumerate(squares):
+                    if visible and not revealed[row][col]:
+                        revealed[row][col] = True
+                        if self.map[row][col] == WATER:
+                            water.append((row,col))
+            revealed_water.append(water)
+        return revealed_water
+
     def get_perspective(self, player):
-        v = self.get_vision(player, self.viewradius)
+        v = self.vision[player]
         result = []
         for row, squares in enumerate(self.map):
             result.append([
@@ -243,7 +255,7 @@ class Ants:
     # communication to bot is in x, y coords
     def render_changes(self, player):
         updates = self.get_state_updates()
-        v = self.get_vision(player)
+        v = self.vision[player]
         visible_updates = []
 
         # first add unseen water
@@ -710,15 +722,22 @@ class Ants:
         self.killed_ants = []
         for ant in self.current_ants.values():
             ant.moved = False
+        self.revealed_water = [[] for i in range(self.num_players)]
+        # ensure that vision is not used while ants are being moved
+        self.vision = None
 
     def finish_turn(self):
-        self.revealed_water = [[] for i in range(self.num_players)]
         self.resolve_orders()
         self.do_attack()
         self.do_spawn()
         self.do_food()
+
         for i, s in enumerate(self.score):
             self.score_history[i].append(s)
+
+        # now that all the ants have moved we can update the vision
+        self.vision = [self.get_vision(i) for i in range(self.num_players)]
+        self.revealed_water = self.update_revealed()
 
     # used for 'map hack' streaming playback
     def get_state(self):
@@ -846,7 +865,6 @@ class Ant:
         return '(%s, %s, %s, %s, %s)' % (self.initial_loc, self.owner, self.spawn_turn, self.die_turn, ''.join(self.orders))
 
     def move(self, new_loc, direction='-'):
-        # ignore duplicate moves
         if self.moved:
             raise Exception("Move ant error",
                             "This ant was already moved from %s to %s"
