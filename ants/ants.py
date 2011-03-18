@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-from random import randrange, choice
+from random import randrange, choice, shuffle
 from math import sqrt
 import os
 from collections import deque, defaultdict
@@ -44,7 +44,6 @@ for r in range(101):
 class Ants:
     def __init__(self, options=None):
         # setup options
-        # attack method
         map_text = options['map']
         self.turns = int(options['turns'])
         self.loadtime = int(options['loadtime'])
@@ -56,7 +55,6 @@ class Ants:
             self.seed = options["seed"]
         else:
             self.seed = None
-        #print("Starting game with view=%s, attack=%s and spawn=%s" % (self.viewradius, self.attackradius, self.spawnradius))
 
         self.do_attack = self.do_attack_closest
         if 'attack' in options:
@@ -68,8 +66,12 @@ class Ants:
         if 'food' in options:
             if options['food'] == 'none':
                 self.do_food = self.do_food_none
+            elif options['food'] == 'random':
+                self.do_food = self.do_food_random
             elif options['food'] == 'sections':
                 self.do_food = self.do_food_sections
+            elif options['food'] == 'symmetric':
+                self.do_food = self.do_food_symmetric
 
         self.width = None   # the map
         self.height = None
@@ -86,37 +88,43 @@ class Ants:
 
         self.turn = 0
 
-        #self.center = [] # used to scroll the map so that a player's
-        #                 #   starting ant is in the center
-
         # load map and get number of players from map
         #   will fill in center data
         self.load_map(map_text)
 
         # used to remember where the ants started
-        self.initial_ant_list = dict((ant.loc, ant.owner) for ant in self.current_ants.values())
+        self.initial_ant_list = sorted(self.current_ants.values(), key=operator.attrgetter('owner'))
         self.initial_access_map = self.access_map()
 
         # used to track dead players, ants may still exist, but order are not processed
         self.killed = [False for i in range(self.num_players)]
 
+        # used to give a different ordering of players to each player
+        self.switch = [[None]*self.num_players + range(-5,0) for i in range(self.num_players)]
         # used to track water and land already reveal to player
         # ants and food will reset spots so a second land entry will be sent
         self.revealed = [[[False for col in range(self.width)]
                           for row in range(self.height)]
                          for p in range(self.num_players)]
-        # used to track per turn for bot communication
-        self.turn_reveal = [[] for i in range(self.num_players)]
+        # used to track what a player can see
+        self.vision = [self.get_vision(i) for i in range(self.num_players)]
+        # used to track new water squares that the player can see
+        self.revealed_water = [[] for i in range(self.num_players)]
 
-        # used to give a different ordering of players to each player
-        #   to help hide total number of players
-        self.switch = [[0 if j == i else None
-                             for j in range(self.num_players)] + range(-5,0)
-                         for i in range(self.num_players)]
+        # initialise data that remembers what players have seen
+        self.update_revealed()
 
         # used to track scores
         self.score = [Fraction(0,1)]*self.num_players
         self.score_history = [[s] for s in self.score]
+
+    def distance(self, x, y):
+        """ Returns distance between x and y squared """
+        d_row = abs(x[0] - y[0])
+        d_row = min(d_row, self.height - d_row)
+        d_col = abs(x[1] - y[1])
+        d_col = min(d_col, self.width - d_col)
+        return d_row**2 + d_col**2
 
     def load_map(self, map_text):
         players = []
@@ -145,9 +153,6 @@ class Ants:
                             #    self.center[value] = (last_row, col)
                         value = players.index(c)
                         self.map[-1].append(value)
-                        # starting ant gets a food entry for the replay format
-                        self.add_food((row, col))
-                        self.remove_food((row, col))
                         self.add_ant((row, col), value)
                         self.land_area += 1
                     elif c == '*':
@@ -168,60 +173,75 @@ class Ants:
         self.num_players = len(players)
         return True
 
-    def distance(self, x1, y1, x2, y2):
-        d_x = min(abs(x1 - x2), self.width - abs(x1 - x2))
-        d_y = min(abs(y1 - y2), self.height - abs(y1 - y2))
-        return d_x + d_y
-
     def get_vision(self, player):
+        """ Determine which squares are visible to the given player """
+
         vision = [[False for col in range(self.width)] for row in range(self.height)]
-        squaresToCheck = deque()
+        squares_to_check = deque()
         for ant in self.player_ants(player):
-            squaresToCheck.append((ant.loc, ant.loc))
-        while len(squaresToCheck) > 0:
-            (a_row, a_col), (v_row, v_col) = squaresToCheck.popleft()
-            for d_row, d_col in ((0,-1),(0,1),(-1,0),(1,0)):
-                n_col = (v_col + d_col) % self.width
-                n_row = (v_row + d_row) % self.height
-                d_row = abs(a_row - n_row)
-                d_row = min(d_row, self.height - d_row)
-                d_col = abs(a_col - n_col)
-                d_col = min(d_col, self.width - d_col)
-                if not vision[n_row][n_col] and (d_row**2 + d_col**2) <= self.viewradius:
+            squares_to_check.append((ant.loc, ant.loc))
+        while squares_to_check:
+            a_loc, v_loc = squares_to_check.popleft()
+            for d in AIM:
+                n_loc = self.destination(v_loc, d)
+                n_row, n_col = n_loc
+                if not vision[n_row][n_col] and self.distance(a_loc, n_loc) <= self.viewradius:
                     vision[n_row][n_col] = True
-                    if not self.revealed[player][n_row][n_col]:
-                        self.turn_reveal[player].append((n_row, n_col))
-                        self.revealed[player][n_row][n_col] = True
-                    value = self.map[n_row][n_col]
-                    if (value >= ANTS and self.switch[player][value] == None):
-                        self.switch[player][value] = (self.num_players -
-                            self.switch[player][:self.num_players].count(None))
-                    squaresToCheck.append(((a_row,a_col),(n_row,n_col)))
+                    squares_to_check.append((a_loc, n_loc))
         return vision
 
+    def update_revealed(self):
+        """ Make updates to state based on what each player can see
+
+            Update self.revealed to reflect the updated vision
+            Update self.switch for any new enemies
+            Update self.revealed_water
+        """
+        self.revealed_water = []
+        for player in range(self.num_players):
+            water = []
+            revealed = self.revealed[player]
+            switch = self.switch[player]
+            for row, squares in enumerate(self.vision[player]):
+                for col, visible in enumerate(squares):
+                    if not visible:
+                        continue
+
+                    value = self.map[row][col]
+
+                    # if this player encounters a new enemy then
+                    #   assign the enemy the next index
+                    if value >= ANTS and switch[value] == None:
+                        switch[value] = self.num_players - switch.count(None)
+
+                    # mark square as revealed and determine if we see any
+                    #   new water
+                    if not revealed[row][col]:
+                        revealed[row][col] = True
+                        if value == WATER:
+                            water.append((row,col))
+
+            self.revealed_water.append(water)
+
     def get_perspective(self, player):
-        v = self.get_vision(player, self.viewradius)
-        #start_row = self.center[player][1] - self.height // 2
-        #stop_row = start_row + self.height
-        #start_col = self.center[player][0] - self.width // 2
-        #stop_col = start_col + self.width
-        return [[self.switch[player][self.map[row % self.height][col % self.width]]
-                    if v[row % self.height][col % self.width] else UNSEEN
-                #    for col in range(start_row, stop_row + 1)]
-                #for row in range(start_col, stop_col + 1)]
-                    for col in range(self.width)]
-                for row in range(self.height)]
+        v = self.vision[player]
+        result = []
+        for row, squares in enumerate(self.map):
+            result.append([
+                self.switch[player][square] if v[row][col] else UNSEEN
+                for col, square in enumerate(squares)
+            ])
+        return result
 
     # communication to bot is in x, y coords
     def render_changes(self, player):
         updates = self.get_state_updates()
-        v = self.get_vision(player)
+        v = self.vision[player]
         visible_updates = []
 
         # first add unseen water
-        for row, col in self.turn_reveal[player]:
-            if self.map[row][col] == WATER:
-                visible_updates.append(['w', row, col])
+        for row, col in self.revealed_water[player]:
+            visible_updates.append(['w', row, col])
 
         # next list all transient objects
         for update in updates:
@@ -230,11 +250,6 @@ class Ants:
             # only include visible updates
             if v[row][col]:
                 visible_updates.append(update)
-
-                # we want to ensure that players are notified about the
-                #  new value of the square next turn
-                # TODO: Why is this required? Land is not explicitly sent
-                self.revealed[player][row][col] = False
 
                 # switch player perspective of player numbers
                 if type in ['a','d']:
@@ -315,8 +330,8 @@ class Ants:
     def do_orders(self, player, orders):
         # process orders ignoring bad or duplicates
         for order in orders:
-            row2, col2 = self.destination(*order)
             row1, col1, d = order
+            row2, col2 = self.destination((row1, col1), d)
 
             ant = self.current_ants[(row1, col1)]
             if ant.owner != player: # must move your *own* ant
@@ -357,7 +372,7 @@ class Ants:
     #  and food in contention is eliminated
     def do_spawn(self):
         # Determine new ant locations
-        new_ant_locations = {}
+        new_ant_locations = []
         for f_loc in self.current_food.keys():
             owner = None
             for ant in self.nearby_ants(f_loc, None, 1, self.spawnradius):
@@ -368,12 +383,12 @@ class Ants:
                     break
             else:
                 if owner != None:
-                    self.remove_food(f_loc)
-                    new_ant_locations[f_loc] = owner
+                    food = self.remove_food(f_loc)
+                    new_ant_locations.append((food, owner))
 
         # Create new ants
-        for loc, owner in new_ant_locations.items():
-            self.add_ant(loc, owner)
+        for food, owner in new_ant_locations:
+            self.add_ant(food, owner)
 
     def add_food(self, loc):
         if loc in self.current_food:
@@ -383,17 +398,27 @@ class Ants:
         food = Food(loc, self.turn)
         self.current_food[loc] = food
         self.all_food.append(food)
+        return food
 
     def remove_food(self, loc):
         try:
             self.map[loc[0]][loc[1]] = LAND
-            self.current_food[loc].end_turn = self.turn
+            food = self.current_food[loc]
+            food.end_turn = self.turn
             del self.current_food[loc]
+            return food
         except KeyError:
             raise Exception("Remove food error",
                             "Food not found at %s" %(loc,))
 
-    def add_ant(self, loc, owner):
+    def add_ant(self, food, owner):
+        # if we weren't given a Food object then create a dummy food
+        if not isinstance(food, Food):
+            loc = food
+            self.add_food(loc)
+            food = self.remove_food(loc)
+
+        loc = food.loc
         if loc in self.current_ants:
             raise Exception("Add ant error",
                             "Ant already found at %s" %(loc,))
@@ -402,6 +427,8 @@ class Ants:
         self.map[row][col] = owner
         self.all_ants.append(ant)
         self.current_ants[loc] = ant
+        food.ant = ant
+        return ant
 
     def kill_ant(self, loc):
         try:
@@ -411,6 +438,7 @@ class Ants:
             ant.killed = True
             ant.die_turn = self.turn
             del self.current_ants[loc]
+            return ant
         except KeyError:
             raise Exception("Kill ant error",
                             "Ant not found at %s" %(loc,))
@@ -473,9 +501,13 @@ class Ants:
 
         self.score = map(operator.add, self.score, score)
 
-    def destination(self, row, col, direction):
-        d_row, d_col = AIM[direction]
-        return ((row + d_row) % self.height, (col + d_col) % self.width)
+    def destination(self, loc, d):
+        if d in AIM:
+            d = AIM[d]
+        elif d == '-':
+            d = (0, 0)
+
+        return ((loc[0] + d[0]) % self.height, (loc[1] + d[1]) % self.width)
 
     def access_map(self):
         """
@@ -501,7 +533,7 @@ class Ants:
         while cell_queue:
             c_loc = cell_queue.popleft()
             for d in AIM:
-                n_loc = self.destination(c_loc[0], c_loc[1], d)
+                n_loc = self.destination(c_loc, d)
                 if n_loc not in distances: continue # wall
 
                 if distances[n_loc] is None:
@@ -530,20 +562,20 @@ class Ants:
             Return None if no square is found
         """
 
-        if self.map[coord[1]][coord[0]] == LAND:
+        if self.map[coord[0]][coord[1]] == LAND:
             return coord
 
         visited = set()
         cell_queue = deque([coord])
 
         while cell_queue:
-            c_row, c_col = cell_queue.popleft()
+            c_loc = cell_queue.popleft()
 
             for d in AIM:
-                n_loc = self.destination(c_row, c_col, d)
+                n_loc = self.destination(c_loc, d)
                 if n_loc in visited: continue
 
-                if self.map[n_loc[1]][n_loc[0]] == LAND:
+                if self.map[n_loc[0]][n_loc[1]] == LAND:
                     return n_loc
 
                 visited.add(n_loc)
@@ -575,9 +607,9 @@ class Ants:
         for f in range(amount):
             dr = -self.height//4 + randrange(self.height//2)
             dc = -self.width//4  + randrange(self.width//2)
-            for row, col in self.initial_ant_list:
-                col = (col+dc)%self.width
-                row = (row+dr)%self.height
+            for ant in self.initial_ant_list: # assumes one ant per player
+                row = (ant.loc[0]+dr)%self.height
+                col = (ant.loc[1]+dc)%self.width
                 coord = self.find_closest_land((row, col))
                 if coord:
                     self.add_food(coord)
@@ -595,6 +627,60 @@ class Ants:
                     if self.map[row][col] == LAND:
                         self.add_food((row, col))
                         break
+
+    def do_food_symmetric(self, amount=1):
+        """
+            Split the map into sections that each ant can access 
+            first at the start of the game. Place food evenly into each space.
+        """
+        if not hasattr(self, 'food_sets'):
+            self.food_sets = self.get_symmetric_food_sets()
+
+        for f in range(amount):
+            for t in range(10):
+                s = self.food_sets[0]
+                self.food_sets.rotate()
+                # only add food if all locations are free
+                if all(self.map[loc[0]][loc[1]] == LAND for loc in s):
+                    for loc in s:
+                        self.add_food(loc)
+                    break
+
+    def get_symmetric_food_sets(self):
+        ant1, ant2 = self.initial_ant_list[0:2] # assumed one ant per player
+        row_t = abs(ant1.loc[0] - ant2.loc[0])
+        col_t = abs(ant1.loc[1] - ant2.loc[1])
+        food_sets = []
+        visited = [[False for col in range(self.width)]
+                          for row in range(self.height)]
+
+        for row, squares in enumerate(visited):
+            for col, square in enumerate(squares):
+                # if this square has been visited then we don't need to process
+                if square:
+                    continue
+
+                # possible food locations
+                locations = [
+                    self.destination((row, col), (n*row_t, n*col_t))
+                    for n in range(self.num_players)
+                ]
+
+                # set locations to visited
+                for loc in locations:
+                    # we should not have visited these locations yet
+                    # this also catches duplicates in the current list
+                    if visited[loc[0]][loc[1]]:
+                        raise Exception("Invalid map",
+                                        "This map does not support symmetric food placement")
+                    visited[loc[0]][loc[1]] = True
+
+                # we only care about sets where none of the locations hit water
+                if all(self.map[loc[0]][loc[1]] != WATER for loc in locations):
+                    food_sets.append(locations)
+
+        shuffle(food_sets)
+        return deque(food_sets)
 
     def remaining_players(self):
         return sum(self.is_alive(p) for p in range(self.num_players))
@@ -617,15 +703,20 @@ class Ants:
         self.killed_ants = []
         for ant in self.current_ants.values():
             ant.moved = False
+        self.revealed_water = [[] for i in range(self.num_players)]
 
     def finish_turn(self):
-        self.turn_reveal= [[] for i in range(self.num_players)]
         self.resolve_orders()
         self.do_attack()
         self.do_spawn()
         self.do_food()
+
         for i, s in enumerate(self.score):
             self.score_history[i].append(s)
+
+        # now that all the ants have moved we can update the vision
+        self.vision = [self.get_vision(i) for i in range(self.num_players)]
+        self.update_revealed()
 
     # used for 'map hack' streaming playback
     def get_state(self):
@@ -705,37 +796,26 @@ class Ants:
         # map
         result.append([self.render_map()])
 
-        #for f in self.all_food:
-        #    print("food: %s" % f)
-        #for a in self.all_ants:
-        #    print("ants: %s" % a)
-            
         # food and ants combined
-        for f in self.all_food:
-            ant_data = ['a', f.loc[0], f.loc[1], f.start_turn]
-            if f.end_turn == None:
+        for food in self.all_food:
+            ant_data = ['a', food.loc[0], food.loc[1], food.start_turn]
+            if food.end_turn == None:
+                # food survives to end of game
                 ant_data.append(self.turn + 1)
+            elif food.ant == None:
+                # food disappears
+                ant_data.append(food.end_turn)
             else:
-                # find ant that was converted
-                ant = None
-                for a in self.all_ants:
-                    if a.initial_loc == f.loc and a.spawn_turn == f.end_turn:
-                        ant = a
-                        break
-                    #else:
-                    #    print('a%s != f%s or %s != %s' % (a.initial_loc, f.loc, a.spawn_turn, f.end_turn))
+                # food got converted to an ant
+                ant = food.ant
+                ant_data.append(ant.spawn_turn)
+                if not ant.killed:
+                    ant_data.append(self.turn + 1)
                 else:
-                    # food disappears
-                    ant_data.append(f.end_turn)
-                if ant != None:
-                    # find if ant survives to end
-                    ant_data.append(ant.spawn_turn)
-                    if not ant.killed:
-                        ant_data.append(self.turn + 1)
-                    else:
-                        ant_data.append(ant.die_turn)
-                    ant_data.append(ant.owner)
-                    ant_data.append(''.join(ant.orders))
+                    ant_data.append(ant.die_turn)
+                ant_data.append(ant.owner)
+                ant_data.append(''.join(ant.orders))
+
             result.append(ant_data)
 
         # scores
@@ -762,9 +842,8 @@ class Ant:
 
     def __str__(self):
         return '(%s, %s, %s, %s, %s)' % (self.initial_loc, self.owner, self.spawn_turn, self.die_turn, ''.join(self.orders))
-    
+
     def move(self, new_loc, direction='-'):
-        # ignore duplicate moves
         if self.moved:
             raise Exception("Move ant error",
                             "This ant was already moved from %s to %s"
@@ -780,7 +859,8 @@ class Food:
         self.loc = loc
         self.start_turn = start_turn
         self.end_turn = None
+        self.ant = None
 
     def __str__(self):
         return '(%s, %s, %s)' % (self.loc, self.start_turn, self.end_turn)
-    
+

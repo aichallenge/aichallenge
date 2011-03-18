@@ -1,4 +1,6 @@
 ;;;; proxy-bot.lisp
+;;;;
+;;;; TODO use STATE class
 
 (in-package :ants-proxy-bot)
 
@@ -38,40 +40,15 @@
 (defun process-cmdline-options ()
   (cond ((or (getopt :short-name "?") (getopt :short-name "h"))
          (help)
-         (exit))
+         (quit))
         ((getopt :short-name "r")
          (format t "~&proxy-bot (Ant Wars) version ~A~%" +version+)
-         (exit)))
+         (quit)))
   (do-cmdline-options (option name value source)
     (when (or (equal name "v") (equal name "verbose"))
       (setf *verbose* t))
     (when (or (equal name "p") (equal name "port"))
       (setf *port* (parse-integer value)))))
-
-
-;;; Handlers
-
-(defun connection-lost (arg)
-  (declare (ignore arg))
-  (logmsg "~&Connection lost. Aborting...~%")
-  (exit 103))
-
-
-(defun connection-refused (arg)
-  (declare (ignore arg))
-  (logmsg "~&Connection refused. Aborting...~%")
-  (exit 111))
-
-
-(defun error-handler (&optional arg)
-  (logmsg "~&" arg " Aborting...~%")
-  (exit 1))
-
-
-(defun user-interrupt (arg)
-  (declare (ignore arg))
-  (logmsg "~&User interrupt. Aborting...~%")
-  (exit))
 
 
 ;;; Main Program

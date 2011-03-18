@@ -6,9 +6,6 @@
   :components ((:module src
                 :serial t
                 :components ((:file "package")
-                             (:file "handlers")
-                             (:file "config")
-                             (:file "classes")
                              (:file "misc")
                              (:file "game-state")
                              (:file "bot-think")

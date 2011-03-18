@@ -68,7 +68,7 @@ def main(argv):
                       help="Attack method to use for engine. (closest, occupied)")
     parser.add_option("--food", dest="food",
                       default="sections",
-                      help="Food spawning method. (none, random, sections)")
+                      help="Food spawning method. (none, random, sections, symmetric)")
     parser.add_option("--viewradius2", dest="viewradius2",
                       default=96, type="int",
                       help="Vision radius of ants squared")

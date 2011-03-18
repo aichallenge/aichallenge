@@ -30,8 +30,8 @@
 (define-test move-ant
   (assert-equal (format nil "~&o 1 1 N~%") (move-ant 1 1 :north))
   (assert-equal (format nil "~&o 2 2 E~%") (move-ant 2 2 :east))
-  (assert-equal (format nil "~&o 3 2 S~%") (move-ant 2 3 :south))
-  (assert-equal (format nil "~&o 2 3 W~%") (move-ant 3 2 :west)))
+  (assert-equal (format nil "~&o 2 3 S~%") (move-ant 2 3 :south))
+  (assert-equal (format nil "~&o 3 2 W~%") (move-ant 3 2 :west)))
 
 (define-test par-value
   (assert-equal 1 (par-value "a 1"))
@@ -90,18 +90,18 @@
 
 (define-test distance
   (assert-equal 0.0 (distance 0 0 0 0))
-  (assert-equal 1.0 (distance 0 0 0 1))
   (assert-equal 1.0 (distance 0 0 1 0))
+  (assert-equal 1.0 (distance 0 0 0 1))
   (assert-equal 1.4142135 (distance 0 0 1 1))
-  (assert-equal 1.0 (distance 0 0 6 0))
-  (assert-equal 1.0 (distance 0 0 0 3))
-  (assert-equal 1.4142135 (distance 0 0 6 3))
-  (assert-equal 3.0 (distance 0 0 3 0))
-  (assert-equal 3.0 (distance 0 0 4 0))
-  (assert-equal 2.236068 (distance 0 0 2 1))
-  (assert-equal 3.6055512 (distance 0 0 3 2))
-  (assert-equal 3.6055512 (distance 0 0 4 2))
-  (assert-equal 2.236068 (distance 0 0 5 3)))
+  (assert-equal 1.0 (distance 0 0 0 6))
+  (assert-equal 1.0 (distance 0 0 3 0))
+  (assert-equal 1.4142135 (distance 0 0 3 6))
+  (assert-equal 3.0 (distance 0 0 0 3))
+  (assert-equal 3.0 (distance 0 0 0 4))
+  (assert-equal 2.236068 (distance 0 0 1 2))
+  (assert-equal 3.6055512 (distance 0 0 2 3))
+  (assert-equal 3.6055512 (distance 0 0 2 4))
+  (assert-equal 2.236068 (distance 0 0 3 5)))
 
 (define-test game-map-food
   (assert-equal '((1 2) (5 1)) (food *state*))
@@ -118,13 +118,13 @@
 
 (define-test water?
   (assert-true (water? 1 1 :north))
-  (assert-true (water? 4 1 :west))
-  (assert-true (water? 2 3 :south))
+  (assert-true (water? 1 4 :west))
+  (assert-true (water? 3 2 :south))
   (assert-true (water? 0 0 :east))
-  (assert-false (water? 1 3 :north))
+  (assert-false (water? 3 1 :north))
   (assert-false (water? 0 0 :west))
   (assert-false (water? 1 1 :south))
-  (assert-false (water? 5 0 :east)))
+  (assert-false (water? 0 5 :east)))
 
 
 ;;; Run the tests.
