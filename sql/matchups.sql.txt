@@ -1,44 +1,56 @@
--- STEP 1: SELECT SEED_ID
+-- Step 1: select the seed player
 
----- All in one approach
-
-select s.user_id, s.submission_id,
-( select max(matchup_id)
-  from matchup m
-  where m.seed_id = s.user_id ) as last_matchup_id,
-( select max(game_id)
-  from game g
-  where g.seed_id = s.user_id ) as last_game_id  
+select s.user_id,
+       s.submission_id
+into @user_id, @submission_id
 from submission s
 where s.latest = 1
-order by
-last_matchup_id asc,
-last_game_id asc,
-s.user_id asc
-limit 1
+order by ( select max(matchup_id)
+           from matchup m
+           where m.seed_id = s.user_id ) asc,
+         ( select max(game_id)
+           from game g
+           where g.seed_id = s.user_id ) asc,
+         s.user_id asc
+limit 1;
 
----- Split approach
----- 1A: Look for new user without game seed (and valid submission)
+-- Step 2: select the map
+-- this does not attempt to rotate maps by number of players yet
 
------- left join method
-select *
-from submission s
-left outer join game g on s.user_id = g.seed_id
-where g.seed_id is null
-and s.latest = 1
-order by s.user_id asc
-limit 1
+select m.map_id, m.players
+into @map_id, @players
+from game g
+inner join game_player gp
+    on g.game_id = gp.game_id
+    and gp.user_id = @seed_id
+right join map m
+    on g.map_id = m.map_id
+group by g.map_id
+order by count(g.game_id) asc,
+         m.priority asc,
+         max(g.game_id) asc
+limit 1;
 
------- not in method
-select *
-from submission s
-where s.user_id not in (
-    select g.seed_id
-    from game g
-)
-and s.latest = 1
-order by s.user_id asc
-limit 1
+select @seed_id, @submission_id, @map_id, @players
 
----- 1B: Look for last seeded user
+-- Step 3: select opponents 1 at a time
 
+-- recent matchups
+
+select opponent.*-- , s.*
+from game_player seed
+inner join game_player opponent
+    on seed.game_id = opponent.game_id
+    and seed.user_id = @seed_id
+-- right join submission s
+--     on s.user_id = opponent.user_id
+
+-- list of last X maps for a user
+select g.map_id, count(g.game_id)
+from game g
+inner join game_player gp
+    on g.game_id = gp.game_id
+    and gp.user_id in (54668)
+group by g.game_id
+order by g.game_id desc
+limit 5
