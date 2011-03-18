@@ -110,17 +110,59 @@ class Ants:
                           for row in range(self.height)]
                          for p in range(self.num_players)]
         # used to track per turn for bot communication
-        self.turn_reveal = [[] for i in range(self.num_players)]
+        self.revealed_water = [[] for i in range(self.num_players)]
 
         # used to give a different ordering of players to each player
-        #   to help hide total number of players
-        self.switch = [[0 if j == i else None
-                             for j in range(self.num_players)] + range(-5,0)
-                         for i in range(self.num_players)]
+        self.switch = self.get_switch()
 
         # used to track scores
         self.score = [Fraction(0,1)]*self.num_players
         self.score_history = [[s] for s in self.score]
+
+    def distance(self, x, y):
+        """ Returns distance between x and y squared """
+        d_row = abs(x[0] - y[0])
+        d_row = min(d_row, self.height - d_row)
+        d_col = abs(x[1] - y[1])
+        d_col = min(d_col, self.width - d_col)
+        return d_row**2 + d_col**2
+
+    def get_switch(self):
+        """ Used to give a different ordering of players to each player
+
+            Player is always 0, closest enemy 1 and so on.
+            This helps hide total number of players.
+        """
+
+        # sort ants by player
+        player_ants = defaultdict(list)
+        for ant in self.initial_ant_list:
+            player_ants[ant.owner].append(ant)
+
+        switch = []
+        for i in range(self.num_players):
+            distances = []
+            for j in range(self.num_players):
+                # distance of player to another player is the minimum
+                #   distance between any two of their ants
+                distance = min(
+                    self.distance(a.loc, b.loc)
+                    for a in player_ants[i]
+                    for b in player_ants[j]
+                )
+                distances.append((distance,j))
+
+            # set the order of players with closest distance first
+            switch_row = [None]*self.num_players
+            for new_value, (distance, player) in enumerate(sorted(distances)):
+                switch_row[player] = new_value
+
+            # account for non-player squares
+            switch_row.extend(range(-5,0))
+
+            switch.append(switch_row)
+
+        return switch
 
     def load_map(self, map_text):
         players = []
@@ -149,9 +191,6 @@ class Ants:
                             #    self.center[value] = (last_row, col)
                         value = players.index(c)
                         self.map[-1].append(value)
-                        # starting ant gets a food entry for the replay format
-                        self.add_food((row, col))
-                        self.remove_food((row, col))
                         self.add_ant((row, col), value)
                         self.land_area += 1
                     elif c == '*':
@@ -172,11 +211,6 @@ class Ants:
         self.num_players = len(players)
         return True
 
-    def distance(self, x1, y1, x2, y2):
-        d_x = min(abs(x1 - x2), self.width - abs(x1 - x2))
-        d_y = min(abs(y1 - y2), self.height - abs(y1 - y2))
-        return d_x + d_y
-
     def get_vision(self, player):
         vision = [[False for col in range(self.width)] for row in range(self.height)]
         squaresToCheck = deque()
@@ -194,27 +228,22 @@ class Ants:
                 if not vision[n_row][n_col] and (d_row**2 + d_col**2) <= self.viewradius:
                     vision[n_row][n_col] = True
                     if not self.revealed[player][n_row][n_col]:
-                        self.turn_reveal[player].append((n_row, n_col))
                         self.revealed[player][n_row][n_col] = True
+                        if self.map[n_row][n_col] == WATER:
+                            self.revealed_water[player].append((n_row, n_col))
                     value = self.map[n_row][n_col]
-                    if (value >= ANTS and self.switch[player][value] == None):
-                        self.switch[player][value] = (self.num_players -
-                            self.switch[player][:self.num_players].count(None))
                     squaresToCheck.append(((a_row,a_col),(n_row,n_col)))
         return vision
 
     def get_perspective(self, player):
         v = self.get_vision(player, self.viewradius)
-        #start_row = self.center[player][1] - self.height // 2
-        #stop_row = start_row + self.height
-        #start_col = self.center[player][0] - self.width // 2
-        #stop_col = start_col + self.width
-        return [[self.switch[player][self.map[row % self.height][col % self.width]]
-                    if v[row % self.height][col % self.width] else UNSEEN
-                #    for col in range(start_row, stop_row + 1)]
-                #for row in range(start_col, stop_col + 1)]
-                    for col in range(self.width)]
-                for row in range(self.height)]
+        result = []
+        for row, squares in enumerate(self.map):
+            result.append([
+                self.switch[player][square] if v[row][col] else UNSEEN
+                for col, square in enumerate(squares)
+            ])
+        return result
 
     # communication to bot is in x, y coords
     def render_changes(self, player):
@@ -223,9 +252,8 @@ class Ants:
         visible_updates = []
 
         # first add unseen water
-        for row, col in self.turn_reveal[player]:
-            if self.map[row][col] == WATER:
-                visible_updates.append(['w', row, col])
+        for row, col in self.revealed_water[player]:
+            visible_updates.append(['w', row, col])
 
         # next list all transient objects
         for update in updates:
@@ -234,11 +262,6 @@ class Ants:
             # only include visible updates
             if v[row][col]:
                 visible_updates.append(update)
-
-                # we want to ensure that players are notified about the
-                #  new value of the square next turn
-                # TODO: Why is this required? Land is not explicitly sent
-                self.revealed[player][row][col] = False
 
                 # switch player perspective of player numbers
                 if type in ['a','d']:
@@ -361,7 +384,7 @@ class Ants:
     #  and food in contention is eliminated
     def do_spawn(self):
         # Determine new ant locations
-        new_ant_locations = {}
+        new_ant_locations = []
         for f_loc in self.current_food.keys():
             owner = None
             for ant in self.nearby_ants(f_loc, None, 1, self.spawnradius):
@@ -372,12 +395,12 @@ class Ants:
                     break
             else:
                 if owner != None:
-                    self.remove_food(f_loc)
-                    new_ant_locations[f_loc] = owner
+                    food = self.remove_food(f_loc)
+                    new_ant_locations.append((food, owner))
 
         # Create new ants
-        for loc, owner in new_ant_locations.items():
-            self.add_ant(loc, owner)
+        for food, owner in new_ant_locations:
+            self.add_ant(food, owner)
 
     def add_food(self, loc):
         if loc in self.current_food:
@@ -387,17 +410,27 @@ class Ants:
         food = Food(loc, self.turn)
         self.current_food[loc] = food
         self.all_food.append(food)
+        return food
 
     def remove_food(self, loc):
         try:
             self.map[loc[0]][loc[1]] = LAND
-            self.current_food[loc].end_turn = self.turn
+            food = self.current_food[loc]
+            food.end_turn = self.turn
             del self.current_food[loc]
+            return food
         except KeyError:
             raise Exception("Remove food error",
                             "Food not found at %s" %(loc,))
 
-    def add_ant(self, loc, owner):
+    def add_ant(self, food, owner):
+        # if we weren't given a Food object then create a dummy food
+        if not isinstance(food, Food):
+            loc = food
+            self.add_food(loc)
+            food = self.remove_food(loc)
+
+        loc = food.loc
         if loc in self.current_ants:
             raise Exception("Add ant error",
                             "Ant already found at %s" %(loc,))
@@ -406,6 +439,8 @@ class Ants:
         self.map[row][col] = owner
         self.all_ants.append(ant)
         self.current_ants[loc] = ant
+        food.ant = ant
+        return ant
 
     def kill_ant(self, loc):
         try:
@@ -415,6 +450,7 @@ class Ants:
             ant.killed = True
             ant.die_turn = self.turn
             del self.current_ants[loc]
+            return ant
         except KeyError:
             raise Exception("Kill ant error",
                             "Ant not found at %s" %(loc,))
@@ -652,7 +688,7 @@ class Ants:
                     visited[loc[0]][loc[1]] = True
 
                 # we only care about sets where none of the locations hit water
-                if all(self.map[l[0]][l[1]] != WATER for l in locations):
+                if all(self.map[loc[0]][loc[1]] != WATER for loc in locations):
                     food_sets.append(locations)
 
         shuffle(food_sets)
@@ -681,7 +717,7 @@ class Ants:
             ant.moved = False
 
     def finish_turn(self):
-        self.turn_reveal= [[] for i in range(self.num_players)]
+        self.revealed_water = [[] for i in range(self.num_players)]
         self.resolve_orders()
         self.do_attack()
         self.do_spawn()
@@ -767,37 +803,26 @@ class Ants:
         # map
         result.append([self.render_map()])
 
-        #for f in self.all_food:
-        #    print("food: %s" % f)
-        #for a in self.all_ants:
-        #    print("ants: %s" % a)
-            
         # food and ants combined
         for f in self.all_food:
             ant_data = ['a', f.loc[0], f.loc[1], f.start_turn]
             if f.end_turn == None:
+                # food survives to end of game
                 ant_data.append(self.turn + 1)
+            elif food.ant == None:
+                # food disappears
+                ant_data.append(f.end_turn)
             else:
-                # find ant that was converted
-                ant = None
-                for a in self.all_ants:
-                    if a.initial_loc == f.loc and a.spawn_turn == f.end_turn:
-                        ant = a
-                        break
-                    #else:
-                    #    print('a%s != f%s or %s != %s' % (a.initial_loc, f.loc, a.spawn_turn, f.end_turn))
+                # food got converted to an ant
+                ant = food.ant
+                ant_data.append(ant.spawn_turn)
+                if not ant.killed:
+                    ant_data.append(self.turn + 1)
                 else:
-                    # food disappears
-                    ant_data.append(f.end_turn)
-                if ant != None:
-                    # find if ant survives to end
-                    ant_data.append(ant.spawn_turn)
-                    if not ant.killed:
-                        ant_data.append(self.turn + 1)
-                    else:
-                        ant_data.append(ant.die_turn)
-                    ant_data.append(ant.owner)
-                    ant_data.append(''.join(ant.orders))
+                    ant_data.append(ant.die_turn)
+                ant_data.append(ant.owner)
+                ant_data.append(''.join(ant.orders))
+
             result.append(ant_data)
 
         # scores
@@ -824,7 +849,7 @@ class Ant:
 
     def __str__(self):
         return '(%s, %s, %s, %s, %s)' % (self.initial_loc, self.owner, self.spawn_turn, self.die_turn, ''.join(self.orders))
-    
+
     def move(self, new_loc, direction='-'):
         # ignore duplicate moves
         if self.moved:
@@ -842,7 +867,8 @@ class Food:
         self.loc = loc
         self.start_turn = start_turn
         self.end_turn = None
+        self.ant = None
 
     def __str__(self):
         return '(%s, %s, %s)' % (self.loc, self.start_turn, self.end_turn)
-    
+
