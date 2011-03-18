@@ -213,26 +213,21 @@ class Ants:
 
     def get_vision(self, player):
         vision = [[False for col in range(self.width)] for row in range(self.height)]
-        squaresToCheck = deque()
+        squares_to_check = deque()
         for ant in self.player_ants(player):
-            squaresToCheck.append((ant.loc, ant.loc))
-        while len(squaresToCheck) > 0:
-            (a_row, a_col), (v_row, v_col) = squaresToCheck.popleft()
-            for d_row, d_col in ((0,-1),(0,1),(-1,0),(1,0)):
-                n_col = (v_col + d_col) % self.width
-                n_row = (v_row + d_row) % self.height
-                d_row = abs(a_row - n_row)
-                d_row = min(d_row, self.height - d_row)
-                d_col = abs(a_col - n_col)
-                d_col = min(d_col, self.width - d_col)
-                if not vision[n_row][n_col] and (d_row**2 + d_col**2) <= self.viewradius:
+            squares_to_check.append((ant.loc, ant.loc))
+        while squares_to_check:
+            a_loc, v_loc = squares_to_check.popleft()
+            for d in AIM:
+                n_loc = self.destination(v_loc, d)
+                n_row, n_col = n_loc
+                if not vision[n_row][n_col] and self.distance(a_loc, n_loc) <= self.viewradius:
                     vision[n_row][n_col] = True
                     if not self.revealed[player][n_row][n_col]:
                         self.revealed[player][n_row][n_col] = True
                         if self.map[n_row][n_col] == WATER:
-                            self.revealed_water[player].append((n_row, n_col))
-                    value = self.map[n_row][n_col]
-                    squaresToCheck.append(((a_row,a_col),(n_row,n_col)))
+                            self.revealed_water[player].append(n_loc)
+                    squares_to_check.append((a_loc, n_loc))
         return vision
 
     def get_perspective(self, player):
