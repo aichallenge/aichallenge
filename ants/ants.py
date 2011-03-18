@@ -99,6 +99,8 @@ class Ants:
         # used to track dead players, ants may still exist, but order are not processed
         self.killed = [False for i in range(self.num_players)]
 
+        # used to give a different ordering of players to each player
+        self.switch = [[None]*self.num_players + range(-5,0) for i in range(self.num_players)]
         # used to track water and land already reveal to player
         # ants and food will reset spots so a second land entry will be sent
         self.revealed = [[[False for col in range(self.width)]
@@ -107,10 +109,10 @@ class Ants:
         # used to track what a player can see
         self.vision = [self.get_vision(i) for i in range(self.num_players)]
         # used to track new water squares that the player can see
-        self.revealed_water = self.update_revealed()
+        self.revealed_water = [[] for i in range(self.num_players)]
 
-        # used to give a different ordering of players to each player
-        self.switch = self.get_switch()
+        # initialise data that remembers what players have seen
+        self.update_revealed()
 
         # used to track scores
         self.score = [Fraction(0,1)]*self.num_players
@@ -123,43 +125,6 @@ class Ants:
         d_col = abs(x[1] - y[1])
         d_col = min(d_col, self.width - d_col)
         return d_row**2 + d_col**2
-
-    def get_switch(self):
-        """ Used to give a different ordering of players to each player
-
-            Player is always 0, closest enemy 1 and so on.
-            This helps hide total number of players.
-        """
-
-        # sort ants by player
-        player_ants = defaultdict(list)
-        for ant in self.initial_ant_list:
-            player_ants[ant.owner].append(ant)
-
-        switch = []
-        for i in range(self.num_players):
-            distances = []
-            for j in range(self.num_players):
-                # distance of player to another player is the minimum
-                #   distance between any two of their ants
-                distance = min(
-                    self.distance(a.loc, b.loc)
-                    for a in player_ants[i]
-                    for b in player_ants[j]
-                )
-                distances.append((distance,j))
-
-            # set the order of players with closest distance first
-            switch_row = [None]*self.num_players
-            for new_value, (distance, player) in enumerate(sorted(distances)):
-                switch_row[player] = new_value
-
-            # account for non-player squares
-            switch_row.extend(range(-5,0))
-
-            switch.append(switch_row)
-
-        return switch
 
     def load_map(self, map_text):
         players = []
@@ -226,21 +191,37 @@ class Ants:
         return vision
 
     def update_revealed(self):
-        """ Update self.revealed to reflect the updated vision
-            Return a list of all new water squares that are visible
+        """ Make updates to state based on what each player can see
+
+            Update self.revealed to reflect the updated vision
+            Update self.switch for any new enemies
+            Update self.revealed_water
         """
-        revealed_water = []
+        self.revealed_water = []
         for player in range(self.num_players):
             water = []
             revealed = self.revealed[player]
+            switch = self.switch[player]
             for row, squares in enumerate(self.vision[player]):
                 for col, visible in enumerate(squares):
-                    if visible and not revealed[row][col]:
+                    if not visible:
+                        continue
+
+                    value = self.map[row][col]
+
+                    # if this player encounters a new enemy then
+                    #   assign the enemy the next index
+                    if value >= ANTS and switch[value] == None:
+                        switch[value] = self.num_players - switch.count(None)
+
+                    # mark square as revealed and determine if we see any
+                    #   new water
+                    if not revealed[row][col]:
                         revealed[row][col] = True
-                        if self.map[row][col] == WATER:
+                        if value == WATER:
                             water.append((row,col))
-            revealed_water.append(water)
-        return revealed_water
+
+            self.revealed_water.append(water)
 
     def get_perspective(self, player):
         v = self.vision[player]
@@ -723,8 +704,6 @@ class Ants:
         for ant in self.current_ants.values():
             ant.moved = False
         self.revealed_water = [[] for i in range(self.num_players)]
-        # ensure that vision is not used while ants are being moved
-        self.vision = None
 
     def finish_turn(self):
         self.resolve_orders()
@@ -737,7 +716,7 @@ class Ants:
 
         # now that all the ants have moved we can update the vision
         self.vision = [self.get_vision(i) for i in range(self.num_players)]
-        self.revealed_water = self.update_revealed()
+        self.update_revealed()
 
     # used for 'map hack' streaming playback
     def get_state(self):
