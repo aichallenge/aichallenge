@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-from random import randrange, choice
+from random import randrange, choice, shuffle
 from math import sqrt
 import os
 from collections import deque, defaultdict
@@ -68,8 +68,12 @@ class Ants:
         if 'food' in options:
             if options['food'] == 'none':
                 self.do_food = self.do_food_none
+            elif options['food'] == 'random':
+                self.do_food = self.do_food_random
             elif options['food'] == 'sections':
                 self.do_food = self.do_food_sections
+            elif options['food'] == 'symmetric':
+                self.do_food = self.do_food_symmetric
 
         self.width = None   # the map
         self.height = None
@@ -94,7 +98,7 @@ class Ants:
         self.load_map(map_text)
 
         # used to remember where the ants started
-        self.initial_ant_list = dict((ant.loc, ant.owner) for ant in self.current_ants.values())
+        self.initial_ant_list = sorted(self.current_ants.values(), key=operator.attrgetter('owner'))
         self.initial_access_map = self.access_map()
 
         # used to track dead players, ants may still exist, but order are not processed
@@ -315,8 +319,8 @@ class Ants:
     def do_orders(self, player, orders):
         # process orders ignoring bad or duplicates
         for order in orders:
-            row2, col2 = self.destination(*order)
             row1, col1, d = order
+            row2, col2 = self.destination((row1, col1), d)
 
             ant = self.current_ants[(row1, col1)]
             if ant.owner != player: # must move your *own* ant
@@ -473,9 +477,13 @@ class Ants:
 
         self.score = map(operator.add, self.score, score)
 
-    def destination(self, row, col, direction):
-        d_row, d_col = AIM[direction]
-        return ((row + d_row) % self.height, (col + d_col) % self.width)
+    def destination(self, loc, d):
+        if d in AIM:
+            d = AIM[d]
+        elif d == '-':
+            d = (0, 0)
+
+        return ((loc[0] + d[0]) % self.height, (loc[1] + d[1]) % self.width)
 
     def access_map(self):
         """
@@ -501,7 +509,7 @@ class Ants:
         while cell_queue:
             c_loc = cell_queue.popleft()
             for d in AIM:
-                n_loc = self.destination(c_loc[0], c_loc[1], d)
+                n_loc = self.destination(c_loc, d)
                 if n_loc not in distances: continue # wall
 
                 if distances[n_loc] is None:
@@ -530,20 +538,20 @@ class Ants:
             Return None if no square is found
         """
 
-        if self.map[coord[1]][coord[0]] == LAND:
+        if self.map[coord[0]][coord[1]] == LAND:
             return coord
 
         visited = set()
         cell_queue = deque([coord])
 
         while cell_queue:
-            c_row, c_col = cell_queue.popleft()
+            c_loc = cell_queue.popleft()
 
             for d in AIM:
-                n_loc = self.destination(c_row, c_col, d)
+                n_loc = self.destination(c_loc, d)
                 if n_loc in visited: continue
 
-                if self.map[n_loc[1]][n_loc[0]] == LAND:
+                if self.map[n_loc[0]][n_loc[1]] == LAND:
                     return n_loc
 
                 visited.add(n_loc)
@@ -575,9 +583,9 @@ class Ants:
         for f in range(amount):
             dr = -self.height//4 + randrange(self.height//2)
             dc = -self.width//4  + randrange(self.width//2)
-            for row, col in self.initial_ant_list:
-                col = (col+dc)%self.width
-                row = (row+dr)%self.height
+            for ant in self.initial_ant_list: # assumes one ant per player
+                row = (ant.loc[0]+dr)%self.height
+                col = (ant.loc[1]+dc)%self.width
                 coord = self.find_closest_land((row, col))
                 if coord:
                     self.add_food(coord)
@@ -595,6 +603,60 @@ class Ants:
                     if self.map[row][col] == LAND:
                         self.add_food((row, col))
                         break
+
+    def do_food_symmetric(self, amount=1):
+        """
+            Split the map into sections that each ant can access 
+            first at the start of the game. Place food evenly into each space.
+        """
+        if not hasattr(self, 'food_sets'):
+            self.food_sets = self.get_symmetric_food_sets()
+
+        for f in range(amount):
+            for t in range(10):
+                s = self.food_sets[0]
+                self.food_sets.rotate()
+                # only add food if all locations are free
+                if all(self.map[loc[0]][loc[1]] == LAND for loc in s):
+                    for loc in s:
+                        self.add_food(loc)
+                    break
+
+    def get_symmetric_food_sets(self):
+        ant1, ant2 = self.initial_ant_list[0:2] # assumed one ant per player
+        row_t = abs(ant1.loc[0] - ant2.loc[0])
+        col_t = abs(ant1.loc[1] - ant2.loc[1])
+        food_sets = []
+        visited = [[False for col in range(self.width)]
+                          for row in range(self.height)]
+
+        for row, squares in enumerate(visited):
+            for col, square in enumerate(squares):
+                # if this square has been visited then we don't need to process
+                if square:
+                    continue
+
+                # possible food locations
+                locations = [
+                    self.destination((row, col), (n*row_t, n*col_t))
+                    for n in range(self.num_players)
+                ]
+
+                # set locations to visited
+                for loc in locations:
+                    # we should not have visited these locations yet
+                    # this also catches duplicates in the current list
+                    if visited[loc[0]][loc[1]]:
+                        raise Exception("Invalid map",
+                                        "This map does not support symmetric food placement")
+                    visited[loc[0]][loc[1]] = True
+
+                # we only care about sets where none of the locations hit water
+                if all(self.map[l[0]][l[1]] != WATER for l in locations):
+                    food_sets.append(locations)
+
+        shuffle(food_sets)
+        return deque(food_sets)
 
     def remaining_players(self):
         return sum(self.is_alive(p) for p in range(self.num_players))
