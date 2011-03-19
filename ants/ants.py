@@ -463,15 +463,15 @@ class Ants:
         # determine which ants to kill
         ants_to_kill = []
         for ant in self.current_ants.values():
-            # determine this ants power
-            inv_power = len(nearby_enemies[ant])
+            # determine this ants weakness (1/power)
+            weakness = len(nearby_enemies[ant])
             # an ant with no enemies nearby can't be attacked
-            if inv_power == 0:
+            if weakness == 0:
                 continue
-            # determine the maximum power of nearby enemies
-            enemy_inv_power = min(len(nearby_enemies[enemy]) for enemy in nearby_enemies[ant])
-            # ant dies if its power is less than or equal to max enemy power
-            if enemy_inv_power <= inv_power:
+            # determine the most powerful nearby enemy
+            min_enemy_weakness = min(len(nearby_enemies[enemy]) for enemy in nearby_enemies[ant])
+            # ant dies if it is weak as or weaker than an enemy weakness
+            if min_enemy_weakness <= weakness:
                 ants_to_kill.append(ant)
 
         # kill ants and distribute score
@@ -489,7 +489,7 @@ class Ants:
 
         # maps ants to nearby enemies
         # we only care about ants which have enemies in range
-        ants_to_test = {}
+        attacked_ants = {}
         for ant in self.current_ants.values():
             enemies = list(self.nearby_ants(ant.loc, ant.owner, 1, MAX_DIST))
             if enemies:
@@ -497,13 +497,13 @@ class Ants:
                 dist_map = defaultdict(list)
                 for enemy in enemies:
                     dist_map[self.distance(ant.loc, enemy.loc)].append(enemy)
-                ants_to_test[ant] = dist_map
+                attacked_ants[ant] = dist_map
 
         ant_group = set()
         def find_enemy(ant, min_d, max_d):
             """ Recursively finds a group of ants to eliminate each other """
             for distance in range(min_d, max_d+1):
-                for enemy in ants_to_test[ant][distance]:
+                for enemy in attacked_ants[ant][distance]:
                     if not enemy.killed and enemy not in ant_group:
                         ant_group.add(enemy)
                         find_enemy(enemy, min_d, max_d)
@@ -512,7 +512,7 @@ class Ants:
             # find all groups of ants containing more than one ant
             ant_groups = []
             ants_in_groups = set()
-            for ant in ants_to_test:
+            for ant in attacked_ants:
                 if ant.killed or ant in ants_in_groups:
                     continue
 
