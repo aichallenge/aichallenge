@@ -481,35 +481,53 @@ class Ants:
             for enemy in nearby_enemies[ant]:
                 self.score[enemy.owner] += Fraction(1, score_share)
 
-    # 1:1 kill ratio, almost, match closest groups and eliminate iteratively
     def do_attack_closest(self):
-        score = [Fraction(0, 1) for i in range(self.num_players)]
-        ant_group = []
+        """ Iteratively kill neighbouring groups of ants """
+
+        # TODO: WTF, 10 is quite arbitrary
+        MAX_DIST = 10
+
+        # maps ants to nearby enemies
+        # we only care about ants which have enemies in range
+        ants_to_test = {}
+        for ant in self.current_ants.values():
+            enemies = list(self.nearby_ants(ant.loc, ant.owner, 1, MAX_DIST))
+            if enemies:
+                # pre-compute distance to each enemy in range
+                dist_map = defaultdict(list)
+                for enemy in enemies:
+                    dist_map[self.distance(ant.loc, enemy.loc)].append(enemy)
+                ants_to_test[ant] = dist_map
+
+        ant_group = set()
         def find_enemy(ant, min_d, max_d):
-            for enemy in self.nearby_ants(ant.loc, ant.owner, min_d, max_d):
-                if enemy.loc not in ant_group:
-                    ant_group[enemy.loc] = enemy.owner
-                    find_enemy(enemy, min_d, max_d)
-        for distance in range(1, 10):
-            ants_to_kill = []
-            for ant in self.current_ants.values():
-                # TODO: Finding the entire ant group once for each ant is not efficient
-                #       Find all groups first, then determine kills
-                ant_group = {ant.loc: ant.owner}
+            """ Recursively finds a group of ants to eliminate each other """
+            for distance in range(min_d, max_d+1):
+                for enemy in ants_to_test[ant][distance]:
+                    if not enemy.killed and enemy not in ant_group:
+                        ant_group.add(enemy)
+                        find_enemy(enemy, min_d, max_d)
+
+        for distance in range(1, MAX_DIST):
+            # find all groups of ants containing more than one ant
+            ant_groups = []
+            ants_in_groups = set()
+            for ant in ants_to_test:
+                if ant.killed or ant in ants_in_groups:
+                    continue
+
+                ant_group = set([ant])
                 find_enemy(ant, distance, distance)
                 if len(ant_group) > 1:
-                    score_share = len(ant_group)
-                    for e_loc, e_owner in ant_group.items():
-                        # TODO: Is sharing scores this way really sensible?
-                        #       Seems like in the end each ant's share is always 1
-                        score[e_owner] += Fraction(1, score_share)
-                    # all ants in the group will get to this line in their own iteration
-                    ants_to_kill.append(ant)
-            for ant in ants_to_kill:
-                if not ant.killed:
-                    self.kill_ant(ant.loc)
+                    ant_groups.append(ant_group)
+                    ants_in_groups.update(ant_group)
 
-        self.score = map(operator.add, self.score, score)
+            # kill all ants in each group
+            for group in ant_groups:
+                score_share = len(group)
+                for ant in group:
+                    self.score[ant.owner] += Fraction(1, score_share)
+                    self.kill_ant(ant.loc)
 
     def destination(self, loc, d):
         if d in AIM:
