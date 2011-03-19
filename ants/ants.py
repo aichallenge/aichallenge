@@ -634,17 +634,32 @@ class Ants:
             first at the start of the game. Place food evenly into each space.
         """
         if not hasattr(self, 'food_sets'):
-            self.food_sets = self.get_symmetric_food_sets()
+            self.food_sets = deque(self.get_symmetric_food_sets())
+            # add a sentinal so we know when to shuffle
+            self.food_sets.append(None)
 
+            # counter for food locations
+            self.food_counter = [[0]*self.width for i in range(self.height)]
+
+        # increment food counter for food spawning locations
         for f in range(amount):
-            for t in range(10):
-                s = self.food_sets[0]
-                self.food_sets.rotate()
-                # only add food if all locations are free
-                if all(self.map[loc[0]][loc[1]] == LAND for loc in s):
-                    for loc in s:
-                        self.add_food(loc)
-                    break
+            s = self.food_sets.pop()
+            # if we finished one rotation, shuffle for the next
+            if s == None:
+                shuffle(self.food_sets)
+                self.food_sets.appendleft(None)
+                s = self.food_sets.pop()
+            self.food_sets.appendleft(s)
+
+            for row, col in s:
+                self.food_counter[row][col] += 1
+
+        # place food in scheduled locations if they are free
+        for row, squares in enumerate(self.food_counter):
+            for col, count in enumerate(squares):
+                if count and self.map[row][col] == LAND:
+                    self.food_counter[row][col] -= 1
+                    self.add_food((row,col))
 
     def get_symmetric_food_sets(self):
         ant1, ant2 = self.initial_ant_list[0:2] # assumed one ant per player
@@ -679,8 +694,7 @@ class Ants:
                 if all(self.map[loc[0]][loc[1]] != WATER for loc in locations):
                     food_sets.append(locations)
 
-        shuffle(food_sets)
-        return deque(food_sets)
+        return food_sets
 
     def remaining_players(self):
         return sum(self.is_alive(p) for p in range(self.num_players))
