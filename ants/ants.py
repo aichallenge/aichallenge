@@ -639,7 +639,7 @@ class Ants:
             self.food_sets.append(None)
 
             # counter for food locations
-            self.food_counter = [[0]*self.width for i in range(self.height)]
+            self.pending_food = defaultdict(int)
 
         # increment food counter for food spawning locations
         for f in range(amount):
@@ -651,15 +651,18 @@ class Ants:
                 s = self.food_sets.pop()
             self.food_sets.appendleft(s)
 
-            for row, col in s:
-                self.food_counter[row][col] += 1
+            for loc in s:
+                self.pending_food[loc] += 1
 
         # place food in scheduled locations if they are free
-        for row, squares in enumerate(self.food_counter):
-            for col, count in enumerate(squares):
-                if count and self.map[row][col] == LAND:
-                    self.food_counter[row][col] -= 1
-                    self.add_food((row,col))
+        for loc in self.pending_food.keys():
+            if self.map[loc[0]][loc[1]] == LAND:
+                self.add_food(loc)
+                self.pending_food[loc] -= 1
+
+                # remove from queue if the count reaches 0
+                if not self.pending_food[loc]:
+                    del self.pending_food[loc]
 
     def get_symmetric_food_sets(self):
         ant1, ant2 = self.initial_ant_list[0:2] # assumed one ant per player
