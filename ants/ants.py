@@ -487,40 +487,39 @@ class Ants:
         # TODO: WTF, 10 is quite arbitrary
         MAX_DIST = 10
 
-        # maps ants to nearby enemies
-        # we only care about ants which have enemies in range
-        attacked_ants = {}
+        # maps ants to nearby enemies by distance
+        ants_by_distance = {}
         for ant in self.current_ants.values():
-            enemies = list(self.nearby_ants(ant.loc, ant.owner, 1, MAX_DIST))
-            if enemies:
-                # pre-compute distance to each enemy in range
-                dist_map = defaultdict(list)
-                for enemy in enemies:
-                    dist_map[self.distance(ant.loc, enemy.loc)].append(enemy)
-                attacked_ants[ant] = dist_map
+            # pre-compute distance to each enemy in range
+            dist_map = defaultdict(list)
+            for enemy in self.nearby_ants(ant.loc, ant.owner, 1, MAX_DIST):
+                dist_map[self.distance(ant.loc, enemy.loc)].append(enemy)
+            ants_by_distance[ant] = dist_map
 
+        # create helper method to find ant groups
         ant_group = set()
         def find_enemy(ant, min_d, max_d):
             """ Recursively finds a group of ants to eliminate each other """
             for distance in range(min_d, max_d+1):
-                for enemy in attacked_ants[ant][distance]:
+                for enemy in ants_by_distance[ant][distance]:
                     if not enemy.killed and enemy not in ant_group:
                         ant_group.add(enemy)
                         find_enemy(enemy, min_d, max_d)
 
+        # setup done - start the killing
         for distance in range(1, MAX_DIST):
             # find all groups of ants containing more than one ant
             ant_groups = []
-            ants_in_groups = set()
-            for ant in attacked_ants:
-                if ant.killed or ant in ants_in_groups:
+            for ant in self.current_ants.values():
+                # skip if we have already seen this ant or if it has
+                #   no enemies in range
+                if not ants_by_distance[ant] or any(ant in g for g in ant_groups):
                     continue
 
                 ant_group = set([ant])
                 find_enemy(ant, distance, distance)
                 if len(ant_group) > 1:
                     ant_groups.append(ant_group)
-                    ants_in_groups.update(ant_group)
 
             # kill all ants in each group
             for group in ant_groups:
