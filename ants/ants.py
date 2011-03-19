@@ -498,13 +498,14 @@ class Ants:
 
         # create helper method to find ant groups
         ant_group = set()
-        def find_enemy(ant, min_d, max_d):
+        def find_enemy(ant, distance):
             """ Recursively finds a group of ants to eliminate each other """
-            for distance in range(min_d, max_d+1):
-                for enemy in ants_by_distance[ant][distance]:
-                    if not enemy.killed and enemy not in ant_group:
-                        ant_group.add(enemy)
-                        find_enemy(enemy, min_d, max_d)
+            # we only need to check ants at the given distance, because closer
+            #   ants would have been eliminated already
+            for enemy in ants_by_distance[ant][distance]:
+                if not enemy.killed and enemy not in ant_group:
+                    ant_group.add(enemy)
+                    find_enemy(enemy, distance)
 
         # setup done - start the killing
         for distance in range(1, MAX_DIST):
@@ -517,7 +518,7 @@ class Ants:
                     continue
 
                 ant_group = set([ant])
-                find_enemy(ant, distance, distance)
+                find_enemy(ant, distance)
                 if len(ant_group) > 1:
                     ant_groups.append(ant_group)
 
