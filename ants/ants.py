@@ -509,25 +509,22 @@ class Ants:
 
         # setup done - start the killing
         for distance in range(1, MAX_DIST):
-            # find all groups of ants containing more than one ant
-            ant_groups = []
             for ant in self.current_ants.values():
-                # skip if we have already seen this ant or if it has
-                #   no enemies in range
-                if not ants_by_distance[ant] or any(ant in g for g in ant_groups):
+                if not ants_by_distance[ant] or ant.killed:
                     continue
 
                 ant_group = set([ant])
                 find_enemy(ant, distance)
-                if len(ant_group) > 1:
-                    ant_groups.append(ant_group)
 
-            # kill all ants in each group
-            for group in ant_groups:
-                score_share = len(group)
-                for ant in group:
-                    self.score[ant.owner] += Fraction(1, score_share)
-                    self.kill_ant(ant.loc)
+                # kill all ants in groups with more than 1 ant
+                #  this way of killing is order-independent because the
+                #  the ant group is the same regardless of which ant
+                #  you start looking at
+                if len(ant_group) > 1:
+                    score_share = len(ant_group)
+                    for ant in ant_group:
+                        self.score[ant.owner] += Fraction(1, score_share)
+                        self.kill_ant(ant.loc)
 
     def destination(self, loc, d):
         if d in AIM:
