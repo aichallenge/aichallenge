@@ -44,7 +44,8 @@ Button.prototype.draw = function() {
 	var d = 0.5 * Math.PI;
 	ctx.save();
 	ctx.translate(ix, iy);
-	ctx.clearRect(0, 0, g.size, g.size);
+	ctx.fillStyle = '#fff';
+	ctx.fillRect(0, 0, g.size, g.size);
 	ctx.beginPath();
 	ctx.moveTo(0, 0);
 	ctx.lineTo(g.size, 0);
@@ -69,7 +70,7 @@ Button.prototype.draw = function() {
 	ctx.save();
 	ctx.shadowColor = 'rgba(0, 50, 200, 0.7)';
 	var bs = g.size - 2 * g.border;
-	var dy = (this.down) ? 0 : -2;
+	var dy = (this.down) ? +1 : -1;
 	if (dy) {
 		ctx.shadowBlur = 5;
 		ctx.shadowOffsetX = -2;

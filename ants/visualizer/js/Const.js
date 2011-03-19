@@ -4,10 +4,15 @@
  */
 var LEFT_PANEL_W = 48;
 /**
+ * width of right side panel
+ * @const
+ */
+var RIGHT_PANEL_W = 48;
+/**
  * height of top panel
  * @const
  */
-var TOP_PANEL_H = 50;
+var TOP_PANEL_H = 114;
 /**
  * height of bottom panel
  * @const

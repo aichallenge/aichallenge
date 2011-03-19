@@ -84,6 +84,7 @@ Director.prototype.loop = function() {
 		this.timeout = window.setTimeout(function() {that.loop(true)}, delay);
 	}
 };
+
 Director.prototype.cleanUp = function() {
 	window.clearTimeout(this.timeout);
 	this.stop();

@@ -5,16 +5,12 @@
 
 /* @todo scrolling player names if too long; fade to the left and right
  * @todo zoom in to 20x20 squares with animated ants
- * @todo save settings
  * @todo animated single steps if possible (how?)
- * @todo graph showing ants and scores
- * @todo menu items: fullscreen, save, clear, show fog, show attack, show birth,
+ * @todo menu items: clear, show fog, show attack, show birth,
  *     zoom, toggle graph/score bars, cpu use
  * @todo duplicate sprites that wrap around the map edge
- * @todo improve resource deallocation in case of errors; reset objects
  * @todo keep a minimum size to allow the controls to render
  * @todo setting for cpu usage
- * @todo make loading multiple replays in sequence more reliable
  * @todo set player colors from replay file (awaiting answer)
  * @todo show when a bot crashed (awaiting answer)
  * @todo clickable player names (requires user_id)
@@ -34,6 +30,23 @@ Key = {
 	PGDOWN: 34,
 	HOME: 36,
 	END: 35
+};
+
+function Location(x, y, w, h) {
+	this.x = x;
+	this.y = y;
+	this.w = w;
+	this.h = h;
+}
+Location.prototype.offX = function() {
+	return this.x + this.w;
+};
+Location.prototype.offY = function() {
+	return this.y + this.h;
+};
+Location.prototype.contains = function(x, y) {
+	return (x >= this.x && x < this.x + this.w
+		&& y >= this.y && y < this.y + this.h);
 };
 
 /**
@@ -115,7 +128,7 @@ Visualizer = function(container, dataDir, codebase, w, h, java) {
 	this.options['codebase'] = codebase;
 	// read URL parameters and store them in the parameters object
 	var equalPos, value, key, i;
-	var parameters = window.location.href.split('?');
+	var parameters = window.location.href.split(/\?/);
 	if (parameters.length > 1) {
 		parameters = parameters[1].split('#')[0].split('&');
 		for (i = 0; i < parameters.length; i++) {
@@ -126,6 +139,21 @@ Visualizer = function(container, dataDir, codebase, w, h, java) {
 			this.options[key] = value;
 		}
 	}
+	/**
+	 * @private
+	 */
+	this.mouseX = -1;
+	/**
+	 * @private
+	 */
+	this.mouseY = -1;
+	/**
+	 * @private
+	 */
+	this.mouseDown = false;
+	/**
+	 * @private
+	 */
 	/**
 	 * buttons
 	 * @private
@@ -157,7 +185,7 @@ Visualizer = function(container, dataDir, codebase, w, h, java) {
 		text += '</i></td></tr>';
 	}
 	text += '</table>';
-	while(this.container.hasChildNodes()){
+	while (this.container.hasChildNodes()) {
 		this.container.removeChild(this.container.lastChild);
 	}
 	this.log.innerHTML = text;
@@ -170,6 +198,7 @@ Visualizer = function(container, dataDir, codebase, w, h, java) {
 	this.imgMgr.add('wood.jpg');
 	this.imgMgr.add('playback.png');
 	this.imgMgr.add('fog.png');
+	this.imgMgr.add('toolbar.png');
 	/**
 	 * the highest player count in a previous replay to avoid button repaints
 	 * @private
@@ -427,6 +456,10 @@ Visualizer.prototype.loadCanvas = function(prompt) {
 			bg.addButton(6, function() {vis.director.gotoTick(Math.floor(vis.director.position) + 1)});
 			bg.addSpace(32);
 			bg.addButton(2, function() {vis.director.gotoTick(vis.director.duration)});
+			bg = vis.btnMgr.addGroup('toolbar', vis.imgMgr.images[3], ButtonGroup.VERTICAL, ButtonGroup.MODE_NORMAL, 2);
+			bg.addButton(0, function() {vis.config.save();});
+			bg.addButton(1, function() {vis.setFullscreen(!vis.config['fullscreen']);});
+			//bg.addButton(2, function() {  });
 		}
 		vis.tryStart();
 	});
@@ -470,7 +503,6 @@ Visualizer.prototype.tryStart = function() {
 				this.imgMgr.colorize(2, colors);
 			}
 			var bg = this.btnMgr.addGroup('fog', this.imgMgr.patterns[2], ButtonGroup.VERTICAL, ButtonGroup.MODE_RADIO, 2);
-			bg.y = TOP_PANEL_H;
 			for (var i = 0; i < colors.length; i++) {
 				var buttonAdder = function(fog) {
 					return bg.addButton(i, function() {vis.showFog(fog);});
@@ -530,7 +562,7 @@ Visualizer.prototype.tryStart = function() {
 				vis.resize();
 			};
 			Visualizer.prototype.focused = this;
-			this.setFullscreen(this.config.fullscreen);
+			this.setFullscreen(this.config['fullscreen']);
 			this.director.play();
 			this.log.style.display = 'none';
 			this.loading = LoadingState.IDLE;
@@ -550,8 +582,8 @@ Visualizer.prototype.calculateCanvasSize = function() {
 		result.width = document.documentElement.clientWidth;
 		result.height = document.documentElement.clientHeight;
 	}
-	result.width = (this.w && !this.config.fullscreen ? this.w : result.width);
-	result.height = (this.h && !this.config.fullscreen ? this.h : result.height - 4);
+	result.width = (this.w && !this.config['fullscreen'] ? this.w : result.width);
+	result.height = (this.h && !this.config['fullscreen'] ? this.h : result.height - 4);
 	return result;
 };
 Visualizer.prototype.createCanvas = function(obj) {
@@ -569,7 +601,7 @@ Visualizer.prototype.createCanvas = function(obj) {
 Visualizer.prototype.setFullscreen = function(enable) {
 	if (!this.options['java']) {
 		var html = document.getElementsByTagName("html")[0];
-		this.config.fullscreen = enable;
+		this.config['fullscreen'] = enable;
 		if (enable) {
 			this.container.removeChild(this.main.element);
 			var tempBody = document.createElement("body");
@@ -599,31 +631,22 @@ Visualizer.prototype.resize = function(forced) {
 				this.main.element['setSize'](news.width, news.height);
 			}
 		}
-		this.loc.vis = {
-			w: news.width - LEFT_PANEL_W,
-			h: news.height - TOP_PANEL_H - BOTTOM_PANEL_H,
-			x: LEFT_PANEL_W,
-			y: TOP_PANEL_H
-		};
+		this.loc.vis = new Location(LEFT_PANEL_W, TOP_PANEL_H,
+			news.width - LEFT_PANEL_W - RIGHT_PANEL_W,
+			news.height - TOP_PANEL_H - BOTTOM_PANEL_H);
 		this.scale = Math.min(10, Math.max(1, Math.min(
 			(this.loc.vis.w - 2 * ZOOM_SCALE) / (this.replay.cols),
-			(this.loc.vis.h - 2 * ZOOM_SCALE) / (this.replay.rows)
-		))) | 0;
-		this.loc.map = {
-			w: this.scale * (this.replay.cols),
-			h: this.scale * (this.replay.rows)
-		};
+			(this.loc.vis.h - 2 * ZOOM_SCALE) / (this.replay.rows)))) | 0;
+		this.loc.map = new Location(0, 0, this.scale * (this.replay.cols),
+			this.scale * (this.replay.rows));
 		this.loc.map.x = ((this.loc.vis.w - this.loc.map.w) / 2 + this.loc.vis.x) | 0;
 		this.loc.map.y = ((this.loc.vis.h - this.loc.map.h) / 2 + this.loc.vis.y) | 0;
 		this.border.canvas.width = this.loc.map.w + 2 * ZOOM_SCALE;
 		this.border.canvas.height = this.loc.map.h + 2 * ZOOM_SCALE;
 		this.renderBorder();
-		this.loc.scores = {
-			x: (0.5 * (1 + news.width)) | 0,
-			y: 0
-		};
-		this.scores.canvas.width = (0.5 * news.width) | 0;
-		this.scores.canvas.height = TOP_PANEL_H;
+		this.loc.scores = new Location(0, 50, news.width, 64);
+		this.scores.canvas.width = this.loc.scores.w;
+		this.scores.canvas.height = this.loc.scores.h;
 		this.renderScores();
 		this.map.canvas.width = this.loc.map.w;
 		this.map.canvas.height = this.loc.map.h;
@@ -632,8 +655,13 @@ Visualizer.prototype.resize = function(forced) {
 		bg.x = ((news.width - 8 * 64) / 2) | 0;
 		bg.y = this.loc.vis.y + this.loc.vis.h;
 		bg = this.btnMgr.groups['fog'];
-		bg.y = this.loc.vis.y;
+		bg.y = this.loc.vis.y + 8;
+		bg = this.btnMgr.groups['toolbar'];
+		bg.x = this.loc.vis.x + this.loc.vis.w;
+		bg.y = this.loc.vis.y + 8;
 		// redraw everything
+		this.main.ctx.fillStyle = '#fff';
+		this.main.ctx.fillRect(0, 0, this.main.canvas.width, this.main.canvas.height);
 		this.btnMgr.draw();
 		// draw player names and captions
 		this.main.ctx.textAlign = 'left';
@@ -651,12 +679,6 @@ Visualizer.prototype.resize = function(forced) {
 				x += this.main.ctx.measureText(' vs ').width;
 			}
 		}
-		var w = this.main.canvas.width;
-		this.main.ctx.fillStyle = '#000';
-		this.main.ctx.textAlign = 'center';
-		this.main.ctx.textBaseline = 'middle';
-		this.main.ctx.font = 'bold 12px Arial';
-		this.main.ctx.fillText('ants'  , 30          , TOP_PANEL_H - 10);
 		this.director.draw();
 	}
 };
@@ -895,11 +917,11 @@ Visualizer.prototype.draw = function(time, tick) {
 	var array1 = this.replay.turns[turn];
 	var array2 = (time === turn) ? array1 : this.replay.turns[turn + 1];
 	var counts = this.interpolate(array1.counts, array2.counts, time - turn);
-	this.drawColorBar(60, TOP_PANEL_H - 20, 0.5 * w - 60, 20, counts);
-	this.main.ctx.drawImage(this.scores.canvas, this.loc.scores.x, 0);
+	this.drawColorBar(0, 30, w, 20, counts);
+	this.main.ctx.drawImage(this.scores.canvas, this.loc.scores.x, this.loc.scores.y);
 	this.main.ctx.beginPath();
-	this.main.ctx.moveTo(this.loc.scores.x + 0.5 + (w / 2 - 1) * time / (this.replay.turns.length - 1), 0.5);
-	this.main.ctx.lineTo(this.loc.scores.x + 0.5 + (w / 2 - 1) * time / (this.replay.turns.length - 1), TOP_PANEL_H - 0.5);
+	this.main.ctx.moveTo(this.loc.scores.x + 0.5 + (this.loc.scores.w - 1) * time / (this.replay.turns.length - 1), this.loc.scores.y + 0.5);
+	this.main.ctx.lineTo(this.loc.scores.x + 0.5 + (this.loc.scores.w - 1) * time / (this.replay.turns.length - 1), this.loc.scores.y + this.loc.scores.h - 0.5);
 	this.main.ctx.stroke();
 	for (var i = 0; i < this.replay.turns[turn].ants.length; i++) {
 		var antObj = this.replay.turns[turn].ants[i].interpolate(time, Quality.LOW);
@@ -908,7 +930,7 @@ Visualizer.prototype.draw = function(time, tick) {
 	}
 	for (var n = 0; n < drawOrder.length; n++) {
 		antObj = drawOrder[n];
-		if (this.config.zoom) {
+		if (this.config['zoom']) {
 			this.main.ctx.save();
 			this.main.ctx.globalAlpha = antObj.alpha;
 			x = ZOOM_SCALE * (antObj.x + 0.5);
@@ -946,18 +968,35 @@ Visualizer.prototype.draw = function(time, tick) {
 	}
 };
 Visualizer.prototype.mouseMoved = function(mx, my) {
-	this.btnMgr.mouseMove(mx, my);
+	this.mouseX = mx;
+	this.mouseY = my;
+	if (this.mouseDown && this.loc.scores.contains(this.mouseX, this.mouseY)) {
+		mx = (this.mouseX - this.loc.scores.x) / (this.loc.scores.w - 1);
+		mx = Math.round(mx * (this.replay.turns.length - 1));
+		this.director.gotoTick(mx);
+	} else {
+		this.btnMgr.mouseMove(mx, my);
+	}
 };
 Visualizer.prototype.mousePressed = function() {
-	this.btnMgr.mouseDown();
+	this.mouseDown = true;
+	if (this.loc.scores.contains(this.mouseX, this.mouseY)) {
+		var mx = (this.mouseX - this.loc.scores.x) / (this.loc.scores.w - 1);
+		mx = Math.round(mx * (this.replay.turns.length - 1));
+		this.director.gotoTick(mx);
+	} else {
+		this.btnMgr.mouseDown();
+	}
 };
 Visualizer.prototype.mouseReleased = function() {
+	this.mouseDown = false;
 	this.btnMgr.mouseUp();
 };
 Visualizer.prototype.mouseExited = function() {
 	this.btnMgr.mouseMove(-1, -1);
 };
 Visualizer.prototype.mouseEntered = function(mx, my, down) {
+	this.mouseDown = down;
 	if (!down) this.btnMgr.mouseUp();
 	this.btnMgr.mouseMove(mx, my);
 };
@@ -988,7 +1027,7 @@ Visualizer.prototype.keyPressed = function(key) {
 		default:
 			switch (String.fromCharCode(key)) {
 				case 'F':
-					this.setFullscreen(!this.config.fullscreen);
+					this.setFullscreen(!this.config['fullscreen']);
 					break;
 			}
 	}
