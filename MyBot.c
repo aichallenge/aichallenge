@@ -15,7 +15,7 @@ int distance(int row1, int col1, int row2, int col2, struct game_info *Info) {
     int abs1, abs2;
 
     abs1 = abs(row1 - row2);
-    abs2 = Info->cols - abs(row1 - row2);
+    abs2 = Info->rows - abs(row1 - row2);
 
     if (abs1 > abs2)
         dr = abs2;
@@ -23,7 +23,7 @@ int distance(int row1, int col1, int row2, int col2, struct game_info *Info) {
         dr = abs1;
 
     abs1 = abs(col1 - col2);
-    abs2 = Info->rows - abs(col1 - col2);
+    abs2 = Info->cols - abs(col1 - col2);
 
     if (abs1 > abs2)
         dc = abs2;
