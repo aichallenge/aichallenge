@@ -446,30 +446,40 @@ class Ants:
     def player_ants(self, player):
         return [ant for ant in self.current_ants.values() if player == ant.owner]
 
-    # ants kill enemies of less or equally occupied
-    # TODO: update function to mark conflict for dead ant info
-    # TODO: write function correctly, don't kill any ant until end
     def do_attack_occupied(self):
-        score = [Fraction(0, 1) for i in range(self.num_players)]
+        """ Kill ants which are the most surrounded by enemies
+
+            For a given ant define: Power = 1/NumOpponents
+            An ant's Opponents are enemy ants which are within the attackradius.
+            Ant alive if its Power is greater than Power of any of his Opponents.
+            If an ant dies 1 point is shared equally between its Opponents.
+        """
+
+        # maps ants to nearby enemies
+        nearby_enemies = {}
+        for ant in self.current_ants.values():
+            nearby_enemies[ant] = list(self.nearby_ants(ant.loc, ant.owner, 1, self.attackradius))
+
+        # determine which ants to kill
         ants_to_kill = []
         for ant in self.current_ants.values():
-            a_owner = ant.owner
-            killers = []
-            enemies = list(self.nearby_ants(ant.loc, ant.owner, 1, self.attackradius))
-            occupied = len(enemies)
-            for enemy in enemies:
-                e_occupied = len(list(self.nearby_ants(enemy.loc, enemy.owner, 1, 2)))
-                if e_occupied <= occupied:
-                    killers.append(enemies)
-            if len(killers) > 0:
+            # determine this ants power
+            inv_power = len(nearby_enemies[ant])
+            # an ant with no enemies nearby can't be attacked
+            if inv_power == 0:
+                continue
+            # determine the maximum power of nearby enemies
+            enemy_inv_power = min(len(nearby_enemies[enemy]) for enemy in nearby_enemies[ant])
+            # ant dies if its power is less than or equal to max enemy power
+            if enemy_inv_power <= inv_power:
                 ants_to_kill.append(ant)
-                score_share = len(killers)
-                for enemy in killers:
-                    score[enemy.owner] += Fraction(1, score_share)
+
+        # kill ants and distribute score
         for ant in ants_to_kill:
-            if not ant.killed:
-                self.kill_ant(ant.loc)
-        self.score = map(operator.add, self.score, score)
+            self.kill_ant(ant.loc)
+            score_share = len(nearby_enemies[ant])
+            for enemy in nearby_enemies[ant]:
+                self.score[enemy.owner] += Fraction(1, score_share)
 
     # 1:1 kill ratio, almost, match closest groups and eliminate iteratively
     def do_attack_closest(self):
