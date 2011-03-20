@@ -62,6 +62,8 @@ class Ants:
                 self.do_attack = self.do_attack_occupied
             elif options['attack'] == 'closest':
                 self.do_attack = self.do_attack_closest
+            elif options['attack'] == 'support':
+                self.do_attack = self.do_attack_support
         self.do_food = self.do_food_sections
         if 'food' in options:
             if options['food'] == 'none':
@@ -445,6 +447,30 @@ class Ants:
 
     def player_ants(self, player):
         return [ant for ant in self.current_ants.values() if player == ant.owner]
+
+    def do_attack_support(self):
+        """ Kill ants which have more enemies nearby than friendly ants """
+
+        # map ants (to be killed) to the enemies that kill it
+        ants_to_kill = {}
+
+        for ant in self.current_ants.values():
+            enemies = []
+            friends = []
+            # sort nearby ants into friend and enemy lists
+            for nearby_ant in self.nearby_ants(ant.loc, None, 1, self.attackradius):
+                if nearby_ant.owner == ant.owner:
+                    friends.append(nearby_ant)
+                else:
+                    enemies.append(nearby_ant)
+            if len(friends) < len(enemies):
+                ants_to_kill[ant] = enemies
+
+        for ant, enemies in ants_to_kill.items():
+            self.kill_ant(ant.loc)
+            score_share = len(enemies)
+            for enemy in enemies:
+                self.score[enemy.owner] += Fraction(1, score_share)
 
     def do_attack_occupied(self):
         """ Kill ants which are the most surrounded by enemies
