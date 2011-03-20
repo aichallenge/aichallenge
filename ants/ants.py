@@ -508,15 +508,12 @@ class Ants:
     def do_attack_closest(self):
         """ Iteratively kill neighbouring groups of ants """
 
-        # TODO: WTF, 10 is quite arbitrary
-        MAX_DIST = 10
-
         # maps ants to nearby enemies by distance
         ants_by_distance = {}
         for ant in self.current_ants.values():
             # pre-compute distance to each enemy in range
             dist_map = defaultdict(list)
-            for enemy in self.nearby_ants(ant.loc, ant.owner, 1, MAX_DIST):
+            for enemy in self.nearby_ants(ant.loc, ant.owner, 1, self.attackradius):
                 dist_map[self.distance(ant.loc, enemy.loc)].append(enemy)
             ants_by_distance[ant] = dist_map
 
@@ -532,7 +529,7 @@ class Ants:
                     find_enemy(enemy, distance)
 
         # setup done - start the killing
-        for distance in range(1, MAX_DIST):
+        for distance in range(1, self.attackradius):
             for ant in self.current_ants.values():
                 if not ants_by_distance[ant] or ant.killed:
                     continue
