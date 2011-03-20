@@ -39,7 +39,6 @@ def main(argv):
     parser.add_option("-O", "--log_output", dest="log_output",
                        action="store_true", default=False,
                        help="Log output streams from bots")
-    
 
     parser.add_option("--serial", dest="serial",
                       action="store_true",
@@ -65,7 +64,7 @@ def main(argv):
     # ants specific game options
     parser.add_option("--attack", dest="attack",
                       default="support",
-                      help="Attack method to use for engine. (closest, occupied,support)")
+                      help="Attack method to use for engine. (closest, occupied, support, damage)")
     parser.add_option("--food", dest="food",
                       default="sections",
                       help="Food spawning method. (none, random, sections, symmetric)")

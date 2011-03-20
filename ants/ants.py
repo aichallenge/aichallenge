@@ -56,7 +56,8 @@ class Ants:
         self.do_attack = {
             'occupied': self.do_attack_occupied,
             'closest':  self.do_attack_closest,
-            'support':  self.do_attack_support
+            'support':  self.do_attack_support,
+            'damage':   self.do_attack_damage
         }.get(options.get('attack'), self.do_attack_closest)
 
         self.do_food = {
@@ -437,6 +438,35 @@ class Ants:
 
     def player_ants(self, player):
         return [ant for ant in self.current_ants.values() if player == ant.owner]
+
+    def do_attack_damage(self):
+        """ Kill ants which take more than 1 damage in a turn
+
+            Each ant deals 1/#enemies damage to each enemy.
+            Any ant with over 1 damage dies.
+            Damage does not accumulate over turns 
+              (ie, ants heal at the end of the battle).
+        """
+
+        damage = defaultdict(Fraction)
+        nearby_enemies = {}
+
+        # each ant damages nearby enemies
+        for ant in self.current_ants.values():
+            enemies = list(self.nearby_ants(ant.loc, ant.owner, 1, self.attackradius))
+            if enemies:
+                nearby_enemies[ant] = enemies
+                damage_per_enemy = Fraction(1, len(enemies))
+                for enemy in enemies:
+                    damage[enemy] += damage_per_enemy
+
+        # kill ants with damage > 1
+        for ant in damage:
+            if damage[ant] >= 1:
+                self.kill_ant(ant.loc)
+                score = Fraction(1, len(nearby_enemies[ant]))
+                for enemy in nearby_enemies[ant]:
+                    self.score[enemy.owner] += score
 
     def do_attack_support(self):
         """ Kill ants which have more enemies nearby than friendly ants 
