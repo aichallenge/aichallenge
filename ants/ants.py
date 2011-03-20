@@ -439,11 +439,17 @@ class Ants:
         return [ant for ant in self.current_ants.values() if player == ant.owner]
 
     def do_attack_support(self):
-        """ Kill ants which have more enemies nearby than friendly ants """
+        """ Kill ants which have more enemies nearby than friendly ants 
+
+            An ant dies if the number of enemy ants within the attackradius
+            is greater than the number of friendly ants within the attackradius.
+            The current ant is not counted in the friendly ant count.
+
+            1 point is distributed evenly among the enemies of the dead ant.
+        """
 
         # map ants (to be killed) to the enemies that kill it
         ants_to_kill = {}
-
         for ant in self.current_ants.values():
             enemies = []
             friends = []
@@ -453,9 +459,11 @@ class Ants:
                     friends.append(nearby_ant)
                 else:
                     enemies.append(nearby_ant)
+            # add ant to kill list if it doesn't have enough support
             if len(friends) < len(enemies):
                 ants_to_kill[ant] = enemies
 
+        # actually do the killing and score distribution
         for ant, enemies in ants_to_kill.items():
             self.kill_ant(ant.loc)
             score_share = len(enemies)

@@ -64,7 +64,7 @@ def main(argv):
 
     # ants specific game options
     parser.add_option("--attack", dest="attack",
-                      default="closest",
+                      default="support",
                       help="Attack method to use for engine. (closest, occupied,support)")
     parser.add_option("--food", dest="food",
                       default="sections",
