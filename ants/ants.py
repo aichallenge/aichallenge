@@ -51,29 +51,20 @@ class Ants:
         self.viewradius = int(options["viewradius2"])
         self.attackradius = int(options["attackradius2"])
         self.spawnradius = int(options["spawnradius2"])
-        if "seed" in options:
-            self.seed = options["seed"]
-        else:
-            self.seed = None
+        self.seed = options.get('seed')
 
-        self.do_attack = self.do_attack_closest
-        if 'attack' in options:
-            if options['attack'] == 'occupied':
-                self.do_attack = self.do_attack_occupied
-            elif options['attack'] == 'closest':
-                self.do_attack = self.do_attack_closest
-            elif options['attack'] == 'support':
-                self.do_attack = self.do_attack_support
-        self.do_food = self.do_food_sections
-        if 'food' in options:
-            if options['food'] == 'none':
-                self.do_food = self.do_food_none
-            elif options['food'] == 'random':
-                self.do_food = self.do_food_random
-            elif options['food'] == 'sections':
-                self.do_food = self.do_food_sections
-            elif options['food'] == 'symmetric':
-                self.do_food = self.do_food_symmetric
+        self.do_attack = {
+            'occupied': self.do_attack_occupied,
+            'closest':  self.do_attack_closest,
+            'support':  self.do_attack_support
+        }.get(options.get('attack'), self.do_attack_closest)
+
+        self.do_food = {
+            'none':      self.do_food_none,
+            'random':    self.do_food_random,
+            'sections':  self.do_food_sections,
+            'symmetric': self.do_food_symmetric
+        }.get(options.get('food'), self.do_food_sections)
 
         self.width = None   # the map
         self.height = None
@@ -184,7 +175,7 @@ class Ants:
             squares_to_check.append((ant.loc, ant.loc))
         while squares_to_check:
             a_loc, v_loc = squares_to_check.popleft()
-            for d in AIM:
+            for d in AIM.values():
                 n_loc = self.destination(v_loc, d)
                 n_row, n_col = n_loc
                 if not vision[n_row][n_col] and self.distance(a_loc, n_loc) <= self.viewradius:
@@ -235,7 +226,6 @@ class Ants:
             ])
         return result
 
-    # communication to bot is in x, y coords
     def render_changes(self, player):
         updates = self.get_state_updates()
         v = self.vision[player]
@@ -333,7 +323,7 @@ class Ants:
         # process orders ignoring bad or duplicates
         for order in orders:
             row1, col1, d = order
-            row2, col2 = self.destination((row1, col1), d)
+            row2, col2 = self.destination((row1, col1), AIM[d])
 
             ant = self.current_ants[(row1, col1)]
             if ant.owner != player: # must move your *own* ant
@@ -553,11 +543,6 @@ class Ants:
                         self.kill_ant(ant.loc)
 
     def destination(self, loc, d):
-        if d in AIM:
-            d = AIM[d]
-        elif d == '-':
-            d = (0, 0)
-
         return ((loc[0] + d[0]) % self.height, (loc[1] + d[1]) % self.width)
 
     def access_map(self):
@@ -583,7 +568,7 @@ class Ants:
         # use bfs to determine who can reach each cell first
         while cell_queue:
             c_loc = cell_queue.popleft()
-            for d in AIM:
+            for d in AIM.values():
                 n_loc = self.destination(c_loc, d)
                 if n_loc not in distances: continue # wall
 
@@ -622,7 +607,7 @@ class Ants:
         while cell_queue:
             c_loc = cell_queue.popleft()
 
-            for d in AIM:
+            for d in AIM.values():
                 n_loc = self.destination(c_loc, d)
                 if n_loc in visited: continue
 
