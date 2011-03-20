@@ -2,6 +2,7 @@ import scala.math.{abs,min,pow}
 
 case class GameInProgress(turn: Int = 0, parameters: GameParameters = GameParameters(), board: Board = Board()) extends Game {
   val gameOver = false
+  def including[P <: Positionable](positionable: P) = this.copy(board = this.board including positionable)
 }
 case class GameOver(turn: Int = 0, parameters: GameParameters = GameParameters(), board: Board = Board()) extends Game {
   val gameOver = true

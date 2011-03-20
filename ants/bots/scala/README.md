@@ -7,7 +7,7 @@ How to build
 ------------
 
 1. If necessary, install [SBT][2]
-2. In this directory, execute `sbt update test package`.
+2. In this directory, execute `sbt update test package-ai`.
 
 
 How to implement your bot

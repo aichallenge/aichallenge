@@ -9,4 +9,9 @@ class AntsGameProject(info: ProjectInfo) extends DefaultProject(info) {
 
   val snapshots = "snapshots" at "http://scala-tools.org/repo-snapshots"
   val releases = "releases" at "http://scala-tools.org/repo-releases"
+
+  lazy val packageAi = task {
+    FileUtilities.zip(("src" / "main" / "scala" ##) :: Nil, "target" / "submission.zip", true, log)
+    None
+  } dependsOn(compile) describedAs("Zips the sources for submission to the AI Challenge")
 }

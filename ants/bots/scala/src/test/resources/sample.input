@@ -1,12 +1,12 @@
 turn 0
-loadtime 2000  
-turntime 2000  
-rows 20  
-cols 20  
-turns 500  
-viewradius2 93  
-attackradius2 6  
-spawnradius2 6  
+loadtime 1000
+turntime 1000
+rows 30
+cols 20
+turns 550
+viewradius2 83
+attackradius2 5
+spawnradius2 7
 ready  
 
 turn 1

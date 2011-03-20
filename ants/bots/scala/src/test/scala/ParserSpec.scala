@@ -44,13 +44,12 @@ class ParserSpec extends Specification with ScalaCheck {
         a 10 9 0
         go"""
       val actualGame = Parser.parse(Source.fromString(input))
-      actualGame must_== GameInProgress(turn = 1, board = Board(Map(
-        Tile(6,5) -> Food(Tile(6,5)),
-        Tile(7,6) -> Water(Tile(7,6)),
-        Tile(7,9) -> Ant(Tile(7,9), false),
-        Tile(10,8) -> Ant(Tile(10,8), true),
-        Tile(10,9) -> Ant(Tile(10,9), true)
-      )))
+      actualGame must_== GameInProgress(turn = 1, board = Board(
+        food = Map(Tile(6,5) -> Food(Tile(6,5))),
+        water = Map(Tile(7,6) -> Water(Tile(7,6))),
+        enemyAnts = Map(Tile(7,9) -> EnemyAnt(Tile(7,9))),
+        myAnts = Map(Tile(10,8) -> MyAnt(Tile(10,8)), Tile(10,9) -> MyAnt(Tile(10,9)))
+      ))
     }
   }
 

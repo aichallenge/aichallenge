@@ -4,22 +4,6 @@ import util.matching.Regex
 
 object Parser {
 
-  private val regularExpressions: Map[Regex, (GameInProgress, Seq[Int]) => GameInProgress] = Map(
-    "a (\\d+ \\d+ \\d+)".r -> ((state, values: Seq[Int]) => state.copy(board = state.board.add(Ant(Tile(values(0), values(1)), values(2) == 0)))),
-    "w (\\d+ \\d+)".r -> ((state, values: Seq[Int]) => state.copy(board = state.board.add(Water(Tile(values(0), values(1)))))),
-    "f (\\d+ \\d+)".r -> ((state, values: Seq[Int]) => state.copy(board = state.board.add(Food(Tile(values(0), values(1)))))),
-    "d (\\d+ \\d+ \\d+)".r -> ((state, values: Seq[Int]) => state.copy(board = state.board.add(Corpse(Tile(values(0), values(1)), values(2) == 0)))),
-    "turn (\\d+)".r -> ((state, values: Seq[Int]) => state.copy(turn = values(0))),
-    "loadtime (\\d+)".r -> ((state, values: Seq[Int]) => state.copy(parameters = state.parameters.copy(loadTime = values(0)))),
-    "turntime (\\d+)".r -> ((state, values: Seq[Int]) => state.copy(parameters = state.parameters.copy(turnTime = values(0)))),
-    "rows (\\d+)".r -> ((state, values: Seq[Int]) => state.copy(parameters = state.parameters.copy(rows = values(0)))),
-    "cols (\\d+)".r -> ((state, values: Seq[Int]) => state.copy(parameters = state.parameters.copy(columns = values(0)))),
-    "turns (\\d+)".r -> ((state, values: Seq[Int]) => state.copy(parameters = state.parameters.copy(turns = values(0)))),
-    "viewradius2 (\\d+)".r -> ((state, values: Seq[Int]) => state.copy(parameters = state.parameters.copy(viewRadius = values(0)))),
-    "attackradius2 (\\d+)".r -> ((state, values: Seq[Int]) => state.copy(parameters = state.parameters.copy(attackRadius = values(0)))),
-    "spawnradius2 (\\d+)".r -> ((state, values: Seq[Int]) => state.copy(parameters = state.parameters.copy(spawnRadius = values(0))))
-  )
-
   def parse(source: Source, params: GameParameters = GameParameters()) = {
     val lines = source.getLines
 
@@ -31,9 +15,7 @@ object Parser {
         case "go" | "ready" => state
         case "end" => GameOver(turn = state.turn, parameters = state.parameters, board = state.board)
         case _ => {
-          regularExpressions.find{case(regex, _) =>
-            line.matches(regex.toString)
-          }.map{case(regex, f) =>
+          regularExpressions.find{case(regex, _) => line.matches(regex.toString)}.map{case(regex, f) =>
             val regex(value) = line
             val values = value.split(" ").map(_.toInt)
             parseInternal(f(state, values))
@@ -44,4 +26,23 @@ object Parser {
 
     parseInternal(GameInProgress(parameters = params))
   }
+
+  // The sequence of these is important. The parser will invoke the first that matches.
+  private val regularExpressions: List[(Regex, (GameInProgress, Seq[Int]) => GameInProgress)] =
+    ("a (\\d+ \\d+) 0".r, (game: GameInProgress, values: Seq[Int]) => game including MyAnt(tileFrom(values))) ::
+    ("a (\\d+ \\d+ \\d+)".r, (game: GameInProgress, values: Seq[Int]) => game including EnemyAnt(tileFrom(values))) ::
+    ("w (\\d+ \\d+)".r, (game: GameInProgress, values: Seq[Int]) => game including Water(tileFrom(values))) ::
+    ("f (\\d+ \\d+)".r, (game: GameInProgress, values: Seq[Int]) => game including Food(tileFrom(values))) ::
+    ("d (\\d+ \\d+ \\d+)".r, (game: GameInProgress, values: Seq[Int]) => game including Corpse(tileFrom(values))) ::
+    ("turn (\\d+)".r, (game: GameInProgress, values: Seq[Int]) => game.copy(turn = values(0))) ::
+    ("loadtime (\\d+)".r, (game: GameInProgress, values: Seq[Int]) => game.copy(parameters = game.parameters.copy(loadTime = values(0)))) ::
+    ("turntime (\\d+)".r, (game: GameInProgress, values: Seq[Int]) => game.copy(parameters = game.parameters.copy(turnTime = values(0)))) ::
+    ("rows (\\d+)".r, (game: GameInProgress, values: Seq[Int]) => game.copy(parameters = game.parameters.copy(rows = values(0)))) ::
+    ("cols (\\d+)".r, (game: GameInProgress, values: Seq[Int]) => game.copy(parameters = game.parameters.copy(columns = values(0)))) ::
+    ("turns (\\d+)".r, (game: GameInProgress, values: Seq[Int]) => game.copy(parameters = game.parameters.copy(turns = values(0)))) ::
+    ("viewradius2 (\\d+)".r, (game: GameInProgress, values: Seq[Int]) => game.copy(parameters = game.parameters.copy(viewRadius = values(0)))) ::
+    ("attackradius2 (\\d+)".r, (game: GameInProgress, values: Seq[Int]) => game.copy(parameters = game.parameters.copy(attackRadius = values(0)))) ::
+    ("spawnradius2 (\\d+)".r, (game: GameInProgress, values: Seq[Int]) => game.copy(parameters = game.parameters.copy(spawnRadius = values(0)))) :: Nil
+
+  private def tileFrom(values: Seq[Int]) = Tile(values(0), values(1))
 }
