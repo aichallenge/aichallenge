@@ -1,3 +1,4 @@
+
 sealed trait Positionable {
   val tile: Tile
 }
