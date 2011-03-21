@@ -45,5 +45,5 @@ object Parser {
     ("attackradius2 (\\d+)".r, (game: GameInProgress, values: Seq[Int]) => game.copy(parameters = game.parameters.copy(attackRadius = values(0)))) ::
     ("spawnradius2 (\\d+)".r, (game: GameInProgress, values: Seq[Int]) => game.copy(parameters = game.parameters.copy(spawnRadius = values(0)))) :: Nil
 
-  private def tileFrom(values: Seq[Int]) = Tile(values(0), values(1))
+  private def tileFrom(values: Seq[Int]) = Tile(row = values(0), column = values(1))
 }
