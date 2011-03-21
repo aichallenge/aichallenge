@@ -1,4 +1,3 @@
-
 case class Board(myAnts: Map[Tile, MyAnt] = Map(),
                  enemyAnts: Map[Tile, EnemyAnt] = Map(),
                  water: Map[Tile, Water] = Map(),

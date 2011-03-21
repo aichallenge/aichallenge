@@ -51,4 +51,3 @@ sealed trait Game {
     }
   }
 }
-

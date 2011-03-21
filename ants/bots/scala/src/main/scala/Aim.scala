@@ -1,4 +1,3 @@
-
 sealed trait CardinalPoint {
   val symbol: Char
 }

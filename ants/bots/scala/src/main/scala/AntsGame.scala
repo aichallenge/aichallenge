@@ -28,5 +28,5 @@ class AntsGame(in: InputStream = System.in, out: OutputStream = System.out) {
       case t => t.printStackTrace
     }
   }
-  
+
 }

@@ -1,1 +1,1 @@
-case class Tile(row:Int, column: Int)
+case class Tile(row: Int, column: Int)
