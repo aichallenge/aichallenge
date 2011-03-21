@@ -2,14 +2,17 @@
 
 """
     Simulates a battle using each attack option
-    ./battle_sim [attackradius2]
+    ./battle_sim.py [attackradius2]
 
     attackradius2 is optional, default is 6.
 
     Map is read in via stdin until EOF or a blank line is encountered.
     Map is automatically padded out to be rectangular.
     Spaces count as LAND.
-    Wrapping does not affect the battles
+    Newlines seperate rows but pipes (|) may also be used.
+        Pipes are useful for creating one liners:
+        ./battle_sim.py <<<"a.b.c||..a"
+    Wrapping does not affect the battles.
 """
 
 from ants import Ants, MAP_RENDER, PLAYER_CHARS
@@ -53,6 +56,7 @@ def simulate_battle(map_segment, attackradius2, attack_method):
         'attackradius2': attackradius2,
         'map': map_data,
         'attack': attack_method,
+        # the rest of these options don't matter
         'loadtime': 0,
         'turntime': 0,
         'viewradius2': 100,
@@ -62,6 +66,7 @@ def simulate_battle(map_segment, attackradius2, attack_method):
     game.do_attack()
     game.render_map()
 
+    # remove buffer and return
     return create_map_output(game.map, buffer)
 
 def read_map_segment():
@@ -71,7 +76,7 @@ def read_map_segment():
     while True:
         line = sys.stdin.readline().rstrip()
         if line:
-            map_segment.append(line)
+            map_segment.extend(line.split('|'))
         else:
             break
 
