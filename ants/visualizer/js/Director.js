@@ -9,9 +9,13 @@ function Director(vis) {
 	this.vis = vis;
 	this.duration = 0;
 	this.defaultSpeed = 1;
+	this.stopAt = undefined;
 	this.cpu = 0.5;
 	this.onstate = undefined;
 	this.timeout = undefined;
+	this.frameCounter = undefined;
+	this.frameStart = undefined;
+	this.frameCpu = undefined;
 }
 /**
  * When the director is in playback mode it has a lastTime. This is just a
@@ -30,8 +34,9 @@ Director.prototype.play = function() {
 			this.position = 0;
 		}
 		this.speed = this.defaultSpeed;
+		this.stopAt = this.duration;
 		if (this.onstate) this.onstate();
-		this.loop(false);
+		this.loop(0);
 	}
 };
 Director.prototype.stop = function() {
@@ -41,47 +46,90 @@ Director.prototype.stop = function() {
 		if (this.onstate) this.onstate();
 	}
 };
-Director.prototype.gotoTick = function(tick) {
+Director.prototype.gotoTick = function(time) {
 	this.stop();
-	if (tick < 0) {
-		tick = 0;
-	} else if (tick > this.duration) {
-		tick = this.duration;
+	if (time < 0) {
+		time = 0;
+	} else if (time > this.duration) {
+		time = this.duration;
 	}
-	if (this.position != tick) {
+	if (this.position != time) {
 		var oldTick = this.position | 0;
-		this.position = tick;
-		this.vis.draw(this.position, oldTick !== tick);
+		this.position = time;
+		time |= 0;
+		this.vis.draw(this.position, oldTick !== time);
 	}
 };
-Director.prototype.loop = function() {
+Director.prototype.slowmoTo = function(time) {
+	if (time < 0) {
+		time = 0;
+	} else if (time > this.duration) {
+		time = this.duration;
+	}
+	this.stopAt = time;
+	var playing = this.playing();
+	if (this.position < time) {
+		this.speed = +0.5
+	} else {
+		this.speed = -0.5;
+	}
+	if (!playing) {
+		if (this.onstate) this.onstate();
+		this.loop(0);
+	}
+};
+Director.prototype.loop = function(delay) {
 	if (this.speed === 0) {
 		return;
 	}
 	var lastTime = this.lastTime;
 	this.lastTime = new Date().getTime();
-	var goOn = true;
 	var oldTurn = this.position | 0;
 	if (lastTime === undefined) {
+		var cpuTime = undefined;
 		oldTurn = -1;
 	} else {
+		cpuTime = this.lastTime - lastTime - delay;
 		this.position += (this.lastTime - lastTime) * this.speed * 0.001;
 	}
-	if (this.position <= 0 && this.speed < 0) {
-		this.position = 0;
+	var goOn = true;
+	if (this.speed < 0 && this.position <= this.stopAt) {
+		this.position = this.stopAt;
 		goOn = false;
 		this.stop();
-	} else if (this.position >= this.duration && this.speed > 0) {
-		this.position = this.duration;
+	} else if (this.speed > 0 && this.position >= this.stopAt) {
+		this.position = this.stopAt;
 		goOn = false;
 		this.stop();
 	}
 	this.vis.draw(this.position, (oldTurn != (this.position | 0)) ? this.position | 0 : undefined);
 	if (goOn) {
 		var that = this;
-		var cpuTime = new Date().getTime() - this.lastTime;
-		var delay = (this.cpu <= 0 || this.cpu > 1) ? 0 : Math.ceil(cpuTime / this.cpu - cpuTime);
-		this.timeout = window.setTimeout(function() {that.loop(true)}, delay);
+		if (that.vis.options['debug'] && cpuTime !== undefined) {
+			if (that.frameStart === undefined) {
+				that.frameStart = lastTime;
+				that.frameCounter = 0;
+				that.frameCpu = 0;
+			}
+			that.frameCounter++;
+			that.frameCpu += cpuTime;
+			if (that.lastTime >= that.frameStart + 1000) {
+				var delta = (that.lastTime - that.frameStart);
+				var fps = Math.round(1000 * that.frameCounter / delta);
+				var cpu = Math.round( 100 * that.frameCpu     / delta);
+				document.title = fps + ' fps @ ' + cpu + '% cpu';
+				that.frameStart = that.lastTime;
+				that.frameCounter = 0;
+				that.frameCpu = 0;
+			}
+		}
+		var invalid = (that.cpu <= 0 || that.cpu > 1) || cpuTime === undefined;
+		delay = invalid ? 0 : Math.ceil(cpuTime / that.cpu - cpuTime);
+		// looks odd, but synchronizes JS and rendering threads so we get
+		// accurate cpu times
+		that.timeout = window.setTimeout(function() {
+			that.timeout = window.setTimeout(function() {that.loop(delay)}, delay);
+		}, 0);
 	}
 };
 

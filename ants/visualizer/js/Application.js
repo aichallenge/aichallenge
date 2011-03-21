@@ -238,7 +238,9 @@ Visualizer.prototype.progress = function(log, func) {
 			if (typeof error == 'string') error = {message: error};
 			var msg = '';
 			for(var key in error) {
-				msg += '<p><u><b>Error ' + key + ':</b></u>\n' + error[key] + '</p>';
+				var escaped = new String(error[key]).replace('&', '&amp;');
+				escaped = escaped.replace('<', '&lt;').replace('>', '&gt;');
+				msg += '<p><u><b>Error ' + key + ':</b></u>\n' + escaped + '</p>';
 			}
 			vis.errorOut(msg);
 			var selectedPosX = 0;
@@ -316,7 +318,7 @@ Visualizer.prototype.loadReplayDataFromURI = function(file) {
 						vis.replay = vis.replay.responseText;
 						vis.loadParseReplay();
 					} else {
-						vis.errorOut('Status ' + p.status + ': ' + p.statusText);
+						vis.errorOut('Status ' + vis.replay.status + ': ' + vis.replay.statusText);
 					}
 				}
 			}
@@ -444,21 +446,21 @@ Visualizer.prototype.loadCanvas = function(prompt) {
 		vis.createCanvas(vis.border);
 		vis.createCanvas(vis.scores);
 		if (!vis.btnMgr.groups['playback']) {
-			var bg = vis.btnMgr.addGroup('playback', vis.imgMgr.images[1], ButtonGroup.HORIZONTAL, ButtonGroup.MODE_NORMAL, 2);
+			var bg = vis.btnMgr.addImageGroup('playback', vis.imgMgr.images[1], ImageButtonGroup.HORIZONTAL, ButtonGroup.MODE_NORMAL, 2);
 			bg.addButton(3, function() {vis.director.gotoTick(0)});
 			bg.addSpace(32);
-			bg.addButton(5, function() {vis.director.gotoTick(Math.ceil(vis.director.position) - 1)});
+			bg.addButton(5, function() {vis.director.slowmoTo((Math.ceil(vis.director.position * 2) - 1) / 2)});
 			//drawImage(this.imgMgr.images[1], 0 * 64, 0, 64, 64, x + 2.5 * 64, y, 64, 64);
 			bg.addSpace(64);
 			bg.addButton(4, function() {vis.director.playStop()});
 			//drawImage(this.imgMgr.images[1], 1 * 64, 0, 64, 64, x + 4.5 * 64, y, 64, 64);
 			bg.addSpace(64);
-			bg.addButton(6, function() {vis.director.gotoTick(Math.floor(vis.director.position) + 1)});
+			bg.addButton(6, function() {vis.director.slowmoTo((Math.floor(vis.director.position * 2) + 1) / 2)});
 			bg.addSpace(32);
 			bg.addButton(2, function() {vis.director.gotoTick(vis.director.duration)});
-			bg = vis.btnMgr.addGroup('toolbar', vis.imgMgr.images[3], ButtonGroup.VERTICAL, ButtonGroup.MODE_NORMAL, 2);
-			bg.addButton(0, function() {vis.config.save();});
-			bg.addButton(1, function() {vis.setFullscreen(!vis.config['fullscreen']);});
+			bg = vis.btnMgr.addImageGroup('toolbar', vis.imgMgr.images[3], ImageButtonGroup.VERTICAL, ButtonGroup.MODE_NORMAL, 2);
+			bg.addButton(0, function() {vis.config.save()});
+			bg.addButton(1, function() {vis.setFullscreen(!vis.config['fullscreen'])});
 			//bg.addButton(2, function() {  });
 		}
 		vis.tryStart();
@@ -502,7 +504,8 @@ Visualizer.prototype.tryStart = function() {
 				this.highestPlayerCount = this.replay.players.length;
 				this.imgMgr.colorize(2, colors);
 			}
-			var bg = this.btnMgr.addGroup('fog', this.imgMgr.patterns[2], ButtonGroup.VERTICAL, ButtonGroup.MODE_RADIO, 2);
+			var bg = this.btnMgr.addImageGroup('fog', this.imgMgr.patterns[2],
+				ImageButtonGroup.VERTICAL, ButtonGroup.MODE_RADIO, 2);
 			for (var i = 0; i < colors.length; i++) {
 				var buttonAdder = function(fog) {
 					return bg.addButton(i, function() {vis.showFog(fog);});
@@ -582,8 +585,8 @@ Visualizer.prototype.calculateCanvasSize = function() {
 		result.width = document.documentElement.clientWidth;
 		result.height = document.documentElement.clientHeight;
 	}
-	result.width = (this.w && !this.config['fullscreen'] ? this.w : result.width);
-	result.height = (this.h && !this.config['fullscreen'] ? this.h : result.height - 4);
+	result.width = (this.w && (!this.config['fullscreen'] || this.options['java']) ? this.w : result.width);
+	result.height = (this.h && (!this.config['fullscreen'] || this.options['java']) ? this.h : result.height - 4);
 	return result;
 };
 Visualizer.prototype.createCanvas = function(obj) {
@@ -599,7 +602,9 @@ Visualizer.prototype.createCanvas = function(obj) {
 	}
 };
 Visualizer.prototype.setFullscreen = function(enable) {
-	if (!this.options['java']) {
+	if (this.options['java']) {
+		this.config['fullscreen'] = false;
+	} else {
 		var html = document.getElementsByTagName("html")[0];
 		this.config['fullscreen'] = enable;
 		if (enable) {
@@ -644,10 +649,10 @@ Visualizer.prototype.resize = function(forced) {
 		this.border.canvas.width = this.loc.map.w + 2 * ZOOM_SCALE;
 		this.border.canvas.height = this.loc.map.h + 2 * ZOOM_SCALE;
 		this.renderBorder();
-		this.loc.scores = new Location(0, 50, news.width, 64);
+		this.loc.scores = new Location(4, 66, news.width - 8, 64);
 		this.scores.canvas.width = this.loc.scores.w;
 		this.scores.canvas.height = this.loc.scores.h;
-		this.renderScores();
+		this.renderCounts();
 		this.map.canvas.width = this.loc.map.w;
 		this.map.canvas.height = this.loc.map.h;
 		this.renderMap();
@@ -660,25 +665,25 @@ Visualizer.prototype.resize = function(forced) {
 		bg.x = this.loc.vis.x + this.loc.vis.w;
 		bg.y = this.loc.vis.y + 8;
 		// redraw everything
-		this.main.ctx.fillStyle = '#fff';
-		this.main.ctx.fillRect(0, 0, this.main.canvas.width, this.main.canvas.height);
+		var ctx = this.main.ctx;
+		var canvas = this.main.canvas;
+		ctx.fillStyle = '#fff';
+		ctx.fillRect(0, 0, canvas.width, canvas.height);
+		ctx.lineWidth = 2;
+		shapeRoundedRect(ctx, 0, 0, canvas.width, 30, 1, 5);
+		ctx.stroke();
+		shapeRoundedRect(ctx, 0, 34, canvas.width, 100, 1, 5);
+		ctx.moveTo(0, 63);
+		ctx.lineTo(canvas.width, 63);
+		ctx.stroke();
+		ctx.lineWidth = 1;
+		ctx.fillStyle = '#888';
+		ctx.textAlign = 'left';
+		ctx.textBaseline = 'middle';
+		ctx.font = 'bold 20px Arial';
+		ctx.fillText('scores', 4, 15);
+		ctx.fillText('# of ants', 4, 49);
 		this.btnMgr.draw();
-		// draw player names and captions
-		this.main.ctx.textAlign = 'left';
-		this.main.ctx.textBaseline = 'top';
-		this.main.ctx.font = 'bold 20px Arial';
-		var x = 0;
-		for (var i = 0; i < this.replay.players.length; i++) {
-			var color = this.replay.players[i]['color'];
-			this.main.ctx.fillStyle = 'rgb(' + color[0] + ', ' + color[1] + ', ' + color[2] + ')';
-			this.main.ctx.fillText(this.replay.players[i].name, x, 2);
-			x += this.main.ctx.measureText(this.replay.players[i].name).width;
-			if (i != this.replay.players.length - 1) {
-				this.main.ctx.fillStyle = '#888';
-				this.main.ctx.fillText(' vs ', x, 2);
-				x += this.main.ctx.measureText(' vs ').width;
-			}
-		}
 		this.director.draw();
 	}
 };
@@ -759,36 +764,43 @@ Visualizer.prototype.renderBorder = function() {
 /**
  * @private
  */
-Visualizer.prototype.renderScores = function() {
+Visualizer.prototype.renderCounts = function() {
 	var ctx = this.scores.ctx;
 	var w = this.scores.canvas.width - 1;
 	var h = this.scores.canvas.height - 1;
 	ctx.fillStyle = '#FFF';
 	ctx.fillRect(0, 0, w + 1, h + 1);
 	// find lowest and highest value
-	var min = +Infinity;
+	var min = 0;
 	var max = -Infinity;
 	for (var i = 0; i < this.replay.turns.length; i++) {
 		var turn = this.replay.turns[i];
 		for (var k = 0; k < turn.scores.length; k++) {
-			if (min > turn.scores[k]) {
-				min = turn.scores[k];
-			}
-			if (max < turn.scores[k]) {
-				max = turn.scores[k];
+			if (max < turn.counts[k]) {
+				max = turn.counts[k];
 			}
 		}
 	}
 	// draw lines
 	var scaleX = w / (this.replay.turns.length - 1);
+	ctx.strokeStyle = 'rgba(0,0,0,0.5)';
+	ctx.beginPath();
+	for (i = 0; i <= this.replay.turns.length; i++) {
+		var t = i + 1;
+		ctx.moveTo(0.5 + scaleX * i, h - (t % 100 ? t % 10 ? 3 : 7 : 17));
+		ctx.lineTo(0.5 + scaleX * i, h + 1);
+	}
+	ctx.moveTo(0.5 + 0, h + 0.5);
+	ctx.lineTo(0.5 + scaleX * this.replay.turns.length, h + 0.5);
+	ctx.stroke();
 	var scaleY = h / (max - min);
-	for (i = 0; i < this.replay.players.length; i++) {
+	for (i = this.replay.players.length - 1; i >= 0; i--) {
 		var color = this.replay.players[i]['color'];
 		ctx.strokeStyle = 'rgb(' + color[0] + ',' + color[1] + ',' + color[2] + ')';
 		ctx.beginPath();
-		ctx.moveTo(0.5, 0.5 + scaleY * (max - this.replay.turns[0].scores[i]));
+		ctx.moveTo(0.5, 0.5 + scaleY * (max - this.replay.turns[0].counts[i]));
 		for (k = 1; k < this.replay.turns.length; k++) {
-			ctx.lineTo(0.5 + scaleX * k, 0.5 + scaleY * (max - this.replay.turns[k].scores[i]));
+			ctx.lineTo(0.5 + scaleX * k, 0.5 + scaleY * (max - this.replay.turns[k].counts[i]));
 		}
 		ctx.stroke();
 	}
@@ -874,8 +886,9 @@ Visualizer.prototype.drawColorBar = function(x, y, w, h, values) {
 	var offsetY = y + 0.5 * h;
 	offsetX = x + 2;
 	for (i = 0; i < useValues.length; i++) {
-		if (useValues[i] != 0) {
-			this.main.ctx.fillText(Math.round(values[i]), offsetX, offsetY);
+		var text = Math.round(values[i]);
+		if (useValues[i] != 0 && scale * useValues[i] >= this.main.ctx.measureText(text).width) {
+			this.main.ctx.fillText(text, offsetX, offsetY);
 		}
 		offsetX += scale * useValues[i];
 	}
@@ -913,16 +926,25 @@ Visualizer.prototype.draw = function(time, tick) {
 	if (tick !== undefined) {
 		//document.getElementById('lblTurn').innerHTML = ((turn > this.replay.turns.length - 2) ? 'end result' : turn + ' / ' + (this.replay.turns.length - 2));
 		if (this.fog !== undefined) this.renderFog(turn);
+		//var array1 = this.replay.turns[turn];
+		//var array2 = (time === turn) ? array1 : this.replay.turns[turn + 1];
+		//var scores = this.interpolate(array1.scores, array2.scores, time - turn);
+		//this.drawColorBar(95,  4, w - 4 - 95, 22, scores);
+		//var counts = this.interpolate(array1.counts, array2.counts, time - turn);
+		//this.drawColorBar(95, 38, w - 4 - 95, 22, counts);
+		this.drawColorBar(95,  4, w - 4 - 95, 22, this.replay.turns[turn].scores);
+		this.drawColorBar(95, 38, w - 4 - 95, 22, this.replay.turns[turn].counts);
 	}
-	var array1 = this.replay.turns[turn];
-	var array2 = (time === turn) ? array1 : this.replay.turns[turn + 1];
-	var counts = this.interpolate(array1.counts, array2.counts, time - turn);
-	this.drawColorBar(0, 30, w, 20, counts);
 	this.main.ctx.drawImage(this.scores.canvas, this.loc.scores.x, this.loc.scores.y);
 	this.main.ctx.beginPath();
 	this.main.ctx.moveTo(this.loc.scores.x + 0.5 + (this.loc.scores.w - 1) * time / (this.replay.turns.length - 1), this.loc.scores.y + 0.5);
 	this.main.ctx.lineTo(this.loc.scores.x + 0.5 + (this.loc.scores.w - 1) * time / (this.replay.turns.length - 1), this.loc.scores.y + this.loc.scores.h - 0.5);
 	this.main.ctx.stroke();
+	var isStop = (turn === this.replay.turns.length - 1);
+	this.main.ctx.fillStyle = '#888';
+	this.main.ctx.fillText('# of ants | ' + (isStop ? 'end' : 'turn '
+			+ (turn + 1) + '/' + (this.replay.turns.length - 1)),
+			this.loc.scores.x, this.loc.scores.y + 11);
 	for (var i = 0; i < this.replay.turns[turn].ants.length; i++) {
 		var antObj = this.replay.turns[turn].ants[i].interpolate(time, Quality.LOW);
 		this.correctCoords(antObj, this.replay.cols, this.replay.rows);
@@ -964,6 +986,7 @@ Visualizer.prototype.draw = function(time, tick) {
 	// draw border over ants, that moved out of the map
 	this.main.ctx.drawImage(this.border.canvas, this.loc.map.x - ZOOM_SCALE, this.loc.map.y - ZOOM_SCALE);
 	if (this.options['java']) {
+		// stop Closure Compiler from renaming this Java method
 		this.main.element['repaint']();
 	}
 };

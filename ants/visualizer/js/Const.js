@@ -12,7 +12,7 @@ var RIGHT_PANEL_W = 48;
  * height of top panel
  * @const
  */
-var TOP_PANEL_H = 114;
+var TOP_PANEL_H = 134;
 /**
  * height of bottom panel
  * @const
