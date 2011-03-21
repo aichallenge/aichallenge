@@ -40,6 +40,7 @@ object Parser {
     ("rows (\\d+)".r, (game: GameInProgress, values: Seq[Int]) => game.copy(parameters = game.parameters.copy(rows = values(0)))) ::
     ("cols (\\d+)".r, (game: GameInProgress, values: Seq[Int]) => game.copy(parameters = game.parameters.copy(columns = values(0)))) ::
     ("turns (\\d+)".r, (game: GameInProgress, values: Seq[Int]) => game.copy(parameters = game.parameters.copy(turns = values(0)))) ::
+    ("seed (\\d+)".r, (game: GameInProgress, values: Seq[Int]) => game.copy(parameters = game.parameters.copy(seed = values(0)))) ::
     ("viewradius2 (\\d+)".r, (game: GameInProgress, values: Seq[Int]) => game.copy(parameters = game.parameters.copy(viewRadius = values(0)))) ::
     ("attackradius2 (\\d+)".r, (game: GameInProgress, values: Seq[Int]) => game.copy(parameters = game.parameters.copy(attackRadius = values(0)))) ::
     ("spawnradius2 (\\d+)".r, (game: GameInProgress, values: Seq[Int]) => game.copy(parameters = game.parameters.copy(spawnRadius = values(0)))) :: Nil
