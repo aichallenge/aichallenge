@@ -4,6 +4,7 @@ turntime 1000
 rows 30
 cols 20
 turns 550
+seed 59
 viewradius2 83
 attackradius2 5
 spawnradius2 7

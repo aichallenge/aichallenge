@@ -23,7 +23,7 @@ class AntsGameSpec extends Specification with Mockito {
       }
       val subject = new AntsGame(new FileInputStream("src/test/resources/sample.input"))
       subject.run(bot)
-      val expectedParams = GameParameters(1000,1000,30,20,550,83,5,7)
+      val expectedParams = GameParameters(1000,1000,30,20,59,550,83,5,7)
       gameParameters must_== List(expectedParams, expectedParams)
     }
   }
