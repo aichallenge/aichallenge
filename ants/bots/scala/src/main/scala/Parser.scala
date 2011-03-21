@@ -19,7 +19,7 @@ object Parser {
             val regex(value) = line
             val values = value.split(" ").map(_.toInt)
             parseInternal(f(state, values))
-          }.getOrElse(state)
+          }.getOrElse(parseInternal(state))
         }
       }
     }
