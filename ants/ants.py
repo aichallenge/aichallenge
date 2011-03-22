@@ -74,7 +74,6 @@ class Ants:
         self.width = None   # the map
         self.height = None
         self.map = None
-        self.water_area = 0
         self.land_area = 0
 
         self.current_ants = {} # ants that are currently alive
@@ -129,48 +128,42 @@ class Ants:
         players = []
         self.map = []
         row = 0
+        water_area = 0
+
         for line in map_text.split('\n'):
             line = line.strip().lower()
-            if line == '':
+            if not line:
                 continue # ignore blank lines
-            data = line.split(' ')
-            if data[0] == 'cols':
-                self.width = int(data[1])
-            elif data[0] == 'rows':
-                self.height = int(data[1])
-            elif data[0] == 'm':
-                if len(data[1]) != self.width:
+            key, value = line.split(' ')
+            if key == 'cols':
+                self.width = int(value)
+            elif key == 'rows':
+                self.height = int(value)
+            elif key == 'm':
+                if len(value) != self.width:
                     raise Exception('map',
                                     'Incorrect number of cols in row %s. Got %s, expected %s.' % (
-                                    row, len(data[1]), self.width))
-                self.map.append([])
-                for col, c in enumerate(data[1]):
+                                    row, len(value), self.width))
+                self.map.append([LAND]*self.width)
+                for col, c in enumerate(value):
                     if c in PLAYER_CHARS:
                         if not c in players:
                             players.append(c)
-                            #if self.center[value] == None:
-                            #    self.center[value] = (last_row, col)
-                        value = players.index(c)
-                        self.map[-1].append(value)
-                        self.add_ant((row, col), value)
-                        self.land_area += 1
+                        self.add_ant((row, col), players.index(c))
                     elif c == '*':
-                        self.map[-1].append(FOOD)
                         self.add_food((row, col))
-                        self.land_area += 1
                     elif c == '%':
-                        self.map[-1].append(WATER)
-                        self.water_area += 1
-                    elif c == '.':
-                        self.map[-1].append(LAND)
-                        self.land_area += 1
-                    else:
+                        self.map[row][col] = WATER
+                        water_area += 1
+                    elif c != '.':
                         raise Exception("map", "Invalid character in map: %s" % c)
                 row += 1
+
         if self.height != row:
                 raise Exception("map", "Incorrect number of rows.  Expected %s, got %s" % (self.height, row))
+
+        self.land_area = self.width*self.height - water_area
         self.num_players = len(players)
-        return True
 
     def get_vision(self, player):
         """ Determine which squares are visible to the given player """
@@ -438,9 +431,9 @@ class Ants:
     def add_food(self, loc):
         """ Add food to a location
 
-            An error is raised if food already exists there.
+            An error is raised if the location is not free
         """
-        if loc in self.current_food:
+        if self.map[loc[0]][loc[1]] != LAND:
             raise Exception("Add food error",
                             "Food already found at %s" %(loc,))
         self.map[loc[0]][loc[1]] = FOOD
@@ -456,10 +449,8 @@ class Ants:
         """
         try:
             self.map[loc[0]][loc[1]] = LAND
-            food = self.current_food[loc]
-            food.end_turn = self.turn
-            del self.current_food[loc]
-            return food
+            self.current_food[loc].end_turn = self.turn
+            return self.current_food.pop(loc)
         except KeyError:
             raise Exception("Remove food error",
                             "Food not found at %s" %(loc,))
@@ -478,9 +469,6 @@ class Ants:
             food = self.remove_food(loc)
 
         loc = food.loc
-        if loc in self.current_ants:
-            raise Exception("Add ant error",
-                            "Ant already found at %s" %(loc,))
         ant = Ant(loc, owner, self.turn)
         row, col = loc
         self.map[row][col] = owner
@@ -500,8 +488,7 @@ class Ants:
             self.killed_ants.append(ant)
             ant.killed = True
             ant.die_turn = self.turn
-            del self.current_ants[loc]
-            return ant
+            return self.current_ants.pop(loc)
         except KeyError:
             raise Exception("Kill ant error",
                             "Ant not found at %s" %(loc,))
@@ -1064,6 +1051,7 @@ class Ant:
         return '(%s, %s, %s, %s, %s)' % (self.initial_loc, self.owner, self.spawn_turn, self.die_turn, ''.join(self.orders))
 
     def move(self, new_loc, direction='-'):
+        """ Schedule ant to move - actual move is executed by resolve_orders """
         if self.moved:
             raise Exception("Move ant error",
                             "This ant was already moved from %s to %s"
