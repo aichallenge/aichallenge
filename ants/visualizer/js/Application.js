@@ -410,7 +410,12 @@ Visualizer.prototype.loadCanvas = function(prompt) {
 				var token = appletManager.add(vis);
 				var e = document.createElement('applet');
 				vis.main.element = e;
-				e.setAttribute('codebase', vis.options['codebase']);
+				var codebase = vis.options['codebase'];
+				if (codebase.substr(codebase.length - 4) === '.jar') {
+					e.setAttribute('archive', codebase);
+				} else {
+					e.setAttribute('codebase', codebase);
+				}
 				e.setAttribute('code', 'com.aicontest.visualizer.CanvasApplet');
 				e.setAttribute('width', size.width);
 				e.setAttribute('height', size.height);
@@ -445,24 +450,6 @@ Visualizer.prototype.loadCanvas = function(prompt) {
 		vis.createCanvas(vis.map);
 		vis.createCanvas(vis.border);
 		vis.createCanvas(vis.scores);
-		if (!vis.btnMgr.groups['playback']) {
-			var bg = vis.btnMgr.addImageGroup('playback', vis.imgMgr.images[1], ImageButtonGroup.HORIZONTAL, ButtonGroup.MODE_NORMAL, 2);
-			bg.addButton(3, function() {vis.director.gotoTick(0)});
-			bg.addSpace(32);
-			bg.addButton(5, function() {vis.director.slowmoTo((Math.ceil(vis.director.position * 2) - 1) / 2)});
-			//drawImage(this.imgMgr.images[1], 0 * 64, 0, 64, 64, x + 2.5 * 64, y, 64, 64);
-			bg.addSpace(64);
-			bg.addButton(4, function() {vis.director.playStop()});
-			//drawImage(this.imgMgr.images[1], 1 * 64, 0, 64, 64, x + 4.5 * 64, y, 64, 64);
-			bg.addSpace(64);
-			bg.addButton(6, function() {vis.director.slowmoTo((Math.floor(vis.director.position * 2) + 1) / 2)});
-			bg.addSpace(32);
-			bg.addButton(2, function() {vis.director.gotoTick(vis.director.duration)});
-			bg = vis.btnMgr.addImageGroup('toolbar', vis.imgMgr.images[3], ImageButtonGroup.VERTICAL, ButtonGroup.MODE_NORMAL, 2);
-			bg.addButton(0, function() {vis.config.save()});
-			bg.addButton(1, function() {vis.setFullscreen(!vis.config['fullscreen'])});
-			//bg.addButton(2, function() {  });
-		}
 		vis.tryStart();
 	});
 };
@@ -495,6 +482,41 @@ Visualizer.prototype.tryStart = function() {
 	if (this.replay && this.replay instanceof Replay) {
 		if (this.main.ctx && !this.imgMgr.error && !this.imgMgr.pending) {
 			var vis = this;
+			if (!vis.btnMgr.groups['playback']) {
+				bg = vis.btnMgr.addImageGroup('playback', vis.imgMgr.images[1],
+						ImageButtonGroup.HORIZONTAL, ButtonGroup.MODE_NORMAL, 2);
+				bg.addButton(3, function() {vis.director.gotoTick(0)});
+				bg.addSpace(32);
+				bg.addButton(5, function() {
+					var stop = (Math.ceil(vis.director.position * 2) - 1) / 2;
+					vis.director.slowmoTo(stop);
+				});
+				//drawImage(this.imgMgr.images[1], 0 * 64, 0, 64, 64, x + 2.5 * 64, y, 64, 64);
+				bg.addSpace(64);
+				bg.addButton(4, function() {vis.director.playStop()});
+				//drawImage(this.imgMgr.images[1], 1 * 64, 0, 64, 64, x + 4.5 * 64, y, 64, 64);
+				bg.addSpace(64);
+				bg.addButton(6, function() {
+					var stop = (Math.floor(vis.director.position * 2) + 1) / 2;
+					vis.director.slowmoTo(stop);
+				});
+				bg.addSpace(32);
+				bg.addButton(2, function() {
+					vis.director.gotoTick(vis.director.duration);
+				});
+				bg = vis.btnMgr.addImageGroup('toolbar', vis.imgMgr.images[3],
+						ImageButtonGroup.VERTICAL, ButtonGroup.MODE_NORMAL, 2);
+				bg.addButton(0, function() {vis.config.save()});
+				bg.addButton(1, function() {
+					vis.setFullscreen(!vis.config['fullscreen']);
+				});
+//				bg.addButton(2, function() {
+//					vis.setBorder(!vis.config['border']);
+//				});
+//				bg.addButton(3, function() {
+//					vis.setAntLabels(!vis.config['label']);
+//				});
+			}
 			// generate fog images
 			var colors = [null];
 			for (i = 0; i < this.replay.players.length; i++) {
@@ -620,6 +642,12 @@ Visualizer.prototype.setFullscreen = function(enable) {
 		}
 	}
 	this.resize(true);
+};
+Visualizer.prototype.setBorder = function(enable) {
+	this.config['border'] = enable;
+};
+Visualizer.prototype.setAntLabels = function(enable) {
+	this.config['label'] = enable;
 };
 Visualizer.prototype.resize = function(forced) {
 	var olds = {
@@ -886,8 +914,10 @@ Visualizer.prototype.drawColorBar = function(x, y, w, h, values) {
 	var offsetY = y + 0.5 * h;
 	offsetX = x + 2;
 	for (i = 0; i < useValues.length; i++) {
-		var text = Math.round(values[i]);
-		if (useValues[i] != 0 && scale * useValues[i] >= this.main.ctx.measureText(text).width) {
+		// work around a bug in Chrome's LiveConnect implementation
+		var text = '' + Math.round(values[i]);
+		var textWidth = this.main.ctx.measureText(text).width;
+		if (useValues[i] != 0 && scale * useValues[i] >= textWidth) {
 			this.main.ctx.fillText(text, offsetX, offsetY);
 		}
 		offsetX += scale * useValues[i];
