@@ -32,6 +32,9 @@ Key = {
 	END: 35
 };
 
+/**
+ * @constructor
+ */
 function Location(x, y, w, h) {
 	this.x = x;
 	this.y = y;

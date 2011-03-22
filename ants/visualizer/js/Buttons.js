@@ -1,3 +1,6 @@
+/**
+ * @constructor
+ */
 function Button(group, onclick) {
 	this.group = group;
 	this.onclick = onclick;
@@ -6,6 +9,9 @@ function Button(group, onclick) {
 }
 
 
+/**
+ * @constructor
+ */
 function ButtonGroup(manager, border) {
 	this.buttons = [];
 	this.manager = manager;
@@ -150,6 +156,9 @@ ImageButtonGroup.prototype.mouseMove = function(mx, my) {
 };
 
 
+/**
+ * @constructor
+ */
 function TextButton(group, text, color, onclick) {
 	Button.apply(this, [group, onclick]);
 	this.text = text;
@@ -171,6 +180,9 @@ TextButton.prototype.draw = function() {
 };
 
 
+/**
+ * @constructor
+ */
 function TextButtonGroup(manager, layout, border) {
 	ButtonGroup.apply(this, [manager, border]);
 	this.layout = layout;

@@ -25,3 +25,4 @@ clean:
 install:
 	mkdir -p $(DESTDIR)/visualizer/applet
 	$(CP) ../applet/canvas.jar $(DESTDIR)/visualizer/applet
+
