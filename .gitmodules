@@ -1,6 +1,6 @@
 [submodule "trueskill"]
 	path = manager/trueskill
 	url = https://github.com/aichallenge/trueskill
-[submodule "ants/bots/c"]
-	path = ants/bots/c
+[submodule "ants/dist/starter_bots/c"]
+	path = ants/dist/starter_bots/c
 	url = https://github.com/flagcapper/GoogleAI-Ants-Starter-Pack.git

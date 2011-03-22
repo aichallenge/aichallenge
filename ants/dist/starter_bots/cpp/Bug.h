@@ -3,8 +3,6 @@
 
 #include <fstream>
 
-#define DEBUG false
-
 /*
     struct for debugging - this is gross but can be used pretty much like an ofstream, except
                            the debug messages are stripped while compiling if DEBUG is false.
