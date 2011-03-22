@@ -18,6 +18,7 @@ fi
 
 if command -v tar 1>&2 /dev/null; then
     tar xvfj 3rd-party.tar.bz2;
+    rm -f 3rd-party.tar.bz2;
 else
     echo "3rd-party.tar.bz2 has been downloaded, but \"tar\" command could not be found.";
     exit 1;
