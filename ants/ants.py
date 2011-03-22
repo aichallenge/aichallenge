@@ -125,6 +125,7 @@ class Ants:
         return d_row**2 + d_col**2
 
     def load_map(self, map_text):
+        """ Parse the map_text and initialise the map data """
         players = []
         self.map = []
         row = 0
@@ -135,7 +136,7 @@ class Ants:
             data = line.split(' ')
             if data[0] == 'cols':
                 self.width = int(data[1])
-            elif data[0] == 'rows':  
+            elif data[0] == 'rows':
                 self.height = int(data[1])
             elif data[0] == 'm':
                 if len(data[1]) != self.width:
@@ -167,7 +168,7 @@ class Ants:
                         raise Exception("map", "Invalid character in map: %s" % c)
                 row += 1
         if self.height != row:
-                raise Exception("map", "Incorrect number of rows.  Expected %s, got %s" % (self.height, row))                
+                raise Exception("map", "Incorrect number of rows.  Expected %s, got %s" % (self.height, row))
         self.num_players = len(players)
         return True
 
@@ -222,6 +223,13 @@ class Ants:
             self.revealed_water.append(water)
 
     def get_perspective(self, player):
+        """ Get the map from the perspective of the given player
+
+            Squares that are outside of the player's vision are
+               marked as UNSEEN.
+            Enemy identifiers are changed to reflect the order in
+               which the player first saw them.
+        """
         v = self.vision[player]
         result = []
         for row, squares in enumerate(self.map):
@@ -232,7 +240,12 @@ class Ants:
         return result
 
     def render_changes(self, player):
-        updates = self.get_state_updates()
+        """ Create a string which communicates the updates to the state
+
+            Water which is seen for the first time is included.
+            All visible transient objects (ants, food) are included.
+        """
+        updates = self.get_state_changes()
         v = self.vision[player]
         visible_updates = []
 
@@ -255,22 +268,31 @@ class Ants:
         visible_updates.append([]) # newline
         return '\n'.join(' '.join(map(str,s)) for s in visible_updates)
 
-    def get_state_updates(self):
-        updates = []
+    def get_state_changes(self):
+        """ Return a list of all transient objects on the map.
+
+            Food, living ants, ants killed this turn
+        """
+        changes = []
 
         # current ants
         for ant in self.current_ants.values():
-            updates.append(['a', ant.loc[0], ant.loc[1], ant.owner])
-        # visible food
+            changes.append(['a', ant.loc[0], ant.loc[1], ant.owner])
+        # current food
         for row, col in self.current_food:
-            updates.append(['f', row, col])
-        # dead ants 
+            changes.append(['f', row, col])
+        # ants killed this turn
         for ant in self.killed_ants:
-            updates.append(['d', ant.loc[0], ant.loc[1], ant.owner])
+            changes.append(['d', ant.loc[0], ant.loc[1], ant.owner])
 
-        return updates
+        return changes
 
     def render_map(self, player=None):
+        """ Render the map from the perspective of the given player.
+
+            If player is None, then no squares are hidden and player ids
+              are not reordered.
+        """
         tmp = ''
         if player == None:
             m = self.map
@@ -280,10 +302,14 @@ class Ants:
             tmp += 'm ' + ''.join([MAP_RENDER[col] for col in row]) + '\n'
         return tmp
 
-    # min and max are defined as sum of directions squared, so 9 is dist 3
-    # default values 1-2 are the 8 spaces around a square
-    # this avoids the sqrt function
     def nearby_ants(self, loc, exclude=None, min_dist=1, max_dist=2):
+        """ Returns ants where sqrt(min_dist) <= dist to loc <= sqrt(max_dist)
+
+            Note that min_dist and max_dist are squares of the normal
+              euclidean distances.
+            If exclude is not None, ants with owner == exclude
+              will be ignored.
+        """
         row, col = loc
         mx = SQRT[max_dist]
         for d_row in range(-mx,mx+1):
@@ -297,6 +323,7 @@ class Ants:
                         yield ant
 
     def parse_orders(self, player, orders):
+        """ Parse orders from the given player """
         new_orders = []
         valid = []
         invalid = []
@@ -323,8 +350,14 @@ class Ants:
             print('error in parsing orders')
             return ['fatal error in parsing orders']
 
-    # process orders 1 player at a time
     def do_orders(self, player, orders):
+        """ Process the orders of the given player
+
+            Invalid orders are ignored.
+            Orders are only scheduled, they are actually executed by the
+              resolve_orders method after all players' orders have been
+              proccessed.
+        """
         # process orders ignoring bad or duplicates
         for order in orders:
             row1, col1, d = order
@@ -340,6 +373,12 @@ class Ants:
                 ant.move((row2, col2), d)
 
     def resolve_orders(self):
+        """ Execute player orders and handle conflicts
+
+            All ants are moved to their new positions.
+            Any ants which occupy the same square are killed.
+        """
+
         # hold any ants that haven't moved and determine new locations
         next_loc = defaultdict(list)
         for ant in self.current_ants.values():
@@ -365,9 +404,17 @@ class Ants:
             row, col = ant.loc
             self.map[row][col] = ant.owner
 
-    # must have only 1 force near the food to create a new ant
-    #  and food in contention is eliminated
     def do_spawn(self):
+        """ Spawn new ants from food
+
+            If there are no ants within spawnradius of a food then
+              the food remains.
+            If all the ants within spawnradius of a food are owned by the
+              same player then the food gets converted to an ant owned by
+              that player.
+            If ants of more than one owner are within spawnradius of a food
+              then that food disappears.
+        """
         # Determine new ant locations
         new_ant_locations = []
         for f_loc in self.current_food.keys():
@@ -388,6 +435,10 @@ class Ants:
             self.add_ant(food, owner)
 
     def add_food(self, loc):
+        """ Add food to a location
+
+            An error is raised if food already exists there.
+        """
         if loc in self.current_food:
             raise Exception("Add food error",
                             "Food already found at %s" %(loc,))
@@ -398,6 +449,10 @@ class Ants:
         return food
 
     def remove_food(self, loc):
+        """ Remove food from a location
+
+            An error is raised if no food exists there.
+        """
         try:
             self.map[loc[0]][loc[1]] = LAND
             food = self.current_food[loc]
@@ -409,6 +464,12 @@ class Ants:
                             "Food not found at %s" %(loc,))
 
     def add_ant(self, food, owner):
+        """ Spawn an ant from a food square
+
+            If a location is given instead of a food objects, then a dummy
+              food is placed at the location to spawn from. This is required
+              for the replay format where all ants must come from food.
+        """
         # if we weren't given a Food object then create a dummy food
         if not isinstance(food, Food):
             loc = food
@@ -428,6 +489,10 @@ class Ants:
         return ant
 
     def kill_ant(self, loc):
+        """ Kill the ant at the given location
+
+            Raises an error if no ant is found at the location
+        """
         try:
             self.map[loc[0]][loc[1]] = LAND
             ant = self.current_ants[loc]
@@ -441,6 +506,7 @@ class Ants:
                             "Ant not found at %s" %(loc,))
 
     def player_ants(self, player):
+        """ Return the current ants belonging to the given player """
         return [ant for ant in self.current_ants.values() if player == ant.owner]
 
     def do_attack_damage(self):
@@ -583,12 +649,11 @@ class Ants:
                         self.kill_ant(ant.loc)
 
     def destination(self, loc, d):
+        """ Returns the location produced by offsetting loc by d """
         return ((loc[0] + d[0]) % self.height, (loc[1] + d[1]) % self.width)
 
     def access_map(self):
-        """
-            Determine the list of locations that each player is closest to
-        """
+        """ Determine the list of locations that each player is closest to """
         distances = {}
         players = defaultdict(set)
         cell_queue = deque()
@@ -633,8 +698,8 @@ class Ants:
         return access_map
 
     def find_closest_land(self, coord):
-        """
-            Find the closest square to coord which is a land square using BFS
+        """ Find the closest square to coord which is a land square using BFS
+
             Return None if no square is found
         """
 
@@ -660,12 +725,11 @@ class Ants:
         return None
 
     def do_food_none(self, amount=0):
+        """ Place no food """
         pass
 
     def do_food_random(self, amount=1):
-        """
-            Place food randomly on the map
-        """
+        """ Place food randomly on the map """
         for f in range(amount*self.num_players):
             for t in range(10):
                 row = randrange(self.height)
@@ -675,10 +739,13 @@ class Ants:
                     break
 
     def do_food_offset(self, amount=1):
-        """
-            Pick a col/row offset each turn. Calculate this offset for each 
-            bots starting location and place food there. If the spot is not
-            land, find the closest land to that spot and place the food there.
+        """ Place food at the same offset from each player's start position
+
+            Pick a col/row offset each turn.
+            Calculate this offset for each bots starting location and place
+              food there.
+            If the spot is not land, find the closest land to that spot and
+              place the food there.
         """
         for f in range(amount):
             dr = -self.height//4 + randrange(self.height//2)
@@ -691,9 +758,11 @@ class Ants:
                     self.add_food(coord)
 
     def do_food_sections(self, amount=1):
-        """
-            Split the map into sections that each ant can access 
-            first at the start of the game. Place food evenly into each space.
+        """ Place food randomly in each player's start section
+
+            Split the map into sections that each ant can access first at
+              the start of the game.
+            Place food evenly into each space.
         """
         for f in range(amount):
             for p in range(self.num_players):
@@ -705,9 +774,12 @@ class Ants:
                         break
 
     def do_food_symmetric(self, amount=1):
-        """
-            Split the map into sections that each ant can access 
-            first at the start of the game. Place food evenly into each space.
+        """ Place food in the same relation player start positions.
+
+            Food that can't be placed is put into a queue and is places
+              as soon as the location becomes available.
+            Positions are randomly orders and cycled to evenly
+              distribute food.
         """
         if not hasattr(self, 'food_sets'):
             self.food_sets = deque(self.get_symmetric_food_sets())
@@ -741,6 +813,13 @@ class Ants:
                     del self.pending_food[loc]
 
     def get_symmetric_food_sets(self):
+        """ Split map into sets of squares
+
+            Each set contains self.num_players points where each point
+              is at a consistant offset from each player's starting
+              position.
+            Assumes map is symmetric.
+        """
         ant1, ant2 = self.initial_ant_list[0:2] # assumed one ant per player
         row_t = abs(ant1.loc[0] - ant2.loc[0])
         col_t = abs(ant1.loc[1] - ant2.loc[1])
@@ -813,7 +892,7 @@ class Ants:
 
     # used for 'map hack' streaming playback
     def get_state(self):
-        updates = self.get_state_updates()
+        updates = self.get_state_changes()
         updates.append([]) # newline
 
         return '\n'.join(' '.join(map(str,s)) for s in updates)
