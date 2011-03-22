@@ -1,2 +1,3 @@
-./playgame.py -r 1 -j -o viewer -t 100 --seed 42 -m maps/random4.txt "python bots/python/HunterBot.py" "python bots/python/LeftyBot.py" "python bots/python/HunterBot.py" "python bots/python/LeftyBot.py"
+#!/usr/bin/env sh
+./playgame.py --output_dir viewer --turns 100 --map_file maps/random4.txt "python dist/sample_bots/python/HunterBot.py" "python dist/sample_bots/python/LeftyBot.py" "python dist/sample_bots/python/HunterBot.py" "python dist/sample_bots/python/LeftyBot.py"
 

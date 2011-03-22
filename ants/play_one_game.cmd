@@ -1,3 +1,3 @@
 @echo off
-playgame.py -r 1 -j -o viewer -t 100 -m maps/random4.txt "python bots/python/HunterBot.py" "python bots/python/LeftyBot.py" "python bots/python/HunterBot.py" "python bots/python/LeftyBot.py"
+playgame.py --output_dir viewer --turns 100 --map_file maps/random4.txt "python dist/sample_bots/python/HunterBot.py" "python dist/sample_bots/python/LeftyBot.py" "python dist/sample_bots/python/HunterBot.py" "python dist/sample_bots/python/LeftyBot.py"
 
