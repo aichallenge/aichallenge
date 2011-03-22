@@ -53,19 +53,23 @@ class Ants:
         self.spawnradius = int(options["spawnradius2"])
         self.seed = options.get('seed')
 
-        self.do_attack = {
+        self.attack_methods = {
             'occupied': self.do_attack_occupied,
             'closest':  self.do_attack_closest,
             'support':  self.do_attack_support,
             'damage':   self.do_attack_damage
-        }.get(options.get('attack'), self.do_attack_closest)
+        }
+        self.do_attack = self.attack_methods.get(options.get('attack'),
+                                                 self.do_attack_closest)
 
-        self.do_food = {
+        self.food_methods = {
             'none':      self.do_food_none,
             'random':    self.do_food_random,
             'sections':  self.do_food_sections,
             'symmetric': self.do_food_symmetric
-        }.get(options.get('food'), self.do_food_sections)
+        }
+        self.do_food = self.food_methods.get(options.get('food'),
+                                             self.do_food_sections)
 
         self.width = None   # the map
         self.height = None
@@ -442,8 +446,9 @@ class Ants:
     def do_attack_damage(self):
         """ Kill ants which take more than 1 damage in a turn
 
-            Each ant deals 1/#enemies damage to each enemy.
-            Any ant with over 1 damage dies.
+            Each ant deals 1/#nearby_enemy damage to each nearby enemy.
+              (nearby enemies are those within the attackradius)
+            Any ant with at least 1 damage dies.
             Damage does not accumulate over turns 
               (ie, ants heal at the end of the battle).
         """
@@ -460,7 +465,7 @@ class Ants:
                 for enemy in enemies:
                     damage[enemy] += damage_per_enemy
 
-        # kill ants with damage > 1
+        # kill ants with damage >= 1
         for ant in damage:
             if damage[ant] >= 1:
                 self.kill_ant(ant.loc)

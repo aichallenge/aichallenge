@@ -10,23 +10,24 @@ class HunterBot extends Bot {
     // for example ...
 
     val targets = (game.board.food ++ game.board.enemyAnts).values.toList
+    val blockedTiles = game.board.myAnts.keySet ++ game.board.water.keySet
 
-    val antAndDirections = game.board.myAnts.values.map{ant =>
-      val distance: (Positionable) => Double = (p) => game.distanceFrom(ant.tile).to(p.tile)
-      val maybeTarget: Option[Positionable] = targets.sortWith(distance(_) < distance(_)).headOption
-      val maybeDirection: Option[CardinalPoint] = maybeTarget.flatMap(target => game.directionsFrom(ant.tile).to(target.tile).headOption)
-      (ant, maybeDirection)
-    }.filter(_._2.isDefined).map{case(ant,maybeDirection) => (ant, maybeDirection.get)}
-
-    val validOrders = antAndDirections.flatMap{case(ant,direction) =>
-      val targetTile = game.tile(direction).of(ant.tile)
-      game.board.elements.get(targetTile) match {
-        case None | Some(Corpse(_)) => Some(Order(ant.tile, direction))
-        case _ => None
+    val orders = game.board.myAnts.values.flatMap{ant =>
+      val target = {
+        val distance = (p: Positionable) => game.distanceFrom(ant.tile).to(p.tile)
+        targets.sortWith(distance(_) < distance(_)).headOption
       }
+      val aim = target.map(t => game.directionFrom(ant.tile).to(t.tile))
+      val direction = aim.flatMap{a =>
+        val directionPrecedence = a.toList match {
+          case List(first, second) => first :: second :: first.opposite :: second.opposite :: Nil
+          case List(first) => first :: first.lateral.toList ::: first.opposite :: Nil
+        }
+        directionPrecedence.find(d => !blockedTiles.contains(game.tile(d).of(ant.tile)))
+      }
+      direction.map(d => Order(ant.tile, d))
     }
 
-    validOrders.toSet
+    orders.toSet
   }
-
 }

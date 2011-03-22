@@ -1,15 +1,35 @@
-/**
- * @constructor
- */
-function Button(group, offset, delta, action) {
+function Button(group, onclick) {
 	this.group = group;
-	this.offset = offset;
-	this.delta = delta;
-	this.action = action;
+	this.onclick = onclick;
 	this.hover = false;
 	this.down = false;
 }
-Button.prototype.mouseDown = function() {
+
+
+function ButtonGroup(manager, border) {
+	this.buttons = [];
+	this.manager = manager;
+	this.border = border ? border : 0;
+}
+ButtonGroup.MODE_HIDDEN = 0;
+ButtonGroup.MODE_NORMAL = 1;
+ButtonGroup.MODE_RADIO = 2;
+ButtonGroup.prototype.draw = function() {
+	for (var i = 0; i < this.buttons.length; i++) {
+		if (this.buttons[i].draw) this.buttons[i].draw();
+	}
+};
+
+
+/**
+ * @constructor
+ */
+function ImageButton(group, offset, delta, onclick) {
+	Button.apply(this, [group, onclick]);
+	this.offset = offset;
+	this.delta = delta;
+}
+ImageButton.prototype.mouseDown = function() {
 	switch (this.group.mode) {
 		case ButtonGroup.MODE_RADIO:
 			if (this.down) return;
@@ -26,7 +46,7 @@ Button.prototype.mouseDown = function() {
 			break;
 	}
 };
-Button.prototype.mouseUp = function() {
+ImageButton.prototype.mouseUp = function() {
 	switch (this.group.mode) {
 		case ButtonGroup.MODE_NORMAL:
 			this.down = false;
@@ -34,9 +54,9 @@ Button.prototype.mouseUp = function() {
 			break;
 	}
 };
-Button.prototype.draw = function() {
-	var ctx = this.group.manager.vis.main.ctx;
+ImageButton.prototype.draw = function() {
 	var g = this.group;
+	var ctx = g.manager.vis.main.ctx;
 	var ix = g.x + (g.vertical ? 0 : this.delta);
 	var iy = g.y + (g.vertical ? this.delta : 0);
 	var n = 1;
@@ -88,46 +108,38 @@ Button.prototype.draw = function() {
 	ctx.restore();
 };
 
+
 /**
  * @constructor
  */
-function ButtonGroup(manager, img, layout, mode, border) {
-	this.manager = manager;
+function ImageButtonGroup(manager, img, layout, mode, border) {
+	ButtonGroup.apply(this, [manager, border]);
 	this.img = img;
 	this.vertical = layout;
 	this.mode = mode;
-	this.border = border ? border : 0;
+	this.size = img.height + 2 * this.border;
 	this.x = 0;
 	this.y = 0;
-	this.size = img.height + 2 * this.border;
 	this.w = (this.vertical) ? this.size : 0;
 	this.h = (this.vertical) ? 0 : this.size;
-	this.buttons = [];
 }
-ButtonGroup.HORIZONTAL = false;
-ButtonGroup.VERTICAL = true;
-ButtonGroup.MODE_HIDDEN = 0;
-ButtonGroup.MODE_NORMAL = 1;
-ButtonGroup.MODE_RADIO = 2;
-ButtonGroup.prototype.addButton = function(idx, action) {
-	var btn = new Button(this, (this.size - 2 * this.border) * idx, (this.vertical) ? this.h : this.w, action);
+ImageButtonGroup.HORIZONTAL = false;
+ImageButtonGroup.VERTICAL = true;
+ImageButtonGroup.prototype.addButton = function(idx, onclick) {
+	var btn = new ImageButton(this, (this.size - 2 * this.border) * idx, (this.vertical) ? this.h : this.w, onclick);
 	this.buttons.push(btn);
 	this.vertical ? this.h += this.size : this.w += this.size;
 	return btn;
 };
-ButtonGroup.prototype.addSpace = function(size) {
+ImageButtonGroup.prototype.addSpace = function(size) {
 	this.buttons.push({
 		delta: (this.vertical) ? this.h : this.w,
 		size: size
 	});
 	this.vertical ? this.h += size : this.w += size;
 };
-ButtonGroup.prototype.draw = function() {
-	for (var i = 0; i < this.buttons.length; i++) {
-		if (this.buttons[i].draw) this.buttons[i].draw();
-	}
-};
-ButtonGroup.prototype.mouseMove = function(mx, my) {
+ImageButtonGroup.prototype.draw = ButtonGroup.prototype.draw;
+ImageButtonGroup.prototype.mouseMove = function(mx, my) {
 	var delta = (this.vertical) ? my : mx;
 	for (var i = 0; i < this.buttons.length; i++) {
 		if (delta < this.buttons[i].delta + (this.buttons[i].size ? this.buttons[i].size : this.size)) {
@@ -136,6 +148,41 @@ ButtonGroup.prototype.mouseMove = function(mx, my) {
 	}
 	return null;
 };
+
+
+function TextButton(group, text, color, onclick) {
+	Button.apply(this, [group, onclick]);
+	this.text = text;
+	this.color = color;
+	var ctx = this.group.manager.vis.main.ctx;
+	this.x = 0;
+	this.y = 0;
+	this.w = ctx.measureText(text).width;
+	this.h = 20;
+}
+TextButton.prototype.draw = function() {
+	var g = this.group;
+	var ctx = g.manager.vis.main.ctx;
+	ctx.fillStyle = this.color;
+	ctx.textAlign = 'left';
+	ctx.textBaseline = 'top';
+	ctx.font = 'bold 20px Arial';
+	ctx.fillText(this.text, this.x, this.y);
+};
+
+
+function TextButtonGroup(manager, layout, border) {
+	ButtonGroup.apply(this, [manager, border]);
+	this.layout = layout;
+}
+TextButtonGroup.FLOW = false;
+TextButtonGroup.BLOCK = true;
+TextButtonGroup.prototype.addButton = function(text, color, onclick) {
+	var btn = new TextButton(this, text, color, onclick);
+	this.buttons.push(btn);
+	return btn;
+};
+TextButtonGroup.prototype.draw = ButtonGroup.prototype.draw;
 
 
 /**
@@ -150,10 +197,13 @@ function ButtonManager(vis) {
 	this.nailed = null;
 }
 /**
- * @returns {ButtonGroup} the created button group
+ * @returns {ImageButtonGroup} the created button group
  */
-ButtonManager.prototype.addGroup = function(name, img, layout, mode, border) {
-	return this.groups[name] = new ButtonGroup(this, img, layout, mode, border);
+ButtonManager.prototype.addImageGroup = function(name, img, layout, mode, border) {
+	return this.groups[name] = new ImageButtonGroup(this, img, layout, mode, border);
+};
+ButtonManager.prototype.addTextGroup = function(name, layout, border) {
+	return this.groups[name] = new TextButtonGroup(this, layout, border);
 };
 ButtonManager.prototype.draw = function() {
 	for (var name in this.groups) {
@@ -199,7 +249,7 @@ ButtonManager.prototype.mouseUp = function() {
 	if (this.nailed) {
 		this.nailed.mouseUp();
 		if (this.nailed == this.hover) {
-			this.nailed.action();
+			this.nailed.onclick();
 		}
 		this.nailed = null;
 		this.repaintCheck();
@@ -220,3 +270,17 @@ ButtonManager.prototype.repaintCheck = function() {
 		this.vis.main.element['repaint']();
 	}
 };
+
+function shapeRoundedRect(ctx, x, y, w, h, margin, r) {
+	var d = 0.5 * Math.PI;
+	ctx.beginPath();
+	ctx.moveTo(x + r + margin, y + margin);
+	ctx.lineTo(x + w - r - margin, y + margin);
+	ctx.arc(x + w - r - margin, y + r + margin, r, -d, 0, false);
+	ctx.lineTo(x + w - margin, y + h - r - margin);
+	ctx.arc(x + w - r - margin, y + h - r - margin, r, 0, d, false);
+	ctx.lineTo(x + r + margin, y + h - margin);
+	ctx.arc(x + r + margin, y + h - r - margin, r, d, 2 * d, false);
+	ctx.lineTo(x + margin, y + r + margin);
+	ctx.arc(x + r + margin, y + r + margin, r, 2 * d, 3 * d, false);
+}
