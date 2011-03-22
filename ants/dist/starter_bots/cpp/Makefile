@@ -5,6 +5,9 @@ SOURCES=Bot.cc MyBot.cc State.cc
 OBJECTS=$(SOURCES:.cc=.o)
 EXECUTABLE=MyBot
 
+#Comment the following to disable debugging
+CFLAGS+=-g -DDEBUG
+
 all: $(OBJECTS) $(EXECUTABLE)
 
 $(EXECUTABLE): $(OBJECTS)
@@ -14,6 +17,7 @@ $(EXECUTABLE): $(OBJECTS)
 	$(CC) $(CFLAGS) $< -o $@
 
 clean: 
-	rm -f ${EXECUTABLE} ${OBJECTS} *.d
+	-rm -f ${EXECUTABLE} ${OBJECTS} *.d
+	-rm -f debug.txt
 
 .PHONY: all clean
