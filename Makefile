@@ -1,8 +1,19 @@
-all:
-	gcc -O3 -funroll-loops -c -o MyBot.o MyBot.c
-	gcc -O3 -funroll-loops -c -o YourCode.o YourCode.c
-	gcc -O3 -funroll-loops -c -o ants.o ants.c
-	gcc YourCode.o MyBot.o ants.o -lm -o MyBot
+CC=gcc
+CFLAGS=-O3 -funroll-loops -c
+LDFLAGS=-O2 -lm
+SOURCES=MyBot.c YourCode.c ants.c
+OBJECTS=$(SOURCES:.c=.o)
+EXECUTABLE=MyBot
+
+all: $(OBJECTS) $(EXECUTABLE)
+
+$(EXECUTABLE): $(OBJECTS)
+	$(CC) $(LDFLAGS) $(OBJECTS) -o $@
+
+.c.o:
+	$(CC) $(CFLAGS) $< -o $@
 
 clean:
-	rm -f ants.o YourCode.o MyBot.o ants.o MyBot
+	rm -f ${EXECUTABLE} ${OBJECTS} *.d
+
+.PHONY: all clean

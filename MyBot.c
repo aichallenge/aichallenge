@@ -103,7 +103,7 @@ int main(int argc, char *argv[]) {
     Game.food = 0;
     Game.dead_ants = 0;
 
-	while (42) {
+    while (42) {
         char data[10000];
         memset(data, 0, 10000);
 
@@ -158,5 +158,5 @@ int main(int argc, char *argv[]) {
             fprintf(stdout, "go\n");
             fflush(stdout);
         }
-	}
+    }
 }
