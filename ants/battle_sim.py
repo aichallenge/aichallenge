@@ -64,7 +64,6 @@ def simulate_battle(map_segment, attackradius2, attack_method):
         'turns': 1
     })
     game.do_attack()
-    game.render_map()
 
     # remove buffer and return
     return create_map_output(game.map, buffer)
@@ -101,7 +100,6 @@ if __name__ == "__main__":
 
     map_segment = read_map_segment()
 
-    print "initial position: "
     print '\n'.join(map_segment)
 
     for method in ['occupied', 'closest', 'support', 'damage']:
