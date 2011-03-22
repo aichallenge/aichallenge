@@ -1,18 +1,28 @@
 JAVAC=javac
-JAVAC_ARGS=
-#TODO: Apparently this is needed, but I can't find it on my system: -classpath /etc/java-config-2/current-system-vm/jre/lib/plugin.jar
+JAVAC_ARGS=-classpath $(JAVA_HOME)/jre/lib/plugin.jar
+JAR=jar
+FIND=find
+CP=cp
 
-SOURCEPATH = com/aicontest/visualizer/
-
-SOURCES=$(wildcard $(SOURCEPATH)*/)
+SOURCES=$(wildcard com/aicontest/visualizer/*.java)
 CLASSES=$(SOURCES:%.java=%.class)
 
-.PHONY: all clean
+.PHONY: all compile clean
 
-all: $(CLASSES)
+all: compile jar
 
-%.class: %.java
-	$(JAVAC) $(JAVAC_ARGS) $<
+compile: $(JAVA_SOURCES)
+	$(JAVAC) $(JAVAC_ARGS) `$(FIND) . -name '*.java'`
+
+jar:
+	mkdir -p ../applet
+	$(JAR) cf ../applet/canvas.jar `$(FIND) . -name '*.class'`
 
 clean:
-	-rm -Rf $(SOURCEPATH)*.class
+	$(FIND) . -name '*.class' -delete
+	$(RM) ../applet/canvas.jar
+
+install:
+	mkdir -p $(DESTDIR)/visualizer/applet
+	$(CP) ../applet/canvas.jar $(DESTDIR)/visualizer/applet
+
