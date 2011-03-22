@@ -12,7 +12,7 @@ class AntsGame(in: InputStream = System.in, out: OutputStream = System.out) {
 
       @tailrec
       def playNextTurn(game: Game): Unit = {
-        val newGameState = Parser.parse(source)
+        val newGameState = Parser.parse(source, game.parameters)
         if (newGameState.gameOver) Unit
         else {
           val orders = bot.ordersFrom(newGameState)
