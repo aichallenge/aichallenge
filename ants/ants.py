@@ -54,13 +54,13 @@ class Ants:
         self.seed = options.get('seed')
 
         self.attack_methods = {
-            'occupied': self.do_attack_occupied,
-            'closest':  self.do_attack_closest,
-            'support':  self.do_attack_support,
-            'damage':   self.do_attack_damage
+            'power':   self.do_attack_power,
+            'closest': self.do_attack_closest,
+            'support': self.do_attack_support,
+            'damage':  self.do_attack_damage
         }
         self.do_attack = self.attack_methods.get(options.get('attack'),
-                                                 self.do_attack_closest)
+                                                 self.do_attack_damage)
 
         self.food_methods = {
             'none':      self.do_food_none,
@@ -505,7 +505,7 @@ class Ants:
             for enemy in enemies:
                 self.score[enemy.owner] += Fraction(1, score_share)
 
-    def do_attack_occupied(self):
+    def do_attack_power(self):
         """ Kill ants which are the most surrounded by enemies
 
             For a given ant define: Power = 1/NumOpponents
