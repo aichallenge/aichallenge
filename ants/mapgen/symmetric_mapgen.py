@@ -21,14 +21,14 @@ class SymmetricMap():
     directions = {'N': (-1,0), 'S': (1,0), 'E': (0,1), 'W': (0,-1)}
 
     #game parameters
-    min_players = 3
+    min_players = 4
     max_players = 10
     min_dim = 70
     max_dim = 120
     min_start_distance = 30
 
-    min_land_proportion = 0.5
-    max_land_proportion = 0.8
+    min_land_proportion = 0.6
+    max_land_proportion = 0.9
     
     no_extra_walks = 30
 
