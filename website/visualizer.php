@@ -4,7 +4,14 @@
 
 <?php include "footer.php"; ?>
 
-<script type="text/javascript" src="visualizer/js/visualizer.js"></script>
+<?php
+if (file_exists(dirname(__FILE__)."/visualizer/js/visualizer.js")) {
+	$js = "visualizer/js/visualizer.js";
+} else {
+	$js = "visualizer/js/visualizer-min.js";
+}
+?>
+<script type="text/javascript" src="<?php echo $js; ?>"></script>
 <script type="text/javascript">
 <?php
 if (file_exists(dirname(__FILE__)."/visualizer/java")) {
