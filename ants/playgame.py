@@ -121,12 +121,11 @@ def main(argv):
             result = run_game(game, bots, engine_options, round)
             if opts.output_json:
                 print result
+        return 0
 
     except Exception:
         traceback.print_exc()
-
-    finally:
-        return 1
+        return -1
 
 if __name__ == "__main__":
     try:
