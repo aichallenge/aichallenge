@@ -43,6 +43,7 @@ sub run {
         given ($mode) {
             when ('ready') {
                 # Do nothing; Could do some setup here if you liked though.
+                $self->setup;
             }
             when ('end') {
                 # Game over.
@@ -173,6 +174,13 @@ sub direction {
 sub create_orders {
     my $self = shift;
     die "You must override create_orders() in your own bot.";
+}
+
+sub setup {
+    my $self = shift;
+    # You may optionally override setup() in your own bot.
+    # It is called after the initial configuration data is sent from the
+    # server.
 }
 
 1;
