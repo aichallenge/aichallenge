@@ -341,26 +341,20 @@ class Ants(Game):
             loc = None
 
             # validate the data
-
-            #  row and col must be integers
             try:
                 loc = int(row)%self.height, int(col)%self.width
             except ValueError:
                 invalid.append(line + ' # invalid row or col')
                 continue
-            # can't issue more than one order per ant
             if loc in seen_locations:
                 invalid.append(line + ' # duplicate order')
                 continue
-            # location must be an ant owned by the current player
             if self.map[loc[0]][loc[1]] != player:
                 invalid.append(line + ' # not player ant')
                 continue
-            # direction must be valid
             if direction not in AIM:
                 invalid.append(line + ' # invalid direction')
                 continue
-            # move can't be into a blocked square
             dest = self.destination(loc, AIM[direction])
             if self.map[dest[0]][dest[1]] in (FOOD, WATER):
                 invalid.append(line + ' # moved blocked')
@@ -373,25 +367,19 @@ class Ants(Game):
 
         return new_orders, valid, invalid
 
-    def do_orders(self, player, orders):
-        """ Process the orders of the given player
-
-            Orders are only scheduled, they are actually executed by the
-              resolve_orders method after all players' orders have been
-              proccessed.
-        """
-        for order in orders:
-            loc, d = order
-            dest = self.destination(loc, AIM[d])
-
-            self.current_ants[loc].move(dest, d)
-
     def resolve_orders(self):
         """ Execute player orders and handle conflicts
 
             All ants are moved to their new positions.
             Any ants which occupy the same square are killed.
         """
+
+        # move all ants who have been ordered to move
+        for player, orders in enumerate(self.orders):
+            for order in orders:
+                loc, direction = order
+                dest = self.destination(loc, AIM[direction])
+                self.current_ants[loc].move(dest, direction)
 
         # hold any ants that haven't moved and determine new locations
         next_loc = defaultdict(list)
@@ -898,6 +886,7 @@ class Ants(Game):
         for ant in self.current_ants.values():
             ant.moved = False
         self.revealed_water = [[] for i in range(self.num_players)]
+        self.orders = [[] for i in range(self.num_players)]
 
     def finish_turn(self):
         """ Called by engine at the end of the turn """
@@ -974,7 +963,7 @@ class Ants(Game):
     def do_moves(self, player, moves):
         """ Called by engine to give latest player orders """
         orders, valid, invalid = self.parse_orders(player, moves)
-        self.do_orders(player, orders)
+        self.orders[player] = orders
         return valid, invalid
 
     def get_scores(self):
