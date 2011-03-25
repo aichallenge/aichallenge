@@ -367,31 +367,34 @@ class Ants(Game):
 
         return new_orders, valid, invalid
 
-    def resolve_orders(self):
+    def do_orders(self):
         """ Execute player orders and handle conflicts
 
             All ants are moved to their new positions.
             Any ants which occupy the same square are killed.
         """
+        # set old ant locations to land
+        for ant in self.current_ants.values():
+            row, col = ant.loc
+            self.map[row][col] = LAND
 
-        # move all ants who have been ordered to move
+        # determine the direction that each ant moves
+        #  (holding any ants that don't have orders)
+        move_direction = {}
         for player, orders in enumerate(self.orders):
             for order in orders:
                 loc, direction = order
-                dest = self.destination(loc, AIM[direction])
-                self.current_ants[loc].move(dest, direction)
+                move_direction[self.current_ants[loc]] = direction
+        for ant in self.current_ants.values():
+            if ant not in move_direction:
+                move_direction[ant] = '-'
 
-        # hold any ants that haven't moved and determine new locations
+        # move all the ants
         next_loc = defaultdict(list)
-        for ant in self.current_ants.values():
-            if not ant.moved:
-                ant.move(ant.loc)
+        for ant, direction in move_direction.items():
+            ant.loc = self.destination(ant.loc, AIM.get(direction, (0,0)))
+            ant.orders.append(direction)
             next_loc[ant.loc].append(ant)
-
-        # set old ant locations to land
-        for ant in self.current_ants.values():
-            row, col = ant.prev_loc
-            self.map[row][col] = LAND
 
         # if ant is sole occupant of a new square then it survives
         self.current_ants = {}
@@ -883,14 +886,12 @@ class Ants(Game):
         """ Called by engine at the start of the turn """
         self.turn += 1
         self.killed_ants = []
-        for ant in self.current_ants.values():
-            ant.moved = False
         self.revealed_water = [[] for i in range(self.num_players)]
         self.orders = [[] for i in range(self.num_players)]
 
     def finish_turn(self):
         """ Called by engine at the end of the turn """
-        self.resolve_orders()
+        self.do_orders()
         self.do_attack()
         self.do_spawn()
         self.do_food()
@@ -1044,29 +1045,14 @@ class Ant:
         self.loc = loc
         self.owner = owner
 
-        self.prev_loc = None
         self.initial_loc = loc
         self.spawn_turn = spawn_turn
         self.die_turn = None
         self.orders = []
         self.killed = False
 
-        self.moved = False
-
     def __str__(self):
         return '(%s, %s, %s, %s, %s)' % (self.initial_loc, self.owner, self.spawn_turn, self.die_turn, ''.join(self.orders))
-
-    def move(self, new_loc, direction='-'):
-        """ Schedule ant to move - actual move is executed by resolve_orders """
-        if self.moved:
-            raise Exception("Move ant error",
-                            "This ant was already moved from %s to %s"
-                            %(self.prev_loc, self.loc))
-
-        self.prev_loc = self.loc
-        self.loc = new_loc
-        self.moved = True
-        self.orders.append(direction)
 
 class Food:
     def __init__(self, loc, start_turn):
