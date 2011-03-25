@@ -327,43 +327,39 @@ class Ants(Game):
             if not line or line[0] == '#':
                 continue
 
-            data = line.split()
-
-            # validate data format
-            if data[0] != 'o':
-                invalid.append(line + ' # unkown action')
-                continue
-            if len(data) != 4:
-                invalid.append(line + ' # incorrectly formatted order')
-                continue
-
-            row, col, direction = data[1:]
-            loc = None
-
-            # validate the data
             try:
-                loc = int(row)%self.height, int(col)%self.width
-            except ValueError:
-                invalid.append(line + ' # invalid row or col')
-                continue
-            if loc in seen_locations:
-                invalid.append(line + ' # duplicate order')
-                continue
-            if self.map[loc[0]][loc[1]] != player:
-                invalid.append(line + ' # not player ant')
-                continue
-            if direction not in AIM:
-                invalid.append(line + ' # invalid direction')
-                continue
-            dest = self.destination(loc, AIM[direction])
-            if self.map[dest[0]][dest[1]] in (FOOD, WATER):
-                invalid.append(line + ' # moved blocked')
-                continue
+                data = line.split()
 
-            # this order is valid!
-            new_orders.append((loc, direction))
-            valid.append(line)
-            seen_locations.add(loc)
+                # validate data format
+                if data[0] != 'o':
+                    raise Exception('unknown action')
+                if len(data) != 4:
+                    raise Exception('incorrectly formatted order')
+
+                row, col, direction = data[1:]
+                loc = None
+
+                # validate the data
+                try:
+                    loc = int(row)%self.height, int(col)%self.width
+                except ValueError:
+                    raise Exception('invalid row or col')
+                if loc in seen_locations:
+                    raise Exception('duplicate order')
+                if self.map[loc[0]][loc[1]] != player:
+                    raise Exception('not player ant')
+                if direction not in AIM:
+                    raise Exception('invalid direction')
+                dest = self.destination(loc, AIM[direction])
+                if self.map[dest[0]][dest[1]] in (FOOD, WATER):
+                    raise Exception('moved blocked')
+
+                # this order is valid!
+                new_orders.append((loc, direction))
+                valid.append(line)
+                seen_locations.add(loc)
+            except Exception as e:
+                invalid.append(line + ' # ' + str(e))
 
         return new_orders, valid, invalid
 
