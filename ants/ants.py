@@ -6,6 +6,7 @@ from collections import deque, defaultdict
 from fractions import Fraction
 import operator
 import string
+from game import Game
 
 ANTS = 0
 LAND = -1
@@ -17,31 +18,16 @@ UNSEEN = -5
 PLAYER_CHARS = string.ascii_lowercase
 MAP_RENDER = PLAYER_CHARS + '?!%*.'
 
+# possible directions an ant can move
 AIM = {'n': (-1, 0),
        'e': (0, 1),
        's': (1, 0),
        'w': (0, -1)}
 
-# precalculated sqrt & radius coordinates for distance calcs
+# precalculated sqrt
 SQRT = [int(sqrt(r)) for r in range(101)]
-RADIUS = []
-for r in range(101):
-    RADIUS.append([])
-    mx = SQRT[r]
-    for d_row in range(-mx, mx+1):
-        for d_col in range(-mx, mx+1):
-            if d_row**2 + d_col**2 == r:
-                RADIUS[r].append((d_row, d_col))
 
-FULL_RADIUS = []
-for r in range(101):
-    FULL_RADIUS.append([])
-    mx = SQRT[r]
-    for d_row in range(-mx, mx+1):
-        for d_col in range(-mx, mx+1):
-            if d_row**2 + d_col**2 <= r:
-                FULL_RADIUS[r].append((d_row, d_col))
-class Ants:
+class Ants(Game):
     def __init__(self, options=None):
         # setup options
         map_text = options['map']
@@ -53,23 +39,19 @@ class Ants:
         self.spawnradius = int(options["spawnradius2"])
         self.seed = options.get('seed')
 
-        self.attack_methods = {
+        self.do_attack = {
             'power':   self.do_attack_power,
             'closest': self.do_attack_closest,
             'support': self.do_attack_support,
             'damage':  self.do_attack_damage
-        }
-        self.do_attack = self.attack_methods.get(options.get('attack'),
-                                                 self.do_attack_damage)
+        }.get(options.get('attack'), self.do_attack_damage)
 
-        self.food_methods = {
+        self.do_food = {
             'none':      self.do_food_none,
             'random':    self.do_food_random,
             'sections':  self.do_food_sections,
             'symmetric': self.do_food_symmetric
-        }
-        self.do_food = self.food_methods.get(options.get('food'),
-                                             self.do_food_sections)
+        }.get(options.get('food'), self.do_food_sections)
 
         self.width = None   # the map
         self.height = None
@@ -132,8 +114,11 @@ class Ants:
 
         for line in map_text.split('\n'):
             line = line.strip().lower()
-            if not line:
-                continue # ignore blank lines
+
+            # ignore blank lines and comments
+            if not line or line[0] == '#':
+                continue
+
             key, value = line.split(' ')
             if key == 'cols':
                 self.width = int(value)
@@ -141,26 +126,32 @@ class Ants:
                 self.height = int(value)
             elif key == 'm':
                 if len(value) != self.width:
-                    raise Exception('map',
-                                    'Incorrect number of cols in row %s. Got %s, expected %s.' % (
-                                    row, len(value), self.width))
+                    raise Exception("map",
+                                    "Incorrect number of cols in row %s. "
+                                    "Got %s, expected %s."
+                                    %(row, len(value), self.width))
                 self.map.append([LAND]*self.width)
                 for col, c in enumerate(value):
                     if c in PLAYER_CHARS:
-                        if not c in players:
+                        # assign player ids in the order that we see them
+                        #  (so player 'a' won't necessarily be 0, and so on)
+                        if c not in players:
                             players.append(c)
                         self.add_ant((row, col), players.index(c))
-                    elif c == '*':
+                    elif c == MAP_RENDER[FOOD]:
                         self.add_food((row, col))
-                    elif c == '%':
+                    elif c == MAP_RENDER[WATER]:
                         self.map[row][col] = WATER
                         water_area += 1
-                    elif c != '.':
-                        raise Exception("map", "Invalid character in map: %s" % c)
+                    elif c != MAP_RENDER[LAND]:
+                        raise Exception("map",
+                                        "Invalid character in map: %s" % c)
                 row += 1
 
         if self.height != row:
-                raise Exception("map", "Incorrect number of rows.  Expected %s, got %s" % (self.height, row))
+            raise Exception("map",
+                            "Incorrect number of rows.  Expected %s, got %s"
+                            % (self.height, row))
 
         self.land_area = self.width*self.height - water_area
         self.num_players = len(players)
