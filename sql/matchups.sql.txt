@@ -1,8 +1,23 @@
+-- Randomize mu and sigma
+
+set @init_mu = 25.0;
+
+update submission
+set mu = rand() * @init_mu * 2;
+
+update submission
+set sigma = mu / 3 * rand()
+where mu <= @init_mu;
+
+update submission
+set sigma = (@init_mu * 2 - mu) / 3 * rand()
+where mu > @init_mu;
+
 -- Step 1: select the seed player
 
 select s.user_id,
        s.submission_id
-into @user_id, @submission_id
+into @seed_id, @submission_id
 from submission s
 where s.latest = 1
 order by ( select max(matchup_id)
@@ -25,13 +40,25 @@ inner join game_player gp
     and gp.user_id = @seed_id
 right join map m
     on g.map_id = m.map_id
-group by g.map_id
+group by m.map_id, m.players
 order by count(g.game_id) asc,
          m.priority asc,
          max(g.game_id) asc
 limit 1;
 
 select @seed_id, @submission_id, @map_id, @players
+
+-- Step 2.5: setup matchup and player info for following queries
+
+insert into matchup (seed_id, map_id, worker_id)
+values (@seed_id, @map_id, -1);
+
+set @matchup_id = last_insert_id();
+
+insert into matchup_player (matchup_id, user_id, submission_id, player_id)
+values (@matchup_id, @seed_id, @submission_id, -1);
+
+select @matchup_id, @seed_id, @submission_id, @map_id, @players;
 
 -- Step 3: select opponents 1 at a time
 
@@ -54,3 +81,76 @@ inner join game_player gp
 group by g.game_id
 order by g.game_id desc
 limit 5
+
+-- attempt and fixing step 2
+
+select @seed_id, m.map_id, m.players, m.priority,
+game_count, max_game_id,
+all_game_count, max_all_game_id,
+matchup_count, max_matchup_id
+from map m
+left outer join (
+    select map_id, max(g.game_id) as max_game_id, count(*) as game_count
+    from game g
+    inner join game_player gp
+        on g.game_id = gp.game_id
+    where g.seed_id = @seed_id
+    group by g.map_id
+) games
+    on m.map_id = games.map_id
+left outer join (
+    select map_id, max(g.game_id) as max_all_game_id, count(*) as all_game_count
+    from game g
+    inner join game_player gp
+        on g.game_id = gp.game_id
+    group by g.map_id
+) all_games
+    on m.map_id = all_games.map_id
+left outer join (
+    select map_id, max(m.matchup_id) as max_matchup_id, count(*) as matchup_count
+    from matchup m
+    inner join matchup_player mp
+        on m.matchup_id = mp.matchup_id
+    where m.seed_id = @seed_id
+    group by m.map_id
+) matchups
+    on m.map_id = matchups.map_id
+order by game_count, priority, max_game_id,
+         matchup_count, max_matchup_id,
+         all_game_count, max_all_game_id,
+         map_id
+         
+         
+-- attempt at filling in temp table, need to fill in matchups directly
+
+set @init_mu = 25.0;
+set @init_beta = @init_mu / 6;
+set @twiceBetaSq = 2 * pow(@init_beta, 2);
+set @seed_id = 50364;
+
+select user_id, submission_id, mu, sigma
+into @next_user_id, @next_submission_id, @next_mu, @next_sigma
+from (
+
+select s.submission_id, s.user_id, s.mu, s.sigma,
+@c := (@twiceBetaSq + pow(p.sigma,2) + pow(s.sigma,2)) as c,
+SQRT(@twiceBetaSq / @c) * EXP(-(pow(p.mu - s.mu, 2) / (2 * @c)))
+    as pairwise_draw_prob
+
+from submission s,
+temp_player p
+
+where s.latest = 1
+and s.user_id not in (select user_id from temp_player)
+-- order by pairwise_draw_prob desc
+
+) as q
+group by user_id, submission_id
+order by exp(sum(ln(pairwise_draw_prob))) desc
+limit 1;
+
+insert into temp_player
+select @next_user_id, @next_submission_id, @next_mu, @next_sigma;
+
+select *
+from temp_player;
