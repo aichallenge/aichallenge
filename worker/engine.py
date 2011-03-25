@@ -6,18 +6,17 @@ import os
 import sys
 
 def run_game(game, botcmds, options, gameid=0):
-    output_json = bool('output_json' in options)
-    error = ''
-    if 'output_dir' in options:
-        output_dir = options["output_dir"]
-    else:
-        output_dir = None
-    log_input = bool('log_input' in options)
-    log_output = bool('log_output' in options)
+    output_json = options.get("output_json", False)
+    output_dir = options.get("output_dir")
+    log_input = options.get("log_input", False)
+    log_output = options.get("log_output", False)
     turns = int(options["turns"])
     loadtime = float(options["loadtime"]) / 1000
     turntime = float(options["turntime"]) / 1000
-    verbose = bool('verbose' in options)
+    verbose = options.get("verbose", False)
+
+    error = ''
+
     try:
         if output_dir:
             if log_input:
