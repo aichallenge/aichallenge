@@ -2,7 +2,7 @@ import java.util.*;
 
 public class MyBot implements Bot {
 	public static void main(String[] args) {
-		Ants.run(new RandomBot());
+		Ants.run(new MyBot());
 	}
 	
 	public void do_turn(Ants ants) {

@@ -88,7 +88,7 @@ public class CanvasRenderingContext2d extends RenderingContext2dState {
 	 * }
 	 */
 	// colors and styles
-	private Object setStyle(Object style) {
+	private Object setStyle(Object style) throws Exception {
 		if (style instanceof String) {
 			String color = (String) style;
 			if (color.startsWith("rgb(")) {
@@ -106,17 +106,24 @@ public class CanvasRenderingContext2d extends RenderingContext2dState {
 				float b = Integer.parseInt(st.nextToken().trim()) / 255.0f;
 				float a = Float.parseFloat(st.nextToken().trim());
 				style = new Color(r, g, b, a);
+			} else if (color.length() == 7) {
+				int r = Integer.parseInt(color.substring(1, 3), 16);
+				int g = Integer.parseInt(color.substring(3, 5), 16);
+				int b = Integer.parseInt(color.substring(5, 7), 16);
+				style = new Color(r, g, b);
 			} else if (color.length() == 4) {
 				int r = 17 * Character.digit(color.charAt(1), 16);
 				int g = 17 * Character.digit(color.charAt(2), 16);
 				int b = 17 * Character.digit(color.charAt(3), 16);
 				style = new Color(r, g, b);
+			} else {
+				throw new Exception("cannot parse paint style: " + style);
 			}
 		}
 		return style;
 	}
 
-	private void setStrokeStyle() {
+	private void setStrokeStyle() throws Exception {
 		strokeStyle = setStyle(strokeStyle);
 		if (strokeStyle instanceof Color) {
 			gfx.setColor((Color) strokeStyle);
@@ -126,7 +133,7 @@ public class CanvasRenderingContext2d extends RenderingContext2dState {
 		}
 	}
 
-	private void setFillStyle() {
+	private void setFillStyle() throws Exception {
 		fillStyle = setStyle(fillStyle);
 		if (fillStyle instanceof CanvasPattern) {
 			BufferedImage cp = ((CanvasPattern) fillStyle).getPattern();
@@ -180,7 +187,7 @@ public class CanvasRenderingContext2d extends RenderingContext2dState {
 		gfx.clearRect((int) x, (int) y, (int) w, (int) h);
 	}
 
-	public void fillRect(double x, double y, double w, double h) {
+	public void fillRect(double x, double y, double w, double h) throws Exception {
 		canvas.checkSize();
 		setFillStyle();
 		Path2D.Double oldPath = path;
@@ -214,7 +221,7 @@ public class CanvasRenderingContext2d extends RenderingContext2dState {
 		this.y = y;
 	}
 
-	public void lineTo(double x, double y) {
+	public void lineTo(double x, double y) throws Exception {
 		if (path == null) {
 			canvas.checkSize();
 			setStrokeStyle();
@@ -268,13 +275,13 @@ public class CanvasRenderingContext2d extends RenderingContext2dState {
 		}
 	}
 
-	public void fill() {
+	public void fill() throws Exception {
 		canvas.checkSize();
 		setFillStyle();
 		gfx.fill(path);
 	}
 
-	public void stroke() {
+	public void stroke() throws Exception {
 		canvas.checkSize();
 		setStrokeStyle();
 		gfx.draw(path);
@@ -296,11 +303,8 @@ public class CanvasRenderingContext2d extends RenderingContext2dState {
 	 * boolean drawFocusRing(Element element, double xCaret, double yCaret,
 	 * boolean canDrawCustom) { return false; }
 	 */
-
-	// text
-	public void fillText(String text, float x, float y) {
-		canvas.checkSize();
-		setFillStyle();
+	
+	private void setFont() {
 		String name = "sans-serif";
 		int style = Font.PLAIN;
 		int pt = 7;
@@ -322,11 +326,20 @@ public class CanvasRenderingContext2d extends RenderingContext2dState {
 			}
 		}
 		gfx.setFont(new Font(name, style, pt));
+	}
+
+	// text
+	public void fillText(String text, float x, float y) throws Exception {
+		canvas.checkSize();
+		setFillStyle();
+		setFont();
 		LineMetrics metrics = gfx.getFontMetrics().getLineMetrics(text, gfx);
 		if (textBaseLine.equals("top")) {
 			y += metrics.getAscent();
 		} else if (textBaseLine.equals("middle")) {
 			y += metrics.getAscent() - metrics.getHeight() / 2;
+		} else if (textBaseLine.equals("bottom")) {
+			y -= metrics.getDescent();
 		}
 		int w = gfx.getFontMetrics().stringWidth(text);
 		if (textAlign.equals("end") || textAlign.equals("right")) {
@@ -350,6 +363,7 @@ public class CanvasRenderingContext2d extends RenderingContext2dState {
 	 * }
 	 */
 	public TextMetrics measureText(String text) {
+		setFont();
 		return new TextMetrics(gfx.getFontMetrics().stringWidth(text));
 	}
 

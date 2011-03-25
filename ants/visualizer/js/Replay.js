@@ -64,19 +64,6 @@ DataType = {
 		}
 		return p;
 	},
-	COLOR: function(p, n) {
-		p = p.match(DataType.MATCH);
-		p[0] = new Array(3);
-		if (p[1].charAt(0) != '#') {
-			throw new Error('Parameter ' + n + ' is not a html color code.');
-		}
-		var chars = (p[1].length / 3) | 0;
-		for (var i = 0; i < 3; i++) {
-			p[0][i] = parseInt(p[1].substr(1 + chars * i, chars), 16);
-			if (chars === 1) p[0][i] *= 17;
-		}
-		return [ p[0], p[2] ];
-	},
 	MAP: function(p, n) {
 		p = p.match(DataType.MATCH);
 		if (!p[1]) {
@@ -140,6 +127,31 @@ DataType = {
  * @constructor
  */
 function Replay(replayStr, parameters) {
+	// check for meta data
+	this.meta = {};
+	if (replayStr.search(/^\s*{/) === 0) {
+		this.meta = JSON.parse(replayStr);
+		if (this.meta && (this.meta instanceof Object)) {
+			var format = this.meta['replayformat'];
+			if (this.meta['challenge'] !== 'ants') {
+				throw new Error('This visualizer is for the ants challenge,'
+						+ ' but a "' + this.meta['challenge']
+						+ '" replay was loaded.');
+			} else if (format !== 'storage') {
+				throw new Error('Replays in the format "'
+						+ this.meta['replayformat']
+						+ '" are not supported.');
+			}
+			replayStr = this.meta['replaydata'];
+			delete this.meta['replaydata'];
+			if (!replayStr) {
+				throw new Error('no data');
+			}
+		} else {
+			throw new Error('replay meta data is no object notation');
+		}
+	}
+	// start parsing process
 	var tl, owner;
 	var lit = new LineIterator(replayStr);
 	this.turns = [];
@@ -153,7 +165,7 @@ function Replay(replayStr, parameters) {
 			}
 		} else {
 			while (that.turns.length < duration + 1) {
-				that.turns.push(new Turn(that.players.length, that.rows, that.cols));
+				that.turns.push(new Turn(that.players, that.rows, that.cols));
 			}
 			if (fixed) durationSetter = tl;
 		}
@@ -161,37 +173,40 @@ function Replay(replayStr, parameters) {
 
 	try {
 		// version check
-		tl = lit.gimmeNext().kw('v').as([DataType.IDENT, DataType.POSINT]);
+		tl = lit.gimmeNext();
+		tl.kw('v').as([DataType.IDENT, DataType.POSINT]);
 		tl.expectEq(0, 'ants'); // game name
 		tl.expectEq(1, 1);      // file version
 		// players
-		tl = lit.gimmeNext().kw('players').as([DataType.POSINT]);
+		tl = lit.gimmeNext();
+		tl.kw('players').as([DataType.POSINT]);
 		tl.expectLE(0, 26);     // player count <= 26
-		this.players = new Array(tl.params[0]);
+		this.players = tl.params[0];
+		// add missing meta data
+		if (!(this.meta['players'] instanceof Array)) {
+			this.meta['players'] = new Array(this.players);
+		}
+		if (!(this.meta['playercolors'] instanceof Array)) {
+			this.meta['playercolors'] = new Array(this.players);
+		}
+		for (i = 0; i < this.meta.players.length; i++) {
+			if (!this.meta['players'][i]) {
+				this.meta['players'][i] = 'player ' + (i + 1);
+			}
+			if (!(this.meta['playercolors'][i] instanceof Array)) {
+				this.meta['playercolors'][i] = PLAYER_COLORS[i];
+			}
+		}
 		// parameters
 		this.parameters = parameters || {};
-		for (var i = 0; i < this.players.length; i++) {
-			this.players[i] = {};
-			this.players[i]['name'] = 'player ' + (i + 1);
-			this.players[i]['color'] = PLAYER_COLORS[i];
-		}
 		tl = lit.gimmeNext();
 		while (tl.keyword !== 'm') {
-			if (tl.keyword.substr(0, 6) === 'player') {
-				var slot = tl.keyword.substr(6);
-				var args = [DataType.UINT, DataType.STRING];
-				if (slot === 'color') args[1] = DataType.COLOR;
-				tl.as(args);
-				var player = this.getPlayer(tl.params[0]);
-				player[slot] = tl.params[1];
-			} else {
-				args = [DataType.STRING];
-				if (tl.keyword === 'viewradius2') {
-					args[0] = DataType.UINT;
-				}
-				tl.as(args);
-				this.parameters[tl.keyword] = tl.params[0];
+			var args = [DataType.STRING];
+			if (tl.keyword === 'viewradius2') {
+				args[0] = DataType.UINT;
 			}
+			tl.as(args);
+			this.parameters[tl.keyword] = tl.params[0];
 			tl = lit.gimmeNext();
 		}
 		// map
@@ -227,7 +242,7 @@ function Replay(replayStr, parameters) {
 			if (end === undefined) end = conv;
 			owner = tl.params[5];
 			var isAnt = owner !== undefined;
-			if (isAnt && owner >= this.players.length) {
+			if (isAnt && owner >= this.players) {
 				throw new Error('Player index out of range.');
 			}
 			var orders = tl.params[6] || '';
@@ -261,7 +276,7 @@ function Replay(replayStr, parameters) {
 			f['size'] = 1;
 			// fade to player color
 			if (isAnt) {
-				var color = this.players[owner]['color'];
+				var color = this.meta['playercolors'][owner];
 				if (conv > start) {
 					ant.fade(Quality.LOW, 'r', 255, conv - 0.5, conv - 0.25);
 					ant.fade(Quality.LOW, 'g', 255, conv - 0.5, conv - 0.25);
@@ -275,7 +290,7 @@ function Replay(replayStr, parameters) {
 			var x = col;
 			var y = row;
 			if (isAnt) {
-				for (i = 0; i < orders.length; i++) {
+				for (var i = 0; i < orders.length; i++) {
 					var dir = orders[i];
 					this.turns[conv + i].clearFog(owner, y, x, this.rows,
 							this.cols, this.parameters['viewradius2']);
@@ -340,7 +355,7 @@ function Replay(replayStr, parameters) {
 			tl = lit.gimmeNext();
 		}
 		// score
-		for (i = 0; i < this.players.length; i++) {
+		for (i = 0; i < this.players; i++) {
 			var scores = tl.kw('s').as([DataType.SCORES]).params[0];
 			setReplayDuration(scores.length - 1, false);
 			for (var k = 0; k < scores.length; k++) {
@@ -349,7 +364,7 @@ function Replay(replayStr, parameters) {
 			for (; k < this.turns.length; k++) {
 				this.turns[k].scores[i] = scores[scores.length - 1];
 			}
-			if (i != this.players.length - 1) tl = lit.gimmeNext();
+			if (i != this.players - 1) tl = lit.gimmeNext();
 		}
 		if (lit.moar()) {
 			tl = lit.gimme();
@@ -370,7 +385,7 @@ function Replay(replayStr, parameters) {
 //	}
 }
 Replay.prototype.getPlayer = function(n) {
-	if (n >= this.players.length) {
+	if (n >= this.players) {
 		throw new Error('Player number ' + n + ' is out of range for per player parameter.');
 	}
 	return this.players[n];
