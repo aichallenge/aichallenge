@@ -308,54 +308,83 @@ class Ants(Game):
                         yield ant
 
     def parse_orders(self, player, orders):
-        """ Parse orders from the given player """
+        """ Parse orders and validate orders from the given player
+
+            Orders must be of the form: o row col direction
+            row, col must be integers
+            direction must be in (n,s,e,w)
+            Location (row, col) must be ant belonging to the player
+            direction must not be blocked
+            Can't multiple orders to one ant
+        """
         new_orders = []
         valid = []
         invalid = []
-        try:
-            for line in orders:
-                line = line.strip().lower()
-                if line != '' and line[0] != '#':
-                    data = line.split()
-                    if data[0] == 'o':
-                        if not data[3] in AIM.keys():
-                            invalid.append(line + ' # invalid direction')
-                        #order = [int(data[1]), int(data[2]), data[3]]
-                        #o_col = (int(data[1]) - self.width//2 + self.center[player][0]) % self.width
-                        #o_row = (int(data[2]) - self.height//2 + self.center[player][1]) % self.height
-                        try:
-                            new_orders.append((int(data[1]), int(data[2]), data[3]))
-                            valid.append(line)
-                        except:
-                            invalid.append(line + ' # invalid row, col')
-            return new_orders, valid, invalid
-        except:
-            import traceback
-            traceback.print_exc()
-            print('error in parsing orders')
-            return ['fatal error in parsing orders']
+        seen_locations = set()
+
+        for line in orders:
+            # ignore blank lines and comments
+            if not line or line[0] == '#':
+                continue
+
+            data = line.split()
+
+            # validate data format
+            if data[0] != 'o':
+                invalid.append(line + ' # unkown action')
+                continue
+            if len(data) != 4:
+                invalid.append(line + ' # incorrectly formatted order')
+                continue
+
+            row, col, direction = data[1:]
+            loc = None
+
+            # validate the data
+
+            #  row and col must be integers
+            try:
+                loc = int(row)%self.height, int(col)%self.width
+            except ValueError:
+                invalid.append(line + ' # invalid row or col')
+                continue
+            # can't issue more than one order per ant
+            if loc in seen_locations:
+                invalid.append(line + ' # duplicate order')
+                continue
+            # location must be an ant owned by the current player
+            if self.map[loc[0]][loc[1]] != player:
+                invalid.append(line + ' # not player ant')
+                continue
+            # direction must be valid
+            if direction not in AIM:
+                invalid.append(line + ' # invalid direction')
+                continue
+            # move can't be into a blocked square
+            dest = self.destination(loc, AIM[direction])
+            if self.map[dest[0]][dest[1]] in (FOOD, WATER):
+                invalid.append(line + ' # moved blocked')
+                continue
+
+            # this order is valid!
+            new_orders.append((loc, direction))
+            valid.append(line)
+            seen_locations.add(loc)
+
+        return new_orders, valid, invalid
 
     def do_orders(self, player, orders):
         """ Process the orders of the given player
 
-            Invalid orders are ignored.
             Orders are only scheduled, they are actually executed by the
               resolve_orders method after all players' orders have been
               proccessed.
         """
-        # process orders ignoring bad or duplicates
         for order in orders:
-            row1, col1, d = order
-            row2, col2 = self.destination((row1, col1), AIM[d])
+            loc, d = order
+            dest = self.destination(loc, AIM[d])
 
-            ant = self.current_ants[(row1, col1)]
-            if ant.owner != player: # must move your *own* ant
-                continue
-            if ant.moved:           # ignore duplicate orders
-                continue
-
-            if self.map[row2][col2] not in (FOOD, WATER): # good orders
-                ant.move((row2, col2), d)
+            self.current_ants[loc].move(dest, d)
 
     def resolve_orders(self):
         """ Execute player orders and handle conflicts
@@ -945,10 +974,7 @@ class Ants(Game):
     def do_moves(self, player, moves):
         """ Called by engine to give latest player orders """
         orders, valid, invalid = self.parse_orders(player, moves)
-        if len(invalid) == 0:
-            self.do_orders(player, orders)
-        else:
-            self.kill_player(player)
+        self.do_orders(player, orders)
         return valid, invalid
 
     def get_scores(self):
