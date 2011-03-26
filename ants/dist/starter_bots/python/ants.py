@@ -210,11 +210,11 @@ class Ants():
             # keep rotating ants so that they all paint at the same rate
             # if 2 ants paint the same square, it is merged and we save time
             for ant_loc in self.my_ants():
-                squares_to_check.append(ant_loc, ant_loc)
+                squares_to_check.append((ant_loc, ant_loc))
             while squares_to_check:
                 a_loc, v_loc = squares_to_check.popleft()
                 # paint all 4 squares around the square to check at once
-                for d in AIM.values():
+                for d in AIM:
                     n_loc = self.destination(v_loc, d)
                     n_row, n_col = n_loc
                     if (not self.vision[n_row][n_col] and
