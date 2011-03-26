@@ -162,16 +162,22 @@ class Ants(Game):
     def get_vision(self, player):
         """ Determine which squares are visible to the given player """
 
-        vision = [[False for col in range(self.width)] for row in range(self.height)]
-        mx = SQRT[self.viewradius]
-        for ant in self.player_ants(player):
-            loc = ant.loc
+        if not hasattr(self, 'vision_offsets'):
+            # precalculate squares to test
+            self.vision_offsets = []
+            mx = int(sqrt(self.viewradius))
             for d_row in range(-mx,mx+1):
                 for d_col in range(-mx,mx+1):
                     d = d_row**2 + d_col**2
                     if d <= self.viewradius:
-                        row, col = self.destination(ant.loc, (d_row, d_col))
-                        vision[row][col] = True
+                        self.vision_offsets.append((d_row,d_col))
+
+        vision = [[False]*self.width for row in range(self.height)]
+        for ant in self.player_ants(player):
+            loc = ant.loc
+            for v_loc in self.vision_offsets:
+                row, col = self.destination(ant.loc, v_loc)
+                vision[row][col] = True
         return vision
 
     def update_revealed(self):
