@@ -44,9 +44,9 @@ class Ants():
         self.loadtime = 0
         self.turn_start_time = None
         self.vision = None
-        self.viewradius = 0
-        self.attackradius = 0
-        self.spawnradius = 0
+        self.viewradius2 = 0
+        self.attackradius2 = 0
+        self.spawnradius2 = 0
 
     def setup(self, data):
         'parse initial input and setup starting game state'
@@ -199,7 +199,7 @@ class Ants():
         'determine which squares are visible to the given player'
     	def vision_distance(self, loc1, loc2):
 	    # this returns the square of the euclidean distance
-            # so it can be compared with the viewradius, which is squared
+            # so it can be compared with the viewradius2, which is squared
 	    row1, col1 = loc1
 	    row2, col2 = loc2
 	    d_col = min(abs(col1 - col2), self.width - abs(col1 - col2))
@@ -227,7 +227,7 @@ class Ants():
                     n_loc = self.destination(v_loc, d)
                     n_row, n_col = n_loc
                     if (not self.vision[n_row][n_col] and
-                            vision_distance(a_loc, n_loc) <= self.viewradius):
+                            vision_distance(a_loc, n_loc) <= self.viewradius2):
                         # we can see this square
                         self.vision[n_row][n_col] = True
                         # add to list to see if other square near it are also
