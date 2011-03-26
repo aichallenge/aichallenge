@@ -79,7 +79,10 @@ class Ants(Game):
         self.killed = [False for i in range(self.num_players)]
 
         # used to give a different ordering of players to each player
+        #   initialised to ensure that each player thinks they are player 0
         self.switch = [[None]*self.num_players + range(-5,0) for i in range(self.num_players)]
+        for i in range(self.num_players):
+            self.switch[i][i] = 0
         # used to track water and land already reveal to player
         # ants and food will reset spots so a second land entry will be sent
         self.revealed = [[[False for col in range(self.width)]
