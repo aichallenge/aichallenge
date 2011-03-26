@@ -4,6 +4,7 @@ import traceback
 import random
 import time
 from collections import deque
+import math
 
 MY_ANT = 0
 ANTS = 0
@@ -200,33 +201,24 @@ class Ants():
         if self.vision == None:
             # cache results for future calls, reset on update
             # start with all spaces not visible
-            self.vision = [[False for col in range(self.width)]
-                           for row in range(self.height)]
-            # squares_to_check is a list of painted squares that may still
-            #     have unpainted squares near it
-            # a deque is like a list, but faster when poping items from the left
-            squares_to_check = deque()
-            # for each ant, slowly paint all the squares around it
-            # keep rotating ants so that they all paint at the same rate
-            # if 2 ants paint the same square, it is merged and we save time
-            for ant_loc in self.my_ants():
-                squares_to_check.append((ant_loc, ant_loc))
-            while squares_to_check:
-                a_loc, v_loc = squares_to_check.popleft()
-                # paint all 4 squares around the square to check at once
-                for d in AIM:
-                    n_loc = self.destination(v_loc, d)
-                    n_row, n_col = n_loc
-                    if (not self.vision[n_row][n_col] and
-                            self.distance(a_loc, n_loc) <= self.viewradius):
-                        # we can see this square
-                        self.vision[n_row][n_col] = True
-                        # add to list to see if other square near it are also
-                        #    visible
-                        squares_to_check.append((a_loc, n_loc))
+            self.vision = [[False]*self.width for row in range(self.height)]
+            # determine the extent we need to check
+            mx = int(math.sqrt(self.viewradius))
+            # for each ant, visit every square within the bounding box
+            #   of the vision circle
+            for a_row, a_col in self.my_ants():
+                for d_row in range(-mx,mx+1):
+                    for d_col in range(-mx,mx+1):
+                        d = d_row**2 + d_col**2
+                        # if the square is within the vision circle
+                        #   then set it to visible
+                        if d <= self.viewradius:
+                            row = (a_row+d_row)%self.height
+                            col = (a_col+d_col)%self.width
+                            self.vision[row][col] = True
         row, col = loc
         return self.vision[row][col]
-    
+
     def render_text_map(self):
         'return a pretty string representing the map'
         tmp = ''
