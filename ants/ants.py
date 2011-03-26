@@ -309,6 +309,7 @@ class Ants(Game):
             If exclude is not None, ants with owner == exclude
               will be ignored.
         """
+        ants = []
         row, col = loc
         mx = SQRT[max_dist]
         for d_row in range(-mx,mx+1):
@@ -318,7 +319,8 @@ class Ants(Game):
                     n_loc = self.destination(loc, (d_row, d_col))
                     ant = self.current_ants.get(n_loc, None)
                     if ant and ant.owner != exclude:
-                        yield ant
+                        ants.append(ant)
+        return ants
 
     def parse_orders(self, player, lines):
         """ Parse orders from the given player
@@ -551,7 +553,7 @@ class Ants(Game):
 
         # each ant damages nearby enemies
         for ant in self.current_ants.values():
-            enemies = list(self.nearby_ants(ant.loc, ant.owner, 1, self.attackradius))
+            enemies = self.nearby_ants(ant.loc, ant.owner, 1, self.attackradius)
             if enemies:
                 nearby_enemies[ant] = enemies
                 damage_per_enemy = Fraction(1, len(enemies))
@@ -610,7 +612,7 @@ class Ants(Game):
         # maps ants to nearby enemies
         nearby_enemies = {}
         for ant in self.current_ants.values():
-            nearby_enemies[ant] = list(self.nearby_ants(ant.loc, ant.owner, 1, self.attackradius))
+            nearby_enemies[ant] = self.nearby_ants(ant.loc, ant.owner, 1, self.attackradius)
 
         # determine which ants to kill
         ants_to_kill = []
