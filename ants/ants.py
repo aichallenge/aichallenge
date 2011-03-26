@@ -174,30 +174,6 @@ class Ants(Game):
                 if not vision[n_row][n_col] and self.distance(a_loc, n_loc) <= self.viewradius:
                     vision[n_row][n_col] = True
                     squares_to_check.append((a_loc, n_loc))
-
-        # verify
-        true_vision = self.get_vision_brute_force(player)
-        if true_vision != vision:
-            print "bad_vision " + str([ant.loc for ant in self.player_ants(player)])
-            for row in true_vision:
-                if any(row):
-                    print ''.join('.' if v else ' ' for v in row)
-            print "------------"
-            for row in vision:
-                if any(row):
-                    print ''.join('.' if v else ' ' for v in row)
-            print "------------"
-        return vision
-
-    def get_vision_brute_force(self, player):
-        vision = [[False for col in range(self.width)] for row in range(self.height)]
-        ants = self.player_ants(player)
-
-        for row in range(self.height):
-            for col in range(self.width):
-                if any( self.distance((row,col), ant.loc) <= self.viewradius for ant in ants ):
-                    vision[row][col] = True
-
         return vision
 
     def update_revealed(self):
