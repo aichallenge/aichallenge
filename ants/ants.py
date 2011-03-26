@@ -180,6 +180,7 @@ class Ants(Game):
                             vision[n_row][n_col][1].append += a_locs
                             squares_to_check.append(n_loc)
                             break
+        vision = [[v for v, a in row] for row in vision]
         return vision
 
     def update_revealed(self):
