@@ -267,18 +267,25 @@ class Ants(Game):
         """ Return a list of all transient objects on the map.
 
             Food, living ants, ants killed this turn
+            Changes are sorted so that the same state will result in the same output
         """
         changes = []
 
         # current ants
-        for ant in self.current_ants.values():
-            changes.append(['a', ant.loc[0], ant.loc[1], ant.owner])
+        changes.extend(sorted(
+            ['a', ant.loc[0], ant.loc[1], ant.owner]
+            for ant in self.current_ants.values()
+        ))
         # current food
-        for row, col in self.current_food:
-            changes.append(['f', row, col])
+        changes.extend(sorted(
+            ['f', row, col]
+            for row, col in self.current_food
+        ))
         # ants killed this turn
-        for ant in self.killed_ants:
-            changes.append(['d', ant.loc[0], ant.loc[1], ant.owner])
+        changes.extend(sorted(
+            ['d', ant.loc[0], ant.loc[1], ant.owner]
+            for ant in self.killed_ants
+        ))
 
         return changes
 
