@@ -163,17 +163,15 @@ class Ants(Game):
         """ Determine which squares are visible to the given player """
 
         vision = [[False for col in range(self.width)] for row in range(self.height)]
-        squares_to_check = deque()
+        mx = SQRT[self.viewradius]
         for ant in self.player_ants(player):
-            squares_to_check.append((ant.loc, ant.loc))
-        while squares_to_check:
-            a_loc, v_loc = squares_to_check.popleft()
-            for d in AIM.values():
-                n_loc = self.destination(v_loc, d)
-                n_row, n_col = n_loc
-                if not vision[n_row][n_col] and self.distance(a_loc, n_loc) <= self.viewradius:
-                    vision[n_row][n_col] = True
-                    squares_to_check.append((a_loc, n_loc))
+            loc = ant.loc
+            for d_row in range(-mx,mx+1):
+                for d_col in range(-mx,mx+1):
+                    d = d_row**2 + d_col**2
+                    if d <= self.viewradius:
+                        row, col = self.destination(ant.loc, (d_row, d_col))
+                        vision[row][col] = True
         return vision
 
     def update_revealed(self):
