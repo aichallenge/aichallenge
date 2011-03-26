@@ -197,14 +197,14 @@ class Ants():
 
     def visible(self, loc):
         'determine which squares are visible to the given player'
-    	def vision_distance(self, loc1, loc2):
-	    # this returns the square of the euclidean distance
+        def vision_distance(loc1, loc2):
+            # this returns the square of the euclidean distance
             # so it can be compared with the viewradius2, which is squared
-	    row1, col1 = loc1
-	    row2, col2 = loc2
-	    d_col = min(abs(col1 - col2), self.width - abs(col1 - col2))
-	    d_row = min(abs(row1 - row2), self.height - abs(row1 - row2))
-	    return d_row**2 + d_col**2
+            row1, col1 = loc1
+            row2, col2 = loc2
+            d_col = min(abs(col1 - col2), self.width - abs(col1 - col2))
+            d_row = min(abs(row1 - row2), self.height - abs(row1 - row2))
+            return d_row**2 + d_col**2
 
         if self.vision == None:
             # cache results for future calls, reset on update
