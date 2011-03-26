@@ -175,8 +175,8 @@ class Ants(Game):
         vision = [[False]*self.width for row in range(self.height)]
         for ant in self.player_ants(player):
             loc = ant.loc
-            for v_loc in self.vision_offsets:
-                row, col = self.destination(ant.loc, v_loc)
+            for offset in self.vision_offsets:
+                row, col = self.destination(loc, offset)
                 vision[row][col] = True
         return vision
 
@@ -307,10 +307,9 @@ class Ants(Game):
         for d_row in range(-mx,mx+1):
             for d_col in range(-mx,mx+1):
                 d = d_row**2 + d_col**2
-                if d >= min_dist and d <= max_dist:
-                    n_row = (row + d_row) % self.height
-                    n_col = (col + d_col) % self.width
-                    ant = self.current_ants.get((n_row, n_col), None)
+                if min_dist <= d <= max_dist:
+                    n_loc = self.destination(loc, (d_row, d_col))
+                    ant = self.current_ants.get(n_loc, None)
                     if ant and ant.owner != exclude:
                         yield ant
 
@@ -385,8 +384,7 @@ class Ants(Game):
         #  (holding any ants that don't have orders)
         move_direction = {}
         for player, orders in enumerate(self.orders):
-            for order in orders:
-                loc, direction = order
+            for loc, direction in orders:
                 move_direction[self.current_ants[loc]] = direction
         for ant in self.current_ants.values():
             if ant not in move_direction:
