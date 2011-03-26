@@ -162,25 +162,18 @@ class Ants(Game):
     def get_vision(self, player):
         """ Determine which squares are visible to the given player """
 
-        vision = [[[False, []] for col in range(self.width)] for row in range(self.height)]
+        vision = [[False for col in range(self.width)] for row in range(self.height)]
         squares_to_check = deque()
         for ant in self.player_ants(player):
-            a_row, a_col = ant.loc
-            vision[a_row][a_col][1].append(ant.loc)
-            squares_to_check.append(ant.loc)
+            squares_to_check.append((ant.loc, ant.loc))
         while squares_to_check:
-            c_row, c_col = c_loc = squares_to_check.popleft()
-            vision[c_row][c_col][0] = True
-            a_locs = vision[c_row][c_col][1]
+            a_loc, v_loc = squares_to_check.popleft()
             for d in AIM.values():
-                n_row, n_col = n_loc = self.destination(c_loc, d)
-                if not vision[n_row][n_col]:
-                    for a_loc in a_locs:
-                        if self.distance(a_loc, n_loc) <= self.viewradius:
-                            vision[n_row][n_col][1].append += a_locs
-                            squares_to_check.append(n_loc)
-                            break
-        vision = [[v for v, a in row] for row in vision]
+                n_loc = self.destination(v_loc, d)
+                n_row, n_col = n_loc
+                if not vision[n_row][n_col] and self.distance(a_loc, n_loc) <= self.viewradius:
+                    vision[n_row][n_col] = True
+                    squares_to_check.append((a_loc, n_loc))
         return vision
 
     def update_revealed(self):
