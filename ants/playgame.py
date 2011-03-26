@@ -116,6 +116,8 @@ def main(argv):
             if game.num_players != len(bots):
                 print("Incorrect number of bots for map.  Need %s, got %s" % 
                       (game.num_players, len(bots)))
+                for arg in args:
+                    print("Bot Cmd: %s" % arg)
                 break
             print('playgame round %s' % round)
             result = run_game(game, bots, engine_options, round)
