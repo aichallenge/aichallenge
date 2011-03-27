@@ -17,6 +17,8 @@ AIM = {'n': (-1, 0),
        'e': (0, 1),
        's': (1, 0),
        'w': (0, -1)}
+HORIZ_DIRECTIONS = [(-1,0),(0,1),(1,0),(0,-1)]
+DIAG_DIRECTIONS = [(1,1),(-1,1),(1,-1),(-1,-1)]
 
 class Ant:
     def __init__(self, loc):
@@ -43,6 +45,29 @@ class CheckVision:
         d_col = abs(x[1] - y[1])
         d_col = min(d_col, self.width - d_col)
         return d_row**2 + d_col**2
+
+    def vision_by_ant_faster(self, player=0):
+        """ Determine which squares are visible to the given player """
+
+        if not hasattr(self, 'vision_offsets_2'):
+            # precalculate squares to test
+            self.vision_offsets_2 = []
+            mx = int(sqrt(self.viewradius2))
+            for d_row in range(-mx,mx+1):
+                for d_col in range(-mx,mx+1):
+                    d = d_row**2 + d_col**2
+                    if d <= self.viewradius2:
+                        self.vision_offsets_2.append((
+                            d_row%self.height-self.height,
+                            d_col%self.width-self.width
+                        ))
+
+        vision = [[False]*self.width for row in range(self.height)]
+        for ant in self.player_ants(player):
+            a_row, a_col = ant.loc
+            for v_row, v_col in self.vision_offsets_2:
+                vision[a_row+v_row][a_col+v_col] = True
+        return vision
 
     def vision_by_ant(self, player=0):
         """ Determine which squares are visible to the given player """
@@ -125,6 +150,37 @@ class CheckVision:
                         squares_to_check[dist].append((a_loc, n_loc))
         return vision
 
+    def vision_by_distance_2(self, player=0):
+        vision = [[False]*self.width for row in range(self.height)]
+        min_dist = 0
+        squares_to_check = [[] for i in range(self.viewradius2 + 1)]
+        squares_to_check.append([None]) # sentinal
+        for ant in self.player_ants(player):
+            squares_to_check[0].append((ant.loc, ant.loc))
+            vision[ant.loc[0]][ant.loc[1]] = True
+        while min_dist <= self.viewradius2:
+            locs = squares_to_check[min_dist]
+            squares_to_check[min_dist] = []
+            for a_loc, v_loc in locs:
+                for d in HORIZ_DIRECTIONS:
+                    n_row, n_col = n_loc = self.destination(v_loc, d)
+                    if not vision[n_row][n_col]:
+                        dist = self.vision_distance(a_loc, n_loc)
+                        if dist <= self.viewradius2:
+                            vision[n_row][n_col] = True
+                            squares_to_check[dist].append((a_loc, n_loc))
+            for a_loc, v_loc in locs:
+                for d in DIAG_DIRECTIONS:
+                    n_row, n_col = n_loc = self.destination(v_loc, d)
+                    if not vision[n_row][n_col]:
+                        dist = self.vision_distance(a_loc, n_loc)
+                        if dist <= self.viewradius2:
+                            vision[n_row][n_col] = True
+                            squares_to_check[dist].append((a_loc, n_loc))
+            while not squares_to_check[min_dist]:
+                min_dist += 1
+        return vision
+
 def make_block(size, offset=0, spacing=1):
     locs = []
     for row in xrange(size[0]):
@@ -141,9 +197,10 @@ def time_to_str(seconds):
     return "%.2f %s" % (seconds, unit)
 
 def vision_to_str(vision):
-    return '\n'.join(''.join('x' if v else '.' for v in row) for row in vision)
+    return '\n'.join(''.join('x' if v is True else v if v  else '.' for v in row) for row in vision)
 
-def check_algos():
+def check_algos(method):
+    print "Checking %s against vision_by_ant" %(method,)
     size = (50, 50)
     cloc = (25, 25)
     result = True
@@ -151,14 +208,23 @@ def check_algos():
         for col in xrange(size[1]):
             cv = CheckVision([cloc, (row, col)], size)
             by_ant = cv.vision_by_ant()
-            by_distance = cv.vision_by_distance()
-            if by_ant != by_distance:
+            other = getattr(cv,method)()
+            if by_ant != other:
                 print "Vision didn't match"
                 print "first ant at", cloc
                 print "second ant at", (row, col)
+                print vision_to_str(by_ant)
                 print
+                print vision_to_str(other)
                 return False
     return result
+
+def time_method(method, repetitions=1000):
+    print "Timing " + method
+    time = timeit.timeit("cv.%s()" %(method,),
+            setup="from __main__ import cv", number=repetitions)
+    print "It took %s per call to %s" % (
+            time_to_str(time / repetitions), method)
 
 if __name__ == "__main__":
     block_size = 5
@@ -169,25 +235,13 @@ if __name__ == "__main__":
         spacing = int(sys.argv[2]) + 1
     size = max(120, ((block_size-1) * spacing) + 30)
     size = (size, size)
-    print "Checking vision_by_distance against vision_by_ant"
-    if not check_algos():
+    if not check_algos('vision_by_ant_faster'):
         sys.exit()
     global cv
     cv = CheckVision(make_block((block_size, block_size), 15, spacing), size)
-    repetitions = 1000
-    print "Timing vision_by_ant"
-    by_ant = timeit.timeit("cv.vision_by_ant()",
-            setup="from __main__ import cv", number=repetitions)
-    print "It took %s per call to vision_by_ant" % (
-            time_to_str(by_ant / repetitions))
-    print "Timing vision_by_distance"
-    by_distance = timeit.timeit("cv.vision_by_distance()",
-            setup="from __main__ import cv", number=repetitions)
-    print "It took %s per call to vision_by_distance" % (
-            time_to_str(by_distance / repetitions))
-    print "Timing vision_by_squares (broken)"
-    by_square = timeit.timeit("cv.vision_by_square()",
-            setup="from __main__ import cv", number=repetitions)
-    print "It took %s per call to vision_by_square" % (
-            time_to_str(by_square / repetitions))
+    time_method("vision_by_ant")
+    time_method("vision_by_ant_faster")
+    #time_method("vision_by_distance")
+    #time_method("vision_by_distance_2")
+    # time_method("vision_by_square")
 
