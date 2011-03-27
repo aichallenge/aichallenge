@@ -9,7 +9,7 @@
 
 import sys
 import timeit
-from collections import deque
+from collections import deque, defaultdict
 from math import sqrt
 
 # possible directions an ant can move
@@ -65,16 +65,17 @@ class CheckVision:
                 vision[row][col] = True
         return vision
 
+    def vision_distance(self, loc1, loc2):
+        # this returns the square of the euclidean distance
+        # so it can be compared with the viewradius2, which is squared
+        row1, col1 = loc1
+        row2, col2 = loc2
+        d_col = min(abs(col1 - col2), self.width - abs(col1 - col2))
+        d_row = min(abs(row1 - row2), self.height - abs(row1 - row2))
+        return d_row**2 + d_col**2
+
     def vision_by_square(self, player=0):
         'determine which squares are visible to the given player'
-        def vision_distance(loc1, loc2):
-            # this returns the square of the euclidean distance
-            # so it can be compared with the viewradius2, which is squared
-            row1, col1 = loc1
-            row2, col2 = loc2
-            d_col = min(abs(col1 - col2), self.width - abs(col1 - col2))
-            d_row = min(abs(row1 - row2), self.height - abs(row1 - row2))
-            return d_row**2 + d_col**2
 
         vision = [[False for col in range(self.width)]
                        for row in range(self.height)]
@@ -94,12 +95,34 @@ class CheckVision:
                 n_loc = self.destination(v_loc, d)
                 n_row, n_col = n_loc
                 if (not vision[n_row][n_col] and
-                        vision_distance(a_loc, n_loc) <= self.viewradius2):
+                        self.vision_distance(a_loc, n_loc) <= self.viewradius2):
                     # we can see this square
                     vision[n_row][n_col] = True
                     # add to list to see if other square near it are also
                     # visible
                     squares_to_check.append((a_loc, n_loc))
+        return vision
+
+    def vision_by_distance(self, player=0):
+        vision = [[False]*self.width for row in range(self.height)]
+        min_dist = 0
+        squares_to_check = [[] for i in range(self.viewradius2 + 1)]
+        squares_to_check.append([None]) # sentinal
+        for ant in self.player_ants(player):
+            squares_to_check[0].append((ant.loc, ant.loc))
+            vision[ant.loc[0]][ant.loc[1]] = True
+        while min_dist <= self.viewradius2:
+            a_loc, v_loc = squares_to_check[min_dist].pop()
+            while not squares_to_check[min_dist]:
+                min_dist += 1
+            for d in AIM.values():
+                n_loc = self.destination(v_loc, d)
+                n_row, n_col = n_loc
+                if not vision[n_row][n_col]:
+                    dist = self.vision_distance(a_loc, n_loc)
+                    if dist <= self.viewradius2:
+                        vision[n_row][n_col] = True
+                        squares_to_check[dist].append((a_loc, n_loc))
         return vision
 
 def make_block(size, offset=0, spacing=1):
@@ -128,17 +151,13 @@ def check_algos():
         for col in xrange(size[1]):
             cv = CheckVision([cloc, (row, col)], size)
             by_ant = cv.vision_by_ant()
-            by_square = cv.vision_by_square()
-            if by_ant != by_square:
+            by_distance = cv.vision_by_distance()
+            if by_ant != by_distance:
                 print "Vision didn't match"
                 print "first ant at", cloc
                 print "second ant at", (row, col)
                 print
-                #print "Vision by ant:"
-                #print vision_to_str(by_ant)
-                #print "Vision by square:"
-                #print vision_to_str(by_square)
-                result = False
+                return False
     return result
 
 if __name__ == "__main__":
@@ -150,6 +169,7 @@ if __name__ == "__main__":
         spacing = int(sys.argv[2]) + 1
     size = max(120, ((block_size-1) * spacing) + 30)
     size = (size, size)
+    print "Checking vision_by_distance against vision_by_ant"
     if not check_algos():
         sys.exit()
     global cv
@@ -160,9 +180,14 @@ if __name__ == "__main__":
             setup="from __main__ import cv", number=repetitions)
     print "It took %s per call to vision_by_ant" % (
             time_to_str(by_ant / repetitions))
-    print "Timing vision_by_square"
+    print "Timing vision_by_distance"
+    by_distance = timeit.timeit("cv.vision_by_distance()",
+            setup="from __main__ import cv", number=repetitions)
+    print "It took %s per call to vision_by_distance" % (
+            time_to_str(by_distance / repetitions))
+    print "Timing vision_by_squares (broken)"
     by_square = timeit.timeit("cv.vision_by_square()",
             setup="from __main__ import cv", number=repetitions)
-    print "It took %s per call to vision_by_ant" % (
+    print "It took %s per call to vision_by_square" % (
             time_to_str(by_square / repetitions))
 
