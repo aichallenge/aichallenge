@@ -154,15 +154,11 @@ class CheckVision:
 
     def vision_by_distance_2(self, player=0):
         vision = [[False]*self.width for row in range(self.height)]
-        min_dist = 0
         squares_to_check = [[] for i in range(self.viewradius2 + 1)]
-        squares_to_check.append([None]) # sentinal
         for ant in self.player_ants(player):
             squares_to_check[0].append((ant.loc, ant.loc))
             vision[ant.loc[0]][ant.loc[1]] = True
-        while min_dist <= self.viewradius2:
-            locs = squares_to_check[min_dist]
-            squares_to_check[min_dist] = []
+        for locs in squares_to_check:
             for d_set in (HORIZ_DIRECTIONS, DIAG_DIRECTIONS):
                 for a_loc, v_loc in locs:
                     for d in d_set:
@@ -172,22 +168,16 @@ class CheckVision:
                             if dist <= self.viewradius2:
                                 vision[n_row][n_col] = True
                                 squares_to_check[dist].append((a_loc, n_loc))
-            while not squares_to_check[min_dist]:
-                min_dist += 1
         return vision
 
     def vision_by_distance_2_faster(self, player=0):
         """ vision_by_distance_2 without function calls """
         vision = [[False]*self.width for row in range(self.height)]
-        min_dist = 0
         squares_to_check = [[] for i in range(self.viewradius2 + 1)]
-        squares_to_check.append([None]) # sentinal
         for ant in self.player_ants(player):
             squares_to_check[0].append((ant.loc[0], ant.loc[1], ant.loc[0], ant.loc[1]))
             vision[ant.loc[0]][ant.loc[1]] = True
-        while min_dist <= self.viewradius2:
-            locs = squares_to_check[min_dist]
-            squares_to_check[min_dist] = []
+        for locs in squares_to_check:
             for d_set in (HORIZ_DIRECTIONS, DIAG_DIRECTIONS):
                 for a_row, a_col, v_row, v_col in locs:
                     for d_row, d_col in d_set:
@@ -202,8 +192,6 @@ class CheckVision:
                             if dist <= self.viewradius2:
                                 vision[n_row][n_col] = True
                                 squares_to_check[dist].append((a_row,a_col,n_row,n_col))
-            while not squares_to_check[min_dist]:
-                min_dist += 1
         return vision
 
 def make_block(size, offset=0, spacing=1):
@@ -260,6 +248,7 @@ if __name__ == "__main__":
         spacing = int(sys.argv[2]) + 1
     size = max(120, ((block_size-1) * spacing) + 30)
     size = (size, size)
+    if not check_algos('vision_by_distance_2'): sys.exit()
     if not check_algos('vision_by_distance_2_faster'): sys.exit()
     if not check_algos('vision_by_ant_faster'): sys.exit()
     global cv
@@ -268,6 +257,6 @@ if __name__ == "__main__":
     time_algo("vision_by_distance_2_faster")
     time_algo("vision_by_ant_faster")
     #time_algo("vision_by_distance")
-    #time_algo("vision_by_distance_2")
+    time_algo("vision_by_distance_2")
     # time_algo("vision_by_square")
 
