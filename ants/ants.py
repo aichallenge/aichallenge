@@ -170,14 +170,19 @@ class Ants(Game):
                 for d_col in range(-mx,mx+1):
                     d = d_row**2 + d_col**2
                     if d <= self.viewradius:
-                        self.vision_offsets.append((d_row,d_col))
+                        self.vision_offsets.append((
+                            d_row%self.height-self.height,
+                            d_col%self.width-self.width
+                        ))
 
         vision = [[False]*self.width for row in range(self.height)]
         for ant in self.player_ants(player):
-            loc = ant.loc
-            for offset in self.vision_offsets:
-                row, col = self.destination(loc, offset)
-                vision[row][col] = True
+            a_row, a_col = ant.loc
+            for v_row, v_col in self.vision_offsets:
+                # vision_offsets were calculated so that
+                #   -height <= a_row+v_row < height
+                #   negative indicies wrap thanks to python
+                vision[a_row+v_row][a_col+v_col] = True
         return vision
 
     def update_revealed(self):
