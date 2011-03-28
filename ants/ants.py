@@ -329,15 +329,10 @@ class Ants(Game):
         """
         ants = []
         row, col = loc
-        mx = SQRT[max_dist]
-        for d_row in range(-mx,mx+1):
-            for d_col in range(-mx,mx+1):
-                d = d_row**2 + d_col**2
-                if 0 < d <= max_dist:
-                    n_loc = self.destination(loc, (d_row, d_col))
-                    ant = self.current_ants.get(n_loc, None)
-                    if ant and ant.owner != exclude:
-                        ants.append(ant)
+        for d_row, d_col in self.neighbourhood_offsets(max_dist):
+            if ANTS <= self.map[row+d_row][col+d_col] != exclude:
+                n_loc = self.destination(loc, (d_row, d_col))
+                ants.append(self.current_ants[n_loc])
         return ants
 
     def parse_orders(self, player, lines):
