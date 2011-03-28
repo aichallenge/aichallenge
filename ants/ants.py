@@ -179,7 +179,7 @@ class Ants(Game):
             for d_row in range(-mx,mx+1):
                 for d_col in range(-mx,mx+1):
                     d = d_row**2 + d_col**2
-                    if d <= self.viewradius:
+                    if 0 < d <= max_dist:
                         offsets.append((
                             d_row%self.height-self.height,
                             d_col%self.width-self.width
