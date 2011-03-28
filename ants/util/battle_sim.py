@@ -15,9 +15,11 @@
     Wrapping does not affect the battles.
 """
 
+import sys
+import os
+sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 from ants import Ants, MAP_RENDER, PLAYER_CHARS
 from math import sqrt
-import sys
 
 def create_map_data(map_segment, buffer):
     # horizontal buffer
