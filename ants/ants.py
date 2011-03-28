@@ -321,11 +321,9 @@ class Ants(Game):
         result.append('') # newline
         return '\n'.join(result)
 
-    def nearby_ants(self, loc, exclude=None, min_dist=1, max_dist=2):
-        """ Returns ants where sqrt(min_dist) <= dist to loc <= sqrt(max_dist)
+    def nearby_ants(self, loc, max_dist, exclude=None):
+        """ Returns ants where 0 < dist to loc <= sqrt(max_dist)
 
-            Note that min_dist and max_dist are squares of the normal
-              euclidean distances.
             If exclude is not None, ants with owner == exclude
               will be ignored.
         """
@@ -335,7 +333,7 @@ class Ants(Game):
         for d_row in range(-mx,mx+1):
             for d_col in range(-mx,mx+1):
                 d = d_row**2 + d_col**2
-                if min_dist <= d <= max_dist:
+                if 0 < d <= max_dist:
                     n_loc = self.destination(loc, (d_row, d_col))
                     ant = self.current_ants.get(n_loc, None)
                     if ant and ant.owner != exclude:
@@ -475,7 +473,7 @@ class Ants(Game):
         new_ant_locations = []
         for f_loc in self.current_food.keys():
             owner = None
-            for ant in self.nearby_ants(f_loc, None, 1, self.spawnradius):
+            for ant in self.nearby_ants(f_loc, self.spawnradius):
                 if owner == None:
                     owner = ant.owner
                 elif owner != ant.owner:
@@ -576,7 +574,7 @@ class Ants(Game):
 
         # each ant damages nearby enemies
         for ant in self.current_ants.values():
-            enemies = self.nearby_ants(ant.loc, ant.owner, 1, self.attackradius)
+            enemies = self.nearby_ants(ant.loc, self.attackradius, ant.owner)
             if enemies:
                 nearby_enemies[ant] = enemies
                 damage_per_enemy = Fraction(1, len(enemies))
@@ -607,7 +605,7 @@ class Ants(Game):
             enemies = []
             friends = []
             # sort nearby ants into friend and enemy lists
-            for nearby_ant in self.nearby_ants(ant.loc, None, 1, self.attackradius):
+            for nearby_ant in self.nearby_ants(ant.loc, self.attackradius, ant.owner):
                 if nearby_ant.owner == ant.owner:
                     friends.append(nearby_ant)
                 else:
@@ -635,7 +633,7 @@ class Ants(Game):
         # maps ants to nearby enemies
         nearby_enemies = {}
         for ant in self.current_ants.values():
-            nearby_enemies[ant] = self.nearby_ants(ant.loc, ant.owner, 1, self.attackradius)
+            nearby_enemies[ant] = self.nearby_ants(ant.loc, self.attackradius, ant.owner)
 
         # determine which ants to kill
         ants_to_kill = []
@@ -666,7 +664,7 @@ class Ants(Game):
         for ant in self.current_ants.values():
             # pre-compute distance to each enemy in range
             dist_map = defaultdict(list)
-            for enemy in self.nearby_ants(ant.loc, ant.owner, 1, self.attackradius):
+            for enemy in self.nearby_ants(ant.loc, self.attackradius, ant.owner):
                 dist_map[self.distance(ant.loc, enemy.loc)].append(enemy)
             ants_by_distance[ant] = dist_map
 
