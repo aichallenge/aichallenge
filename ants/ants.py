@@ -437,7 +437,8 @@ class Ants(Game):
             if len(ants) == 1:
                 self.current_ants[loc] = ants[0]
             else:
-                self.killed_ants.extend(ants)
+                for ant in ants:
+                    self.kill_ant(ant, True)
 
         # set new ant locations
         for ant in self.current_ants.values():
@@ -523,21 +524,23 @@ class Ants(Game):
         food.ant = ant
         return ant
 
-    def kill_ant(self, loc):
+    def kill_ant(self, ant, ignore_error=False):
         """ Kill the ant at the given location
 
             Raises an error if no ant is found at the location
+              (if ignore error is set to False)
         """
         try:
+            loc = ant.loc
             self.map[loc[0]][loc[1]] = LAND
-            ant = self.current_ants[loc]
             self.killed_ants.append(ant)
             ant.killed = True
             ant.die_turn = self.turn
             return self.current_ants.pop(loc)
         except KeyError:
-            raise Exception("Kill ant error",
-                            "Ant not found at %s" %(loc,))
+            if not ignore_error:
+                raise Exception("Kill ant error",
+                                "Ant not found at %s" %(loc,))
 
     def player_ants(self, player):
         """ Return the current ants belonging to the given player """
@@ -568,7 +571,7 @@ class Ants(Game):
         # kill ants with at least 1 damage
         for ant in damage:
             if damage[ant] >= 1:
-                self.kill_ant(ant.loc)
+                self.kill_ant(ant)
                 score = Fraction(1, len(nearby_enemies[ant]))
                 for enemy in nearby_enemies[ant]:
                     self.score[enemy.owner] += score
@@ -600,7 +603,7 @@ class Ants(Game):
 
         # actually do the killing and score distribution
         for ant, enemies in ants_to_kill.items():
-            self.kill_ant(ant.loc)
+            self.kill_ant(ant)
             score_share = len(enemies)
             for enemy in enemies:
                 self.score[enemy.owner] += Fraction(1, score_share)
@@ -635,7 +638,7 @@ class Ants(Game):
 
         # kill ants and distribute score
         for ant in ants_to_kill:
-            self.kill_ant(ant.loc)
+            self.kill_ant(ant)
             score_share = len(nearby_enemies[ant])
             for enemy in nearby_enemies[ant]:
                 self.score[enemy.owner] += Fraction(1, score_share)
@@ -680,7 +683,7 @@ class Ants(Game):
                     score_share = len(ant_group)
                     for ant in ant_group:
                         self.score[ant.owner] += Fraction(1, score_share)
-                        self.kill_ant(ant.loc)
+                        self.kill_ant(ant)
 
     def destination(self, loc, d):
         """ Returns the location produced by offsetting loc by d """
