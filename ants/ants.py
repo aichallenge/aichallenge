@@ -75,6 +75,9 @@ class Ants(Game):
         self.initial_ant_list = sorted(self.current_ants.values(), key=operator.attrgetter('owner'))
         self.initial_access_map = self.access_map()
 
+        # cache used by neighbourhood_offsets() to determine nearby squares
+        self.offsets_cache = {}
+
         # used to track dead players, ants may still exist, but order are not processed
         self.killed = [False for i in range(self.num_players)]
 
@@ -159,29 +162,41 @@ class Ants(Game):
         self.land_area = self.width*self.height - water_area
         self.num_players = len(players)
 
-    def get_vision(self, player):
-        """ Determine which squares are visible to the given player """
+    def neighbourhood_offsets(self, max_dist):
+        """ Return a list of squares within a given distance of loc
 
-        if not hasattr(self, 'vision_offsets'):
-            # precalculate squares to test
-            self.vision_offsets = []
-            mx = int(sqrt(self.viewradius))
+            Loc is not included in the list
+            For all squares returned: 0 < distance(loc,square) <= max_dist
+
+            Offsets are calculated so that:
+              -height <= row+offset_row < height (and similarly for col)
+              negative indicies on self.map wrap thanks to python
+        """
+
+        if max_dist not in self.offsets_cache:
+            offsets = []
+            mx = int(sqrt(max_dist))
             for d_row in range(-mx,mx+1):
                 for d_col in range(-mx,mx+1):
                     d = d_row**2 + d_col**2
                     if d <= self.viewradius:
-                        self.vision_offsets.append((
+                        offsets.append((
                             d_row%self.height-self.height,
                             d_col%self.width-self.width
                         ))
+            self.offsets_cache[max_dist] = offsets
+        return self.offsets_cache[max_dist]
 
+    def get_vision(self, player):
+        """ Determine which squares are visible to the given player """
+
+        offsets = self.neighbourhood_offsets(self.viewradius)
         vision = [[False]*self.width for row in range(self.height)]
         for ant in self.player_ants(player):
             a_row, a_col = ant.loc
-            for v_row, v_col in self.vision_offsets:
-                # vision_offsets were calculated so that
-                #   -height <= a_row+v_row < height
-                #   negative indicies wrap thanks to python
+            vision[a_row][a_col] = True
+            for v_row, v_col in offsets:
+                # offsets are such that there is never an IndexError
                 vision[a_row+v_row][a_col+v_col] = True
         return vision
 
