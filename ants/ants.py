@@ -467,17 +467,18 @@ class Ants(Game):
         # Determine new ant locations
         new_ant_locations = []
         for f_loc in self.current_food.keys():
-            owner = None
-            for ant in self.nearby_ants(f_loc, self.spawnradius):
-                if owner == None:
-                    owner = ant.owner
-                elif owner != ant.owner:
-                    self.remove_food(f_loc)
-                    break
-            else:
-                if owner != None:
-                    food = self.remove_food(f_loc)
-                    new_ant_locations.append((food, owner))
+            # find the owners of all the ants near the food
+            nearby_players = set(
+                ant.owner for ant in self.nearby_ants(f_loc, self.spawnradius)
+            )
+
+            if len(nearby_players) == 1:
+                # spawn food because there is only one player near the food
+                food = self.remove_food(f_loc)
+                new_ant_locations.append((food, nearby_players.pop()))
+            elif nearby_players:
+                # remove food because it is contested
+                self.remove_food(f_loc)
 
         # Create new ants
         for food, owner in new_ant_locations:
