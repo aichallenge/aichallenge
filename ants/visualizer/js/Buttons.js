@@ -287,7 +287,6 @@ ButtonManager.prototype.mouseMove = function(mx, my) {
 			}
 		}
 		this.hover = result;
-		this.repaintCheck();
 	}
 	return result;
 };
@@ -298,22 +297,12 @@ ButtonManager.prototype.mouseUp = function() {
 			this.nailed.onclick();
 		}
 		this.nailed = null;
-		this.repaintCheck();
 	}
 };
 ButtonManager.prototype.mouseDown = function() {
 	if (this.hover) {
 		this.hover.mouseDown();
 		this.nailed = this.hover;
-		this.repaintCheck();
-	}
-};
-/**
- * @private
- */
-ButtonManager.prototype.repaintCheck = function() {
-	if (this.vis.options['java']) {
-		this.vis.main.element['repaint']();
 	}
 };
 

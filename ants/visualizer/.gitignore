@@ -1,2 +1,7 @@
-applet
+3rdparty
+downloads
+build/*
+local.properties
+.ant-targets-build.xml
+colors.html
 .classpath

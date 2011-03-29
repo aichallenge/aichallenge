@@ -1,0 +1,313 @@
+<?xml version="1.0" encoding="utf-8"?>
+<project name="Rhino Visualizer" basedir="." default="help">
+
+  <target name="load-properties">
+    <!-- Allow user to override default settings from build.properties -->
+    <property file="local.properties" />
+    <property file="default.properties" />
+  </target>
+
+  <target name="check-rhino">
+    <condition property="rhino.available">
+      <available file="3rdparty/mozilla" />
+    </condition>
+  </target>
+
+  <target name="download-rhino" unless="rhino.available" depends="check-rhino">
+    <cvs cvsroot=":pserver:anonymous@cvs-mirror.mozilla.org:/cvsroot" package="mozilla/js/rhino/src" dest="3rdparty" date="${rhino.date}" failonerror="yes" />
+  </target>
+
+  <target name="compile-rhino" depends="load-properties,download-rhino">
+    <mkdir dir="${build.java}" />
+    <javac destdir="${build.java}" debug="${java.debug}" target="${java.target}" source="${java.source}" includeAntRuntime="false" classpath="${java.home}/lib/plugin.jar" srcdir="3rdparty/mozilla/js/rhino/src">
+      <include name="org/mozilla/javascript/ast/ArrayComprehension.java" />
+      <include name="org/mozilla/javascript/ast/ArrayComprehensionLoop.java" />
+      <include name="org/mozilla/javascript/ast/ArrayLiteral.java" />
+      <include name="org/mozilla/javascript/ast/Assignment.java" />
+      <include name="org/mozilla/javascript/ast/AstNode.java" />
+      <include name="org/mozilla/javascript/ast/AstRoot.java" />
+      <include name="org/mozilla/javascript/ast/Block.java" />
+      <include name="org/mozilla/javascript/ast/BreakStatement.java" />
+      <include name="org/mozilla/javascript/ast/Comment.java" />
+      <include name="org/mozilla/javascript/ast/ConditionalExpression.java" />
+      <include name="org/mozilla/javascript/ast/ContinueStatement.java" />
+      <include name="org/mozilla/javascript/ast/DestructuringForm.java" />
+      <include name="org/mozilla/javascript/ast/DoLoop.java" />
+      <include name="org/mozilla/javascript/ast/ElementGet.java" />
+      <include name="org/mozilla/javascript/ast/EmptyExpression.java" />
+      <include name="org/mozilla/javascript/ast/ErrorNode.java" />
+      <include name="org/mozilla/javascript/ast/ExpressionStatement.java" />
+      <include name="org/mozilla/javascript/ast/ForInLoop.java" />
+      <include name="org/mozilla/javascript/ast/ForLoop.java" />
+      <include name="org/mozilla/javascript/ast/FunctionCall.java" />
+      <include name="org/mozilla/javascript/ast/FunctionNode.java" />
+      <include name="org/mozilla/javascript/ast/IdeErrorReporter.java" />
+      <include name="org/mozilla/javascript/ast/IfStatement.java" />
+      <include name="org/mozilla/javascript/ast/InfixExpression.java" />
+      <include name="org/mozilla/javascript/ast/Jump.java" />
+      <include name="org/mozilla/javascript/ast/KeywordLiteral.java" />
+      <include name="org/mozilla/javascript/ast/Label.java" />
+      <include name="org/mozilla/javascript/ast/LabeledStatement.java" />
+      <include name="org/mozilla/javascript/ast/LetNode.java" />
+      <include name="org/mozilla/javascript/ast/Loop.java" />
+      <include name="org/mozilla/javascript/ast/Name.java" />
+      <include name="org/mozilla/javascript/ast/NewExpression.java" />
+      <include name="org/mozilla/javascript/ast/NodeVisitor.java" />
+      <include name="org/mozilla/javascript/ast/NumberLiteral.java" />
+      <include name="org/mozilla/javascript/ast/ObjectLiteral.java" />
+      <include name="org/mozilla/javascript/ast/ObjectProperty.java" />
+      <include name="org/mozilla/javascript/ast/ParenthesizedExpression.java" />
+      <include name="org/mozilla/javascript/ast/PropertyGet.java" />
+      <include name="org/mozilla/javascript/ast/RegExpLiteral.java" />
+      <include name="org/mozilla/javascript/ast/ReturnStatement.java" />
+      <include name="org/mozilla/javascript/ast/Scope.java" />
+      <include name="org/mozilla/javascript/ast/ScriptNode.java" />
+      <include name="org/mozilla/javascript/ast/StringLiteral.java" />
+      <include name="org/mozilla/javascript/ast/SwitchStatement.java" />
+      <include name="org/mozilla/javascript/ast/Symbol.java" />
+      <include name="org/mozilla/javascript/ast/ThrowStatement.java" />
+      <include name="org/mozilla/javascript/ast/TryStatement.java" />
+      <include name="org/mozilla/javascript/ast/UnaryExpression.java" />
+      <include name="org/mozilla/javascript/ast/VariableDeclaration.java" />
+      <include name="org/mozilla/javascript/ast/WhileLoop.java" />
+      <include name="org/mozilla/javascript/ast/WithStatement.java" />
+      <include name="org/mozilla/javascript/ast/XmlDotQuery.java" />
+      <include name="org/mozilla/javascript/ast/XmlElemRef.java" />
+      <include name="org/mozilla/javascript/ast/XmlExpression.java" />
+      <include name="org/mozilla/javascript/ast/XmlFragment.java" />
+      <include name="org/mozilla/javascript/ast/XmlLiteral.java" />
+      <include name="org/mozilla/javascript/ast/XmlMemberGet.java" />
+      <include name="org/mozilla/javascript/ast/XmlPropRef.java" />
+      <include name="org/mozilla/javascript/ast/XmlRef.java" />
+      <include name="org/mozilla/javascript/ast/XmlString.java" />
+      <include name="org/mozilla/javascript/ast/Yield.java" />
+      <include name="org/mozilla/javascript/debug/DebuggableObject.java" />
+      <include name="org/mozilla/javascript/debug/DebuggableScript.java" />
+      <include name="org/mozilla/javascript/gen/**" />
+      <include name="org/mozilla/javascript/jdk13/**" />
+      <include name="org/mozilla/javascript/jdk15/**" />
+      <include name="org/mozilla/javascript/json/**" />
+      <include name="org/mozilla/javascript/optimizer/Codegen.java" />
+      <include name="org/mozilla/javascript/regexp/**" />
+      <include name="org/mozilla/javascript/resources/Messages.load-properties" />
+      <include name="org/mozilla/javascript/xml/XMLObject.java" />
+      <include name="org/mozilla/javascript/Arguments.java" />
+      <include name="org/mozilla/javascript/BaseFunction.java" />
+      <include name="org/mozilla/javascript/Callable.java" />
+      <include name="org/mozilla/javascript/ClassCache.java" />
+      <include name="org/mozilla/javascript/CodeGenerator.java" />
+      <include name="org/mozilla/javascript/CompilerEnvirons.java" />
+      <include name="org/mozilla/javascript/ConstProperties.java" />
+      <include name="org/mozilla/javascript/ContextAction.java" />
+      <include name="org/mozilla/javascript/Context.java" />
+      <include name="org/mozilla/javascript/ContextFactory.java" />
+      <include name="org/mozilla/javascript/ContinuationPending.java" />
+      <include name="org/mozilla/javascript/Decompiler.java" />
+      <include name="org/mozilla/javascript/DefaultErrorReporter.java" />
+      <include name="org/mozilla/javascript/DefiningClassLoader.java" />
+      <include name="org/mozilla/javascript/DToA.java" />
+      <include name="org/mozilla/javascript/EcmaError.java" />
+      <include name="org/mozilla/javascript/ErrorReporter.java" />
+      <include name="org/mozilla/javascript/Evaluator.java" />
+      <include name="org/mozilla/javascript/EvaluatorException.java" />
+      <include name="org/mozilla/javascript/Function.java" />
+      <include name="org/mozilla/javascript/FunctionObject.java" />
+      <include name="org/mozilla/javascript/GeneratedClassLoader.java" />
+      <include name="org/mozilla/javascript/Icode.java" />
+      <include name="org/mozilla/javascript/IdFunctionCall.java" />
+      <include name="org/mozilla/javascript/IdFunctionObject.java" />
+      <include name="org/mozilla/javascript/IdScriptableObject.java" />
+      <include name="org/mozilla/javascript/ImporterTopLevel.java" />
+      <include name="org/mozilla/javascript/InterpretedFunction.java" />
+      <include name="org/mozilla/javascript/Interpreter.java" />
+      <include name="org/mozilla/javascript/InterpreterData.java" />
+      <include name="org/mozilla/javascript/IRFactory.java" />
+      <include name="org/mozilla/javascript/JavaMembers.java" />
+      <include name="org/mozilla/javascript/JavaScriptException.java" />
+      <include name="org/mozilla/javascript/Kit.java" />
+      <include name="org/mozilla/javascript/LazilyLoadedCtor.java" />
+      <include name="org/mozilla/javascript/MemberBox.java" />
+      <include name="org/mozilla/javascript/NativeArray.java" />
+      <include name="org/mozilla/javascript/NativeBoolean.java" />
+      <include name="org/mozilla/javascript/NativeCall.java" />
+      <include name="org/mozilla/javascript/NativeContinuation.java" />
+      <include name="org/mozilla/javascript/NativeDate.java" />
+      <include name="org/mozilla/javascript/NativeError.java" />
+      <include name="org/mozilla/javascript/NativeFunction.java" />
+      <include name="org/mozilla/javascript/NativeGenerator.java" />
+      <include name="org/mozilla/javascript/NativeGlobal.java" />
+      <include name="org/mozilla/javascript/NativeIterator.java" />
+      <include name="org/mozilla/javascript/NativeJavaArray.java" />
+      <include name="org/mozilla/javascript/NativeJavaClass.java" />
+      <include name="org/mozilla/javascript/NativeJavaMethod.java" />
+      <include name="org/mozilla/javascript/NativeJavaObject.java" />
+      <include name="org/mozilla/javascript/NativeJavaPackage.java" />
+      <include name="org/mozilla/javascript/NativeJavaTopPackage.java" />
+      <include name="org/mozilla/javascript/NativeJSON.java" />
+      <include name="org/mozilla/javascript/NativeMath.java" />
+      <include name="org/mozilla/javascript/NativeNumber.java" />
+      <include name="org/mozilla/javascript/NativeObject.java" />
+      <include name="org/mozilla/javascript/NativeScript.java" />
+      <include name="org/mozilla/javascript/NativeString.java" />
+      <include name="org/mozilla/javascript/NativeWith.java" />
+      <include name="org/mozilla/javascript/Node.java" />
+      <include name="org/mozilla/javascript/NodeTransformer.java" />
+      <include name="org/mozilla/javascript/ObjArray.java" />
+      <include name="org/mozilla/javascript/ObjToIntMap.java" />
+      <include name="org/mozilla/javascript/optimizer/OptRuntime.java" />
+      <include name="org/mozilla/javascript/Parser.java" />
+      <include name="org/mozilla/javascript/RegExpProxy.java" />
+      <include name="org/mozilla/javascript/RhinoException.java" />
+      <include name="org/mozilla/javascript/Scriptable.java" />
+      <include name="org/mozilla/javascript/ScriptableObject.java" />
+      <include name="org/mozilla/javascript/Script.java" />
+      <include name="org/mozilla/javascript/ScriptRuntime.java" />
+      <include name="org/mozilla/javascript/ScriptStackElement.java" />
+      <include name="org/mozilla/javascript/SecurityController.java" />
+      <include name="org/mozilla/javascript/SecurityUtilities.java" />
+      <include name="org/mozilla/javascript/TokenStream.java" />
+      <include name="org/mozilla/javascript/TopLevel.java" />
+      <include name="org/mozilla/javascript/Undefined.java" />
+      <include name="org/mozilla/javascript/UniqueTag.java" />
+      <include name="org/mozilla/javascript/VMBridge.java" />
+      <include name="org/mozilla/javascript/WrapFactory.java" />
+      <include name="org/mozilla/javascript/WrappedException.java" />
+      <include name="org/mozilla/javascript/Wrapper.java" />
+    </javac>
+  </target>
+
+  <target name="compile-visualizer" depends="compile-rhino">
+    <javac destdir="${build.java}" debug="${java.debug}" target="${java.target}" source="${java.source}" includeAntRuntime="false" classpath="${java.home}/lib/plugin.jar">
+      <src path="${src.java}" />
+    </javac>
+  </target>
+
+  <target name="compile-js" depends="compile-visualizer">
+    <java classname="com.aicontest.visualizer.Compile" classpath="${build.java}" dir="${build.java}" taskname="rhino" fork="yes">
+      <arg value="${basedir}" />
+      <arg value="${src.js}" />
+    </java>
+  </target>
+  
+  <!-- JAR generation -->
+
+  <target name="check-jar" depends="load-properties">
+    <uptodate property="jar.uptodate" targetfile="${jar.file}">
+      <srcfiles dir="${build.java}" />
+      <srcfiles dir="${src.data}/img" />
+    </uptodate>
+  </target>
+
+  <target name="jar" depends="compile-rhino,compile-visualizer,compile-js,check-jar" unless="jar.uptodate" description="creates the visualizer jar file for use as an applet and as an offline viewer">
+    <jar jarfile="${jar.file}" update="no" compress="${jar.compression}" level="9" manifest="${src.java}/MANIFEST.MF">
+      <fileset dir="${src.data}">
+        <include name="img/**" />
+      </fileset>
+      <fileset dir="${build.java}">
+        <include name="com/aicontest/visualizer/**" />
+        <include name="org/mozilla/javascript/**" />
+        <include name="precompiled" />
+        <exclude name="com/aicontest/visualizer/Compile.class" />
+        <exclude name="org/mozilla/javascript/optimizer/Codegen.java" />
+      </fileset>
+    </jar>
+  </target>
+  
+  <!-- JavaScript transormation -->
+
+  <target name="check-closurecompiler">
+    <condition property="closurecompiler.available">
+      <available file="3rdparty/google/compiler.jar" />
+    </condition>
+    <uptodate property="closurecompiler.skip" targetfile="${build.js}/visualizer-min.js">
+      <srcfiles dir="${src.js}" includes="**/*.js" />
+    </uptodate>
+  </target>
+
+  <target name="download-closurecompiler" unless="closurecompiler.available" depends="check-closurecompiler">
+    <mkdir dir="downloads" />
+    <get src="http://closure-compiler.googlecode.com/files/compiler-latest.zip" dest="downloads/compiler-latest.zip" usetimestamp="true" />
+    <unzip src="downloads/compiler-latest.zip" dest="3rdparty/google" />
+  </target>
+
+  <target name="minify-js" depends="load-properties,download-closurecompiler" unless="closurecompiler.skip">
+    <mkdir dir="${build.js}"/>
+    <delete>
+      <fileset dir="${build.js}">
+        <include name="**/*.js" />
+        <exclude name="visualizer-min.js" />
+      </fileset>
+    </delete>
+    <loadfile property="js.files" srcfile="${src.js}/visualizer.js">
+      <filterchain>
+        <containsregex byline="on" pattern="^\$import" />
+        <replaceregex pattern="\$import\('" replace="--js ${src.js}/" />
+        <replaceregex pattern="'\)\;\n" flags="g" byline="false" replace=".js " />
+      </filterchain>
+    </loadfile>
+    <mkdir dir="${build.js}" />
+    <condition property="js.pretty.arg" value="--formatting PRETTY_PRINT" else="">
+      <istrue value="${js.pretty}"/>
+    </condition>
+    <java jar="3rdparty/google/compiler.jar" fork="true" failonerror="yes">
+      <arg line="--compilation_level ADVANCED_OPTIMIZATIONS ${js.pretty.arg} --js_output_file ${build.js}/visualizer-min.js ${js.files}" />
+    </java>
+  </target>
+
+  <target name="minify-js-condition" depends="load-properties">
+    <condition property="js.minify.set">
+      <istrue value="${js.minify}"/>
+    </condition>
+  </target>
+
+  <target name="minify-js-conditional" depends="minify-js-condition" if="js.minify.set">
+    <antcall target="minify-js" />
+  </target>
+  
+  <target name="copy-js-conditional" depends="minify-js-condition" unless="js.minify.set">
+    <sync todir="${build.js}">
+      <fileset dir="${src.js}" />
+    </sync>
+  </target>
+  
+  <target name="minify-or-copy-js" depends="minify-js-conditional,copy-js-conditional" description="minify or copy JavaScript files to the build directory depending on the value of js.minify"/>
+  
+  <!-- deployment -->
+  
+  <target name="check-deploy" depends="load-properties" unless="deploy.path">
+    <fail message="Please define 'deploy.path' in local.build as the web root." />
+  </target>
+  
+  <target name="deploy" depends="check-deploy,jar,minify-or-copy-js" description="compile and deploy to the path that is set in 'deploy.path'">
+    <sync todir="${build}/deploy/img">
+      <fileset dir="${src.data}/img" />
+    </sync>
+    <sync todir="${deploy.path}/visualizer">
+      <fileset dir="${build}/deploy" />
+    </sync>
+  </target>
+  
+  <!-- other -->
+
+  <target name="run-visualizer" depends="compile-visualizer,compile-js" description="runs the visualizer with a sample replay">
+    <java classname="com.aicontest.visualizer.Main" classpath="${build.java}:${src.data}" dir="${build.java}" fork="yes" failonerror="yes">
+      <arg value="${basedir}/games/0/2.replay" />
+    </java>
+  </target>
+  
+  <target name="all" depends="jar,minify-or-copy-js" />
+
+  <target name="clean" depends="load-properties" description="deletes the build directory">
+    <delete quiet="true" dir="${build}" />
+  </target>
+
+  <target name="deepclean" depends="clean" description="removes all generated or downloaded files">
+    <delete quiet="true" dir="3rdparty" />
+    <delete quiet="true" dir="downloads" />
+  </target>
+  
+  <target name="help">
+    <echo>Type 'ant -p' to list available targets!</echo>
+  </target>
+
+</project>

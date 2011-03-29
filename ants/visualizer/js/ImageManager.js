@@ -13,7 +13,6 @@ function ImageManager(dataDir, vis, callback) {
 	this.dataDir = dataDir;
 	this.vis = vis;
 	this.callback = callback;
-	this.javaApplet = null;
 	this.info = [];
 	this.images = [];
 	this.patterns = [];
@@ -38,42 +37,33 @@ ImageManager.prototype.add = function(source) {
  * handles these cases internally.
  */
 ImageManager.prototype.cleanUp = function() {
-	if (!this.vis.options['java']) {
-		for (var i = 0; i < this.images.length; i++) {
-			if (this.info[i].success === false) {
-				this.info[i].success = undefined;
-				this.images[i] = null;
-				this.pending++;
-			}
+	for (var i = 0; i < this.images.length; i++) {
+		if (this.info[i].success === false) {
+			this.info[i].success = undefined;
+			this.images[i] = null;
+			this.pending++;
 		}
-		this.startRequests();
 	}
+	this.startRequests();
 };
 ImageManager.prototype.startRequests = function() {
 	var img;
 	this.error = '';
 	for (var i = 0; i < this.images.length; i++) {
 		if (this.info[i].success === undefined && !this.images[i]) {
-			if (this.javaApplet) {
-				this.images[i] = this.javaApplet['imgRequest'](this.info[i].src);
-			} else {
-				img = new Image();
-				this.images[i] = img;
-				var that = this;
-				img.onload = function() {
-					that.imgHandler(this, true);
-				};
-				img.onerror = function() {
-					that.imgHandler(this, false);
-				};
-				img.onabort = img.onerror;
-				img.src = this.info[i].src;
-			}
+			img = new Image();
+			this.images[i] = img;
+			var that = this;
+			img.onload = function() {
+				that.imgHandler(this, true);
+			};
+			img.onerror = function() {
+				that.imgHandler(this, false);
+			};
+			img.onabort = img.onerror;
+			img.src = this.info[i].src;
 			this.pending++;
 		}
-	}
-	if (this.javaApplet) {
-		this.javaApplet['imgWaitFor'](this);
 	}
 };
 /**
@@ -117,11 +107,7 @@ ImageManager.prototype.colorize = function(idx, colors) {
 	var ctx = obj.ctx;
 	ctx.fillStyle = ctx.createPattern(this.images[idx], 'repeat');
 	ctx.fillRect(0, 0, obj.canvas.width, obj.canvas.height);
-	if (this.javaApplet) {
-		// technically this is not neccesary, but it in praxis it would take
-		// ages to manipulate pixels through LiveConnect
-		this.javaApplet['imageOps']['colorize'](ctx, colors);
-	} else if (!this.restrictSecurity) {
+	if (!this.restrictSecurity) {
 		try {
 			var data = ctx.getImageData(0, 0, obj.canvas.width, obj.canvas.height);
 		} catch (error1) {

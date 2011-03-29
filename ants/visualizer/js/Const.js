@@ -41,3 +41,9 @@ var COLOR_SAND = '#FFD';
  * @const
  */
 var ZOOM_SCALE = 20;
+var INT_TO_HEX = new Array(256);
+(function() {
+	for (var i = 0; i < 16; i++) INT_TO_HEX[i] = '0' + i.toString(16);
+	for (; i < 256; i++) INT_TO_HEX[i] = i.toString(16);
+})();
+

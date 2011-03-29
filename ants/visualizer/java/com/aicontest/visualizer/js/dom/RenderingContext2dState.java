@@ -1,11 +1,11 @@
-package com.aicontest.visualizer;
+package com.aicontest.visualizer.js.dom;
 
 import java.awt.Color;
 import java.awt.Paint;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Path2D;
 
-public class RenderingContext2dState {
+class RenderingContext2dState {
 
 	protected AffineTransform transform;
 	protected Path2D.Double path;
@@ -13,26 +13,21 @@ public class RenderingContext2dState {
 	protected double x;
 	protected double y;
 	protected Paint paint;
-	
-	public Object strokeStyle = Color.BLACK;
-	public Object fillStyle = Color.BLACK;
-	public float lineWidth = 1;
-	public String font = "10px sans-serif";
-	public String textAlign = "start"; // "start", "end", "left", "right",
-										// "center"
-	public String textBaseLine = "alphabetic"; // "top", "hanging", "middle",
-												// "alphabetic", "ideographic",
-												// "bottom"
-	// shadows
-	public double shadowOffsetX = 0;
-	public double shadowOffsetY = 0;
-	public double shadowBlur = 0;
-	public Object shadowColor = new Color(0, 0, 0, 0);
+	protected Object strokeStyle = Color.BLACK;
+	protected Object fillStyle = Color.BLACK;
+	protected float lineWidth = 1.0F;
+	protected String font = "10px sans-serif";
+	protected String textAlign = "start";
+	protected String textBaseline = "alphabetic";
+	protected double shadowOffsetX = 0.0D;
+	protected double shadowOffsetY = 0.0D;
+	protected double shadowBlur = 0.0D;
+	protected Object shadowColor = new Color(0, 0, 0, 0);
 
 	public RenderingContext2dState() {
 		transform = new AffineTransform();
 	}
-	
+
 	protected RenderingContext2dState(RenderingContext2dState other) {
 		transform = new AffineTransform();
 		setFrom(other);
@@ -42,15 +37,15 @@ public class RenderingContext2dState {
 		transform.setTransform(state.transform);
 		x = state.x;
 		y = state.y;
-		if (state.path == null) {
+		if (state.path == null)
 			path = null;
-		} else {
-			path = (Path2D.Double) state.path.clone();
+		else {
+			path = ((Path2D.Double) state.path.clone());
 		}
-		if (state.clip == null) {
+		if (state.clip == null)
 			clip = null;
-		} else {
-			clip = (Path2D.Double) state.clip.clone();
+		else {
+			clip = ((Path2D.Double) state.clip.clone());
 		}
 		paint = state.paint;
 		strokeStyle = state.strokeStyle;
@@ -58,11 +53,10 @@ public class RenderingContext2dState {
 		lineWidth = state.lineWidth;
 		font = state.font;
 		textAlign = state.textAlign;
-		textBaseLine = state.textBaseLine;
+		textBaseline = state.textBaseline;
 		shadowBlur = state.shadowBlur;
 		shadowColor = state.shadowColor;
 		shadowOffsetX = state.shadowOffsetX;
 		shadowOffsetY = state.shadowOffsetY;
 	}
-
 }

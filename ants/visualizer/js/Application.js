@@ -3,17 +3,15 @@
  * @author <a href="mailto:marco.leise@gmx.de">Marco Leise</a>
  */
 
-/* @todo scrolling player names if too long; fade to the left and right
+/*
+ * @todo scroll map
  * @todo zoom in to 20x20 squares with animated ants
- * @todo animated single steps if possible (how?)
- * @todo menu items: clear, show fog, show attack, show birth,
+ * @todo menu items: clear, show attack, show birth,
  *     zoom, toggle graph/score bars, cpu use
  * @todo duplicate sprites that wrap around the map edge
  * @todo keep a minimum size to allow the controls to render
  * @todo setting for cpu usage
- * @todo set player colors from replay file (awaiting answer)
- * @todo show when a bot crashed (awaiting answer)
- * @todo clickable player names (requires user_id)
+ * @todo show when a bot crashed
  */
 
 LoadingState = {
@@ -31,12 +29,6 @@ Key = {
 	HOME: 36,
 	END: 35
 };
-
-Hex = new Array(256);
-(function() {
-	for (var i = 0; i < 16; i++) Hex[i] = '0' + i.toString(16);
-	for (; i < 256; i++) Hex[i] = i.toString(16);
-})();
 
 /**
  * @constructor
@@ -65,13 +57,10 @@ Location.prototype.contains = function(x, y) {
  * @param {Node} container the html element, that the visualizer will embed into
  * @param {String} dataDir This relative path to the visualizer data files. You
  *     will get an error message if you forget the tailing '/'.
- * @param {String} codebase The java applet will be loaded from this location.
  * @param {Number} w an optional maximum width or undefined
  * @param {Number} h an optional maximum height or undefined
- * @param {Boolean} java if set to true or false, this overrides the
- *     auto-detection of the Java mode
  */
-Visualizer = function(container, dataDir, codebase, w, h, java) {
+Visualizer = function(container, dataDir, w, h) {
 	/**
 	 * any generated DOM elements will be placed here
 	 * @private
@@ -132,9 +121,7 @@ Visualizer = function(container, dataDir, codebase, w, h, java) {
 	 * @private
 	 */
 	this.options = {};
-	this.options['java'] = java;
 	this.options['data_dir'] = dataDir;
-	this.options['codebase'] = codebase;
 	// read URL parameters and store them in the parameters object
 	var equalPos, value, key, i;
 	var parameters = window.location.href.split(/\?/);
@@ -144,7 +131,7 @@ Visualizer = function(container, dataDir, codebase, w, h, java) {
 			equalPos = parameters[i].indexOf('=');
 			key = parameters[i].substr(0, equalPos);
 			value = parameters[i].substr(equalPos + 1);
-			if (key === 'java' || key === 'debug') value = new Boolean(value);
+			if (key === 'debug') value = new Boolean(value);
 			this.options[key] = value;
 		}
 	}
@@ -172,24 +159,13 @@ Visualizer = function(container, dataDir, codebase, w, h, java) {
 	 * @private
 	 */
 	this.log = document.createElement('div');
-	// print some information text
 	var text = 'Loading visualizer...';
 	text += '<table>';
 	for (key in this.options) {
 		value = this.options[key];
 		text += '<tr><td>-&nbsp;</td><td>' + key + '&nbsp;&nbsp;</td><td><b>' + value + '&nbsp;&nbsp;</b></td><td><i>';
-		if (key == "java") {
-			text += '(Display method: ';
-			if (value === undefined) {
-				this.options['java'] = !document.createElement('canvas').getContext;
-				text += (this.options['java'] ? 'Java Applet [autodetected]' : 'HTML Canvas [autodetected]') + ')';
-			} else {
-				text += (value ? 'Java Applet' : 'HTML Canvas') + ')';
-			}
-		} else if (key == "data_dir") {
+		if (key == "data_dir") {
 			text += '(Image directory)';
-		} else if (key == "codebase") {
-			text += '(Java codebase)';
 		}
 		text += '</i></td></tr>';
 	}
@@ -229,9 +205,7 @@ Visualizer = function(container, dataDir, codebase, w, h, java) {
 	 */
 	this.fog = undefined;
 	this.loading = LoadingState.IDLE;
-	// If we use a Java applet, we have to delay the image requests until we
-	// can pass the image URLs over to it.
-	if (!this.options['java']) this.imgMgr.startRequests();
+	this.imgMgr.startRequests();
 }
 /**
  * @private
@@ -291,7 +265,7 @@ Visualizer.prototype.cleanUp = function() {
 	this.director.cleanUp();
 	if (this.replay && this.replay instanceof XMLHttpRequest) this.replay.abort();
 	this.replay = undefined;
-	if (this.main.element && !this.options['java']) {
+	if (this.main.element) {
 		if (this.container.firstChild === this.main.element) {
 			this.container.removeChild(this.main.element);
 		}
@@ -305,13 +279,12 @@ Visualizer.prototype.cleanUp = function() {
 };
 Visualizer.prototype.preload = function() {
 	if (this.loading !== LoadingState.IDLE) return true;
-	while (this.log.firstElement !== this.log.lastElement) {
-		this.log.removeElement(this.log.lastElement);
-	}
+	this.log.innerHTML = '';
 	this.cleanUp();
 	this.loading = LoadingState.LOADING;
 	return false;
 };
+
 /**
  * Loads a replay file located on the same server using a XMLHttpRequest.
  * @param {string} file the relative file name
@@ -325,7 +298,7 @@ Visualizer.prototype.loadReplayDataFromURI = function(file) {
 			if (vis.replay.readyState === 4) {
 				if (vis.loading === LoadingState.LOADING) {
 					if (vis.replay.status === 200) {
-						vis.replay = vis.replay.responseText;
+						vis.replay = '' + vis.replay.responseText;
 						vis.loadParseReplay();
 					} else {
 						vis.errorOut('Status ' + vis.replay.status + ': ' + vis.replay.statusText);
@@ -334,7 +307,7 @@ Visualizer.prototype.loadReplayDataFromURI = function(file) {
 			}
 		};
 		vis.replay.open("GET", file);
-		vis.replay.send(null);
+		vis.replay.send();
 		vis.loadCanvas(true);
 	});
 };
@@ -416,44 +389,10 @@ Visualizer.prototype.loadParseReplay = function() {
 Visualizer.prototype.loadCanvas = function(prompt) {
 	var vis = this;
 	this.progress(prompt ? 'Creating canvas...' : undefined, function() {
-		var size = vis.calculateCanvasSize();
 		if (!vis.main.element) {
-			if (vis.options['java']) {
-				var token = appletManager.add(vis);
-				var e = document.createElement('applet');
-				vis.main.element = e;
-				var codebase = vis.options['codebase'];
-				if (codebase.substr(codebase.length - 4) === '.jar') {
-					e.setAttribute('archive', codebase);
-				} else {
-					e.setAttribute('codebase', codebase);
-				}
-				e.setAttribute('code', 'com.aicontest.visualizer.CanvasApplet');
-				e.setAttribute('width', size.width);
-				e.setAttribute('height', size.height);
-				e.setAttribute('mayscript', 'true');
-				var param = function(name, value) {
-					var p = document.createElement('param');
-					p.setAttribute('name', name);
-					p.setAttribute('value', value);
-					e.appendChild(p);
-					e.setAttribute(name, value);
-				}
-				if (vis.options['debug']) {
-					param('separate_jvm', 'true');
-					param('classloader_cache', 'false');
-					param('debug', true);
-				}
-				param('token', token);
-				vis.container.insertBefore(e, vis.log);
-				// wait for the applet to call back
-				return;
-			} else {
-				vis.main.element = document.createElement('canvas');
-				vis.main.canvas = vis.main.element;
-			}
+			vis.main.element = document.createElement('canvas');
+			vis.main.canvas = vis.main.element;
 		}
-		// from here on I can handle both canvases the same
 		vis.main.ctx = vis.main.canvas.getContext('2d');
 		e = vis.main.element;
 		if (vis.container.firstChild !== e) {
@@ -464,15 +403,6 @@ Visualizer.prototype.loadCanvas = function(prompt) {
 		vis.createCanvas(vis.scores);
 		vis.tryStart();
 	});
-};
-/**
- * Called by the AppletManager when the applet is initialized
- */
-Visualizer.prototype.initializedApplet = function() {
-	this.main.canvas = this.main.element['getMainCanvas']();
-	this.imgMgr.javaApplet = this.main.element;
-	this.imgMgr.startRequests();
-	this.loadCanvas(false);
 };
 /**
  * Called by the ImageManager when no more images are loading
@@ -557,8 +487,7 @@ Visualizer.prototype.tryStart = function() {
 					ButtonGroup.MODE_NORMAL, 2);
 			bg.addButton('Players:', '#888');
 			buttonAdder = function(i) {
-				var color = vis.replay.meta['playercolors'][i];
-				color = 'rgb('+ color[0] +','+ color[1] +','+ color[2] +')';
+				var color = vis.replay.htmlPlayerColors[i];
 				var func = null;
 				if (vis.replay.meta['user_url'] && vis.replay.meta['user_ids']
 						&& vis.replay.meta['user_ids'][i]) {
@@ -592,32 +521,28 @@ Visualizer.prototype.tryStart = function() {
 				}
 				vis.keyPressed(event.keyCode);
 			};
-			if (this.options['java']) {
-				this.main.element['setInputHandler'](this);
-			} else {
-				// setup mouse handlers
-				this.main.element.onmousemove = function(event) {
-					var mx = 0;
-					var my = 0;
-					var obj = this;
-					if (this.offsetParent) do {
-						mx += obj.offsetLeft;
-						my += obj.offsetTop;
-					} while ((obj = obj.offsetParent));
-					mx = (event || window.event).clientX - mx + ((window.scrollX === undefined) ? (document.body.parentNode.scrollLeft !== undefined) ? document.body.parentNode.scrollLeft : document.body.scrollLeft : window.scrollX);
-					my = (event || window.event).clientY - my + ((window.scrollY === undefined) ? (document.body.parentNode.scrollTop !== undefined) ? document.body.parentNode.scrollTop : document.body.scrollTop : window.scrollY);
-					vis.mouseMoved(mx, my);
-				};
-				this.main.element.onmouseout = function() {
-					vis.mouseExited();
-				};
-				this.main.element.onmousedown = function() {
-					vis.mousePressed();
-				};
-				this.main.element.onmouseup = function() {
-					vis.mouseReleased();
-				};
-			}
+			// setup mouse handlers
+			this.main.element.onmousemove = function(event) {
+				var mx = 0;
+				var my = 0;
+				var obj = this;
+				if (this.offsetParent) do {
+					mx += obj.offsetLeft;
+					my += obj.offsetTop;
+				} while ((obj = obj.offsetParent));
+				mx = (event || window.event).clientX - mx + ((window.scrollX === undefined) ? (document.body.parentNode.scrollLeft !== undefined) ? document.body.parentNode.scrollLeft : document.body.scrollLeft : window.scrollX);
+				my = (event || window.event).clientY - my + ((window.scrollY === undefined) ? (document.body.parentNode.scrollTop !== undefined) ? document.body.parentNode.scrollTop : document.body.scrollTop : window.scrollY);
+				vis.mouseMoved(mx, my);
+			};
+			this.main.element.onmouseout = function() {
+				vis.mouseExited();
+			};
+			this.main.element.onmousedown = function() {
+				vis.mousePressed();
+			};
+			this.main.element.onmouseup = function() {
+				vis.mouseReleased();
+			};
 			window.onresize = function() {
 				vis.resize();
 			};
@@ -633,7 +558,7 @@ Visualizer.prototype.tryStart = function() {
 };
 Visualizer.prototype.calculateCanvasSize = function() {
 	var result = {};
-	if (typeof(window.innerWidth) == 'number' ) {
+	if (typeof(window.innerWidth) == 'number') {
 		//Non-IE
 		result.width = window.innerWidth;
 		result.height = window.innerHeight;
@@ -642,38 +567,37 @@ Visualizer.prototype.calculateCanvasSize = function() {
 		result.width = document.documentElement.clientWidth;
 		result.height = document.documentElement.clientHeight;
 	}
-	result.width = (this.w && (!this.config['fullscreen'] || this.options['java']) ? this.w : result.width);
-	result.height = (this.h && (!this.config['fullscreen'] || this.options['java']) ? this.h : result.height - 4);
+	result.width = (this.w && !this.config['fullscreen']) ? this.w : result.width;
+	result.height = (this.h && !this.config['fullscreen']) ? this.h : result.height;
 	return result;
 };
 Visualizer.prototype.createCanvas = function(obj) {
 	if (!obj.canvas) {
-		if (this.options['java']) {
-			obj.canvas = this.main.element['createCanvas']();
-		} else {
-			obj.canvas = document.createElement('canvas');
-		}
+		obj.canvas = document.createElement('canvas');
 	}
 	if (!obj.ctx) {
 		obj.ctx = obj.canvas.getContext('2d');
 	}
 };
 Visualizer.prototype.setFullscreen = function(enable) {
-	if (this.options['java']) {
-		this.config['fullscreen'] = false;
+	if (window.setFullscreen) {
+		this.config['fullscreen'] = window.setFullscreen(enable);
 	} else {
-		var html = document.getElementsByTagName("html")[0];
 		this.config['fullscreen'] = enable;
-		if (enable) {
-			this.container.removeChild(this.main.element);
-			var tempBody = document.createElement("body");
-			tempBody.appendChild(this.main.element);
-			this.savedBody = html.replaceChild(tempBody, document.body);
-		} else if (this.savedBody) {
-			document.body.removeChild(this.main.element);
-			this.container.appendChild(this.main.element);
-			html.replaceChild(this.savedBody, document.body);
-			delete this.savedBody;
+		if (enable || this.savedBody) {
+			var html = document.getElementsByTagName("html")[0];
+			if (enable) {
+				this.container.removeChild(this.main.element);
+				var tempBody = document.createElement("body");
+				tempBody.style.overflow = 'hidden';
+				tempBody.appendChild(this.main.element);
+				this.savedBody = html.replaceChild(tempBody, document.body);
+			} else if (this.savedBody) {
+				document.body.removeChild(this.main.element);
+				this.container.appendChild(this.main.element);
+				html.replaceChild(this.savedBody, document.body);
+				delete this.savedBody;
+			}
 		}
 	}
 	this.resize(true);
@@ -686,18 +610,15 @@ Visualizer.prototype.setAntLabels = function(enable) {
 };
 Visualizer.prototype.resize = function(forced) {
 	var olds = {
-		width: this.main.element.getAttribute('width'),
-		height: this.main.element.getAttribute('height')
+		width: this.main.element.width,
+		height: this.main.element.height
 	};
 	var news = this.calculateCanvasSize();
 	var resizing = news.width != olds.width || news.height != olds.height;
 	if (resizing || forced) {
 		if (resizing) {
-			this.main.element.setAttribute('width', news.width);
-			this.main.element.setAttribute('height', news.height);
-			if (this.options['java']) {
-				this.main.element['setSize'](news.width, news.height);
-			}
+			this.main.element.width = news.width;
+			this.main.element.height = news.height;
 		}
 		var canvas = this.main.canvas;
 		var ctx = this.main.ctx;
@@ -865,8 +786,7 @@ Visualizer.prototype.renderCounts = function() {
 	ctx.stroke();
 	var scaleY = h / (max - min);
 	for (i = this.replay.players - 1; i >= 0; i--) {
-		var color = this.replay.meta['playercolors'][i];
-		ctx.strokeStyle = 'rgb(' + color[0] + ',' + color[1] + ',' + color[2] + ')';
+		ctx.strokeStyle = this.replay.htmlPlayerColors[i];
 		ctx.beginPath();
 		ctx.moveTo(0.5, 0.5 + scaleY * (max - this.replay.turns[0].counts[i]));
 		for (k = 1; k < this.replay.turns.length; k++) {
@@ -885,8 +805,7 @@ Visualizer.prototype.renderFog = function(turn) {
 			this.createCanvas(this.fog);
 			this.fog.canvas.width = 2;
 			this.fog.canvas.height = 2;
-			var color = this.replay.meta['playercolors'][this.fog.player];
-			this.fog.ctx.fillStyle = 'rgb(' + color[0] + ',' + color[1] + ',' + color[2] + ')';
+			this.fog.ctx.fillStyle = this.replay.htmlPlayerColors[this.fog.player];
 			this.fog.ctx.fillRect(0, 0, 1, 1);
 			this.fog.ctx.fillRect(1, 1, 1, 1);
 			this.fog.ptrn = this.border.ctx.createPattern(this.fog.canvas, 'repeat');
@@ -944,9 +863,7 @@ Visualizer.prototype.drawColorBar = function(loc, values) {
 	var offsetX = loc.x;
 	for (i = 0; i < useValues.length; i++) {
 		var amount = scale * useValues[i];
-		var color = this.replay.meta['playercolors'][i];
-		this.main.ctx.fillStyle =
-				'rgb(' + color[0] + ', ' + color[1] + ', ' + color[2] + ')';
+		this.main.ctx.fillStyle = this.replay.htmlPlayerColors[i];
 		this.main.ctx.fillRect(offsetX, loc.y, loc.w - offsetX + loc.x, loc.h);
 		offsetX += amount;
 	}
@@ -957,8 +874,7 @@ Visualizer.prototype.drawColorBar = function(loc, values) {
 	var offsetY = loc.y + 0.5 * loc.h;
 	offsetX = loc.x + 2;
 	for (i = 0; i < useValues.length; i++) {
-		// work around a bug in Chrome's LiveConnect implementation
-		var text = '' + Math.round(values[i]);
+		var text = Math.round(values[i]);
 		var textWidth = this.main.ctx.measureText(text).width;
 		if (useValues[i] != 0 && scale * useValues[i] >= textWidth) {
 			this.main.ctx.fillText(text, offsetX, offsetY);
@@ -1012,6 +928,7 @@ Visualizer.prototype.draw = function(time, tick) {
 	this.main.ctx.moveTo(this.loc.graph.x + 0.5 + (this.loc.graph.w - 1) * time / (this.replay.turns.length - 1), this.loc.graph.y + 0.5);
 	this.main.ctx.lineTo(this.loc.graph.x + 0.5 + (this.loc.graph.w - 1) * time / (this.replay.turns.length - 1), this.loc.graph.y + this.loc.graph.h - 0.5);
 	this.main.ctx.stroke();
+	// turn number
 	var isStop = (turn === this.replay.turns.length - 1);
 	this.main.ctx.fillStyle = '#888';
 	this.main.ctx.textBaseline = 'middle';
@@ -1023,7 +940,7 @@ Visualizer.prototype.draw = function(time, tick) {
 	for (var i = 0; i < this.replay.turns[turn].ants.length; i++) {
 		var antObj = this.replay.turns[turn].ants[i].interpolate(time, Quality.LOW);
 		this.correctCoords(antObj, this.replay.cols, this.replay.rows);
-		var hash = Hex[antObj['r']] + Hex[antObj['g']] + Hex[antObj['b']];
+		var hash = INT_TO_HEX[antObj['r']] + INT_TO_HEX[antObj['g']] + INT_TO_HEX[antObj['b']];
 		if (!drawStates[hash]) drawStates[hash] = [];
 		drawStates[hash].push(antObj);
 	}
@@ -1066,10 +983,6 @@ Visualizer.prototype.draw = function(time, tick) {
 	}
 	// draw border over ants, that moved out of the map
 	this.main.ctx.drawImage(this.border.canvas, this.loc.map.x - ZOOM_SCALE, this.loc.map.y - ZOOM_SCALE);
-	if (this.options['java']) {
-		// stop Closure Compiler from renaming this Java method
-		this.main.element['repaint']();
-	}
 };
 Visualizer.prototype.mouseMoved = function(mx, my) {
 	this.mouseX = mx;
@@ -1143,10 +1056,3 @@ Visualizer.prototype.keyReleased = function() {
 Visualizer.prototype['loadReplayData'] = Visualizer.prototype.loadReplayData;
 Visualizer.prototype['loadReplayDataFromPHP'] = Visualizer.prototype.loadReplayDataFromPHP;
 Visualizer.prototype['loadReplayDataFromURI'] = Visualizer.prototype.loadReplayDataFromURI;
-Visualizer.prototype['mouseEntered'] = Visualizer.prototype.mouseEntered;
-Visualizer.prototype['mouseExited'] = Visualizer.prototype.mouseExited;
-Visualizer.prototype['mouseMoved'] = Visualizer.prototype.mouseMoved;
-Visualizer.prototype['mousePressed'] = Visualizer.prototype.mousePressed;
-Visualizer.prototype['mouseReleased'] = Visualizer.prototype.mouseReleased;
-Visualizer.prototype['keyPressed'] = Visualizer.prototype.keyPressed;
-Visualizer.prototype['keyReleased'] = Visualizer.prototype.keyReleased;
