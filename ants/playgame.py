@@ -5,6 +5,7 @@ import os
 import time
 from optparse import OptionParser
 import random
+import cProfile
 
 from ants import Ants
 
@@ -25,7 +26,7 @@ def main(argv):
     parser.add_option("-t", "--turns", dest="turns",
                       default=200, type="int",
                       help="Number of turns in the game")
-    
+
     # the output directory will contain the replay file used by the visualizer
     # it will also contain the bot input/output logs, if requested
     parser.add_option("-o", "--output_dir", dest="output_dir",
@@ -77,64 +78,78 @@ def main(argv):
     parser.add_option("--attackradius2", dest="attackradius2",
                       default=5, type="int",
                       help="Attack radius of ants squared")
+    parser.add_option("--profile", dest="profile",
+                       action="store_true", default=False,
+                       help="Run under the python profiler")
 
     (opts, args) = parser.parse_args(argv)
     if opts.map is None or not os.path.exists(opts.map):
         parser.print_help()
         return -1
     try:
-        # this split of options is not needed, but left for documentation
-        game_options = {
-            "map": opts.map,
-            "attack": opts.attack,
-            "food": opts.food,
-            "viewradius2": opts.viewradius2,
-            "attackradius2": opts.attackradius2,
-            "spawnradius2": opts.spawnradius2,
-            "loadtime": opts.loadtime,
-            "turntime": opts.turntime,
-            "turns": opts.turns,
-            "seed": opts.seed }
-        engine_options = {
-            "loadtime": opts.loadtime,
-            "turntime": opts.turntime,
-            "map_file": opts.map,
-            "turns": opts.turns,
-            "output_dir": opts.output_dir,
-            "output_json": opts.output_json,
-            "log_input": opts.log_input,
-            "log_output": opts.log_output,
-            "serial": opts.serial,
-            "verbose": opts.verbose }
-        random.seed(opts.seed)
-        for round in range(opts.rounds):
-            map_file = open(opts.map, 'r')
-            game_options["map"] = map_file.read()
-            map_file.close()
-            game = Ants(game_options)
-            bots = [('.', arg) for arg in args]
-            if game.num_players != len(bots):
-                print("Incorrect number of bots for map.  Need %s, got %s" % 
-                      (game.num_players, len(bots)))
-                for arg in args:
-                    print("Bot Cmd: %s" % arg)
-                break
-            print('playgame round %s' % round)
-            result = run_game(game, bots, engine_options, round)
-            if opts.output_json:
-                print result
+        if opts.profile:
+            # put profile file into output dir if we can
+            prof_file = "ants.profile"
+            if opts.output_dir:
+                prof_file = os.path.join(opts.output_dir, prof_file)
+            # cProfile needs to be explitly told about out local and global context
+            print("Running profile and outputting to %s" %(prof_file,))
+            cProfile.runctx("run_rounds(opts,args)", globals(), locals(), prof_file)
+        else:
+            # only use psyco if we are not profiling
+            # (psyco messes with profiling)
+            try:
+                import psyco
+                psyco.full()
+            except ImportError:
+                pass
+            run_rounds(opts,args)
         return 0
-
     except Exception:
         traceback.print_exc()
         return -1
 
+def run_rounds(opts,args):
+    # this split of options is not needed, but left for documentation
+    game_options = {
+        "map": opts.map,
+        "attack": opts.attack,
+        "food": opts.food,
+        "viewradius2": opts.viewradius2,
+        "attackradius2": opts.attackradius2,
+        "spawnradius2": opts.spawnradius2,
+        "loadtime": opts.loadtime,
+        "turntime": opts.turntime,
+        "turns": opts.turns,
+        "seed": opts.seed }
+    engine_options = {
+        "loadtime": opts.loadtime,
+        "turntime": opts.turntime,
+        "map_file": opts.map,
+        "turns": opts.turns,
+        "output_dir": opts.output_dir,
+        "output_json": opts.output_json,
+        "log_input": opts.log_input,
+        "log_output": opts.log_output,
+        "serial": opts.serial,
+        "verbose": opts.verbose }
+    random.seed(opts.seed)
+    for round in range(opts.rounds):
+        map_file = open(opts.map, 'r')
+        game_options["map"] = map_file.read()
+        map_file.close()
+        game = Ants(game_options)
+        bots = [('.', arg) for arg in args]
+        if game.num_players != len(bots):
+            print("Incorrect number of bots for map.  Need %s, got %s" %
+                  (game.num_players, len(bots)))
+            for arg in args:
+                print("Bot Cmd: %s" % arg)
+            break
+        print('playgame round %s' % round)
+        result = run_game(game, bots, engine_options, round)
+        if opts.output_json:
+            print result
+
 if __name__ == "__main__":
-    try:
-        import psyco
-        psyco.full()
-    except ImportError:
-        pass
-    #import cProfile
-    #cProfile.run('sys.exit(main(sys.argv[1:]))')
     sys.exit(main(sys.argv[1:]))
