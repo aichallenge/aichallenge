@@ -32,4 +32,12 @@ if __name__ == "__main__":
     generated_path = os.path.realpath(os.path.join(path, 'visualizer', 'replay.html'))
 
     generate(data, generated_path)
-    webbrowser.open('file://'+generated_path)
+
+    # allow people to surpress launching the brower
+    launch = True
+    if len(sys.argv) > 1 and sys.argv[1] == '--nolaunch':
+        launch = False
+
+    # open the page in the browser
+    if launch:
+        webbrowser.open('file://'+generated_path)
