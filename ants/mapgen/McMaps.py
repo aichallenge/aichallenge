@@ -1,11 +1,17 @@
 #!/usr/bin/python
-from random import randrange, random
+from random import randrange, random, choice, seed
 from math import sqrt
 import Image, ImageDraw, ImageChops
+from itertools import combinations
+from collections import defaultdict
 
-LAND = 0
-FOOD = -1
-WALL = -2
+MY_ANT = 0
+ANTS = 0
+DEAD = -1
+LAND = -2
+FOOD = -3
+WATER = -4
+UNSEEN = -5
 
 WALL_COLOR = (128, 128, 128)
 LAND_COLOR = (139, 69, 19)
@@ -229,9 +235,9 @@ def random_box():
     players = 4
     width = randrange(16, 64) * 2
     height = randrange(16, 64) * 2
-    m = [[WALL for x in range(width)] for y in range(height)]
+    m = [[WATER for x in range(width)] for y in range(height)]
     def carve(row, col):
-        if m[row][col] == WALL:
+        if m[row][col] == WATER:
             m[row][col] = LAND
     for box in range(randrange(7,14)):
         l = randrange(width-5)
@@ -263,19 +269,211 @@ def random_box():
                 carve(height-t-1, x)
     return ant_map(m)
 
+def mid_point(loc1, loc2, size):
+    row1, col1 = loc1
+    row2, col2 = loc2
+    rows, cols = size
+    row1, row2 = sorted((row1,row2))
+    m_row = (row1 + row2)//2
+    if row2 - row1 > rows:
+        m_row = (m_row + rows) % rows
+    m_col = (col1 + col2)//2
+    if col2 - col1 > cols:
+        m_col = (m_col + cols) % cols
+    return m_row, m_col
+
+def row_distance(row1, row2, rows):
+    return min(abs(row1-row2),rows-abs(row1-row2))
+
+def col_distance(col1, col2, cols):
+    return min(abs(col1-col2),cols-abs(col1-col2))
+
+def manhatten_distance(loc1, loc2, size):
+    row1, col1 = loc1
+    row2, col2 = loc2
+    rows, cols = size
+    d_row = min(abs(row1-row2),rows-abs(row1-row2))
+    d_col = min(abs(col1-col2),cols-abs(col1-col2))
+    return d_row + d_col
+
+def chebychev_distance(loc1, loc2, size):
+    row1, col1 = loc1
+    row2, col2 = loc2
+    rows, cols = size
+    d_row = min(abs(row1-row2),rows-abs(row1-row2))
+    d_col = min(abs(col1-col2),cols-abs(col1-col2))
+    return max(d_row, d_col)
+
+def euclidean_distance(loc1, loc2, size):
+    row1, col1 = loc1
+    row2, col2 = loc2
+    rows, cols = size
+    d_row = min(abs(row1-row2),rows-abs(row1-row2))
+    d_col = min(abs(col1-col2),cols-abs(col1-col2))
+    return sqrt(d_row**2 + d_col**2)
+
+def random_points(count, size, spacing, distance):
+    rows, cols = size
+    points = []
+    failures = 0
+    for c in range(count):
+        while True:
+            point = (randrange(rows), randrange(cols))
+            for other_point in points:
+                if distance(point, other_point, size) < spacing:
+                    failures += 1
+                    if failures > 100000:
+                        return points
+                    break
+            else:
+                break
+        points.append(point)
+    return points
+
+def random_points_unique(count, size, spacing, distance):
+    rows, cols = size
+    count = min(count, max(rows, cols))
+    avail_rows = list(range(rows))
+    avail_cols = list(range(cols))
+    points = []
+    failures = 0
+    for c in range(count):
+        while True:
+            point = (choice(avail_rows), choice(avail_cols))
+            for other_point in points:
+                if distance(point, other_point, size) < spacing:
+                    failures += 1
+                    if failures > 100000:
+                        return points
+                    break
+            else:
+                break
+        points.append(point)
+        avail_rows.remove(point[0])
+        avail_cols.remove(point[1])
+    return points
+
+def cells(size, starts, distance, max_braids=1000, openness=0.25):
+    rows, cols = size
+    size = (rows, cols)
+    m = [[LAND for col in range(cols)] for row in range(rows)]
+
+    # undirected node graph
+    neighbor = defaultdict(list) 
+    # list of water to remove when carving a passage between nodes
+    water = defaultdict(list)
+    
+    for row in range(rows):
+        for col in range(cols):
+            distances = [distance((row,col),s_loc,size)
+                         for s_loc in starts]
+            #closest = sorted(distances)
+            closest = [d for d in distances if d - 1 <= min(distances)]
+            #if closest[0] + 1 >= closest[1]:
+            if len(closest) > 1:
+                m[row][col] = WATER
+                # find all starting points that contributed to the water wall,
+                # mark them as neighbors, add to water wall dict
+                nearest = [i for i, x in enumerate(distances)
+                           if x in closest]
+                if len(nearest) == 2:
+                    neighbor[nearest[0]].append(nearest[1])
+                    neighbor[nearest[1]].append(nearest[0])
+                water[tuple(nearest)].append((row, col))
+            else:
+                # note: a cell could wrap around vertically or horizontally
+                #       depending on the placement of other cells
+                #       this draws a wall halfway around on the other side
+                nearest = distances.index(min(distances))
+                if (row_distance(row, starts[nearest][0], rows) >= rows//2 or
+                    col_distance(col, starts[nearest][1], cols) >= cols//2):
+                    m[row][col] = WATER # this water can't be carved
+                #m[row][col] = distances.index(closest[0])
+    for i, (row, col) in enumerate(starts):
+        m[row][col] = i
+        
+    # carve passages function to pass to maze function
+    # note: a path from one point to another could have 2 walls if they touch
+    #       left and right or top and bottom due to wrapping
+    #       the path midpoint attempts to choose one and only one wall
+    def carve(path):
+        path = tuple(sorted(path))
+        m_row, m_col = mid_point(starts[path[0]], starts[path[1]], size)
+        for row, col in water[path]:
+            if (row_distance(m_row, row, rows) > rows//4 or
+                    col_distance(m_col, col, cols) > cols//4):
+                continue
+            m[row][col] = LAND
+            
+    carved = growing_tree(neighbor, carve, max_braids=max_braids, openness=openness)
+    #for c1, cs in carved.items():
+    #    for c2 in cs:
+    #        print "%s-%s " % (chr(c1+97),chr(c2+97)),
+    #for n, squares in water.items():
+    #    print("%s : %s" % ('-'.join([chr(x+97) for x in n]),
+    #                       ' '.join([','.join([str(s2) for s2 in s]) for s in squares])))
+    return ant_map(m)
+
+def growing_tree(nodes, carve, max_braids=1000, openness=0.5):
+    cells = [choice(nodes.keys())]
+    visited = cells[:]
+    carved = defaultdict(list) # key is cell carved into, value is last cell where carve came from
+    #carved[cells[0]].append(cells[0])
+    new = True # track real dead ends, not backtracked forks
+    while len(cells) > 0:
+        # tune this for different generation methods
+        # recursive backtracker
+        #index = -1                     
+        # Prim's algorithm
+        index = randrange(len(cells)) 
+        
+        cell = cells[index]
+        unvisited = [node for node in nodes[cell] if not node in visited]
+        if len(unvisited) > 0:
+            next = choice(unvisited)
+            carve((cell, next))
+            carved[next].append(cell)
+            carved[cell].append(next)
+            visited.append(next)
+            cells.append(next)
+            new = True
+        else:
+            if max_braids > 0 and (new or bool(random() < openness)):
+                # tune this for different braiding methods
+                # random
+                #braid = choice([n for n in nodes[cell] if not n in carved[cell]])
+                # longest loop
+                braid = ([c for c in cells if c in nodes[cell]]+nodes[cell])[0]
+                
+                carve((cell, braid))
+                carved[cell].append(braid)
+                max_braids -= 1
+            cells.pop(index)
+            new = False
+    return carved
+
+def cell_maze():
+    # these control how much wall carving will happen
+    max_braids = 100 # points where the maze can create a loop
+    openness = 0.01  # chance that non dead ends can create a loop
+    
 def ant_map(m):
-    tmp = 'D %s %s 4\n' % (len(m[0]), len(m))
+    tmp = 'rows %s\ncols %s\n' % (len(m[0]), len(m))
     for row in m:
         tmp += 'M '
         for col in row:
             if col == LAND:
                 tmp += '.'
-            elif col == WALL:
-                tmp += 'X'
+            elif col == WATER:
+                tmp += '%'
+            elif col == FOOD:
+                tmp += '*'
             else:
-                tmp += chr(col + 96)
+                tmp += chr(col + 97)
         tmp += '\n'
     return tmp
     
 if __name__ == '__main__':
-    divide_conquer()
+    size = (40, 80)
+    starts = random_points(26, size, 6, euclidean_distance)
+    print(cells(size, starts, euclidean_distance, choice((0,1000)), random()))
