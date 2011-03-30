@@ -93,7 +93,7 @@ def main(argv):
             if opts.output_dir:
                 prof_file = os.path.join(opts.output_dir, prof_file)
             # cProfile needs to be explitly told about out local and global context
-            print("Running profile and outputting to %s" %(prof_file,))
+            print >> sys.stderr, "Running profile and outputting to %s" %(prof_file,)
             cProfile.runctx("run_rounds(opts,args)", globals(), locals(), prof_file)
         else:
             # only use psyco if we are not profiling
@@ -141,15 +141,13 @@ def run_rounds(opts,args):
         game = Ants(game_options)
         bots = [('.', arg) for arg in args]
         if game.num_players != len(bots):
-            print("Incorrect number of bots for map.  Need %s, got %s" %
+            print >> sys.stderr, ("Incorrect number of bots for map.  Need %s, got %s" %
                   (game.num_players, len(bots)))
             for arg in args:
-                print("Bot Cmd: %s" % arg)
+                print >> sys.stderr, "Bot Cmd: %s" % arg
             break
-        print('playgame round %s' % round)
+        print >> sys.stderr, 'playgame round %s' % round
         result = run_game(game, bots, engine_options, round)
-        if opts.output_json:
-            print result
 
 if __name__ == "__main__":
     sys.exit(main(sys.argv[1:]))

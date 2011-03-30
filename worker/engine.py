@@ -20,17 +20,17 @@ def run_game(game, botcmds, options, gameid=0):
     try:
         if output_dir:
             if log_input:
-                bot_input_log = [open(os.path.join(output_dir, '%s.bot%s.input' % (gameid, i)), "w") 
+                bot_input_log = [open(os.path.join(output_dir, '%s.bot%s.input' % (gameid, i)), "w")
                                  for i in range(len(botcmds))]
             if log_output:
-                bot_output_log = [open(os.path.join(output_dir, '%s.bot%s.output' % (gameid, i)), "w") 
+                bot_output_log = [open(os.path.join(output_dir, '%s.bot%s.output' % (gameid, i)), "w")
                                   for i in range(len(botcmds))]
         # create bot sandboxes
         bots = [Sandbox(*bot) for bot in botcmds]
         for b, bot in enumerate(bots):
             if not bot.is_alive:
                 if verbose:
-                    print('bot %s did not start' % botcmds[b])
+                    print >> sys.stderr, 'bot %s did not start' % botcmds[b]
                 game.kill_player(b)
 
         if output_dir:
@@ -40,10 +40,10 @@ def run_game(game, botcmds, options, gameid=0):
             of.flush()
 
         if verbose:
-            print('running for %s turns' % turns)
+            print >> sys.stderr, 'running for %s turns' % turns
         for turn in range(turns+1):
             if verbose:
-                print('turn %s' % turn)
+                print >> sys.stderr, 'turn %s' % turn
             try:
                 if turn == 0:
                     game.start_game()
@@ -90,7 +90,7 @@ def run_game(game, botcmds, options, gameid=0):
                             continue # already got bot moves
                         if not bot.is_alive:
                             if verbose:
-                                print('bot %s died' % b)
+                                print >> sys.stderr, 'bot %s died' % b
                             bot_finished[b] = True
                             game.kill_player(b)
                             continue # bot is dead
@@ -108,18 +108,18 @@ def run_game(game, botcmds, options, gameid=0):
                 for b, finished in enumerate(bot_finished):
                     if not finished:
                         if verbose:
-                            print("bot %s timed out" % b)
+                            print >> sys.stderr, "bot %s timed out" % b
                         if output_dir:
                             of.write('# bot %s timed out\n' % b)
                         game.kill_player(b)
                         bots[b].kill()
-                                            
+
                 # process all moves
                 bot_alive = [game.is_alive(b) for b in range(len(bots))]
                 if turn > 0 and not game.game_over():
                     for b, moves in enumerate(bot_moves):
                         if game.is_alive(b):
-                            valid, invalid = game.do_moves(b, moves) 
+                            valid, invalid = game.do_moves(b, moves)
                             if output_dir and log_output:
                                 bot_output_log[b].write('# turn %s\n' % turn)
                                 if len(valid) > 0:
@@ -130,12 +130,12 @@ def run_game(game, botcmds, options, gameid=0):
                                     of.flush()
 
                     game.finish_turn()
-                    
+
                 # send ending info to eliminated bots
                 for b, alive in enumerate(bot_alive):
                     if alive and not game.is_alive(b):
                         if verbose:
-                            print("bot %s eliminated" % b)
+                            print >> sys.stderr, "bot %s eliminated" % b
                         if output_dir:
                             of.write('# bot %s eliminated\n' % b)
                         end_line = 'end\nscore %s\n' % ' '.join([str(s) for s in game.get_scores()])
@@ -153,7 +153,7 @@ def run_game(game, botcmds, options, gameid=0):
                 s = 'turn %4d stats: ' % turn
                 for key, values in stats.items():
                     s += '%s: %s' % (key, values)
-                print("\r%-50s" % s)
+                print >> sys.stderr, "\r%-50s" % s
 
             alive = [game.is_alive(b) for b in range(len(bots))]
             if sum(alive) <= 1:
@@ -183,7 +183,7 @@ def run_game(game, botcmds, options, gameid=0):
     except Exception:
         error = traceback.format_exc()
         if verbose:
-            print(error)
+            print >> sys.stderr, error
     finally:
         for bot in bots:
             if bot.is_alive:
