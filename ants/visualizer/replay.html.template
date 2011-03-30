@@ -7,6 +7,7 @@
 		var visualizer;
 		function visualizePasted() {
 			visualizer.loadReplayData(document.getElementById('txtReplay').value);
+			visualizer.setFullscreen(true);
 		}
 	</script>
 	<style type="text/css">
