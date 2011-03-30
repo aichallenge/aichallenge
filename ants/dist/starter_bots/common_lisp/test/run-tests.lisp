@@ -24,14 +24,14 @@
 
 ;;; Tests
 
+(define-test issue-order
+  (assert-equal (format nil "~&o 1 1 N~%") (issue-order 1 1 :north))
+  (assert-equal (format nil "~&o 2 2 E~%") (issue-order 2 2 :east))
+  (assert-equal (format nil "~&o 2 3 S~%") (issue-order 2 3 :south))
+  (assert-equal (format nil "~&o 3 2 W~%") (issue-order 3 2 :west)))
+
 (define-test mkstr
   (assert-equal "abc1de23fG456HI" (mkstr "abc" 1 "de" 23 "f" 'g 456 'hi)))
-
-(define-test move-ant
-  (assert-equal (format nil "~&o 1 1 N~%") (move-ant 1 1 :north))
-  (assert-equal (format nil "~&o 2 2 E~%") (move-ant 2 2 :east))
-  (assert-equal (format nil "~&o 2 3 S~%") (move-ant 2 3 :south))
-  (assert-equal (format nil "~&o 3 2 W~%") (move-ant 3 2 :west)))
 
 (define-test par-value
   (assert-equal 1 (par-value "a 1"))
