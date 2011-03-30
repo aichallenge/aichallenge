@@ -8,7 +8,7 @@ import json
 
 def generate(data, generated_path):
     path = os.path.dirname(__file__)
-    template_path = os.path.join(path, 'visualizer', 'replay.html.template')
+    template_path = os.path.join(path, 'replay.html.template')
     template = open(template_path, 'r')
     content = template.read()
     template.close()
@@ -29,7 +29,7 @@ if __name__ == "__main__":
     data = sys.stdin.read()
 
     path = os.path.dirname(__file__)
-    generated_path = os.path.realpath(os.path.join(path, 'visualizer', 'replay.html'))
+    generated_path = os.path.realpath(os.path.join(path, 'replay.html'))
 
     generate(data, generated_path)
 
