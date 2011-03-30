@@ -92,12 +92,7 @@ class Ants(Game):
                           for row in range(self.height)]
                          for p in range(self.num_players)]
         # used to track what a player can see
-        self.vision = [self.get_vision(i) for i in range(self.num_players)]
-        # used to track new water squares that the player can see
-        self.revealed_water = [[] for i in range(self.num_players)]
-
-        # initialise data that remembers what players have seen
-        self.update_revealed()
+        self.init_vision()
 
         # used to track scores
         self.score = [Fraction(0,1)]*self.num_players
@@ -187,18 +182,59 @@ class Ants(Game):
             self.offsets_cache[max_dist] = offsets
         return self.offsets_cache[max_dist]
 
-    def get_vision(self, player):
-        """ Determine which squares are visible to the given player """
+    def init_vision(self):
+        self.vision = []
+        for p in range(self.num_players):
+            self.vision.append([[0]*self.width for row in range(self.height)])
+        self.update_vision()
+        self.update_revealed()
 
-        offsets = self.neighbourhood_offsets(self.viewradius)
-        vision = [[False]*self.width for row in range(self.height)]
-        for ant in self.player_ants(player):
-            a_row, a_col = ant.loc
-            vision[a_row][a_col] = True
-            for v_row, v_col in offsets:
-                # offsets are such that there is never an IndexError
-                vision[a_row+v_row][a_col+v_col] = True
-        return vision
+    def vision_offsets(self):
+        if not hasattr(self, 'vision_offsets_cache'):
+            cache = {}
+            # all offsets that an ant can see
+            locs = set(self.neighbourhood_offsets(self.viewradius))
+            locs.add((0,0))
+            cache['new'] = list(locs)
+            cache['-'] = [list(locs)]
+
+            for d in AIM:
+                # determine the previous view
+                p_r, p_c = -AIM[d][0], -AIM[d][1]
+                p_locs = set(
+                    (((p_r+r)%self.height-self.height),
+                     ((p_c+c)%self.width-self.width))
+                    for r,c in locs
+                )
+                cache[d] = [list(p_locs), list(locs-p_locs), list(p_locs-locs)]
+            self.vision_offsets_cache = cache
+        return self.vision_offsets_cache
+
+    def update_vision(self):
+        """ Determine which squares are visible to the given player """
+        ant_view = self.vision_offsets()
+
+        for ant in self.current_ants.values():
+            if not ant.orders:
+                # new ant
+                self.update_vision_ant(ant, ant_view['new'], 1)
+            else:
+                order = ant.orders[-1]
+                if order in AIM:
+                    # ant moved
+                    self.update_vision_ant(ant, ant_view[order][1], 1)
+                    self.update_vision_ant(ant, ant_view[order][-1], -1)
+                # else: ant stayed where it was
+        for ant in self.killed_ants:
+            order = ant.orders[-1]
+            self.update_vision_ant(ant, ant_view[order][0], -1)
+
+    def update_vision_ant(self, ant, offsets, delta):
+        a_row, a_col = ant.loc
+        vision = self.vision[ant.owner]
+        for v_row, v_col in offsets:
+            # offsets are such that there is never an IndexError
+            vision[a_row+v_row][a_col+v_col] += delta
 
     def update_revealed(self):
         """ Make updates to state based on what each player can see
@@ -947,7 +983,7 @@ class Ants(Game):
             self.score_history[i].append(s)
 
         # now that all the ants have moved we can update the vision
-        self.vision = [self.get_vision(i) for i in range(self.num_players)]
+        self.update_vision()
         self.update_revealed()
 
     def get_state(self):
