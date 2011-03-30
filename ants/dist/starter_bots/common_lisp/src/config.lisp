@@ -1,11 +1,16 @@
-;;;; classes.lisp
+;;;; specials.lisp
 
-(in-package :ants-common)
+(in-package :ants-bot)
+
+
+;;; Both shadowed in MAIN, never assign to directly!
+
+(defvar *state* nil)
+(defvar *verbose* nil)
 
 
 ;;; Classes
 
-;; TODO add defaults
 (defclass state ()
   ((input :reader input :initarg :input :initform *standard-input*)
    (output :reader output :initarg :output :initform *standard-output*)

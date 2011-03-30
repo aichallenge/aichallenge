@@ -1,7 +1,0 @@
-#!/usr/bin/sbcl --script
-
-(require :asdf)
-
-(load (merge-pathnames "3rd-party/asdf-init.lisp" *default-pathname-defaults*))
-(asdf:oos 'asdf:load-op :play-game)
-(play-game::main)

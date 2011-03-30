@@ -24,7 +24,7 @@
             do (logmsg "--- turn: " (turn *state*) " ---~%")
                (logmsg "~&[start] " (current-date-time-string) "~%")
                (bot-think)
-               (end-of-turn)
+               (finish-turn)
                (logmsg "~&[  end] move took " (turn-time-used) " seconds ("
                        (turn-time-remaining) " left).~%")))))
 

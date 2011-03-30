@@ -6,8 +6,10 @@
   :components ((:module src
                 :serial t
                 :components ((:file "package")
+                             (:file "config")
                              (:file "misc")
+                             (:file "handlers")
                              (:file "game-state")
                              (:file "bot-think")
                              (:file "ants-bot"))))
-  :depends-on (:ants-common :usocket))
+  :depends-on (:usocket))

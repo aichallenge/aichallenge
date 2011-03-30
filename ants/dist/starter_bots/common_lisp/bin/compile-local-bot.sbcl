@@ -4,5 +4,4 @@
 
 (load (merge-pathnames "3rd-party/asdf-init.lisp" *default-pathname-defaults*))
 (asdf:oos 'asdf:load-op :ants-bot)
-(save-lisp-and-die "ants-bot" :toplevel #'ants-bot::main-for-local
-                   :executable t)
+(save-lisp-and-die "MyBot" :toplevel #'ants-bot::main-for-local :executable t)
