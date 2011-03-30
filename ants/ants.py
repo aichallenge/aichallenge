@@ -183,53 +183,58 @@ class Ants(Game):
         return self.offsets_cache[max_dist]
 
     def init_vision(self):
+        """ Initialise the vision data """
+        # calculate and cache vision offsets
+        cache = {}
+        # all offsets that an ant can see
+        locs = set(self.neighbourhood_offsets(self.viewradius))
+        locs.add((0,0))
+        cache['new'] = list(locs)
+        cache['-'] = [list(locs)]
+
+        for d in AIM:
+            # determine the previous view
+            p_r, p_c = -AIM[d][0], -AIM[d][1]
+            p_locs = set(
+                (((p_r+r)%self.height-self.height),
+                 ((p_c+c)%self.width-self.width))
+                for r,c in locs
+            )
+            cache[d] = [list(p_locs), list(locs-p_locs), list(p_locs-locs)]
+        self.vision_offsets_cache = cache
+
+        # create vision arrays
         self.vision = []
         for p in range(self.num_players):
             self.vision.append([[0]*self.width for row in range(self.height)])
+
+        # initialise the data based on the initial ants
         self.update_vision()
         self.update_revealed()
 
-    def vision_offsets(self):
-        if not hasattr(self, 'vision_offsets_cache'):
-            cache = {}
-            # all offsets that an ant can see
-            locs = set(self.neighbourhood_offsets(self.viewradius))
-            locs.add((0,0))
-            cache['new'] = list(locs)
-            cache['-'] = [list(locs)]
-
-            for d in AIM:
-                # determine the previous view
-                p_r, p_c = -AIM[d][0], -AIM[d][1]
-                p_locs = set(
-                    (((p_r+r)%self.height-self.height),
-                     ((p_c+c)%self.width-self.width))
-                    for r,c in locs
-                )
-                cache[d] = [list(p_locs), list(locs-p_locs), list(p_locs-locs)]
-            self.vision_offsets_cache = cache
-        return self.vision_offsets_cache
-
     def update_vision(self):
-        """ Determine which squares are visible to the given player """
-        ant_view = self.vision_offsets()
-
+        """ Incrementally updates the vision data """
         for ant in self.current_ants.values():
             if not ant.orders:
                 # new ant
-                self.update_vision_ant(ant, ant_view['new'], 1)
+                self.update_vision_ant(ant, self.vision_offsets_cache['new'], 1)
             else:
                 order = ant.orders[-1]
                 if order in AIM:
                     # ant moved
-                    self.update_vision_ant(ant, ant_view[order][1], 1)
-                    self.update_vision_ant(ant, ant_view[order][-1], -1)
+                    self.update_vision_ant(ant, self.vision_offsets_cache[order][1], 1)
+                    self.update_vision_ant(ant, self.vision_offsets_cache[order][-1], -1)
                 # else: ant stayed where it was
         for ant in self.killed_ants:
             order = ant.orders[-1]
-            self.update_vision_ant(ant, ant_view[order][0], -1)
+            self.update_vision_ant(ant, self.vision_offsets_cache[order][0], -1)
 
     def update_vision_ant(self, ant, offsets, delta):
+        """ Update the vision data for a single ant 
+
+            Increments all the given offsets by delta for the vision
+              data for ant.owner
+        """
         a_row, a_col = ant.loc
         vision = self.vision[ant.owner]
         for v_row, v_col in offsets:
