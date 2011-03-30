@@ -4,9 +4,10 @@ import time
 import traceback
 import os
 import sys
+import json
 
 def run_game(game, botcmds, options, gameid=0):
-    output_json = options.get("output_json", False)
+    output = options.get("output", None)
     output_dir = options.get("output_dir")
     log_input = options.get("log_input", False)
     log_output = options.get("log_output", False)
@@ -179,6 +180,8 @@ def run_game(game, botcmds, options, gameid=0):
             cof = open(os.path.join(output_dir, '%s.replay' % gameid), "w")
             cof.write(game.get_replay())
             cof.close()
+        if output == 'replay':
+            print game.get_replay()
 
     except Exception:
         error = traceback.format_exc()
@@ -199,7 +202,7 @@ def run_game(game, botcmds, options, gameid=0):
             if log_output:
                 for log in bot_output_log:
                     log.close()
-    if output_json:
+    if output == 'json':
         # this isn't actually json yet, the worker will encode it
         json_response = {}
         if error:
@@ -210,4 +213,4 @@ def run_game(game, botcmds, options, gameid=0):
             json_response['rank'] = [sorted(set(scores)).index(x) for x in scores]
             json_response['player_info'] = [{} for x in range(len(bots))]
             json_response['replay'] = game.get_replay()
-        return json_response
+        print json.dumps(json_response)
