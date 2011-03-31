@@ -61,7 +61,7 @@ sub run {
 sub parse {
     my $self = shift;
     # Reset maps:
-    $self->{food} = $self->{water} = $self->{corpses} = $self->{ants} = undef;
+    $self->{food} = $self->{corpses} = $self->{ants} = undef;
 
     while (1) {
         my $line = <>;
