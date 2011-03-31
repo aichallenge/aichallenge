@@ -396,8 +396,12 @@ class Ants(Game):
             if loc in seen_locations:
                 invalid.append((line,'duplicate order'))
                 continue
-            if self.map[loc[0]][loc[1]] != player:
-                invalid.append((line,'not player ant'))
+            try:
+                if self.map[loc[0]][loc[1]] != player:
+                    invalid.append((line,'not player ant'))
+                    continue
+            except IndexError:
+                invalid.append((line,'out of bounds'))
                 continue
             dest = self.destination(loc, AIM[direction])
             if self.map[dest[0]][dest[1]] in (FOOD, WATER):
