@@ -278,8 +278,8 @@ sub direction {
     my ($self, $x1, $y1, $x2, $y2) = @_;
     if ($x1 < $x2) { return 'E' }
     if ($x1 > $x2) { return 'W' }
-    if ($y1 < $y2) { return 'N' }
-    if ($y1 > $y2) { return 'S' }
+    if ($y1 < $y2) { return 'S' }
+    if ($y1 > $y2) { return 'N' }
     return ''
 }
 
