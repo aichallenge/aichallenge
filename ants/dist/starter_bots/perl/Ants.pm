@@ -1,6 +1,7 @@
 package Ants;
 use strict;
 use warnings;
+use 5.10.0;
 use feature ':5.10';
 use List::Util qw(first max min reduce shuffle sum);
 
@@ -115,7 +116,7 @@ sub map_search {
     for my $y (0 .. $self->height) {
         for my $x (0 .. $self->width) {
             if (exists $map->{$x}{$y}
-                and $map->{$x}{$y} == $value
+                and $map->{$x}{$y} ~~ $value
             ) {
                 push(@points, [$x,$y])
             }
@@ -129,6 +130,13 @@ sub map_search {
 sub my_ants {
     my $self = shift;
     return $self->map_search($self->{ants}, 0);
+}
+
+# Returns list of enemy ants on the map
+# Eg: ( [0,1], [10,21] )
+sub enemy_ants {
+    my $self = shift;
+    return $self->map_search($self->{ants}, [1..3]);
 }
 
 # Returns list of visible food on the map
