@@ -123,6 +123,12 @@
        offset)))
 
 
+(defun user-interrupt (arg)
+  (declare (ignore arg))
+  (logmsg "~&User interrupt. Aborting...~%")
+  (quit))
+
+
 (defun water? (row col direction)
   (let ((nl (new-location row col direction)))
     (= 1 (aref (game-map *state*) (elt nl 0) (elt nl 1)))))
