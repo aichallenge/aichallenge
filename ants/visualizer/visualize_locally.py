@@ -13,13 +13,8 @@ def generate(data, generated_path):
     content = template.read()
     template.close()
 
-    json_data = json.dumps({
-        'challenge': 'ants',
-        'replayformat': 'storage',
-        'replaydata': data
-    })
     insert_re = re.compile(r"## REPLAY PLACEHOLDER ##")
-    content = insert_re.sub(json_data, content)
+    content = insert_re.sub(data, content)
 
     output = open(generated_path, 'w')
     output.write(content)

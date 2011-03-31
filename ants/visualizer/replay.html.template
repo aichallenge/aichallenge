@@ -20,9 +20,7 @@
 		<tr valign="top">
 			<td>
 				Game replay copy &amp; paste: <input type="button" value="Load text below" onClick="visualizePasted()"/><br/>
-				<textarea id="txtReplay" rows="27" cols="41">
-                    ## REPLAY PLACEHOLDER ##
-				</textarea>
+				<textarea id="txtReplay" rows="27" cols="41">## REPLAY PLACEHOLDER ##</textarea>
 			</td>
 			<td id="visualizerDiv"></td>
 		</tr>
