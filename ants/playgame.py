@@ -31,7 +31,7 @@ def main(argv):
     # it will also contain the bot input/output logs, if requested
     parser.add_option("-o", "--output_dir", dest="output_dir",
                       help="Directory to dump replay files to.")
-    parser.add_option("-j", "--output", dest="output",
+    parser.add_option("-j", "--stdout", dest="stdout",
                       help="What type of data to output on stdout.")
     parser.add_option("-I", "--log_input", dest="log_input",
                        action="store_true", default=False,
@@ -127,7 +127,7 @@ def run_rounds(opts,args):
         "map_file": opts.map,
         "turns": opts.turns,
         "output_dir": opts.output_dir,
-        "output": opts.output,
+        "stdout": opts.stdout,
         "log_input": opts.log_input,
         "log_output": opts.log_output,
         "serial": opts.serial,

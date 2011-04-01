@@ -7,7 +7,7 @@ import sys
 import json
 
 def run_game(game, botcmds, options, gameid=0):
-    output = options.get("output", None)
+    output = options.get("stdout", None)
     output_dir = options.get("output_dir")
     log_input = options.get("log_input", False)
     log_output = options.get("log_output", False)
