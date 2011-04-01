@@ -29,11 +29,9 @@ def run_game(game, botcmds, options, gameid=0):
                     print >> sys.stderr, 'bot %s did not start' % botcmds[b]
                 game.kill_player(b)
 
+        # initialise file logs
         if output_dir:
             stream_log = open(os.path.join(output_dir, '%s.stream' % gameid), "w")
-            stream_log.write(game.get_player_start())
-            # TODO: write player names and crap
-            stream_log.flush()
 
             replay_log = open(os.path.join(output_dir, '%s.replay' % gameid), "w")
 
@@ -43,6 +41,22 @@ def run_game(game, botcmds, options, gameid=0):
             if log_output:
                 bot_output_log = [open(os.path.join(output_dir, '%s.bot%s.output' % (gameid, i)), "w")
                                   for i in range(len(botcmds))]
+
+        # initialise stdout logs
+        if output == 'replay':
+            if replay_log:
+                replay_log = Tee(replay_log, sys.stdout)
+            else:
+                replay_log = sys.stdout
+        elif output == 'stream':
+            if stream_log:
+                stream_log = Tee(stream_log, sys.stdout)
+            else:
+                stream_log = sys.stdout
+
+        if stream_log:
+            stream_log.write(game.get_player_start())
+            stream_log.flush()
 
         if verbose:
             print >> sys.stderr, 'running for %s turns' % turns
@@ -180,9 +194,6 @@ def run_game(game, botcmds, options, gameid=0):
         if replay_log:
             replay_log.write(game.get_replay())
 
-        if output == 'replay':
-            print game.get_replay()
-
     except Exception:
         error = traceback.format_exc()
         if verbose:
@@ -204,7 +215,6 @@ def run_game(game, botcmds, options, gameid=0):
             for log in bot_output_log:
                 log.close()
     if output == 'json':
-        # this isn't actually json yet, the worker will encode it
         json_response = {}
         if error:
             json_response["error"] = error
@@ -215,3 +225,17 @@ def run_game(game, botcmds, options, gameid=0):
             json_response['player_info'] = [{} for x in range(len(bots))]
             json_response['replay'] = game.get_replay()
         print json.dumps(json_response)
+
+class Tee(object):
+    """ Write to multiple files at once """
+    def __init__(self, *files):
+        self.files = files
+    def write(self, data):
+        for file in self.files:
+            file.write(data)
+    def flush(self):
+        for file in self.files:
+            file.flush()
+    def close(self):
+        for file in self.files:
+            file.close()
