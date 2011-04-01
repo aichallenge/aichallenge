@@ -1,22 +1,20 @@
-;;;; specials.lisp
+;;;; config.lisp
 
 (in-package :ants-bot)
 
 
-;;; Both shadowed in MAIN, never assign to directly!
-
+;; Both shadowed in MAIN, never assign to directly!
 (defvar *state* nil)
 (defvar *verbose* nil)
 
 
-;;; Classes
-
+;; State  Class
 (defclass state ()
   ((input :reader input :initarg :input :initform *standard-input*)
    (output :reader output :initarg :output :initform *standard-output*)
    (error-stream :reader error-stream :initarg :error-stream
                  :initform *error-output*)
-   (log-stream :reader log-stream :initform nil)  ; TODO? *debug-io*
+   (log-stream :reader log-stream :initform nil)
    (turn :reader turn :initform nil)
    (turn-start-time :reader turn-start-time :initform nil)
    (attack-radius2  :reader attack-radius2 :initform 6)
@@ -28,7 +26,6 @@
    (rows :reader rows :initform nil)
    (cols :reader cols :initform nil)
    (game-map :reader game-map :initform nil)
-   ;; TODO move enemy-ants and my-ants to a subclass in :ants-bot
    (enemy-ants :reader enemy-ants :initform nil)
    (my-ants :reader my-ants :initform nil)
    (food :reader food :initform nil)))

@@ -13,13 +13,11 @@ visiting [www.ai-contest.com](http://www.ai-contest.com/).
 
 The entire contents of this starter package are released under the
 Apache license as is all code related to the Google AI Challenge. See
-[code.google.com/p/ai-contest/](http://code.google.com/p/ai-contest/)
-for more details.
+[http://github.com/aichallenge/aichallenge](http://github.com/aichallenge/aichallenge) for more details.
 
-There are a bunch of tutorials on the
-[ai-contest.com](http://ai-contest.com/) website that tell you what to
-do with the contents of this starter package. For the impatient, here
-is a brief summary.
+There are a bunch of tutorials on the [ai-contest.com](http://ai-contest.com/)
+website that tell you what to do with the contents of this starter
+package. For the impatient, here is a brief summary.
 
 * In the root directory, there are a bunch of code files. These are a
   simple working contest entry that employs a basic strategy. These
@@ -60,7 +58,8 @@ starter package).  Nevertheless, patches and improvements are welcome.
 
 ## Usage
 
-Run `bin/run-ants-bot.sbcl` and paste the sample input from the [Ants Game Specification](http://github.com/aichallenge/aichallenge/wiki/Ants-Game-Specification).
+Run `bin/run-ants-bot.sbcl` and paste the sample input from the [Bot Input](http://github.com/aichallenge/aichallenge/wiki/Ant-bot-input-output)
+wiki page.
 
 You can also run either `make` or `make local-bot` to compile the bot
 into a `MyBot` binary.  The former is done on the official server and
@@ -85,6 +84,27 @@ issues an order to the server to go in that direction.  (As described
 in the [Ants Starter Pack Guide](https://github.com/aichallenge/aichallenge/wiki/Ants-Starter-Pack-Guide)).
 
 See the `state` class in `src/config.lisp` for the game variables.
+
+### Internal Map Representation
+
+Also see `src/game-state.lisp`.
+
+The map is internally represented as a 2-dimensional array of [fixnums](file:///export/home/ekwis/emacs/HyperSpec/Body/t_fixnum.htm#fixnum)
+and is accessible as `(game-map *state*)`.  Do note that is reset and
+modified when PARSE-GAME-STATE is called during the main loop, so work
+on a copy if you have to.
+
+Each tile of the map can be accessed by `(aref (game-map *state) row col)`
+and the values of the tiles have to following meaning:
+
+0 = land  
+1 = water  
+2 = food  
+100+ = live ant  
+200+ = dead ant  
+
+Your live ants are always represented as 100 and your dead ants as
+200.
 
 
 ### 3rd Party Libraries
