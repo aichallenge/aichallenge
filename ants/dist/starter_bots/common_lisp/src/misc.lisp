@@ -30,13 +30,6 @@
   (force-output (output *state*)))
 
 
-(defun host2str (host)
-  (cond ((and (vectorp host) (= 4 (length host)))
-         (format nil "~D.~D.~D.~D" (elt host 0) (elt host 1) (elt host 2)
-                 (elt host 3)))
-        (t host)))
-
-
 (defun issue-order (row col direction)
   (if (not (member direction '(:north :east :south :west)))
       (errmsg "[issue-order] Illegal direction: " direction)
