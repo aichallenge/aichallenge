@@ -940,8 +940,9 @@ class Ants(Game):
             food_bonus = (self.turns - self.turn)*self.num_players
             self.score[player] += food_bonus
 
+        # ammend the score history instead of extending it
         for i, s in enumerate(self.score):
-            self.score_history[i].append(s)
+            self.score_history[i][-1] = s
 
     def start_turn(self):
         """ Called by engine at the start of the turn """
