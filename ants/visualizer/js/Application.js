@@ -451,9 +451,11 @@ Visualizer.prototype.tryStart = function() {
 				bg = vis.btnMgr.addImageGroup('toolbar', vis.imgMgr.images[3],
 						ImageButtonGroup.VERTICAL, ButtonGroup.MODE_NORMAL, 2);
 				bg.addButton(0, function() {vis.config.save()});
-				bg.addButton(1, function() {
-					vis.setFullscreen(!vis.config['fullscreen']);
-				});
+				if (window.isFullscreenSupported && window.isFullscreenSupported()) { 
+					bg.addButton(1, function() {
+						vis.setFullscreen(!vis.config['fullscreen']);
+					});
+				}
 //				bg.addButton(2, function() {
 //					vis.setBorder(!vis.config['border']);
 //				});

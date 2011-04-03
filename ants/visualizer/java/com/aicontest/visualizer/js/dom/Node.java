@@ -69,7 +69,8 @@ public class Node implements org.w3c.dom.Node {
 		throw new DOMException(DOMException.NOT_SUPPORTED_ERR, "not supported");
 	}
 
-	public org.w3c.dom.Node insertBefore(org.w3c.dom.Node newChild, org.w3c.dom.Node refChild) throws DOMException {
+	public org.w3c.dom.Node insertBefore(org.w3c.dom.Node newChild,
+			org.w3c.dom.Node refChild) throws DOMException {
 		int i = 0;
 		Iterator<Node> it = childNodes.nodes.iterator();
 		while (it.hasNext()) {
@@ -85,17 +86,20 @@ public class Node implements org.w3c.dom.Node {
 		return newChild;
 	}
 
-	public org.w3c.dom.Node replaceChild(org.w3c.dom.Node newChild, org.w3c.dom.Node oldChild) throws DOMException {
+	public org.w3c.dom.Node replaceChild(org.w3c.dom.Node newChild,
+			org.w3c.dom.Node oldChild) throws DOMException {
 		throw new DOMException(DOMException.NOT_SUPPORTED_ERR, "not supported");
 	}
 
-	public org.w3c.dom.Node removeChild(org.w3c.dom.Node oldChild) throws DOMException {
+	public org.w3c.dom.Node removeChild(org.w3c.dom.Node oldChild)
+			throws DOMException {
 		childNodes.nodes.remove(oldChild);
 		((Node) oldChild).setParentNode(this);
 		return oldChild;
 	}
 
-	public org.w3c.dom.Node appendChild(org.w3c.dom.Node newChild) throws DOMException {
+	public org.w3c.dom.Node appendChild(org.w3c.dom.Node newChild)
+			throws DOMException {
 		childNodes.nodes.addLast((Node) newChild);
 		((Node) newChild).setParentNode(this);
 		return newChild;
@@ -149,7 +153,8 @@ public class Node implements org.w3c.dom.Node {
 		throw new DOMException(DOMException.NOT_SUPPORTED_ERR, "not supported");
 	}
 
-	public short compareDocumentPosition(org.w3c.dom.Node other) throws DOMException {
+	public short compareDocumentPosition(org.w3c.dom.Node other)
+			throws DOMException {
 		throw new DOMException(DOMException.NOT_SUPPORTED_ERR, "not supported");
 	}
 
@@ -205,11 +210,14 @@ public class Node implements org.w3c.dom.Node {
 				return (Node) nodes.get(index);
 			} catch (IndexOutOfBoundsException e) {
 			}
-			throw new DOMException(DOMException.INDEX_SIZE_ERR, "Index " + index + " was requested, while we only have " + nodes.size() + " nodes.");
+			throw new DOMException(DOMException.INDEX_SIZE_ERR, "Index "
+					+ index + " was requested, while we only have "
+					+ nodes.size() + " nodes.");
 		}
 
 		public int getLength() {
 			return nodes.size();
 		}
 	}
+
 }

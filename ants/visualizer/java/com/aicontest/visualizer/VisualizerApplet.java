@@ -3,43 +3,41 @@ package com.aicontest.visualizer;
 import java.applet.Applet;
 import java.awt.Color;
 import java.awt.Graphics;
-import java.awt.Image;
-import java.awt.image.BufferedImage;
+import java.awt.Panel;
 import java.net.MalformedURLException;
 import java.net.URL;
 
+import netscape.javascript.JSObject;
+
 import org.mozilla.javascript.ScriptableObject;
 
-import com.aicontest.visualizer.js.WebWrapper;
-import com.aicontest.visualizer.js.dom.HTMLCanvasElement;
 import com.aicontest.visualizer.js.dom.HTMLDocument;
 
 @SuppressWarnings("serial")
-public class VisualizerApplet extends Applet implements Runnable {
+public class VisualizerApplet extends Applet implements Runnable,
+		IVisualizerUser {
 
 	private URL replay;
-	private Image offscreen;
-	private Graphics offscreenGraphics;
+	private Thread thread;
+	private Visualizer webWrapper;
 
+	@Override
 	public void init() {
 		try {
 			replay = new URL(getDocumentBase(), getParameter("replay"));
-			setBackground(Color.WHITE);
-			setFocusable(true);
-			new Thread(this).start();
 		} catch (MalformedURLException e) {
 			e.printStackTrace();
 		}
+		setBackground(Color.WHITE);
+		setFocusable(true);
 	}
 
-	public synchronized void setBounds(int x, int y, int width, int height) {
-		if ((width > 0) && (height > 0)) {
-			offscreen = createImage(width, height);
-			if (offscreen != null) {
-				offscreenGraphics = offscreen.getGraphics();
-			}
+	@Override
+	public void start() {
+		if (thread == null) {
+			thread = new Thread(this);
+			thread.start();
 		}
-		super.setBounds(x, y, width, height);
 	}
 
 	public void update(Graphics g) {
@@ -47,22 +45,9 @@ public class VisualizerApplet extends Applet implements Runnable {
 	}
 
 	public synchronized void paint(Graphics g) {
-		g.drawImage(offscreen, 0, 0, this);
-		getToolkit().sync();
-	}
-
-	public synchronized void repaint() {
-		WebWrapper webWrapper = WebWrapper.getInstance();
-
 		if (webWrapper != null) {
-			HTMLCanvasElement mainCanvas = webWrapper.getMainCanvas();
-			if ((mainCanvas != null) && (mainCanvas.getContext("2d").isDrawn())) {
-				BufferedImage pixmap = mainCanvas.getPixmap();
-				offscreenGraphics.clearRect(0, 0, getWidth(), getHeight());
-				offscreenGraphics.drawImage(pixmap, 0, 0, this);
-			}
+			webWrapper.paint(g);
 		}
-		super.repaint();
 	}
 
 	public String getAppletInfo() {
@@ -71,15 +56,50 @@ public class VisualizerApplet extends Applet implements Runnable {
 
 	public void run() {
 		try {
-			VisualizerWebWrapper webWrapper = new VisualizerWebWrapper(null);
-			webWrapper.setDrawPanel(this);
-			webWrapper.runScripts();
+			Thread.interrupted();
+			final JSObject jsRoot = JSObject.getWindow(this);
+			webWrapper = new Visualizer(this, getWidth(), getHeight());
+			webWrapper.setJsRoot(jsRoot);
 			HTMLDocument document = webWrapper.getDomWindow().getDocument();
-			ScriptableObject vis = webWrapper.construct("Visualizer", new Object[] { document, "/" });
-			webWrapper.invoke(vis, "loadReplayDataFromURI", new Object[] { replay });
+			ScriptableObject vis = webWrapper.construct("Visualizer",
+					new Object[] { document, "/" });
+			webWrapper.invoke(vis, "loadReplayDataFromURI",
+					new Object[] { replay });
+			addKeyListener(webWrapper);
 			webWrapper.loop();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 	}
+
+	@Override
+	public String getJavaScriptPath() {
+		return null;
+	}
+
+	@Override
+	public IProgram getProgram() {
+		final Ants ants = new Ants();
+		return ants;
+	}
+
+	@Override
+	public void setVisualizerPanel(Panel visualizerPanel) {
+		visualizerPanel.setSize(getWidth(), getHeight());
+		if (Thread.currentThread().isInterrupted()) {
+			System.out.println("pre add");
+		}
+		add(visualizerPanel);
+	}
+
+	@Override
+	public boolean isFullScreenSupported() {
+		return false;
+	}
+
+	@Override
+	public boolean setFullScreen(boolean enable) {
+		return false;
+	}
+
 }
