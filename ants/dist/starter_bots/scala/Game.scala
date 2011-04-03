@@ -24,7 +24,7 @@ sealed trait Game {
   }
 
   def directionFrom(one: Tile) = new {
-    def to(other: Tile) = {
+    def to(other: Tile): Set[CardinalPoint] = {
       val ns: Set[CardinalPoint] = if (one.row < other.row) {
         if (other.row - one.row >= parameters.rows / 2) Set(North) else Set(South)
       } else if (one.row > other.row) {
