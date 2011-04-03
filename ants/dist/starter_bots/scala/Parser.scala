@@ -4,7 +4,7 @@ import util.matching.Regex
 
 object Parser {
 
-  def parse(source: Source, params: GameParameters = GameParameters()) = {
+  def parse(source: Source, params: GameParameters = GameParameters(), knownWater: Map[Tile, Water] = Map.empty) = {
     val lines = source.getLines
 
     @tailrec
@@ -24,7 +24,7 @@ object Parser {
       }
     }
 
-    parseInternal(GameInProgress(parameters = params))
+    parseInternal(GameInProgress(parameters = params, board = Board(water = knownWater)))
   }
 
   // The sequence of these is important. The parser will invoke the first that matches.
