@@ -4,9 +4,10 @@ import time
 import traceback
 import os
 import sys
+import json
 
 def run_game(game, botcmds, options, gameid=0):
-    output_json = options.get("output_json", False)
+    output = options.get("stdout", None)
     output_dir = options.get("output_dir")
     log_input = options.get("log_input", False)
     log_output = options.get("log_output", False)
@@ -17,33 +18,51 @@ def run_game(game, botcmds, options, gameid=0):
 
     error = ''
 
+    bot_input_log = bot_output_log = stream_log = replay_log = None
+
     try:
-        if output_dir:
-            if log_input:
-                bot_input_log = [open(os.path.join(output_dir, '%s.bot%s.input' % (gameid, i)), "w") 
-                                 for i in range(len(botcmds))]
-            if log_output:
-                bot_output_log = [open(os.path.join(output_dir, '%s.bot%s.output' % (gameid, i)), "w") 
-                                  for i in range(len(botcmds))]
         # create bot sandboxes
         bots = [Sandbox(*bot) for bot in botcmds]
         for b, bot in enumerate(bots):
             if not bot.is_alive:
                 if verbose:
-                    print('bot %s did not start' % botcmds[b])
+                    print >> sys.stderr, 'bot %s did not start' % botcmds[b]
                 game.kill_player(b)
 
+        # initialise file logs
         if output_dir:
-            of = open(os.path.join(output_dir, '%s.stream' % gameid), "w")
-            of.write(game.get_player_start())
-            # TODO: write player names and crap
-            of.flush()
+            stream_log = open(os.path.join(output_dir, '%s.stream' % gameid), "w")
+
+            replay_log = open(os.path.join(output_dir, '%s.replay' % gameid), "w")
+
+            if log_input:
+                bot_input_log = [open(os.path.join(output_dir, '%s.bot%s.input' % (gameid, i)), "w")
+                                 for i in range(len(botcmds))]
+            if log_output:
+                bot_output_log = [open(os.path.join(output_dir, '%s.bot%s.output' % (gameid, i)), "w")
+                                  for i in range(len(botcmds))]
+
+        # initialise stdout logs
+        if output == 'replay':
+            if replay_log:
+                replay_log = Tee(replay_log, sys.stdout)
+            else:
+                replay_log = sys.stdout
+        elif output == 'stream':
+            if stream_log:
+                stream_log = Tee(stream_log, sys.stdout)
+            else:
+                stream_log = sys.stdout
+
+        if stream_log:
+            stream_log.write(game.get_player_start())
+            stream_log.flush()
 
         if verbose:
-            print('running for %s turns' % turns)
+            print >> sys.stderr, 'running for %s turns' % turns
         for turn in range(turns+1):
             if verbose:
-                print('turn %s' % turn)
+                print >> sys.stderr, 'turn %s' % turn
             try:
                 if turn == 0:
                     game.start_game()
@@ -54,21 +73,21 @@ def run_game(game, botcmds, options, gameid=0):
                         if turn == 0:
                             start = game.get_player_start(b) + 'ready\n'
                             bot.write(start)
-                            if output_dir and log_input:
-                                    bot_input_log[b].write(start)
-                                    bot_input_log[b].flush()
+                            if bot_input_log:
+                                bot_input_log[b].write(start)
+                                bot_input_log[b].flush()
                         else:
                             state = 'turn ' + str(turn) + '\n' + game.get_player_state(b) + 'go\n'
                             bot.write(state)
-                            if output_dir and log_input:
+                            if bot_input_log:
                                 bot_input_log[b].write(state)
                                 bot_input_log[b].flush()
                 if turn > 0:
-                    if output_dir:
-                        of.write('turn %s\n' % turn)
-                        of.write('score %s\n' % ' '.join([str(s) for s in game.get_scores()]))
-                        of.write(game.get_state())
-                        of.flush()
+                    if stream_log:
+                        stream_log.write('turn %s\n' % turn)
+                        stream_log.write('score %s\n' % ' '.join([str(s) for s in game.get_scores()]))
+                        stream_log.write(game.get_state())
+                        stream_log.flush()
                     game.start_turn()
 
                 # get moves from each player
@@ -90,7 +109,7 @@ def run_game(game, botcmds, options, gameid=0):
                             continue # already got bot moves
                         if not bot.is_alive:
                             if verbose:
-                                print('bot %s died' % b)
+                                print >> sys.stderr, 'bot %s died' % b
                             bot_finished[b] = True
                             game.kill_player(b)
                             continue # bot is dead
@@ -108,40 +127,37 @@ def run_game(game, botcmds, options, gameid=0):
                 for b, finished in enumerate(bot_finished):
                     if not finished:
                         if verbose:
-                            print("bot %s timed out" % b)
-                        if output_dir:
-                            of.write('# bot %s timed out\n' % b)
+                            print >> sys.stderr, "bot %s timed out" % b
+                        if stream_log:
+                            stream_log.write('# bot %s timed out\n' % b)
                         game.kill_player(b)
                         bots[b].kill()
-                                            
+
                 # process all moves
                 bot_alive = [game.is_alive(b) for b in range(len(bots))]
                 if turn > 0 and not game.game_over():
                     for b, moves in enumerate(bot_moves):
                         if game.is_alive(b):
-                            valid, invalid = game.do_moves(b, moves) 
-                            if output_dir and log_output:
+                            valid, invalid = game.do_moves(b, moves)
+                            if bot_output_log:
                                 bot_output_log[b].write('# turn %s\n' % turn)
-                                if len(valid) > 0:
-                                    tmp = '\n'.join(valid) + '\n'
-                                    bot_output_log[b].write(tmp)
+                                if valid:
+                                    bot_output_log[b].write('\n'.join(valid)+'\n')
                                     bot_output_log[b].flush()
-                                    of.write(tmp)
-                                    of.flush()
 
                     game.finish_turn()
-                    
+
                 # send ending info to eliminated bots
                 for b, alive in enumerate(bot_alive):
                     if alive and not game.is_alive(b):
                         if verbose:
-                            print("bot %s eliminated" % b)
-                        if output_dir:
-                            of.write('# bot %s eliminated\n' % b)
+                            print >> sys.stderr, "bot %s eliminated" % b
+                        if stream_log:
+                            stream_log.write('# bot %s eliminated\n' % b)
                         end_line = 'end\nscore %s\n' % ' '.join([str(s) for s in game.get_scores()])
                         end_line += game.get_player_state(b)
                         bots[b].write(end_line)
-                        if output_dir and log_output:
+                        if bot_output_log:
                             bot_output_log[b].write(end_line)
                             bot_output_log[b].flush()
 
@@ -153,7 +169,7 @@ def run_game(game, botcmds, options, gameid=0):
                 s = 'turn %4d stats: ' % turn
                 for key, values in stats.items():
                     s += '%s: %s' % (key, values)
-                print("\r%-50s" % s)
+                print >> sys.stderr, "\r%-50s" % s
 
             alive = [game.is_alive(b) for b in range(len(bots))]
             if sum(alive) <= 1:
@@ -168,39 +184,37 @@ def run_game(game, botcmds, options, gameid=0):
             if game.is_alive(b):
                 state = score_line + game.get_player_state(b) + 'go\n'
                 bot.write(state)
-                if output_dir and log_input:
+                if bot_input_log:
                     bot_input_log[b].write(state)
                     bot_input_log[b].flush()
-        if output_dir:
-            of.write(score_line)
-            of.write(game.get_state())
-            of.flush()
-
-            cof = open(os.path.join(output_dir, '%s.replay' % gameid), "w")
-            cof.write(game.get_replay())
-            cof.close()
+        if stream_log:
+            stream_log.write(score_line)
+            stream_log.write(game.get_state())
+            stream_log.flush()
+        if replay_log:
+            replay_log.write(game.get_replay())
 
     except Exception:
         error = traceback.format_exc()
         if verbose:
-            print(error)
+            print >> sys.stderr, error
     finally:
         for bot in bots:
             if bot.is_alive:
                 bot.kill()
-        if output_dir:
-            try:
-                of.close()
-            except:
-                pass
-            if log_input:
-                for log in bot_input_log:
-                    log.close()
-            if log_output:
-                for log in bot_output_log:
-                    log.close()
-    if output_json:
-        # this isn't actually json yet, the worker will encode it
+
+        # close all the open files
+        if stream_log:
+            stream_log.close()
+        if replay_log:
+            replay_log.close()
+        if bot_input_log:
+            for log in bot_input_log:
+                log.close()
+        if bot_output_log:
+            for log in bot_output_log:
+                log.close()
+    if output == 'json':
         json_response = {}
         if error:
             json_response["error"] = error
@@ -210,4 +224,18 @@ def run_game(game, botcmds, options, gameid=0):
             json_response['rank'] = [sorted(set(scores)).index(x) for x in scores]
             json_response['player_info'] = [{} for x in range(len(bots))]
             json_response['replay'] = game.get_replay()
-        return json_response
+        print json.dumps(json_response)
+
+class Tee(object):
+    """ Write to multiple files at once """
+    def __init__(self, *files):
+        self.files = files
+    def write(self, data):
+        for file in self.files:
+            file.write(data)
+    def flush(self):
+        for file in self.files:
+            file.flush()
+    def close(self):
+        for file in self.files:
+            file.close()

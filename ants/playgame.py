@@ -31,9 +31,8 @@ def main(argv):
     # it will also contain the bot input/output logs, if requested
     parser.add_option("-o", "--output_dir", dest="output_dir",
                       help="Directory to dump replay files to.")
-    parser.add_option("-j", "--output_json", dest="output_json",
-                      action="store_true", default=False,
-                      help="Return json result from engine.")
+    parser.add_option("-j", "--stdout", dest="stdout",
+                      help="What type of data to output on stdout.")
     parser.add_option("-I", "--log_input", dest="log_input",
                        action="store_true", default=False,
                        help="Log input streams sent to bots")
@@ -93,7 +92,7 @@ def main(argv):
             if opts.output_dir:
                 prof_file = os.path.join(opts.output_dir, prof_file)
             # cProfile needs to be explitly told about out local and global context
-            print("Running profile and outputting to %s" %(prof_file,))
+            print >> sys.stderr, "Running profile and outputting to %s" %(prof_file,)
             cProfile.runctx("run_rounds(opts,args)", globals(), locals(), prof_file)
         else:
             # only use psyco if we are not profiling
@@ -128,7 +127,7 @@ def run_rounds(opts,args):
         "map_file": opts.map,
         "turns": opts.turns,
         "output_dir": opts.output_dir,
-        "output_json": opts.output_json,
+        "stdout": opts.stdout,
         "log_input": opts.log_input,
         "log_output": opts.log_output,
         "serial": opts.serial,
@@ -141,15 +140,13 @@ def run_rounds(opts,args):
         game = Ants(game_options)
         bots = [('.', arg) for arg in args]
         if game.num_players != len(bots):
-            print("Incorrect number of bots for map.  Need %s, got %s" %
+            print >> sys.stderr, ("Incorrect number of bots for map.  Need %s, got %s" %
                   (game.num_players, len(bots)))
             for arg in args:
-                print("Bot Cmd: %s" % arg)
+                print >> sys.stderr, "Bot Cmd: %s" % arg
             break
-        print('playgame round %s' % round)
+        print >> sys.stderr, 'playgame round %s' % round
         result = run_game(game, bots, engine_options, round)
-        if opts.output_json:
-            print result
 
 if __name__ == "__main__":
     sys.exit(main(sys.argv[1:]))
