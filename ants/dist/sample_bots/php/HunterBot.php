@@ -1,6 +1,6 @@
 <?php
 
-require 'Ants.php';
+require_once 'Ants.php';
 
 class HunterBot
 {
@@ -44,4 +44,9 @@ class HunterBot
     }
 }
 
-Ants::run( new HunterBot() );
+/**
+ * Don't run bot when unit-testing
+ */
+if( !defined('PHPUnit_MAIN_METHOD') ) {
+    Ants::run( new HunterBot() );
+}
