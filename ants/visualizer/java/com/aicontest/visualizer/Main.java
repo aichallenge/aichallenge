@@ -8,6 +8,7 @@ import java.awt.Panel;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.net.URI;
 import java.net.URISyntaxException;
 
@@ -23,9 +24,10 @@ public class Main implements IVisualizerUser, WindowListener {
 
 	public static void main(String[] args) {
 		try {
-			if (args.length != 1) {
-				System.out
-						.println("The visualizer takes a replay file as its only argument.");
+			if (args.length > 1) {
+				System.out.println("The visualizer takes a replay file as its only argument. If no argument is given, stdin is used.");
+			} else if (args.length == 0) {
+				new Main();
 			} else {
 				new Main(args[0]);
 			}
@@ -35,12 +37,13 @@ public class Main implements IVisualizerUser, WindowListener {
 		}
 	}
 
-	public Main(String replay) throws InstantiationException,
-			IllegalAccessException, IOException, URISyntaxException {
+	private ScriptableObject init() throws InstantiationException, IllegalAccessException, IOException {
 		visualizer = new Visualizer(this, 640, 640);
 		HTMLDocument document = visualizer.getDomWindow().getDocument();
-		ScriptableObject vis = visualizer.construct("Visualizer", new Object[] {
-				document, "/" });
+		return visualizer.construct("Visualizer", new Object[] { document, "/" });
+	}
+
+	public Main(String replay) throws InstantiationException, IllegalAccessException, IOException, URISyntaxException {
 		URI uri = null;
 		try {
 			uri = new URI(replay);
@@ -49,7 +52,21 @@ public class Main implements IVisualizerUser, WindowListener {
 		if (uri == null || uri.getScheme() == null) {
 			uri = new URI("file", replay, null);
 		}
+		ScriptableObject vis = init();
 		visualizer.invoke(vis, "loadReplayDataFromURI", new Object[] { uri });
+		visualizer.loop();
+	}
+
+	public Main() throws IOException, InstantiationException, IllegalAccessException {
+		InputStreamReader isr = new InputStreamReader(System.in);
+		char[] cbuf = new char[4096];
+		int read;
+		StringBuffer sb = new StringBuffer();
+		while ((read = isr.read(cbuf)) != -1) {
+			sb.append(cbuf, 0, read);
+		}
+		ScriptableObject vis = init();
+		visualizer.invoke(vis, "loadReplayData", new Object[] { sb.toString() });
 		visualizer.loop();
 	}
 

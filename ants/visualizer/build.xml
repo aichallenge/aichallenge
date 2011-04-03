@@ -46,7 +46,7 @@
   </target>
 
   <target name="download-jaropt" unless="jaropt.available" depends="check-jaropt">
-    <mkdir dir="downloads" />
+    <mkdir dir="3rdparty/cmc" />
     <get src="http://www.fightingquaker.com/jaropt/jaropt.jar" dest="3rdparty/cmc/jaropt.jar" usetimestamp="true" />
   </target>
 
