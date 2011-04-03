@@ -70,6 +70,7 @@ class Sandbox:
         if self.is_alive:
             try:
                 self.command_process.kill()
+                self.command_process.wait()
             except:
                 pass
             #os.kill(self.command_process.pid, signal.SIGKILL)
