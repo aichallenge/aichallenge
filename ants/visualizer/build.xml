@@ -80,7 +80,7 @@
       <includePattern>org.mozilla.javascript.jdk15.VMBridge_jdk15</includePattern>
       <includePattern>org.mozilla.javascript.regexp.RegExpImpl</includePattern>
     </JarOpt>
-    <!--<move file="${build.deploy}/min.jar" tofile="${jar.file}"/>-->
+    <move file="${build.deploy}/min.jar" tofile="${jar.file}"/>
   </target>
   
   <!-- JavaScript transormation -->

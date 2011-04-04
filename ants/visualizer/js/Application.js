@@ -12,6 +12,9 @@
  * @todo keep a minimum size to allow the controls to render
  * @todo setting for cpu usage
  * @todo show when a bot crashed
+ * @todo switch to console.log for debug and load messages
+ * @todo fix duplicate 'parsing replay...' messages
+ * @todo load replays incrementally
  */
 
 LoadingState = {
@@ -451,7 +454,7 @@ Visualizer.prototype.tryStart = function() {
 				bg = vis.btnMgr.addImageGroup('toolbar', vis.imgMgr.images[3],
 						ImageButtonGroup.VERTICAL, ButtonGroup.MODE_NORMAL, 2);
 				bg.addButton(0, function() {vis.config.save()});
-				if (window.isFullscreenSupported && window.isFullscreenSupported()) { 
+				if (!window.isFullscreenSupported || window.isFullscreenSupported()) {
 					bg.addButton(1, function() {
 						vis.setFullscreen(!vis.config['fullscreen']);
 					});
