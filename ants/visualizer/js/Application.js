@@ -81,6 +81,11 @@ Visualizer = function(container, dataDir, w, h) {
 	 */
 	this.border = {};
 	/**
+	 * Caches overlay graphics like fog
+	 * @private
+	 */
+	this.overlay = {};
+	/**
 	 * Caches the score graph
 	 * @private
 	 */
@@ -150,7 +155,15 @@ Visualizer = function(container, dataDir, w, h) {
 	/**
 	 * @private
 	 */
-	this.mouseDown = false;
+	this.shiftX = 0;
+	/**
+	 * @private
+	 */
+	this.shiftY = 0;
+	/**
+	 * @private
+	 */
+	this.mouseDown = 0;
 	/**
 	 * @private
 	 */
@@ -404,6 +417,7 @@ Visualizer.prototype.loadCanvas = function(prompt) {
 		}
 		vis.createCanvas(vis.map);
 		vis.createCanvas(vis.border);
+		vis.createCanvas(vis.overlay);
 		vis.createCanvas(vis.scores);
 		vis.tryStart();
 	});
@@ -461,9 +475,10 @@ Visualizer.prototype.tryStart = function() {
 						vis.setFullscreen(!vis.config['fullscreen']);
 					});
 				}
-//				bg.addButton(2, function() {
-//					vis.setBorder(!vis.config['border']);
-//				});
+				bg.addButton(2, function() {
+					vis.setBorder(!vis.config['border']);
+					vis.director.draw();
+				});
 //				bg.addButton(3, function() {
 //					vis.setAntLabels(!vis.config['label']);
 //				});
@@ -616,6 +631,62 @@ Visualizer.prototype.setFullscreen = function(enable) {
 };
 Visualizer.prototype.setBorder = function(enable) {
 	this.config['border'] = enable;
+	if (enable) {
+		var loc = this.loc.vis;
+		this.main.ctx.fillStyle = '#fff';
+		this.main.ctx.fillRect(loc.x, loc.y, loc.w, loc.h);
+		loc = this.loc.map;
+		this.border.canvas.width = loc.w + 2 * ZOOM_SCALE;
+		this.border.canvas.height = loc.h + 2 * ZOOM_SCALE;
+		var ctx = this.border.ctx;
+		ctx.save();
+			this.imgMgr.pattern(0, ctx, 'repeat');
+			ctx.translate(ZOOM_SCALE, ZOOM_SCALE);
+			var m = this.loc.map;
+			ctx.save();
+				ctx.beginPath();
+				ctx.moveTo(0, 0);
+				ctx.lineTo(m.w, 0);
+				ctx.lineTo(m.w + ZOOM_SCALE, -ZOOM_SCALE);
+				ctx.lineTo(-ZOOM_SCALE, -ZOOM_SCALE);
+				ctx.closePath();
+				ctx.fill();
+			ctx.restore();
+			ctx.save();
+				ctx.translate(0, m.h);
+				ctx.beginPath();
+				ctx.moveTo(0, 0);
+				ctx.lineTo(m.w, 0);
+				ctx.lineTo(m.w + ZOOM_SCALE, +ZOOM_SCALE);
+				ctx.lineTo(-ZOOM_SCALE, +ZOOM_SCALE);
+				ctx.closePath();
+				ctx.fill();
+			ctx.restore();
+			ctx.rotate(0.5 * Math.PI);
+			ctx.save();
+				ctx.beginPath();
+				ctx.moveTo(0, 0);
+				ctx.lineTo(m.h, 0);
+				ctx.lineTo(m.h + ZOOM_SCALE, ZOOM_SCALE);
+				ctx.lineTo(-ZOOM_SCALE, ZOOM_SCALE);
+				ctx.closePath();
+				ctx.fill();
+			ctx.restore();
+			ctx.save();
+				ctx.translate(0, -m.w);
+				ctx.beginPath();
+				ctx.moveTo(0, 0);
+				ctx.lineTo(m.h, 0);
+				ctx.lineTo(m.h + ZOOM_SCALE, -ZOOM_SCALE);
+				ctx.lineTo(-ZOOM_SCALE, -ZOOM_SCALE);
+				ctx.closePath();
+				ctx.fill();
+		   ctx.restore();
+		ctx.restore();
+	} else {
+		this.border.canvas.width = this.loc.map.w;
+		this.border.canvas.height = this.loc.map.h;
+	}
 };
 Visualizer.prototype.setAntLabels = function(enable) {
 	this.config['label'] = enable;
@@ -668,15 +739,15 @@ Visualizer.prototype.resize = function(forced) {
 			this.scale * (this.replay.rows));
 		this.loc.map.x = ((this.loc.vis.w - this.loc.map.w) / 2 + this.loc.vis.x) | 0;
 		this.loc.map.y = ((this.loc.vis.h - this.loc.map.h) / 2 + this.loc.vis.y) | 0;
-		this.border.canvas.width = this.loc.map.w + 2 * ZOOM_SCALE;
-		this.border.canvas.height = this.loc.map.h + 2 * ZOOM_SCALE;
-		this.renderBorder();
+		this.setBorder(this.config['border']);
 		this.scores.canvas.width = this.loc.graph.w;
 		this.scores.canvas.height = this.loc.graph.h;
 		this.renderCounts();
 		this.map.canvas.width = this.loc.map.w;
 		this.map.canvas.height = this.loc.map.h;
 		this.renderMap();
+		this.overlay.canvas.width = this.loc.map.w;
+		this.overlay.canvas.height = this.loc.map.h;
 		var bg = this.btnMgr.groups['playback'];
 		bg.x = ((news.width - 8 * 64) / 2) | 0;
 		bg.y = this.loc.vis.y + this.loc.vis.h;
@@ -713,56 +784,6 @@ Visualizer.prototype.renderMap = function() {
 			ctx.fillRect(this.scale * start, this.scale * row, this.scale * (col - start), this.scale);
 		}
 	}
-};
-/**
- * @private
- */
-Visualizer.prototype.renderBorder = function() {
-	var ctx = this.border.ctx;
-	ctx.save();
-		this.imgMgr.pattern(0, ctx, 'repeat');
-		ctx.translate(ZOOM_SCALE, ZOOM_SCALE);
-		var m = this.loc.map;
-		ctx.save();
-			ctx.beginPath();
-			ctx.moveTo(0, 0);
-			ctx.lineTo(m.w, 0);
-			ctx.lineTo(m.w + ZOOM_SCALE, -ZOOM_SCALE);
-			ctx.lineTo(-ZOOM_SCALE, -ZOOM_SCALE);
-			ctx.closePath();
-			ctx.fill();
-		ctx.restore();
-		ctx.save();
-			ctx.translate(0, m.h);
-			ctx.beginPath();
-			ctx.moveTo(0, 0);
-			ctx.lineTo(m.w, 0);
-			ctx.lineTo(m.w + ZOOM_SCALE, +ZOOM_SCALE);
-			ctx.lineTo(-ZOOM_SCALE, +ZOOM_SCALE);
-			ctx.closePath();
-			ctx.fill();
-		ctx.restore();
-		ctx.rotate(0.5 * Math.PI);
-		ctx.save();
-			ctx.beginPath();
-			ctx.moveTo(0, 0);
-			ctx.lineTo(m.h, 0);
-			ctx.lineTo(m.h + ZOOM_SCALE, ZOOM_SCALE);
-			ctx.lineTo(-ZOOM_SCALE, ZOOM_SCALE);
-			ctx.closePath();
-			ctx.fill();
-		ctx.restore();
-		ctx.save();
-			ctx.translate(0, -m.w);
-			ctx.beginPath();
-			ctx.moveTo(0, 0);
-			ctx.lineTo(m.h, 0);
-			ctx.lineTo(m.h + ZOOM_SCALE, -ZOOM_SCALE);
-			ctx.lineTo(-ZOOM_SCALE, -ZOOM_SCALE);
-			ctx.closePath();
-			ctx.fill();
-	   ctx.restore();
-	ctx.restore();
 };
 /**
  * @private
@@ -811,7 +832,14 @@ Visualizer.prototype.renderCounts = function() {
  * @private
  */
 Visualizer.prototype.renderFog = function(turn) {
-	this.border.ctx.clearRect(ZOOM_SCALE, ZOOM_SCALE, this.scale * this.replay.cols, this.scale * this.replay.rows);
+	if (this.config['border']) {
+		ctx = this.border.ctx;
+		ctx.save();
+		ctx.translate(ZOOM_SCALE, ZOOM_SCALE);
+	} else {
+		var ctx = this.overlay.ctx;
+	}
+	ctx.clearRect(0, 0, this.overlay.canvas.width, this.overlay.canvas.height);
 	if (this.fog) {
 		if (!this.fog.ctx) {
 			this.createCanvas(this.fog);
@@ -820,26 +848,29 @@ Visualizer.prototype.renderFog = function(turn) {
 			this.fog.ctx.fillStyle = this.replay.htmlPlayerColors[this.fog.player];
 			this.fog.ctx.fillRect(0, 0, 1, 1);
 			this.fog.ctx.fillRect(1, 1, 1, 1);
-			this.fog.ptrn = this.border.ctx.createPattern(this.fog.canvas, 'repeat');
+			this.fog.ptrn = ctx.createPattern(this.fog.canvas, 'repeat');
 		}
-		this.border.ctx.fillStyle = this.fog.ptrn;
+		ctx.fillStyle = this.fog.ptrn;
 		for (var row = 0; row < this.replay.rows; row++) {
-			var y = ZOOM_SCALE + row * this.scale;
+			var y = row * this.scale;
 			var start = undefined;
 			for (var col = 0; col < this.replay.cols; col++) {
-				var x = ZOOM_SCALE + col * this.scale;
+				var x = col * this.scale;
 				var isFog = this.replay.turns[turn].fogs[this.fog.player][row][col];
 				if (start === undefined && isFog) {
 					start = x;
 				} else if (start !== undefined && !isFog) {
-					this.border.ctx.fillRect(start, y, x - start, this.scale);
+					ctx.fillRect(start, y, x - start, this.scale);
 					start = undefined;
 				}
 			}
 			if (start !== undefined) {
-				this.border.ctx.fillRect(start, y, ZOOM_SCALE + this.replay.cols * this.scale - start, this.scale);
+				ctx.fillRect(start, y, this.replay.cols * this.scale - start, this.scale);
 			}
 		}
+	}
+	if (this.config['border']) {
+		ctx.restore();
 	}
 };
 Visualizer.prototype.showFog = function(fog) {
@@ -919,8 +950,6 @@ Visualizer.prototype.interpolate = function(array1, array2, delta) {
 Visualizer.prototype.draw = function(time, tick) {
 	var x, y, w, d;
 	var turn = (time | 0);
-	// draw the map background
-	this.main.ctx.drawImage(this.map.canvas, this.loc.map.x, this.loc.map.y);
 	// draw scores
 	w = this.main.canvas.width;
 	if (tick !== undefined) {
@@ -956,9 +985,18 @@ Visualizer.prototype.draw = function(time, tick) {
 		if (!drawStates[hash]) drawStates[hash] = [];
 		drawStates[hash].push(antObj);
 	}
+	if (this.config['border']) {
+		var ctx = this.main.ctx;
+		ctx.save();
+		ctx.translate(this.loc.map.x, this.loc.map.y);
+	} else {
+		ctx = this.border.ctx;
+	}
+	// draw the map background
+	ctx.drawImage(this.map.canvas, 0, 0);
 	// sorting by render state gives slight fps improvements
 	for (var key in drawStates) {
-		this.main.ctx.fillStyle = '#' + key;
+		ctx.fillStyle = '#' + key;
 		var drawList = drawStates[key];
 		for (var n = 0; n < drawList.length; n++) {
 			antObj = drawList[n];
@@ -980,8 +1018,8 @@ Visualizer.prototype.draw = function(time, tick) {
 					this.ctxMap.lineTo(x + sin, y + cos);
 				}
 			} else {
-				x = Math.round(this.scale * antObj['x']) + this.loc.map.x;
-				y = Math.round(this.scale * antObj['y']) + this.loc.map.y;
+				x = Math.round(this.scale * antObj['x']);
+				y = Math.round(this.scale * antObj['y']);
 				w = this.scale;
 				if (antObj['size'] !== 1) {
 					d = 0.5 * (1.0 - antObj['size']) * this.scale;
@@ -989,43 +1027,84 @@ Visualizer.prototype.draw = function(time, tick) {
 					y += d;
 					w *= antObj['size'];
 				}
-				this.main.ctx.fillRect(x, y, w, w);
+				ctx.fillRect(x, y, w, w);
+				if (x + w > this.loc.map.w) {
+					ctx.fillRect(x - this.loc.map.w, y, w, w);
+					if (y + w > this.loc.map.h) {
+						ctx.fillRect(x - this.loc.map.w, y - this.loc.map.h, w, w);
+					}
+				}
+				if (y + w > this.loc.map.h) {
+					ctx.fillRect(x, y - this.loc.map.h, w, w);
+				}
 			}
 		}
 	}
-	// draw border over ants, that moved out of the map
-	this.main.ctx.drawImage(this.border.canvas, this.loc.map.x - ZOOM_SCALE, this.loc.map.y - ZOOM_SCALE);
+	if (this.config['border']) {
+		// draw border over ants, that moved out of the map
+		ctx.drawImage(this.border.canvas, -ZOOM_SCALE, -ZOOM_SCALE);
+		ctx.restore();
+	} else {
+		ctx.drawImage(this.overlay.canvas, 0, 0);
+		ctx = this.main.ctx;
+		var loc = this.loc.vis;
+		ctx.save();
+		ctx.beginPath();
+		ctx.rect(loc.x, loc.y, loc.w, loc.h);
+		ctx.clip();
+		var sx = this.loc.map.x - loc.x + this.shiftX;
+		var sy = this.loc.map.y - loc.y + this.shiftY;
+		sx += loc.x - Math.ceil(sx / this.loc.map.w) * this.loc.map.w;
+		sy += loc.y - Math.ceil(sy / this.loc.map.h) * this.loc.map.h;
+		for (y = sy; y < loc.y + loc.h; y += this.loc.map.h) {
+			for (x = sx; x < loc.x + loc.w; x += this.loc.map.w) {
+				ctx.drawImage(this.border.canvas, x, y);
+			}
+		}
+		ctx.restore();
+		ctx.fillStyle = 'rgba(0,0,0,0.5)';
+		ctx.fillRect(loc.x, loc.y, loc.w, this.loc.map.y - loc.y);
+		ctx.fillRect(loc.x, this.loc.map.y + this.loc.map.h, loc.w, loc.y + loc.h - this.loc.map.y - this.loc.map.h);
+		ctx.fillRect(loc.x, loc.y, this.loc.map.x - loc.x, loc.h);
+		ctx.fillRect(this.loc.map.x + this.loc.map.w, loc.y, loc.x + loc.w - this.loc.map.x - this.loc.map.w, loc.h);
+	}
 };
 Visualizer.prototype.mouseMoved = function(mx, my) {
+	var deltaX = mx - this.mouseX;
+	var deltaY = my - this.mouseY;
 	this.mouseX = mx;
 	this.mouseY = my;
-	if (this.mouseDown && this.loc.graph.contains(this.mouseX, this.mouseY)) {
+	if (this.mouseDown === 1) {
 		mx = (this.mouseX - this.loc.graph.x) / (this.loc.graph.w - 1);
 		mx = Math.round(mx * (this.replay.turns.length - 1));
 		this.director.gotoTick(mx);
+	} else if (this.mouseDown === 2 && !this.config['border']) {
+		this.shiftX += deltaX;
+		this.shiftY += deltaY;
+		this.director.draw();
 	} else {
 		this.btnMgr.mouseMove(mx, my);
 	}
 };
 Visualizer.prototype.mousePressed = function() {
-	this.mouseDown = true;
 	if (this.loc.graph.contains(this.mouseX, this.mouseY)) {
-		var mx = (this.mouseX - this.loc.graph.x) / (this.loc.graph.w - 1);
-		mx = Math.round(mx * (this.replay.turns.length - 1));
-		this.director.gotoTick(mx);
+		this.mouseDown = 1;
+	} else if (this.loc.vis.contains(this.mouseX, this.mouseY) && !this.config['border']) {
+		this.mouseDown = 2;
 	} else {
 		this.btnMgr.mouseDown();
+		return;
 	}
+	this.mouseMoved(this.mouseX, this.mouseY);
 };
 Visualizer.prototype.mouseReleased = function() {
-	this.mouseDown = false;
+	this.mouseDown = 0;
 	this.btnMgr.mouseUp();
 };
 Visualizer.prototype.mouseExited = function() {
 	this.btnMgr.mouseMove(-1, -1);
 };
 Visualizer.prototype.mouseEntered = function(mx, my, down) {
-	this.mouseDown = down;
 	if (!down) this.btnMgr.mouseUp();
 	this.btnMgr.mouseMove(mx, my);
 };

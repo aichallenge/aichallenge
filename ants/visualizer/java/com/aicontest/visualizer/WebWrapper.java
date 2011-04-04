@@ -18,6 +18,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.DelayQueue;
+import java.util.concurrent.locks.ReentrantLock;
 
 import org.mozilla.javascript.CompilerEnvirons;
 import org.mozilla.javascript.Context;
@@ -42,7 +43,7 @@ import com.aicontest.visualizer.js.tasks.IExecutionUnit;
 
 public class WebWrapper {
 	private File baseDir;
-	private final Object lock = new Object();
+	private final ReentrantLock lock = new ReentrantLock();
 	private final DelayQueue<DelayedExecutionUnit> delayedQueue = new DelayQueue<DelayedExecutionUnit>();
 	private Map<String, String> precompiled = new HashMap<String, String>();
 	private Map<String, String> inUse = new HashMap<String, String>();
@@ -225,9 +226,12 @@ public class WebWrapper {
 
 	private void execute(IExecutionUnit task) {
 		// the thread must not be interrupted during execution
-		synchronized (lock) {
+		lock.lock();
+		try {
 			task.execute(cx, global);
 			postExecute();
+		} finally {
+			lock.unlock();
 		}
 	}
 
@@ -237,8 +241,13 @@ public class WebWrapper {
 	public void addTask(IExecutionUnit task) {
 		immediateQueue.add(task);
 		// the lock is only accessible when no JavaScript is executing
-		synchronized (lock) {
-			jsThread.interrupt();
+		boolean locked = lock.tryLock();
+		if (locked) {
+			try {
+				jsThread.interrupt();
+			} finally {
+				lock.unlock();
+			}
 		}
 	}
 

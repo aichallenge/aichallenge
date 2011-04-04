@@ -16,6 +16,7 @@ function Director(vis) {
 	this.frameCounter = undefined;
 	this.frameStart = undefined;
 	this.frameCpu = undefined;
+	this.tickFlag = false;
 }
 /**
  * When the director is in playback mode it has a lastTime. This is just a
@@ -102,7 +103,8 @@ Director.prototype.loop = function(delay) {
 		goOn = false;
 		this.stop();
 	}
-	this.vis.draw(this.position, (oldTurn != (this.position | 0)) ? this.position | 0 : undefined);
+	this.vis.draw(this.position, (this.tickFlag || oldTurn != (this.position | 0)) ? this.position | 0 : undefined);
+	this.tickFlag = false;
 	if (goOn) {
 		var that = this;
 		if (that.vis.options['debug'] && cpuTime !== undefined) {
@@ -142,7 +144,11 @@ Director.prototype.cleanUp = function() {
  * Causes the visualizer to draw the current game state.
  */
 Director.prototype.draw = function() {
-	this.vis.draw(this.position, this.position | 0);
+	if (this.playing()) {
+		this.tickFlag = true;
+	} else {
+		this.vis.draw(this.position, this.position | 0);
+	}
 };
 /**
  * When an applet goes fullscreen it is detached and reinitialized. We need to

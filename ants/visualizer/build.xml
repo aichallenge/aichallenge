@@ -24,6 +24,8 @@
       <include name="**"/>
       <exclude name="org/mozilla/javascript/JavaAdapter.java"/>
     </javac>
+    <copy file="3rdparty/mozilla/js/rhino/src/org/mozilla/javascript/resources/Messages.properties"
+        tofile="${build.java}/org/mozilla/javascript/resources/Messages.properties"/>
   </target>
 
   <target name="compile-visualizer" depends="compile-rhino">

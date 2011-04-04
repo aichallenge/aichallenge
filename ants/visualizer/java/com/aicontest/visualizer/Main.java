@@ -111,8 +111,9 @@ public class Main implements IVisualizerUser, WindowListener {
 			fsWin.setVisible(true);
 			winGfxConf.getDevice().setFullScreenWindow(fsWin);
 		} else if (fsWin != null && !enable) {
+			Thread.interrupted();
+			fsWin.dispose();
 			winGfxConf.getDevice().setFullScreenWindow(null);
-			fsWin.setVisible(false);
 			frame.add(visualizerPanel);
 			frame.setVisible(true);
 		}
