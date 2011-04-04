@@ -155,21 +155,6 @@ function Replay(replayStr, parameters) {
 			throw new Error('replay meta data is no object notation');
 		}
 	}
-	// add missing meta data
-	if (!(this.meta['players'] instanceof Array)) {
-		this.meta['players'] = new Array(this.players);
-	}
-	if (!(this.meta['playercolors'] instanceof Array)) {
-		this.meta['playercolors'] = new Array(this.players);
-	}
-	for (i = 0; i < this.meta['players'].length; i++) {
-		if (!this.meta['players'][i]) {
-			this.meta['players'][i] = 'player ' + (i + 1);
-		}
-		if (!(this.meta['playercolors'][i] instanceof Array)) {
-			this.meta['playercolors'][i] = PLAYER_COLORS[i];
-		}
-	}
 	// start parsing process
 	this.turns = [];
 	var that = this;
@@ -236,6 +221,21 @@ function Replay(replayStr, parameters) {
 		keyEq(replay, 'revision', 2);
 		keyRange(replay, 'players', 1, 26);
 		this.players = replay['players'];
+		// add missing meta data
+		if (!(this.meta['players'] instanceof Array)) {
+			this.meta['players'] = new Array(this.players);
+		}
+		if (!(this.meta['playercolors'] instanceof Array)) {
+			this.meta['playercolors'] = new Array(this.players);
+		}
+		for (i = 0; i < this.meta['players'].length; i++) {
+			if (!this.meta['players'][i]) {
+				this.meta['players'][i] = 'player ' + (i + 1);
+			}
+			if (!(this.meta['playercolors'][i] instanceof Array)) {
+				this.meta['playercolors'][i] = PLAYER_COLORS[i];
+			}
+		}
 		keyOption(replay, 'viewradius2', keyRange, [0, undefined]);
 		// map
 		var map = enterObj(replay, 'map');
@@ -463,6 +463,21 @@ function Replay(replayStr, parameters) {
 			tl.kw('players').as([DataType.POSINT]);
 			tl.expectLE(0, 26);     // player count <= 26
 			this.players = tl.params[0];
+			// add missing meta data
+			if (!(this.meta['players'] instanceof Array)) {
+				this.meta['players'] = new Array(this.players);
+			}
+			if (!(this.meta['playercolors'] instanceof Array)) {
+				this.meta['playercolors'] = new Array(this.players);
+			}
+			for (i = 0; i < this.meta['players'].length; i++) {
+				if (!this.meta['players'][i]) {
+					this.meta['players'][i] = 'player ' + (i + 1);
+				}
+				if (!(this.meta['playercolors'][i] instanceof Array)) {
+					this.meta['playercolors'][i] = PLAYER_COLORS[i];
+				}
+			}
 			// parameters
 			this.parameters = parameters || {};
 			tl = lit.gimmeNext();
