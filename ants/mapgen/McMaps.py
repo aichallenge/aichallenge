@@ -329,6 +329,19 @@ def euclidean_distance(loc1, loc2, size):
     return value
    
 def make_symmetric(points, size, players):
+    # TODO: shearing, like antimatroid
+    #    3, 4 and 7 player can be made fair
+    # TODO: rotational
+    #    2, 4 and 8 can be made fairish
+    points = {point: x for x, point in enumerate points}
+    def copy_vert(points, size):
+        rows, cols = size
+        new_points = []
+        for point in points:
+            new_points.append(point)
+            new_points.append((point[0]+size[0], point[1]))
+        return new_points, (size[0]*2, size[1])
+    
     # pick random grid size
     divs = [i for i in range(1,players+1) if players%i==0]
     row_sym = choice(divs)
@@ -337,7 +350,7 @@ def make_symmetric(points, size, players):
     newsize = (size[0]*row_sym, size[1]*col_sym)
     newpoints = []
     comps = []
-    # todo, copy points symmetrically
+    # TODO: copy points symmetrically
     for row in range(row_sym):
         for col in range(col_sym):
             pass
