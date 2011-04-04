@@ -1,6 +1,6 @@
 import annotation.tailrec
 import io.Source
-import java.io.{BufferedWriter, OutputStreamWriter, OutputStream, InputStream}
+import java.io._
 
 class AntsGame(in: InputStream = System.in, out: OutputStream = System.out) {
 
@@ -12,7 +12,7 @@ class AntsGame(in: InputStream = System.in, out: OutputStream = System.out) {
 
       @tailrec
       def playNextTurn(game: Game): Unit = {
-        val newGameState = Parser.parse(source, game.parameters)
+        val newGameState = Parser.parse(source, game.parameters, game.board.water)
         if (newGameState.gameOver) Unit
         else {
           val orders = bot.ordersFrom(newGameState)

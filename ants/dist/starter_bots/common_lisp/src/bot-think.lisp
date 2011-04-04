@@ -2,7 +2,7 @@
 ;;;;
 ;;;; Starter bot as described in:
 ;;;;
-;;;;     http://github.com/aichallenge/aichallenge/wiki/Ants-Strategy-Guide
+;;;;     http://github.com/aichallenge/aichallenge/wiki/Ants-Starter-Pack-Guide
 
 (in-package :ants-bot)
 

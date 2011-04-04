@@ -1,6 +1,6 @@
 <?php
 
-require 'Ants.php';
+require_once 'Ants.php';
 
 class LeftyBot
 {

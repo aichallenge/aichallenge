@@ -34,11 +34,11 @@
   (assert-equal "abc1de23fG456HI" (mkstr "abc" 1 "de" 23 "f" 'g 456 'hi)))
 
 (define-test par-value
-  (assert-equal 1 (par-value "a 1"))
+  (assert-equal 1   (par-value "a 1"))
   (assert-equal 234 (par-value "bc 234"))
   ;; Ought to be an error but it isn't for now.  Added test so we know when
   ;; the implementation changes.
-  (assert-equal 1 (par-value " 1"))
+  (assert-equal 1   (par-value " 1"))
   (assert-error 'type-error (par-value "")))
 
 #+sbcl (define-test par-value-sbcl
@@ -49,10 +49,10 @@
          (assert-error 'sb-int:simple-parse-error (par-value "a b")))
 
 (define-test split-state-string
-  (assert-equal '("abc") (split-state-string "abc"))
-  (assert-equal '("a" "bc") (split-state-string " a bc"))
+  (assert-equal '("abc")       (split-state-string "abc"))
+  (assert-equal '("a" "bc")    (split-state-string " a bc"))
   (assert-equal '("a" "b" "c") (split-state-string "a b c "))
-  (assert-equal '("a") (split-state-string " a ")))
+  (assert-equal '("a")         (split-state-string " a ")))
 
 (define-test starts-with
   (assert-true (starts-with "abc" "a"))
@@ -69,6 +69,7 @@
 
 ;;; Manipulating *STATE*
 
+;; *STATE* has been created in test-objects.lisp
 (setf (slot-value *state* 'input) (make-string-input-stream turn-0))
 (parse-game-state)
 
@@ -88,20 +89,21 @@
 (setf (slot-value *state* 'input) (make-string-input-stream turn-1))
 (parse-game-state)
 
+;; Only tested with *READ-DEFAULT-FLOAT-FORMAT* set to SINGLE-FLOAT.
 (define-test distance
-  (assert-equal 0.0 (distance 0 0 0 0))
-  (assert-equal 1.0 (distance 0 0 1 0))
-  (assert-equal 1.0 (distance 0 0 0 1))
+  (assert-equal 0.0       (distance 0 0 0 0))
+  (assert-equal 1.0       (distance 0 0 1 0))
+  (assert-equal 1.0       (distance 0 0 0 1))
   (assert-equal 1.4142135 (distance 0 0 1 1))
-  (assert-equal 1.0 (distance 0 0 0 6))
-  (assert-equal 1.0 (distance 0 0 3 0))
+  (assert-equal 1.0       (distance 0 0 0 6))
+  (assert-equal 1.0       (distance 0 0 3 0))
   (assert-equal 1.4142135 (distance 0 0 3 6))
-  (assert-equal 3.0 (distance 0 0 0 3))
-  (assert-equal 3.0 (distance 0 0 0 4))
-  (assert-equal 2.236068 (distance 0 0 1 2))
+  (assert-equal 3.0       (distance 0 0 0 3))
+  (assert-equal 3.0       (distance 0 0 0 4))
+  (assert-equal 2.236068  (distance 0 0 1 2))
   (assert-equal 3.6055512 (distance 0 0 2 3))
   (assert-equal 3.6055512 (distance 0 0 2 4))
-  (assert-equal 2.236068 (distance 0 0 3 5)))
+  (assert-equal 2.236068  (distance 0 0 3 5)))
 
 (define-test game-map-food
   (assert-equal '((1 2) (5 1)) (food *state*))

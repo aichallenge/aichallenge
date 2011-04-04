@@ -5,93 +5,98 @@ import java.awt.image.ImageObserver;
 import org.mozilla.javascript.Function;
 import org.w3c.dom.DOMException;
 
-public class HTMLCanvasElement extends HTMLElement
-{
-  private BufferedImage pixmap;
-  private CanvasRenderingContext2d context2d;
-  private final ImageObserver imageObserver;
-  private Function onmousemove;
-  private Function onmouseout;
-  private Function onmousedown;
-  private Function onmouseup;
+import com.aicontest.visualizer.Visualizer;
+import com.aicontest.visualizer.WebWrapper;
 
-  public HTMLCanvasElement(ImageObserver imageObsever)
-  {
-    imageObserver = imageObsever;
-    pixmap = new BufferedImage(1, 1, 6);
-  }
+public class HTMLCanvasElement extends HTMLElement {
+	private BufferedImage pixmap;
+	private CanvasRenderingContext2d context2d;
+	private final ImageObserver imageObserver;
+	private Function onmousemove;
+	private Function onmouseout;
+	private Function onmousedown;
+	private Function onmouseup;
 
-  public BufferedImage getPixmap() {
-    return pixmap;
-  }
+	public HTMLCanvasElement(ImageObserver imageObsever) {
+		imageObserver = imageObsever;
+		pixmap = new BufferedImage(1, 1, 6);
+	}
 
-  public CanvasRenderingContext2d getContext(String type) {
-    if ("2d".equals(type)) {
-      if (context2d == null) {
-        context2d = new CanvasRenderingContext2d(this, pixmap);
-      }
-      return context2d;
-    }
-    throw new DOMException(DOMException.NOT_SUPPORTED_ERR, type);
-  }
+	public BufferedImage getPixmap() {
+		return pixmap;
+	}
 
-  ImageObserver getImageObserver() {
-    return imageObserver;
-  }
+	public CanvasRenderingContext2d getContext(String type) {
+		if ("2d".equals(type)) {
+			if (context2d == null) {
+				context2d = new CanvasRenderingContext2d(this, pixmap);
+			}
+			return context2d;
+		}
+		throw new DOMException(DOMException.NOT_SUPPORTED_ERR, type);
+	}
 
-  public void setWidth(int width) {
-    if (width != pixmap.getWidth()) {
-      pixmap = new BufferedImage(width, pixmap.getHeight(), pixmap.getType());
+	ImageObserver getImageObserver() {
+		return imageObserver;
+	}
 
-      context2d.updatePixmap(pixmap);
-    }
-  }
+	public void setWidth(int width) {
+		if (width != pixmap.getWidth()) {
+			pixmap = new BufferedImage(width, pixmap.getHeight(),
+					pixmap.getType());
+			context2d.updatePixmap(pixmap);
+			Visualizer visualizer = (Visualizer) WebWrapper.getInstance();
+			visualizer.canvasResized();
+		}
+	}
 
-  public int getWidth() {
-    return pixmap.getWidth();
-  }
+	public int getWidth() {
+		return pixmap.getWidth();
+	}
 
-  public void setHeight(int height) {
-    if (height != pixmap.getHeight()) {
-      pixmap = new BufferedImage(pixmap.getWidth(), height, pixmap.getType());
+	public void setHeight(int height) {
+		if (height != pixmap.getHeight()) {
+			pixmap = new BufferedImage(pixmap.getWidth(), height,
+					pixmap.getType());
+			context2d.updatePixmap(pixmap);
+			Visualizer visualizer = (Visualizer) WebWrapper.getInstance();
+			visualizer.canvasResized();
+		}
+	}
 
-      context2d.updatePixmap(pixmap);
-    }
-  }
+	public int getHeight() {
+		return pixmap.getHeight();
+	}
 
-  public int getHeight() {
-    return pixmap.getHeight();
-  }
+	public void setOnmousemove(Function onmousemove) {
+		this.onmousemove = onmousemove;
+	}
 
-  public void setOnmousemove(Function onmousemove) {
-    this.onmousemove = onmousemove;
-  }
+	public Function getOnmousemove() {
+		return onmousemove;
+	}
 
-  public Function getOnmousemove() {
-    return onmousemove;
-  }
+	public Function getOnmouseout() {
+		return onmouseout;
+	}
 
-  public Function getOnmouseout() {
-    return onmouseout;
-  }
+	public void setOnmouseout(Function onmouseout) {
+		this.onmouseout = onmouseout;
+	}
 
-  public void setOnmouseout(Function onmouseout) {
-    this.onmouseout = onmouseout;
-  }
+	public Function getOnmousedown() {
+		return onmousedown;
+	}
 
-  public Function getOnmousedown() {
-    return onmousedown;
-  }
+	public void setOnmousedown(Function onmousedown) {
+		this.onmousedown = onmousedown;
+	}
 
-  public void setOnmousedown(Function onmousedown) {
-    this.onmousedown = onmousedown;
-  }
+	public Function getOnmouseup() {
+		return onmouseup;
+	}
 
-  public Function getOnmouseup() {
-    return onmouseup;
-  }
-
-  public void setOnmouseup(Function onmouseup) {
-    this.onmouseup = onmouseup;
-  }
+	public void setOnmouseup(Function onmouseup) {
+		this.onmouseup = onmouseup;
+	}
 }

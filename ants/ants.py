@@ -931,7 +931,18 @@ class Ants(Game):
 
     def finish_game(self):
         """ Called by engine at the end of the game """
-        pass
+        players = [p for p in range(self.num_players) if self.is_alive(p)]
+
+        # if there is exactly one player remaining they get food bonus
+        if len(players) == 1:
+            player = players[0]
+            # currently 1 food is spawned per turn per player
+            food_bonus = (self.turns - self.turn)*self.num_players
+            self.score[player] += food_bonus
+
+        # ammend the score history instead of extending it
+        for i, s in enumerate(self.score):
+            self.score_history[i][-1] = s
 
     def start_turn(self):
         """ Called by engine at the start of the turn """

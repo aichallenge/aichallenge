@@ -9,7 +9,7 @@ import java.net.URLConnection;
 
 import org.w3c.dom.DOMException;
 
-import com.aicontest.visualizer.js.WebWrapper;
+import com.aicontest.visualizer.WebWrapper;
 import com.aicontest.visualizer.js.tasks.EventExecutionUnit;
 
 public class XMLHttpRequest {
