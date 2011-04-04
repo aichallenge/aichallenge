@@ -4,18 +4,16 @@
  */
 
 /*
- * @todo scroll map
+ * @todo add letters over ants for the visually impaired
  * @todo zoom in to 20x20 squares with animated ants
  * @todo menu items: clear, show attack, show birth,
  *     zoom, toggle graph/score bars, cpu use
- * @todo duplicate sprites that wrap around the map edge
- * @todo keep a minimum size to allow the controls to render
  * @todo setting for cpu usage
+ * @todo keep a minimum size to allow the controls to render
  * @todo show when a bot crashed
  * @todo switch to console.log for debug and load messages
  * @todo fix duplicate 'parsing replay...' messages
  * @todo load replays incrementally
- * @todo add letters over ants for the visually impaired
  */
 
 LoadingState = {
@@ -1103,10 +1101,8 @@ Visualizer.prototype.mouseReleased = function() {
 };
 Visualizer.prototype.mouseExited = function() {
 	this.btnMgr.mouseMove(-1, -1);
-};
-Visualizer.prototype.mouseEntered = function(mx, my, down) {
-	if (!down) this.btnMgr.mouseUp();
-	this.btnMgr.mouseMove(mx, my);
+	this.btnMgr.mouseUp();
+	this.mouseDown = 0;
 };
 Visualizer.prototype.keyPressed = function(key) {
 	var d = this.director;
