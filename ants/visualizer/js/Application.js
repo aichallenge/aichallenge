@@ -15,6 +15,7 @@
  * @todo switch to console.log for debug and load messages
  * @todo fix duplicate 'parsing replay...' messages
  * @todo load replays incrementally
+ * @todo add letters over ants for the visually impaired
  */
 
 LoadingState = {
@@ -422,9 +423,10 @@ Visualizer.prototype.completedImages = function(error) {
  * replay. If all components are loaded it starts playback.
  */
 Visualizer.prototype.tryStart = function() {
+	if (this.replay === undefined) return;
 	// we need to parse the replay, unless it has been parsed by the
 	// XmlHttpRequest callback
-	if (this.replay && this.replay instanceof Replay) {
+	if (this.replay instanceof Replay) {
 		if (this.main.ctx && !this.imgMgr.error && !this.imgMgr.pending) {
 			var vis = this;
 			// add static buttons
@@ -557,7 +559,7 @@ Visualizer.prototype.tryStart = function() {
 			this.log.style.display = 'none';
 			this.loading = LoadingState.IDLE;
 		}
-	} else if (this.replay && !(this.replay instanceof XMLHttpRequest)) {
+	} else if (!(this.replay instanceof XMLHttpRequest)) {
 		this.loadParseReplay();
 	}
 };
@@ -572,8 +574,11 @@ Visualizer.prototype.calculateCanvasSize = function() {
 		result.width = document.documentElement.clientWidth;
 		result.height = document.documentElement.clientHeight;
 	}
-	result.width = (this.w && !this.config['fullscreen']) ? this.w : result.width;
-	result.height = (this.h && !this.config['fullscreen']) ? this.h : result.height;
+	var embed = (window.isFullscreenSupported 
+			&& !window.isFullscreenSupported()) 
+			|| !this.config['fullscreen'];
+	result.width = (this.w && embed) ? this.w : result.width;
+	result.height = (this.h && embed) ? this.h : result.height;
 	return result;
 };
 Visualizer.prototype.createCanvas = function(obj) {
@@ -585,23 +590,25 @@ Visualizer.prototype.createCanvas = function(obj) {
 	}
 };
 Visualizer.prototype.setFullscreen = function(enable) {
-	if (window.setFullscreen) {
-		this.config['fullscreen'] = window.setFullscreen(enable);
-	} else {
-		this.config['fullscreen'] = enable;
-		if (enable || this.savedBody) {
-			var html = document.getElementsByTagName("html")[0];
-			if (enable) {
-				this.container.removeChild(this.main.element);
-				var tempBody = document.createElement("body");
-				tempBody.style.overflow = 'hidden';
-				tempBody.appendChild(this.main.element);
-				this.savedBody = html.replaceChild(tempBody, document.body);
-			} else if (this.savedBody) {
-				document.body.removeChild(this.main.element);
-				this.container.appendChild(this.main.element);
-				html.replaceChild(this.savedBody, document.body);
-				delete this.savedBody;
+	if (!window.isFullscreenSupported || window.isFullscreenSupported()) {
+		if (window.setFullscreen) {
+			this.config['fullscreen'] = window.setFullscreen(enable);
+		} else {
+			this.config['fullscreen'] = enable;
+			if (enable || this.savedBody) {
+				var html = document.getElementsByTagName("html")[0];
+				if (enable) {
+					this.container.removeChild(this.main.element);
+					var tempBody = document.createElement("body");
+					tempBody.style.overflow = 'hidden';
+					tempBody.appendChild(this.main.element);
+					this.savedBody = html.replaceChild(tempBody, document.body);
+				} else if (this.savedBody) {
+					document.body.removeChild(this.main.element);
+					this.container.appendChild(this.main.element);
+					html.replaceChild(this.savedBody, document.body);
+					delete this.savedBody;
+				}
 			}
 		}
 	}

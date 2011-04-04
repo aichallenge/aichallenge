@@ -83,6 +83,14 @@
     <move file="${build.deploy}/min.jar" tofile="${jar.file}"/>
   </target>
   
+  <!-- HTML visualizer -->
+  
+  <target name="html-visualizer" depends="load-properties" description="create a zip archive of the offline html visualizer files">
+    <zip destfile="${html.zip}">
+      <fileset dir="." includes="copy_paste.html,replay.html.template,visualize_locally.py,${src.js}/**,${src.data}/**"/>
+    </zip>
+  </target>
+  
   <!-- JavaScript transormation -->
 
   <target name="check-closurecompiler">
@@ -148,7 +156,7 @@
     <fail message="Please define 'deploy.path' in local.build as the web root." />
   </target>
   
-  <target name="deploy" depends="check-deploy,jar,minify-or-copy-js" description="compile and deploy to the path that is set in 'deploy.path'">
+  <target name="deploy" depends="check-deploy,jar,minify-or-copy-js,html-visualizer" description="compile and deploy to the path that is set in 'deploy.path'">
     <sync todir="${build.deploy}/img">
       <fileset dir="${src.data}/img" />
     </sync>

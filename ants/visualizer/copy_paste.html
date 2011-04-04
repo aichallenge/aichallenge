@@ -8,9 +8,11 @@
 			return false;
 		};
 
-		function init() {
+		function visualizePasted() {
+			document.getElementById('gui').style.display = 'none';
+			var replay = document.getElementById('txtReplay').value;
 			var visualizer = new Visualizer(document.body, 'data/');
-			visualizer.loadReplayData('## REPLAY PLACEHOLDER ##');
+			visualizer.loadReplayData(replay);
 		}
 	</script>
 	<style type="text/css">
@@ -18,5 +20,10 @@
 		body { margin:0; padding:0; overflow:hidden; }
 	</style>
 </head>
-<body onload="init()" />
+<body>
+	<div id="gui">
+		Game replay copy &amp; paste: <input type="button" value="Load text below" onClick="visualizePasted()"/><br/>
+		<textarea id="txtReplay" rows="27" cols="41"></textarea>
+	</div>
+</body>
 </html>

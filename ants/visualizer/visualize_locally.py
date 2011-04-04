@@ -13,7 +13,11 @@ def generate(data, generated_path):
     content = template.read()
     template.close()
 
+    quote_re = re.compile("'")
+    newline_re = re.compile("\s", re.MULTILINE)
     insert_re = re.compile(r"## REPLAY PLACEHOLDER ##")
+    data = quote_re.sub(r"\\\\'", data)
+    data = newline_re.sub("", data)
     content = insert_re.sub(data, content)
 
     output = open(generated_path, 'w')
