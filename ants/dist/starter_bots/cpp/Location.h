@@ -1,6 +1,9 @@
 #ifndef LOCATION_H_
 #define LOCATION_H_
 
+/*
+    struct for representing locations in the grid.
+*/
 struct Location
 {
     int row, col;
