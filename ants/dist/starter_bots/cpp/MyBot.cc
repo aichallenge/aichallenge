@@ -12,10 +12,6 @@ using namespace std;
     own, provided you continue conforming to the input and output format
     outlined on the specifications page at:
         http://www.ai-contest.com
-
-    There is also a tutorial (tutorial.txt) included in the folder with
-    this file outlining some basic changes you could make that will improve
-    the bot.
 */
 int main(int argc, char *argv[])
 {
