@@ -593,15 +593,15 @@ Replay.prototype.getFog = function(player, turn) {
 		aniAnts = this.getTurn(turn);
 		for (i = 0; i < aniAnts.length; i++) {
 			aniAnt = aniAnts[i].interpolate(turn, Quality.LOW);
-			if (aniAnt && aniAnt.owner === player) {
+			if (aniAnt && aniAnt['owner'] === player) {
 				row_wrap = new Array(2 * radius + 1);
 				for (row = 2 * radius; row >= 0; row--) {
-					row_wrap[row] = aniAnt.y - radius + row;
+					row_wrap[row] = aniAnt['y'] - radius + row;
 					row_wrap[row] -= Math.floor(row_wrap[row] / this.rows) * this.rows;
 				}
 				col_wrap = new Array(2 * radius + 1);
 				for (col = 2 * radius; col >= 0; col--) {
-					col_wrap[col] = aniAnt.x - radius + col;
+					col_wrap[col] = aniAnt['x'] - radius + col;
 					col_wrap[col] -= Math.floor(col_wrap[col] / this.cols) * this.cols;
 				}
 				col = col_wrap[radius];
