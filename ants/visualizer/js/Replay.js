@@ -126,37 +126,42 @@ DataType = {
 /**
  * @constructor
  */
-function Replay(replayStr, parameters) {
-	// check for meta data
-	this.meta = {};
-	if (replayStr.search(/^\s*{/) === 0) {
-		this.meta = JSON.parse(replayStr);
-		if (this.meta && (this.meta instanceof Object)) {
-			var format = this.meta['replayformat'];
-			if (this.meta['challenge'] !== 'ants') {
-				throw new Error('This visualizer is for the ants challenge,'
-						+ ' but a "' + this.meta['challenge']
-						+ '" replay was loaded.');
-			} else if (format !== 'storage') {
-				throw new Error('Replays in the format "'
-						+ this.meta['replayformat']
-						+ '" are not supported.');
-			}
-			if (typeof this.meta['replaydata'] == 'object') {
-				var replay = this.meta['replaydata'];
-			} else {
-				replayStr = this.meta['replaydata'];
-				delete this.meta['replaydata'];
-				if (!replayStr) {
-					throw new Error('no data');
-				}
-			}
-		} else {
-			throw new Error('replay meta data is no object notation');
+function Replay(replay) {
+	var i, k, scores;
+	// check for a replay from the pre-json era and convert it.
+	if (replay.search(/^\s*{/) === -1) {
+		replay = this.txtToJson(replay);
+	} else {
+		replay = JSON.parse(replay);
+	}
+	// check if we have meta data or just replay data
+	if (replay['challenge'] === undefined) {
+		this.meta = {
+			'challenge': 'ants',
+			'replayformat': 'storage',
+			'replaydata': replay
+		};
+	} else {
+		this.meta = replay;
+		if (typeof this.meta['replaydata'] == 'string') {
+			this.meta['replaydata'] = this.txtToJson(this.meta['replaydata']);
 		}
+		replay = this.meta['replaydata'];
+	}
+	// validate metadata
+	if (this.meta['challenge'] !== 'ants') {
+		throw new Error('This visualizer is for the ants challenge,'
+				+ ' but a "' + this.meta['challenge']
+				+ '" replay was loaded.');
+	} else if (this.meta['replayformat'] !== 'storage') {
+		throw new Error('Replays in the format "' + this.meta['replayformat']
+				+ '" are not supported.');
+	}
+	if (!replay) {
+		throw new Error('replay meta data is no object notation');
 	}
 	// start parsing process
-	this.turns = [];
+	this.duration = 0;
 	var that = this;
 	if (replay) {
 		var stack = [];
@@ -207,13 +212,11 @@ function Replay(replayStr, parameters) {
 		var durationSetter = null;
 		var setReplayDuration = function(duration, fixed) {
 			if (durationSetter) {
-				if (!fixed && that.turns.length < duration + 1 || fixed && that.turns.length !== duration + 1) {
-					throw new Error('Replay duration was previously set to ' + (that.turns.length - 1) + ' by "' + durationSetter + '" and is now redefined to be ' + duration);
+				if (!fixed && that.duration < duration || fixed && that.duration !== duration) {
+					throw new Error('Replay duration was previously set to ' + that.duration + ' by "' + durationSetter + '" and is now redefined to be ' + duration);
 				}
 			} else {
-				while (that.turns.length < duration + 1) {
-					that.turns.push(new Turn(that.players, that.rows, that.cols));
-				}
+				that.duration = duration;
 				if (fixed) durationSetter = obj;
 			}
 		};
@@ -221,21 +224,6 @@ function Replay(replayStr, parameters) {
 		keyEq(replay, 'revision', 2);
 		keyRange(replay, 'players', 1, 26);
 		this.players = replay['players'];
-		// add missing meta data
-		if (!(this.meta['players'] instanceof Array)) {
-			this.meta['players'] = new Array(this.players);
-		}
-		if (!(this.meta['playercolors'] instanceof Array)) {
-			this.meta['playercolors'] = new Array(this.players);
-		}
-		for (i = 0; i < this.meta['players'].length; i++) {
-			if (!this.meta['players'][i]) {
-				this.meta['players'][i] = 'player ' + (i + 1);
-			}
-			if (!(this.meta['playercolors'][i] instanceof Array)) {
-				this.meta['playercolors'][i] = PLAYER_COLORS[i];
-			}
-		}
 		keyOption(replay, 'viewradius2', keyRange, [0, undefined]);
 		// map
 		var map = enterObj(replay, 'map');
@@ -307,363 +295,52 @@ function Replay(replayStr, parameters) {
 		stack.push('scores');
 		var scoreslist = replay['scores'];
 		for (i = 0; i < this.players; i++) {
-			obj = scoreslist[i];
-			setReplayDuration(obj.length - 1, false);
-			for (var k = 0; k < obj.length; k++) {
-				this.turns[k].scores[i] = obj[k];
-			}
+			setReplayDuration(scoreslist[i].length - 1, false);
+		}
+		// prepare score and count lists
+		this.turns = new Array(this.duration + 1);
+		this.scores = new Array(this.duration + 1);
+		this.counts = new Array(this.duration + 1);
+		this.fogs = new Array(this.players);
+		for (n = 0; n <= this.duration; n++) {
+			this.scores[n] = new Array(this.players);
+			this.counts[n] = new Array(this.players);
+			for (i = 0; i < this.players; i++) this.counts[n][i] = 0;
 		}
 		for (i = 0; i < this.players; i++) {
-			obj = scoreslist[i];
-			for (k = obj.length; k < this.turns.length; k++) {
-				this.turns[k].scores[i] = obj[obj.length - 1];
+			scores = scoreslist[i];
+			for (k = 0; k < scores.length; k++) {
+				this.scores[k][i] = scores[k];
 			}
+			for (; k <= this.duration; k++) {
+				this.scores[k][i] = scores[scores.length - 1];
+			}
+			this.fogs[i] = new Array(this.duration + 1);
 		}
-		// generate keyframes
-		for (n = 0; n < ants.length; n++) {
-			obj = ants[n];
-			var ant = new Ant(autoinc++, obj[2] - 0.25);
-			ant.owner = obj[5];
-			var f = ant.frameAt(obj[2] - 0.25, Quality.LOW, false);
-			f['x'] = obj[1];
-			f['y'] = obj[0];
-			f['r'] = FOOD_COLOR[0];
-			f['g'] = FOOD_COLOR[1];
-			f['b'] = FOOD_COLOR[2];
-			if (obj[2] !== 0) {
-				f = ant.frameAt(obj[2], Quality.LOW, true);
-				f['size'] = 1.0;
-				f = ant.frameAt(obj[2] + 0.125, Quality.LOW, true);
-				f['size'] = 1.5;
-				f = ant.frameAt(obj[2] + 0.25, Quality.LOW, true);
-				f['size'] = 0.7;
-				f = ant.frameAt(obj[2] + 0.5, Quality.LOW, true);
-			}
-			f['size'] = 1;
-			// fade to player color
-			if (obj[5] !== undefined) {
-				var color = this.meta['playercolors'][obj[5]];
-				if (obj[3] > obj[2]) {
-					ant.fade(Quality.LOW, 'r', 255, obj[3] - 0.5, obj[3] - 0.25);
-					ant.fade(Quality.LOW, 'g', 255, obj[3] - 0.5, obj[3] - 0.25);
-					ant.fade(Quality.LOW, 'b', 255, obj[3] - 0.5, obj[3] - 0.25);
-				}
-				ant.fade(Quality.LOW, 'r', color[0], obj[3] - 0.25, obj[3]);
-				ant.fade(Quality.LOW, 'g', color[1], obj[3] - 0.25, obj[3]);
-				ant.fade(Quality.LOW, 'b', color[2], obj[3] - 0.25, obj[3]);
-			}
-			// do moves
-			var x = obj[1];
-			var y = obj[0];
-			if (obj[6] !== undefined) {
-				for (var i = 0; i < obj[6].length; i++) {
-					this.turns[obj[3] + i].clearFog(obj[5], y, x, this.rows,
-							this.cols, replay['viewradius2']);
-					var dir = undefined;
-					switch (obj[6].charAt(i)) {
-						case 'n':
-						case 'N':
-							dir = Directions.N;
-							break;
-						case 'e':
-						case 'E':
-							dir = Directions.E;
-							break;
-						case 's':
-						case 'S':
-							dir = Directions.S;
-							break;
-						case 'w':
-						case 'W':
-							dir = Directions.W;
-					}
-					if (dir) {
-						x += dir.x;
-						y += dir.y;
-						ant.fade(Quality.LOW, 'x', x, obj[3] + i, obj[3] + i + 0.5);
-						ant.fade(Quality.LOW, 'y', y, obj[3] + i, obj[3] + i + 0.5);
-						/*antObj.keyFrames[1].angle = offset.angle;
-						antObj.animate([{
-							time: 0.5,
-							absolute: {
-								x: antObj.keyFrames[1].x,
-								y: antObj.keyFrames[1].y//,
-								//angle: offset.angle
-							},
-							relative: {}
-						}]);
-						// only in zoom mode: < movement time reduced to 0.5, pay attention when uncommenting >
-						/*
-						nextDir = nextAntDirection(antObj.id, t);
-						if (nextDir) {
-							var angle = nextDir.angle - offset.angle;
-							if (angle < -Math.PI) {
-								angle += 2 * Math.PI;
-							} else if (angle > +Math.PI) {
-								angle -= 2 * Math.PI;
-							}
-							if (angle != 0) {
-								antObj.keyFrames[1].jitter = 0;
-								antObj.keyFrames[2].jitter = 0;
-								if (Math.abs(angle) < 0.9 * Math.PI) {
-									var sq = 1 / Math.sqrt(2);
-									antObj.keyFrames[2]['x'] = antObj.keyFrames[1]['x'] + 0.5 * (offset['x'] * sq + (1 - sq) * nextDir.x);
-									antObj.keyFrames[2]['y'] = antObj.keyFrames[1]['y'] + 0.5 * (offset['y'] * sq + (1 - sq) * nextDir.y);
-									antObj.keyFrames[2].angle += 0.5 * angle;
-								}
-							}
-						}*/
-					}
-				}
-				if (obj[4] !== obj[3] + obj[6].length) {
-					// account for survivors
-					this.turns[obj[4] - 1].clearFog(obj[5], y, x, this.rows,
-							this.cols, replay['viewradius2']);
-				}
-			}
-			// end of life
-			dir = (obj[4] || obj[3]) - 0.25;
-			ant.fade(Quality.LOW, 'size', 0.0, dir, dir + 0.25);
-			ant.fade(Quality.LOW, 'r', 0.0, dir, dir + 0.25);
-			ant.fade(Quality.LOW, 'g', 0.0, dir, dir + 0.25);
-			ant.fade(Quality.LOW, 'b', 0.0, dir, dir + 0.25);
-			// account ant to the owner
-			for (i = obj[3]; i < obj[4]; i++) {
-				this.turns[i].counts[obj[5]]++;
-			}
-			for (i = Math.max(0, obj[2]); i < obj[4]; i++) {
-				this.turns[i].ants.push(ant);
-			}
-		}
-	} else {
-		var tl, owner;
-		var lit = new LineIterator(replayStr);
-		var autoinc = 0;
-		durationSetter = null;
-		setReplayDuration = function(duration, fixed) {
-			if (durationSetter) {
-				if (!fixed && that.turns.length < duration + 1 || fixed && that.turns.length !== duration + 1) {
-					throw new Error('Replay duration was previously set to ' + (that.turns.length - 1) + ' by the line "' + durationSetter.line + '" and is now redefined to be ' + duration);
-				}
-			} else {
-				while (that.turns.length < duration + 1) {
-					that.turns.push(new Turn(that.players, that.rows, that.cols));
-				}
-				if (fixed) durationSetter = tl;
-			}
-		};
-		try {
-			// version check
-			tl = lit.gimmeNext();
-			tl.kw('v').as([DataType.IDENT, DataType.POSINT]);
-			tl.expectEq(0, 'ants'); // game name
-			tl.expectEq(1, 1);      // file version
-			// players
-			tl = lit.gimmeNext();
-			tl.kw('players').as([DataType.POSINT]);
-			tl.expectLE(0, 26);     // player count <= 26
-			this.players = tl.params[0];
-			// add missing meta data
-			if (!(this.meta['players'] instanceof Array)) {
-				this.meta['players'] = new Array(this.players);
-			}
-			if (!(this.meta['playercolors'] instanceof Array)) {
-				this.meta['playercolors'] = new Array(this.players);
-			}
-			for (i = 0; i < this.meta['players'].length; i++) {
-				if (!this.meta['players'][i]) {
-					this.meta['players'][i] = 'player ' + (i + 1);
-				}
-				if (!(this.meta['playercolors'][i] instanceof Array)) {
-					this.meta['playercolors'][i] = PLAYER_COLORS[i];
-				}
-			}
-			// parameters
-			this.parameters = parameters || {};
-			tl = lit.gimmeNext();
-			while (tl.keyword !== 'm') {
-				var args = [DataType.STRING];
-				if (tl.keyword === 'viewradius2') {
-					args[0] = DataType.UINT;
-				}
-				tl.as(args);
-				this.parameters[tl.keyword] = tl.params[0];
-				tl = lit.gimmeNext();
-			}
-			// map
-			this.walls = [];
-			var cols = undefined;
-			var rows = 0;
-			do {
-				tl.as([DataType.MAP]);
-				if (cols === undefined) {
-					cols = tl.params[0].length;
-				} else if (tl.params[0].length !== cols) {
-					throw new Error('Map lines have different lenghts');
-				}
-				this.walls.push(tl.params[0]);
-				rows++;
-				tl = lit.gimmeNext();
-			} while (tl.keyword === 'm');
-			this.rows = this.walls.length;
-			this.cols = this.walls[0].length;
-			// food / ant
-			while (tl.keyword === 'a') {
-				//     row            col            start          conversion
-				tl.as([DataType.UINT, DataType.UINT, DataType.UINT, DataType.UINT,
-					DataType.UINT, DataType.UINT, DataType.ORDERS], 3);
-				//  end            owner          orders            # optional
-				var row = tl.params[0];
-				if (row >= this.rows) throw new Error('Row exceeds map width.');
-				var col = tl.params[1];
-				if (col >= this.cols) throw new Error('Col exceeds map height.');
-				var start = tl.params[2];
-				var conv = tl.params[3];
-				var end = tl.params[4];
-				if (end === undefined) end = conv;
-				owner = tl.params[5];
-				var isAnt = owner !== undefined;
-				if (isAnt && owner >= this.players) {
-					throw new Error('Player index out of range.');
-				}
-				var orders = tl.params[6] || '';
-				if (isAnt) {
-					var fixed = orders.length !== end - conv;
-					if (fixed && orders.length + 1 !== end - conv) {
-						throw new Error('Number of orders does not match life span.');
-					}
-					setReplayDuration(end - 1, fixed);
-				} else {
-					setReplayDuration(conv - 1, false);
-				}
-				// create ant
-				var ant = new Ant(autoinc++, start - 0.25);
-				ant.owner = owner;
-				var f = ant.frameAt(start - 0.25, Quality.LOW, false);
-				f['x'] = col;
-				f['y'] = row;
-				f['r'] = FOOD_COLOR[0];
-				f['g'] = FOOD_COLOR[1];
-				f['b'] = FOOD_COLOR[2];
-				if (start !== 0) {
-					f = ant.frameAt(start, Quality.LOW, true);
-					f['size'] = 1.0;
-					f = ant.frameAt(start + 0.125, Quality.LOW, true);
-					f['size'] = 1.5;
-					f = ant.frameAt(start + 0.25, Quality.LOW, true);
-					f['size'] = 0.7;
-					f = ant.frameAt(start + 0.5, Quality.LOW, true);
-				}
-				f['size'] = 1;
-				// fade to player color
-				if (isAnt) {
-					var color = this.meta['playercolors'][owner];
-					if (conv > start) {
-						ant.fade(Quality.LOW, 'r', 255, conv - 0.5, conv - 0.25);
-						ant.fade(Quality.LOW, 'g', 255, conv - 0.5, conv - 0.25);
-						ant.fade(Quality.LOW, 'b', 255, conv - 0.5, conv - 0.25);
-					}
-					ant.fade(Quality.LOW, 'r', color[0], conv - 0.25, conv);
-					ant.fade(Quality.LOW, 'g', color[1], conv - 0.25, conv);
-					ant.fade(Quality.LOW, 'b', color[2], conv - 0.25, conv);
-				}
-				// do moves
-				var x = col;
-				var y = row;
-				if (isAnt) {
-					for (var i = 0; i < orders.length; i++) {
-						var dir = orders[i];
-						this.turns[conv + i].clearFog(owner, y, x, this.rows,
-								this.cols, this.parameters['viewradius2']);
-						if (dir) {
-							x += dir.x;
-							y += dir.y;
-							ant.fade(Quality.LOW, 'x', x, conv + i, conv + i + 0.5);
-							ant.fade(Quality.LOW, 'y', y, conv + i, conv + i + 0.5);
-							/*antObj.keyFrames[1].angle = offset.angle;
-							antObj.animate([{
-								time: 0.5,
-								absolute: {
-									x: antObj.keyFrames[1].x,
-									y: antObj.keyFrames[1].y//,
-									//angle: offset.angle
-								},
-								relative: {}
-							}]);
-							// only in zoom mode: < movement time reduced to 0.5, pay attention when uncommenting >
-							/*
-							nextDir = nextAntDirection(antObj.id, t);
-							if (nextDir) {
-								var angle = nextDir.angle - offset.angle;
-								if (angle < -Math.PI) {
-									angle += 2 * Math.PI;
-								} else if (angle > +Math.PI) {
-									angle -= 2 * Math.PI;
-								}
-								if (angle != 0) {
-									antObj.keyFrames[1].jitter = 0;
-									antObj.keyFrames[2].jitter = 0;
-									if (Math.abs(angle) < 0.9 * Math.PI) {
-										var sq = 1 / Math.sqrt(2);
-										antObj.keyFrames[2]['x'] = antObj.keyFrames[1]['x'] + 0.5 * (offset['x'] * sq + (1 - sq) * nextDir.x);
-										antObj.keyFrames[2]['y'] = antObj.keyFrames[1]['y'] + 0.5 * (offset['y'] * sq + (1 - sq) * nextDir.y);
-										antObj.keyFrames[2].angle += 0.5 * angle;
-									}
-								}
-							}*/
-						}
-					}
-					if (end !== conv + orders.length) {
-						// account for survivors
-						this.turns[end - 1].clearFog(owner, y, x, this.rows,
-								this.cols, this.parameters['viewradius2']);
-					}
-				}
-				// end of life
-				var collision = false;
-				dir = collision ? end - 0.75 : end - 0.25;
-				ant.fade(Quality.LOW, 'size', 0.0, dir, dir + 0.25);
-				ant.fade(Quality.LOW, 'r', 0.0, dir, dir + 0.25);
-				ant.fade(Quality.LOW, 'g', 0.0, dir, dir + 0.25);
-				ant.fade(Quality.LOW, 'b', 0.0, dir, dir + 0.25);
+		for (i = 0; i < ants.length; i++) {
+			if (ants[i][5] !== undefined) {
 				// account ant to the owner
-				for (i = conv; i < end; i++) {
-					this.turns[i].counts[owner]++;
+				for (n = ants[i][3]; n < ants[i][4]; n++) {
+					this.counts[n][ants[i][5]]++;
 				}
-				for (i = Math.max(0, start); i < end; i++) {
-					this.turns[i].ants.push(ant);
-				}
-				tl = lit.gimmeNext();
 			}
-			// score
-			for (i = 0; i < this.players; i++) {
-				scores = tl.kw('s').as([DataType.SCORES]).params[0];
-				setReplayDuration(scores.length - 1, false);
-				for (var k = 0; k < scores.length; k++) {
-					this.turns[k].scores[i] = scores[k];
-				}
-				for (; k < this.turns.length; k++) {
-					this.turns[k].scores[i] = scores[scores.length - 1];
-				}
-				if (i != this.players - 1) tl = lit.gimmeNext();
-			}
-			if (lit.moar()) {
-				tl = lit.gimme();
-				throw new Error('Extra data at end of file.');
-			}
-		} catch (error) {
-			error.message = tl.line + '\n' + error.message;
-			throw error;
 		}
-	//	var nextAntDirection = function(id, turn) {
-	//		for (var nadk = 0; nadk < tturns[turn + 1].orders.length; nadk++) {
-	//			var nadAction = tturns[turn + 1].orders[nadk];
-	//			if (nadAction.id == id) {
-	//				return nadAction.direction;
-	//			}
-	//		}
-	//		return null;
-	//	}
+		this.aniAnts = new Array(ants.length);
+	}
+	// add missing meta data
+	if (!(this.meta['players'] instanceof Array)) {
+		this.meta['players'] = new Array(this.players);
+	}
+	if (!(this.meta['playercolors'] instanceof Array)) {
+		this.meta['playercolors'] = new Array(this.players);
+	}
+	for (i = 0; i < this.meta['players'].length; i++) {
+		if (!this.meta['players'][i]) {
+			this.meta['players'][i] = 'player ' + (i + 1);
+		}
+		if (!(this.meta['playercolors'][i] instanceof Array)) {
+			this.meta['playercolors'][i] = PLAYER_COLORS[i];
+		}
 	}
 	this.htmlPlayerColors = new Array(this.players);
 	for (i = 0; i < this.players; i++) {
@@ -673,11 +350,284 @@ function Replay(replayStr, parameters) {
 		this.htmlPlayerColors[i] += INT_TO_HEX[this.meta['playercolors'][i][2]];
 	}
 }
-Replay.prototype.getPlayer = function(n) {
-	if (n >= this.players) {
-		throw new Error('Player number ' + n + ' is out of range for per player parameter.');
+Replay.prototype.txtToJson = function(replay) {
+	var i, lit, tl, args, rows, cols, owner, row, col, isAnt, conv, end;
+	var orders, fixed, scores, result;
+	lit = new LineIterator(replay);
+	result = {
+		'revision': 2,
+		'map': {'data': []},
+		'ants': [],
+		'scores': []
+	};
+	this.turns = [];
+	try {
+		// version check
+		tl = lit.gimmeNext();
+		tl.kw('v').as([DataType.IDENT, DataType.POSINT]);
+		tl.expectEq(0, 'ants'); // game name
+		tl.expectEq(1, 1);      // file version
+		// players
+		tl = lit.gimmeNext();
+		tl.kw('players').as([DataType.POSINT]);
+		tl.expectLE(0, 26);     // player count <= 26
+		result['players'] = tl.params[0];
+		// parameters
+		tl = lit.gimmeNext();
+		while (tl.keyword !== 'm') {
+			args = [DataType.STRING];
+			if (tl.keyword === 'viewradius2' || tl.keyword === 'rows' || tl.keyword === 'cols') {
+				args[0] = DataType.UINT;
+			}
+			tl.as(args);
+			if (tl.keyword === 'rows' || tl.keyword === 'cols') {
+				result['map'][tl.keyword] = tl.params[0];
+			} else {
+				result[tl.keyword] = tl.params[0];
+			}
+			tl = lit.gimmeNext();
+		}
+		// map
+		cols = undefined;
+		rows = 0;
+		do {
+			tl.as([DataType.STRING]);
+			if (cols === undefined) {
+				cols = tl.params[0].length;
+			} else if (tl.params[0].length !== cols) {
+				throw new Error('Map lines have different lenghts');
+			}
+			result['map']['data'].push(tl.params[0]);
+			rows++;
+			tl = lit.gimmeNext();
+		} while (tl.keyword === 'm');
+		// food / ant
+		while (tl.keyword === 'a') {
+			//     row            col            start          conversion
+			tl.as([DataType.UINT, DataType.UINT, DataType.UINT, DataType.UINT,
+					DataType.UINT, DataType.UINT, DataType.STRING], 3);
+			//  end            owner          orders            # optional
+			row = tl.params[0];
+			if (row >= this.rows) throw new Error('Row exceeds map width.');
+			col = tl.params[1];
+			if (col >= this.cols) throw new Error('Col exceeds map height.');
+			conv = tl.params[3];
+			end = tl.params[4];
+			if (end === undefined) end = conv;
+			owner = tl.params[5];
+			isAnt = owner !== undefined;
+			if (isAnt && owner >= this.players) {
+				throw new Error('Player index out of range.');
+			}
+			if (tl.params.length === 6) {
+				tl.params.push('');
+			}
+			orders = tl.params[6];
+			if (isAnt) {
+				fixed = orders.length !== end - conv;
+				if (fixed && orders.length + 1 !== end - conv) {
+					throw new Error('Number of orders does not match life span.');
+				}
+			}
+			result['ants'].push(tl.params);
+			tl = lit.gimmeNext();
+		}
+		// score
+		for (i = 0; i < result['players']; i++) {
+			scores = tl.kw('s').as([DataType.SCORES]).params[0];
+			result['scores'].push(scores);
+			if (i != result['players'] - 1) tl = lit.gimmeNext();
+		}
+		if (lit.moar()) {
+			tl = lit.gimme();
+			throw new Error('Extra data at end of file.');
+		}
+	} catch (error) {
+		error.message = tl.line + '\n' + error.message;
+		throw error;
 	}
-	return this.players[n];
+	return result;
+};
+Replay.prototype.getTurn = function(n) {
+	var i, turn, ants, ant, aniAnt, lastFrame, dead;
+	if (this.turns[n] === undefined) {
+		if (n !== 0) this.getTurn(n - 1);
+		turn = this.turns[n] = [];
+		// generate ants & keyframes
+		ants = this.meta['replaydata']['ants'];
+		for (i = 0; i < ants.length; i++) {
+			ant = ants[i];
+			if (ant[2] === n + 1 || n === 0 && ant[2] === 0) {
+				// spawn this ant
+				aniAnt = this.aniAnts[i] = new Ant(i, ant[2] - 0.25);
+				aniAnt.owner = ant[5];
+				var f = aniAnt.frameAt(ant[2] - 0.25, Quality.LOW, false);
+				f['x'] = ant[1];
+				f['y'] = ant[0];
+				f['r'] = FOOD_COLOR[0];
+				f['g'] = FOOD_COLOR[1];
+				f['b'] = FOOD_COLOR[2];
+				if (ant[2] !== 0) {
+					f = aniAnt.frameAt(ant[2], Quality.LOW, true);
+					f['size'] = 1.0;
+					f = aniAnt.frameAt(ant[2] + 0.125, Quality.LOW, true);
+					f['size'] = 1.5;
+					f = aniAnt.frameAt(ant[2] + 0.25, Quality.LOW, true);
+					f['size'] = 0.7;
+					f = aniAnt.frameAt(ant[2] + 0.5, Quality.LOW, true);
+				}
+				f['size'] = 1;
+			} else if (this.aniAnts[i]) {
+				// load existing state
+				aniAnt = this.aniAnts[i];
+			} else {
+				// continue with next ant
+				continue;
+			}
+			if (ant[5] !== undefined && (ant[3] === n + 1 || n === 0 && ant[3] === 0)) {
+				// fade to player color
+				var color = this.meta['playercolors'][ant[5]];
+				if (ant[3] != ant[2]) {
+					aniAnt.fade(Quality.LOW, 'r', 255, ant[3] - 0.5, ant[3] - 0.25);
+					aniAnt.fade(Quality.LOW, 'g', 255, ant[3] - 0.5, ant[3] - 0.25);
+					aniAnt.fade(Quality.LOW, 'b', 255, ant[3] - 0.5, ant[3] - 0.25);
+				}
+				aniAnt.fade(Quality.LOW, 'r', color[0], ant[3] - 0.25, ant[3]);
+				aniAnt.fade(Quality.LOW, 'g', color[1], ant[3] - 0.25, ant[3]);
+				aniAnt.fade(Quality.LOW, 'b', color[2], ant[3] - 0.25, ant[3]);
+			}
+			if (ant[6] !== undefined && n >= ant[3] && n < ant[3] + ant[6].length) {
+				// move
+				aniAnt.frameAt(n, Quality.LOW, true).owner = ant[5];
+				var dir = undefined;
+				switch (ant[6].charAt(n - ant[3])) {
+					case 'n':
+					case 'N':
+						dir = Directions.N;
+						break;
+					case 'e':
+					case 'E':
+						dir = Directions.E;
+						break;
+					case 's':
+					case 'S':
+						dir = Directions.S;
+						break;
+					case 'w':
+					case 'W':
+						dir = Directions.W;
+				}
+				if (dir) {
+					lastFrame = aniAnt.lo[aniAnt.lo.length - 1];
+					aniAnt.fade(Quality.LOW, 'x', lastFrame['x'] + dir.x, n, n + 0.5);
+					aniAnt.fade(Quality.LOW, 'y', lastFrame['y'] + dir.y, n, n + 0.5);
+					/*antObj.keyFrames[1].angle = offset.angle;
+					antObj.animate([{
+						time: 0.5,
+						absolute: {
+							x: antObj.keyFrames[1].x,
+							y: antObj.keyFrames[1].y//,
+							//angle: offset.angle
+						},
+						relative: {}
+					}]);
+					// only in zoom mode: < movement time reduced to 0.5, pay attention when uncommenting >
+					/*
+					nextDir = nextAntDirection(antObj.id, t);
+					if (nextDir) {
+						var angle = nextDir.angle - offset.angle;
+						if (angle < -Math.PI) {
+							angle += 2 * Math.PI;
+						} else if (angle > +Math.PI) {
+							angle -= 2 * Math.PI;
+						}
+						if (angle != 0) {
+							antObj.keyFrames[1].jitter = 0;
+							antObj.keyFrames[2].jitter = 0;
+							if (Math.abs(angle) < 0.9 * Math.PI) {
+								var sq = 1 / Math.sqrt(2);
+								antObj.keyFrames[2]['x'] = antObj.keyFrames[1]['x'] + 0.5 * (offset['x'] * sq + (1 - sq) * nextDir.x);
+								antObj.keyFrames[2]['y'] = antObj.keyFrames[1]['y'] + 0.5 * (offset['y'] * sq + (1 - sq) * nextDir.y);
+								antObj.keyFrames[2].angle += 0.5 * angle;
+							}
+						}
+					}*/
+				}
+			}
+//			if (ant[4] !== ant[3] + ant[6].length) {
+				// account for survivors
+//					this.turns[obj[4] - 1].clearFog(obj[5], y, x, this.rows,
+//							this.cols, replay['viewradius2']);
+//			}
+			dead = (ant[4] || ant[3]);
+			if (dead === n + 1) {
+				// end of life
+				aniAnt.fade(Quality.LOW, 'size', 0.0, dead - 0.25, dead);
+				aniAnt.fade(Quality.LOW, 'r'   , 0.0, dead - 0.25, dead);
+				aniAnt.fade(Quality.LOW, 'g'   , 0.0, dead - 0.25, dead);
+				aniAnt.fade(Quality.LOW, 'b'   , 0.0, dead - 0.25, dead);
+			}
+			if (n >= ant[2] && n < dead) {
+				// assign ant to display list
+				turn.push(aniAnt);
+			}
+		}
+	}
+	return this.turns[n];
+};
+Replay.prototype.getFog = function(player, turn) {
+	var i, fogs, fog, row, col, radius, radius2, row_wrap, col_wrap;
+	var fog_row, fog_row1, fog_row2, aniAnts, aniAnt;
+	fogs = this.fogs[player];
+	if (fogs[turn] === undefined) {
+		fogs[turn] = fog = new Array(this.rows);
+		for (row = 0; row < this.rows; row++) {
+			fog[row] = new Array(this.cols);
+			for (col = 0; col < this.cols; col++) {
+				fog[row][col] = true;
+			}
+		}
+		radius2 = this.meta['replaydata']['viewradius2'];
+		radius = Math.sqrt(radius2) | 0;
+		aniAnts = this.getTurn(turn);
+		for (i = 0; i < aniAnts.length; i++) {
+			aniAnt = aniAnts[i].interpolate(turn, Quality.LOW);
+			if (aniAnt.owner === player) {
+				row_wrap = new Array(2 * radius + 1);
+				for (row = 2 * radius; row >= 0; row--) {
+					row_wrap[row] = aniAnt.y - radius + row;
+					row_wrap[row] -= Math.floor(row_wrap[row] / this.rows) * this.rows;
+				}
+				col_wrap = new Array(2 * radius + 1);
+				for (col = 2 * radius; col >= 0; col--) {
+					col_wrap[col] = aniAnt.x - radius + col;
+					col_wrap[col] -= Math.floor(col_wrap[col] / this.cols) * this.cols;
+				}
+				col = col_wrap[radius];
+				for (row = 1; row <= radius; row++) {
+					fog[row_wrap[radius - row]][col] = false;
+					fog[row_wrap[radius + row]][col] = false;
+				}
+				fog_row = fog[row_wrap[radius]];
+				for (col = 0; col < col_wrap.length; col++) {
+					fog_row[col_wrap[col]] = false;
+				}
+				for (row = 1; row <= radius; row++) {
+					fog_row1 = fog[row_wrap[radius - row]];
+					fog_row2 = fog[row_wrap[radius + row]];
+					for (col = 1; col <= radius; col++) {
+						if (row*row + col*col <= radius2) {
+							fog_row1[col_wrap[radius - col]] = false;
+							fog_row1[col_wrap[radius + col]] = false;
+							fog_row2[col_wrap[radius - col]] = false;
+							fog_row2[col_wrap[radius + col]] = false;
+						}
+					}
+				}
+			}
+		}
+	}
+	return fogs[turn];
 };
 
 /**
@@ -752,71 +702,4 @@ TokenLine.prototype.expectLE = function(idx, value) {
 	if (value < this.params[idx]) {
 		this.expected('parameter ' + idx + ' to be <= ' + value, this.params[idx]);
 	}
-};
-
-/**
- * @constructor
- */
-function Turn(playerCnt, rows, cols) {
-	this.scores = new Array(playerCnt);
-	this.counts = new Array(playerCnt);
-	this.fogs = new Array(playerCnt);
-	for (var i = 0; i < playerCnt; i++) {
-		this.counts[i] = 0;
-		this.fogs[i] = new Array(rows);
-		for (var k = 0; k < rows; k++) {
-			this.fogs[i][k] = new Array(cols);
-			for (var m = 0; m < cols; m++) {
-				this.fogs[i][k][m] = true;
-			}
-		}
-	}
-	this.ants = [];
-}
-Turn.prototype.clearFog = function(player, row, col, rows, cols, radius2) {
-	var fog = this.fogs[player];
-	var radius = Math.sqrt(radius2) | 0;
-	var row_wrap = new Array(2 * radius + 1);
-	for (var y = 2 * radius; y >= 0; y--) {
-		row_wrap[y] = row - radius + y;
-		row_wrap[y] -= Math.floor(row_wrap[y] / rows) * rows;
-	}
-	var col_wrap = new Array(2 * radius + 1);
-	for (var x = 2 * radius; x >= 0; x--) {
-		col_wrap[x] = col - radius + x;
-		col_wrap[x] -= Math.floor(col_wrap[x] / cols) * cols;
-	}
-	x = col_wrap[radius];
-	for (y = 1; y <= radius; y++) {
-		fog[row_wrap[radius - y]][x] = false;
-		fog[row_wrap[radius + y]][x] = false;
-	}
-	var fog_row = fog[row_wrap[radius]];
-	for (x = 0; x < col_wrap.length; x++) {
-		fog_row[col_wrap[x]] = false;
-	}
-	for (y = 1; y <= radius; y++) {
-		var fog_row1 = fog[row_wrap[radius - y]];
-		var fog_row2 = fog[row_wrap[radius + y]];
-		for (x = 1; x <= radius; x++) {
-			if (y*y + x*x <= radius2) {
-				fog_row1[col_wrap[radius - x]] = false;
-				fog_row1[col_wrap[radius + x]] = false;
-				fog_row2[col_wrap[radius - x]] = false;
-				fog_row2[col_wrap[radius + x]] = false;
-			}
-		}
-	}
-//	return;
-//	for (var row_a = row - radius; row_a <= row + radius; row_a++) {
-//		var row_delta = row_a - row;
-//		var row_b = row_a - Math.floor(row_a / rows) * rows;
-//		for (var col_a = col - radius; col_a <= col + radius; col_a++) {
-//			var col_delta = col_a - col;
-//			if (row_delta * row_delta + col_delta * col_delta <= radius2) {
-//				var col_b = col_a - Math.floor(col_a / cols) * cols;
-//				fog[row_b][col_b] = false;
-//			}
-//		}
-//	}
 };

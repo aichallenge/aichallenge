@@ -131,14 +131,16 @@ Visualizer = function(container, dataDir, w, h) {
 	this.options['data_dir'] = dataDir;
 	// read URL parameters and store them in the parameters object
 	var equalPos, value, key, i;
-	var parameters = window.location.href.split(/\?/);
-	if (parameters.length > 1) {
-		parameters = parameters[1].split('#')[0].split('&');
+	var parameters = window.location.href;
+	if ((i = parameters.indexOf('?')) !== -1) {
+		parameters = parameters.substr(i + 1).split('#')[0].split('&');
 		for (i = 0; i < parameters.length; i++) {
 			equalPos = parameters[i].indexOf('=');
 			key = parameters[i].substr(0, equalPos);
 			value = parameters[i].substr(equalPos + 1);
-			if (key === 'debug') value = new Boolean(value);
+			if (key === 'debug' || key === 'profile') {
+				value = new Boolean(value);
+			}
 			this.options[key] = value;
 		}
 	}
@@ -322,46 +324,11 @@ Visualizer.prototype.loadReplayDataFromURI = function(file) {
 			}
 		};
 		vis.replay.open("GET", file);
+		if (vis.options['debug']) {
+			vis.replay.setRequestHeader('Cache-Control', 'no-cache');
+		}
 		vis.replay.send();
 		vis.loadCanvas(true);
-	});
-};
-/**
- * Loads a replay file through the php site. This data has html special
- * characters encoded and has a general structure of key=value.
- * @param {string} data the encoded replay data
- */
-Visualizer.prototype.loadReplayDataFromPHP = function(data) {
-	if (this.preload()) return;
-	var vis = this;
-	this.progress('Reading replay passed in from php...', function() {
-		var parameters = {};
-		var unquot = data.replace(/&lt;/g, '<').replace(/&gt;/g, '>')
-		unquot = unquot.replace(/&quot;/g, '"').replace(/&amp;/g, '&');
-		var matches = unquot.match(/[a-zA-Z_]+=.*((?!\n[a-zA-Z_]+=)\n.*)*(?=\n)/gm);
-		var replay = undefined;
-		if (matches) {
-			for (var i = 0; i < matches.length; i++) {
-				var ep = matches[i].indexOf('=');
-				var key = matches[i].substr(0, ep);
-				var value = matches[i].substr(ep + 1);
-				if (key == 'playback_string') {
-					replay = value;
-				} else {
-					parameters[key] = value;
-				}
-			}
-			if (!replay) {
-				vis.errorOut('game_info.php did not feed any playback_string.');
-			} else {
-				vis.replay = {replay: replay, parameters: parameters};
-				vis.loadCanvas(true);
-			}
-		} else if (data) {
-			vis.errorOut(data);
-		} else {
-			vis.errorOut('no data');
-		}
 	});
 };
 /**
@@ -389,8 +356,6 @@ Visualizer.prototype.loadParseReplay = function() {
 			vis.replay = new Replay(vis.replay);
 		} else if (vis.replay instanceof XMLHttpRequest) { // wait for the reply
 			return;
-		} else if (vis.replay instanceof Object) { // string + param
-			vis.replay = new Replay(vis.replay.replay, vis.replay.parameters);
 		} else {
 			throw new Error('Something unknown is in the replay variable: ' + vis.replay);
 		}
@@ -467,7 +432,9 @@ Visualizer.prototype.tryStart = function() {
 				});
 				bg = vis.btnMgr.addImageGroup('toolbar', vis.imgMgr.images[3],
 						ImageButtonGroup.VERTICAL, ButtonGroup.MODE_NORMAL, 2);
-				bg.addButton(0, function() {vis.config.save()});
+				if (this.config.hasLocalStorage()) {
+					bg.addButton(0, function() {vis.config.save()});
+				}
 				if (!window.isFullscreenSupported || window.isFullscreenSupported()) {
 					bg.addButton(1, function() {
 						vis.setFullscreen(!vis.config['fullscreen']);
@@ -587,8 +554,8 @@ Visualizer.prototype.calculateCanvasSize = function() {
 		result.width = document.documentElement.clientWidth;
 		result.height = document.documentElement.clientHeight;
 	}
-	var embed = (window.isFullscreenSupported 
-			&& !window.isFullscreenSupported()) 
+	var embed = (window.isFullscreenSupported
+			&& !window.isFullscreenSupported())
 			|| !this.config['fullscreen'];
 	result.width = (this.w && embed) ? this.w : result.width;
 	result.height = (this.h && embed) ? this.h : result.height;
@@ -795,11 +762,10 @@ Visualizer.prototype.renderCounts = function() {
 	// find lowest and highest value
 	var min = 0;
 	var max = -Infinity;
-	for (var i = 0; i < this.replay.turns.length; i++) {
-		var turn = this.replay.turns[i];
-		for (var k = 0; k < turn.scores.length; k++) {
-			if (max < turn.counts[k]) {
-				max = turn.counts[k];
+	for (var i = 0; i <= this.replay.duration; i++) {
+		for (var k = 0; k < this.replay.counts[i].length; k++) {
+			if (max < this.replay.counts[i][k]) {
+				max = this.replay.counts[i][k];
 			}
 		}
 	}
@@ -819,9 +785,9 @@ Visualizer.prototype.renderCounts = function() {
 	for (i = this.replay.players - 1; i >= 0; i--) {
 		ctx.strokeStyle = this.replay.htmlPlayerColors[i];
 		ctx.beginPath();
-		ctx.moveTo(0.5, 0.5 + scaleY * (max - this.replay.turns[0].counts[i]));
-		for (k = 1; k < this.replay.turns.length; k++) {
-			ctx.lineTo(0.5 + scaleX * k, 0.5 + scaleY * (max - this.replay.turns[k].counts[i]));
+		ctx.moveTo(0.5, 0.5 + scaleY * (max - this.replay.counts[0][i]));
+		for (k = 1; k <= this.replay.duration; k++) {
+			ctx.lineTo(0.5 + scaleX * k, 0.5 + scaleY * (max - this.replay.counts[k][i]));
 		}
 		ctx.stroke();
 	}
@@ -849,12 +815,14 @@ Visualizer.prototype.renderFog = function(turn) {
 			this.fog.ptrn = ctx.createPattern(this.fog.canvas, 'repeat');
 		}
 		ctx.fillStyle = this.fog.ptrn;
+		var fog = this.replay.getFog(this.fog.player, turn);
 		for (var row = 0; row < this.replay.rows; row++) {
+			var fogRow = fog[row];
 			var y = row * this.scale;
 			var start = undefined;
 			for (var col = 0; col < this.replay.cols; col++) {
 				var x = col * this.scale;
-				var isFog = this.replay.turns[turn].fogs[this.fog.player][row][col];
+				var isFog = fogRow[col];
 				if (start === undefined && isFog) {
 					start = x;
 				} else if (start !== undefined && !isFog) {
@@ -927,13 +895,6 @@ Visualizer.prototype.drawColorBar = function(loc, values) {
 /**
  * @private
  */
-Visualizer.prototype.correctCoords = function(obj, w, h) {
-	obj.x -= Math.floor(obj.x / w) * w;
-	obj.y -= Math.floor(obj.y / h) * h;
-};
-/**
- * @private
- */
 Visualizer.prototype.interpolate = function(array1, array2, delta) {
 	if (delta === 0) return array1;
 	var result = new Array(array1.length);
@@ -946,42 +907,44 @@ Visualizer.prototype.interpolate = function(array1, array2, delta) {
  * @private
  */
 Visualizer.prototype.draw = function(time, tick) {
-	var x, y, w, d;
+	var x, y, w, d, hash;
 	var turn = (time | 0);
 	// draw scores
 	w = this.main.canvas.width;
 	if (tick !== undefined) {
 		if (this.fog !== undefined) this.renderFog(turn);
-		//var array1 = this.replay.turns[turn];
+		//var array1 = turnObj;
 		//var array2 = (time === turn) ? array1 : this.replay.turns[turn + 1];
 		//var scores = this.interpolate(array1.scores, array2.scores, time - turn);
 		//this.drawColorBar(95,  4, w - 4 - 95, 22, scores);
 		//var counts = this.interpolate(array1.counts, array2.counts, time - turn);
 		//this.drawColorBar(95, 38, w - 4 - 95, 22, counts);
-		this.drawColorBar(this.loc.scorebar, this.replay.turns[turn].scores);
-		this.drawColorBar(this.loc.countbar, this.replay.turns[turn].counts);
+		this.drawColorBar(this.loc.scorebar, this.replay.scores[turn]);
+		this.drawColorBar(this.loc.countbar, this.replay.counts[turn]);
 	}
 	this.main.ctx.drawImage(this.scores.canvas, this.loc.graph.x, this.loc.graph.y);
+	// time indicator
+	var duration = this.replay.turns.length - 1;
+	x = this.loc.graph.x + 0.5 + (this.loc.graph.w - 1) * time / duration;
 	this.main.ctx.lineWidth = 1;
 	this.main.ctx.beginPath();
-	this.main.ctx.moveTo(this.loc.graph.x + 0.5 + (this.loc.graph.w - 1) * time / (this.replay.turns.length - 1), this.loc.graph.y + 0.5);
-	this.main.ctx.lineTo(this.loc.graph.x + 0.5 + (this.loc.graph.w - 1) * time / (this.replay.turns.length - 1), this.loc.graph.y + this.loc.graph.h - 0.5);
+	this.main.ctx.moveTo(x, this.loc.graph.y + 0.5);
+	this.main.ctx.lineTo(x, this.loc.graph.y + this.loc.graph.h - 0.5);
 	this.main.ctx.stroke();
 	// turn number
-	var isStop = (turn === this.replay.turns.length - 1);
 	this.main.ctx.fillStyle = '#888';
 	this.main.ctx.textBaseline = 'middle';
-	this.main.ctx.fillText('# of ants | ' + (isStop ? 'end' : 'turn '
-			+ (turn + 1) + '/' + (this.replay.turns.length - 1)),
+	this.main.ctx.fillText('# of ants | ' + (turn === duration ?
+			'end' : 'turn ' + (turn + 1) + '/' + duration),
 			this.loc.graph.x, this.loc.graph.y + 11);
 	// ants...
 	var drawStates = {};
-	for (var i = 0; i < this.replay.turns[turn].ants.length; i++) {
-		var antObj = this.replay.turns[turn].ants[i].interpolate(time, Quality.LOW);
-		this.correctCoords(antObj, this.replay.cols, this.replay.rows);
-		var hash = INT_TO_HEX[antObj['r']] + INT_TO_HEX[antObj['g']] + INT_TO_HEX[antObj['b']];
+	var ants = this.replay.getTurn(turn);
+	for (var i = ants.length - 1; i >= 0; i--) {
+		var ant = ants[i].interpolate(time, Quality.LOW);
+		hash = INT_TO_HEX[ant['r']] + INT_TO_HEX[ant['g']] + INT_TO_HEX[ant['b']];
 		if (!drawStates[hash]) drawStates[hash] = [];
-		drawStates[hash].push(antObj);
+		drawStates[hash].push(ant);
 	}
 	if (this.config['border']) {
 		var ctx = this.main.ctx;
@@ -993,38 +956,43 @@ Visualizer.prototype.draw = function(time, tick) {
 	// draw the map background
 	ctx.drawImage(this.map.canvas, 0, 0);
 	// sorting by render state gives slight fps improvements
+	var rowPixels = this.scale * this.replay.rows;
+	var colPixels = this.scale * this.replay.cols;
 	for (var key in drawStates) {
 		ctx.fillStyle = '#' + key;
 		var drawList = drawStates[key];
 		for (var n = 0; n < drawList.length; n++) {
-			antObj = drawList[n];
+			ant = drawList[n];
 			if (this.config['zoom']) {
 				this.main.ctx.save();
-				this.main.ctx.globalAlpha = antObj.alpha;
-				x = ZOOM_SCALE * (antObj.x + 0.5);
-				y = ZOOM_SCALE * (antObj.y + 0.5);
+				this.main.ctx.globalAlpha = ant.alpha;
+				x = ZOOM_SCALE * (ant.x + 0.5);
+				y = ZOOM_SCALE * (ant.y + 0.5);
 				this.main.ctx.translate(x, y);
-				this.main.ctx.rotate(antObj.angle + Math.sin(20 * time) * antObj.jitter);
-				this.main.ctx.drawImage(this.imgMgr.ants[antObj.type], -10, -10);
+				this.main.ctx.rotate(ant.angle + Math.sin(20 * time) * ant.jitter);
+				this.main.ctx.drawImage(this.imgMgr.ants[ant.type], -10, -10);
 				this.main.ctx.restore();
 				x += 3 * Math.tan(2 * (Math.random() - 0.5));
 				y += 3 * Math.tan(2 * (Math.random() - 0.5));
-				if (antObj.alpha == 1) {
-					var sin = -Math.sin(antObj.angle);
-					var cos = +Math.cos(antObj.angle);
+				if (ant.alpha == 1) {
+					var sin = -Math.sin(ant.angle);
+					var cos = +Math.cos(ant.angle);
 					this.ctxMap.moveTo(x - sin, y - cos);
 					this.ctxMap.lineTo(x + sin, y + cos);
 				}
 			} else {
-				x = Math.round(this.scale * antObj['x']);
-				y = Math.round(this.scale * antObj['y']);
+				x = Math.round(this.scale * ant['x']);
+				y = Math.round(this.scale * ant['y']);
 				w = this.scale;
-				if (antObj['size'] !== 1) {
-					d = 0.5 * (1.0 - antObj['size']) * this.scale;
+				if (ant['size'] !== 1) {
+					d = 0.5 * (1.0 - ant['size']) * this.scale;
 					x += d;
 					y += d;
-					w *= antObj['size'];
+					w *= ant['size'];
 				}
+				// correct coordinates
+				x -= Math.floor(x / colPixels) * colPixels;
+				y -= Math.floor(y / rowPixels) * rowPixels;
 				ctx.fillRect(x, y, w, w);
 				if (x + w > this.loc.map.w) {
 					ctx.fillRect(x - this.loc.map.w, y, w, w);

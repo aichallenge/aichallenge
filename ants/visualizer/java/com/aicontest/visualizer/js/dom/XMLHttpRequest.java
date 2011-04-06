@@ -77,7 +77,7 @@ public class XMLHttpRequest {
 	}
 
 	public void setRequestHeader(String header, String value) {
-		throw new DOMException(DOMException.NOT_SUPPORTED_ERR, "not supported");
+		conn.addRequestProperty(header, value);
 	}
 
 	public void send() throws Exception {
