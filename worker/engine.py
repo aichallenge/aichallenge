@@ -191,8 +191,6 @@ def run_game(game, botcmds, options, gameid=0):
             stream_log.write(score_line)
             stream_log.write(game.get_state())
             stream_log.flush()
-        if replay_log:
-            replay_log.write(game.get_replay())
 
     except Exception:
         error = traceback.format_exc()
@@ -206,25 +204,22 @@ def run_game(game, botcmds, options, gameid=0):
         # close all the open files
         if stream_log:
             stream_log.close()
-        if replay_log:
-            replay_log.close()
         if bot_input_log:
             for log in bot_input_log:
                 log.close()
         if bot_output_log:
             for log in bot_output_log:
                 log.close()
-    if output == 'json':
-        json_response = {}
-        if error:
-            json_response["error"] = error
-        else:
-            scores = game.get_scores()
-            json_response['score'] = scores
-            json_response['rank'] = [sorted(set(scores)).index(x) for x in scores]
-            json_response['player_info'] = [{} for x in range(len(bots))]
-            json_response['replay'] = game.get_replay()
-        print json.dumps(json_response)
+
+    if replay_log:
+        replay = game.get_replay()
+        replay = {
+            'challenge': game.__class__.__name__.lower(),
+            'replayformat': 'storage',
+            'replaydata': game.get_replay(),
+        }
+        json.dump(replay, replay_log,sort_keys=True)
+        replay_log.close()
 
 class Tee(object):
     """ Write to multiple files at once """

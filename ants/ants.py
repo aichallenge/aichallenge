@@ -350,7 +350,7 @@ class Ants(Game):
 
         return changes
 
-    def render_map(self, player=None):
+    def get_map_output(self, player=None):
         """ Render the map from the perspective of the given player.
 
             If player is None, then no squares are hidden and player ids
@@ -358,9 +358,8 @@ class Ants(Game):
         """
         result = []
         for row in self.get_perspective(player):
-            result.append('m ' + ''.join([MAP_RENDER[col] for col in row]))
-        result.append('') # newline
-        return '\n'.join(result)
+            result.append(''.join([MAP_RENDER[col] for col in row]))
+        return result
 
     def nearby_ants(self, loc, max_dist, exclude=None):
         """ Returns ants where 0 < dist to loc <= sqrt(max_dist)
@@ -1034,9 +1033,9 @@ class Ants(Game):
         if self.seed is not None:
             result.append(['seed', self.seed])
         if player == None:
-            result.append([self.render_map()])
-        else:
-            result.append([]) # newline
+            for line in self.get_map_output():
+                result.append(['m',line])
+        result.append([]) # newline
         return '\n'.join(' '.join(map(str,s)) for s in result)
 
     def get_player_state(self, player):
@@ -1094,29 +1093,31 @@ class Ants(Game):
             Used by the engine to create a replay file which may be used
               to replay the game.
         """
-        result = []
+        replay = {}
         # required params
-        result.append(['v', 'ants', '1'])
-        result.append(['players', self.num_players])
+        replay['revision'] = 2
+        replay['players'] = self.num_players
 
         # optional params
-        result.append(['loadtime', self.loadtime])
-        result.append(['turntime', self.turntime])
-        result.append(['rows', self.height])
-        result.append(['cols', self.width])
-        result.append(['turns', self.turns])
-        result.append(['viewradius2', self.viewradius])
-        result.append(['attackradius2', self.attackradius])
-        result.append(['spawnradius2', self.spawnradius])
+        replay['loadtime'] = self.loadtime
+        replay['turntime'] = self.turntime
+        replay['turns'] = self.turns
+        replay['viewradius2'] = self.viewradius
+        replay['attackradius2'] = self.attackradius
+        replay['spawnradius2'] = self.spawnradius
         if self.seed is not None:
-            result.append(['seed', self.seed])
+            replay['seed'] = self.seed
 
         # map
-        result.append([self.render_map()])
+        replay['map'] = {}
+        replay['map']['rows'] = self.height
+        replay['map']['cols'] = self.width
+        replay['map']['data'] = self.get_map_output()
 
         # food and ants combined
+        replay['ants'] = []
         for food in self.all_food:
-            ant_data = ['a', food.loc[0], food.loc[1], food.start_turn]
+            ant_data = [ food.loc[0], food.loc[1], food.start_turn]
             if food.end_turn == None:
                 # food survives to end of game
                 ant_data.append(self.turn + 1)
@@ -1134,15 +1135,12 @@ class Ants(Game):
                 ant_data.append(ant.owner)
                 ant_data.append(''.join(ant.orders))
 
-            result.append(ant_data)
+            replay['ants'].append(ant_data)
 
         # scores
-        for s in self.score_history:
-            result.append(['s'] + map(int, s))
+        replay['scores'] = [map(int, s) for s in self.score_history]
 
-        result.append([]) # final new line
-
-        return '\n'.join(' '.join(map(str,s)) for s in result)
+        return replay
 
 class Ant:
     def __init__(self, loc, owner, spawn_turn=None):
