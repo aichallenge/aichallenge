@@ -593,7 +593,7 @@ Replay.prototype.getFog = function(player, turn) {
 		aniAnts = this.getTurn(turn);
 		for (i = 0; i < aniAnts.length; i++) {
 			aniAnt = aniAnts[i].interpolate(turn, Quality.LOW);
-			if (aniAnt.owner === player) {
+			if (aniAnt && aniAnt.owner === player) {
 				row_wrap = new Array(2 * radius + 1);
 				for (row = 2 * radius; row >= 0; row--) {
 					row_wrap[row] = aniAnt.y - radius + row;

@@ -441,10 +441,14 @@ Visualizer.prototype.tryStart = function() {
 					});
 				}
 				bg.addButton(2, function() {
+					vis.setZoom(!vis.config['zoom']);
+					vis.director.draw();
+				});
+				bg.addButton(3, function() {
 					vis.setBorder(!vis.config['border']);
 					vis.director.draw();
 				});
-//				bg.addButton(3, function() {
+//				bg.addButton(4, function() {
 //					vis.setAntLabels(!vis.config['label']);
 //				});
 			}
@@ -594,9 +598,35 @@ Visualizer.prototype.setFullscreen = function(enable) {
 	}
 	this.resize(true);
 };
+Visualizer.prototype.setZoom = function(enable) {
+	var oldScale = this.scale;
+	this.config['zoom'] = enable;
+	if (enable) {
+		this.scale = ZOOM_SCALE;
+	} else {
+		this.scale = Math.min(10, Math.max(1, Math.min(
+			(this.loc.vis.w - 2 * ZOOM_SCALE) / (this.replay.cols),
+			(this.loc.vis.h - 2 * ZOOM_SCALE) / (this.replay.rows)))) | 0;
+	}
+	if (oldScale) {
+		this.shiftX = (this.shiftX * this.scale / oldScale) | 0;
+		this.shiftY = (this.shiftY * this.scale / oldScale) | 0;
+	}
+	this.loc.map = new Location(0, 0, this.scale * (this.replay.cols),
+		this.scale * (this.replay.rows));
+	this.loc.map.x = ((this.loc.vis.w - this.loc.map.w) / 2 + this.loc.vis.x) | 0;
+	this.loc.map.y = ((this.loc.vis.h - this.loc.map.h) / 2 + this.loc.vis.y) | 0;
+	this.map.canvas.width = this.loc.map.w;
+	this.map.canvas.height = this.loc.map.h;
+	this.renderMap();
+	this.overlay.canvas.width = this.loc.map.w;
+	this.overlay.canvas.height = this.loc.map.h;
+	this.setBorder(this.config['border']);
+	this.btnMgr.groups['toolbar'].buttons[3].enabled = !enable;
+};
 Visualizer.prototype.setBorder = function(enable) {
 	this.config['border'] = enable;
-	if (enable) {
+	if (enable && !this.config['zoom']) {
 		var loc = this.loc.vis;
 		this.main.ctx.fillStyle = '#fff';
 		this.main.ctx.fillRect(loc.x, loc.y, loc.w, loc.h);
@@ -697,22 +727,11 @@ Visualizer.prototype.resize = function(forced) {
 		this.loc.vis = new Location(LEFT_PANEL_W, y,
 			news.width - LEFT_PANEL_W - RIGHT_PANEL_W,
 			news.height - y - BOTTOM_PANEL_H);
-		this.scale = Math.min(10, Math.max(1, Math.min(
-			(this.loc.vis.w - 2 * ZOOM_SCALE) / (this.replay.cols),
-			(this.loc.vis.h - 2 * ZOOM_SCALE) / (this.replay.rows)))) | 0;
-		this.loc.map = new Location(0, 0, this.scale * (this.replay.cols),
-			this.scale * (this.replay.rows));
-		this.loc.map.x = ((this.loc.vis.w - this.loc.map.w) / 2 + this.loc.vis.x) | 0;
-		this.loc.map.y = ((this.loc.vis.h - this.loc.map.h) / 2 + this.loc.vis.y) | 0;
+		this.setZoom(this.config['zoom']);
 		this.setBorder(this.config['border']);
 		this.scores.canvas.width = this.loc.graph.w;
 		this.scores.canvas.height = this.loc.graph.h;
 		this.renderCounts();
-		this.map.canvas.width = this.loc.map.w;
-		this.map.canvas.height = this.loc.map.h;
-		this.renderMap();
-		this.overlay.canvas.width = this.loc.map.w;
-		this.overlay.canvas.height = this.loc.map.h;
 		var bg = this.btnMgr.groups['playback'];
 		bg.x = ((news.width - 8 * 64) / 2) | 0;
 		bg.y = this.loc.vis.y + this.loc.vis.h;
@@ -796,7 +815,7 @@ Visualizer.prototype.renderCounts = function() {
  * @private
  */
 Visualizer.prototype.renderFog = function(turn) {
-	if (this.config['border']) {
+	if (this.config['border'] && !this.config['zoom']) {
 		ctx = this.border.ctx;
 		ctx.save();
 		ctx.translate(ZOOM_SCALE, ZOOM_SCALE);
@@ -907,7 +926,7 @@ Visualizer.prototype.interpolate = function(array1, array2, delta) {
  * @private
  */
 Visualizer.prototype.draw = function(time, tick) {
-	var x, y, w, d, hash, ants, ant;
+	var x, y, w, h, dx, dy, d, hash, ants, ant;
 	var turn = (time | 0);
 	// draw scores
 	w = this.main.canvas.width;
@@ -947,7 +966,7 @@ Visualizer.prototype.draw = function(time, tick) {
 			drawStates[hash].push(ant);
 		}
 	}
-	if (this.config['border']) {
+	if (this.config['border'] && !this.config['zoom']) {
 		var ctx = this.main.ctx;
 		ctx.save();
 		ctx.translate(this.loc.map.x, this.loc.map.y);
@@ -965,7 +984,7 @@ Visualizer.prototype.draw = function(time, tick) {
 		var drawList = drawStates[key];
 		for (var n = 0; n < drawList.length; n++) {
 			ant = drawList[n];
-			if (this.config['zoom']) {
+			if (this.config['graphics']) {
 				this.main.ctx.save();
 				this.main.ctx.globalAlpha = ant.alpha;
 				x = ZOOM_SCALE * (ant.x + 0.5);
@@ -985,21 +1004,23 @@ Visualizer.prototype.draw = function(time, tick) {
 			} else {
 				x = Math.round(this.scale * ant['x']);
 				y = Math.round(this.scale * ant['y']);
-				w = this.scale;
-				if (ant['size'] !== 1) {
-					d = 0.5 * (1.0 - ant['size']) * this.scale;
-					x += d;
-					y += d;
-					w *= ant['size'];
-				}
 				// correct coordinates
 				x -= Math.floor(x / colPixels) * colPixels;
 				y -= Math.floor(y / rowPixels) * rowPixels;
 				if (ant['owner'] === undefined) {
+					w = halfScale;
+					if (ant['size'] !== 1) w *= ant['size'];
 					ctx.beginPath();
-					ctx.arc(x + halfScale, y + halfScale, halfScale, 0, 2 * Math.PI, false);
+					ctx.arc(x + halfScale, y + halfScale, w, 0, 2 * Math.PI, false);
 					ctx.fill();
 				} else {
+					w = this.scale;
+					if (ant['size'] !== 1) {
+						d = 0.5 * (1.0 - ant['size']) * this.scale;
+						x += d;
+						y += d;
+						w *= ant['size'];
+					}
 					ctx.fillRect(x, y, w, w);
 					if (x + w > this.loc.map.w) {
 						ctx.fillRect(x - this.loc.map.w, y, w, w);
@@ -1014,12 +1035,12 @@ Visualizer.prototype.draw = function(time, tick) {
 			}
 		}
 	}
-	if (this.config['border']) {
+	if (this.config['border'] && !this.config['zoom']) {
 		// draw border over ants, that moved out of the map
 		ctx.drawImage(this.border.canvas, -ZOOM_SCALE, -ZOOM_SCALE);
 		ctx.restore();
 	} else {
-		ctx.drawImage(this.overlay.canvas, 0, 0);
+		if (this.fog) ctx.drawImage(this.overlay.canvas, 0, 0);
 		ctx = this.main.ctx;
 		var loc = this.loc.vis;
 		ctx.save();
@@ -1037,10 +1058,44 @@ Visualizer.prototype.draw = function(time, tick) {
 		}
 		ctx.restore();
 		ctx.fillStyle = 'rgba(0,0,0,0.5)';
-		ctx.fillRect(loc.x, loc.y, loc.w, this.loc.map.y - loc.y);
-		ctx.fillRect(loc.x, this.loc.map.y + this.loc.map.h, loc.w, loc.y + loc.h - this.loc.map.y - this.loc.map.h);
-		ctx.fillRect(loc.x, loc.y, this.loc.map.x - loc.x, loc.h);
-		ctx.fillRect(this.loc.map.x + this.loc.map.w, loc.y, loc.x + loc.w - this.loc.map.x - this.loc.map.w, loc.h);
+		w = this.loc.map.y - loc.y;
+		if (w > 0) ctx.fillRect(loc.x, loc.y, loc.w, w);
+		w = loc.y + loc.h - this.loc.map.y - this.loc.map.h;
+		if (w > 0) ctx.fillRect(loc.x, this.loc.map.y + this.loc.map.h, loc.w, w);
+		w = this.loc.map.x - loc.x;
+		if (w > 0) ctx.fillRect(loc.x, loc.y, w, loc.h);
+		w = loc.x + loc.w - this.loc.map.x - this.loc.map.w;
+		if (w > 0) ctx.fillRect(this.loc.map.x + this.loc.map.w, loc.y, w, loc.h);
+		if (this.config['zoom']) {
+			ctx.save();
+			ctx.fillStyle = '#000';
+			ctx.lineWidth = 2;
+			ctx.beginPath();
+			w = this.replay.cols;
+			h = this.replay.rows;
+			x = this.loc.vis.x + this.loc.vis.w - w - 2;
+			y = this.loc.vis.y + 2;
+			ctx.rect(x - 1, y - 1, w + 2, h + 2);
+			ctx.stroke();
+			ctx.globalAlpha = 0.5;
+			ctx.drawImage(this.border.canvas, x, y, w, h);
+			ctx.beginPath();
+			ctx.rect(x, y, w, h);
+			ctx.clip();
+			w = this.loc.vis.w / this.scale;
+			h = this.loc.vis.h / this.scale;
+			dx = this.replay.cols / 2 - this.shiftX / this.scale - w / 2;
+			dy = this.replay.rows / 2 - this.shiftY / this.scale - h / 2;
+			dx -= Math.floor(dx / this.replay.cols) * this.replay.cols;
+			dy -= Math.floor(dy / this.replay.rows) * this.replay.rows;
+			ctx.beginPath();
+			ctx.rect(x + dx, y + dy, w, h);
+			ctx.rect(x + dx - this.replay.cols, y + dy, w, h);
+			ctx.rect(x + dx, y + dy - this.replay.rows, w, h);
+			ctx.rect(x + dx - this.replay.cols, y + dy - this.replay.rows, w, h);
+			ctx.stroke();
+			ctx.restore();
+		}
 	}
 };
 Visualizer.prototype.mouseMoved = function(mx, my) {
@@ -1052,7 +1107,7 @@ Visualizer.prototype.mouseMoved = function(mx, my) {
 		mx = (this.mouseX - this.loc.graph.x) / (this.loc.graph.w - 1);
 		mx = Math.round(mx * (this.replay.turns.length - 1));
 		this.director.gotoTick(mx);
-	} else if (this.mouseDown === 2 && !this.config['border']) {
+	} else if (this.mouseDown === 2 && (!this.config['border'] || this.config['zoom'])) {
 		this.shiftX += deltaX;
 		this.shiftY += deltaY;
 		this.director.draw();
@@ -1063,11 +1118,17 @@ Visualizer.prototype.mouseMoved = function(mx, my) {
 Visualizer.prototype.mousePressed = function() {
 	if (this.loc.graph.contains(this.mouseX, this.mouseY)) {
 		this.mouseDown = 1;
-	} else if (this.loc.vis.contains(this.mouseX, this.mouseY) && !this.config['border']) {
-		this.mouseDown = 2;
 	} else {
-		this.btnMgr.mouseDown();
-		return;
+		var miniMap = new Location(this.loc.vis.x + this.loc.vis.w - this.replay.cols - 2, this.loc.vis.y + 2, this.replay.cols, this.replay.rows);
+		if (this.config['zoom'] && miniMap.contains(this.mouseX, this.mouseY)) {
+			this.shiftX = (this.replay.cols / 2 - (this.mouseX - miniMap.x)) * this.scale;
+			this.shiftY = (this.replay.rows / 2 - (this.mouseY - miniMap.y)) * this.scale;
+		} else if (this.loc.vis.contains(this.mouseX, this.mouseY) && (!this.config['border'] || this.config['zoom'])) {
+			this.mouseDown = 2;
+		} else {
+			this.btnMgr.mouseDown();
+			return;
+		}
 	}
 	this.mouseMoved(this.mouseX, this.mouseY);
 };
