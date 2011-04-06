@@ -815,12 +815,13 @@ Visualizer.prototype.renderCounts = function() {
  * @private
  */
 Visualizer.prototype.renderFog = function(turn) {
-	if (this.config['border'] && !this.config['zoom']) {
+	var useOverlay = !this.config['border'] || this.config['zoom']
+	if (useOverlay) {
+		var ctx = this.overlay.ctx;
+	} else {
 		ctx = this.border.ctx;
 		ctx.save();
 		ctx.translate(ZOOM_SCALE, ZOOM_SCALE);
-	} else {
-		var ctx = this.overlay.ctx;
 	}
 	ctx.clearRect(0, 0, this.overlay.canvas.width, this.overlay.canvas.height);
 	if (this.fog) {
@@ -854,7 +855,7 @@ Visualizer.prototype.renderFog = function(turn) {
 			}
 		}
 	}
-	if (this.config['border']) {
+	if (!useOverlay) {
 		ctx.restore();
 	}
 };

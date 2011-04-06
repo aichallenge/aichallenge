@@ -23,6 +23,7 @@ class RenderingContext2dState {
 	protected double shadowOffsetY = 0.0D;
 	protected double shadowBlur = 0.0D;
 	protected Object shadowColor = new Color(0, 0, 0, 0);
+	protected double globalAlpha = 1.0;
 
 	public RenderingContext2dState() {
 		transform = new AffineTransform();
@@ -58,5 +59,6 @@ class RenderingContext2dState {
 		shadowColor = state.shadowColor;
 		shadowOffsetX = state.shadowOffsetX;
 		shadowOffsetY = state.shadowOffsetY;
+		globalAlpha = state.globalAlpha;
 	}
 }

@@ -1,5 +1,6 @@
 package com.aicontest.visualizer.js.dom;
 
+import java.awt.AlphaComposite;
 import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Font;
@@ -21,11 +22,11 @@ import java.util.Deque;
 import java.util.StringTokenizer;
 
 public class CanvasRenderingContext2d extends RenderingContext2dState {
+
 	private final HTMLCanvasElement canvas;
 	private Graphics2D gfx;
 	private Deque<RenderingContext2dState> stack;
 	private static final Point2D ONE_PIXEL = new Point2D.Double(0.0D, -1.0D);
-
 	private boolean fontChanged = true;
 	private boolean fillChanged = true;
 	private boolean strokeChanged = true;
@@ -48,6 +49,7 @@ public class CanvasRenderingContext2d extends RenderingContext2dState {
 		strokeChanged = true;
 		gfx.setTransform(transform);
 		gfx.setClip(clip);
+		setGlobalAlpha(globalAlpha);
 	}
 
 	public void save() {
@@ -117,7 +119,6 @@ public class CanvasRenderingContext2d extends RenderingContext2dState {
 			Object fillObj = setStyle(fillStyle);
 			if ((fillObj instanceof CanvasPattern)) {
 				BufferedImage cp = ((CanvasPattern) fillObj).getPattern();
-
 				Point2D p = transform.transform(ONE_PIXEL, null);
 				Rectangle2D.Double anchor = new Rectangle2D.Double(0.0D, p.getX(), cp.getWidth(), cp.getHeight());
 				gfx.setPaint(new TexturePaint(cp, anchor));
@@ -278,6 +279,11 @@ public class CanvasRenderingContext2d extends RenderingContext2dState {
 		drawn = true;
 	}
 
+	public void drawImage(HTMLCanvasElement image, int dx, int dy, int dw, int dh) {
+		gfx.drawImage(image.getPixmap(), dx, dy, dw, dh, canvas.getImageObserver());
+		drawn = true;
+	}
+
 	public void drawImage(HTMLCanvasElement image, int sx, int sy, int sw, int sh, int dx, int dy, int dw, int dh) {
 		gfx.drawImage(image.getPixmap(), dx, dy, dx + dw, dy + dh, sx, sy, sx + sw, sy + sh, canvas.getImageObserver());
 		drawn = true;
@@ -287,9 +293,7 @@ public class CanvasRenderingContext2d extends RenderingContext2dState {
 		gfx = pixmap.createGraphics();
 		gfx.setBackground(new Color(0, 0, 0, 0));
 		gfx.clearRect(0, 0, pixmap.getWidth(), pixmap.getHeight());
-
 		gfx.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-
 		gfx.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_PURE);
 		gfx.setTransform(transform);
 		gfx.setClip(clip);
@@ -309,10 +313,8 @@ public class CanvasRenderingContext2d extends RenderingContext2dState {
 			data[p] |= imagedata.data[(i + 1)] << 8;
 			data[p] |= imagedata.data[(i + 2)] << 0;
 			data[p] |= imagedata.data[(i + 3)] << 24;
-
 			i += 4;
 		}
-
 		canvas.getPixmap().setRGB(dx, dy, imagedata.width, imagedata.height, data, 0, imagedata.width);
 		drawn = true;
 	}
@@ -361,6 +363,15 @@ public class CanvasRenderingContext2d extends RenderingContext2dState {
 
 	public void setShadowColor(Object shadowColor) {
 		this.shadowColor = shadowColor;
+	}
+
+	public void setGlobalAlpha(double globalAlpha) {
+		this.globalAlpha = globalAlpha;
+		if (globalAlpha == 1.0) {
+			gfx.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER));
+		} else {
+			gfx.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, (float) globalAlpha));
+		}
 	}
 
 	public boolean isDrawn() {
