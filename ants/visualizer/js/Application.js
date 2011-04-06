@@ -1123,6 +1123,7 @@ Visualizer.prototype.mousePressed = function() {
 		if (this.config['zoom'] && miniMap.contains(this.mouseX, this.mouseY)) {
 			this.shiftX = (this.replay.cols / 2 - (this.mouseX - miniMap.x)) * this.scale;
 			this.shiftY = (this.replay.rows / 2 - (this.mouseY - miniMap.y)) * this.scale;
+			this.director.draw();
 		} else if (this.loc.vis.contains(this.mouseX, this.mouseY) && (!this.config['border'] || this.config['zoom'])) {
 			this.mouseDown = 2;
 		} else {
