@@ -439,7 +439,7 @@ Replay.prototype.txtToJson = function(replay) {
 			if (i != result['players'] - 1) tl = lit.gimmeNext();
 		}
 		if (lit.moar()) {
-			tl = lit.gimme();
+			tl = lit.gimmeNext();
 			throw new Error('Extra data at end of file.');
 		}
 	} catch (error) {
