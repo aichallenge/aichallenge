@@ -907,7 +907,7 @@ Visualizer.prototype.interpolate = function(array1, array2, delta) {
  * @private
  */
 Visualizer.prototype.draw = function(time, tick) {
-	var x, y, w, d, hash;
+	var x, y, w, d, hash, ants, ant;
 	var turn = (time | 0);
 	// draw scores
 	w = this.main.canvas.width;
@@ -939,12 +939,13 @@ Visualizer.prototype.draw = function(time, tick) {
 			this.loc.graph.x, this.loc.graph.y + 11);
 	// ants...
 	var drawStates = {};
-	var ants = this.replay.getTurn(turn);
+	ants = this.replay.getTurn(turn);
 	for (var i = ants.length - 1; i >= 0; i--) {
-		var ant = ants[i].interpolate(time, Quality.LOW);
-		hash = INT_TO_HEX[ant['r']] + INT_TO_HEX[ant['g']] + INT_TO_HEX[ant['b']];
-		if (!drawStates[hash]) drawStates[hash] = [];
-		drawStates[hash].push(ant);
+		if ((ant = ants[i].interpolate(time, Quality.LOW))) {
+			hash = INT_TO_HEX[ant['r']] + INT_TO_HEX[ant['g']] + INT_TO_HEX[ant['b']];
+			if (!drawStates[hash]) drawStates[hash] = [];
+			drawStates[hash].push(ant);
+		}
 	}
 	if (this.config['border']) {
 		var ctx = this.main.ctx;
@@ -958,6 +959,7 @@ Visualizer.prototype.draw = function(time, tick) {
 	// sorting by render state gives slight fps improvements
 	var rowPixels = this.scale * this.replay.rows;
 	var colPixels = this.scale * this.replay.cols;
+	var halfScale = 0.5 * this.scale;
 	for (var key in drawStates) {
 		ctx.fillStyle = '#' + key;
 		var drawList = drawStates[key];
@@ -993,15 +995,21 @@ Visualizer.prototype.draw = function(time, tick) {
 				// correct coordinates
 				x -= Math.floor(x / colPixels) * colPixels;
 				y -= Math.floor(y / rowPixels) * rowPixels;
-				ctx.fillRect(x, y, w, w);
-				if (x + w > this.loc.map.w) {
-					ctx.fillRect(x - this.loc.map.w, y, w, w);
-					if (y + w > this.loc.map.h) {
-						ctx.fillRect(x - this.loc.map.w, y - this.loc.map.h, w, w);
+				if (ant['owner'] === undefined) {
+					ctx.beginPath();
+					ctx.arc(x + halfScale, y + halfScale, halfScale, 0, 2 * Math.PI, false);
+					ctx.fill();
+				} else {
+					ctx.fillRect(x, y, w, w);
+					if (x + w > this.loc.map.w) {
+						ctx.fillRect(x - this.loc.map.w, y, w, w);
+						if (y + w > this.loc.map.h) {
+							ctx.fillRect(x - this.loc.map.w, y - this.loc.map.h, w, w);
+						}
 					}
-				}
-				if (y + w > this.loc.map.h) {
-					ctx.fillRect(x, y - this.loc.map.h, w, w);
+					if (y + w > this.loc.map.h) {
+						ctx.fillRect(x, y - this.loc.map.h, w, w);
+					}
 				}
 			}
 		}

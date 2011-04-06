@@ -82,20 +82,22 @@ Ant.prototype.interpolate = function(time, quality) {
 		result = this.loInter;
 		lookup = this.loLookup;
 	}
+	if (time < set[0].time) return null;
 	lastFrame = set[set.length - 1];
-	if (time >= lastFrame.time) {
-		return result.assign(lastFrame);
-	} else {
-		timeIdx = time | 0;
-		goFrom = lookup[timeIdx];
-		if (goFrom === undefined) {
+	if (time >= lastFrame.time) return result.assign(lastFrame);
+	timeIdx = time | 0;
+	goFrom = lookup[timeIdx];
+	if (goFrom === undefined) {
+		if (timeIdx < set[0].time) {
+			goFrom = 0;
+		} else {
 			min = 0;
 			max = set.length - 1;
 			do {
 				i = (min + max >> 1);
-				if (set[i].time > timeIdx) {
+				if (timeIdx < set[i].time) {
 					max = i;
-				} else if (set[i + 1].time < timeIdx) {
+				} else if (timeIdx > set[i + 1].time) {
 					min = i;
 				} else {
 					goFrom = i;
@@ -103,10 +105,11 @@ Ant.prototype.interpolate = function(time, quality) {
 				}
 			} while (goFrom === undefined);
 		}
-		while (time > set[goFrom + 1].time) goFrom++;
-		delta = (time - set[goFrom].time) / (set[goFrom + 1].time - set[goFrom].time);
-		return result.interpolate(set[goFrom], set[goFrom + 1], delta);
+		lookup[timeIdx] = goFrom;
 	}
+	while (time > set[goFrom + 1].time) goFrom++;
+	delta = (time - set[goFrom].time) / (set[goFrom + 1].time - set[goFrom].time);
+	return result.interpolate(set[goFrom], set[goFrom + 1], delta);
 };
 Ant.prototype.fade = function(quality, key, valueb, timea, timeb) {
 	var i, valuea, mix, f0, f1;

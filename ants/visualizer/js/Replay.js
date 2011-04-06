@@ -491,6 +491,7 @@ Replay.prototype.getTurn = function(n) {
 					aniAnt.fade(Quality.LOW, 'r', 255, ant[3] - 0.5, ant[3] - 0.25);
 					aniAnt.fade(Quality.LOW, 'g', 255, ant[3] - 0.5, ant[3] - 0.25);
 					aniAnt.fade(Quality.LOW, 'b', 255, ant[3] - 0.5, ant[3] - 0.25);
+					aniAnt.frameAt(ant[3] - 0.25, Quality.LOW, false)['owner'] = ant[5];
 				}
 				aniAnt.fade(Quality.LOW, 'r', color[0], ant[3] - 0.25, ant[3]);
 				aniAnt.fade(Quality.LOW, 'g', color[1], ant[3] - 0.25, ant[3]);
@@ -567,7 +568,7 @@ Replay.prototype.getTurn = function(n) {
 				aniAnt.fade(Quality.LOW, 'g'   , 0.0, dead - 0.25, dead);
 				aniAnt.fade(Quality.LOW, 'b'   , 0.0, dead - 0.25, dead);
 			}
-			if (n >= ant[2] && n < dead) {
+			if (n < dead) {
 				// assign ant to display list
 				turn.push(aniAnt);
 			}
