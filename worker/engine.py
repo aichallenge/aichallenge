@@ -144,6 +144,10 @@ def run_game(game, botcmds, options, gameid=0):
                                 if valid:
                                     bot_output_log[b].write('\n'.join(valid)+'\n')
                                     bot_output_log[b].flush()
+                                if invalid:
+                                    bot_output_log[b].write('# invalid actions:\n')
+                                    bot_output_log[b].write('\n'.join(invalid)+'\n')
+                                    bot_output_log[b].flush()
 
                     game.finish_turn()
 
