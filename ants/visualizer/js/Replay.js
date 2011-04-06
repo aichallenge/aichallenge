@@ -499,7 +499,7 @@ Replay.prototype.getTurn = function(n) {
 			}
 			if (ant[6] !== undefined && n >= ant[3] && n < ant[3] + ant[6].length) {
 				// move
-				aniAnt.frameAt(n, Quality.LOW, true).owner = ant[5];
+				aniAnt.frameAt(n, Quality.LOW, true)['owner'] = ant[5];
 				var dir = undefined;
 				switch (ant[6].charAt(n - ant[3])) {
 					case 'n':
