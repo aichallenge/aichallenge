@@ -28,6 +28,7 @@ def run_game(game, botcmds, options, gameid=0):
                 if verbose:
                     print >> sys.stderr, 'bot %s did not start' % botcmds[b]
                 game.kill_player(b)
+            bot.pause()
 
         # initialise file logs
         if output_dir:
@@ -67,6 +68,11 @@ def run_game(game, botcmds, options, gameid=0):
                 if turn == 0:
                     game.start_game()
 
+                # resume all bots
+                for bot in bots:
+                    if bot.is_alive:
+                        bot.resume()
+
                 # send game state to each player
                 for b, bot in enumerate(bots):
                     if game.is_alive(b):
@@ -82,6 +88,12 @@ def run_game(game, botcmds, options, gameid=0):
                             if bot_input_log:
                                 bot_input_log[b].write(state)
                                 bot_input_log[b].flush()
+
+                # pause all bots again
+                for bot in bots:
+                    if bot.is_alive:
+                        bot.pause()
+
                 if turn > 0:
                     if stream_log:
                         stream_log.write('turn %s\n' % turn)
@@ -89,6 +101,7 @@ def run_game(game, botcmds, options, gameid=0):
                         stream_log.write(game.get_state())
                         stream_log.flush()
                     game.start_turn()
+
 
                 # get moves from each player
                 if turn == 0:
@@ -98,6 +111,11 @@ def run_game(game, botcmds, options, gameid=0):
                 start_time = time.time()
                 bot_finished = [not game.is_alive(b) for b in range(len(bots))]
                 bot_moves = [[] for b in bots]
+
+                # resume all bots
+                for bot in bots:
+                    if bot.is_alive:
+                        bot.resume()
 
                 # loop until received all bots send moves or are dead
                 #   or when time is up
@@ -126,6 +144,11 @@ def run_game(game, botcmds, options, gameid=0):
                                 # bot finished sending data for this turn
                                 break
                             bot_moves[b].append(line)
+
+                # pause all bots again
+                for bot in bots:
+                    if bot.is_alive:
+                        bot.pause()
 
                 # kill timed out bots
                 for b, finished in enumerate(bot_finished):

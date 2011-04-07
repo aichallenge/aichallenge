@@ -26,7 +26,7 @@ def monitor_input_channel(sandbox):
             print sys.exc_info()
             sandbox.kill()
             break
-        if line is None or len(line) == 0:
+        if not line:
             try:
                 sandbox.kill()
             except:
@@ -75,6 +75,14 @@ class Sandbox:
                 pass
             #os.kill(self.command_process.pid, signal.SIGKILL)
             self.is_alive = False
+
+    # pause the process by sending a SIGSTOP to the child
+    def pause(self):
+        self.command_process.send_signal(signal.SIGSTOP)
+
+    # resume the process by sending a SIGCONT to the child
+    def resume(self):
+        self.command_process.send_signal(signal.SIGCONT)
 
     def write(self, line):
         if not self.is_alive:
