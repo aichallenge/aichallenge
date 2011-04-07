@@ -153,6 +153,14 @@ def install_scala():
         os.symlink("/usr/share/scala/bin/scala", "/usr/bin/scala")
         os.symlink("/usr/share/scala/bin/scalac", "/usr/bin/scalac")
 
+def install_dmd():
+    """ Install the D language """
+    if os.path.exists("/usr/bin/dmd"):
+        return
+    with CD("/root"):
+        run_cmd("curl 'http://ftp.digitalmars.com/dmd_2.052-0_i386.deb' > dmd_2.052-0_i386.deb")
+        run_cmd("dpkg -i dmd_2.052-0_i386.deb")
+
 def install_all_languages():
     install_basic_languages()
     install_extra_packaged_languages()
@@ -160,6 +168,7 @@ def install_all_languages():
     install_nodejs()
     install_groovy()
     install_scala()
+    install_dmd()
 
 def setup_contest_user():
     """ Setup the contest user that all worker scripts run under """
