@@ -199,6 +199,7 @@ comp_args = {
     "C#"            : [["gmcs", "-warn:0", "-out:%s.exe" % BOT]],
     "C++"         : [["g++", "-O3", "-funroll-loops", "-c"],
                              ["g++", "-O2", "-lm", "-o", BOT]],
+    "D"             : [["dmd", "-O", "-inline", "-release", "-of" + BOT]],
     "Go"            : [["/usr/local/bin/8g", "-o", "_go_.8"],
                              ["/usr/local/bin/8l", "-o", BOT, "_go_.8"]],
     "Groovy"    : [["groovyc"],
@@ -268,6 +269,13 @@ languages = {
          "coffee MyBot.coffee",
          [],
          [(["*.coffee"], ChmodCompiler("CoffeeScript"))]
+        ),
+    "D": 
+        ("",
+         "MyBot.d",
+         "./MyBot",
+         ["*.o", BOT],
+         [(["*.d"], JavaCompiler(comp_args["D"][0]))]
         ),
     "Go":
         ("",
