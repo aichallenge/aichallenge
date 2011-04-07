@@ -3,13 +3,18 @@ delimiter $$
 create procedure generate_matchup()
 begin
 
+set @init_mu = 25.0;
+set @init_beta = @init_mu / 6;
+set @twiceBetaSq = 2 * pow(@init_beta, 2);
+
 -- Step 1: select the seed player
 
-select s.user_id,
-       s.submission_id
-into @seed_id, @submission_id
+select s.user_id, s.submission_id, s.mu, s.sigma
+into @seed_id, @submission_id, @mu, @sigma
 from submission s
 where s.latest = 1
+-- this selects the user that was least recently used player for a seed
+-- from both the game and matchup tables
 order by ( select max(matchup_id)
            from matchup m
            where m.seed_id = s.user_id ) asc,
@@ -62,8 +67,8 @@ values (@seed_id, @map_id, -1);
 
 set @matchup_id = last_insert_id();
 
-insert into matchup_player (matchup_id, user_id, submission_id, player_id)
-values (@matchup_id, @seed_id, @submission_id, -1);
+insert into matchup_player (matchup_id, user_id, submission_id, player_id, mu, sigma)
+values (@matchup_id, @seed_id, @submission_id, -1, @mu, @sigma);
 
 -- select @matchup_id, @seed_id, @submission_id, @map_id, @players;
 
@@ -88,12 +93,14 @@ while @player_count < @players do
     from game_player gp1
     inner join game_player gp2
         on gp1.game_id = gp2.game_id
-    where gp2.user_id = @last_added_user_id
+    where gp2.user_id = @last_user_id
     and gp1.game_id in (
         select game_id from (
+            -- mysql does not allow limits in subqueries
+            -- wrapping in it a dummy select is a work around
             select game_id
             from game_player
-            where user_id = @last_added_user_id
+            where user_id = @last_user_id
             order by game_id desc
             limit 5
         ) latest_games
@@ -103,23 +110,23 @@ while @player_count < @players do
     -- and then rank by a match_quality approximation
     --   the approximation is not the true trueskill match_quality,
     --   but will be in the same order as if we calculated it   
-    select s.user_id, s.submission_id, -- , s.mu, s.sigma ,
+    select s.user_id, s.submission_id, s.mu, s.sigma ,
     @c := (@twiceBetaSq + pow(mp.sigma,2) + pow(s.sigma,2)) as c,
     exp(sum(ln(
         SQRT(@twiceBetaSq / @c) * EXP(-(pow(mp.mu - s.mu, 2) / (2 * @c)))
     ))) as match_quality
-    into @last_user_id, @last_submission_id, @c, @match_quality
+    into @last_user_id, @last_submission_id, @last_mu, @last_sigma, @c, @match_quality
     from matchup_player mp,
     (
         select s.user_id, s.submission_id, s.mu, s.sigma
-        from matchup m
-            join matchup_player mp
-                on m.matchup_id = mp.matchup_id,
+        from matchup_player mp,
             submission s
 
         where m.matchup_id = @matchup_id
             and s.latest = 1
 
+        -- this order by causes a filesort, but I don't see a way around it
+        -- limiting to 100 saves us from doing extra trueskill calculations
         order by abs(s.mu - mp.mu)
         limit 100
     ) s
@@ -131,8 +138,8 @@ while @player_count < @players do
     order by match_quality desc
     limit 1;
 
-    insert into matchup_player (matchup_id, user_id, submission_id, player_id)
-    values (@matchup_id, @last_user_id, @last_submission_id, -1);
+    insert into matchup_player (matchup_id, user_id, submission_id, player_id, mu, sigma)
+    values (@matchup_id, @last_user_id, @last_submission_id, -1, @last_mu, @last_sigma);
     
     set @player_count = @player_count + 1;
 
@@ -142,3 +149,26 @@ select @matchup_id as matchup_id, @players as players;
 
 end$$
 delimiter ;
+
+-- TODO, fill in the player_id positions
+set @matchup_id = 39;
+
+select m.map_id, mp.user_id, g.game_id, gp.user_id, gp.player_id, id.player_id
+from matchup m
+inner join matchup_player mp
+    on m.matchup_id = mp.matchup_id
+inner join game g
+    on m.map_id = g.map_id
+inner join game_player gp
+    on g.game_id = gp.game_id
+    and gp.user_id = mp.user_id
+right outer join
+(
+    select @row := @row + 1 as player_id
+    from matchup_player mp,
+    (select @row := -1) id
+    where mp.matchup_id = @matchup_id
+) id
+    on gp.player_id = id.player_id
+where m.matchup_id = @matchup_id or m.matchup_id is null
+order by g.game_id;
