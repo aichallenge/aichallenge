@@ -113,15 +113,19 @@ def run_game(game, botcmds, options, gameid=0):
                             bot_finished[b] = True
                             game.kill_player(b)
                             continue # bot is dead
-                        line = bot.read_line()
-                        while line != None:
+
+                        # read a maximum of 100 lines per iteration
+                        for x in range(100):
+                            line = bot.read_line()
+                            if line is None:
+                                # stil waiting for more data
+                                break
                             line = line.strip()
                             if line.lower() == 'go':
                                 bot_finished[b] = True
+                                # bot finished sending data for this turn
                                 break
-                            else:
-                                bot_moves[b].append(line)
-                            line = bot.read_line()
+                            bot_moves[b].append(line)
 
                 # kill timed out bots
                 for b, finished in enumerate(bot_finished):
