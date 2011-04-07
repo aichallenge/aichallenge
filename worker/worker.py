@@ -279,11 +279,10 @@ class Worker:
                     log.error("Unpack Error")
                     return False
             log.info("Compiling %s " % submission_id)
-            compile_log = compiler.Log()
-            success = compiler.compile_anything(download_dir)
-            if not success:
+            detected_lang, errors = compiler.compile_anything(download_dir)
+            if not detected_lang:
                 shutil.rmtree(download_dir)
-                log.error(compile_log.err)
+                log.error('\n'.join(errors))
                 report(STATUS_COMPILE_ERROR);
                 log.error("Compile Error")
                 return False
@@ -338,7 +337,7 @@ class Worker:
             game = Ants(options)
             submission_dir = self.submission_dir(submission_id)
             bots = [("../ants/submission_test/", "python TestBot.py"),
-                    (submission_dir, compiler.detect_language(submission_dir)[2])]
+                    (submission_dir, compiler.get_run_cmd(submission_dir))]
             result = run_game(game, bots, options, matchup_id)
             log.info(result)
             return True
@@ -362,7 +361,7 @@ class Worker:
             for submission_id in task["players"]:
                 if self.compile(submission_id):
                     submission_dir = self.submission_dir(submission_id)
-                    run_cmd = compiler.detect_language(submission_dir)[2]
+                    run_cmd = compiler.get_run_cmd(submission_dir)
                     #run_dir = tempfile.mkdtemp(dir=server_info["submissions_path"])
                     bots.append((submission_dir, run_cmd))
                     #shutil.copytree(submission_dir, run_dir)
