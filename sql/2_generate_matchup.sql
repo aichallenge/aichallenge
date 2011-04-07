@@ -122,7 +122,7 @@ while @player_count < @players do
         from matchup_player mp,
             submission s
 
-        where m.matchup_id = @matchup_id
+        where mp.matchup_id = @matchup_id
             and s.latest = 1
 
         -- this order by causes a filesort, but I don't see a way around it
@@ -145,30 +145,58 @@ while @player_count < @players do
 
 end while;
 
-select @matchup_id as matchup_id, @players as players;
+-- Step 4: put players into map positions
+
+set @player_count = 0;
+
+while @player_count < @players do
+
+    select mp.user_id, id.player_id
+    into @pos_user_id, @pos_player_id
+    from matchup_player mp
+    inner join (
+        select user_id
+        from matchup_player mp
+        where matchup_id = @matchup_id
+        and player_id = -1
+    ) avail
+        on mp.user_id = avail.user_id,
+    (
+        select @row := @row + 1 as player_id
+        from matchup_player,
+        (select @row := -1) id
+        where matchup_id = @matchup_id
+    ) id
+    where mp.matchup_id = @matchup_id
+    and id.player_id not in (
+        select player_id
+        from matchup_player mp
+        where matchup_id = @matchup_id
+        and player_id != -1
+    )
+    order by (mp.user_id = @seed_id) desc,
+    (
+        select max(g.game_id)    
+        from game g
+        inner join game_player gp
+            on g.game_id = gp.game_id
+        where g.map_id = @map_id
+        and gp.user_id = mp.user_id
+        and gp.player_id = id.player_id
+    ) asc
+    limit 1;
+    
+    update matchup_player
+    set player_id = @pos_player_id
+    where matchup_id = @matchup_id
+    and user_id = @pos_user_id;
+    
+    set @player_count = @player_count + 1;
+    
+end while;
+
+-- return new matchup id
+select @matchup_id as matchup_id;
 
 end$$
 delimiter ;
-
--- TODO, fill in the player_id positions
-set @matchup_id = 39;
-
-select m.map_id, mp.user_id, g.game_id, gp.user_id, gp.player_id, id.player_id
-from matchup m
-inner join matchup_player mp
-    on m.matchup_id = mp.matchup_id
-inner join game g
-    on m.map_id = g.map_id
-inner join game_player gp
-    on g.game_id = gp.game_id
-    and gp.user_id = mp.user_id
-right outer join
-(
-    select @row := @row + 1 as player_id
-    from matchup_player mp,
-    (select @row := -1) id
-    where mp.matchup_id = @matchup_id
-) id
-    on gp.player_id = id.player_id
-where m.matchup_id = @matchup_id or m.matchup_id is null
-order by g.game_id;
