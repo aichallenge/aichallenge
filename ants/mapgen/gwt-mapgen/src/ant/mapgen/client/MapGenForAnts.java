@@ -131,10 +131,10 @@ public class MapGenForAnts implements EntryPoint, ClickHandler {
             for (int c = 0; c < map[0].length; c++) {
                 switch (map[r][c]) {
                     case MapGenerator.WATER_TILE:
-                        sb.append(".");
+                        sb.append("%");
                         break;
                     case MapGenerator.LAND_TILE:
-                        sb.append("%");
+                        sb.append(".");
                         break;
                     case MapGenerator.ANT_START_POS_TILE:
                         sb.append(ant++);

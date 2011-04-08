@@ -86,10 +86,10 @@ public class MapGenerator {
             for (int c = 0; c < map[0].length; c++) {
                 switch (map[r][c]) {
                     case WATER_TILE:
-                        sb.append(TILE_PREFIX + ".");
+                        sb.append(TILE_PREFIX + "%s");
                         break;
                     case LAND_TILE:
-                        sb.append(TILE_PREFIX + "%");
+                        sb.append(TILE_PREFIX + ".");
                         break;
                     case ANT_START_POS_TILE:
                         sb.append(TILE_PREFIX + ant++);
@@ -117,8 +117,14 @@ public class MapGenerator {
      * The map will consist of WATER_TILE's and INVALID_TILE's
      */
     private int[][] createMapPart() {
-        int rows = rnd.nextInt(maxMapSize - minMapSize) + minMapSize;
-        int cols = rnd.nextInt(maxMapSize - minMapSize) + minMapSize;
+    	
+        int rows =  maxMapSize;
+        int cols = maxMapSize;
+        
+        if (maxMapSize != minMapSize) {
+        	rows = rnd.nextInt(maxMapSize - minMapSize) + minMapSize;
+        	cols = rnd.nextInt(maxMapSize - minMapSize) + minMapSize;
+        }
 
         int[][] mapPart;
 
