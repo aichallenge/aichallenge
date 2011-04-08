@@ -4,7 +4,6 @@
  */
 
 /*
- * @todo add letters over ants for the visually impaired
  * @todo zoom in to 20x20 squares with animated ants
  * @todo menu items: clear, show attack, show birth,
  *     zoom, toggle graph/score bars, cpu use
@@ -13,7 +12,6 @@
  * @todo show when a bot crashed
  * @todo switch to console.log for debug and load messages
  * @todo fix duplicate 'parsing replay...' messages
- * @todo load replays incrementally
  */
 
 LoadingState = {
@@ -448,9 +446,10 @@ Visualizer.prototype.tryStart = function() {
 					vis.setBorder(!vis.config['border']);
 					vis.director.draw();
 				});
-//				bg.addButton(4, function() {
-//					vis.setAntLabels(!vis.config['label']);
-//				});
+				bg.addButton(4, function() {
+					vis.setAntLabels(!vis.config['label']);
+					vis.director.draw();
+				});
 			}
 			// generate fog images
 			var colors = [null];
@@ -622,7 +621,9 @@ Visualizer.prototype.setZoom = function(enable) {
 	this.overlay.canvas.width = this.loc.map.w;
 	this.overlay.canvas.height = this.loc.map.h;
 	this.setBorder(this.config['border']);
-	this.btnMgr.groups['toolbar'].buttons[3].enabled = !enable;
+	var borderBtn = this.btnMgr.groups['toolbar'].buttons[3];
+	borderBtn.enabled = !enable;
+	borderBtn.draw();
 };
 Visualizer.prototype.setBorder = function(enable) {
 	this.config['border'] = enable;
@@ -727,11 +728,6 @@ Visualizer.prototype.resize = function(forced) {
 		this.loc.vis = new Location(LEFT_PANEL_W, y,
 			news.width - LEFT_PANEL_W - RIGHT_PANEL_W,
 			news.height - y - BOTTOM_PANEL_H);
-		this.setZoom(this.config['zoom']);
-		this.setBorder(this.config['border']);
-		this.scores.canvas.width = this.loc.graph.w;
-		this.scores.canvas.height = this.loc.graph.h;
-		this.renderCounts();
 		var bg = this.btnMgr.groups['playback'];
 		bg.x = ((news.width - 8 * 64) / 2) | 0;
 		bg.y = this.loc.vis.y + this.loc.vis.h;
@@ -740,6 +736,11 @@ Visualizer.prototype.resize = function(forced) {
 		bg = this.btnMgr.groups['toolbar'];
 		bg.x = this.loc.vis.x + this.loc.vis.w;
 		bg.y = this.loc.vis.y + 8;
+		this.setZoom(this.config['zoom']);
+		this.setBorder(this.config['border']);
+		this.scores.canvas.width = this.loc.graph.w;
+		this.scores.canvas.height = this.loc.graph.h;
+		this.renderCounts();
 		// redraw everything
 		this.btnMgr.draw();
 		this.director.draw();
@@ -904,6 +905,9 @@ Visualizer.prototype.drawColorBar = function(loc, values) {
 	offsetX = loc.x + 2;
 	for (i = 0; i < useValues.length; i++) {
 		var text = Math.round(values[i]);
+		if (this.config['label']) {
+			text = String.fromCharCode(65 + i) + ':' + text;
+		}
 		var textWidth = this.main.ctx.measureText(text).width;
 		if (useValues[i] != 0 && scale * useValues[i] >= textWidth) {
 			this.main.ctx.fillText(text, offsetX, offsetY);
@@ -933,12 +937,6 @@ Visualizer.prototype.draw = function(time, tick) {
 	w = this.main.canvas.width;
 	if (tick !== undefined) {
 		if (this.fog !== undefined) this.renderFog(turn);
-		//var array1 = turnObj;
-		//var array2 = (time === turn) ? array1 : this.replay.turns[turn + 1];
-		//var scores = this.interpolate(array1.scores, array2.scores, time - turn);
-		//this.drawColorBar(95,  4, w - 4 - 95, 22, scores);
-		//var counts = this.interpolate(array1.counts, array2.counts, time - turn);
-		//this.drawColorBar(95, 38, w - 4 - 95, 22, counts);
 		this.drawColorBar(this.loc.scorebar, this.replay.scores[turn]);
 		this.drawColorBar(this.loc.countbar, this.replay.counts[turn]);
 	}
@@ -1031,6 +1029,43 @@ Visualizer.prototype.draw = function(time, tick) {
 					}
 					if (y + w > this.loc.map.h) {
 						ctx.fillRect(x, y - this.loc.map.h, w, w);
+					}
+				}
+			}
+		}
+	}
+	if (this.config['label']) {
+		var fontSize = Math.max(this.scale, 8);
+		ctx.textBaseline = 'middle';
+		ctx.textAlign = 'center';
+		ctx.font = 'bold ' + fontSize + 'px Arial';
+		ctx.fillStyle = '#000';
+		ctx.strokeStyle = '#fff';
+		ctx.lineWidth = 0.2 * fontSize;
+		for (key in drawStates) {
+			drawList = drawStates[key];
+			for (n = 0; n < drawList.length; n++) {
+				ant = drawList[n];
+				x = Math.round(this.scale * ant['x']);
+				y = Math.round(this.scale * ant['y']);
+				// correct coordinates
+				x += halfScale - Math.floor(x / colPixels) * colPixels;
+				y += halfScale - Math.floor(y / rowPixels) * rowPixels;
+				if (ant['owner'] !== undefined) {
+					var letter = String.fromCharCode(65 + ant['owner']);
+					ctx.strokeText(letter, x, y);
+					ctx.fillText(letter, x, y);
+					if (x - halfScale + w > this.loc.map.w) {
+						ctx.strokeText(letter, x - this.loc.map.w, y);
+						ctx.fillText(letter, x - this.loc.map.w, y);
+						if (y - halfScale + w > this.loc.map.h) {
+							ctx.strokeText(letter, x - this.loc.map.w, y - this.loc.map.h);
+							ctx.fillText(letter, x - this.loc.map.w, y - this.loc.map.h);
+						}
+					}
+					if (y - halfScale + w > this.loc.map.h) {
+						ctx.strokeText(letter, x, y - this.loc.map.h);
+						ctx.fillText(letter, x, y - this.loc.map.h);
 					}
 				}
 			}
