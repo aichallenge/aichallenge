@@ -86,7 +86,7 @@ public class MapGenerator {
             for (int c = 0; c < map[0].length; c++) {
                 switch (map[r][c]) {
                     case WATER_TILE:
-                        sb.append(TILE_PREFIX + "%s");
+                        sb.append(TILE_PREFIX + "%");
                         break;
                     case LAND_TILE:
                         sb.append(TILE_PREFIX + ".");
@@ -121,7 +121,7 @@ public class MapGenerator {
         int rows =  maxMapSize;
         int cols = maxMapSize;
         
-        if (maxMapSize != minMapSize) {
+        if (maxMapSize > minMapSize) {
         	rows = rnd.nextInt(maxMapSize - minMapSize) + minMapSize;
         	cols = rnd.nextInt(maxMapSize - minMapSize) + minMapSize;
         }
