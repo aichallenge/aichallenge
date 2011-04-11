@@ -108,57 +108,13 @@ def run_game(game, botcmds, options, gameid=0):
                     time_limit = loadtime
                 else:
                     time_limit = turntime
-                start_time = time.time()
-                bot_finished = [not game.is_alive(b) for b in range(len(bots))]
-                bot_moves = [[] for b in bots]
+                bot_moves = []
 
-                # resume all bots
-                for bot in bots:
-                    if bot.is_alive:
-                        bot.resume()
-
-                # loop until received all bots send moves or are dead
-                #   or when time is up
-                while (sum(bot_finished) < len(bot_finished) and
-                        time.time() - start_time < time_limit):
-                    time.sleep(0.01)
-                    for b, bot in enumerate(bots):
-                        if bot_finished[b]:
-                            continue # already got bot moves
-                        if not bot.is_alive:
-                            if verbose:
-                                print >> sys.stderr, 'bot %s died' % b
-                            bot_finished[b] = True
-                            game.kill_player(b)
-                            continue # bot is dead
-
-                        # read a maximum of 100 lines per iteration
-                        for x in range(100):
-                            line = bot.read_line()
-                            if line is None:
-                                # stil waiting for more data
-                                break
-                            line = line.strip()
-                            if line.lower() == 'go':
-                                bot_finished[b] = True
-                                # bot finished sending data for this turn
-                                break
-                            bot_moves[b].append(line)
-
-                # pause all bots again
-                for bot in bots:
-                    if bot.is_alive:
-                        bot.pause()
-
-                # kill timed out bots
-                for b, finished in enumerate(bot_finished):
-                    if not finished:
-                        if verbose:
-                            print >> sys.stderr, "bot %s timed out" % b
-                        if stream_log:
-                            stream_log.write('# bot %s timed out\n' % b)
-                        game.kill_player(b)
-                        bots[b].kill()
+                if options['serial']:
+                    for bot in bots:
+                        bot_moves.extend(get_moves(game, [bot], time_limit))
+                else:
+                    bot_moves = get_moves(game, bots, time_limit)
 
                 # process all moves
                 bot_alive = [game.is_alive(b) for b in range(len(bots))]
@@ -251,6 +207,61 @@ def run_game(game, botcmds, options, gameid=0):
         }
         json.dump(replay, replay_log,sort_keys=True)
         replay_log.close()
+
+def get_moves(game, bots, time_limit):
+    bot_finished = [not game.is_alive(b) for b in range(len(bots))]
+    bot_moves = [[] for b in bots]
+    start_time = time.time()
+
+    # resume all bots
+    for bot in bots:
+        if bot.is_alive:
+            bot.resume()
+
+    # loop until received all bots send moves or are dead
+    #   or when time is up
+    while (sum(bot_finished) < len(bot_finished) and
+            time.time() - start_time < time_limit):
+        time.sleep(0.01)
+        for b, bot in enumerate(bots):
+            if bot_finished[b]:
+                continue # already got bot moves
+            if not bot.is_alive:
+                if verbose:
+                    print >> sys.stderr, 'bot %s died' % b
+                bot_finished[b] = True
+                game.kill_player(b)
+                continue # bot is dead
+
+            # read a maximum of 100 lines per iteration
+            for x in range(100):
+                line = bot.read_line()
+                if line is None:
+                    # stil waiting for more data
+                    break
+                line = line.strip()
+                if line.lower() == 'go':
+                    bot_finished[b] = True
+                    # bot finished sending data for this turn
+                    break
+                bot_moves[b].append(line)
+
+    # pause all bots again
+    for bot in bots:
+        if bot.is_alive:
+            bot.pause()
+
+    # kill timed out bots
+    for b, finished in enumerate(bot_finished):
+        if not finished:
+            if verbose:
+                print >> sys.stderr, "bot %s timed out" % b
+            if stream_log:
+                stream_log.write('# bot %s timed out\n' % b)
+            game.kill_player(b)
+            bots[b].kill()
+
+    return bot_moves
 
 class Tee(object):
     """ Write to multiple files at once """
