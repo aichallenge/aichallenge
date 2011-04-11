@@ -913,8 +913,8 @@ class Ants(Game):
             Assumes map is symmetric.
         """
         ant1, ant2 = self.initial_ant_list[0:2] # assumed one ant per player
-        row_t = abs(ant1.loc[0] - ant2.loc[0])
-        col_t = abs(ant1.loc[1] - ant2.loc[1])
+        row_t = ant1.loc[0] - ant2.loc[0]
+        col_t = ant1.loc[1] - ant2.loc[1]
         food_sets = []
         visited = [[False for col in range(self.width)]
                           for row in range(self.height)]
