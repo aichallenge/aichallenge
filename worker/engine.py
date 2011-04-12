@@ -19,6 +19,7 @@ def run_game(game, botcmds, options, gameid=0):
     error = ''
 
     bot_input_log = bot_output_log = stream_log = replay_log = None
+    bots = []
 
     try:
         # create bot sandboxes
