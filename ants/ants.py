@@ -979,10 +979,8 @@ class Ants(Game):
             # currently 1 food is spawned per turn per player
             food_bonus = (self.turns - self.turn)*self.num_players
             self.score[player] += food_bonus
-
-        # ammend the score history instead of extending it
-        for i, s in enumerate(self.score):
-            self.score_history[i][-1] = s
+            # ammend the score history instead of extending it
+            self.score_history[player][-1] += food_bonus
 
     def start_turn(self):
         """ Called by engine at the start of the turn """
@@ -993,13 +991,24 @@ class Ants(Game):
 
     def finish_turn(self):
         """ Called by engine at the end of the turn """
+
+        # determine players alive at the start of the turn
+        #  (only these players will be able to score this turn)
+        was_alive = set(i for i in range(self.num_players) if self.is_alive(i))
+
         self.do_orders()
         self.do_attack()
         self.do_spawn()
         self.do_food()
 
         for i, s in enumerate(self.score):
-            self.score_history[i].append(s)
+            if i in was_alive:
+                # update score for those were alive at the START of the turn
+                self.score_history[i].append(s)
+            else:
+                # otherwise undo any changes to their score made 
+                #   during this turn
+                self.score[i] = self.score_history[i][-1]
 
         # now that all the ants have moved we can update the vision
         self.update_vision()
