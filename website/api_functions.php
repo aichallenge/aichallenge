@@ -43,7 +43,7 @@ function valid_worker($api_key,$ip_address) {
 		}
 	} else {
 		// fallback for no memcache
-		$sql = "SELECT * FROM worker WHERE api_key = '".addslashes($api_key)."';";
+		$sql = "SELECT * FROM worker WHERE api_key = '".mysql_real_escape_string($api_key)."';";
 	    $result = mysql_query($sql);
 	    if(!$result || mysql_num_rows($result) == 0){
 	        return false;
