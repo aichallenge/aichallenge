@@ -29,7 +29,7 @@ if ($compile_result) {
 $match_result = mysql_query(sprintf($sql["select_next_matchup"],
                                     $worker["worker_id"]));
 if (!$match_result) {
-    $match_result = mysql_query("call genarate_matchup;");
+    $match_result = mysql_query("call generate_matchup;");
     $match_result = mysql_query(sprintf($sql["select_next_matchup"],
                                         $worker["worker_id"]));
 }
