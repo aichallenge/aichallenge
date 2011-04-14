@@ -485,17 +485,33 @@ class Ants(Game):
 
         # if ant is sole occupant of a new square then it survives
         self.current_ants = {}
+        colliding_ants = []
         for loc, ants in next_loc.items():
             if len(ants) == 1:
                 self.current_ants[loc] = ants[0]
             else:
                 for ant in ants:
                     self.kill_ant(ant, True)
+                    colliding_ants.append(ant)
 
         # set new ant locations
         for ant in self.current_ants.values():
             row, col = ant.loc
             self.map[row][col] = ant.owner
+
+        # distribute score for ants which died from collisions
+        for ant in colliding_ants:
+            # find living nearby enemies
+            enemies = self.nearby_ants(ant.loc, self.attackradius, ant.owner)
+            # in addition to the living nearby enemies, dead nearby enemies 
+            #   should get points too!
+            for other_ant in colliding_ants:
+                # only interested in enemies within range
+                if other_ant.owner != ant.owner and self.distance(ant.loc, other_ant.loc) <= self.attackradius:
+                    enemies.append(other_ant)
+            score = Fraction(1, len(enemies))
+            for enemy in enemies:
+                self.score[enemy.owner] += score
 
     def do_spawn(self):
         """ Spawn new ants from food
