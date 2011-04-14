@@ -127,7 +127,8 @@ DROP TABLE IF EXISTS `organization`;
 CREATE TABLE `organization` (
   `org_id` int(11) NOT NULL AUTO_INCREMENT,
   `name` varchar(128) DEFAULT NULL,
-  PRIMARY KEY (`org_id`)
+  PRIMARY KEY (`org_id`),
+  UNIQUE KEY (`name`)
 );
 
 DROP TABLE IF EXISTS `ranking`;
@@ -143,9 +144,8 @@ CREATE TABLE `ranking` (
   `skill_change` float NOT NULL,
   `latest` tinyint(1) NOT NULL,
   `age` timestamp NOT NULL,
-  KEY `leaderboard_id` (`leaderboard_id`),
   KEY `submission_id` (`submission_id`),
-  KEY `leaderboard_id_2` (`leaderboard_id`,`submission_id`,`rank`)
+  KEY `leaderboard_id` (`leaderboard_id`,`submission_id`,`rank`)
 );
 
 DROP TABLE IF EXISTS `ranking_archive`;
@@ -161,9 +161,8 @@ CREATE TABLE `ranking_archive` (
   `skill_change` float NOT NULL,
   `latest` tinyint(4) NOT NULL,
   `age` timestamp NOT NULL ,
-  KEY `leaderboard_id` (`leaderboard_id`),
   KEY `submission_id` (`submission_id`),
-  KEY `leaderboard_id_2` (`leaderboard_id`,`submission_id`,`rank`)
+  KEY `leaderboard_id` (`leaderboard_id`,`submission_id`,`rank`)
 );
 
 DROP TABLE IF EXISTS `settings`;
@@ -171,8 +170,7 @@ CREATE TABLE `settings` (
   `name` varchar(20) NOT NULL,
   `number` int(11) NOT NULL DEFAULT '0',
   `string` varchar(255) NOT NULL DEFAULT '',
-  PRIMARY KEY (`name`),
-  UNIQUE KEY `name_UNIQUE` (`name`)
+  PRIMARY KEY (`name`)
 );
 
 DROP TABLE IF EXISTS `submission`;
@@ -191,7 +189,6 @@ CREATE TABLE `submission` (
   `worker_id` int(11) DEFAULT NULL,
   PRIMARY KEY (`submission_id`),
   KEY `language_id` (`language_id`),
-  KEY `submission_id` (`submission_id`,`user_id`),
   KEY `user_id` (`user_id`),
   KEY `timestamp` (`timestamp`),
   KEY `user_id_2` (`user_id`,`timestamp`),
@@ -213,15 +210,15 @@ CREATE TABLE `user` (
   `activated` tinyint(1) NOT NULL,
   `admin` tinyint(1) NOT NULL,
   PRIMARY KEY (`user_id`),
-  KEY `username` (`username`),
-  KEY `user_id` (`user_id`,`username`)
+  UNIQUE KEY (`username`)
 );
 
 DROP TABLE IF EXISTS `user_status_code`;
 CREATE TABLE `user_status_code` (
   `status_id` int(11) NOT NULL,
   `name` varchar(256) NOT NULL,
-  PRIMARY KEY (`status_id`)
+  PRIMARY KEY (`status_id`),
+  UNIQUE KEY (`name`)
 );
 
 DROP TABLE IF EXISTS `worker`;

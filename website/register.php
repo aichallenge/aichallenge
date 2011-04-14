@@ -1,11 +1,36 @@
 <?php
 
-include 'header.php';
-include 'mysql_login.php';
-include 'server_info.php';
+require_once 'header.php';
+require_once 'mysql_login.php';
+require_once 'server_info.php';
 
 if($server_info["submissions_open"]) { ?>
+<script>
+    function onClickOrganization(element) {
+        var otherOrg = document.getElementById('user_organization_other');
+        if(element.selectedIndex === 1) {
+            otherOrg.disabled = false;
+            otherOrg.focus();
+        } else {
+            otherOrg.disabled = true;
+            otherOrg.value = '';
+        }
+    }
+</script>
 <h2>Create Your Account</h2>
+<?php if (count($errors) > 0) { ?>
+
+<p>There was a problem with the information that you gave.</p>
+<ul>
+
+<?php
+    foreach ($errors as $key => $error) {
+      print "<li>$error</li>";
+    }
+}
+?>
+
+
 <form name="create_account_form" method="post"
   action="process_registration.php">
 <table border="0" width="100%" cellspacing="10">
@@ -13,7 +38,7 @@ if($server_info["submissions_open"]) { ?>
   <tr>
     <td>Username</td>
     <td>&nbsp;</td>
-    <td><input name="username" type="text" id="username"></td>
+    <td><input name="username" type="text" id="username" value="<?php echo isset($_POST['username'])?htmlspecialchars($_POST['username']):'' ?>" /></td>
     <td>Your username must be at least 6 characters and composed only of the
         characters a-z, A-Z, 0-9, '-', '_', and '.'</td>
   </tr>
@@ -21,7 +46,7 @@ if($server_info["submissions_open"]) { ?>
   <tr>
     <td>Password</td>
     <td>&nbsp;</td>
-    <td><input name="password1" type="password" id="password1"></td>
+    <td><input name="password1" type="password" id="password1" /></td>
     <td>Must be at least 8 characters long. Must contain at least one number
         and one letter.</td>
   </tr>
@@ -29,14 +54,14 @@ if($server_info["submissions_open"]) { ?>
   <tr>
     <td>Confirm Password</td>
     <td>&nbsp;</td>
-    <td><input name="password2" type="password" id="password2"></td>
+    <td><input name="password2" type="password" id="password2" /></td>
     <td>&nbsp;</td>
   </tr>
   <!-- Email -->
   <tr>
     <td>Email Address</td>
     <td>&nbsp;</td>
-    <td><input name="user_email" type="text" id="user_email"></td>
+    <td><input name="user_email" type="text" id="user_email" value="<?php echo isset($_POST['user_email'])?htmlspecialchars($_POST['user_email']):'' ?>" /></td>
     <td>You can use any email address. You will use this address to confirm
         the creation of your account.</td>
   </tr>
@@ -52,7 +77,9 @@ if($server_info["submissions_open"]) { ?>
   while ($row = mysql_fetch_assoc($result)) {
     $status_id = $row['status_id'];
     $status_name = $row['name'];
-    echo "<option value=$status_id>$status_name</option>";
+    if ( isset( $_POST['user_status'] ) && $_POST['user_status'] == $status_id ) $selected = ' selected="selected"';
+    else $selected = '';
+    echo "<option value=\"$status_id\"$selected>$status_name</option>";
   }
 ?>
       </select>
@@ -64,23 +91,43 @@ if($server_info["submissions_open"]) { ?>
     <td>Organization</td>
     <td>&nbsp;</td>
     <td>
-      <select name="user_organization" style="width:210px">
-      <option value="0">Other</option>
-      <option value="1">University of Waterloo</option>
-      <option value="999">---</option>
+      <select name="user_organization" style="width:210px" onClick="onClickOrganization(this)">
 <?php
+    $organizations = array(
+        array( 'org_id' => '0', 'name' => 'None' ),
+        array( 'org_id' => '-1', 'name' => 'Other' ),
+        array( 'org_id' => '1', 'name' => 'University of Waterloo' ),
+        array( 'org_id' => '999', 'name' => '---' ),
+
+    );
   $query = "SELECT * FROM organization WHERE org_id > 1 ORDER BY name";
   $result = mysql_query($query);
   while ($row = mysql_fetch_assoc($result)) {
-    $status_id = $row['org_id'];
-    $org_name = $row['name'];
-    echo "<option value=$status_id>$org_name</option>";
+      $organizations []= $row;
+  }
+
+  foreach ( $organizations as $row ) {
+    $org_id = $row['org_id'];
+    $org_name = htmlspecialchars($row['name']);
+    if ( isset( $_POST['user_organization'] ) && $_POST['user_organization'] == $org_id ) $selected = ' selected="selected"';
+    else $selected = '';
+
+    echo "<option value=\"$org_id\"$selected>$org_name</option>";
   }
 ?>
       </select>
     </td>
     <td>If you are a student, select your school. If you are an
-      employee, select your employer. Otherwise, select 'Other'.</td>
+      employee, select your employer. Otherwise, select 'None'.</td>
+  </tr>
+  <tr>
+      <td>Other</td>
+        <td>&nbsp;</td>
+        <td>
+            <input name="user_organization_other" id="user_organization_other" <?php if (empty($_POST['user_organization']) || $_POST['user_organization'] !== '-1') {
+                ?> disabled="true"<?php } else { ?> value="<?php echo isset($_POST['user_organization_other'])?htmlspecialchars($_POST['user_organization_other']):'' ?>"<?php } ?>  />
+        </td>
+        <td>If your organization isn't present in drowdown, select 'Other' and enter your organization.</td>
   </tr>
   <!-- Country -->
   <tr>
@@ -109,7 +156,7 @@ if($server_info["submissions_open"]) { ?>
   <tr>
     <td>About You</td>
     <td>&nbsp;</td>
-    <td><textarea name="bio" rows="3" cols="20"></textarea></td>
+    <td><textarea name="bio" rows="3" cols="20"><?php echo isset($_POST['bio'])?htmlspecialchars($_POST['bio']):'' ?></textarea></td>
     <td>Introduce yourself. Other contestants will be able to see this on
       your profile. Optional</td>
   </tr>
@@ -135,4 +182,4 @@ your ideas for the next competition though.</p>
 
 <?php } ?>
 
-<?php include 'footer.php' ?>
+<?php require_once 'footer.php' ?>

@@ -76,13 +76,11 @@ function grant_permission_to_user($username, $permission_name) {
   //return mysql_query($query);
 }
 
-function activate_user($username) {
-  if ($username == NULL) {
-    return False;
-  }
-  $query = "UPDATE users SET activated = 1 WHERE username = '$username'";
+function activate_user($user_id) {
+  
+  $query = "UPDATE user SET activated = 1 WHERE user_id = '$user_id'";
   return mysql_query($query);
 }
 
+$errors = array();
 }
-?>

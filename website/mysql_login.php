@@ -36,7 +36,8 @@ function check_credentials($username, $password) {
         FROM user u 
         WHERE
             username='$username' AND
-            activated = 1";
+            activated = 1
+    ";
   $result = mysql_query($query);
     if( $user = mysql_fetch_assoc( $result ) ) {
     	if (crypt($password, $user['password']) == $user['password']) {
