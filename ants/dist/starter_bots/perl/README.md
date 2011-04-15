@@ -13,6 +13,7 @@ game starts running.
 create_orders() will be called once per game turn, and it should issue orders
 via issue_order().
 
+To get started, edit MyBot.pm; you can run it with: perl MyBot.pl
 
 # ANTS LIBRARY METHODS
 
@@ -45,56 +46,68 @@ Called to indicate the turn is over. Automatically called by run()
 
 ## issue_order
 
-Method to issue an order to the server. Takes parameters of the x and y
-coordinates of the ant, plus the direction for it to travel in. 
+Method to issue an order to the server. Takes parameters of the Position
+of the ant, plus the direction for it to travel in.
 (Which must be N, E, S or W)
 
 ## map_search
 
 Method to return a list of types-of-things from a given map.
 
-Searches a map and returns an array of array-refs for occupied points.
+Searches a map and returns an array of Position objects for occupied points.
 Also takes a value to check against for those occupied points.
-Returns like: ( [0,1], [10,21] )
+
+(Position objects encapsulate the row/col values)
 
 ## my_ants
 
-Returns list of our ants on the map
+Returns list of our ants on the map.
 
-Eg: ( [0,1], [10,21] )
+(As an array of Position objects)
+
+Example:
+
+  my @ants = $self->my_ants;
+  for my $ant (@ants) {
+    say "I am at " . $ant->row . " by " . $ant->col;
+    say sprintf('Also known as (%d,%d)', $ant->x, $ant->y);
+  }
 
 ## enemy_ants
 
-Returns list of enemy ants on the map
+Returns list of enemy ants on the map.
 
-Eg: ( [0,1], [10,21] )
+See my_ants()
 
 ## food
 
 Returns list of visible food on the map
 
-Eg: ( [2,5], [11,22] )
+Data returned in same format as my_ants()
 
 ## water
 
 Returns a list of known water tiles from the map.
 
-Eg: ( [2,5], [11,22] )
+Data returned in same format as my_ants()
 
 ## passable
 
-Returns true/false indicating if given point is passable.. (ie. not water)
+Returns true/false indicating if given Position is passable.. (ie. not water)
+
 Note: Does not check for current occupation by other ants.
 
 ## distance
 
-Calculate the distance between two points.
+Calculate the distance between two Positions.
 
 ## direction
 
-Given a current point (x1,y1), return which direction to move to get to
-another point (x2,y2).
+Given a current Position, return which direction to move to get to
+another Position.
+
 Note: Does not take into account impassable terrain.
+This is a fairly naive algorithm.
 
 ## create_orders
 
@@ -115,3 +128,4 @@ Toby Corkindale, tjc@cpan.org.
 
 This code is freely released into the public domain for use by maintainers and
 entrants of the AI Challenge.
+
