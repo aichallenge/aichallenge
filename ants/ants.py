@@ -509,9 +509,9 @@ class Ants(Game):
                 # only interested in enemies within range
                 if other_ant.owner != ant.owner and self.distance(ant.loc, other_ant.loc) <= self.attackradius:
                     enemies.append(other_ant)
-            score = Fraction(1, len(enemies))
+            score_share = len(enemies)
             for enemy in enemies:
-                self.score[enemy.owner] += score
+                self.score[enemy.owner] += Fraction(1,score_share)
 
     def do_spawn(self):
         """ Spawn new ants from food
