@@ -91,7 +91,7 @@ if($server_info["submissions_open"]) { ?>
     <td>Organization</td>
     <td>&nbsp;</td>
     <td>
-      <select name="user_organization" style="width:210px" onClick="onClickOrganization(this)">
+      <select name="user_organization" style="width:210px" onClick="onClickOrganization(this)" onChange="onClickOrganization(this)">
 <?php
     $organizations = array(
         array( 'org_id' => '0', 'name' => 'None' ),

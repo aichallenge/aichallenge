@@ -133,8 +133,14 @@ if (strlen($country_id) <= 0) {
 
 // Check that the user organziation code is valid.
 if( $user_org == '-1') {
-    $user_org_other = mysql_real_escape_string(stripslashes($_POST['user_organization_other']));
-    $user_org = create_new_organization( $user_org_other );
+    $_POST['user_organization_other'] = trim($_POST['user_organization_other']);
+    if( $_POST['user_organization_other'] === '' ) {
+        //don't create empty organizations
+        $user_org = '0';
+    } else {
+        $user_org_other = mysql_real_escape_string(stripslashes($_POST['user_organization_other']));
+        $user_org = create_new_organization( $user_org_other );
+    }
 } elseif (!check_valid_organization($user_org)) {
   $errors[] = "The organization you selected is invalid. Please contact the contest staff.";
 }
