@@ -30,7 +30,7 @@ void State::reset()
     food.clear();
     for(int row=0; row<rows; row++)
         for(int col=0; col<cols; col++)
-            if(!grid[row][col].isFood)
+            if(!grid[row][col].isWater)
                 grid[row][col].reset();
 };
 
