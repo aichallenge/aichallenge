@@ -17,14 +17,9 @@
   word at other universities around the world so that more people can take
   part.</p>
 <p><strong>Question:</strong> Where can I see some strategy ideas?</p>
-<p><strong>Answer:</strong> Check out the <a href="resources.php">articles and
+<p><strong>Answer:</strong> Check out the <a href="/resources.php">articles and
   tutorials section</a>, where you will find a couple strategy guides, as well
-  as the <a href="forums/">forums</a>.</p>
-<p><strong>Question:</strong> My school/organization is not on the list in the
-  dropdown box on the signup form. What do I do?</p>
-<p><strong>Answer:</strong> Post on the <a href="forums/">forums</a>. We
-  would be happy to add your school or organization to the list so that you
-  can compete with your classmates and coworkers!</p>
+  as the <a href="/forums/">forums</a>.</p>
 <p><strong>Question:</strong> Do we have to submit PlanetWars.java/
   PlanetWars.cc? Can we have more source files than the ones that come in
   the starter package? How does the auto-compile work?</p>
