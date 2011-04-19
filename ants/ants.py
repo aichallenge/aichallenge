@@ -993,7 +993,11 @@ class Ants(Game):
         if len(players) == 1:
             player = players[0]
             # currently 1 food is spawned per turn per player
-            food_bonus = (self.turns - self.turn)*self.num_players
+            food_bonus = (
+                (self.turns - self.turn)*self.num_players # food that will spawn
+                + len(self.current_food) # food that hasn't been collected
+                + len(self.current_ants) # player AND enemy ants
+            )
             self.score[player] += food_bonus
             # ammend the score history instead of extending it
             self.score_history[player][-1] += food_bonus
