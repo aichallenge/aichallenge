@@ -1,0 +1,202 @@
+drop procedure if exists generate_matchup;
+delimiter $$
+create procedure generate_matchup()
+begin
+
+set @init_mu = 25.0;
+set @init_beta = @init_mu / 6;
+set @twiceBetaSq = 2 * pow(@init_beta, 2);
+
+-- Step 1: select the seed player
+
+select s.user_id, s.submission_id, s.mu, s.sigma
+into @seed_id, @submission_id, @mu, @sigma
+from submission s
+where s.latest = 1
+-- this selects the user that was least recently used player for a seed
+-- from both the game and matchup tables
+order by ( select max(matchup_id)
+           from matchup m
+           where m.seed_id = s.user_id ) asc,
+         ( select max(game_id)
+           from game g
+           where g.seed_id = s.user_id ) asc,
+         s.user_id asc
+limit 1;
+
+-- Step 2: select the map
+
+select m.map_id, m.players
+into @map_id, @players
+from map m
+left outer join (
+    select map_id, max(g.game_id) as max_game_id, count(*) as game_count
+    from game g
+    inner join game_player gp
+        on g.game_id = gp.game_id
+    where g.seed_id = @seed_id
+    group by g.map_id
+) games
+    on m.map_id = games.map_id
+left outer join (
+    select map_id, max(g.game_id) as max_all_game_id, count(*) as all_game_count
+    from game g
+    inner join game_player gp
+        on g.game_id = gp.game_id
+    group by g.map_id
+) all_games
+    on m.map_id = all_games.map_id
+left outer join (
+    select map_id, max(m.matchup_id) as max_matchup_id, count(*) as matchup_count
+    from matchup m
+    inner join matchup_player mp
+        on m.matchup_id = mp.matchup_id
+    group by m.map_id
+) matchups
+    on m.map_id = matchups.map_id
+order by game_count, priority, max_game_id,
+         matchup_count, max_matchup_id,
+         all_game_count, max_all_game_id,
+         map_id
+limit 1;
+
+-- Step 2.5: setup matchup and player info for following queries
+
+insert into matchup (seed_id, map_id, worker_id)
+values (@seed_id, @map_id, -1);
+
+set @matchup_id = last_insert_id();
+
+insert into matchup_player (matchup_id, user_id, submission_id, player_id, mu, sigma)
+values (@matchup_id, @seed_id, @submission_id, -1, @mu, @sigma);
+
+-- select @matchup_id, @seed_id, @submission_id, @map_id, @players;
+
+-- Step 3: select opponents 1 at a time
+
+-- create temp table to hold user_ids not to match
+--   due to repeat games, maps or player_counts
+drop temporary table if exists temp_unavailable;
+create temporary table temp_unavailable (
+ user_id int(11) NOT NULL
+);
+
+set @last_user_id = @seed_id;
+set @player_count = 1;
+
+while @player_count < @players do
+
+    -- don't match player that played with anyone matched so far
+    -- in the last 5 games
+    insert into temp_unavailable
+    select gp1.user_id
+    from game_player gp1
+    inner join game_player gp2
+        on gp1.game_id = gp2.game_id
+    where gp2.user_id = @last_user_id
+    and gp1.game_id in (
+        select game_id from (
+            -- mysql does not allow limits in subqueries
+            -- wrapping in it a dummy select is a work around
+            select game_id
+            from game_player
+            where user_id = @last_user_id
+            order by game_id desc
+            limit 5
+        ) latest_games
+    );
+
+    -- pick the closest 100 available submissions (limited for speed)
+    -- and then rank by a match_quality approximation
+    --   the approximation is not the true trueskill match_quality,
+    --   but will be in the same order as if we calculated it   
+    select s.user_id, s.submission_id, s.mu, s.sigma ,
+    @c := (@twiceBetaSq + pow(mp.sigma,2) + pow(s.sigma,2)) as c,
+    exp(sum(ln(
+        SQRT(@twiceBetaSq / @c) * EXP(-(pow(mp.mu - s.mu, 2) / (2 * @c)))
+    ))) as match_quality
+    into @last_user_id, @last_submission_id, @last_mu, @last_sigma, @c, @match_quality
+    from matchup_player mp,
+    (
+        select s.user_id, s.submission_id, s.mu, s.sigma
+        from matchup_player mp,
+            submission s
+
+        where mp.matchup_id = @matchup_id
+            and s.latest = 1
+
+        -- this order by causes a filesort, but I don't see a way around it
+        -- limiting to 100 saves us from doing extra trueskill calculations
+        order by abs(s.mu - mp.mu)
+        limit 100
+    ) s
+    left outer join temp_unavailable tu
+        on s.user_id = tu.user_id
+    where mp.matchup_id = @matchup_id
+    and tu.user_id is null
+    group by s.user_id, s.submission_id, s.mu, s.sigma
+    order by match_quality desc
+    limit 1;
+
+    insert into matchup_player (matchup_id, user_id, submission_id, player_id, mu, sigma)
+    values (@matchup_id, @last_user_id, @last_submission_id, -1, @last_mu, @last_sigma);
+    
+    set @player_count = @player_count + 1;
+
+end while;
+
+-- Step 4: put players into map positions
+
+set @player_count = 0;
+
+while @player_count < @players do
+
+    select mp.user_id, id.player_id
+    into @pos_user_id, @pos_player_id
+    from matchup_player mp
+    inner join (
+        select user_id
+        from matchup_player mp
+        where matchup_id = @matchup_id
+        and player_id = -1
+    ) avail
+        on mp.user_id = avail.user_id,
+    (
+        select @row := @row + 1 as player_id
+        from matchup_player,
+        (select @row := -1) id
+        where matchup_id = @matchup_id
+    ) id
+    where mp.matchup_id = @matchup_id
+    and id.player_id not in (
+        select player_id
+        from matchup_player mp
+        where matchup_id = @matchup_id
+        and player_id != -1
+    )
+    order by (mp.user_id = @seed_id) desc,
+    (
+        select max(g.game_id)    
+        from game g
+        inner join game_player gp
+            on g.game_id = gp.game_id
+        where g.map_id = @map_id
+        and gp.user_id = mp.user_id
+        and gp.player_id = id.player_id
+    ) asc
+    limit 1;
+    
+    update matchup_player
+    set player_id = @pos_player_id
+    where matchup_id = @matchup_id
+    and user_id = @pos_user_id;
+    
+    set @player_count = @player_count + 1;
+    
+end while;
+
+-- return new matchup id
+select @matchup_id as matchup_id;
+
+end$$
+delimiter ;

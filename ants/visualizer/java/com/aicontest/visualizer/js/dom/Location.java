@@ -1,43 +1,47 @@
 package com.aicontest.visualizer.js.dom;
 
-import com.aicontest.visualizer.js.WebWrapper;
-import java.applet.Applet;
-import java.awt.Container;
 import java.awt.Desktop;
 import java.net.URI;
+
 import netscape.javascript.JSObject;
 
-public class Location
-{
-  private JSObject getJSLocation()
-  {
-    Container container = WebWrapper.getInstance().getContainer();
-    if ((container instanceof Applet)) {
-      JSObject window = JSObject.getWindow((Applet)container);
-      JSObject document = (JSObject)window.getMember("document");
-      return (JSObject)document.getMember("location");
-    }
-    return null;
-  }
+import com.aicontest.visualizer.Visualizer;
 
-  public String getHref() {
-    JSObject jsLoc = getJSLocation();
-    if (jsLoc == null) {
-      return "";
-    }
-    return jsLoc.getMember("href").toString();
-  }
+public class Location {
 
-  public void setHref(String href)
-  {
-    JSObject jsLoc = getJSLocation();
-    if (jsLoc == null)
-      try {
-        Desktop.getDesktop().browse(URI.create(href));
-      } catch (Exception e) {
-        e.printStackTrace();
-      }
-    else
-      jsLoc.setMember("href", href);
-  }
+	private Visualizer webWrapper;
+
+	public Location(Visualizer webWrapper) {
+		this.webWrapper = webWrapper;
+	}
+
+	private JSObject getJSLocation() {
+		JSObject jsRoot = webWrapper.getJsRoot();
+		if (jsRoot != null) {
+			Thread.interrupted();
+			JSObject document = (JSObject) jsRoot.getMember("document");
+			return (JSObject) document.getMember("location");
+		}
+		return null;
+	}
+
+	public String getHref() {
+		JSObject jsLoc = getJSLocation();
+		if (jsLoc == null) {
+			return "";
+		}
+		return jsLoc.getMember("href").toString();
+	}
+
+	public void setHref(String href) {
+		JSObject jsLoc = getJSLocation();
+		if (jsLoc == null)
+			try {
+				Desktop.getDesktop().browse(URI.create(href));
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		else
+			jsLoc.setMember("href", href);
+	}
 }

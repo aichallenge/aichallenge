@@ -28,7 +28,13 @@ if ($compile_result) {
 // look for match
 $match_result = mysql_query(sprintf($sql["select_next_matchup"],
                                     $worker["worker_id"]));
-if ($match_result) {                               
+if (!$match_result) {
+    $match_result = mysql_query("call generate_matchup;");
+    $match_result = mysql_query(sprintf($sql["select_next_matchup"],
+                                        $worker["worker_id"]));
+}
+
+if ($match_result) {
 	while ($match_row = mysql_fetch_assoc($match_result)) {
 		$json = array( "task" => "game",
 		               "matchup_id" => $match_row["matchup_id"],

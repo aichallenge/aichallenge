@@ -17,7 +17,7 @@ if ($check_result && mysql_num_rows($check_result) != 0){
 } else {
   $new_key = md5(uniqid(null,true).rand());
 
-  $insert_sql = "insert into worker SET api_key = '".addslashes($new_key)."', ip_address = '".$ip."';";
+  $insert_sql = "insert into worker SET api_key = '".mysql_real_escape_string($new_key)."', ip_address = '".$ip."';";
   $success = mysql_query($insert_sql);
   if(!$success){
     echo("# ".mysql_error());

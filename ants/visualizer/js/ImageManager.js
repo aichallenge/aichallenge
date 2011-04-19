@@ -114,7 +114,7 @@ ImageManager.prototype.colorize = function(idx, colors) {
 			try {
 				var privilegeManager = netscape.security.PrivilegeManager;
 				if (this.askSecurity) {
-					alert('Accept the next dialog to have colorized button graphics.');
+					// alert('Accept the next dialog to have colorized button graphics.');
 					this.askSecurity = false;
 				}
 				privilegeManager.enablePrivilege("UniversalBrowserRead");

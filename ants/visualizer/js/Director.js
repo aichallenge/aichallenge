@@ -16,6 +16,7 @@ function Director(vis) {
 	this.frameCounter = undefined;
 	this.frameStart = undefined;
 	this.frameCpu = undefined;
+	this.tickFlag = false;
 }
 /**
  * When the director is in playback mode it has a lastTime. This is just a
@@ -37,10 +38,12 @@ Director.prototype.play = function() {
 		this.stopAt = this.duration;
 		if (this.onstate) this.onstate();
 		this.loop(0);
+		if (this.vis.options['profile']) console.profile();
 	}
 };
 Director.prototype.stop = function() {
 	if (this.playing()) {
+		if (this.vis.options['profile']) console.profileEnd();
 		this.speed = 0;
 		this.lastTime = undefined;
 		if (this.onstate) this.onstate();
@@ -102,34 +105,39 @@ Director.prototype.loop = function(delay) {
 		goOn = false;
 		this.stop();
 	}
-	this.vis.draw(this.position, (oldTurn != (this.position | 0)) ? this.position | 0 : undefined);
+	this.vis.draw(this.position, (this.tickFlag || oldTurn != (this.position | 0)) ? this.position | 0 : undefined);
+	this.tickFlag = false;
 	if (goOn) {
-		var that = this;
-		if (that.vis.options['debug'] && cpuTime !== undefined) {
-			if (that.frameStart === undefined) {
-				that.frameStart = lastTime;
-				that.frameCounter = 0;
-				that.frameCpu = 0;
+		if (this.vis.options['debug'] && cpuTime !== undefined) {
+			if (this.frameStart === undefined) {
+				this.frameStart = lastTime;
+				this.frameCounter = 0;
+				this.frameCpu = 0;
 			}
-			that.frameCounter++;
-			that.frameCpu += cpuTime;
-			if (that.lastTime >= that.frameStart + 1000) {
-				var delta = (that.lastTime - that.frameStart);
-				var fps = Math.round(1000 * that.frameCounter / delta);
-				var cpu = Math.round( 100 * that.frameCpu     / delta);
+			this.frameCounter++;
+			this.frameCpu += cpuTime;
+			if (this.lastTime >= this.frameStart + 1000) {
+				var delta = (this.lastTime - this.frameStart);
+				var fps = Math.round(1000 * this.frameCounter / delta);
+				var cpu = Math.round( 100 * this.frameCpu     / delta);
 				document.title = fps + ' fps @ ' + cpu + '% cpu';
-				that.frameStart = that.lastTime;
-				that.frameCounter = 0;
-				that.frameCpu = 0;
+				this.frameStart = this.lastTime;
+				this.frameCounter = 0;
+				this.frameCpu = 0;
 			}
 		}
-		var invalid = (that.cpu <= 0 || that.cpu > 1) || cpuTime === undefined;
-		delay = invalid ? 0 : Math.ceil(cpuTime / that.cpu - cpuTime);
-		// looks odd, but synchronizes JS and rendering threads so we get
-		// accurate cpu times
-		that.timeout = window.setTimeout(function() {
-			that.timeout = window.setTimeout(function() {that.loop(delay)}, delay);
-		}, 0);
+		var that = this;
+		var useMax = (this.cpu <= 0 || this.cpu > 1) || cpuTime === undefined;
+		if (useMax) {
+			that.timeout = window.setTimeout(function() {that.loop(delay)}, 0);
+		} else {
+			delay = useMax ? 0 : Math.ceil(cpuTime / this.cpu - cpuTime);
+			// looks odd, but synchronizes JS and rendering threads so we get
+			// accurate cpu times
+			this.timeout = window.setTimeout(function() {
+				that.timeout = window.setTimeout(function() {that.loop(delay)}, delay);
+			}, 0);
+		}
 	}
 };
 
@@ -142,7 +150,11 @@ Director.prototype.cleanUp = function() {
  * Causes the visualizer to draw the current game state.
  */
 Director.prototype.draw = function() {
-	this.vis.draw(this.position, this.position | 0);
+	if (this.playing()) {
+		this.tickFlag = true;
+	} else {
+		this.vis.draw(this.position, this.position | 0);
+	}
 };
 /**
  * When an applet goes fullscreen it is detached and reinitialized. We need to

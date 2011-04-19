@@ -1,5 +1,8 @@
 #include "Bot.h"
 
+using namespace std;
+
+//constructor
 Bot::Bot()
 {
 
@@ -8,12 +11,15 @@ Bot::Bot()
 //plays a single game of Ants.
 void Bot::playGame()
 {
-    //reads the game parameters
+    //reads the game parameters and sets up
     cin >> state;
+    state.setup();
+    endTurn();
 
     //continues making moves while the game is not over
     while(cin >> state)
     {
+        state.updateVisionInformation();
         makeMoves();
         endTurn();
     }
@@ -32,7 +38,7 @@ void Bot::makeMoves()
         {
             Location loc = state.getLocation(state.ants[ant], d);
 
-            if(state.grid[loc.row][loc.col] != '%')
+            if(!state.grid[loc.row][loc.col].isWater)
             {
                 state.makeMove(state.ants[ant], d);
                 break;
@@ -46,7 +52,8 @@ void Bot::makeMoves()
 //finishes the turn
 void Bot::endTurn()
 {
-    state.reset();
+    if(state.turn > 0)
+        state.reset();
     state.turn++;
 
     cout << "go" << endl;

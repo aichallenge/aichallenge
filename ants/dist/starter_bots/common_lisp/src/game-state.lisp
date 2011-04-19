@@ -112,7 +112,8 @@
          (row (parse-integer (elt split 1)))
          (col (parse-integer (elt split 2)))
          (owner (parse-integer (elt split 3))))
-    (setf (aref (game-map *state*) row col) (+ owner 200))))
+    (unless (= 2 (aref (game-map *state*) row col))
+      (setf (aref (game-map *state*) row col) (+ owner 200)))))
 
 
 (defun set-food (string)

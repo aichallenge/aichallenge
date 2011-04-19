@@ -1,0 +1,29 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+	<title>Ant Canvas</title>
+	<script type="text/javascript" src="js/visualizer.js"></script>
+	<script type="text/javascript">
+		window.isFullscreenSupported = function() {
+			return false;
+		};
+
+		function visualizePasted() {
+			document.getElementById('gui').style.display = 'none';
+			var replay = document.getElementById('txtReplay').value;
+			var visualizer = new Visualizer(document.body, 'data/');
+			visualizer.loadReplayData(replay);
+		}
+	</script>
+	<style type="text/css">
+		html { margin:0; padding:0; }
+		body { margin:0; padding:0; overflow:hidden; }
+	</style>
+</head>
+<body>
+	<div id="gui">
+		Game replay copy &amp; paste: <input type="button" value="Load text below" onClick="visualizePasted()"/><br/>
+		<textarea id="txtReplay" rows="27" cols="41"></textarea>
+	</div>
+</body>
+</html>

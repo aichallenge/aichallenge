@@ -11,7 +11,6 @@ function Config() {
 }
 /**
  * checks if local storage is available
- * @private
  */
 Config.prototype.hasLocalStorage = function() {
 	try {

@@ -28,7 +28,11 @@ function Ant(id, time) {
 	this.lo[0].time = time;
 	this.hi = [new HiFiData()];
 	this.hi[0].time = time;
-	this.player = undefined;
+	this.owner = undefined;
+	/** @private */
+	this.loInter = new LoFiData();
+	/** @private */
+	this.hiInter = new HiFiData();
 	/** @private */
 	this.loLookup = [];
 	/** @private */
@@ -68,35 +72,44 @@ Ant.prototype.frameAt = function(time, quality, create) {
  *     frames
  */
 Ant.prototype.interpolate = function(time, quality) {
-	var i, delta;
-	var set = quality ? this.hi : this.lo;
-	var lookup = quality ? this.hiLookup : this.loLookup;
-	var timeIdx = time | 0;
-	var goFrom = lookup[timeIdx];
+	var i, min, max, delta, set, result, lookup, lastFrame, timeIdx, goFrom;
+	if (quality) {
+		set = this.hi;
+		result = this.hiInter;
+		lookup = this.hiLookup;
+	} else {
+		set = this.lo;
+		result = this.loInter;
+		lookup = this.loLookup;
+	}
+	if (time < set[0].time) return null;
+	lastFrame = set[set.length - 1];
+	if (time >= lastFrame.time) return result.assign(lastFrame);
+	timeIdx = time | 0;
+	goFrom = lookup[timeIdx];
 	if (goFrom === undefined) {
-		for (i = set.length - 1; i >= 0; i--) {
-			if (set[i].time <= timeIdx) {
-				goFrom = i;
-				lookup[timeIdx] = i;
-			}
+		if (timeIdx < set[0].time) {
+			goFrom = 0;
+		} else {
+			min = 0;
+			max = set.length - 1;
+			do {
+				i = (min + max >> 1);
+				if (timeIdx < set[i].time) {
+					max = i;
+				} else if (timeIdx > set[i + 1].time) {
+					min = i;
+				} else {
+					goFrom = i;
+					lookup[timeIdx] = i;
+				}
+			} while (goFrom === undefined);
 		}
-		if (goFrom === undefined) {
-			throw 'Can not interpolate before first key frame';
-		}
+		lookup[timeIdx] = goFrom;
 	}
-	while (goFrom < set.length - 1 && set[goFrom + 1].time <= time) {
-		goFrom++;
-	}
-	if (goFrom == set.length - 1) {
-		return set[goFrom].copy();
-	}
+	while (time > set[goFrom + 1].time) goFrom++;
 	delta = (time - set[goFrom].time) / (set[goFrom + 1].time - set[goFrom].time);
-	if (delta == 0) {
-		return set[goFrom].copy();
-	} else if (delta == 1) {
-		return set[goFrom + 1].copy();
-	}
-	return set[goFrom].interpolate(set[goFrom + 1], delta);
+	return result.interpolate(set[goFrom], set[goFrom + 1], delta);
 };
 Ant.prototype.fade = function(quality, key, valueb, timea, timeb) {
 	var i, valuea, mix, f0, f1;
@@ -146,32 +159,41 @@ Ant.prototype.animate = function(list) {
  * @constructor
  */
 function LoFiData(other) {
-	this.time = other ? other.time : 0;
-	this['x'] = other ? other['x'] : 0;
-	this['y'] = other ? other['y'] : 0;
-	this['r'] = other ? other['r'] : 0;
-	this['g'] = other ? other['g'] : 0;
-	this['b'] = other ? other['b'] : 0;
-	this['size'] = other ? other['size'] : 0.0;
-}
-LoFiData.prototype.interpolate = function(other, b) {
-	var a = 1.0 - b;
-	var result = new LoFiData();
-	result.time = a * this.time + b * other.time;
-	result['x'] = a * this['x'] + b * other['x'];
-	result['y'] = a * this['y'] + b * other['y'];
-	result['r'] = (a * this['r'] + b * other['r']) | 0;
-	result['g'] = (a * this['g'] + b * other['g']) | 0;
-	result['b'] = (a * this['b'] + b * other['b']) | 0;
-	result['size'] = a * this['size'] + b * other['size'];
-	return result;
-};
-LoFiData.prototype.copy = function() {
-	var result = new LoFiData();
-	for (var i in this) {
-		result[i] = this[i];
+	if (other) {
+		this.assign(other);
+	} else {
+		this.time = 0.0;
+		this['x'] = 0.0;
+		this['y'] = 0.0;
+		this['r'] = 0;
+		this['g'] = 0;
+		this['b'] = 0;
+		this['size'] = 0.0;
+		this['owner'] = undefined;
 	}
-	return result;
+}
+LoFiData.prototype.interpolate = function(a, b, useb) {
+	var usea = 1.0 - useb;
+	this.time = usea * a.time + useb * b.time;
+	this['x'] = usea * a['x'] + useb * b['x'];
+	this['y'] = usea * a['y'] + useb * b['y'];
+	this['r'] = (usea * a['r'] + useb * b['r']) | 0;
+	this['g'] = (usea * a['g'] + useb * b['g']) | 0;
+	this['b'] = (usea * a['b'] + useb * b['b']) | 0;
+	this['size'] = usea * a['size'] + useb * b['size'];
+	this['owner'] = a['owner'];
+	return this;
+};
+LoFiData.prototype.assign = function(other) {
+	this.time = other.time;
+	this['x'] = other['x'];
+	this['y'] = other['y'];
+	this['r'] = other['r'];
+	this['g'] = other['g'];
+	this['b'] = other['b'];
+	this['size'] = other['size'];
+	this['owner'] = other['owner'];
+	return this;
 };
 
 /**

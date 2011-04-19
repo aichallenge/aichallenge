@@ -65,7 +65,7 @@ function get_error_message($game_id){
     'UNPARSEABLE_ORDER' => 'issued an order that could not be parsed',
     );
   
-  $sql = "SELECT e.*, u.username from error e inner join submission s ON e.submission_id = s.submission_id inner join user u on u.user_id = s.user_id where game_id = '".addslashes($game_id)."'";
+  $sql = "SELECT e.*, u.username from error e inner join submission s ON e.submission_id = s.submission_id inner join user u on u.user_id = s.user_id where game_id = '".mysql_real_escape_string($game_id)."'";
   $q = mysql_query($sql);
   $out = array();
   while($result = mysql_fetch_assoc($q)){

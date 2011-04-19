@@ -12,9 +12,8 @@
 
 #include "Timer.h"
 #include "Bug.h"
+#include "Square.h"
 #include "Location.h"
-
-using namespace std;
 
 /*
     constants
@@ -33,14 +32,14 @@ struct State
     */
     int rows, cols,
         turn, turns,
-        players,
-        attackradius, spawnradius, viewradius;
+        noPlayers;
+    double attackradius, spawnradius, viewradius;
     double loadtime, turntime;
-    vector<double> scores;
+    std::vector<double> scores;
     bool gameover;
 
-    vector<vector<char> > grid;
-    vector<Location> ants;
+    std::vector<std::vector<Square> > grid;
+    std::vector<Location> ants, enemies, food;
 
     Timer timer;
     Bug bug;
@@ -58,9 +57,11 @@ struct State
 
     double distance(const Location &loc1, const Location &loc2);
     Location getLocation(const Location &startLoc, int direction);
+
+    void updateVisionInformation();
 };
 
-ostream& operator<<(ostream &os, const State &state);
-istream& operator>>(istream &is, State &state);
+std::ostream& operator<<(std::ostream &os, const State &state);
+std::istream& operator>>(std::istream &is, State &state);
 
 #endif //STATE_H_

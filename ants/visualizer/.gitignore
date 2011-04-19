@@ -5,3 +5,5 @@ local.properties
 .ant-targets-build.xml
 colors.html
 .classpath
+replay.html
+jaropt.log

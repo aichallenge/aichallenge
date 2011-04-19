@@ -17,11 +17,11 @@ sub create_orders {
 
     for my $ant ($self->my_ants) {
         my ($antx, $anty) = @$ant;
-        my $food = $self->nearby_food($ant);
+        my @food = $self->nearby_food($ant);
         my $direction;
 
-        if ($food) {
-            my ($foodx, $foody) = @$food;
+        if (@food) {
+            my ($foodx, $foody) = @{$food[0]};
             $direction = $self->direction(
                 $antx, $anty,
                 $foodx, $foody
@@ -48,22 +48,31 @@ sub create_orders {
     }
 }
 
+# This demonstrates the use of some of the methods available in the Ants
+# library.
+# This subroutine returns a list of nearby food for a given location, sorted
+# by distance.
 sub nearby_food {
     my ($self, $ant_location) = @_;
 
-    my $goal_distance = ($self->width + $self->height) / 2;
+    # We will ignore food further away than this distance:
+    my $goal_distance = ($self->width + $self->height) / 4;
+
+    my @foods;
 
     for my $food ($self->food) {
         if (
-            $self->distance(
+            (my $dist = $self->distance(
                 $ant_location->[0], $ant_location->[1],
                 $food->[0], $food->[1]
-            ) < $goal_distance
+            )) < $goal_distance
         ) {
-            return $food;
+            push @foods, { distance => $dist, tile => $food };
         }
     }
-    return;
+    return map { $_->{tile} } sort {
+        $a->{distance} <=> $b->{distance}
+    } @foods;
 }
 
 1;

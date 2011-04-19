@@ -2,35 +2,27 @@ package com.aicontest.visualizer.js.dom;
 
 import java.applet.Applet;
 import java.awt.Container;
-import java.awt.GraphicsDevice;
-import java.awt.GraphicsEnvironment;
-import java.awt.Window;
 
 import org.mozilla.javascript.Function;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
-import com.aicontest.visualizer.js.WebWrapper;
+import com.aicontest.visualizer.Visualizer;
 import com.aicontest.visualizer.js.tasks.DelayedExecutionUnit;
 import com.aicontest.visualizer.js.tasks.TimeoutExecutionUnit;
 
 public class DOMWindow {
 	private String output = "";
-	private WebWrapper webWrapper;
+	private Visualizer webWrapper;
 	private Location location;
 	private HTMLDocument document;
 	private Function onresize;
 	private LocalStorage localStorage;
 
-	public DOMWindow(String name, WebWrapper webWrapper) {
+	public DOMWindow(String name, Visualizer webWrapper) {
 		this.webWrapper = webWrapper;
-		location = new Location();
-		document = new HTMLDocument();
-		Container container = webWrapper.getContainer();
-		if ((container instanceof Applet))
-			localStorage = new AppletLocalStorage((Applet) container);
-		else
-			localStorage = new ApplicationLocalStorage();
+		location = new Location(webWrapper);
+		document = new HTMLDocument(webWrapper);
 	}
 
 	void contentChanged() {
@@ -54,15 +46,19 @@ public class DOMWindow {
 				int blackIdx;
 				do {
 					redIdx = msg.indexOf(RED_MARKER);
-					String black = redIdx == -1 ? msg : msg.substring(0, redIdx);
+					String black = redIdx == -1 ? msg : msg
+							.substring(0, redIdx);
 					System.out.print(unHtml(black));
 					if (redIdx != -1) {
-						msg = msg.substring(Math.min(msg.length(), redIdx + RED_MARKER.length()));
+						msg = msg.substring(Math.min(msg.length(), redIdx
+								+ RED_MARKER.length()));
 						blackIdx = msg.indexOf(BLACK_MARKER);
-						String red = blackIdx == -1 ? msg : msg.substring(0, blackIdx);
+						String red = blackIdx == -1 ? msg : msg.substring(0,
+								blackIdx);
 						System.err.print(unHtml(red));
 						if (blackIdx != -1)
-							msg = msg.substring(Math.min(msg.length(), blackIdx + BLACK_MARKER.length()));
+							msg = msg.substring(Math.min(msg.length(), blackIdx
+									+ BLACK_MARKER.length()));
 					} else {
 						blackIdx = -1;
 					}
@@ -89,11 +85,11 @@ public class DOMWindow {
 	}
 
 	public int getInnerWidth() {
-		return WebWrapper.getInstance().getDrawPanel().getWidth();
+		return webWrapper.getDrawPanel().getWidth();
 	}
 
 	public int getInnerHeight() {
-		return WebWrapper.getInstance().getDrawPanel().getHeight();
+		return webWrapper.getDrawPanel().getHeight();
 	}
 
 	public void setOnresize(Function onresize) {
@@ -129,22 +125,22 @@ public class DOMWindow {
 		return 0;
 	}
 
+	public boolean isFullscreenSupported() {
+		return webWrapper.isFullscreenSupported();
+	}
+
 	public boolean setFullscreen(boolean enable) {
-		Container container = webWrapper.getContainer();
-		if ((container instanceof Applet)) {
-			return false;
-		}
-		GraphicsEnvironment lge = GraphicsEnvironment.getLocalGraphicsEnvironment();
-		GraphicsDevice dsd = lge.getDefaultScreenDevice();
-		if (enable)
-			dsd.setFullScreenWindow((Window) container);
-		else {
-			dsd.setFullScreenWindow(null);
-		}
-		return enable;
+		return webWrapper.setFullscreen(enable);
 	}
 
 	public LocalStorage getLocalStorage() {
+		if (localStorage == null) {
+			Container container = webWrapper.getContainer();
+			if ((container instanceof Applet))
+				localStorage = new AppletLocalStorage((Applet) container);
+			else
+				localStorage = new ApplicationLocalStorage();
+		}
 		return localStorage;
 	}
 

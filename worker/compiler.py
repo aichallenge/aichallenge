@@ -34,16 +34,14 @@
 #     gmcs -warn:0 -out:MyBot.exe *.cs
 # (though the *.cs is actually replaced with the list of files found)
 
+import sys
 import os
 import re
 import glob
 import subprocess
 import fnmatch
 import errno
-import time
 import shutil
-import MySQLdb
-from server_info import server_info
 
 BOT = "MyBot"
 SAFEPATH = re.compile('[a-zA-Z0-9_.$-]+$')
@@ -86,41 +84,33 @@ def nukeglob(pattern):
             if e.errno != errno.ENOENT:
                 raise
 
-class Log:
-    def __init__(self):
-        self.out = ""
-        self.err = ""
-
-def system(args, log):
-    log.out += ' '.join(args) + "\n"
+def system(args, errors):
     proc = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     (out, err) = proc.communicate()
-    log.out += out
-    log.err += err
+    errors.append(err)
     return proc.returncode == 0
 
-def check_path(path, log):
+def check_path(path, errors):
     if not os.path.exists(path):
-        log.err += "\nFailure: output file " + str(path) + " was not created.\n"
+        errors.append("Output file " + str(path) + " was not created.")
         return False
     else:
         return True
 
 class Compiler:
-    def compile(self, globs, log):
+    def compile(self, globs, errors):
         raise NotImplementedError
 
 class ChmodCompiler(Compiler):
     def __init__(self, language):
         self.language = language
 
-    def compile(self, globs, log):
+    def compile(self, globs, errors):
         for f in safeglob_multi(globs):
             try:
                 os.chmod(f, 0644)
             except Exception, e:
-                log.err += "Error chmoding %s - %s\n" % (f, e)
-        log.out += self.language + " scripts do not need to be compiled.\n"
+                errors.append("Error chmoding %s - %s\n" % (f, e))
         return True
 
 class ExternalCompiler(Compiler):
@@ -128,7 +118,7 @@ class ExternalCompiler(Compiler):
         self.args = args
         self.separate = separate
 
-    def compile(self, globs, log):
+    def compile(self, globs, errors):
         files = safeglob_multi(globs)
         if self.separate:
             for file in files:
@@ -168,14 +158,14 @@ class JavaCompiler(ExternalCompiler):
                 if e.errno != errno.ENOENT:
                     raise
 
-    def compile(self, globs, log):
+    def compile(self, globs, errors):
         files = JavaCompiler.safeglob_multi(globs)
         if self.separate:
             for file in files:
-                if not system(self.args + [file], log):
+                if not system(self.args + [file], errors):
                     return False
         else:
-            if not system(self.args + files, log):
+            if not system(self.args + files, errors):
                 return False
         return True
 
@@ -186,16 +176,16 @@ class TargetCompiler(Compiler):
         self.replacements = replacements
         self.outflag = outflag
 
-    def compile(self, globs, log):
+    def compile(self, globs, errors):
         sources = safeglob_multi(globs)
         for source in sources:
             head, ext = os.path.splitext(source)
             if ext in self.replacements:
                 target = head + self.replacements[ext]
             else:
-                log.err += "Could not determine target for source file %s.\n" % source
+                errors.append("Could not determine target for source file %s." % source)
                 return False
-            if not system(self.args + [self.outflag, target, source], log):
+            if not system(self.args + [self.outflag, target, source], errors):
                 return False
         return True
 
@@ -209,6 +199,7 @@ comp_args = {
     "C#"            : [["gmcs", "-warn:0", "-out:%s.exe" % BOT]],
     "C++"         : [["g++", "-O3", "-funroll-loops", "-c"],
                              ["g++", "-O2", "-lm", "-o", BOT]],
+    "D"             : [["dmd", "-O", "-inline", "-release", "-of" + BOT]],
     "Go"            : [["/usr/local/bin/8g", "-o", "_go_.8"],
                              ["/usr/local/bin/8l", "-o", BOT, "_go_.8"]],
     "Groovy"    : [["groovyc"],
@@ -278,6 +269,13 @@ languages = {
          "coffee MyBot.coffee",
          [],
          [(["*.coffee"], ChmodCompiler("CoffeeScript"))]
+        ),
+    "D": 
+        ("",
+         "MyBot.d",
+         "./MyBot",
+         ["*.o", BOT],
+         [(["*.d"], JavaCompiler(comp_args["D"][0]))]
         ),
     "Go":
         ("",
@@ -402,59 +400,79 @@ def detect_language(submission_dir=None):
         submission_dir = os.getcwd()
     with CD(submission_dir):
         # Autodetects the language of the entry in the current working directory
-        log = Log()
-        detected_langs = [
-            lang_data + (lang_name,) for lang_name, lang_data
-            in languages.items() if os.path.exists(lang_data[1])
-        ]
-        #print os.getcwd()
-        #print os.listdir(os.getcwd())
-        #print detected_langs
+        detected_lang = get_run_lang(submission_dir)
+        if detected_lang and detected_lang in languages:
+            detected_langs = [languages[detected_lang] + (detected_lang,)]
+        else:
+            detected_langs = [
+                lang_data + (lang_name,) for lang_name, lang_data
+                in languages.items() if os.path.exists(lang_data[1])
+            ]
+        
         # If no language was detected
-        if len(detected_langs) == 0:
-            log.err += "The auto-compile environment could not locate your main code\n"
-            log.err += "file. This is probably because you accidentally changed the\n"
-            log.err += "name of your main code file. You must include exactly one file"
-            log.err += "\nwith one of the following names:\n"
-            for lang_name, lang_data in languages.items():
-                log.err += "     * " + lang_data[1] + " (" + lang_name + ")\n"
-            log.err += "This is to help the auto-compile environment figure out which"
-            log.err += "\nprogramming language you are using.\n"
-            return None
-            #return log.out, log.err, "NULL"
-        # If more than one language was detected
         if len(detected_langs) > 1:
-            log.err = "The auto-compile environment found more than one main code "
-            log.err += "file:\n"
-            for lang in detected_langs:
-                log.err += "     * " + lang[1] + " (" + lang[-1] + ")\n"
-            log.err += "You must submit only one of these files so that the\n"
-            log.err += "auto-compile environment can figure out which programming\n"
-            log.err += "language you are trying to use.\n"
-            return None
-            #return log.out, log.err, "NULL"
-        return detected_langs[0]
+            return None, {'errors': [],
+                          'language_count': len(detected_langs),
+                          'language_list': [lang[1] for lang in detected_langs]}
+        elif len(detected_langs) == 0:
+            return None, {'errors': [],
+                          'language_count': 0}
+        else:
+            return detected_langs[0], {'errors': []}
 
+# detect language looks for MyBot.* files
+# in the case of java, a MyBot.class file is created after compile
+# if detect is called again, it will think this could be a scala bot
+# a work around is to write a run.sh file in the compile dir so that
+# we don't have to detect the language more than once
+def get_run_cmd(submission_dir):
+    with CD(submission_dir):
+        if os.path.exists('run.sh'):
+            with open('run.sh') as f:
+                for line in f:
+                    if line[0] != '#':
+                        return line
+
+def get_run_lang(submission_dir):
+    with CD(submission_dir):
+        if os.path.exists('run.sh'):
+            with open('run.sh') as f:
+                for line in f:
+                    if line[0] == '#':
+                        return line[1:-1]
+            
+                                
 # Autodetects the language of the entry in the current working directory and
 # compiles it.
-def compile_anything(submission_dir):
+def compile_anything(submission_dir=None):
+    if submission_dir == None:
+        submission_dir = os.getcwd()
     with CD(submission_dir):
-        log = Log()
         # If we get this far, then we have successfully auto-detected the language
         # that this contestant is using.
-        detected_language = detect_language()
-        main_code_file = detected_language[1]
-        detected_lang = detected_language[-1]
-        log.out += "Found " + main_code_file + ". Compiling this entry as " + \
-            detected_lang + "\n"
-        t1 = time.time()
-        if compile_function(detected_lang, log):
-            return detected_lang
+        detected_language, errors = detect_language()
+        if detected_language:
+            main_code_file = detected_language[1]
+            detected_lang = detected_language[-1]
+            run_cmd = detected_language[2]
+            if compile_function(detected_lang, errors['errors']):
+                with open('run.sh', 'w') as f:
+                    f.write('#%s\n%s' % (detected_lang, run_cmd))
+                return detected_lang, errors
+            else:
+                return None, errors
         else:
-            return None
+            return None, errors
 
 if __name__ == '__main__':
+    if len(sys.argv) == 2:
+        detected_lang, errors = compile_anything(sys.argv[1])
+    else:
+        detected_lang, errors = compile_anything()
     import json
-    out, err, language_id = compile_anything()
-    print json.dumps((out, err, language_id))
-
+    if detected_lang:
+        print(json.dumps({'language': detected_lang}))
+    else:
+        print(json.dumps(errors))
+        for error in errors['errors']:
+            print(error)

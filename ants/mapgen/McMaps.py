@@ -327,21 +327,76 @@ def euclidean_distance(loc1, loc2, size):
     value = sqrt(d_row**2 + d_col**2)
     euclidean_cache[key] = value
     return value
-   
+
+def copy(value, size):
+    return size+value
+def mirror(value, size):
+    return size*2-value-1
+def flip(value, size):
+    return size-value-1
+
+def both_point(point, size, funcs):
+    return (funcs[0](point[0], size[0]), funcs[1](point[1], size[1]))
+def vert_point(point, size, funcs):
+    return (funcs[0](point[0], size[0]), point[1])
+def horz_point(point, size, funcs):
+    return (point[0], funcs[0](point[1], size[1]))
+# TODO: ensure square or change output size
+def flip_point(point, size, funcs):
+    return (funcs[0](point[1], size[1]), funcs[1](point[0], size[0]))
+
+def vert_increase(size, count):
+    return (size[0]*count, size[1])
+def horz_increase(size, count):
+    return (size[0], size[1]*count)
+
+vert_copy = (vert_point, (copy,), vert_increase)
+vert_mirror = (vert_point, (mirror,), vert_increase)
+vert_rotate = (both_point, (mirror, flip), vert_increase)
+horz_copy = (horz_point, (copy,), horz_increase)
+horz_mirror = (horz_point, (mirror,), horz_increase)
+horz_rotate = (both_point, (flip, mirror), horz_increase)    
+
+def extend(funcs, points, size, count=2):
+    if type(points) == list:
+        points = {point: x for x, point in enumerate(points)}
+    rows, cols = size
+    new_points = {}
+    for point, id in points.items():
+        new_points[point] = id
+        for c in range(1,count):
+            new_points[funcs[0](point, funcs[2](size, c), funcs[1])] = id
+    return new_points, funcs[2](size, count)
+               
 def make_symmetric(points, size, players):
+    # TODO: shearing, like antimatroid
+    #    3, 4 and 7 player can be made fair
+    # TODO: rotational
+    #    2, 4 and 8 can be made fairish
+    
     # pick random grid size
     divs = [i for i in range(1,players+1) if players%i==0]
     row_sym = choice(divs)
     col_sym = players/row_sym
+    grid = (row_sym, col_sym)
     
     newsize = (size[0]*row_sym, size[1]*col_sym)
     newpoints = []
     comps = []
-    # todo, copy points symmetrically
-    for row in range(row_sym):
-        for col in range(col_sym):
-            pass
-    return None
+
+    if row_sym % 2 == 0:
+        points, size = extend(choice((vert_copy, vert_mirror, vert_rotate)), points, size)
+        row_sym /= 2
+    if row_sym > 1:
+        points, size = extend(vert_copy, points, size, row_sym)
+
+    if col_sym % 2 == 0:
+        points, size = extend(choice((horz_copy, horz_mirror, horz_rotate)), points, size)
+        col_sym /= 2
+    if col_sym > 1:
+        points, size = extend(horz_copy, points, size, col_sym)
+    
+    return points, size, grid
 
 def random_points(count, size, spacing, distance):
     rows, cols = size
@@ -387,11 +442,15 @@ def random_points_unique(count, size, spacing, distance):
             avail_cols = list(range(cols))
     return points
 
-def cells(size, points, comps=None, min_gap=5, max_braids=1000, openness=0.25, distance=euclidean_distance):
+def cells(size, points, min_gap=5, max_braids=1000, openness=0.25, distance=euclidean_distance):
     rows, cols = size
     size = (rows, cols)
     m = [[LAND for col in range(cols)] for row in range(rows)]
-
+    
+    # ensure points is a dict with id's
+    if type(points) == dict:
+        points = {point: x for x, point in enumerate(points)}
+        
     # undirected node graph
     neighbor = defaultdict(list) 
     # list of barriers to remove when carving a passage between nodes
@@ -399,22 +458,17 @@ def cells(size, points, comps=None, min_gap=5, max_braids=1000, openness=0.25, d
     
     for row in range(rows):
         for col in range(cols):
-            distances = [distance((row,col),s_loc,size) for s_loc in points]
-            closest = [d for d in distances if d - 1 <= min(distances)]
+            # TODO: improve speed with nearest neighbor queries
+            distances = {loc: distance((row,col), loc, size) for loc in points.keys()}
+            cutoff = min(distances.values()) + 1
+            closest = [point for point, d in distances.items() if d <= cutoff]
+            comps = set([points[point] for point in closest])
+            
             # find if there are unique complement sets that are closest
             # if not, this is probably a mirrored edge and the points should be
             # considered one cell
             #if closest[0] + 1 >= closest[1]:
             if len(closest) > 1:
-                nearest = [i for i, x in enumerate(distances) if x in closest]
-                comps_found = True
-                if comps != None:
-                    for n1, n2 in combinations(nearest, 2):
-                        if not n1 in comps[n2]:
-                            break
-                    else:
-                        # no unique complement sets found
-                        comps_found = False
                 if comps_found:
                     m[row][col] = BARRIER
                     # find all starting points that contributed to the barrier,
@@ -602,6 +656,35 @@ def main():
     #print(ant_map(m))
     #map_to_png(m, "test.png")
 
+def make_text(points, size):
+    tmp = ''
+    rows, cols = size
+    if cols > rows:
+        for row in range(rows):
+            for col in range(cols):
+                if (row,col) in points:
+                    tmp += chr(points[(row,col)]+97)
+                else:
+                    tmp += '.'
+            tmp += '\n'
+    else:
+        for col in range(cols):
+            for row in range(rows):
+                if (row,col) in points:
+                    tmp += chr(points[(row,col)]+97)
+                else:
+                    tmp += '.'
+            tmp += '\n'
+    return tmp
+
 if __name__ == '__main__':
-    import cProfile
-    cProfile.run('main()')
+    p = [(0,0),(0,1)]
+    s = (2,2)
+    p, s, g = make_symmetric(p, s, randrange(2,12))
+    t = make_text(p, s)
+    print("size: %s\ngrid: %s\n\n%s" % (s, g, t))
+    
+    #import cProfile
+    #cProfile.run('main()')
+    
+    

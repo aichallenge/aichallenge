@@ -4,18 +4,18 @@ from ants import *
 class TestBot:
     def do_turn(self, ants):
         destinations = []
-        for a_row, a_col in ants.my_ants():
+        for ant_loc in ants.my_ants():
             # try all directions in order
             directions = ('n','e','s','w')
             for direction in directions:
-                (n_row, n_col) = ants.destination(a_row, a_col, direction)
-                if (not (n_row, n_col) in destinations and
-                        ants.passable(n_row, n_col)):
-                    ants.issue_order((a_row, a_col, direction))
-                    destinations.append((n_row, n_col))
+                new_loc = ants.destination(ant_loc, direction)
+                if (not new_loc in destinations and
+                        ants.passable(new_loc)):
+                    ants.issue_order((ant_loc, direction))
+                    destinations.append(new_loc)
                     break
             else:
-                destinations.append((a_row, a_col))
+                destinations.append(ant_loc)
 
 if __name__ == '__main__':
     try:

@@ -89,6 +89,10 @@ Ants.parseData = function (data) {
             this.max_turns = turn;
             this.changes.push([]);
         } else if (tokens[0] === 'm') {
+            if (this.changes.length === 0) {
+                // used for map only mode
+                this.changes.push([]);
+            }
             // only except map input for turn 0
             if (turn === 0) {
                 var line = tokens[1];

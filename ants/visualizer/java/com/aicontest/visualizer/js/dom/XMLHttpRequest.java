@@ -9,7 +9,7 @@ import java.net.URLConnection;
 
 import org.w3c.dom.DOMException;
 
-import com.aicontest.visualizer.js.WebWrapper;
+import com.aicontest.visualizer.WebWrapper;
 import com.aicontest.visualizer.js.tasks.EventExecutionUnit;
 
 public class XMLHttpRequest {
@@ -77,7 +77,7 @@ public class XMLHttpRequest {
 	}
 
 	public void setRequestHeader(String header, String value) {
-		throw new DOMException(DOMException.NOT_SUPPORTED_ERR, "not supported");
+		conn.addRequestProperty(header, value);
 	}
 
 	public void send() throws Exception {
