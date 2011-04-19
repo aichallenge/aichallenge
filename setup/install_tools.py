@@ -1,7 +1,7 @@
 
 import os
 import re
-from subprocess import Popen
+from subprocess import Popen, PIPE
 
 class Environ(object):
     """ Context manager that sets and restores an environment variable """
@@ -33,8 +33,10 @@ class CD(object):
     def __exit__(self, type, value, traceback):
         os.chdir(self.org_dir)
 
-def file_matches(filename, line_pattern):
+def file_contains(filename, line_pattern):
     """ Checks if a file has a line matching the given pattern """
+    if not os.path.exists(filename):
+        return False
     regex = re.compile(line_pattern)
     with open(filename, 'r') as src:
         for line in src:
@@ -55,13 +57,16 @@ class CmdError(StandardError):
         StandardError.__init__(self, "Error %s returned from %s"
             % (returncode, cmd))
 
-def run_cmd(cmd):
+def run_cmd(cmd, capture_stdout=False):
     """ Run a command in a shell """
     print "Executing:", cmd
-    proc = Popen(cmd, shell=True)
+    stdout_loc = PIPE if capture_stdout else None
+    proc = Popen(cmd, shell=True, stdout=stdout_loc)
+    output, error_out = proc.communicate()
     status = proc.wait()
     if status != 0:
         raise CmdError(cmd, status)
+    return output
 
 def install_apt_packages(packages):
     """ Install system packages using aptitude """
@@ -71,4 +76,23 @@ def install_apt_packages(packages):
     except TypeError:
         cmd = apt_cmd + " ".join(packages)
     run_cmd(cmd)
+
+def get_choice(query, default=False):
+    negative_responses = ["no", "n"]
+    positive_responses = ["yes", "y"]
+    query += " [%s] " % ('yes' if default else 'no')
+    while True:
+        resp = raw_input(query).lower().strip()
+        if resp in negative_responses or (resp == "" and not default):
+            return False
+        if resp in positive_responses or (resp == "" and default):
+            return True
+
+def get_password(pw_name):
+    while True:
+        passwd = getpass.getpass("%s password? " % (pw_name.capitalize()))
+        confirm = getpass.getpass("Confirm %s password? " % (pw_name,))
+        if passwd == confirm:
+            return passwd
+        print "Sorry, passwords did not match."
 
