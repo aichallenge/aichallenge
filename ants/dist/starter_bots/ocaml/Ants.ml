@@ -429,8 +429,10 @@ let passable gstate (row, col) =
 let centre state = state.setup.rows / 2, state.setup.cols / 2;;
 
 (* How many milliseconds remain? *)
-let time_remaining state = 1000. *. 
-      (1. -. ((Sys.time ()) -. state.go_time));;
+let time_remaining state = 
+   let turn_time = if state.turn = 0 then (float_of_int state.setup.loadtime)
+   else (float_of_int state.setup.turntime) in
+      1000. *. (turn_time -. ((Sys.time ()) -. state.go_time));;
 
 (* End helper functions *)
 
