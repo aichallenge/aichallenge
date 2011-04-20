@@ -105,5 +105,11 @@ Ant	: 100+ (100 for friendly, then add owner value for 101, 102...)
 Dead ant: 200+ (200 for friendly, then as for Ant)
 
 For the Unseen, Land, Water and Food values, there are functions for 
-converting to labels of similar names. They will work for Ant and Dead 
-as well, but for those you may want to look at the actual value.
+converting to and from labels of similar names. They are named 
+tile_of_int and int_of_tile. They will work for Ant and Dead as well, 
+but for those you may want to look at the actual value. int_of_tile 
+returns 199 for a live ant, 299 for a dead ant, ignoring owner (if if 
+it's yours).
+
+It is still likely that there are undiscovered bugs in this code: 
+testing would be great.

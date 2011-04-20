@@ -75,7 +75,7 @@ let tile_of_int c =
    else if c = 1 then `Land
    else if c = 2 then `Water
    else if c = 3 then `Food
-   else if c > 99 then `Ant
+   else if (c > 99) && (c < 200) then `Ant
    else `Dead
 ;;
 
