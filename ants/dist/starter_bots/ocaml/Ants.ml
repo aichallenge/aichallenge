@@ -432,7 +432,9 @@ let centre state = state.setup.rows / 2, state.setup.cols / 2;;
 let time_remaining state = 
    let turn_time = if state.turn = 0 then (float_of_int state.setup.loadtime)
    else (float_of_int state.setup.turntime) in
-      1000. *. (turn_time -. ((Sys.time ()) -. state.go_time));;
+      1000. *. 
+      ((turn_time /. 1000.) -. ((Sys.time ()) -. state.go_time))
+;;
 
 (* End helper functions *)
 
