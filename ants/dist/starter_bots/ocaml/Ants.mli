@@ -1,4 +1,4 @@
-type ant = { loc : int * int; owner : int; }
+val ddebug : 'a -> unit
 type game_setup = {
   loadtime : int;
   turntime : int;
@@ -10,6 +10,17 @@ type game_setup = {
   spawnradius2 : int;
 }
 type mapb = { content : int; seen : int; }
+class ant :
+  row:int ->
+  col:int ->
+  owner:int ->
+  object
+    method col : int
+    method loc : int * int
+    method owner : int
+    method row : int
+    method to_string : string
+  end
 type tgame_state = {
   setup : game_setup;
   turn : int;
@@ -21,29 +32,31 @@ type tgame_state = {
   go_time : float;
 }
 type dir = [ `E | `N | `S | `Stop | `W ]
-type tile = [ `Dead | `Food | `Land | `Unseen | `Water ]
+type tile = [ `Ant | `Dead | `Food | `Land | `Unseen | `Water ]
 type order = (int * int) * dir
+class swrap :
+  tgame_state ->
+  object
+    val mutable state : tgame_state
+    method bounds : int * int
+    method centre : int * int
+    method direction : int * int -> int * int -> dir * dir
+    method distance : int * int -> int * int -> float
+    method distance2 : int * int -> int * int -> int
+    method distance_and_direction :
+      int * int -> int * int -> (dir * dir) * float
+    method finish_turn : unit -> unit
+    method get_state : tgame_state
+    method get_tile : int * int -> tile
+    method issue_order : order -> unit
+    method my_ants : ant list
+    method passable : int * int -> bool
+    method set_state : tgame_state -> unit
+    method step_dir : int * int -> dir -> int * int
+    method time_remaining : float
+    method turn : int
+    method update_vision : unit
+    method visible : int * int -> bool
+  end
 
-val ddebug : string -> unit
-val issue_order : (int * int) * [< `E | `N | `S | `Stop | `W ] -> unit
-val finish_turn : unit -> unit
-val step_dir :
-  [< `E | `N | `S | `Stop | `W ] -> int * int -> int * int -> int * int
-val get_tile :
-  mapb array array ->
-  int * int -> [> `Ant | `Dead | `Food | `Land | `Unseen | `Water ]
-val direction :
-  int * int ->
-  int * int -> int * int -> [> `N | `S | `Stop ] * [> `E | `Stop | `W ]
-val distance2 : int * int -> int * int -> int * int -> int
-val distance : int * int -> int * int -> int * int -> float
-val distance_and_direction :
-  int * int ->
-  int * int ->
-  int * int -> ([> `N | `S | `Stop ] * [> `E | `Stop | `W ]) * float
-val update_vision : ant list -> tgame_state -> unit
-val visible : tgame_state -> int * int -> bool
-val passable : tgame_state -> int * int -> bool
-val centre : tgame_state -> int * int
-val time_remaining : tgame_state -> float
-val loop : (tgame_state -> 'a) -> unit
+val loop : (swrap -> 'a) -> unit

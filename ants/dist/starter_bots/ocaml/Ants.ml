@@ -8,13 +8,6 @@ let out_chan = open_out "mybot_err.log";;
 
 let ddebug s = (* output_string out_chan s; flush out_chan *) () ;;
 
-type ant =
- {
-   loc: (int * int);
-   owner : int
- }
-;;
-
 type game_setup =
  {
    loadtime : int;
@@ -35,6 +28,18 @@ type mapb =
  }
 ;;
 
+class ant ~row ~col ~owner =
+   object
+      method loc = row, col
+      method row = row
+      method col = col
+      method owner = owner
+      method to_string =
+         Printf.sprintf "Ant at %d, %d belongs to player %d" 
+            row col owner;
+   end
+;;
+
 type tgame_state =
   { 
     setup : game_setup;
@@ -50,7 +55,7 @@ type tgame_state =
 
 type dir = [ `N | `E | `S | `W | `Stop];;
 
-type tile = [ `Water | `Land | `Food | `Dead | `Unseen];;
+type tile = [ `Water | `Land | `Food | `Ant | `Dead | `Unseen];;
 
 type order = ((int * int) * dir);;
 
@@ -61,15 +66,6 @@ let proto_tile =
  }
 ;;
 
-let string_of_dir d = 
-   match d with
-    | `N -> "N" 
-    | `E -> "E"
-    | `S -> "S"
-    | `W -> "W"
-    | `Stop -> "Stop"
-;;
-
 let tile_of_int c =
    if c = 0 then `Unseen
    else if c = 1 then `Land
@@ -77,6 +73,15 @@ let tile_of_int c =
    else if c = 3 then `Food
    else if (c > 99) && (c < 200) then `Ant
    else `Dead
+;;
+
+let string_of_dir d = 
+   match d with
+    | `N -> "N" 
+    | `E -> "E"
+    | `S -> "S"
+    | `W -> "W"
+    | `Stop -> "Stop"
 ;;
 
 let int_of_tile t =
@@ -171,7 +176,7 @@ let add_ant gstate row col owner =
      (
       gstate.tmap.(row).(col) <- 
          {gstate.tmap.(row).(col) with content = (100 + owner)};
-      let new_ant = {loc = (row, col); owner = owner} in
+      let new_ant = new ant row col owner in
       match owner with
        | 0 ->
             {gstate with my_ants = (new_ant :: gstate.my_ants)}
@@ -186,7 +191,7 @@ let add_dead_ant gstate row col owner =
      (
       gstate.tmap.(row).(col) <- 
          {gstate.tmap.(row).(col) with content = (200 + owner)};
-      let new_ant = {loc = (row, col); owner = owner} in
+      let new_ant = new ant row col owner in
       {gstate with dead_ants = (new_ant :: gstate.dead_ants)}
      )
    with _ -> gstate
@@ -360,7 +365,7 @@ let stepdistance_ndirection (rows, cols) (row1, col1) (row2, col2) =
 
 let direction bounds p1 p2 =
    let d, _ = stepdistance_ndirection bounds p1 p2 in
-      d
+      (d: (dir * dir))
 ;;
 
 let fsquare_int i =
@@ -390,7 +395,7 @@ let mark_seen turn (pr, pc) tmap =
 
 (* Draw a filled vision circle around an ant *)
 let paint_fov ant gstate =
-   let c_row, c_col = ant.loc in
+   let c_row, c_col = ant#loc in
    let bounds = gstate.setup.rows, gstate.setup.cols in
    let r2 = gstate.setup.viewradius2 in
    let r = int_of_float (sqrt (float_of_int r2)) in
@@ -400,7 +405,7 @@ let paint_fov ant gstate =
          let pr, pc = 
             wrap_bound bounds (ul_row + count_rows, ul_col + count_cols)
          in
-         if distance2 bounds (pr, pc) ant.loc <= r2 then
+         if distance2 bounds (pr, pc) ant#loc <= r2 then
             mark_seen gstate.turn (pr, pc) gstate.tmap
       done
    done
@@ -438,6 +443,38 @@ let time_remaining state =
 
 (* End helper functions *)
 
+class swrap state =
+ object (self)
+   val mutable state = state
+   method bounds = state.setup.rows, state.setup.cols
+   method issue_order (o:order) =
+      issue_order o
+   method finish_turn = finish_turn
+   method step_dir (row, col) (d:dir) =
+      step_dir d self#bounds (row, col)
+   method get_tile (row, col) = ((get_tile state.tmap (row, col)): tile)
+   method direction p1 p2 = ((direction self#bounds p1 p2): (dir * dir))
+   method step_dir loc dir = step_dir dir self#bounds loc
+   method get_tile loc = get_tile state.tmap loc
+   method distance2 p1 p2 = distance2 self#bounds p1 p2
+   method distance p1 p2 = distance self#bounds p1 p2
+   method distance_and_direction p1 p2 =
+      ((distance_and_direction self#bounds p1 p2): ((dir * dir) * float))
+   method update_vision = update_vision state.my_ants state
+   method visible loc = visible state loc
+   method passable loc = passable state loc
+   method centre = centre state
+   method time_remaining = time_remaining state
+   method set_state s = state <- s
+   method get_state = state
+   method turn = state.turn
+   method my_ants = state.my_ants
+(*
+   More getters to be added as needed
+*)
+ end
+;;
+
 (* Main game loop. Bots should define a main function taking a 
 tgame_state for an argument, and then call loop main_function. *)
 
@@ -452,41 +489,6 @@ tests, adds it to its order list if it passes, and then the finish_turn
 function prints the orders followed by "go\n".*)
 
 let loop engine =
-  let rec take_turn i gstate =
-    match read gstate with
-    | Some state ->
-        if not (state.turn = i) then 
-          (
-           ddebug (Printf.sprintf 
-              "Game engine and internal turn count disagree: %d vs %d\n" 
-              state.turn i);
-          );
-        begin try 
-         (
-          engine state;
-          flush stdout;
-         )
-        with exc ->
-         (
-          ddebug (Printf.sprintf 
-             "Ants.loop: Engine raised an exception in turn %d.\n" i);
-(*
-            output_game_state stderr state;
-*)
-          ddebug (Printf.sprintf "EXCEPTION:\n  %s\n" 
-             (Printexc.to_string exc));
-(* Before releasing your bot into the final contest, I strongly suggest 
-changing this "raise exc" to something less fatal. In order to pass your 
-turn correctly, it would be good to know whether "go" has already been 
-printed on stdout, so you can print it now if it hasn't. This is another 
-reason to change the finish_turn function. (see above) *)
-          raise exc
-         )
-        end;
-        take_turn (i + 1) state
-    | None ->
-        ()
-  in
   let proto_setup =
      {
       loadtime = -1;
@@ -510,6 +512,43 @@ reason to change the finish_turn function. (see above) *)
       tmap = Array.make_matrix 1 1 proto_tile; 
       go_time = 0.0;
      }
+  in
+  let wrap = new swrap proto_gstate in
+  let rec take_turn i gstate =
+    match read gstate with
+    | Some state ->
+        if not (state.turn = i) then 
+          (
+           ddebug (Printf.sprintf 
+              "Game engine and internal turn count disagree: %d vs %d\n" 
+              state.turn i);
+          );
+        begin try 
+         (
+          wrap#set_state state;
+          engine wrap;
+          flush stdout;
+         )
+        with exc ->
+         (
+          ddebug (Printf.sprintf 
+             "Ants.loop: Engine raised an exception in turn %d.\n" i);
+(*
+            output_game_state stderr state;
+*)
+          ddebug (Printf.sprintf "EXCEPTION:\n  %s\n" 
+             (Printexc.to_string exc));
+(* Before releasing your bot into the final contest, I strongly suggest 
+changing this "raise exc" to something less fatal. In order to pass your 
+turn correctly, it would be good to know whether "go" has already been 
+printed on stdout, so you can print it now if it hasn't. This is another 
+reason to change the finish_turn function. (see above) *)
+          raise exc
+         )
+        end;
+        take_turn (i + 1) wrap#get_state
+    | None ->
+        ()
   in
      take_turn 0 proto_gstate
 ;;
