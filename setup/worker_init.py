@@ -45,8 +45,8 @@ def main():
     os.chdir("/home/contest")
     get_contest_files(sys.argv[1])
     os.chdir("aichallenge/setup")
-    run_cmd("./setup_worker.py -y --username contest --api-url %s --api-key %s \
-            --start" % (sys.argv[1], sys.argv[2]))
+    run_cmd("./worker_setup.py -y --username contest --api-url %s --api-key %s \
+            --install-cronjob --start" % (sys.argv[1], sys.argv[2]))
 
 if __name__=="__main__":
     main()

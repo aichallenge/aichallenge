@@ -137,30 +137,44 @@ def setup_contest_files(opts):
             run_cmd("chmod 600 server_info.py")
     run_cmd("chown -R {0}:{0} {1}".format(opts.username, contest_root))
 
+def create_jail_group():
+    run_cmd("groupadd jailusers")
+    limits_conf = "/etc/security/limits.conf"
+    if not file_contains(limits_conf, "@jailusers"):
+        # limit jailuser processes to:
+        # 10 processes or system threads
+        append_line(limits_conf, "@jailusers hard nproc 10 # ai-contest")
+        # 20 minutes of cpu time
+        append_line(limits_conf, "@jailusers hard cpu 20 # ai-contest")
+        # slightly more than 1GB of ram
+        append_line(limits_conf, "@jailusers hard rss 1048600 # ai-contest")
+
+def create_jail_user(username):
+    run_cmd("useradd -g jailusers -d /home/jailuser %s" % (username,))
+    # Add rule to drop any network communication from this user
+    run_cmd("iptables -A OUTPUT -m owner --uid-owner %s -j DROP" % (username,))
+
 IPTABLES_LOAD = """#!/bin/sh
 iptables-restore < /etc/iptables.rules
 exit 0
 """
 
-def setup_jailusers(contest_root):
+def setup_jailusers(options):
     """ Create and configure the jail users """
-    worker_dir = os.path.join(contest_root, "aichallenge", "worker")
-    with CD(worker_dir):
-        run_cmd("python create_jail_users.py 32")
+    create_jail_group()
     org_mode = os.stat("/etc/sudoers")[0]
     os.chmod("/etc/sudoers", 0640)
-    append_line("/etc/sudoers", "contest ALL = (%jailusers) NOPASSWD: ALL")
+    append_line("/etc/sudoers",
+            "%s ALL = (%%jailusers) NOPASSWD: ALL" % (options.username,))
     os.chmod("/etc/sudoers", org_mode)
-    run_cmd("iptables-save > /etc/iptables.rules")
     iptablesload_path = "/etc/network/if-pre-up.d/iptablesload"
     if not os.path.exists(iptablesload_path):
         with open(iptablesload_path, "w") as loadfile:
             loadfile.write(IPTABLES_LOAD)
         os.chmod(iptablesload_path, 0744)
-
-def setup_start_script(opts):
-    """ Set worker startup script to run on every reboot """
-    return script
+    for user_num in range(1, 33):
+        create_jail_user("jailuser%s" % (user_num,))
+    run_cmd("iptables-save > /etc/iptables.rules")
 
 def interactive_options(options):
     print "Warning: This script is meant to be run as root and will make changes to the configuration of the machine it is run on."
@@ -172,7 +186,8 @@ def interactive_options(options):
     if resp != "yes":
         sys.exit(1)
     pkg_only = get_choice(
-            "Only install packages, do no additional setup?")
+            "Only install packages, do no additional setup?",
+            options.packages_only)
     options.packages_only = pkg_only
     if pkg_only:
         print "Only system packages will be installed, no further setup will be done."
@@ -187,13 +202,14 @@ def interactive_options(options):
     repo_dir = raw_input("Directory of source repository? [%s] " % (repo_dir,))
     options.local_repo = repo_dir if repo_dir else options.local_repo
     base_url = options.api_url
+    options.create_jails = get_choice("Create bot jails?", options.create_jails)
     base_url = raw_input("API Base url? [%s] " % (base_url,))
     options.api_url = base_url if base_url else options.api_url
     api_key = options.api_key
     api_key = raw_input("Worker API key? [%s] " % (api_key,))
     options.api_key = api_key if api_key else options.api_key
-    options.install_cronjobs = get_choice("Install startup cronjob?",
-            options.install_cronjobs)
+    options.install_cronjob = get_choice("Install startup cronjob?",
+            options.install_cronjob)
     options.run_worker = get_choice(
             "Immediately run worker start script at end of setup?",
             options.run_worker)
@@ -211,10 +227,11 @@ def get_options(argv):
         "username": current_username,
         "root_dir": root_dir,
         "local_repo": local_repo,
+        "create_jails": True,
         "api_url": "http://ai-contest.com/",
         "api_key": "",
-        "install_cronjobs": True,
-        "run_worker": True,
+        "install_cronjob": False,
+        "run_worker": False,
         "interactive": True,
         }
     parser = OptionParser()
@@ -234,6 +251,9 @@ def get_options(argv):
             help="Api key used when communicating with the main server")
     parser.add_option("-b", "--api-url", action="store", dest="api_url",
             help="Base url for queries to the main server")
+    parser.add_option("--install-cronjob", action="store_true",
+            dest="install_cronjob",
+            help="Install cron script to start worker running after reboot")
     parser.add_option("--start", action="store_true", dest="run_worker",
             help="Start the worker after finishing setup")
     options, args = parser.parse_args(argv)
@@ -259,10 +279,11 @@ def main(argv=["worker_setup.py"]):
     if opts.packages_only:
         return
     setup_contest_files(opts)
-    #setup_jailusers("/home/contest")
+    if opts.create_jails:
+        setup_jailusers(opts)
     start_script = os.path.join(opts.root_dir, opts.local_repo,
             "worker/start_worker.sh")
-    if opts.install_cronjobs:
+    if opts.install_cronjob:
         cron_file = "/etc/cron.d/ai-contest"
         if not file_contains(cron_file, start_script):
             append_line(cron_file, "@reboot root %s" % (start_script,))
