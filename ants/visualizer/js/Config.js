@@ -6,7 +6,7 @@ function Config() {
 	this['fullscreen'] = false;
 	this['border'] = true;
 	this['label'] = false;
-	this['zoom'] = false;
+	this['zoom'] = 1;
 	this.load();
 }
 /**
