@@ -469,14 +469,16 @@ class swrap state =
    method get_state = state
    method turn = state.turn
    method my_ants = state.my_ants
+   method get_map = state.tmap
 (*
    More getters to be added as needed
 *)
  end
 ;;
 
-(* Main game loop. Bots should define a main function taking a 
-tgame_state for an argument, and then call loop main_function. *)
+(* Main game loop. Bots should define a main function taking a swrap for 
+an argument (see above), and then call loop main_function. See how the 
+starter bot in MyBot.ml does it if this doesn't make sense.*)
 
 (* There was an errors_in_orders function in the Planetwars version, 
 which checked for errors and printed the game state on error. The 

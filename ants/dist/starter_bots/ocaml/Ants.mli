@@ -46,6 +46,7 @@ class swrap :
     method distance_and_direction :
       int * int -> int * int -> (dir * dir) * float
     method finish_turn : unit -> unit
+    method get_map : mapb array array
     method get_state : tgame_state
     method get_tile : int * int -> tile
     method issue_order : order -> unit

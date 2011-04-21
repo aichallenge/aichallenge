@@ -58,24 +58,45 @@ in the source directory.
 
 ## Where to go from here
 
-Have a look through Ants.mli for provided functions.
+Please note that most of these comments were written before I added the 
+OO interface. I've updated some things but not all.
+
+The main change resulting from this is that you will need to add some 
+getters to the swrap class in Ants.ml when you want to access bits of 
+game state. After doing that, you will need to either hide (rename) or 
+recreate the Ants.mli file with "ocamlc -i", because it won't know 
+about your new getters. See methods my_ants and get_map if you don't 
+understand what I mean by "getters".
+
+You don't have to use the OO interface. You can change the loop function 
+in Ants.ml to provide the raw tgame_state, recreate (or remove) 
+Ants.mli, and use the raw functions which are called by the swrap class.
+
+The advantage of the OO interface is that some function calls require 
+fewer arguments, because they can be referenced internally.
+
+Have a look through the default Ants.mli for provided functions.
 
 MyBot.ml contains the starter bot logic, and Ants.ml implements the I/O 
 and helper functions. Users are encouraged to look at Ants.ml, 
 particularly at the comments near the end, in the loop function.
 
-Consider modifying the game loop exception handler to suppress fatal 
-exceptions and pass the turn rather than complaining and exiting.
+Before release into the contes, consider modifying the game loop 
+exception handler to suppress fatal exceptions and pass the turn rather 
+than complaining and exiting. Don't do this before release, though, 
+unless you really want to be unaware of these exceptions being thrown. 
+:)
 
 Currently the bot doesn't generate any debugging output. There is a 
 "ddebug" function which does nothing, but a slight adjustment to some 
 comment marks will activate it. I like it to direct the output to a 
 file, but you could redirect it to stderr or some other place.
 
-The bot provides issue_order and finish_turn function just as specified 
-in the starter pack guide; the functions write directly to stdout. I 
-recommend changing this so that issue_order builds up a list of orders, 
-checking for errors, and then finish_turn does all the outputting.
+The pack provides issue_order and finish_turn functions just as 
+specified in the starter pack guide; the functions write directly to 
+stdout. I recommend changing this so that issue_order builds up a list 
+of orders, checking for errors, and then finish_turn does all the 
+outputting.
 
 This is my first attempt at making something like this for other people 
 to use. If anyone would like to make improvements, that would be great. 
@@ -108,7 +129,7 @@ For the Unseen, Land, Water and Food values, there are functions for
 converting to and from labels of similar names. They are named 
 tile_of_int and int_of_tile. They will work for Ant and Dead as well, 
 but for those you may want to look at the actual value. int_of_tile 
-returns 199 for a live ant, 299 for a dead ant, ignoring owner (if if 
+returns 199 for a live ant, 299 for a dead ant, ignoring owner (even if 
 it's yours).
 
 It is still likely that there are undiscovered bugs in this code: 

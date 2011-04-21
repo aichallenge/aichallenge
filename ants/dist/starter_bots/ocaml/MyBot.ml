@@ -40,11 +40,11 @@ The bot checks whether it's Turn 0 (setting up turn, no orders
 allowed) and finishes the turn immediately if it is; otherwise it calls 
 step_ants. 
 
-Referencing the map directly rather than through get_tile will yield an 
-int * int , not a tile type. There is a tile_of_int function which can 
-convert the first int to its tile type, such as `Water. See Ants.mli for 
-more tile types, and see README.md or Ants.ml for the map format. 
-*)
+Referencing the map structure directly through state#get_map rather than 
+through get_tile will yield an int * int , not a tile type. There is a 
+tile_of_int function which can convert the first int to its tile type, 
+such as `Water. See Ants.mli for more tile types, and see README.md or 
+Ants.ml for the map format. *)
 
 let mybot_engine state =
    if state#turn = 0 then state#finish_turn ()
