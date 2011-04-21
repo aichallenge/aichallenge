@@ -47,7 +47,7 @@ more tile types, and see README.md or Ants.ml for the map format.
 *)
 
 let mybot_engine state =
-   if state#turn = 0 then state#finish_turn
+   if state#turn = 0 then state#finish_turn ()
    else
     (
 (* This update_vision function is optional; with a lot of ants, it could 
@@ -59,7 +59,7 @@ function won't work. *)
       step_ants state state#my_ants;
       ddebug (Printf.sprintf "Time remaining: %f\n"
          (state#time_remaining));
-      state#finish_turn
+      state#finish_turn ()
     )
 ;;
 

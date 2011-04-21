@@ -449,7 +449,7 @@ class swrap state =
    method bounds = state.setup.rows, state.setup.cols
    method issue_order (o:order) =
       issue_order o
-   method finish_turn = finish_turn
+   method finish_turn () = finish_turn ()
    method step_dir (row, col) (d:dir) =
       step_dir d self#bounds (row, col)
    method get_tile (row, col) = ((get_tile state.tmap (row, col)): tile)
