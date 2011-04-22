@@ -4,7 +4,7 @@ import getpass
 import os.path
 import re
 import sys
-from optparse import OptionParser
+from optparse import OptionParser, SUPPRESS_HELP
 
 from install_tools import CD, Environ, install_apt_packages, run_cmd
 from install_tools import append_line, file_contains, get_choice, get_password
@@ -137,8 +137,27 @@ def setup_contest_files(opts):
             run_cmd("chmod 600 server_info.py")
     run_cmd("chown -R {0}:{0} {1}".format(opts.username, contest_root))
 
+def setup_base_chroot(options):
+    """ Create and setup the base chroot jail users will run in. """
+    install_apt_packages(["debootstrap", "schroot"])
+    if os.path.exists("/srv/chroot/aic-base"):
+        return
+    os.makedirs("/srv/chroot/aic-base")
+    run_cmd("debootstrap --variant=buildd --arch amd64 maverick \
+            /srv/chroot/aic-base http://us.archive.ubuntu.com/ubuntu/")
+    with CD(TEMPLATE_DIR):
+        run_cmd("cp chroot_configs/chroot.d/* /etc/schroot/chroot.d")
+        run_cmd("cp chroot_configs/sources.list /srv/chroot/aic-base/etc/apt/")
+    run_cmd("schroot -c aic-base -- /bin/sh -c \"DEBIANFRONTEND=noninteractive;\
+            apt-get update; apt-get upgrade -y\"")
+    run_cmd("schroot -c aic-base -- apt-get install -y python")
+    run_cmd("schroot -c aic-base -- %s/setup/worker_setup.py --chroot-setup"
+            % (os.path.join(options.root_dir, options.local_repo),))
+
 def create_jail_group():
-    run_cmd("groupadd jailusers")
+    """ Create user group for jail users and set limits on it """
+    if not file_contains("/etc/group", "^jailusers"):
+        run_cmd("groupadd jailusers")
     limits_conf = "/etc/security/limits.conf"
     if not file_contains(limits_conf, "@jailusers"):
         # limit jailuser processes to:
@@ -150,9 +169,12 @@ def create_jail_group():
         append_line(limits_conf, "@jailusers hard rss 1048600 # ai-contest")
 
 def create_jail_user(username):
+    """ Setup a jail user with the given username """
     run_cmd("useradd -g jailusers -d /home/jailuser %s" % (username,))
     # Add rule to drop any network communication from this user
     run_cmd("iptables -A OUTPUT -m owner --uid-owner %s -j DROP" % (username,))
+    # TODO: create user specific chroot
+
 
 IPTABLES_LOAD = """#!/bin/sh
 iptables-restore < /etc/iptables.rules
@@ -172,6 +194,7 @@ def setup_jailusers(options):
         with open(iptablesload_path, "w") as loadfile:
             loadfile.write(IPTABLES_LOAD)
         os.chmod(iptablesload_path, 0744)
+    setup_base_chroot(options)
     for user_num in range(1, 33):
         create_jail_user("jailuser%s" % (user_num,))
     run_cmd("iptables-save > /etc/iptables.rules")
@@ -179,12 +202,12 @@ def setup_jailusers(options):
 def interactive_options(options):
     print "Warning: This script is meant to be run as root and will make changes to the configuration of the machine it is run on."
     resp = raw_input("Are you sure you want to continue (yes/no)? [no] ")
+    if resp != "yes":
+        sys.exit(1)
     sys_update = options.update_system
     options.update_system = get_choice(
             "Update and upgrade system before rest of setup?",
             options.update_system)
-    if resp != "yes":
-        sys.exit(1)
     pkg_only = get_choice(
             "Only install packages, do no additional setup?",
             options.packages_only)
@@ -221,8 +244,9 @@ def get_options(argv):
     root_dir, local_repo = os.path.split(top_level)
     default_setup = {
         "update_system": True,
+        "install_required": True,
         "install_utilities": True,
-        "install_languages": True,
+        "install_languages": False,
         "packages_only": False,
         "username": current_username,
         "root_dir": root_dir,
@@ -234,6 +258,17 @@ def get_options(argv):
         "run_worker": False,
         "interactive": True,
         }
+
+    chroot_setup = {
+        "install_utilities": False,
+        "install_languages": True,
+        "packages_only": True,
+        "interactive": False,
+        }
+    def replace_options(option, opt_str, opt_value, parser, replacements):
+        for option, value in replacements.items():
+            setattr(parser.values, option, value)
+
     parser = OptionParser()
     parser.set_defaults(**default_setup)
     parser.add_option("-y", "--non-interactive", action="store_false",
@@ -256,6 +291,9 @@ def get_options(argv):
             help="Install cron script to start worker running after reboot")
     parser.add_option("--start", action="store_true", dest="run_worker",
             help="Start the worker after finishing setup")
+    parser.add_option("--chroot-setup", action="callback",
+            callback=replace_options, callback_args=(chroot_setup,),
+            help=SUPPRESS_HELP)
     options, args = parser.parse_args(argv)
     if options.interactive:
         interactive_options(options)
@@ -269,9 +307,10 @@ def main(argv=["worker_setup.py"]):
     opts = get_options(argv)
     with Environ("DEBIAN_FRONTEND", "noninteractive"):
         if opts.update_system:
-            run_cmd("aptitude update")
-            run_cmd("aptitude upgrade -y")
-        install_required_packages()
+            run_cmd("apt-get update")
+            run_cmd("apt-get upgrade -y")
+        if opts.install_required:
+            install_required_packages()
         if opts.install_utilities:
             install_utility_packages()
         if opts.install_languages:
