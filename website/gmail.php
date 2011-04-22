@@ -1,7 +1,7 @@
 <?php
 
-require_once("phpmailer/class.phpmailer.php");
-require_once("phpmailer/class.smtp.php");
+require_once("libphp-phpmailer/class.phpmailer.php");
+require_once("libphp-phpmailer/class.smtp.php");
 
 function send_gmail($recipient, $subject, $body) {
   include("server_info.php");
