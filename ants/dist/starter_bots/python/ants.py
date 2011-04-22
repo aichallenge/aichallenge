@@ -4,6 +4,7 @@ import traceback
 import random
 import time
 from collections import deque
+from math import sqrt
 
 MY_ANT = 0
 ANTS = 0
@@ -66,11 +67,11 @@ class Ants():
                 elif key == 'loadtime':
                     self.loadtime = int(tokens[1])
                 elif key == 'viewradius2':
-                    self.loadtime = int(tokens[1])
+                    self.viewradius2 = int(tokens[1])
                 elif key == 'attackradius2':
-                    self.loadtime = int(tokens[1])
+                    self.attackradius2 = int(tokens[1])
                 elif key == 'spawnradius2':
-                    self.loadtime = int(tokens[1])
+                    self.spawnradius2 = int(tokens[1])
         self.map = [[LAND for col in range(self.width)]
                     for row in range(self.height)]
 
@@ -196,43 +197,28 @@ class Ants():
         return d
 
     def visible(self, loc):
-        'determine which squares are visible to the given player'
-        def vision_distance(loc1, loc2):
-            # this returns the square of the euclidean distance
-            # so it can be compared with the viewradius2, which is squared
-            row1, col1 = loc1
-            row2, col2 = loc2
-            d_col = min(abs(col1 - col2), self.width - abs(col1 - col2))
-            d_row = min(abs(row1 - row2), self.height - abs(row1 - row2))
-            return d_row**2 + d_col**2
+        ' determine which squares are visible to the given player '
 
         if self.vision == None:
-            # cache results for future calls, reset on update
-            # start with all spaces not visible
-            self.vision = [[False for col in range(self.width)]
-                           for row in range(self.height)]
-            # squares_to_check is a list of painted squares that may still
-            #     have unpainted squares near it
-            # a deque is like a list, but faster when poping items from the left
-            squares_to_check = deque()
-            # for each ant, slowly paint all the squares around it
-            # keep rotating ants so that they all paint at the same rate
-            # if 2 ants paint the same square, it is merged and we save time
-            for ant_loc in self.my_ants():
-                squares_to_check.append((ant_loc, ant_loc))
-            while squares_to_check:
-                a_loc, v_loc = squares_to_check.popleft()
-                # paint all 4 squares around the square to check at once
-                for d in AIM:
-                    n_loc = self.destination(v_loc, d)
-                    n_row, n_col = n_loc
-                    if (not self.vision[n_row][n_col] and
-                            vision_distance(a_loc, n_loc) <= self.viewradius2):
-                        # we can see this square
-                        self.vision[n_row][n_col] = True
-                        # add to list to see if other square near it are also
-                        #    visible
-                        squares_to_check.append((a_loc, n_loc))
+            if not hasattr(self, 'vision_offsets_2'):
+                # precalculate squares around an ant to set as visible
+                self.vision_offsets_2 = []
+                mx = int(sqrt(self.viewradius2))
+                for d_row in range(-mx,mx+1):
+                    for d_col in range(-mx,mx+1):
+                        d = d_row**2 + d_col**2
+                        if d <= self.viewradius2:
+                            self.vision_offsets_2.append((
+                                d_row%self.height-self.height,
+                                d_col%self.width-self.width
+                            ))
+            # set all spaces as not visible
+            # loop through ants and set all squares around ant as visible
+            self.vision = [[False]*self.width for row in range(self.height)]
+            for ant in self.my_ants():
+                a_row, a_col = ant.loc
+                for v_row, v_col in self.vision_offsets_2:
+                    self.vision[a_row+v_row][a_col+v_col] = True
         row, col = loc
         return self.vision[row][col]
     
