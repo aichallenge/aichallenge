@@ -81,7 +81,7 @@ function activate_user($username) {
     return False;
   }
   // this user name should be comming from the database and already be sanitized
-  return mysql_query(sprintf(sql["activate_user"], $username));
+  return mysql_query(sprintf($sql["activate_user"], $username));
 }
 
 }
