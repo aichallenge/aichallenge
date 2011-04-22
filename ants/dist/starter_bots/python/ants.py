@@ -112,7 +112,12 @@ class Ants():
                     elif tokens[0] == 'w':
                         self.map[row][col] = WATER
                     elif tokens[0] == 'd':
-                        self.map[row][col] = DEAD
+                        # food could spawn on a spot where an ant just died
+                        # don't overwrite the space unless it is land
+                        if self.map[row][col] == LAND:
+                            self.map[row][col] = DEAD
+                        # but always add to the dead list
+                        self.dead_list.append((row, col))
 
     def time_remaining(self):
         return self.turntime - int(1000 * (time.clock() - self.turn_start_time))
