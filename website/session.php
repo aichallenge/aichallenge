@@ -80,8 +80,8 @@ function activate_user($username) {
   if ($username == NULL) {
     return False;
   }
-  $query = "UPDATE `user` SET activated = 1 WHERE username = '$username'";
-  return mysql_query($query);
+  // this user name should be comming from the database and already be sanitized
+  return mysql_query(sprintf(sql["activate_user"], $username));
 }
 
 }

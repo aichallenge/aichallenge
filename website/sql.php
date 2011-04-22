@@ -51,7 +51,8 @@ $sql = array(
                              where matchup_id = %s
                              and player_id = %s;",
     "delete_matchup" => "delete from matchup where matchup_id = %s;",
-    "delete_matchup_player" => "delete from matchup_player where matchup_id = %s;"
+    "delete_matchup_player" => "delete from matchup_player where matchup_id = %s;",
+    "activate_user" => "UPDATE `user` SET activated = 1 WHERE username =  '%s';"
                            
 );
 
