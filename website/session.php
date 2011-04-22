@@ -80,7 +80,7 @@ function activate_user($username) {
   if ($username == NULL) {
     return False;
   }
-  $query = "UPDATE users SET activated = 1 WHERE username = '$username'";
+  $query = "UPDATE `user` SET activated = 1 WHERE username = '$username'";
   return mysql_query($query);
 }
 
