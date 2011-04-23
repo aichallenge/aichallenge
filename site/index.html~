@@ -5,13 +5,37 @@
 
 <head>
 
-<title>Google AI Contest Spring 2011 - Ants</title>
+    <title>Google AI Contest</title>
+
+    <link rel="stylesheet" href="css/reset.css" type="text/css" media="screen" charset="utf-8">
+    <link rel="stylesheet" href="css/main.css" type="text/css" media="screen" charset="utf-8">
 
 </head>
 
 <body>
-    <div class="header">
-        <img src="/layout/images.png">
+    <div id="container">
+        <div id="header">
+            <img src="layout/header.png">
+        </div>
+        <div id=contentContainer>
+            <div id="content">
+                <p>Ubuntu is a computer operating system based on the Debian GNU/Linux distribution and distributed as free and open source software. It is named after the Southern African philosophy of Ubuntu ("humanity towards others").</p>
+                <p>With an estimated global usage of more than 12 million users,[8] Ubuntu is designed primarily for desktop use, although netbook and server editions exist as well.[9] Web statistics suggest that Ubuntu's share of Linux desktop usage is about 50%,[10][11] and indicate upward-trending usage as a web server.</p>
+                <p>Ubuntu is sponsored by the UK-based company Canonical Ltd., owned by South African entrepreneur Mark Shuttleworth. Canonical generates revenue by selling technical support and services tied to Ubuntu, while the operating system itself is entirely free of charge.</p>
+            </div>
+            <div id="navbar">
+                <ul id="linkList">
+                <li id="link"><a href="http://google.ca">Google</a></li>
+                <li id="link"><a href="http://google.ca">Google</a></li>
+                <li id="link"><a href="http://google.ca">Google</a></li>
+                <li id="link"><a href="http://google.ca">Google</a></li>
+                <li id="link"><a href="http://google.ca">Google</a></li>
+                <li id="link"><a href="http://google.ca">Google</a></li>
+                <li id="link"><a href="http://google.ca">Google</a></li>
+                <li id="link"><a href="http://google.ca">Google</a></li>
+                </ul>
+            </div>
+        </div>
     </div>
 </body>
 </html>
