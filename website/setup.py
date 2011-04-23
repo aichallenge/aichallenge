@@ -8,13 +8,16 @@ seewikiregex=re.compile(r'(<!--<MarkdownReplacement with="([^\n>]*.md)">-->.*?<!
 markdownlocation = "aichallenge.wiki/"
 
 for page in glob.iglob("*.php"):
-    pagecontent=open(page,"r").read()
-    
-    matches=(match.groups() for match in seewikiregex.finditer(pagecontent))
-    for toreplace, markdownfilename in matches:
-        realmarkdownfilename=markdownfilename.replace("competition",competition)
-        print "Inserting `%s` into `%s`, where `%s...` was." % (realmarkdownfilename,page,toreplace[:90])
-        compiledmarkdown=os.popen("markdown %s" % markdownlocation+realmarkdownfilename).read()
-        compiledmarkdown='<!--<MarkdownReplacement with="%s">-->%s<!--</MarkdownReplacement>-->' % (markdownfilename,compiledmarkdown)
-        pagecontent=pagecontent.replace(toreplace,compiledmarkdown)
-    open(page,"w").write(pagecontent)
+    try:
+        pagecontent=open(page,"r").read()
+        
+        matches=(match.groups() for match in seewikiregex.finditer(pagecontent))
+        for toreplace, markdownfilename in matches:
+            realmarkdownfilename=markdownfilename.replace("competition",competition)
+            print "Inserting `%s` into `%s`, where `%s...` was." % (realmarkdownfilename,page,toreplace[:90])
+            compiledmarkdown=os.popen("markdown %s" % markdownlocation+realmarkdownfilename).read()
+            compiledmarkdown='<!--<MarkdownReplacement with="%s">-->%s<!--</MarkdownReplacement>-->' % (markdownfilename,compiledmarkdown)
+            pagecontent=pagecontent.replace(toreplace,compiledmarkdown)
+        open(page,"w").write(pagecontent)
+    except IOError:
+        print "Ignoring `%s` because of errors" % (page)
