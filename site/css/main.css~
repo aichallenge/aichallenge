@@ -21,8 +21,8 @@ p{
 
 #navbar{
     float:right;
-    width:240px;
-    min-height:400px;
+    width:200px;
+    min-height:600px;
     padding:0px 20px 20px 20px;
     background-color:#73b000;
 }
@@ -35,23 +35,29 @@ p{
     border:0px;
 }
 
+#userform{
+    width:120px;
+}
+
 .link{
     padding:4px 0px 4px 20px;
     list-style-type:none;
+    font-size:14px;
 }
 .linkTitle{
     list-style-type:none;
-    font-size:18px;
+    font-size:14px;
+    font-weight:bold;
     padding:4px 0px 2px 0px;
 }
 
 #content{
-    font-size:12px;
+    font-size:14px;
     float:left;
     text-align:justify;
-    width:640px;
-    min-height:400px;
-    padding:20px 20px 20px 20px;
+    width:700px;
+    min-height:580px;
+    padding:10px;
     background-color:#AFD861;
 }
 
