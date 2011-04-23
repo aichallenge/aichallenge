@@ -32,7 +32,7 @@ def setup_base_files(opts):
     sub_dir = os.path.join(opts.root_dir, "submissions")
     if not os.path.exists(sub_dir):
         os.mkdir(sub_dir)
-        run_cmd("chown {0}:{0} {1}".format(opts.username, sub_dir))
+        run_cmd("chown {0}:www-data {1}".format(opts.username, sub_dir))
     map_dir = os.path.join(opts.root_dir, "maps")
     if not os.path.exists(map_dir):
         os.mkdir(map_dir)
