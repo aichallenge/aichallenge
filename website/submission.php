@@ -123,7 +123,7 @@ function update_current_submission_status($new_status) {
 
 function submission_directory($submission_id) {
     $submission_id = intval($submission_id);
-    return $server_info["submissions_path"]."/".strval($submission_id % 1000)."/".strval($submission_id));
+    return $server_info["submissions_path"]."/".strval($submission_id % 1000)."/".strval($submission_id);
 }
 
 } // include guard
