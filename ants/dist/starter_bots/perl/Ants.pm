@@ -4,6 +4,7 @@ use warnings;
 use 5.10.0;
 use feature ':5.10';
 use List::Util qw(first max min reduce shuffle sum);
+use Position;
 
 =head1 NAME
 
@@ -147,24 +148,25 @@ sub finish_turn { say "go" }
 
 =head2 issue_order
 
-Method to issue an order to the server. Takes parameters of the x and y
-coordinates of the ant, plus the direction for it to travel in. 
+Method to issue an order to the server. Takes parameters of the Position
+of the ant, plus the direction for it to travel in.
 (Which must be N, E, S or W)
 
 =cut
 
 sub issue_order {
-    my ($self, $x, $y, $direction) = @_;
-    say "o $y $x $direction";
+    my ($self, $position, $direction) = @_;
+    say sprintf('o %d %d %s', $position->row, $position->col, $direction);
 }
 
 =head2 map_search
 
 Method to return a list of types-of-things from a given map.
 
-Searches a map and returns an array of array-refs for occupied points.
+Searches a map and returns an array of Position objects for occupied points.
 Also takes a value to check against for those occupied points.
-Returns like: ( [0,1], [10,21] )
+
+(Position objects encapsulate the row/col values)
 
 =cut
 
@@ -176,7 +178,7 @@ sub map_search {
             if (exists $map->{$x}{$y}
                 and $map->{$x}{$y} ~~ $value
             ) {
-                push(@points, [$x,$y])
+                push @points, Position->new($x,$y)
             }
         }
     }
@@ -185,9 +187,17 @@ sub map_search {
 
 =head2 my_ants
 
-Returns list of our ants on the map
+Returns list of our ants on the map.
 
-Eg: ( [0,1], [10,21] )
+(As an array of Position objects)
+
+Example:
+
+  my @ants = $self->my_ants;
+  for my $ant (@ants) {
+    say "I am at " . $ant->row . " by " . $ant->col;
+    say sprintf('Also known as (%d,%d)', $ant->x, $ant->y);
+  }
 
 =cut
 
@@ -198,9 +208,9 @@ sub my_ants {
 
 =head2 enemy_ants
 
-Returns list of enemy ants on the map
+Returns list of enemy ants on the map.
 
-Eg: ( [0,1], [10,21] )
+See my_ants()
 
 =cut
 
@@ -213,7 +223,7 @@ sub enemy_ants {
 
 Returns list of visible food on the map
 
-Eg: ( [2,5], [11,22] )
+Data returned in same format as my_ants()
 
 =cut
 
@@ -226,7 +236,7 @@ sub food {
 
 Returns a list of known water tiles from the map.
 
-Eg: ( [2,5], [11,22] )
+Data returned in same format as my_ants()
 
 =cut
 
@@ -237,49 +247,52 @@ sub water {
 
 =head2 passable
 
-Returns true/false indicating if given point is passable.. (ie. not water)
+Returns true/false indicating if given Position is passable.. (ie. not water)
+
 Note: Does not check for current occupation by other ants.
 
 =cut
 
 sub passable {
-    my ($self, $x, $y) = @_;
-    return(not $self->{water}->{$x}{$y});
+    my ($self, $position) = @_;
+    return(not $self->{water}->{$position->x}{$position->y});
 }
 
 =head2 distance
 
-Calculate the distance between two points.
+Calculate the distance between two Positions.
 
 =cut
 
 sub distance {
-    my ($self, $x1, $y1, $x2, $y2) = @_;
+    my ($self, $source, $dest) = @_;
     my $dx = min(
-        abs($x1 - $x2),
-        $self->width - abs($x1 - $x2)
+        abs($source->x - $dest->x),
+        $self->width - abs($source->x - $dest->x)
     );
     my $dy = min(
-        abs($y1 - $y2),
-        $self->height - abs($y1 - $y2)
+        abs($source->y - $dest->y),
+        $self->height - abs($source->y - $dest->y)
     );
     return $dx + $dy;
 }
 
 =head2 direction
 
-Given a current point (x1,y1), return which direction to move to get to
-another point (x2,y2).
+Given a current Position, return which direction to move to get to
+another Position.
+
 Note: Does not take into account impassable terrain.
+This is a fairly naive algorithm.
 
 =cut
 
 sub direction {
-    my ($self, $x1, $y1, $x2, $y2) = @_;
-    if ($x1 < $x2) { return 'E' }
-    if ($x1 > $x2) { return 'W' }
-    if ($y1 < $y2) { return 'S' }
-    if ($y1 > $y2) { return 'N' }
+    my ($self, $source, $target) = @_;
+    if ($source->x < $target->x) { return 'E' }
+    if ($source->x > $target->x) { return 'W' }
+    if ($source->y < $target->y) { return 'S' }
+    if ($source->y > $target->y) { return 'N' }
     return ''
 }
 
