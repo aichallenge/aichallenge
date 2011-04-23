@@ -1,7 +1,7 @@
 <?php include 'header.php';
 ?>
 
-<MarkdownReplacement with="competition.md" />
+<!--<MarkdownReplacement with="competition.md">--> <!--</MarkdownReplacement>-->
 
 <h2>Planet Wars Final Rankings</h2>
 <p>Congratulations to this term's winner, <a href="http://quotenil.com/">
