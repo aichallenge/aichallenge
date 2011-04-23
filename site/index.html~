@@ -25,10 +25,10 @@
             </div>
             <div id="navbar">
                 <ul id="linkList">
-                <li id="link"><a href="http://google.ca">Google</a></li>
-                <li id="link"><a href="http://google.ca">Google</a></li>
-                <li id="link"><a href="http://google.ca">Google</a></li>
-                <li id="link"><a href="http://google.ca">Google</a></li>
+                <li id="link"><a href="http://google.ca">Home</a></li>
+                <li id="link"><a href="http://google.ca">Current Rankings</a></li>
+                <li id="link"><a href="http://google.ca">Problem Description</a></li>
+                <li id="link"><a href="http://google.ca">Contest Rules</a></li>
                 <li id="link"><a href="http://google.ca">Google</a></li>
                 <li id="link"><a href="http://google.ca">Google</a></li>
                 <li id="link"><a href="http://google.ca">Google</a></li>

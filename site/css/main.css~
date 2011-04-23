@@ -1,7 +1,5 @@
-body{background-color:#1f2fff;
-    background-image: url(../layout/background.png); 
-    background-repeat: repeat-x;
-    text-align:justify;
+body{
+    background-color:white;
 }
 
 p{
@@ -23,9 +21,9 @@ p{
 
 #navbar{
     float:right;
-    width:260px;
-    min-height:400px;
-    padding:10px 10px 10px 10px;
+    width:240px;
+    min-height:360px;
+    padding:16px 20px 20px 20px;
     background-color:#73b000;
 }
 
@@ -33,14 +31,17 @@ p{
     margin-left:10px
 }
 
-#link{
+.link{
     padding:4px 0px 4px 0px;
 }
 
 #content{
     float:left;
-    width:660px;
-    padding:10px 10px 10px 10px;
+    text-align:justify;
+    width:640px;
+    min-height:360px;
+    padding:20px 20px 20px 20px;
+    background-color:#AFD861;
 }
 
 a:link{
