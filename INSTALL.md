@@ -1,6 +1,6 @@
 ## Server
 
-* Install Ubuntu 11.10
+* Install Ubuntu 11.04
 * Install git and a few of your favorite admin tools
 * Create the `contest` user
 * `git clone` the repository inside
