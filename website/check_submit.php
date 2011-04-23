@@ -38,7 +38,6 @@ function upload_errors($errors) {
   return $errors;
 }
 
-$submission_directory = $server_info["submissions_path"];
 if (!logged_in_with_valid_credentials()) {
   header('Location: index.php');
   die();
@@ -64,31 +63,35 @@ if (count($errors) == 0) {
 }
 
 if (count($errors) == 0) {
-  if (!setup_submission_directory($submission_directory)) {
-    $errors[] = "Problem while creating submission directory.";
+  if (!create_new_submission_for_current_user()) {
+    $errors[] = "Problem while creating submission entry in database.";
   }
 }
 
 if (count($errors) == 0) {
-  $destination_folder = $submission_directory . '/' . current_submission_id();
+  $submission_id = current_submission_id();
+  $destination_folder = submission_directory($submission_id);
   $filename = basename($_FILES['uploadedfile']['name']);
   if (ends_with($filename, ".zip")) { $filename = "entry.zip"; }
   if (ends_with($filename, ".tar.gz")) { $filename = "entry.tar.gz"; }
   if (ends_with($filename, ".tgz")) { $filename = "entry.tgz"; }
   $target_path = $destination_folder . '/' . $filename;
   delete_directory($destination_folder);
-  mkdir($destination_folder);
-  if (!move_uploaded_file($_FILES['uploadedfile']['tmp_name'],
-                          $target_path)) {
-    $errors[] = "Failed to move file from temporary to permanent " .
-                "location.";
-    update_current_submission_status(30);
+  if (!mkdir($destination_folder, 777, true)) {
+      $errors[] = "Problem while creating submission directory.";
   } else {
-    chmod($destination_folder, 0777);
-    chmod($target_path, 0777);
-    if (!update_current_submission_status(20)) {
-      $errors[] = "Failed to update the submission status in the " .
-                  "database.";
+    if (!move_uploaded_file($_FILES['uploadedfile']['tmp_name'],
+                            $target_path)) {
+      $errors[] = "Failed to move file from temporary to permanent " .
+                  "location.";
+      update_current_submission_status(30);
+    } else {
+      chmod($destination_folder, 0777);
+      chmod($target_path, 0777);
+      if (!update_current_submission_status(20)) {
+        $errors[] = "Failed to update the submission status in the " .
+                    "database.";
+      }
     }
   }
 }

@@ -121,19 +121,9 @@ function update_current_submission_status($new_status) {
   return mysql_query($query);
 }
 
-function setup_submission_directory($submission_directory) {
-  if (!create_new_submission_for_current_user()) {
-    print "Failed to setup new submission in database.\n";
-    return FALSE;
-  }
-  $submission_id = current_submission_id();
-  if ($submission_id < 0) {
-    print "Failed to get submission id.\n";
-    return FALSE;
-  }
-  $directory_name = $submission_directory . $submission_id;
-  //mkdir($directory_name);
-  return TRUE;
+function submission_directory($submission_id) {
+    $submission_id = intval($submission_id);
+    return $server_info["submissions_path"]."/".strval($submission_id % 1000)."/".strval($submission_id));
 }
 
 } // include guard
