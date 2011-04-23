@@ -17,7 +17,7 @@
    version="1.1"
    inkscape:version="0.48.1 r9760"
    sodipodi:docname="header.svg"
-   inkscape:export-filename="/home/andrew/.gvfs/sftp for andrew on hypertriangle.com/home/andrew/projects/ants/site/layout/header.png"
+   inkscape:export-filename="/home/andrew/projects/ants/site/layout/header.png"
    inkscape:export-xdpi="90"
    inkscape:export-ydpi="90">
   <defs
@@ -187,83 +187,6 @@
        inkscape:collect="always"
        xlink:href="#linearGradient3831"
        id="radialGradient7459"
-       gradientUnits="userSpaceOnUse"
-       gradientTransform="matrix(-0.84486159,0.93523466,-1.1924279,-1.0772019,1439.0469,1357.148)"
-       spreadMethod="pad"
-       cx="277.09579"
-       cy="778.11285"
-       fx="277.09579"
-       fy="778.11285"
-       r="61.348473" />
-    <linearGradient
-       inkscape:collect="always"
-       xlink:href="#linearGradient3783"
-       id="linearGradient7461"
-       gradientUnits="userSpaceOnUse"
-       x1="222.70309"
-       y1="800.12"
-       x2="72.829803"
-       y2="801.13013" />
-    <linearGradient
-       inkscape:collect="always"
-       xlink:href="#linearGradient3783"
-       id="linearGradient7463"
-       gradientUnits="userSpaceOnUse"
-       x1="268.96875"
-       y1="845.33893"
-       x2="294.67468"
-       y2="977.66888" />
-    <radialGradient
-       inkscape:collect="always"
-       xlink:href="#linearGradient3831"
-       id="radialGradient7465"
-       gradientUnits="userSpaceOnUse"
-       gradientTransform="matrix(2.6788686,0.15158589,-0.13097137,2.3145631,-127.70278,-1211.5568)"
-       cx="146.54938"
-       cy="903.51318"
-       fx="146.54938"
-       fy="903.51318"
-       r="66.261041" />
-    <linearGradient
-       inkscape:collect="always"
-       xlink:href="#linearGradient3783"
-       id="linearGradient7467"
-       gradientUnits="userSpaceOnUse"
-       x1="235.87569"
-       y1="752.85199"
-       x2="132.82999"
-       y2="675.07019" />
-    <linearGradient
-       inkscape:collect="always"
-       xlink:href="#linearGradient3783"
-       id="linearGradient7469"
-       gradientUnits="userSpaceOnUse"
-       x1="313.22815"
-       y1="790.91864"
-       x2="465.39047"
-       y2="790.91864" />
-    <linearGradient
-       inkscape:collect="always"
-       xlink:href="#linearGradient3783"
-       id="linearGradient7471"
-       gradientUnits="userSpaceOnUse"
-       x1="307.95798"
-       y1="806.92065"
-       x2="408.11627"
-       y2="909.95624" />
-    <linearGradient
-       inkscape:collect="always"
-       xlink:href="#linearGradient3783"
-       id="linearGradient7473"
-       gradientUnits="userSpaceOnUse"
-       x1="262.09906"
-       y1="725.49664"
-       x2="237.29738"
-       y2="596.19714" />
-    <radialGradient
-       inkscape:collect="always"
-       xlink:href="#linearGradient3831"
-       id="radialGradient7475"
        gradientUnits="userSpaceOnUse"
        gradientTransform="matrix(-0.84486159,0.93523466,-1.1924279,-1.0772019,1439.0469,1357.148)"
        spreadMethod="pad"
@@ -665,9 +588,9 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="0.934375"
-     inkscape:cx="503.6696"
-     inkscape:cy="100"
+     inkscape:zoom="0.81354167"
+     inkscape:cx="384.35589"
+     inkscape:cy="162.41695"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
      showgrid="false"
@@ -686,7 +609,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title />
+        <dc:title></dc:title>
       </cc:Work>
     </rdf:RDF>
   </metadata>
@@ -842,18 +765,6 @@
          x="778.2749"
          y="972.3327"
          style="font-size:61.27659607px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:Ubuntu;-inkscape-font-specification:Ubuntu">Ants</tspan></text>
-    <text
-       sodipodi:linespacing="125%"
-       id="text5516"
-       y="986.65833"
-       x="834.49695"
-       style="font-size:14.16002846px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#ffffff;fill-opacity:1;stroke:none;font-family:Sans"
-       xml:space="preserve"><tspan
-         style="font-size:13.27659607px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;fill:#ffffff;fill-opacity:1;font-family:Ubuntu;-inkscape-font-specification:Ubuntu"
-         y="986.65833"
-         x="834.49695"
-         id="tspan5518"
-         sodipodi:role="line">Spring 2011</tspan></text>
     <g
        inkscape:label="Layer 1"
        id="g5294"
@@ -1317,5 +1228,35 @@
          d="m 137.38075,87.857765 c 0,5.021027 -3.61809,9.091373 -8.08122,9.091373 -4.46313,0 -8.08122,-4.070346 -8.08122,-9.091373 0,-5.021026 3.61809,-9.091372 8.08122,-9.091372 4.46313,0 8.08122,4.070346 8.08122,9.091372 z"
          transform="matrix(0.77752935,0,0,0.77752935,266.1461,604.01321)" />
     </g>
+    <text
+       sodipodi:linespacing="125%"
+       id="text5516"
+       y="1036.0078"
+       x="16.522709"
+       style="font-size:14.16002846px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#ffffff;fill-opacity:1;stroke:none;font-family:Sans"
+       xml:space="preserve"><tspan
+         style="font-size:14px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;fill:#ffffff;fill-opacity:1;font-family:Ubuntu;-inkscape-font-specification:Ubuntu"
+         y="1036.0078"
+         x="16.522709"
+         id="tspan5518"
+         sodipodi:role="line">Sign in</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:14.16002846px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#ffffff;fill-opacity:1;stroke:none;font-family:Sans"
+       x="76.522705"
+       y="1036.0078"
+       id="text4821"
+       sodipodi:linespacing="125%"><tspan
+         sodipodi:role="line"
+         id="tspan4823"
+         x="76.522705"
+         y="1036.0078"
+         style="font-size:14px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;fill:#ffffff;fill-opacity:1;font-family:Ubuntu;-inkscape-font-specification:Ubuntu">Register</tspan></text>
+    <path
+       style="fill:none;stroke:#ffffff;stroke-width:1.48053002;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"
+       d="m 67.577835,1024.9145 0,14.5147"
+       id="path4825"
+       inkscape:connector-curvature="0"
+       sodipodi:nodetypes="cc" />
   </g>
 </svg>

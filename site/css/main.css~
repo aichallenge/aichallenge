@@ -55,9 +55,9 @@ p{
     font-size:14px;
     float:left;
     text-align:justify;
-    width:700px;
-    min-height:580px;
-    padding:10px;
+    width:692px;
+    min-height:591px;
+    padding:14px;
     background-color:#AFD861;
 }
 
