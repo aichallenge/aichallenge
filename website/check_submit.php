@@ -70,7 +70,7 @@ if (count($errors) == 0) {
 }
 
 if (count($errors) == 0) {
-  $destination_folder = $submission_directory . current_submission_id();
+  $destination_folder = $submission_directory . '/' . current_submission_id();
   $filename = basename($_FILES['uploadedfile']['name']);
   if (ends_with($filename, ".zip")) { $filename = "entry.zip"; }
   if (ends_with($filename, ".tar.gz")) { $filename = "entry.tar.gz"; }
