@@ -22,24 +22,35 @@ p{
 #navbar{
     float:right;
     width:240px;
-    min-height:360px;
-    padding:16px 20px 20px 20px;
+    min-height:400px;
+    padding:0px 20px 20px 20px;
     background-color:#73b000;
 }
 
-#linkList{
-    margin-left:10px
+.divider{
+    color:black;
+    background-color:black;
+    margin:0px 0px 4px 0px;
+    padding:0px;
+    border:0px;
 }
 
 .link{
-    padding:4px 0px 4px 0px;
+    padding:4px 0px 4px 20px;
+    list-style-type:none;
+}
+.linkTitle{
+    list-style-type:none;
+    font-size:18px;
+    padding:4px 0px 2px 0px;
 }
 
 #content{
+    font-size:12px;
     float:left;
     text-align:justify;
     width:640px;
-    min-height:360px;
+    min-height:400px;
     padding:20px 20px 20px 20px;
     background-color:#AFD861;
 }
