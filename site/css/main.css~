@@ -1,5 +1,6 @@
 body{
-    background-color:white;
+    background-image: url(../layout/background.png); 
+    background-repeat: repeat-x;
 }
 
 p{
@@ -56,9 +57,10 @@ p{
     float:left;
     text-align:justify;
     width:692px;
-    min-height:591px;
+    min-height:590px;
+    background-color:white;
     padding:14px;
-    background-color:#AFD861;
+/*     background-color:#AFD861; */
 }
 
 a:link{
