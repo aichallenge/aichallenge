@@ -657,30 +657,6 @@
        fx="277.09579"
        fy="778.11285"
        r="61.348473" />
-    <filter
-       inkscape:collect="always"
-       id="filter8248"
-       x="-0.070715341"
-       width="1.1414307"
-       y="-0.39596692"
-       height="1.7919338">
-      <feGaussianBlur
-         inkscape:collect="always"
-         stdDeviation="1.9818145"
-         id="feGaussianBlur8250" />
-    </filter>
-    <filter
-       inkscape:collect="always"
-       id="filter8274"
-       x="-0.036054848"
-       width="1.0721097"
-       y="-0.17864122"
-       height="1.3572824">
-      <feGaussianBlur
-         inkscape:collect="always"
-         stdDeviation="1.0398656"
-         id="feGaussianBlur8276" />
-    </filter>
   </defs>
   <sodipodi:namedview
      id="base"
@@ -689,9 +665,9 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="6.5083333"
-     inkscape:cx="839.24159"
-     inkscape:cy="72.179014"
+     inkscape:zoom="0.934375"
+     inkscape:cx="480"
+     inkscape:cy="100"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
      showgrid="false"
@@ -728,18 +704,30 @@
        y="852.36218"
        ry="0" />
     <text
-       xml:space="preserve"
-       style="font-size:40px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#78b400;fill-opacity:1;stroke:none;filter:url(#filter6655);font-family:Sans"
-       x="260.4935"
-       y="967.12219"
-       id="text4744"
+       transform="matrix(1.5550405,0,0,1.5550405,-303.13762,-532.32852)"
        sodipodi:linespacing="125%"
-       transform="matrix(1.0212766,0,0,1.0212766,41.073663,-22.39067)"><tspan
-         sodipodi:role="line"
-         id="tspan4746"
-         x="260.4935"
+       id="text4744"
+       y="967.12219"
+       x="260.4935"
+       style="font-size:40px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#78b400;fill-opacity:1;stroke:none;filter:url(#filter6655);font-family:Sans"
+       xml:space="preserve"><tspan
+         style="font-size:39.40514374px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;fill:#78b400;fill-opacity:1;font-family:Ubuntu;-inkscape-font-specification:Ubuntu"
          y="967.12219"
-         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;fill:#78b400;fill-opacity:1;font-family:Ubuntu;-inkscape-font-specification:Ubuntu">Google AI Challenge</tspan></text>
+         x="260.4935"
+         id="tspan4746"
+         sodipodi:role="line">Google AI Challenge</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:62.20161819px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;opacity:0.95999995;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans"
+       x="101.94034"
+       y="972.3327"
+       id="text6639"
+       sodipodi:linespacing="125%"><tspan
+         sodipodi:role="line"
+         id="tspan6641"
+         x="101.94034"
+         y="972.3327"
+         style="font-size:61.27659607px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:Ubuntu;-inkscape-font-specification:Ubuntu">Google Ai Challenge</tspan></text>
     <path
        style="opacity:1;fill:#73b000;fill-opacity:1;stroke:none"
        d="m 680,852.36217 280,0 0,200.00003 -280,0 0,-50 49.55311,-50.00006 L 680,902.36215 z"
@@ -748,18 +736,9 @@
        sodipodi:nodetypes="cccccccc"
        inkscape:export-xdpi="90"
        inkscape:export-ydpi="90" />
-    <text
-       sodipodi:linespacing="125%"
-       id="text6639"
-       y="965.30859"
-       x="307.10959"
-       style="font-size:40.85106277px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;opacity:0.95999995;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans"
-       xml:space="preserve"><tspan
-         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:Ubuntu;-inkscape-font-specification:Ubuntu"
-         y="965.30859"
-         x="307.10959"
-         id="tspan6641"
-         sodipodi:role="line">Google AI Challenge</tspan></text>
+    <g
+       id="g8351"
+       transform="matrix(1.5226438,0,0,1.5226438,-258.57251,-498.23548)" />
     <g
        transform="matrix(0.14298478,0,0,0.14298478,887.45228,776.13174)"
        id="layer1-6"
@@ -854,25 +833,25 @@
     <text
        xml:space="preserve"
        style="font-size:40.85106277px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans"
-       x="736.2749"
+       x="738.2749"
        y="972.3327"
        id="text4755"
        sodipodi:linespacing="125%"><tspan
          sodipodi:role="line"
          id="tspan4757"
-         x="736.2749"
+         x="738.2749"
          y="972.3327"
          style="font-size:61.27659607px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:Ubuntu;-inkscape-font-specification:Ubuntu">Ants</tspan></text>
     <text
        sodipodi:linespacing="125%"
        id="text5516"
        y="986.65833"
-       x="792.49695"
+       x="794.49695"
        style="font-size:14.16002846px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#ffffff;fill-opacity:1;stroke:none;font-family:Sans"
        xml:space="preserve"><tspan
          style="font-size:13.27659607px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;fill:#ffffff;fill-opacity:1;font-family:Ubuntu;-inkscape-font-specification:Ubuntu"
          y="986.65833"
-         x="792.49695"
+         x="794.49695"
          id="tspan5518"
          sodipodi:role="line">Spring 2011</tspan></text>
     <g
@@ -1431,23 +1410,5 @@
          d="m 137.38075,87.857765 c 0,5.021027 -3.61809,9.091373 -8.08122,9.091373 -4.46313,0 -8.08122,-4.070346 -8.08122,-9.091373 0,-5.021026 3.61809,-9.091372 8.08122,-9.091372 4.46313,0 8.08122,4.070346 8.08122,9.091372 z"
          transform="matrix(0.77752935,0,0,0.77752935,266.1461,604.01321)" />
     </g>
-    <path
-       style="fill:none;stroke:#000000;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"
-       d="m 698.50141,892.3204 -2.73479,0"
-       id="path6080"
-       inkscape:connector-curvature="0"
-       sodipodi:nodetypes="cc" />
-    <path
-       style="fill:none;stroke:#000000;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"
-       d="m 699.09593,893.86913 -6.53972,1.54575"
-       id="path6082"
-       inkscape:connector-curvature="0"
-       sodipodi:nodetypes="cc" />
-    <path
-       sodipodi:nodetypes="cc"
-       inkscape:connector-curvature="0"
-       id="path6084"
-       d="m 699.09593,890.77168 -6.53972,-1.54576"
-       style="fill:none;stroke:#000000;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none" />
   </g>
 </svg>
