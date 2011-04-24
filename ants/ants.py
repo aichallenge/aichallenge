@@ -71,6 +71,9 @@ class Ants(Game):
         #   will fill in center data
         self.load_map(map_text)
 
+        # track which food has been seen by each player
+        self.seen_food = [set() for i in range(self.num_players)]
+
         # used to remember where the ants started
         self.initial_ant_list = sorted(self.current_ants.values(), key=operator.attrgetter('owner'))
         self.initial_access_map = self.access_map()
@@ -247,18 +250,37 @@ class Ants(Game):
             Update self.revealed to reflect the updated vision
             Update self.switch for any new enemies
             Update self.revealed_water
+            Update self.seen_food
+            Update self.removed_food
         """
         self.revealed_water = []
+        self.removed_food = []
         for player in range(self.num_players):
             water = []
             revealed = self.revealed[player]
             switch = self.switch[player]
+
+            # update the removed food which was revealed this turn
+            food = []
+            for seen in list(self.seen_food[player]):
+                # here we care about the food that the player HAS seen
+                #  which has since been removed
+                row, col = seen.loc
+                if self.vision[player][row][col] and seen.end_turn:
+                    self.seen_food[player].remove(seen)
+                    food.append(seen.loc)
+            self.removed_food.append(food)
+
             for row, squares in enumerate(self.vision[player]):
                 for col, visible in enumerate(squares):
                     if not visible:
                         continue
 
                     value = self.map[row][col]
+
+                    # add any food that is visible to seen_food
+                    if value == FOOD:
+                        self.seen_food[player].add(self.current_food[(row,col)])
 
                     # if this player encounters a new enemy then
                     #   assign the enemy the next index
@@ -272,6 +294,7 @@ class Ants(Game):
                         if value == WATER:
                             water.append((row,col))
 
+            # update the water which was revealed this turn
             self.revealed_water.append(water)
 
     def get_perspective(self, player=None):
@@ -320,6 +343,11 @@ class Ants(Game):
                 # switch player perspective of player numbers
                 if type in ['a','d']:
                     update[-1] = self.switch[player][update[-1]]
+
+        # also tell the player about any food that has been removed
+        #   (only for food they have already seen)
+        for row, col in sorted(self.removed_food[player]):
+            visible_updates.append(['r',row,col])
 
         visible_updates.append([]) # newline
         return '\n'.join(' '.join(map(str,s)) for s in visible_updates)
@@ -1007,6 +1035,7 @@ class Ants(Game):
         self.turn += 1
         self.killed_ants = []
         self.revealed_water = [[] for i in range(self.num_players)]
+        self.removed_food = [[] for i in range(self.num_players)]
         self.orders = [[] for i in range(self.num_players)]
 
     def finish_turn(self):
