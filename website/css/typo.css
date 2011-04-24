@@ -11,6 +11,7 @@ body {
 h1, h2, h3, h4 {
     display: block;
     text-shadow: #aaa 1px 1px 3px;
+    line-height: 1;
 }
 
 h1 {
