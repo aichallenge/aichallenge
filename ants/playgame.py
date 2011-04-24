@@ -24,7 +24,7 @@ def main(argv):
 
     # maximum number of turns that the game will be played
     parser.add_option("-t", "--turns", dest="turns",
-                      default=200, type="int",
+                      default=1000, type="int",
                       help="Number of turns in the game")
 
     # the output directory will contain the replay file used by the visualizer
@@ -69,13 +69,13 @@ def main(argv):
                       default="sections",
                       help="Food spawning method. (none, random, sections, symmetric)")
     parser.add_option("--viewradius2", dest="viewradius2",
-                      default=96, type="int",
+                      default=55, type="int",
                       help="Vision radius of ants squared")
     parser.add_option("--spawnradius2", dest="spawnradius2",
-                      default=2, type="int",
+                      default=1, type="int",
                       help="Spawn radius of ants squared")
     parser.add_option("--attackradius2", dest="attackradius2",
-                      default=5, type="int",
+                      default=4, type="int",
                       help="Attack radius of ants squared")
     parser.add_option("--profile", dest="profile",
                        action="store_true", default=False,
