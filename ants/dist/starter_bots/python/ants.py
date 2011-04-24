@@ -109,6 +109,12 @@ class Ants():
                     elif tokens[0] == 'f':
                         self.map[row][col] = FOOD
                         self.food_list.append((row, col))
+                    elif tokens[0] == 'r':
+                        self.map[row][col] = LAND
+                        try:
+                            self.food_list.remove((row, col))
+                        except:
+                            pass
                     elif tokens[0] == 'w':
                         self.map[row][col] = WATER
                     elif tokens[0] == 'd':
