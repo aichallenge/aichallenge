@@ -133,6 +133,24 @@ body {
     min-height: 65%;
 }
 
+#menu {
+    padding: 15px;
+}
+
+#menu h1 {
+    font-size: 1.4em;
+    text-shadow: none;
+    margin-top: 10px;
+    margin-bottom: 0px;
+/*     text-shadow: #000 0.5px 0.5px 1px; */
+}
+#menu form, #menu ul {
+    margin: 5px 10px;
+}
+#menu a {
+    color: #fff
+}
+
 #footer {
     padding: 15px;
     color: #fff;

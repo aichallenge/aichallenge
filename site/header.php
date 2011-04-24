@@ -7,7 +7,7 @@
         
         <!-- Global Tags --> 
         <meta http-equiv="Content-Type" content="text/html; charset=utf-8" /> 
-        <link rel="shortcut icon" href="/layout/images/favicon.png" />
+        <link rel="shortcut icon" href="images/favicon.png" />
  
         <!-- CSS --> 
         <link href="css/reset.css" rel="stylesheet" type="text/css" /> 
@@ -22,7 +22,7 @@
                     <h1>Google AI Challenge</h1>
                 </div>
                 <div class="right">
-                    <img src="layout/images/ants.png" alt="Ants Logo" />
+                    <img src="images/ants.png" alt="Ants Logo" />
                     <h2>Ants</h2>
                     <h3>Spring 2011</h3>
                     <div id="triangle"></div>

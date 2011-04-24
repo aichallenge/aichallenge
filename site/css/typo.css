@@ -3,9 +3,9 @@
 @import url("http://fonts.googleapis.com/css?family=Ubuntu");
 
 body {
-/*     font-family: Verdana, Arial, sans-serif; */
     font-family: 'Ubuntu', arial, serif;
     font-size: 12px;
+    line-height: 1.5;
 }
 
 h1, h2, h3, h4 {

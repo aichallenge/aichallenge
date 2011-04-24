@@ -1,7 +1,7 @@
                     </div>
                 </div>
                 <div class="right">
-                
+                    <?php include("menu.php"); ?>
                 </div>
             </div>
             <div class="columns">
