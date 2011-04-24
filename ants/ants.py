@@ -346,7 +346,7 @@ class Ants(Game):
 
         # also tell the player about any food that has been removed
         #   (only for food they have already seen)
-        for row, col in self.removed_food[player]:
+        for row, col in sorted(self.removed_food[player]):
             visible_updates.append(['r',row,col])
 
         visible_updates.append([]) # newline
