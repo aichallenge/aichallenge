@@ -1,40 +1,22 @@
 <?php
 
-// include guard
-if (!isset($JPC_CONTEST_SUBMISSION_PHP__)) {
-$JPC_CONTEST_SUBMISSION_PHP__ = 1;
-
 /*
  * Submission Statuses
- * 10: entry record created in database.
- * 15: entry archive file placed in temporary directory. Still has to be
- *     transferred to where the compile script expects to find it.
- * 20: Ready to be unzipped and compiled.
- * 24: entry currently in the process of being compiled. The compiler script
- *     should not try to compile this entry now.
- * 27: entry has compiled successfully, and is awaiting test cases.
- * 30: error receiving submission zip file.
- * 40: compiled successfully and passed test cases.  Ready to be run.
- * 50: error while unzipping submission file.
- * 60: problem with submission file.
- * 70: error while compiling submission.
- * 80: compiled successfully but failed test cases.
+ * 10: Created: entry record created in database.
+ * 20: Uploaded: Ready to be unzipped and compiled.
+ * 30: Compiling: worker is compiling and running tests
+ * 40: Runable: compiled successfully and passed test cases.  Ready to be run.
+ * 50: Download Error: error receiving submission zip file.
+ * 60: Unpack Error: error while unzipping submission file.
+ * 70: Compile Error: error while compiling submission.
+ * 80: Test Error: compiled successfully but failed test cases.
  */
 
 function create_new_submission_for_current_user() {
-  $username = current_username();
-  if ($username = NULL) {
+  if (current_user_id() == -1) {
     return FALSE;
   }
-  $query = "INSERT INTO submission (" .
-    "user_id,status,timestamp) VALUES (" .
-    current_user_id() . "," .
-    "10,CURRENT_TIMESTAMP)";
-  $successfull = mysql_query($query);
-  if($successfull){
-    mysql_query("UPDATE submission SET latest = 0 WHERE user_id ='".current_user_id()."'");
-  }
-  return $successfull;
+  return contest_query("insert_new_submission", current_user_id());
 }
 
 function current_submission_id() {
@@ -59,7 +41,7 @@ function current_submission_id() {
 
 function current_submission_status() {
   $user_id = current_user_id();
-  if ($user_id = NULL) {
+  if ($user_id == NULL) {
     return -1;
   }
   $query = "SELECT TOP 1 * FROM submission " .
@@ -126,5 +108,4 @@ function submission_directory($submission_id) {
     return $server_info["submissions_path"]."/".strval($submission_id % 1000)."/".strval($submission_id);
 }
 
-} // include guard
 ?>

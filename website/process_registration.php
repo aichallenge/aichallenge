@@ -1,13 +1,13 @@
 <?php
 
 include 'header.php';
-include 'server_info.php';
+require_once('server_info.php');
 
 if($server_info["submissions_open"]) {
 
-include 'mysql_login.php';
-include 'bad_words.php';
-include 'web_util.php';
+require_once('mysql_login.php');
+require_once('bad_words.php');
+require_once('web_util.php');
 
 function check_valid_user_status_code($code) {
   $query = "SELECT * FROM user_status_code";

@@ -1,8 +1,10 @@
 <?php
-include 'session.php';
-include 'file_system_util.php';
-include 'submission.php';
-include 'server_info.php';
+require_once('session.php');
+require_once('mysql_login.php');
+require_once('file_system_util.php');
+require_once('submission.php');
+
+include 'header.php';
 
 function ends_with($str, $sub) {
   return preg_match('/\Q' . $sub . '\E$/', $str);
@@ -64,7 +66,7 @@ if (count($errors) == 0) {
 
 if (count($errors) == 0) {
   if (!create_new_submission_for_current_user()) {
-    $errors[] = "Problem while creating submission entry in database.";
+    $errors[] = "Problem while creating submission entry in database. ".mysql_error();
   }
 }
 
@@ -96,7 +98,6 @@ if (count($errors) == 0) {
   }
 }
 
-include 'header.php';
 if (count($errors) == 0) {
 ?>
 

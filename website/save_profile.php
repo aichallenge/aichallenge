@@ -1,6 +1,7 @@
 <?php
-include 'session.php';
-include 'bad_words.php';
+require_once('session.php');
+require_once('mysql_login.php');
+require_once('bad_words.php');
 
 function check_valid_organization($id) {
   if ($id == 999) {
