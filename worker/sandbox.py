@@ -45,22 +45,18 @@ class Sandbox:
     #                                            directory are copied into the VM before the shell
     #                                            command is executed.
     #     shell_command: the shell command to launch inside the sandbox.
-    #     stderr_file: which file the bot's stderr output should be written out to
-    #                  if none is specified then it will be sent to /dev/null
-    def __init__(self, working_directory, shell_command, jailuser=None, stderr_file=None):
+    #     stderr: where the bot's stderr output should be written out to
+    def __init__(self, working_directory, shell_command, jailuser=None, stderr=None):
         shell_command = shell_command.replace('\\','/')
         self.is_alive = False
         self.command_process = None
         self.stdout_queue = Queue()
         self.stderr_queue = Queue()
 
-        if stderr_file is None:
-            stderr_file = os.devnull
-
         self.command_process = subprocess.Popen(shlex.split(shell_command),
                                                 stdin=subprocess.PIPE,
                                                 stdout=subprocess.PIPE,
-                                                stderr=open(stderr_file, 'w'),
+                                                stderr=stderr,
                                                 cwd=working_directory)
         self.is_alive = not self.command_process is None
         stdout_monitor = Timer(1, monitor_input_channel, args=(self,))

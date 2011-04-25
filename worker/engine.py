@@ -26,10 +26,13 @@ def run_game(game, botcmds, options, gameid=0):
         # create bot sandboxes
         bots = []
         for b, bot in enumerate(botcmds):
-            stderr_file = None
-            if output_dir and log_stderr:
-                stderr_file = os.path.join(output_dir, '%s.bot%s.stderr' % (gameid, b))
-            sandbox = Sandbox(*bot, stderr_file = stderr_file)
+            if log_stderr == 'file':
+                stderr_fd = open(os.path.join(output_dir, '%s.bot%s.stderr' % (gameid, b)), "w")
+            elif log_stderr == 'stderr':
+                stderr_fd = sys.stderr
+            else:
+                stderr_fd = open(os.devnull, "w")
+            sandbox = Sandbox(*bot, stderr = stderr_fd)
             bots.append(sandbox)
 
             # ensure it started

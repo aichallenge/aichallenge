@@ -40,8 +40,8 @@ def main(argv):
                        action="store_true", default=False,
                        help="Log output streams from bots")
     parser.add_option("-E", "--log_stderr", dest="log_stderr",
-                       action="store_true", default=False,
-                       help="Log stderr streams from bots")
+                       default="stderr",
+                       help="Where to send bots' stderr output. (file, stderr, ignore)")
 
     parser.add_option("--serial", dest="serial",
                       action="store_true",
