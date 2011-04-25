@@ -1,8 +1,7 @@
 <?php include 'header.php';
 ?>
 
-<h2>Ants</h2>
-<p>TODO: Write something about the ants challenge.</p>
+<!--<MarkdownReplacement with="competition.md">--><!--</MarkdownReplacement>-->
 
 <h2>Planet Wars Final Rankings</h2>
 <p>Congratulations to this term's winner, <a href="http://quotenil.com/">

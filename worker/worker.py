@@ -160,10 +160,10 @@ class Worker:
         self.test_map = None
 
     def submission_dir(self, submission_id):
-        return os.path.join(server_info["submissions_path"], "c" + str(submission_id))
+        return os.path.join(server_info["submissions_path"], "compiled", str(submission_id % 1000), str(submission_id))
         
     def download_dir(self, submission_id):
-        return os.path.join(server_info["submissions_path"], "d" + str(submission_id))
+        return os.path.join(server_info["submissions_path"], "downloaded", str(submission_id % 1000), str(submission_id))
 
     def download_submission(self, submission_id):
         submission_dir = self.submission_dir(submission_id)
@@ -176,7 +176,10 @@ class Worker:
             return True
         else:
             log.info("Downloading %s..." % submission_id)
-            os.mkdir(download_dir)
+            try:
+                os.makedirs(download_dir)
+            except:
+                pass
             os.chmod(download_dir, 0755)
             filename = self.cloud.get_submission(submission_id, download_dir)
             if filename != None:
@@ -369,7 +372,10 @@ class Worker:
                     raise Exception('bot', 'Can not compile bot %s' % submission_id)
             output_dir = os.path.join(server_info["root_path"], "games", str(matchup_id))
             if not os.path.exists(output_dir):
-                os.mkdir(output_dir)
+                try:
+                    os.makedirs(output_dir)
+                except:
+                    pass
             options['output_dir'] = output_dir
             options['log_input'] = True
             options['log_output'] = True

@@ -1,13 +1,9 @@
 <?php
 
+require_once('server_info.php');
 require_once('sql.php');
 
-// include guard
-if (!isset($JPC_CONTEST_MYSQL_LOGIN_PHP__)) {
-$JPC_CONTEST_MYSQL_LOGIN_PHP__ = 1;
-
 // Get the database login information from the server_info.txt file.
-include 'server_info.php';
 
 // Login credentials for MySQL database.
 $db_host = $server_info["db_host"]; // Host name
@@ -29,6 +25,22 @@ function salt($len=16) {
 	}
 	return $tmp;
 }
+
+function contest_query() {
+    global $sql;
+    $args = func_get_args();
+    if (count($args) >= 1) {
+        $query_name = $args[0];
+        if (count($args) > 1) {
+            $query_args = array_map('mysql_real_escape_string',
+                                    array_slice($args, 1));
+            return mysql_query(vsprintf($sql[$query_name], $query_args));
+        } else {
+            return mysql_query($sql[$query_name]);
+        }
+    }
+}
+
 
 function check_credentials($username, $password) {
   $query = "
@@ -53,5 +65,4 @@ function check_credentials($username, $password) {
     }
 }
 
-}
 ?>

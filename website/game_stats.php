@@ -1,4 +1,7 @@
-<?php include 'header.php'; 
+<?php
+
+include 'header.php'; 
+require_once('mysql_query.php');
 
 $query = "select count(*) from user where activated=1 and created > (now() - interval 24 hour)";
 $result = mysql_query($query);

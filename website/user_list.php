@@ -1,6 +1,6 @@
 <?php
 include 'header.php';
-include 'mysql_login.php';
+require_once('mysql_login.php');
 echo "<h2>User List</h2>";
 $query = "SELECT * FROM user";
 $result = mysql_query($query);

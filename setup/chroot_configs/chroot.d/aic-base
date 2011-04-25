@@ -1,0 +1,6 @@
+[aic-base]
+description=Base chroot for ai-contest
+directory=/srv/chroot/aic-base
+type=directory
+script-config=default/config
+

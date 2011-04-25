@@ -1,6 +1,6 @@
 <?php
 
-include "mysql_login.php";
+require_once("mysql_login.php");
 
 $username = mysql_real_escape_string(stripslashes($_GET['username']));
 if (!isset($username)) {

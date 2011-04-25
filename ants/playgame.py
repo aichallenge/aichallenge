@@ -24,7 +24,7 @@ def main(argv):
 
     # maximum number of turns that the game will be played
     parser.add_option("-t", "--turns", dest="turns",
-                      default=200, type="int",
+                      default=1000, type="int",
                       help="Number of turns in the game")
 
     # the output directory will contain the replay file used by the visualizer
@@ -39,6 +39,9 @@ def main(argv):
     parser.add_option("-O", "--log_output", dest="log_output",
                        action="store_true", default=False,
                        help="Log output streams from bots")
+    parser.add_option("-E", "--log_stderr", dest="log_stderr",
+                       default="stderr",
+                       help="Where to send bots' stderr output. (file, stderr, ignore)")
 
     parser.add_option("--serial", dest="serial",
                       action="store_true",
@@ -69,13 +72,13 @@ def main(argv):
                       default="sections",
                       help="Food spawning method. (none, random, sections, symmetric)")
     parser.add_option("--viewradius2", dest="viewradius2",
-                      default=96, type="int",
+                      default=55, type="int",
                       help="Vision radius of ants squared")
     parser.add_option("--spawnradius2", dest="spawnradius2",
-                      default=2, type="int",
+                      default=1, type="int",
                       help="Spawn radius of ants squared")
     parser.add_option("--attackradius2", dest="attackradius2",
-                      default=5, type="int",
+                      default=4, type="int",
                       help="Attack radius of ants squared")
     parser.add_option("--profile", dest="profile",
                        action="store_true", default=False,
@@ -130,6 +133,7 @@ def run_rounds(opts,args):
         "stdout": opts.stdout,
         "log_input": opts.log_input,
         "log_output": opts.log_output,
+        "log_stderr": opts.log_stderr,
         "serial": opts.serial,
         "verbose": opts.verbose }
     random.seed(opts.seed)

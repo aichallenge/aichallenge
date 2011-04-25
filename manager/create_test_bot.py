@@ -6,8 +6,8 @@ import MySQLdb
 from server_info import server_info
 
 def create_test_bot(name):
-    bot_filename = os.path.join("../ants/bots/python", name + ".py")
-    bot_support_filename = "../ants/bots/python/ants.py"
+    bot_filename = os.path.join("../ants/dist/sample_bots/python", name + ".py")
+    bot_support_filename = "../ants/dist/sample_bots/python/ants.py"
     if not os.path.exists(bot_filename):
         print("No bot named %s" % name)
         return False
@@ -58,4 +58,5 @@ def create_test_bot(name):
         bot_zip.write(bot_support_filename, 'ants.py')
 
 if __name__ == '__main__':
-    create_test_bot(sys.argv[1])
+    if os.path.exists(os.path.join("../ants/dist/sample_bots/python", sys.argv[1] + ".py")):
+        create_test_bot(sys.argv[1])

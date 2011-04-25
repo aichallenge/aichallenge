@@ -1,6 +1,6 @@
 <?php
 
-include "mysql_login.php";
+require_once("mysql_login.php");
 
 $game_id = (int)($_GET["game_id"]);
 

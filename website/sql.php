@@ -51,7 +51,25 @@ $sql = array(
                              where matchup_id = %s
                              and player_id = %s;",
     "delete_matchup" => "delete from matchup where matchup_id = %s;",
-    "delete_matchup_player" => "delete from matchup_player where matchup_id = %s;"
+    "delete_matchup_player" => "delete from matchup_player where matchup_id = %s;",
+    "get_user_from_activation_code" => "select username from user where activation_code = '%s'",
+    "activate_user" => "update user set activated = 1 where activation_code =  '%s';",
+    "insert_new_submission" => "insert into submission (user_id, version, status, timestamp, language_id)
+                               select user_row.user_id,
+                                      coalesce(max(s.version), 0) + 1 as next_version,
+                                      user_row.status,
+                                      user_row.timestamp,
+                                      user_row.language_id
+                               from (select %s as user_id,
+                                     20 as status,
+                                     current_timestamp() as timestamp,
+                                     0 as language_id) user_row
+                               left outer join submission s
+                                   on s.user_id = user_row.user_id
+                               group by user_row.user_id,
+                                        user_row.status,
+                                        user_row.timestamp,
+                                        user_row.language_id;"
                            
 );
 

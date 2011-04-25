@@ -1,0 +1,4 @@
+# Files to copy into the chroot from the host system.
+#
+# <source and destination>
+/etc/gshadow

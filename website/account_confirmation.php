@@ -1,7 +1,7 @@
 <?php
-include 'session.php';
-include 'mysql_login.php';
-include 'header.php';
+require_once('session.php');
+require_once('mysql_login.php');
+require_once('header.php');
 
 function get_userid_from_confirmation_code($confirmation_code) {
     $confirmation_code = mysql_real_escape_string( stripslashes( $confirmation_code ) );
@@ -44,7 +44,7 @@ if (count($errors) > 0) {
 
 <?php
 foreach ($errors as $key => $error) {
-  print "<li>$error</li>";
+    print "<li>$error</li>";
 }
 ?>
 

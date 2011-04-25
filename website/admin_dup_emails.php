@@ -1,6 +1,8 @@
 <?php
 
-include 'session.php';
+require_once('session.php');
+require_once('mysql_query.php');
+
 include 'header.php';
 
 if (!logged_in_as_admin()) {

@@ -7,6 +7,7 @@ import subprocess
 import sys
 from threading import Thread, Timer
 import time
+import os
 
 def usage():
     print    """sandbox.py - Executes commands in a sandbox VM
@@ -33,10 +34,6 @@ def monitor_input_channel(sandbox):
                 pass
             break
         sandbox.stdout_queue.put(line.strip())
-    #print "end monitor"
-    e = sandbox.command_process.stderr.read().strip()
-    if len(e) > 0:
-        print e
 
 # The sandbox class is used to invoke arbitrary shell commands. Its main feature
 # is that it has the option to launch the shell command inside a dedicated
@@ -48,16 +45,18 @@ class Sandbox:
     #                                            directory are copied into the VM before the shell
     #                                            command is executed.
     #     shell_command: the shell command to launch inside the sandbox.
-    def __init__(self, working_directory, shell_command, jailuser=None):
+    #     stderr: where the bot's stderr output should be written out to
+    def __init__(self, working_directory, shell_command, jailuser=None, stderr=None):
         shell_command = shell_command.replace('\\','/')
         self.is_alive = False
         self.command_process = None
         self.stdout_queue = Queue()
         self.stderr_queue = Queue()
+
         self.command_process = subprocess.Popen(shlex.split(shell_command),
                                                 stdin=subprocess.PIPE,
                                                 stdout=subprocess.PIPE,
-                                                stderr=subprocess.PIPE,
+                                                stderr=stderr,
                                                 cwd=working_directory)
         self.is_alive = not self.command_process is None
         stdout_monitor = Timer(1, monitor_input_channel, args=(self,))

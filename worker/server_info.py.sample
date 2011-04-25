@@ -11,4 +11,12 @@ server_info = {
     "maps_path": "/home/worker/aichallenge/maps/",
     "api_base_url": "http://127.0.0.1/",
     "api_key": "1"
+    "game_options": {
+        "turns": 1000,
+        "loadtime": 3000,
+        "turntime": 1000,
+        "viewradius2": 55,
+        "attackradius2": 4,
+        "spawnradius2": 1
+    }
 }

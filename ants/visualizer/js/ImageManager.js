@@ -119,7 +119,6 @@ ImageManager.prototype.colorize = function(idx, colors) {
 				}
 				privilegeManager.enablePrivilege("UniversalBrowserRead");
 				data = ctx.getImageData(0, 0, obj.canvas.width, obj.canvas.height);
-				data = ctx.getImageData(0, 0, obj.canvas.width, obj.canvas.height);
 			} catch (error2) {
 				this.restrictSecurity = true;
 				return;

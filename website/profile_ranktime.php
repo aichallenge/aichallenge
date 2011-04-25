@@ -16,7 +16,7 @@ $cacheID="pchart_$user_id";
 
 if (!($cache->start($cacheID))) {
 
-include('mysql_login.php');
+require_once('mysql_login.php');
 include("pChart/pData.class");
 include("pChart/pChart.class");
 include("pChart/pCache.class");
