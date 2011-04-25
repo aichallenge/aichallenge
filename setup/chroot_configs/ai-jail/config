@@ -1,0 +1,13 @@
+# Settings for "ai-jail" profile.
+# See schroot.conf(5) and schroot-script-config(5) for further details.
+# The files detailed below may also be edited to further customise
+# this profile.
+
+# Filesystems to mount inside the chroot.
+FSTAB="/etc/schroot/ai-jail/fstab"
+
+# Files to copy from the host system into the chroot.
+COPYFILES="/etc/schroot/ai-jail/copyfiles"
+
+# System NSS databases to copy into the chroot.
+NSSDATABASES="/etc/schroot/ai-jail/nssdatabases"

@@ -139,22 +139,26 @@ def setup_contest_files(opts):
 
 def setup_base_chroot(options):
     """ Create and setup the base chroot jail users will run in. """
-    install_apt_packages(["debootstrap", "schroot"])
-    if os.path.exists("/srv/chroot/aic-base"):
+    install_apt_packages(["debootstrap", "schroot", "unionfs-fuse"])
+    chroot_dir = "/srv/chroot"
+    base_chroot_dir = os.path.join(chroot_dir, "aic-base")
+    if os.path.exists(base_chroot_dir):
         return
-    os.makedirs("/srv/chroot/aic-base")
+    os.makedirs(base_chroot_dir)
     run_cmd("debootstrap --variant=buildd --arch amd64 maverick \
-            /srv/chroot/aic-base http://us.archive.ubuntu.com/ubuntu/")
+            %s http://us.archive.ubuntu.com/ubuntu/" % (base_chroot_dir,))
     with CD(TEMPLATE_DIR):
-        run_cmd("cp chroot_configs/chroot.d/* /etc/schroot/chroot.d")
-        run_cmd("cp chroot_configs/sources.list /srv/chroot/aic-base/etc/apt/")
+        run_cmd("cp chroot_configs/chroot.d/aic-base /etc/schroot/chroot.d/")
+        run_cmd("cp chroot_configs/sources.list %s/etc/apt/"
+                % (base_chroot_dir,))
+        run_cmd("cp -r chroot_configs/ai-jail /etc/schroot/ai-jail")
     run_cmd("schroot -c aic-base -- /bin/sh -c \"DEBIANFRONTEND=noninteractive;\
             apt-get update; apt-get upgrade -y\"")
     run_cmd("schroot -c aic-base -- apt-get install -y python")
     run_cmd("schroot -c aic-base -- %s/setup/worker_setup.py --chroot-setup"
             % (os.path.join(options.root_dir, options.local_repo),))
 
-def create_jail_group():
+def create_jail_group(options):
     """ Create user group for jail users and set limits on it """
     if not file_contains("/etc/group", "^jailusers"):
         run_cmd("groupadd jailusers")
@@ -167,14 +171,44 @@ def create_jail_group():
         append_line(limits_conf, "@jailusers hard cpu 20 # ai-contest")
         # slightly more than 1GB of ram
         append_line(limits_conf, "@jailusers hard rss 1048600 # ai-contest")
+    if not file_contains("/etc/sudoers",
+            "^%s.+jailusers" % (options.username,)):
+        org_mode = os.stat("/etc/sudoers")[0]
+        os.chmod("/etc/sudoers", 0640)
+        append_line("/etc/sudoers",
+                "%s ALL = (%%jailusers) NOPASSWD: ALL" % (options.username,))
+        os.chmod("/etc/sudoers", org_mode)
 
 def create_jail_user(username):
     """ Setup a jail user with the given username """
     run_cmd("useradd -g jailusers -d /home/jailuser %s" % (username,))
     # Add rule to drop any network communication from this user
     run_cmd("iptables -A OUTPUT -m owner --uid-owner %s -j DROP" % (username,))
-    # TODO: create user specific chroot
-
+    # Create user specific chroot
+    # FIXME: the problem with this chroot currently is that the contest user
+    # is unable to clean it back up after use
+    chroot_dir = "/srv/chroot"
+    jail_dir = os.path.join(chroot_dir, username)
+    os.makedirs(os.path.join(jail_dir, "scratch"))
+    os.makedirs(os.path.join(jail_dir, "root"))
+    home_dir = os.path.join(jail_dir, "home/home/jailuser")
+    os.makedirs(home_dir)
+    run_cmd("chown %s:jailusers %s" % (username, home_dir))
+    fs_line = "unionfs-fuse#%s=rw:%s=ro:%s=ro %s fuse cow,allow_other 0 0" % (
+            os.path.join(jail_dir, "scratch"),
+            os.path.join(jail_dir, "home"),
+            os.path.join(chroot_dir, "aic-base"),
+            os.path.join(jail_dir, "root")
+            )
+    append_line("/etc/fstab", fs_line)
+    run_cmd("mount %s" % (os.path.join(jail_dir, "root"),))
+    cfg_filename = os.path.join(TEMPLATE_DIR,
+        "chroot_configs/chroot.d/jailuser.template")
+    with open(cfg_filename, 'r') as cfg_file:
+        cfg = cfg_file.read()
+    schroot_filename = os.path.join("/etc/schroot/chroot.d", username)
+    with open(schroot_filename, 'w') as schroot_file:
+        schroot_file.write(cfg.format(jailname=username))
 
 IPTABLES_LOAD = """#!/bin/sh
 iptables-restore < /etc/iptables.rules
@@ -183,12 +217,7 @@ exit 0
 
 def setup_jailusers(options):
     """ Create and configure the jail users """
-    create_jail_group()
-    org_mode = os.stat("/etc/sudoers")[0]
-    os.chmod("/etc/sudoers", 0640)
-    append_line("/etc/sudoers",
-            "%s ALL = (%%jailusers) NOPASSWD: ALL" % (options.username,))
-    os.chmod("/etc/sudoers", org_mode)
+    create_jail_group(options)
     iptablesload_path = "/etc/network/if-pre-up.d/iptablesload"
     if not os.path.exists(iptablesload_path):
         with open(iptablesload_path, "w") as loadfile:

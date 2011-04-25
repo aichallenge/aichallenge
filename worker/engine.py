@@ -11,6 +11,7 @@ def run_game(game, botcmds, options, gameid=0):
     output_dir = options.get("output_dir")
     log_input = options.get("log_input", False)
     log_output = options.get("log_output", False)
+    log_stderr = options.get("log_stderr", False)
     turns = int(options["turns"])
     loadtime = float(options["loadtime"]) / 1000
     turntime = float(options["turntime"]) / 1000
@@ -23,11 +24,21 @@ def run_game(game, botcmds, options, gameid=0):
 
     try:
         # create bot sandboxes
-        bots = [Sandbox(*bot) for bot in botcmds]
-        for b, bot in enumerate(bots):
-            if not bot.is_alive:
+        bots = []
+        for b, bot in enumerate(botcmds):
+            if log_stderr == 'file':
+                stderr_fd = open(os.path.join(output_dir, '%s.bot%s.stderr' % (gameid, b)), "w")
+            elif log_stderr == 'stderr':
+                stderr_fd = sys.stderr
+            else:
+                stderr_fd = open(os.devnull, "w")
+            sandbox = Sandbox(*bot, stderr = stderr_fd)
+            bots.append(sandbox)
+
+            # ensure it started
+            if not sandbox.is_alive:
                 if verbose:
-                    print >> sys.stderr, 'bot %s did not start' % botcmds[b]
+                    print >> sys.stderr, 'bot %s did not start' % bot
                 game.kill_player(b)
 
         # initialise file logs
