@@ -11,10 +11,12 @@ ai.run do |ai|
 	# your turn code here
 	
 	ai.my_ants.each do |ant|
-		ant.order [:N, :E, :S, :W][rand 4]
-	end
-	
-	if ai.turn_number == :game_over
-		$stderr.puts ai.score.zip(0...ai.players).map{|score, player| "Player #{player}: #{score}"}
+		# try to go north, if possible; otherwise try east, south, west.
+		[:N, :E, :S, :W].each do |dir|
+			if ant.square.neighbor(dir).land?
+				ant.order dir
+				break
+			end
+		end
 	end
 end
