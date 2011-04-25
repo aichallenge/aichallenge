@@ -29,7 +29,7 @@
   </target>
 
   <target name="compile-visualizer" depends="compile-rhino">
-    <javac destdir="${build.java}" debug="${java.debug}" target="${java.target}" includeAntRuntime="false" srcdir="${src.java}" classpath="${java.home}/lib/plugin.jar" />
+    <javac destdir="${build.java}" debug="${java.debug}" target="${java.target}" includeAntRuntime="false" srcdir="${src.java}" classpath="${java.plugin}" />
   </target>
 
   <target name="compile-js" depends="compile-visualizer">
