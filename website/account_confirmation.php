@@ -1,33 +1,32 @@
 <?php
-include 'session.php';
-include 'mysql_login.php';
-include 'header.php';
+require_once('session.php');
+require_once('mysql_login.php');
+require_once('header.php');
 
 function get_username_from_confirmation_code($confirmation_code) {
-  $query = "SELECT username FROM user WHERE " .
-    "activation_code = '$confirmation_code'";
-  $result = mysql_query($query);
-  if ($row = mysql_fetch_assoc($result)) {
-    $username = $row['username'];
-    return $username;
-  } else {
-    return NULL;
-  }
+    $result = contest_query("get_user_from_activation_code",
+                            $confirmation_code);
+    if ($row = mysql_fetch_assoc($result)) {
+        $username = $row['username'];
+        return $username;
+    } else {
+        return NULL;
+    }
 }
 
 $confirmation_code = $_GET['confirmation_code'];
 if ($confirmation_code == NULL || strlen($confirmation_code) <= 0) {
-  $errors[] = "Failed to activate the account. (101)";
+    $errors[] = "Failed to activate the account. (101)";
 } else {
-  $username = get_username_from_confirmation_code($confirmation_code);
-  if ($username == NULL || strlen($username) <= 0) {
-    $errors[] = "Failed to activate the account. (102)";
-  } else {
-    $result = activate_user($username);
-    if (!$result) {
-      $errors[] = "Failed to activate the account. (103)";
+    $username = get_username_from_confirmation_code($confirmation_code);
+    if ($username == NULL || strlen($username) <= 0) {
+        $errors[] = "Failed to activate the account. (102)";
+    } else {
+        $result = contest_query("activate_user", $confirmation_code);
+        if (!$result) {
+            $errors[] = "Failed to activate the account. (103)";
+        }
     }
-  }
 }
 if (count($errors) > 0) {
 ?>
@@ -39,7 +38,7 @@ if (count($errors) > 0) {
 
 <?php
 foreach ($errors as $key => $error) {
-  print "<li>$error</li>";
+    print "<li>$error</li>";
 }
 ?>
 

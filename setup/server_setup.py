@@ -23,7 +23,8 @@ def install_manager_packages():
 
 def install_website_packages():
     """ Install system packages required for the website """
-    pkg_list = ["apache2", "php5", "libapache2-mod-php5", "php5-mysql"]
+    pkg_list = ["apache2", "php5", "libapache2-mod-php5", "php5-mysql",
+            "memcached", "php5-memcached", "libphp-phpmailer"]
     install_apt_packages(pkg_list)
 
 def setup_base_files(opts):
@@ -31,7 +32,7 @@ def setup_base_files(opts):
     sub_dir = os.path.join(opts.root_dir, "submissions")
     if not os.path.exists(sub_dir):
         os.mkdir(sub_dir)
-        run_cmd("chown {0}:{0} {1}".format(opts.username, sub_dir))
+        run_cmd("chown {0}:www-data {1}".format(opts.username, sub_dir))
     map_dir = os.path.join(opts.root_dir, "maps")
     if not os.path.exists(map_dir):
         os.mkdir(map_dir)
@@ -150,7 +151,7 @@ def interactive_options(options):
     user = raw_input("Contest username? [%s] " % (user,))
     options.username = user if user else options.username
     options.database_root_password = get_password("database root")
-    db_user = options.database_user
+    db_user = options.username
     db_user = raw_input("Contest database username? [%s] " % (db_user,))
     options.database_user = db_user if db_user else options.database_user
     options.database_password = get_password("contest database")

@@ -63,4 +63,5 @@ function api_log($message) {
 	$message = sprintf("%s - %s", date(DATE_ATOM), $message) . "\n";
 	error_log($message, 3, $server_info["api_log"]);
 }
+
 ?>

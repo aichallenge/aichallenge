@@ -11,18 +11,18 @@ $json_hash = md5($json_string);
 $compiledata = json_decode($json_string);
 
 if ($compiledata->status_id == 40) {
-	if (mysql_query(sprintf($sql["update_submission_success"],
-	                        $worker["worker_id"],
-	                        $compiledata->submission_id))) {
+	if (contest_query("update_submission_success",
+	                  $worker["worker_id"],
+	                  $compiledata->submission_id)) {
 		echo json_encode(array( "hash" => $json_hash ));
 	} else {
 		api_log(sprintf("Error updating successful compile: %s", mysql_error()));
 	}
 } else {
-	if (mysql_query(sprintf($sql["update_submission_failure"],
-	                        $compiledata->status_id,
-	                        $worker["worker_id"],
-	                        $compiledata->submission_id))) {
+	if (contest_query("update_submission_failure",
+	                  $compiledata->status_id,
+	                  $worker["worker_id"],
+	                  $compiledata->submission_id)) {
 		echo json_encode(array( "hash" => $json_hash ));
 	} else {
 		api_log(sprintf("Error updating errored compile: %s", mysql_error()));

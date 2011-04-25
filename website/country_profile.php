@@ -1,6 +1,7 @@
 <?php
 include 'header.php';
 include_once 'rankings_widget.php';
+require_once('mysql_query.php');
 
 $country_id = $_GET["country_id"];
 $country_id = mysql_real_escape_string($country_id);

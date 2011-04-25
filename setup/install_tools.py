@@ -1,4 +1,5 @@
 
+import getpass
 import os
 import re
 from subprocess import Popen, PIPE
@@ -70,7 +71,7 @@ def run_cmd(cmd, capture_stdout=False):
 
 def install_apt_packages(packages):
     """ Install system packages using aptitude """
-    apt_cmd = "aptitude install -y "
+    apt_cmd = "apt-get install -y "
     try:
         cmd = apt_cmd + packages
     except TypeError:

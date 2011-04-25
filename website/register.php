@@ -1,8 +1,8 @@
 <?php
 
 include 'header.php';
-include 'mysql_login.php';
-include 'server_info.php';
+require_once('mysql_login.php');
+require_once('server_info.php');
 
 if($server_info["submissions_open"]) { ?>
 <h2>Create Your Account</h2>

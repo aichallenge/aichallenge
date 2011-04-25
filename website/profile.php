@@ -1,10 +1,11 @@
 <?php
-include 'header.php';
+include('header.php');
+include('mysql_login.php');
 
 $user_id = $_GET["user_id"];
 if(!filter_var($user_id, FILTER_VALIDATE_INT)) {
-  $user_id = NULL;
- }
+    $user_id = NULL;
+}
 
 #require_once 'Zend/Cache.php';
 
@@ -51,7 +52,7 @@ from
   left outer join organization o on o.org_id = u.org_id
   left outer join country c on c.country_id = u.country_id
 where
-  u.user_id = '$user_id'
+  u.user_id = $user_id;
 EOT;
 $userresult = mysql_query($userquery);
 $userdata = mysql_fetch_assoc($userresult);

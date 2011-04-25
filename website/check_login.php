@@ -1,10 +1,7 @@
 <?php
-// include guard
-if (!isset($JPC_CONTEST_CHECK_LOGIN_PHP__)) {
-$JPC_CONTEST_CHECK_LOGIN_PHP__ = 1;
 
-include 'mysql_login.php';
-include 'session.php';
+require_once('session.php');
+require_once('mysql_login.php');
 
 // A function I copied from teh internets that claims to get a person's "real"
 // IP address. Not sure what that's all about, but let's log it anyways!
@@ -48,5 +45,4 @@ if (check_credentials($username, $password)) {
     header("location:login_failed.php");
 }
 
-}  // include guard
 ?>
