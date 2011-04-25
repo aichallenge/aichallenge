@@ -35,12 +35,12 @@ p {
     text-align: justify;
 }
 
-ul {
-/*  list-style-position:inside; */
+ul, ol {
+    list-style-position:inside;
     margin-left: 1.5em;
     margin-bottom: 1em;
 }
-ul ul {
+ul ul, ol ol {
     margin-bottom: 0em;
 }
 ul li.spacer {
@@ -48,6 +48,12 @@ ul li.spacer {
 }
 ul li.spacer+li {
     margin-top: 1em;
+}
+ul li {
+    list-style-type: disc;
+}
+ol li {
+    list-style-type: decimal-leading-zero;
 }
 
 /*Spacing*/
@@ -60,6 +66,10 @@ p+h1, p+h2, p+h3, p+h4 {
 }
 
 ul+h1, ul+h2, ul+h3, ul+h4 {
+    margin-top: 1.5em;
+}
+
+ol+h1, ol+h2, ol+h3, ol+h4 {
     margin-top: 1.5em;
 }
 
@@ -104,4 +114,9 @@ th {
 /* Misc */
 .small {
     font-size: 70%;
+}
+
+strong {
+    font-weight: bold;
+    text-shadow: #aaa 1px 1px 2px;
 }
