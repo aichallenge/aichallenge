@@ -82,6 +82,20 @@ a:hover {
     text-decoration: underline;
 }
 
+/* Monochrome elements */
+pre, code {
+    font-family: monospace;
+}
+code {
+    padding: 10px;
+    
+    display: block;
+    margin-bottom: 1em;
+    
+    border: 1px solid #7a0;
+    background: #ad6;
+}
+
 /*Tables*/
 th {
     color: #900;
