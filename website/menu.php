@@ -32,7 +32,7 @@
     </ul>
     <h1>User Search:</h1>
     <form name="user_search_form" method="get" action="find_user.php">
-        <input name="username" type="text" style="width: 10em">
-        <input type="submit" name="search" value="Go">
+        <input name="username" type="text" style="width: 10em" />
+        <input type="submit" name="search" value="Go" />
     </form>
 </div>

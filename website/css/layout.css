@@ -136,7 +136,7 @@ body {
     background: #fff;
     padding: 15px;
     
-    min-height: 65%;
+    min-height: 630px;
 }
 
 #menu {
@@ -148,7 +148,6 @@ body {
     text-shadow: none;
     margin-top: 10px;
     margin-bottom: 0px;
-/*     text-shadow: #000 0.5px 0.5px 1px; */
 }
 #menu form, #menu ul {
     margin: 5px 10px;
