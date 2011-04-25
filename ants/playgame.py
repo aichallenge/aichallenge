@@ -39,6 +39,9 @@ def main(argv):
     parser.add_option("-O", "--log_output", dest="log_output",
                        action="store_true", default=False,
                        help="Log output streams from bots")
+    parser.add_option("-E", "--log_stderr", dest="log_stderr",
+                       action="store_true", default=False,
+                       help="Log stderr streams from bots")
 
     parser.add_option("--serial", dest="serial",
                       action="store_true",
@@ -130,6 +133,7 @@ def run_rounds(opts,args):
         "stdout": opts.stdout,
         "log_input": opts.log_input,
         "log_output": opts.log_output,
+        "log_stderr": opts.log_stderr,
         "serial": opts.serial,
         "verbose": opts.verbose }
     random.seed(opts.seed)
