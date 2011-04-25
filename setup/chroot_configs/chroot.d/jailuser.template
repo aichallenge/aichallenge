@@ -1,0 +1,7 @@
+[{jailname}]
+description=Jail chroot for ai-contest
+directory=/srv/chroot/{jailname}/root
+users={jailname}
+type=directory
+script-config=ai-jail/config
+
