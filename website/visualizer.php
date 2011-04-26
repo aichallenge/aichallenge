@@ -17,7 +17,7 @@ $replay = "games/" . (int)($_GET["game_id"] / 10000) . "/" . $_GET["game_id"] . 
 // Write applet tag if we use Java
 if (isset ($java)) {
 ?>
-      <applet <?php echo $java; ?> code="com.aicontest.visualizer.VisualizerApplet" width="655" height="655">
+      <applet <?php echo $java; ?> code="com.aicontest.visualizer.VisualizerApplet" width="690" height="700">
         <param name="replay" value="<?php echo $replay; ?>">
 <?php
 	if ($_GET["debug"] == "true") {
@@ -45,7 +45,7 @@ if (!isset ($java)) {
 	} ?>
 <script type="text/javascript" src="<?php echo $js; ?>"></script>
 <script type="text/javascript">
-	visualizer = new Visualizer(document.getElementById('visualizerDiv'), 'visualizer/', 655, undefined);
+	visualizer = new Visualizer(document.getElementById('visualizerDiv'), 'visualizer/', 690, undefined);
 	visualizer.loadReplayDataFromURI('<?php echo $replay; ?>');
 </script>
 <?php
