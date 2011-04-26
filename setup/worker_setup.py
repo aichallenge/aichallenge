@@ -1,7 +1,9 @@
 #!/usr/bin/python
 
+import grp
 import getpass
 import os.path
+import pwd
 import re
 import sys
 from optparse import OptionParser, SUPPRESS_HELP
@@ -157,6 +159,15 @@ def setup_base_chroot(options):
     run_cmd("schroot -c aic-base -- apt-get install -y python")
     run_cmd("schroot -c aic-base -- %s/setup/worker_setup.py --chroot-setup"
             % (os.path.join(options.root_dir, options.local_repo),))
+    worker_dir = os.path.join(options.root_dir, options.local_repo, "worker")
+    with CD(worker_dir):
+        user_info = pwd.getpwnam(options.username)
+        cuid = user_info[2]
+        cgid = user_info[3]
+        jgid = grp.getgrnam("jailusers")[2]
+        run_cmd("gcc -DCONTEST_UID=%d -DCONTEST_GID=%d -DJAIL_GID=%d jail_own.c -o jail_own" % (cuid, cgid, jgid))
+        run_cmd("chown root:%s jail_own" % (cgid,))
+        run_cmd("chmod u=rwxs,g=rwx,o= jail_own")
 
 def create_jail_group(options):
     """ Create user group for jail users and set limits on it """
