@@ -38,9 +38,9 @@ def run_game(game, botcmds, options, gameid=0):
             # ensure it started
             if not sandbox.is_alive:
                 if verbose:
-                    print >> sys.stderr, 'bot %s did not start' % bot
+                    print >> sys.stderr, 'bot %s did not start' % b
                 game.kill_player(b)
-            bot.pause()
+            sandbox.pause()
 
         # initialise file logs
         if output_dir:
