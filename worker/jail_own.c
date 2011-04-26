@@ -47,7 +47,7 @@ int own_dir_tree(const char *base_dir, uid_t owner, gid_t group) {
             printf("Changed owner on: %s\n", child_path);
         }
         if (entry->d_type == DT_DIR) {
-            error = 1 ? own_dir_tree(child_path, owner, group) : error;
+            error = own_dir_tree(child_path, owner, group) ? 1 : error;
         }
     }
     return error;
