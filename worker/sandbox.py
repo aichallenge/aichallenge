@@ -1,52 +1,47 @@
 #!/usr/bin/python
 import os
-from Queue import Queue
 import shlex
 import signal
 import subprocess
 import sys
-from threading import Thread, Timer
 import time
-import os
+from optparse import OptionParser
+from Queue import Queue, Empty
+from threading import Thread
 
-def usage():
-    print    """sandbox.py - Executes commands in a sandbox VM
-Required Arguments:
---directory, -d : directory where executable and related files live
---command, -c : shell command to execute inside sandboxed VM
---security, -s: is not set, command is run on current host, otherwise,
-                                funneled through VM
-"""
-
-def monitor_input_channel(sandbox):
-    #print "start monitor"
+def _monitor_input_channel(sandbox):
     while sandbox.is_alive:
         try:
             line = sandbox.command_process.stdout.readline()
         except:
-            print sys.exc_info()
+            print >> sys.stderr, sys.exc_info()
             sandbox.kill()
             break
         if not line:
-            try:
-                sandbox.kill()
-            except:
-                pass
+            sandbox.kill()
             break
         sandbox.stdout_queue.put(line.strip())
 
-# The sandbox class is used to invoke arbitrary shell commands. Its main feature
-# is that it has the option to launch the shell command inside a dedicated
-# virtual machine, in order to totally isolate the command.
 class Sandbox:
-    # Initializes a new sandbox and invoke the given shell command inside it.
-    #     working_directory: the directory in which the shell command should be
-    #                                            launched. If security is enabled, files from this
-    #                                            directory are copied into the VM before the shell
-    #                                            command is executed.
-    #     shell_command: the shell command to launch inside the sandbox.
-    #     stderr: where the bot's stderr output should be written out to
-    def __init__(self, working_directory, shell_command, jailuser=None, stderr=None):
+    """Provide a sandbox to run arbitrary commands in.
+
+    The sandbox class is used to invoke arbitrary shell commands. Its main
+    feature is that it has the option to launch the shell command inside a
+    jail, in order to totally isolate the command.
+
+    """
+
+    def __init__(self, working_directory, shell_command, stderr=None):
+        """Initialize a new sandbox and invoke the given shell command inside.
+
+        working_directory: the directory in which the shell command should
+                           be launched. If security is enabled, files from
+                           this directory are copied into the VM before the
+                           shell command is executed.
+        shell_command: the shell command to launch inside the sandbox.
+        stderr: where the bot's stderr output should be written out to
+
+        """
         shell_command = shell_command.replace('\\','/')
         self.is_alive = False
         self.command_process = None
@@ -59,68 +54,101 @@ class Sandbox:
                                                 stderr=stderr,
                                                 cwd=working_directory)
         self.is_alive = not self.command_process is None
-        stdout_monitor = Timer(1, monitor_input_channel, args=(self,))
+        stdout_monitor = Thread(target=_monitor_input_channel, args=(self,))
         stdout_monitor.start()
 
-    # Shuts down the sandbox, cleaning up any spawned processes, threads, and
-    # other resources. The shell command running inside the sandbox may be
-    # suddenly terminated.
     def kill(self):
+        """ Shuts down the sandbox.
+
+        Shuts down the sandbox, cleaning up any spawned processes, threads, and
+        other resources. The shell command running inside the sandbox may be
+        suddenly terminated.
+
+        """
         if self.is_alive:
             try:
                 self.command_process.kill()
                 self.command_process.wait()
-            except:
+            except OSError:
                 pass
-            #os.kill(self.command_process.pid, signal.SIGKILL)
             self.is_alive = False
 
-    # pause the process by sending a SIGSTOP to the child
     def pause(self):
+        """Pause the process by sending a SIGSTOP to the child"""
         self.command_process.send_signal(signal.SIGSTOP)
 
-    # resume the process by sending a SIGCONT to the child
     def resume(self):
+        """Resume the process by sending a SIGCONT to the child"""
         self.command_process.send_signal(signal.SIGCONT)
 
-    def write(self, line):
+    def write(self, str):
+        """Write str to stdin of the process being run"""
         if not self.is_alive:
-            return
+            return False
         try:
-            self.command_process.stdin.write(line)
+            self.command_process.stdin.write(str)
             self.command_process.stdin.flush()
-            return 0
-        except:
+        except (OSError, IOError):
             self.kill()
-            return -1
+            return False
+        return True
 
     def write_line(self, line):
+        """Write line to stdin of the process being run
+
+        A newline is appended to line and written to stdin of the child process
+
+        """
         if not self.is_alive:
-            return
+            return False
         try:
             self.command_process.stdin.write(line + "\n")
             self.command_process.stdin.flush()
-            return 0
-        except:
+        except (OSError, IOError):
             self.kill()
-            return -1
+            return False
+        return True
 
     def read_line(self):
-        if not self.is_alive:
-            return None
+        """Read line from child process
+
+        Returns a line of the child process' stdout, if one isn't available
+        returns None.
+
+        """
         try:
-            return self.stdout_queue.get(block=False, timeout=0)
-        except:
+            return self.stdout_queue.get(block=False)
+        except Empty:
             return None
 
 def main():
-    sandbox = Sandbox(".", "python bots\\MyBot.py")
-    #sandbox = Sandbox("../submissions/122742/.", "python MyBot.py", False)
-    time.sleep(1)
-    sandbox.write_line("D 10 10")
-    sandbox.write_line("ready")
-    time.sleep(1)
+    parser = OptionParser(usage="usage: %prog [options] <command to run>")
+    parser.add_option("-d", "--directory", action="store", dest="working_dir",
+            default=".",
+            help="Working directory to run command in (copied in secure mode)")
+    parser.add_option("-l", action="append", dest="send_lines", default=list(),
+            help="String to send as a line on commands stdin")
+    parser.add_option("-s", "--send-delay", action="store", dest="send_delay",
+            type="float", default=0.0,
+            help="Time in seconds to sleep after sending a line")
+    parser.add_option("-r", "--receive-delay", action="store",
+            dest="resp_delay", type="float", default=0.01,
+            help="Time in seconds to sleep before checking for a response line")
+    options, args = parser.parse_args()
+    if len(args) == 0:
+        parser.error("Must include a command to run.\
+                \nRun with --help for more information.")
+
+    sandbox = Sandbox(options.working_dir, " ".join(args))
+    for line in options.send_lines:
+        if not sandbox.write_line(line):
+            print >> sys.stderr, "Could not send line '%s'" % (line,)
+            sandbox.kill()
+            sys.exit(1)
+        print "sent:", line
+        time.sleep(options.send_delay)
     while True:
+        time.sleep(options.resp_delay)
         response = sandbox.read_line()
         if response is None:
             print "No more responses. Terminating."
