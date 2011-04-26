@@ -139,6 +139,10 @@ body {
     min-height: 630px;
 }
 
+#visualizerDiv {
+    margin-bottom: 2.5em;
+}
+
 #visualizerDiv * {
     display: block;
     margin: 0 auto;
