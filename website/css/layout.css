@@ -139,6 +139,11 @@ body {
     min-height: 630px;
 }
 
+#visualizerDiv * {
+    display: block;
+    margin: 0 auto;
+}
+
 #menu {
     padding: 15px;
 }

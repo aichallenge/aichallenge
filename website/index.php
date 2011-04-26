@@ -1,7 +1,12 @@
-<?php include 'header.php';
-?>
+<?php include 'header.php'; ?>
 
 <!--<MarkdownReplacement with="competition.md">--><!--</MarkdownReplacement>-->
+
+<p>Two Computer Programs Duking it Out with Ants:</p>
+<?php
+    include 'visualizer_widget.php';
+    visualizer_widget($game_id="2",550,550);
+?>
 
 <h2>Planet Wars Final Rankings</h2>
 <p>Congratulations to this term's winner, <a href="http://quotenil.com/">
