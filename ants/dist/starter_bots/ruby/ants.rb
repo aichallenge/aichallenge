@@ -217,7 +217,7 @@ class AI
 		@enemy_ants=[]
 		
 		until((rd=@stdin.gets.strip)=='go')
-			_, type, row, col, owner = *rd.match(/(w|f|a|d) (\d+) (\d+)(?: (\d+)|)/)
+			_, type, row, col, owner = *rd.match(/([wfadr]) (\d+) (\d+)(?: (\d+)|)/)
 			row, col = row.to_i, col.to_i
 			owner = owner.to_i if owner
 			
