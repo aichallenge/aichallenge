@@ -116,6 +116,9 @@ class Ants(Game):
         row = 0
         water_area = 0
 
+        # temporary storage for scores so that add_ant can work like normal
+        self.score = defaultdict(int)
+
         for line in map_text.split('\n'):
             line = line.strip().lower()
 
@@ -606,6 +609,9 @@ class Ants(Game):
               food is placed at the location to spawn from. This is required
               for the replay format where all ants must come from food.
         """
+        # each ant gives the owner 1 point
+        self.score[owner] += 1
+
         # if we weren't given a Food object then create a dummy food
         if not isinstance(food, Food):
             loc = food
