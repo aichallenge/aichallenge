@@ -82,9 +82,6 @@ class Square
 	end
 end
 
-# Internal; raised when we encounter weird input.
-class UnexpectedInput < Exception; end
-
 class AI
 	# Map, as an array of arrays.
 	attr_accessor :map
@@ -92,7 +89,7 @@ class AI
 	attr_accessor	:turn_number
 	
 	# Game settings. Integers.
-	attr_accessor :loadtime, :turntime, :rows, :cols, :turns, :viewradius2, :attackradius2, :spawnradius2
+	attr_accessor :loadtime, :turntime, :rows, :cols, :turns, :viewradius2, :attackradius2, :spawnradius2, :seed
 	# Radii, unsquared. Floats.
 	attr_accessor :viewradius, :attackradius, :spawnradius
 	
@@ -127,7 +124,8 @@ class AI
 			:spawnradius2 => @spawnradius2,
 			:viewradius => @viewradius,
 			:attackradius => @attackradius,
-			:spawnradius => @spawnradius
+			:spawnradius => @spawnradius,
+			:seed => @seed
 		}.freeze
 	end
 	
@@ -135,7 +133,9 @@ class AI
 	def setup # :yields: self
 		read_intro
 		yield self
+		
 		@stdout.puts 'go'
+		@stdout.flush
 		
 		@map=Array.new(@rows){|row| Array.new(@cols){|col| Square.new false, false, nil, row, col, self } }
 		@did_setup=true
@@ -145,19 +145,20 @@ class AI
 	def run &b # :yields: self
 		setup &b if !@did_setup
 		
-		loop do
+		over=false
+		until over
 			over = read_turn
 			yield self
-			@stdout.puts 'go'
 			
-			break if over
+			@stdout.puts 'go'
+			@stdout.flush
 		end
 	end
 
 	# Internal; reads zero-turn input (game settings).
 	def read_intro
 		rd=@stdin.gets.strip
-		raise UnexpectedInput, rd unless rd=='turn 0'
+		warn "unexpected: #{rd}" unless rd=='turn 0'
 
 		until((rd=@stdin.gets.strip)=='ready')
 			_, name, value = *rd.match(/\A([a-z0-9]+) (\d+)\Z/)
@@ -171,8 +172,9 @@ class AI
 			when 'viewradius2'; @viewradius2=value.to_i
 			when 'attackradius2'; @attackradius2=value.to_i
 			when 'spawnradius2'; @spawnradius2=value.to_i
+			when 'seed'; @seed=value.to_i
 			else
-				raise UnexpectedInput, rd
+				warn "unexpected: #{rd}"
 			end
 		end
 		
@@ -184,7 +186,6 @@ class AI
 	# Internal; reads turn input (map state).
 	def read_turn
 		ret=false
-		
 		rd=@stdin.gets.strip
 		
 		if rd=='end'
@@ -237,12 +238,13 @@ class AI
 			when 'd'
 				d=Ant.new false, owner, @map[row][col], self
 				@map[row][col].ant = d
+			when 'r'
+				# pass
 			else
-				p type
-				raise UnexpectedInput, rd
+				warn "unexpected: #{rd}"
 			end
 		end
-		
+
 		return ret
 	end
 	
