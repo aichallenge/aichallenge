@@ -122,11 +122,20 @@ def run_game(game, botcmds, options, gameid=0):
                     time_limit = turntime
                 bot_moves = []
 
+                log_lines = []
                 if options['serial']:
                     for bot in bots:
-                        bot_moves.extend(get_moves(game, [bot], time_limit, verbose))
+                        moves, log_lines = get_moves(game, [bot], time_limit)
+                        bot_moves.extend(moves)
                 else:
-                    bot_moves = get_moves(game, bots, time_limit, verbose)
+                    bot_moves, log_lines = get_moves(game, bots, time_limit)
+
+                # handle any logs that get_moves produced
+                if log_lines:
+                    if verbose:
+                        print >> sys.stderr, '\n'.join(log_lines)
+                    if stream_log:
+                        stream_log.write('\n'.join(('# '+s for s in log_lines)) + '\n')
 
                 # process all moves
                 bot_alive = [game.is_alive(b) for b in range(len(bots))]
@@ -220,10 +229,11 @@ def run_game(game, botcmds, options, gameid=0):
         json.dump(replay, replay_log,sort_keys=True)
         replay_log.close()
 
-def get_moves(game, bots, time_limit, verbose=False):
+def get_moves(game, bots, time_limit):
     bot_finished = [not game.is_alive(b) for b in range(len(bots))]
     bot_moves = [[] for b in bots]
     start_time = time.time()
+    log_lines = []
 
     # resume all bots
     for bot in bots:
@@ -239,8 +249,7 @@ def get_moves(game, bots, time_limit, verbose=False):
             if bot_finished[b]:
                 continue # already got bot moves
             if not bot.is_alive:
-                if verbose:
-                    print >> sys.stderr, 'bot %s died' % b
+                log_lines.append('bot %s died' % b)
                 bot_finished[b] = True
                 game.kill_player(b)
                 continue # bot is dead
@@ -266,14 +275,11 @@ def get_moves(game, bots, time_limit, verbose=False):
     # kill timed out bots
     for b, finished in enumerate(bot_finished):
         if not finished:
-            if verbose:
-                print >> sys.stderr, "bot %s timed out" % b
-            if stream_log:
-                stream_log.write('# bot %s timed out\n' % b)
+            log_lines.append("bot %s timed out" % b)
             game.kill_player(b)
             bots[b].kill()
 
-    return bot_moves
+    return bot_moves, log_lines
 
 class Tee(object):
     """ Write to multiple files at once """
