@@ -124,9 +124,9 @@ def run_game(game, botcmds, options, gameid=0):
 
                 if options['serial']:
                     for bot in bots:
-                        bot_moves.extend(get_moves(game, [bot], time_limit))
+                        bot_moves.extend(get_moves(game, [bot], time_limit, verbose))
                 else:
-                    bot_moves = get_moves(game, bots, time_limit)
+                    bot_moves = get_moves(game, bots, time_limit, verbose)
 
                 # process all moves
                 bot_alive = [game.is_alive(b) for b in range(len(bots))]
@@ -220,7 +220,7 @@ def run_game(game, botcmds, options, gameid=0):
         json.dump(replay, replay_log,sort_keys=True)
         replay_log.close()
 
-def get_moves(game, bots, time_limit):
+def get_moves(game, bots, time_limit, verbose=False):
     bot_finished = [not game.is_alive(b) for b in range(len(bots))]
     bot_moves = [[] for b in bots]
     start_time = time.time()
