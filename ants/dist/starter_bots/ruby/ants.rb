@@ -34,6 +34,11 @@ class Ant
 	def order direction
 		@ai.order self, direction
 	end
+	
+	# Returns true if this ant can see given square (or other ant). Equivalent to square.visible? ant.
+	def can_see? square
+		(square.is_a?(Ant) ? square.square : square).visible? self
+	end
 end
 
 # Represent a single field of the map.
@@ -58,6 +63,11 @@ class Square
 	# Returns true if this square contains food.
 	def food?; @food; end
 	
+	# Returns true if this square is land, has no food and no alive ants.
+	def passable?
+		@land and !@food and !ant?
+	end
+	
 	# Returns true if this square has an alive ant.
 	def ant?; @ant and @ant.alive?; end;
 	
@@ -79,6 +89,15 @@ class Square
 		end
 		
 		return @ai.map[row][col]
+	end
+	
+	# Returns true if this square is visible by given ant, or by any of your ants (if no argument given).
+	def visible? ant=nil
+		if ant
+			@ai.distance_euclid(self, ant) < @ai.viewradius
+		else
+			@ai.my_ants.any?{|ant| self.visible? ant}
+		end
 	end
 end
 
@@ -215,6 +234,7 @@ class AI
 		
 		@my_ants=[]
 		@enemy_ants=[]
+		@food=[]
 		
 		until((rd=@stdin.gets.strip)=='go')
 			_, type, row, col, owner = *rd.match(/([wfadr]) (\d+) (\d+)(?: (\d+)|)/)
@@ -224,22 +244,24 @@ class AI
 			case type
 			when 'w'
 				@map[row][col].water=true
+				
 			when 'f'
 				@map[row][col].food=true
+				@food.push @map[row][col]
+				
 			when 'a'
-				a=Ant.new true, owner, @map[row][col], self
+				a = Ant.new true, owner, @map[row][col], self
 				@map[row][col].ant = a
 				
-				if owner==0
-					my_ants.push a
-				else
-					enemy_ants.push a
-				end
+				(owner==0 ? @my_ants : @enemy_ants).push a
+				
 			when 'd'
-				d=Ant.new false, owner, @map[row][col], self
+				d = Ant.new false, owner, @map[row][col], self
 				@map[row][col].ant = d
+				
 			when 'r'
 				# pass
+				
 			else
 				warn "unexpected: #{rd}"
 			end
@@ -256,10 +278,10 @@ class AI
 	#
 	# Give orders to an ant, or to whatever happens to be in the given square (and it better be an ant).
 	def order a, b, c=nil
-		if !c # assume two-argument form: ant, direction
+		if !c # assume two-argument form
 			ant, direction = a, b
 			@stdout.puts "o #{ant.row} #{ant.col} #{direction.to_s.upcase}"
-		else # assume three-argument form: row, col, direction
+		else # assume three-argument form
 			col, row, direction = a, b, c
 			@stdout.puts "o #{row} #{col} #{direction.to_s.upcase}"
 		end
@@ -272,14 +294,85 @@ class AI
 	def my_ants; @my_ants; end
 	# Returns an array of alive enemy ants on the gamefield.
 	def enemy_ants; @enemy_ants; end
+	# Returns an array of all squares containing food.
+	def food; @food; end
 	
 	# If row or col are greater than or equal map width/height, makes them fit the map.
 	#
-	# Handles negative values correctly (it may return a negative value, but always one that is a correct index).
+	# Handles negative values correctly (never returns negative values).
 	#
 	# Returns [row, col].
 	def normalize row, col
+		# http://www.ruby-doc.org/core/classes/Numeric.html#M000968
+		# dividing modulo by a positive value always yields a positive value
 		[row % @rows, col % @cols]
+	end
+	
+	
+	# Calculates the difference between rows of two squares on a torus.
+	def distance_city_row sqa, sqb
+		minrow, maxrow = *[sqa.row, sqb.row].sort
+		[maxrow-minrow, minrow+@rows-maxrow].min
+	end
+	
+	# Calculates the difference between columns of two squares on a torus.
+	def distance_city_col sqa, sqb
+		mincol, maxcol = *[sqa.col, sqb.col].sort
+		[maxcol-mincol, mincol+@cols-maxcol].min
+	end
+	
+	# Calculates distance between two points on a torus in city metric. Equivalent to sum of distance_city_row and distance_city_col.
+	def distance_city sqa, sqb
+		distance_city_row(sqa, sqb) + distance_city_col(sqa, sqb)
+	end
+	
+	# Calculate direction(s) from sqa to sqb. Returns an array containing either:
+	#
+	# * nothing -- if columns and rows of squares are equal
+	#	* one of :N, :E, :S, :W -- if either columns or rows of squares are equal
+	# * two of :N, :E, :S, :W -- otherwise
+	#
+	def directions sqa, sqb
+		if sqa.row == sqb.row and sqa.col == sqb.col
+			return []
+		end
+		
+		mincol, maxcol = *[sqa.col, sqb.col].sort
+		minrow, maxrow = *[sqa.row, sqb.row].sort
+		
+		ret=[]
+		
+		if sqa.col != sqb.col
+			if maxcol-mincol < mincol+@cols-maxcol # if non-wrapping diff is lesser than wrapping diff
+				ret.push(sqa.col < sqb.col ? :E : :W)
+			else
+				ret.push(sqa.col < sqb.col ? :W : :E)
+			end
+		end
+			
+		if sqa.row != sqb.row
+			if maxrow-minrow < minrow+@rows-maxrow # if non-wrapping diff is lesser than wrapping diff
+				ret.push(sqa.row < sqb.row ? :S : :N)
+			else
+				ret.push(sqa.row < sqb.row ? :N : :S)
+			end
+		end
+		
+		ret
+	end
+	
+	# Equivalent to directions(sqa, sqb)[0]. (Can be nil.)
+	def direction sqa, sqb
+		directions(sqa, sqb)[0]
+	end
+	
+	
+	# Calculates euclidean distance between two points on a torus (as a float).
+	def distance_euclid sqa, sqb
+		rowdiff = distance_city_row(sqa, sqb)
+		coldiff = distance_city_col(sqa, sqb)
+		
+		Math.sqrt(rowdiff**2 + coldiff**2)
 	end
 end
 
