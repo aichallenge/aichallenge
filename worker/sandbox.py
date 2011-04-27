@@ -80,7 +80,7 @@ class Sandbox:
         """
         try:
             self.command_process.send_signal(signal.SIGSTOP)
-        except ValueError, AttributeError:
+        except (ValueError, AttributeError):
             pass
 
     def resume(self):
@@ -90,7 +90,7 @@ class Sandbox:
         """
         try:
             self.command_process.send_signal(signal.SIGCONT)
-        except ValueError, AttributeError:
+        except (ValueError, AttributeError):
             pass
 
     def write(self, str):
