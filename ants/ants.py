@@ -53,10 +53,10 @@ class Ants(Game):
             'symmetric': self.do_food_symmetric
         }.get(options.get('food'), self.do_food_sections)
 
-        self.width = None   # the map
-        self.height = None
-        self.map = None
-        self.land_area = 0
+        map_data = self.parse_map(map_text)
+
+        self.turn = 0
+        self.num_players = map_data['num_players']
 
         self.current_ants = {} # ants that are currently alive
         self.killed_ants = []  # ants which were killed this turn
@@ -65,11 +65,29 @@ class Ants(Game):
         self.all_food = []     # all food created
         self.current_food = {} # food currently in game
 
-        self.turn = 0
+        # initalise scores
+        self.score = [Fraction(0,1)]*self.num_players
+        self.score_history = [[s] for s in self.score]
 
-        # load map and get number of players from map
-        #   will fill in center data
-        self.load_map(map_text)
+        # initialise size
+        self.height, self.width = map_data['size']
+        self.land_area = self.height*self.width - len(map_data['water'])
+
+        # initialise map
+        self.map = [[LAND]*self.width for i in range(self.height)]
+
+        # initialise water
+        for row, col in map_data['water']:
+            self.map[row][col] = WATER
+
+        # initalise ants
+        for owner, locs in map_data['ants'].items():
+            for loc in locs:
+                self.add_ant(loc, owner)
+
+        # initalise food
+        for loc in map_data['food']:
+            self.add_food(loc)
 
         # track which food has been seen by each player
         self.seen_food = [set() for i in range(self.num_players)]
@@ -97,9 +115,6 @@ class Ants(Game):
         # used to track what a player can see
         self.init_vision()
 
-        # used to track scores
-        self.score = [Fraction(0,1)]*self.num_players
-        self.score_history = [[s] for s in self.score]
 
     def distance(self, x, y):
         """ Returns distance between x and y squared """
@@ -109,15 +124,14 @@ class Ants(Game):
         d_col = min(d_col, self.width - d_col)
         return d_row**2 + d_col**2
 
-    def load_map(self, map_text):
-        """ Parse the map_text and initialise the map data """
+    def parse_map(self, map_text):
+        """ Parse the map_text into a more friendly data structure """
         players = []
-        self.map = []
+        width = height = None
+        water = []
+        food = []
+        ants = defaultdict(list)
         row = 0
-        water_area = 0
-
-        # temporary storage for scores so that add_ant can work like normal
-        self.score = defaultdict(int)
 
         for line in map_text.split('\n'):
             line = line.strip().lower()
@@ -128,40 +142,43 @@ class Ants(Game):
 
             key, value = line.split(' ')
             if key == 'cols':
-                self.width = int(value)
+                width = int(value)
             elif key == 'rows':
-                self.height = int(value)
+                height = int(value)
             elif key == 'm':
-                if len(value) != self.width:
+                if len(value) != width:
                     raise Exception("map",
                                     "Incorrect number of cols in row %s. "
                                     "Got %s, expected %s."
-                                    %(row, len(value), self.width))
-                self.map.append([LAND]*self.width)
+                                    %(row, len(value), width))
                 for col, c in enumerate(value):
                     if c in PLAYER_CHARS:
                         # assign player ids in the order that we see them
                         #  (so player 'a' won't necessarily be 0, and so on)
                         if c not in players:
                             players.append(c)
-                        self.add_ant((row, col), players.index(c))
+                        ants[players.index(c)].append((row,col))
                     elif c == MAP_RENDER[FOOD]:
-                        self.add_food((row, col))
+                        food.append((row,col))
                     elif c == MAP_RENDER[WATER]:
-                        self.map[row][col] = WATER
-                        water_area += 1
+                        water.append((row,col))
                     elif c != MAP_RENDER[LAND]:
                         raise Exception("map",
                                         "Invalid character in map: %s" % c)
                 row += 1
 
-        if self.height != row:
+        if height != row:
             raise Exception("map",
                             "Incorrect number of rows.  Expected %s, got %s"
-                            % (self.height, row))
+                            % (height, row))
 
-        self.land_area = self.width*self.height - water_area
-        self.num_players = len(players)
+        return {
+            'size':        (height, width),
+            'num_players': len(players),
+            'ants':        ants,
+            'food':        food,
+            'water':        water
+        }
 
     def neighbourhood_offsets(self, max_dist):
         """ Return a list of squares within a given distance of loc
