@@ -74,12 +74,24 @@ class Sandbox:
             self.is_alive = False
 
     def pause(self):
-        """Pause the process by sending a SIGSTOP to the child"""
-        self.command_process.send_signal(signal.SIGSTOP)
+        """Pause the process by sending a SIGSTOP to the child
+
+        This method is a no-op on Windows
+        """
+        try:
+            self.command_process.send_signal(signal.SIGSTOP)
+        except ValueError, AttributeError:
+            pass
 
     def resume(self):
-        """Resume the process by sending a SIGCONT to the child"""
-        self.command_process.send_signal(signal.SIGCONT)
+        """Resume the process by sending a SIGCONT to the child
+
+        This method is a no-op on Windows
+        """
+        try:
+            self.command_process.send_signal(signal.SIGCONT)
+        except ValueError, AttributeError:
+            pass
 
     def write(self, str):
         """Write str to stdin of the process being run"""
