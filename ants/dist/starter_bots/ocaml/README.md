@@ -102,21 +102,23 @@ This is my first attempt at making something like this for other people
 to use. If anyone would like to make improvements, that would be great. 
 Also, testing and bug reports are appreciated.
 
-Note that the starter pack clears all non-water tiles from the map after 
-every turn, so if you want it to remember food, you have to either 
-change this behaviour in Ants.ml, or implement your own system of 
-tracking food. As well as the food marked on the map, there is 
-gstate.food which gives a list of food tiles seen this turn.
+Food you have seen is remembered on the map, and removed when you can 
+see that it isn't there any more. As well as the food marked on the map, 
+there is gstate.food which gives a list of food tiles seen this turn. 
+You could change this to remember old food tiles (as the map does), but 
+note that sometimes those food tiles will be eaten by enemy ants.
 
 The loop function does not expect you to modify gstate.tmap, though in 
 theory you could. Be careful, have a look at the code to understand the 
 consequences. Or work on a copy.
 
-The map is represented by an (int * int) array array.
+The map is represented by a mapb array array, with mapb consisting of:
 
-Those ints represent (tiletype * last_seen_on_turn).
+type mapb {seen : int; content : int}
 
-Tiletypes are as follows:
+seen is the turn on which the tile was last seen.
+
+Tiletypes (content) are as follows:
 
 Unseen 	: 0
 Land	: 1
