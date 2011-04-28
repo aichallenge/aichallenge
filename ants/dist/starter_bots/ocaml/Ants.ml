@@ -503,12 +503,14 @@ class swrap state =
  end
 ;;
 
+(*
 let rec print_food = function
  | [] -> ()
  | (row, col) :: tail ->
       ddebug (Printf.sprintf " Food at %d, %d\n" row col);
       print_food tail
 ;;
+*)
 
 (* Main game loop. Bots should define a main function taking a swrap for 
 an argument (see above), and then call loop main_function. See how the 
