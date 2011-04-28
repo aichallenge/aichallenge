@@ -96,8 +96,8 @@ class Ants():
         self.dead_list = []
         
         # set all known food to unseen
-        for loc in self.food_list.keys():
-            self.food_list[loc] = False
+        for (row, col) in self.food_list.keys():
+            self.food_list[(row, col)] = False
             self.map[row][col] = UNSEEN_FOOD
 
         # update map and create new ant and food lists
