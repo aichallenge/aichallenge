@@ -123,12 +123,12 @@ public class Ants {
 	}
 	
 	public void issueOrder(int row, int col, Aim direction) {
-		System.out.println("o " + col + " " + row + " " + direction.symbol);
+		System.out.println("o " + row + " " + col + " " + direction.symbol);
 		System.out.flush();
 	}
 
 	public void issueOrder(Tile ant, Aim direction) {
-		System.out.println("o " + ant.col() + " " + ant.row() + " " + direction.symbol);
+		System.out.println("o " + ant.row() + " " + ant.col() + " " + direction.symbol);
 		System.out.flush();
 	}
 	
