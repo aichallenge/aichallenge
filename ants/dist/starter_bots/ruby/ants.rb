@@ -91,10 +91,10 @@ class Square
 		return @ai.map[row][col]
 	end
 	
-	# Returns true if this square is visible by given ant, or by any of your ants (if no argument given).
+	# Returns true if this square is visible by given ant (or from given square), or by any of your ants (if no argument given).
 	def visible? ant=nil
 		if ant
-			@ai.distance_euclid(self, ant) < @ai.viewradius
+			@ai.distance_euclid(self, ant) <= @ai.viewradius
 		else
 			@ai.my_ants.any?{|ant| self.visible? ant}
 		end
@@ -329,7 +329,7 @@ class AI
 	# Calculate direction(s) from sqa to sqb. Returns an array containing either:
 	#
 	# * nothing -- if columns and rows of squares are equal
-	#	* one of :N, :E, :S, :W -- if either columns or rows of squares are equal
+	# * one of :N, :E, :S, :W -- if either columns or rows of squares are equal
 	# * two of :N, :E, :S, :W -- otherwise
 	#
 	def directions sqa, sqb
