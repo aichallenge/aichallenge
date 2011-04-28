@@ -11,8 +11,9 @@ ANTS = 0
 DEAD = -1
 LAND = -2
 FOOD = -3
-WATER = -4
-UNSEEN = -5
+UNSEEN_FOOD = -4
+WATER = -5
+UNSEEN = -6
 
 MAP_RENDER = 'abcdefghijklmnopqrstuvwxyz?!%*.'
 
@@ -92,8 +93,9 @@ class Ants():
         self.dead_list = []
         
         # set all known food to unseen
-        for loc in self.food_list.keys():
-            self.food_list[loc] = False
+        for (row, col) in self.food_list.keys():
+            self.map[row][col] = UNSEEN_FOOD
+            self.food_list[(row, col)] = False
 
         # update map and create new ant and food lists
         for line in data.split('\n'):
@@ -158,12 +160,12 @@ class Ants():
     def food_visible(self):
         'return a list of all visible food locations'
         return [loc for loc in self.food_list.keys()
-                    if self.food_list[loc] == True]
+                    if self.food_list[loc]]
         
     def food_unseen(self):
         'return a list of all unseen food locations'
         return [loc for loc in self.food_list.keys()
-                    if self.food_list[loc] == False]
+                    if not self.food_list[loc]]
 
     def passable(self, loc):
         'true if not water'
