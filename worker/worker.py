@@ -101,6 +101,7 @@ class GameAPIClient:
         try:
             url = self.get_url('api_get_submission')
             url += '&submission_id=%s' % submission_id
+            log.debug(url)
             remote_zip = urllib.urlopen(url)
             filename = remote_zip.info().getheader('Content-disposition').split('filename=')[1]
             filename = os.path.join(download_dir, filename)
@@ -110,6 +111,7 @@ class GameAPIClient:
             remote_zip.close()
             return filename
         except Exception as ex:
+            log.error(traceback.format_exc())
             log.error("Get submission error: %s" % ex)
             return None
 
@@ -160,10 +162,10 @@ class Worker:
         self.test_map = None
 
     def submission_dir(self, submission_id):
-        return os.path.join(server_info["submissions_path"], "compiled", str(submission_id % 1000), str(submission_id))
+        return os.path.join(server_info["submissions_path"], "compiled", str(submission_id//1000), str(submission_id))
         
     def download_dir(self, submission_id):
-        return os.path.join(server_info["submissions_path"], "downloaded", str(submission_id % 1000), str(submission_id))
+        return os.path.join(server_info["submissions_path"], "downloaded", str(submission_id//1000), str(submission_id))
 
     def download_submission(self, submission_id):
         submission_dir = self.submission_dir(submission_id)
@@ -290,6 +292,8 @@ class Worker:
                 log.error("Compile Error")
                 return False
             else:
+                if not os.path.exists(os.path.split(submission_dir)[0]):
+                    os.makedirs(os.path.split(submission_dir)[0])
                 os.rename(download_dir, submission_dir)
                 if self.functional_test(submission_id):
                     report(STATUS_RUNABLE)
@@ -392,7 +396,7 @@ class Worker:
                       "error": str(ex) }
             self.cloud.post_result('api_game_result', result)
             
-    def task(self):
+    def task(self, last=False):
         task = self.cloud.get_task()
         if task:
             log.info("Recieved task: %s" % task)
@@ -402,7 +406,8 @@ class Worker:
             elif task['task'] == 'game':
                 self.game(task, True)
             else:
-                time.sleep(20)
+                if not last:
+                    time.sleep(20)
         else:
             log.error("Error retrieving task from server.")
 
@@ -471,7 +476,7 @@ def main(argv):
         else:
             for task_count in range(opts.num_tasks):
                 log.info("Getting task %s" % (task_count + 1))
-                worker.task()
+                worker.task((task_count+1)==opts.num_tasks)
         return
     
     parser.print_help()
