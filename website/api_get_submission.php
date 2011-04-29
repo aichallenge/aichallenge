@@ -16,7 +16,8 @@ if(!filter_var($submission_id, FILTER_VALIDATE_INT) || $submission_id == '') {
  * switch to the submission's directory making sure it's actually there
  */
 if (!chdir(submission_directory($submission_id))) {
-  die();
+    api_log(submission_directory($submission_id));
+    die(submission_directory($submission_id));
 }
 
 // set correct content headers based on compression type
