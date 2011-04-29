@@ -3,7 +3,7 @@ sql = {
     # used in add_maps_to_database.py
     "select_map_filenames": "select filename from map",
     "update_map_priorities": "update map set priority = priority + 1",
-    "insert_map_filenames": "insert into map (filename) values (?)",
+    "insert_map_filenames": "insert into map (filename, players) values (%s, %s)",
     
     # used in delete_some_old_submissions.py
     "select_latest_submissions": "select submission_id from submission where latest = 1",

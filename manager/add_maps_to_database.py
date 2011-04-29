@@ -9,8 +9,11 @@ from sql import sql
 
 def main():
     # get list of all map files
-    map_files = os.listdir(server_info["maps_path"])
-    map_files = set([m for m in map_files if m.endswith(".map")])
+    map_files = set()
+    for root, dirs, files in os.walk(server_info["maps_path"]):
+        for filepath in files:
+            if filepath.endswith(".map"):
+                map_files.add(os.path.join(root, filepath))
     
     # get list of maps in database
     connection = MySQLdb.connect(host = server_info["db_host"],
@@ -26,8 +29,17 @@ def main():
     
     # add new maps to database with top priority
     cursor.execute(sql["update_map_priorities"])
-    cursor.execute(sql["insert_map_filenames"], new_maps)
-
+    for mapfile in new_maps:
+        players = 0
+        with open(mapfile, 'r') as f:
+            for line in f:
+                if line.startswith('players'):
+                    players = int(line.split()[1])
+                    break
+        if players:
+            cursor.execute(sql["insert_map_filenames"], (mapfile, players))
+    connection.commit()
+    
 if __name__ == "__main__":
     main()
 
