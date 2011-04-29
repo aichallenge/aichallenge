@@ -155,8 +155,9 @@ let add_food gstate row col =
 ;;
 
 let remove_food gstate row col =
-   gstate.tmap.(row).(col) <- 
-      {gstate.tmap.(row).(col) with content = (int_of_tile `Food)};
+   if gstate.tmap.(row).(col).content = (int_of_tile `Food) then
+      gstate.tmap.(row).(col) <- 
+         {gstate.tmap.(row).(col) with content = (int_of_tile `Land)};
    {gstate with food = (List.filter (fun p -> not (p = (row, col)))
                         gstate.food)}
 ;;
