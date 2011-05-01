@@ -122,10 +122,10 @@ class ExternalCompiler(Compiler):
         files = safeglob_multi(globs)
         if self.separate:
             for file in files:
-                if not system(self.args + [file], log):
+                if not system(self.args + [file], errors):
                     return False
         else:
-            if not system(self.args + files, log):
+            if not system(self.args + files, errors):
                 return False
         return True
 
@@ -213,6 +213,7 @@ comp_args = {
                                 + "\" :executable t :toplevel #'pwbot::main)"]],
     "OCaml"     : [["ocamlbuild", BOT + ".native"]],
     "Scala"     : [["scalac"]],
+    "Clojure"   : [["lein", "uberjar"]],
     }
 
 targets = {
@@ -257,11 +258,11 @@ languages = {
           (["*.o"], ExternalCompiler(comp_args["C++"][1]))]
          ),
     "Clojure":
-        (".clj",
-         "?",
-         "?",
+        (".jar",
+         "project.clj",
+         "java -jar MyBot.jar",
          [],
-         [(["*.clj"], ChmodCompiler("Clojure"))]
+         [([], ExternalCompiler(comp_args["Clojure"][0]))]
         ),
     "CoffeeScript":
         (".coffee",
