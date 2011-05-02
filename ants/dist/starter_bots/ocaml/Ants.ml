@@ -2,11 +2,19 @@
 PlanetWars starter package and adapted. If you find any bugs or make 
 any improvements, please post to the forum or upload a fix! *)
 
+(* Uncomment this and the next function to enable logging *)
+
 (*
 let out_chan = open_out "mybot_err.log";;
 *)
 
-let ddebug s = (* output_string out_chan s; flush out_chan *) () ;;
+
+(* uncomment the output_string line and comment out the () *)
+
+let ddebug s = 
+(* output_string out_chan s; flush out_chan *) 
+(* *)  ()  (* *)
+;;
 
 type game_setup =
  {
@@ -146,6 +154,14 @@ let add_food gstate row col =
    {gstate with food = ((row, col) :: gstate.food)}
 ;;
 
+let remove_food gstate row col =
+   if gstate.tmap.(row).(col).content = (int_of_tile `Food) then
+      gstate.tmap.(row).(col) <- 
+         {gstate.tmap.(row).(col) with content = (int_of_tile `Land)};
+   {gstate with food = (List.filter (fun p -> not (p = (row, col)))
+                        gstate.food)}
+;;
+
 let add_water gstate row col =
    gstate.tmap.(row).(col) <- 
       {gstate.tmap.(row).(col) with content = (int_of_tile `Water)};
@@ -154,9 +170,13 @@ let add_water gstate row col =
 
 let clear_tile t =
    match (tile_of_int t.content) with
-    | `Water | `Unseen -> t
+    | `Water | `Food | `Unseen -> t
     | _ -> {t with content = (int_of_tile `Land)}
 ;;
+
+(* Currently this clears previously seen food from the food list, but 
+not from the map. It doesn't have to clear either, or could clear both - 
+change as you see fit. *)
 
 let clear_gstate gs =
  if gs.turn < 1 then gs else
@@ -204,6 +224,9 @@ let initialize_map gstate =
    {gstate with tmap = new_map}
 ;;
 
+(* This add_line function is a bit tricky to modify (make sure you get 
+the parentheses in the right places if you change it.) *)
+
 let add_line gstate line =
    sscanf_cps "%s %d %d %d"
     (fun ad row col owner ->
@@ -216,6 +239,7 @@ let add_line gstate line =
          match fw with
           | "f" -> add_food gstate row col
           | "w" -> add_water gstate row col
+          | "r" -> remove_food gstate row col
           | _ -> gstate)
       (sscanf_cps "%s %d"
         (fun key v ->
@@ -334,6 +358,8 @@ let shorter_dist w p1 p2 =
       (d1 < d2), (min d1 d2)
 ;;
 
+(* I think there's a better way to do this, but I wrote this first and 
+it seems to work, so I don't plan to change it. *)
 let stepdistance_ndirection (rows, cols) (row1, col1) (row2, col2) =
    let row_si, row_dist =
       shorter_dist rows row1 row2
@@ -443,6 +469,8 @@ let time_remaining state =
 
 (* End helper functions *)
 
+(* swrap wraps the game state. One of these is passed to the AI. *)
+
 class swrap state =
  object (self)
    val mutable state = state
@@ -476,19 +504,18 @@ class swrap state =
  end
 ;;
 
+(*
+let rec print_food = function
+ | [] -> ()
+ | (row, col) :: tail ->
+      ddebug (Printf.sprintf " Food at %d, %d\n" row col);
+      print_food tail
+;;
+*)
+
 (* Main game loop. Bots should define a main function taking a swrap for 
 an argument (see above), and then call loop main_function. See how the 
 starter bot in MyBot.ml does it if this doesn't make sense.*)
-
-(* There was an errors_in_orders function in the Planetwars version, 
-which checked for errors and printed the game state on error. The 
-starter pack guide doesn't suggest providing this type of help directly. 
-However, the contestant should seriously consider altering the 
-issue_order and finish_turn functions, and re-implementing something 
-like this. One example goes like this this: your bot calls issue_order, 
-gets a formatted order in reply, does the necessary error/conflict 
-tests, adds it to its order list if it passes, and then the finish_turn 
-function prints the orders followed by "go\n".*)
 
 let loop engine =
   let proto_setup =
@@ -535,7 +562,7 @@ let loop engine =
          (
           ddebug (Printf.sprintf 
              "Ants.loop: Engine raised an exception in turn %d.\n" i);
-(*
+(* from Planetwars, I haven't written an equivalent
             output_game_state stderr state;
 *)
           ddebug (Printf.sprintf "EXCEPTION:\n  %s\n" 
@@ -543,8 +570,8 @@ let loop engine =
 (* Before releasing your bot into the final contest, I strongly suggest 
 changing this "raise exc" to something less fatal. In order to pass your 
 turn correctly, it would be good to know whether "go" has already been 
-printed on stdout, so you can print it now if it hasn't. This is another 
-reason to change the finish_turn function. (see above) *)
+printed on stdout (which it almost certainly hasn't), so you can print 
+it now. This shouldn't be done before release, of course. :) *)
           raise exc
          )
         end;

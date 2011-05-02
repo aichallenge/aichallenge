@@ -2,7 +2,7 @@
 
 <!--<MarkdownReplacement with="competition.md">--><!--</MarkdownReplacement>-->
 
-<p>Two Computer Programs Duking it Out with Ants:</p>
+<p>4 Computer Programs Duking it Out with Ants:</p>
 <?php
     include 'visualizer_widget.php';
     visualizer_widget($game_id="2",550,550);
