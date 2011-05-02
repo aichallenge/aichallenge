@@ -16,8 +16,9 @@ CREATE TABLE `game` (
   `worker_id` int(11) unsigned NOT NULL,
   `replay_path` varchar(255) NOT NULL,
   PRIMARY KEY (`game_id`),
-  KEY `timestamp` (`timestamp`),
-  KEY `worker_id` (`worker_id`,`timestamp`)
+  KEY `game_seed_id_idx` (`seed_id`),
+  KEY `game_map_id_idx` (`map_id`),
+  KEY `game_seed_map_idx` (`seed_id`,`map_id`)
 );
 
 DROP TABLE IF EXISTS `game_archive`;
@@ -47,7 +48,9 @@ CREATE TABLE `game_player` (
   `mu_after` float NOT NULL,
   `valid` tinyint(1) NOT NULL DEFAULT '1',
   PRIMARY KEY (`game_id`,`user_id`),
-  UNIQUE KEY `game_player_idx` (`game_id`,`submission_id`)
+  UNIQUE KEY `game_player_idx` (`game_id`,`submission_id`),
+  KEY `game_user_id_idx` (`user_id`),
+  KEY `game_player_game_id_idx` (`game_id`)
 );
 
 DROP TABLE IF EXISTS `game_player_archive`;
@@ -110,7 +113,10 @@ CREATE TABLE `matchup` (
   `seed_id` int(11) NOT NULL,
   `map_id` int(11) NOT NULL,
   `worker_id` int(11) DEFAULT NULL,
-  PRIMARY KEY (`matchup_id`)
+  PRIMARY KEY (`matchup_id`),
+  KEY `matchup_seed_id_idx` (`seed_id`),
+  KEY `matchup_seed_map_idx` (`seed_id`,`map_id`),
+  KEY `matchup_map_id_idx` (`map_id`)
 );
 
 DROP TABLE IF EXISTS `matchup_player`;
@@ -119,8 +125,11 @@ CREATE TABLE `matchup_player` (
   `user_id` int(11) NOT NULL,
   `submission_id` int(11) NOT NULL,
   `player_id` int(11) NOT NULL,
+  `mu` float DEFAULT NULL,
+  `sigma` float DEFAULT NULL,
   PRIMARY KEY (`matchup_id`,`user_id`),
-  UNIQUE KEY `matchup_player_idx` (`matchup_id`,`submission_id`)
+  UNIQUE KEY `matchup_player_idx` (`matchup_id`,`submission_id`),
+  KEY `matchup_player_user_id_idx` (`user_id`)
 );
 
 DROP TABLE IF EXISTS `organization`;
@@ -170,7 +179,8 @@ CREATE TABLE `settings` (
   `name` varchar(20) NOT NULL,
   `number` int(11) NOT NULL DEFAULT '0',
   `string` varchar(255) NOT NULL DEFAULT '',
-  PRIMARY KEY (`name`)
+  PRIMARY KEY (`name`),
+  UNIQUE KEY `name_UNIQUE` (`name`)
 );
 
 DROP TABLE IF EXISTS `submission`;
@@ -189,10 +199,10 @@ CREATE TABLE `submission` (
   `worker_id` int(11) DEFAULT NULL,
   PRIMARY KEY (`submission_id`),
   KEY `language_id` (`language_id`),
-  KEY `user_id` (`user_id`),
-  KEY `timestamp` (`timestamp`),
-  KEY `user_id_2` (`user_id`,`timestamp`),
-  KEY `latest` (`latest`)
+  KEY `submission_id` (`submission_id`,`user_id`),
+  KEY `user_id` (`user_id`,`submission_id`),
+  KEY `latest` (`latest`,`user_id`),
+  KEY `mu_idx` (`mu`)
 );
 
 DROP TABLE IF EXISTS `user`;
@@ -210,7 +220,8 @@ CREATE TABLE `user` (
   `activated` tinyint(1) NOT NULL,
   `admin` tinyint(1) NOT NULL,
   PRIMARY KEY (`user_id`),
-  UNIQUE KEY (`username`)
+  UNIQUE KEY (`username`),
+  KEY `user_id` (`user_id`,`username`)
 );
 
 DROP TABLE IF EXISTS `user_status_code`;
