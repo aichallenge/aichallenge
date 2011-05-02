@@ -208,6 +208,7 @@ def run_game(game, botcmds, options, gameid=0):
         for bot in bots:
             if bot.is_alive:
                 bot.kill()
+            bot.release()
 
         # close all the open files
         if stream_log:

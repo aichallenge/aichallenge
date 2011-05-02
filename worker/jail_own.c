@@ -44,7 +44,8 @@ int own_dir_tree(const char *base_dir, uid_t owner, gid_t group) {
             fprintf(stderr, "Could not change owner on '%s'\n", child_path);
             error = 1;
         } else {
-            printf("Changed owner on: %s\n", child_path);
+            // Uncomment for verbose output on every file ownership change
+            // printf("Changed owner on: %s\n", child_path);
         }
         if (entry->d_type == DT_DIR) {
             error = own_dir_tree(child_path, owner, group) ? 1 : error;
@@ -107,8 +108,10 @@ int main(int argc, char *argv[]) {
     int status = 0;
     printf("Changing ownership to uid %d, gid %d\n", owner_uid, owner_gid);
     if (chown(base_path, owner_uid, owner_gid)) {
-        printf("Could not change owner on %s\n", base_path);
+        fprintf(stderr, "Could not change owner on %s\n", base_path);
         status = EXIT_CHOWN_FAIL;
+    } else {
+        printf("Changed owner on: %s\n", base_path);
     }
     if (own_dir_tree(base_path, owner_uid, owner_gid)) {
         status = EXIT_CHOWN_FAIL;

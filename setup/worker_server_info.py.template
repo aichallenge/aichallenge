@@ -3,6 +3,7 @@ server_info = {{
   "mail_name": "AI Contest",
   "mail_password": "",
   "root_path": "{contest_root}",
+  "repo_path": "{repo_dir}",
   "maps_path": "{map_dir}",
   "submissions_path": "{compiled_dir}",
   "api_base_url": "{api_url}",

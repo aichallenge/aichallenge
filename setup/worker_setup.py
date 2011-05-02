@@ -130,6 +130,7 @@ def setup_contest_files(opts):
     with open(si_filename, 'r') as si_file:
         si_template = si_file.read()
     si_contents = si_template.format(contest_root=contest_root,
+            repo_dir=opts.local_repo,
             map_dir=map_dir, compiled_dir=compiled_dir,
             api_url=opts.api_url, api_key=opts.api_key)
     with CD(worker_dir):
@@ -173,6 +174,8 @@ def create_jail_group(options):
     """ Create user group for jail users and set limits on it """
     if not file_contains("/etc/group", "^jailusers"):
         run_cmd("groupadd jailusers")
+        run_cmd("groupadd jailkeeper")
+        run_cmd("usermod -a -G jailkeeper %s" % (options.username,))
     limits_conf = "/etc/security/limits.conf"
     if not file_contains(limits_conf, "@jailusers"):
         # limit jailuser processes to:
@@ -205,6 +208,8 @@ def create_jail_user(username):
     home_dir = os.path.join(jail_dir, "home/home/jailuser")
     os.makedirs(home_dir)
     run_cmd("chown %s:jailusers %s" % (username, home_dir))
+    run_cmd("chown :jailkeeper %s" % (jail_dir,))
+    run_cmd("chmod g=rwx %s" % (jail_dir,))
     fs_line = "unionfs-fuse#%s=rw:%s=ro:%s=ro %s fuse cow,allow_other 0 0" % (
             os.path.join(jail_dir, "scratch"),
             os.path.join(jail_dir, "home"),
