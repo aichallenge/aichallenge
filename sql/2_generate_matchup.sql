@@ -80,6 +80,7 @@ drop temporary table if exists temp_unavailable;
 create temporary table temp_unavailable (
  user_id int(11) NOT NULL
 );
+insert into temp_unavailable (user_id) values (@seed_id);
 
 set @last_user_id = @seed_id;
 set @player_count = 1;
@@ -140,6 +141,7 @@ while @player_count < @players do
 
     insert into matchup_player (matchup_id, user_id, submission_id, player_id, mu, sigma)
     values (@matchup_id, @last_user_id, @last_submission_id, -1, @last_mu, @last_sigma);
+    insert into temp_unavailable (user_id) values (@last_user_id);
     
     set @player_count = @player_count + 1;
 
