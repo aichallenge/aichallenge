@@ -197,6 +197,11 @@ while @player_count < @players do
     
 end while;
 
+-- turn matchup on
+update matchup
+set worker_id = null
+where matchup_id = @matchup_id;
+
 -- return new matchup id
 select @matchup_id as matchup_id;
 

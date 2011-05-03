@@ -75,6 +75,7 @@ class GameAPIClient:
     def get_task(self):
         try:
             url = self.get_url('api_get_task')
+            log.debug(url)
             data = urllib.urlopen(url).read()
             return json.loads(data)
         except ValueError as ex:
@@ -366,6 +367,7 @@ class Worker:
             game = Ants(options)
             bots = []
             for submission_id in task["players"]:
+                submission_id = int(submission_id)
                 if self.compile(submission_id):
                     submission_dir = self.submission_dir(submission_id)
                     run_cmd = compiler.get_run_cmd(submission_dir)
@@ -384,6 +386,7 @@ class Worker:
             options['log_input'] = True
             options['log_output'] = True
             result = run_game(game, bots, options, matchup_id)
+            log.debug(result)
             result['matchup_id'] = task['matchup_id']
             result['post_id'] = self.post_id
             if report_status:
