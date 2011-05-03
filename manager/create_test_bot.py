@@ -67,7 +67,8 @@ def create_test_bot(name, language):
     
     # create submission file
     bot_dir = submission_dir(submission_id)
-    os.mkdir(bot_dir)
+    print(bot_dir)
+    os.makedirs(bot_dir)
 
     bot_zip_filename = os.path.join(bot_dir, 'entry.zip')
     with zipfile.ZipFile(bot_zip_filename, 'w') as bot_zip:
