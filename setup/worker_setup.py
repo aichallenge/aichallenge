@@ -34,8 +34,10 @@ def install_basic_languages():
 def install_extra_packaged_languages():
     """ Install all extra languages that are part of the Ubuntu distribution
         and don't require any special installation steps """
-    pkg_list = ["ruby1.9.1", "php5-cli", "perl", "haskell-platform", "ocaml",
+    pkg_list = ["ruby1.9.1", "php5-cli", "perl", "ocaml",
             "common-lisp-controller", "sbcl", "mono-2.0-devel"]
+    # "haskell-platform" should be added for the haskell language, but the
+    # package is currently broken in ubuntu natty
     install_apt_packages(pkg_list)
     if not os.path.exists("/usr/bin/ruby"):
         os.symlink("/usr/bin/ruby1.9.1", "/usr/bin/ruby")
@@ -142,13 +144,13 @@ def setup_contest_files(opts):
 
 def setup_base_chroot(options):
     """ Create and setup the base chroot jail users will run in. """
-    install_apt_packages(["debootstrap", "schroot", "unionfs-fuse"])
+    install_apt_packages(["debootstrap", "schroot", "unionfs-fuse", "gcc"])
     chroot_dir = "/srv/chroot"
     base_chroot_dir = os.path.join(chroot_dir, "aic-base")
     if os.path.exists(base_chroot_dir):
         return
     os.makedirs(base_chroot_dir)
-    run_cmd("debootstrap --variant=buildd --arch amd64 maverick \
+    run_cmd("debootstrap --variant=buildd --arch amd64 natty \
             %s http://us.archive.ubuntu.com/ubuntu/" % (base_chroot_dir,))
     with CD(TEMPLATE_DIR):
         run_cmd("cp chroot_configs/chroot.d/aic-base /etc/schroot/chroot.d/")

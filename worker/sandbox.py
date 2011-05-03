@@ -160,6 +160,7 @@ class Sandbox:
                                                 cwd=working_directory)
         self.is_alive = not self.command_process is None
         stdout_monitor = Thread(target=_monitor_input_channel, args=(self,))
+        stdout_monitor.daemon = True
         stdout_monitor.start()
 
     def release(self):
