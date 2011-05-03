@@ -104,6 +104,18 @@ def install_dmd():
         run_cmd("curl 'http://ftp.digitalmars.com/dmd_2.052-0_i386.deb' > dmd_2.052-0_i386.deb")
         run_cmd("dpkg -i dmd_2.052-0_i386.deb")
 
+def install_clojure():
+    """ Install Clojure language support -- Leiningen build manager."""
+    if os.path.exists("/usr/bin/lein"):
+        return
+    install_apt_packages(["openjdk-6-jdk", "curl"])
+    lein = "https://github.com/technomancy/leiningen/raw/1.5.2/bin/lein"
+    with CD("/usr/bin"): # fetch the script
+        run_cmd("curl '{0}' > lein".format(lein))
+        run_cmd("chmod +x /usr/bin/lein")
+    append_line("/etc/profile.d/lein.sh", "export LEIN_ROOT=1")
+    run_cmd("export LEIN_ROOT=1; lein") # fetch the JAR for root
+
 def install_all_languages():
     install_basic_languages()
     install_extra_packaged_languages()
@@ -113,6 +125,7 @@ def install_all_languages():
     install_scala()
     # dmd install is broken
     #install_dmd()
+    install_clojure()
 
 def setup_contest_files(opts):
     """ Setup all the contest specific files and directories """
