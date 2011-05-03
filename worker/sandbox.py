@@ -11,7 +11,7 @@ from threading import Thread
 
 try:
     from server_info import server_info
-    _SECURE_DEFAULT = True
+    _SECURE_DEFAULT = server_info.get("secure_jail", True)
 except ImportError:
     _SECURE_DEFAULT = False
 
