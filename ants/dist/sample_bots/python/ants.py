@@ -230,30 +230,30 @@ class Ants():
         row, col = loc
         return self.vision[row][col]
 
-    def closest_food(self,row1,col1):
-        #find the closest food from this row/col
-        min_dist=MAX_INT
+    def closest_food(self,loc):
+        #find the closest food to this location
+        min_dist = MAX_INT
         closest_food = None
         for food in self.food():
             getLogger().debug("Investigating food at:%d,%d",food[0],food[1])
-            dist = self.distance(row1,col1,food[0],food[1])
+            dist = self.distance(loc,food)
             getLogger().debug("Investigating food dist:%d",dist)
             if dist<min_dist:
                 min_dist = dist
                 closest_food = food
         return closest_food    
 
-    def closest_enemy_ant(self,row1,col1):
-        #find the closest enemy ant from this row/col
-        min_dist=MAX_INT
+    def closest_enemy_ant(self,loc):
+        #find the closest enemy ant to this location
+        min_dist = MAX_INT
         closest_ant = None
-        for ant in self.enemy_ants():
-            getLogger().debug("Investigating ant at:%d,%d",ant[0][0],ant[0][1])
-            dist = self.distance(row1,col1,ant[0][0],ant[0][1])
+        for a_loc, owner in self.enemy_ants():
+            getLogger().debug("Investigating ant at:%d,%d",a_loc[0],a_loc[1])
+            dist = self.distance(loc,a_loc)
             getLogger().debug("Investigating ant dist:%d",dist)
             if dist<min_dist:
                 min_dist = dist
-                closest_ant = ant[0]
+                closest_ant = a_loc
         return closest_ant    
         
     def render_text_map(self):
