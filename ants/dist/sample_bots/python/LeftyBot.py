@@ -14,10 +14,11 @@ class LeftyBot:
         destinations = []
         new_straight = {}
         new_lefty = {}
-        for a_row, a_col in ants.my_ants():
+        for a_loc in ants.my_ants():
+            (a_row, a_col) = a_loc
             # send new ants in a straight line
-            if (not (a_row, a_col) in self.ants_straight and
-                    not (a_row, a_col) in self.ants_lefty):
+            if (not a_loc in self.ants_straight and
+                    not a_loc in self.ants_lefty):
                 if a_row % 2 == 0:
                     if a_col % 2 == 0:
                         direction = 'n'
@@ -28,44 +29,44 @@ class LeftyBot:
                         direction = 'e'
                     else:
                         direction = 'w'
-                self.ants_straight[(a_row, a_col)] = direction
+                self.ants_straight[a_loc] = direction
 
             # send ants going in a straight line in the same direction
-            if (a_row, a_col) in self.ants_straight:
-                direction = self.ants_straight[(a_row, a_col)]
-                n_row, n_col = ants.destination(a_row, a_col, direction)
-                if ants.passable(n_row, n_col):
-                    if (ants.unoccupied(n_row, n_col) and
-                            not (n_row, n_col) in destinations):
-                        ants.issue_order((a_row, a_col, direction))
-                        new_straight[(n_row, n_col)] = direction
-                        destinations.append((n_row, n_col))
+            if a_loc in self.ants_straight:
+                direction = self.ants_straight[a_loc]
+                n_loc = ants.destination(a_loc, direction)
+                if ants.passable(n_loc):
+                    if (ants.unoccupied(n_loc) and
+                            not n_loc in destinations):
+                        ants.issue_order((a_loc, direction))
+                        new_straight[n_loc] = direction
+                        destinations.append(n_loc)
                     else:
                         # pause ant, turn and try again next turn
-                        new_straight[(a_row, a_col)] = LEFT[direction]
-                        destinations.append((a_row, a_col))
+                        new_straight[a_loc] = LEFT[direction]
+                        destinations.append(a_loc)
                 else:
                     # hit a wall, start following it
-                    self.ants_lefty[(a_row, a_col)] = RIGHT[direction]
+                    self.ants_lefty[a_loc] = RIGHT[direction]
 
             # send ants following a wall, keeping it on their left
-            if (a_row, a_col) in self.ants_lefty:
-                direction = self.ants_lefty[(a_row, a_col)]
+            if a_loc in self.ants_lefty:
+                direction = self.ants_lefty[a_loc]
                 directions = [LEFT[direction], direction, RIGHT[direction], BEHIND[direction]]
                 # try 4 directions in order, attempting to turn left at corners
                 for new_direction in directions:
-                    n_row, n_col = ants.destination(a_row, a_col, new_direction)
-                    if ants.passable(n_row, n_col):
-                        if (ants.unoccupied(n_row, n_col) and
-                                not (n_row, n_col) in destinations):
-                            ants.issue_order((a_row, a_col, new_direction))
-                            new_lefty[(n_row, n_col)] = new_direction
-                            destinations.append((n_row, n_col))
+                    n_loc = ants.destination(a_loc, new_direction)
+                    if ants.passable(n_loc):
+                        if (ants.unoccupied(n_loc) and
+                                not n_loc in destinations):
+                            ants.issue_order((a_loc, new_direction))
+                            new_lefty[n_loc] = new_direction
+                            destinations.append(n_loc)
                             break
                         else:
                             # have ant wait until it is clear
-                            new_straight[(a_row, a_col)] = RIGHT[direction]
-                            destinations.append((a_row, a_col))
+                            new_straight[a_loc] = RIGHT[direction]
+                            destinations.append(a_loc)
                             break
 
         # reset lists
