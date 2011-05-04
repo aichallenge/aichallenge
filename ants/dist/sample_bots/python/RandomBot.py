@@ -5,19 +5,19 @@ from ants import *
 class RandomBot:
     def do_turn(self, ants):
         destinations = []
-        for a_row, a_col in ants.my_ants():
+        for a_loc in ants.my_ants():
             # try all directions randomly until one is passable and not occupied
             directions = AIM.keys()
             shuffle(directions)
             for direction in directions:
-                (n_row, n_col) = ants.destination(a_row, a_col, direction)
-                if (not (n_row, n_col) in destinations and
-                        ants.passable(n_row, n_col)):
-                    ants.issue_order((a_row, a_col, direction))
-                    destinations.append((n_row, n_col))
+                n_loc = ants.destination(a_loc, direction)
+                if (not n_loc in destinations and
+                            ants.passable(n_loc)):
+                    ants.issue_order((a_loc, direction))
+                    destinations.append(n_loc)
                     break
             else:
-                destinations.append((a_row, a_col))
+                destinations.append(a_loc)
 
 if __name__ == '__main__':
     try:

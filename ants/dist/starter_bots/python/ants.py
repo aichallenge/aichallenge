@@ -39,7 +39,7 @@ class Ants():
         self.height = None
         self.map = None
         self.ant_list = {}
-        self.food_list = {}
+        self.food_list = []
         self.dead_list = []
         self.turntime = 0
         self.loadtime = 0
@@ -83,17 +83,16 @@ class Ants():
         # reset vision
         self.vision = None
         
-        # clear ant data
+        # clear ant and food data
         for (row, col), owner in self.ant_list.items():
             self.map[row][col] = LAND
         self.ant_list = {}
         for row, col in self.dead_list:
             self.map[row][col] = LAND
         self.dead_list = []
-        
-        # set all known food to unseen
-        for loc in self.food_list.keys():
-            self.food_list[loc] = False
+        for row, col in self.food_list:
+            self.map[row][col] = LAND
+        self.food_list = []
 
         # update map and create new ant and food lists
         for line in data.split('\n'):
@@ -109,13 +108,7 @@ class Ants():
                         self.ant_list[(row, col)] = owner
                     elif tokens[0] == 'f':
                         self.map[row][col] = FOOD
-                        self.food_list[(row, col)] = True
-                    elif tokens[0] == 'r':
-                        self.map[row][col] = LAND
-                        try:
-                            del self.food_list[(row, col)]
-                        except:
-                            pass
+                        self.food_list.append((row, col))
                     elif tokens[0] == 'w':
                         self.map[row][col] = WATER
                     elif tokens[0] == 'd':
@@ -153,17 +146,7 @@ class Ants():
 
     def food(self):
         'return a list of all food locations'
-        return self.food_list.keys()[:]
-        
-    def food_visible(self):
-        'return a list of all visible food locations'
-        return [loc for loc in self.food_list.keys()
-                    if self.food_list[loc] == True]
-        
-    def food_unseen(self):
-        'return a list of all unseen food locations'
-        return [loc for loc in self.food_list.keys()
-                    if self.food_list[loc] == False]
+        return self.food_list[:]
 
     def passable(self, loc):
         'true if not water'
