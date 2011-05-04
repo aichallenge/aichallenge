@@ -237,7 +237,7 @@ class AI
 		@food=[]
 		
 		until((rd=@stdin.gets.strip)=='go')
-			_, type, row, col, owner = *rd.match(/([wfadr]) (\d+) (\d+)(?: (\d+)|)/)
+			_, type, row, col, owner = *rd.match(/([wfad]) (\d+) (\d+)(?: (\d+)|)/)
 			row, col = row.to_i, col.to_i
 			owner = owner.to_i if owner
 			
@@ -258,9 +258,6 @@ class AI
 			when 'd'
 				d = Ant.new false, owner, @map[row][col], self
 				@map[row][col].ant = d
-				
-			when 'r'
-				# pass
 				
 			else
 				warn "unexpected: #{rd}"
