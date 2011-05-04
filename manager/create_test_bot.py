@@ -21,7 +21,8 @@ def submission_dir(submission_id):
     return os.path.join(server_info["submissions_path"], str(submission_id//1000), str(submission_id))
     
 def create_test_bot(name, language):
-    botpath = os.path.join('..','ants','dist','sample_bots', language)
+    botpath = os.path.join(os.path.split(os.path.dirname(__file__))[0],
+                           'ants','dist','sample_bots',language)
     bot_filename = os.path.join(botpath, name + extension[language])
     if not os.path.exists(bot_filename):
         print('No {0} bot named {1}'.format(language, name))
@@ -64,10 +65,12 @@ def create_test_bot(name, language):
     
     connection.commit()
     connection.close()
-    
+
     # create submission file
     bot_dir = submission_dir(submission_id)
     print(bot_dir)
+    if os.path.exists(bot_dir):
+        os.rmdir(bot_dir)
     os.makedirs(bot_dir)
 
     bot_zip_filename = os.path.join(bot_dir, 'entry.zip')
@@ -84,9 +87,11 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('name')
     parser.add_argument('language', nargs='?', default='python')
+    parser.add_argument('-c', '--count', type=int, default=1)
     args = parser.parse_args()
 
-    create_test_bot(args.name, args.language)
+    for i in range(args.count):
+        create_test_bot(args.name, args.language)
         
 if __name__ == '__main__':
     main()

@@ -253,7 +253,7 @@ class Worker:
             return True
 
     def compile(self, submission_id=None, report_status=False):
-        def report(status=STATUS_RUNABLE):
+        def report(status):
             if report_status:
                 self.post_id += 1
                 result = {"post_id": self.post_id,
@@ -337,7 +337,6 @@ class Worker:
     def functional_test(self, submission_id):
         self.post_id += 1
         try:
-            matchup_id = 0
             log.info("Running functional test for %s" % submission_id)
             options = server_info["game_options"]
             options["map"] = self.get_test_map()
@@ -346,6 +345,7 @@ class Worker:
             submission_dir = self.submission_dir(submission_id)
             bots = [("../ants/submission_test/", "python TestBot.py"),
                     (submission_dir, compiler.get_run_cmd(submission_dir))]
+            log.debug((game, bots, options, matchup_id))
             result = run_game(game, bots, options, matchup_id)
             log.info(result)
             return True
@@ -385,7 +385,8 @@ class Worker:
             options['output_dir'] = output_dir
             options['log_input'] = True
             options['log_output'] = True
-            result = run_game(game, bots, options, matchup_id)
+            log.debug((game, bots, options, matchup_id))
+            #result = run_game(game, bots, options, matchup_id)
             log.debug(result)
             result['matchup_id'] = task['matchup_id']
             result['post_id'] = self.post_id
@@ -393,7 +394,7 @@ class Worker:
                 self.cloud.post_result('api_game_result', result)
         except Exception as ex:
             import traceback
-            traceback.print_exc()
+            log.debug(traceback.format_exc())
             result = {"post_id": self.post_id,
                       "matchup_id": matchup_id,
                       "error": str(ex) }

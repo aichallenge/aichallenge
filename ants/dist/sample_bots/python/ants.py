@@ -2,7 +2,6 @@
 import sys
 import traceback
 import random
-from logutils import initLogging,getLogger
 
 MY_ANT = 0
 ANTS = 0
@@ -160,9 +159,7 @@ class Ants():
         min_dist=MAX_INT
         closest_food = None
         for food in self.food_list:
-            getLogger().debug("Investigating food at:%d,%d",food[0],food[1])
             dist = self.distance(row1,col1,food[0],food[1])
-            getLogger().debug("Investigating food dist:%d",dist)
             if dist<min_dist:
                 min_dist = dist
                 closest_food = food
@@ -173,9 +170,7 @@ class Ants():
         min_dist=MAX_INT
         closest_ant = None
         for ant in self.enemy_ants():
-            getLogger().debug("Investigating ant at:%d,%d",ant[0][0],ant[0][1])
             dist = self.distance(row1,col1,ant[0][0],ant[0][1])
-            getLogger().debug("Investigating ant dist:%d",dist)
             if dist<min_dist:
                 min_dist = dist
                 closest_ant = ant[0]
@@ -189,7 +184,6 @@ class Ants():
 
     @staticmethod
     def run(bot):
-        initLogging()
         ants = Ants()
         map_data = ''
         while(True):
@@ -208,5 +202,6 @@ class Ants():
                     map_data += current_line + '\n'
             except EOFError:
                 break
-            except:
+            except Exception as e:
                 traceback.print_exc(file=sys.stderr)
+                break

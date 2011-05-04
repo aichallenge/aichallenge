@@ -764,7 +764,7 @@ class Ants(Game):
                 self.score[enemy.owner] += Fraction(1, score_share)
 
     def do_attack_closest(self):
-        """ Iteratively kill neighbouring groups of ants """
+        """ Iteratively kill neighboring groups of ants """
 
         # maps ants to nearby enemies by distance
         ants_by_distance = {}
@@ -975,7 +975,7 @@ class Ants(Game):
         """ Split map into sets of squares
 
             Each set contains self.num_players points where each point
-              is at a consistant offset from each player's starting
+              is at a consistent offset from each player's starting
               position.
             Assumes map is symmetric.
         """
@@ -1050,7 +1050,7 @@ class Ants(Game):
                 + len(self.current_ants) # player AND enemy ants
             )
             self.score[player] += food_bonus
-            # ammend the score history instead of extending it
+            # amend the score history instead of extending it
             self.score_history[player][-1] += food_bonus
 
     def start_turn(self):
@@ -1154,7 +1154,7 @@ class Ants(Game):
     def get_scores(self):
         """ Gets the scores of all players
 
-            Used by engine fo ranking
+            Used by engine for ranking
         """
         return [int(score) for score in self.score]
 

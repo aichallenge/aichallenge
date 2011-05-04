@@ -1,4 +1,5 @@
 #!/usr/bin/python
+from __future__ import print_function
 import os
 import shlex
 import signal
@@ -107,14 +108,33 @@ def _monitor_input_channel(sandbox):
         try:
             line = sandbox.command_process.stdout.readline()
         except:
-            print >> sys.stderr, sys.exc_info()
+            print('error', file=sys.stderr)
+            print(sys.exc_info(), file=sys.stderr)
+#            print("bot error", file=sys.stderr)
+#            while true:
+#                try:
+#                    line = sandbox.command_process.stderr.readline()
+#                    print(line, file=sys.stderr)
+#                    sandbox.stderr.write(line)
+#                except:
+#                    break
             sandbox.kill()
             break
         if not line:
             sandbox.kill()
             break
         sandbox.stdout_queue.put(line.strip())
-
+    while True:
+        try:
+            line = sandbox.command_process.stderr.readline()
+            if line:
+                # print(line, file=sys.stderr)
+                sandbox.stderr.write(line)
+            else:
+                break
+        except:
+            break
+    
 class Sandbox:
     """Provide a sandbox to run arbitrary commands in.
 
@@ -143,6 +163,7 @@ class Sandbox:
         self.is_alive = False
         self.command_process = None
         self.stdout_queue = Queue()
+        self.stderr = stderr
 
         if secure:
             self.jail = _Jail()
@@ -156,7 +177,7 @@ class Sandbox:
         self.command_process = subprocess.Popen(shell_command,
                                                 stdin=subprocess.PIPE,
                                                 stdout=subprocess.PIPE,
-                                                stderr=stderr,
+                                                stderr=subprocess.PIPE,
                                                 cwd=working_directory)
         self.is_alive = not self.command_process is None
         stdout_monitor = Thread(target=_monitor_input_channel, args=(self,))
@@ -287,18 +308,18 @@ def main():
             secure=options.secure)
     for line in options.send_lines:
         if not sandbox.write_line(line):
-            print >> sys.stderr, "Could not send line '%s'" % (line,)
+            print("Could not send line '%s'" % (line,), file=sys.stderr)
             sandbox.kill()
             sys.exit(1)
-        print "sent:", line
+        print("sent: " + line)
         time.sleep(options.send_delay)
     while True:
         time.sleep(options.resp_delay)
         response = sandbox.read_line()
         if response is None:
-            print "No more responses. Terminating."
+            print("No more responses. Terminating.")
             break
-        print "response: " + response
+        print("response: " + response)
     sandbox.kill()
 
 if __name__ == "__main__":

@@ -1,7 +1,6 @@
 <?php
 
 require_once('api_functions.php');
-
 header("Content-type: application/json");
 
 // look for compile task first
