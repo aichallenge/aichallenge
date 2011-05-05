@@ -499,7 +499,7 @@ Visualizer.prototype.tryStart = function() {
 										vis.replay.meta['user_ids'][i]);
 					};
 				}
-				bg.addButton(vis.replay.meta['players'][i], color, func);
+				bg.addButton(vis.replay.meta['playernames'][i], color, func);
 			}
 			for (i = 0; i < this.replay.players; i++) {
 				buttonAdder(i);
