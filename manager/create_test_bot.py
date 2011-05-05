@@ -8,7 +8,8 @@ import argparse
 
 extension = { 'python': '.py',
               'java': '.java' }
-support = { 'python': ['ants.py'],
+support = { 'python': ['ants.py',
+                       'logutils.py'],
             'java': ['Ants.java',
                      'Aim.java',
                      'Bot.java'
