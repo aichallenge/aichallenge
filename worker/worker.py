@@ -252,7 +252,7 @@ class Worker:
             self.clean_old_submission(download_dir)
             return True
 
-    def compile(self, submission_id=None, report_status=False):
+    def compile(self, submission_id=None, report_status=False, run_test=True):
         def report(status):
             if report_status:
                 self.post_id += 1
@@ -268,7 +268,7 @@ class Worker:
             download_dir = self.download_dir(submission_id)
             if os.path.exists(submission_dir):
                 log.info("Already compiled: %s" % submission_id)
-                if self.functional_test(submission_id):
+                if not run_test or self.functional_test(submission_id):
                     report(STATUS_RUNABLE)
                     return True
                 else:
@@ -296,7 +296,7 @@ class Worker:
                 if not os.path.exists(os.path.split(submission_dir)[0]):
                     os.makedirs(os.path.split(submission_dir)[0])
                 os.rename(download_dir, submission_dir)
-                if self.functional_test(submission_id):
+                if not run_test or self.functional_test(submission_id):
                     report(STATUS_RUNABLE)
                     return True
                 else:
@@ -373,9 +373,9 @@ class Worker:
             options["output_json"] = True
             game = Ants(options)
             bots = []
-            for submission_id in task["players"]:
+            for submission_id in task["submissions"]:
                 submission_id = int(submission_id)
-                if self.compile(submission_id):
+                if self.compile(submission_id, run_test=False):
                     submission_dir = self.submission_dir(submission_id)
                     run_cmd = compiler.get_run_cmd(submission_dir)
                     #run_dir = tempfile.mkdtemp(dir=server_info["submissions_path"])
@@ -389,14 +389,13 @@ class Worker:
                     os.makedirs(output_dir)
                 except:
                     pass
-            options['output_dir'] = output_dir
-            options['log_input'] = True
-            options['log_output'] = True
-            options['gameid'] = matchup_id
-            log.debug((game, bots, options, matchup_id))
+            options['verbose_log'] = sys.stdout
+            options['game_id'] = matchup_id
+            log.debug((game.__class__.__name__, task['submissions'], options, matchup_id))
             result = run_game(game, bots, options)
             log.debug(result)
-            result['matchup_id'] = task['matchup_id']
+            del result['game_id']
+            result['matchup_id'] = matchup_id
             result['post_id'] = self.post_id
             if report_status:
                 self.cloud.post_result('api_game_result', result)
