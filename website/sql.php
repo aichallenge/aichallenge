@@ -31,6 +31,17 @@ $sql = array(
                                  from matchup_player
                                  where matchup_id = %s
                                  order by player_id;",
+    "select_game_metadata" => "select u.user_id, username, submission_id
+                               from game g
+                               inner join game_player gp
+                                   on g.game_id = gp.game_id
+                               inner join user u
+                                   on u.user_id = gp.user_id
+                               where g.game_id = %s
+                               order by player_id;",
+    "lock_matchup" => "update matchup
+                       set worker_id = %s
+                       where matchup_id = %s;",
     "select_languages" => "select *
                            from language;",
     "select_player_skills" => "select player_id, sigma, mu
