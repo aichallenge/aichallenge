@@ -8,10 +8,11 @@ header("Content-type: application/json");
 
 $json_string = file_get_contents('php://input');
 $json_hash = md5($json_string);
+api_log($json_string);
 $gamedata = json_decode($json_string);
 
 if ($gamedata == null) {
-    api_log("Did not recieve post data for game result.");
+    api_log("Did not recieve post data for game result as proper json.");
 } else {
     if (array_key_exists('error', $gamedata)) {
     	// set to non-existant worker and email admin
@@ -61,7 +62,24 @@ if ($gamedata == null) {
     		api_log(mysql_error());
     		die();
         }
-        $replay_dir = $server_info["replay_path"] . ((int) ($game_id / 10000));
+        // update game data with meta data
+        $gamedata->playernames = array();
+        $gamedata->user_ids = array();
+        $gamedata->submission_ids = array();
+        $result = contest_query("select_game_metadata",
+                                $game_id);
+        if ($result) {
+            while ($meta_row = mysql_fetch_assoc($result)) {
+                $gamedata->playernames[] = $meta_row["username"];
+                $gamadata->user_ids[] = $meta_row["user_id"];
+                $gamedata->submission_ids[] = $meta_row["submission_id"];
+            }
+        }
+        $gamedata->user_url = "http://localhost/profile.php?user_id=~";
+        $gamedata->game_url = "http://localhost/visualizer.php?game_id=~";
+        // $gamedata->date = date(DATE_ATOM);
+        // create pathname to replay file
+        $replay_dir = $server_info["replay_path"] . strval((int) ($game_id / 10000));
         if (!file_exists($replay_dir)) {
             api_log($replay_dir);
             mkdir($replay_dir);
@@ -69,10 +87,9 @@ if ($gamedata == null) {
         $replay_filename = $replay_dir . "/" . $game_id . ".replay";
         api_log($replay_filename);
         try {
-            api_log($gamedata->replay);
             api_log(getcwd());
             $replay_file = fopen($replay_filename, 'w') or api_log(json_encode(error_get_last()));
-            fwrite($replay_file, $gamedata->replay);
+            fwrite($replay_file, json_encode($gamedata));
             fclose($replay_file);
             echo json_encode(array( "hash" => $json_hash ));
             mysql_query("COMMIT");
