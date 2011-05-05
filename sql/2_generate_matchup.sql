@@ -83,30 +83,35 @@ create temporary table temp_unavailable (
 insert into temp_unavailable (user_id) values (@seed_id);
 
 set @last_user_id = @seed_id;
+set @use_limits = 1;
 set @player_count = 1;
 
 while @player_count < @players do
 
-    -- don't match player that played with anyone matched so far
-    -- in the last 5 games
-    insert into temp_unavailable
-    select gp1.user_id
-    from game_player gp1
-    inner join game_player gp2
-        on gp1.game_id = gp2.game_id
-    where gp2.user_id = @last_user_id
-    and gp1.game_id in (
-        select game_id from (
-            -- mysql does not allow limits in subqueries
-            -- wrapping in it a dummy select is a work around
-            select game_id
-            from game_player
-            where user_id = @last_user_id
-            order by game_id desc
-            limit 5
-        ) latest_games
-    );
+     if @use_limits = 1 then
+        -- don't match player that played with anyone matched so far
+        -- in the last 5 games
+        insert into temp_unavailable
+        select gp1.user_id
+        from game_player gp1
+        inner join game_player gp2
+            on gp1.game_id = gp2.game_id
+        where gp2.user_id = @last_user_id
+        and gp1.game_id in (
+            select game_id from (
+                -- mysql does not allow limits in subqueries
+                -- wrapping in it a dummy select is a work around
+                select game_id
+                from game_player
+                where user_id = @last_user_id
+                order by game_id desc
+                limit 5
+            ) latest_games
+        );
+    end if;
 
+    set @last_user_id = -1; -- used to ensure an opponent was selected
+    
     -- pick the closest 100 available submissions (limited for speed)
     -- and then rank by a match_quality approximation
     --   the approximation is not the true trueskill match_quality,
@@ -138,12 +143,17 @@ while @player_count < @players do
     group by s.user_id, s.submission_id, s.mu, s.sigma
     order by match_quality desc
     limit 1;
-
-    insert into matchup_player (matchup_id, user_id, submission_id, player_id, mu, sigma)
-    values (@matchup_id, @last_user_id, @last_submission_id, -1, @last_mu, @last_sigma);
-    insert into temp_unavailable (user_id) values (@last_user_id);
     
-    set @player_count = @player_count + 1;
+    if @last_user_id = -1 then
+        delete from temp_unavailable;
+        insert into temp_unavailable select user_id from matchup_player where matchup_id = @matchup_id;
+        set @use_limits = 0;
+    else
+        insert into matchup_player (matchup_id, user_id, submission_id, player_id, mu, sigma)
+        values (@matchup_id, @last_user_id, @last_submission_id, -1, @last_mu, @last_sigma);
+        insert into temp_unavailable (user_id) values (@last_user_id);    
+        set @player_count = @player_count + 1;    
+    end if;
 
 end while;
 
