@@ -12,7 +12,6 @@ WATER = -4
 UNSEEN = -5
 MAX_INT=99999999
 MAP_RENDER = 'abcdefghijklmnopqrstuvwxyz?!%*.'
-MAP_READ = '?!%*.abcdefghijklmnopqrstuvwxyz'
 
 
 AIM = {'n': (-1, 0),
@@ -42,6 +41,7 @@ class Ants():
         self.dead_list = []
 
     def setup(self, data):
+        'parse initial input and setup starting game state'
         for line in data.split('\n'):
             line = line.strip().lower()
             if len(line) > 0:
@@ -53,6 +53,16 @@ class Ants():
                     self.height = int(tokens[1])
                 elif key == 'seed':
                     random.seed(int(tokens[1]))
+                elif key == 'turntime':
+                    self.turntime = int(tokens[1])
+                elif key == 'loadtime':
+                    self.loadtime = int(tokens[1])
+                elif key == 'viewradius2':
+                    self.viewradius2 = int(tokens[1])
+                elif key == 'attackradius2':
+                    self.attackradius2 = int(tokens[1])
+                elif key == 'spawnradius2':
+                    self.spawnradius2 = int(tokens[1])
         self.map = [[LAND for col in range(self.width)]
                     for row in range(self.height)]
 

@@ -11,6 +11,9 @@ mysql -u aichallenge -p%1 -D aichallenge < sql\1_data.sql
 mysql -u aichallenge -p%1 -D aichallenge < sql\2_generate_matchup.sql
 mysql -u aichallenge -p%1 -D aichallenge < sql\3_worker.sql
 manager\add_maps_to_database.py
+manager\create_test_bot.py ErrorBot -c 1
+manager\create_test_bot.py TimeoutBot -c 1
+manager\create_test_bot.py InvalidBot -c 1
 manager\create_test_bot.py HunterBot -c 3
 manager\create_test_bot.py LeftyBot -c 3
 manager\create_test_bot.py GreedyBot -c 3

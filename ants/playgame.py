@@ -17,9 +17,13 @@ from engine import run_game
 class Comment(object):
     def __init__(self, file):
         self.file = file
+        self.last_char = '\n'
     def write(self, data):
-        for line in data.split('\n'):
-            self.file.write('# ' + line)
+        for char in data:
+            if self.last_char == '\n':
+                self.file.write('# ')
+            self.file.write(char)
+            self.last_char = char
     def flush(self):
         self.file.flush()
     def close(self):
@@ -69,6 +73,10 @@ def main(argv):
     parser.add_option("--seed", dest="seed",
                       default=None, type="int",
                       help="Seed for the random number generator")
+    
+    parser.add_option('--strict', dest='strict',
+                      action='store_true', default=False,
+                      help='Strict mode enforces valid moves for bots')
 
     # ants specific game options
     parser.add_option("--attack", dest="attack",
@@ -118,8 +126,8 @@ def main(argv):
     # verbose will not print bot input/output/errors
     # only info+debug will print bot error output
     parser.add_option("-v", "--verbose", dest="verbose",
-                      default=0, type='int',
-                      help="Print out status as game goes. 1=info, 2=info+debug")
+                      action='store_true', default=False,
+                      help="Print out status as game goes.")
     parser.add_option("--profile", dest="profile",
                        action="store_true", default=False,
                        help="Run under the python profiler")
@@ -175,7 +183,7 @@ def run_rounds(opts,args):
         "log_output": opts.log_output,
         "log_error": opts.log_error,
         "serial": opts.serial,
-        "verbose": opts.verbose }
+        "strict": opts.strict }
     random.seed(opts.seed)
     for round in range(opts.rounds):
         # initialize game
@@ -230,16 +238,29 @@ def run_rounds(opts,args):
             engine_options['output_logs'] = None
         if opts.log_error:
             if opts.log_stderr:
-                engine_options['error_logs'] = [Tee(Comment(sys.stderr), open(os.path.join(opts.log_dir, '%s.bot%s.error' % (round, i)), 'w'))
-                                  for i in range(bot_count)]
+                if opts.log_stdout:
+                    engine_options['error_logs'] = [Tee(Comment(sys.stderr), open(os.path.join(opts.log_dir, '%s.bot%s.error' % (round, i)), 'w'))
+                                      for i in range(bot_count)]
+                else:
+                    engine_options['error_logs'] = [Tee(sys.stderr, open(os.path.join(opts.log_dir, '%s.bot%s.error' % (round, i)), 'w'))
+                                      for i in range(bot_count)]
             else:
-                engine_options['error_logs'] = [Comment(open(os.path.join(opts.log_dir, '%s.bot%s.error' % (round, i)), 'w'))
+                engine_options['error_logs'] = [open(os.path.join(opts.log_dir, '%s.bot%s.error' % (round, i)), 'w')
                                   for i in range(bot_count)]
         elif opts.log_stderr:
-            engine_options['error_logs'] = [Comment(sys.stderr)] * bot_count
+            if opts.log_stdout:
+                engine_options['error_logs'] = [Comment(sys.stderr)] * bot_count
+            else:
+                engine_options['error_logs'] = [sys.stderr] * bot_count
         else:
             engine_options['error_logs'] = None
         
+        if opts.verbose:
+            if opts.log_stdout:
+                engine_options['verbose_log'] = Comment(sys.stdout)
+            else:
+                engine_options['verbose_log'] = sys.stdout
+            
         engine_options['gameid'] = round
         if opts.rounds > 1:
             print('# playgame round %s' % round)

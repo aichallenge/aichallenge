@@ -339,19 +339,26 @@ class Worker:
         try:
             log.info("Running functional test for %s" % submission_id)
             options = server_info["game_options"]
+            options['strict'] = True # kills bot on invalid inputs
             options["map"] = self.get_test_map()
-            options["output_json"] = True
+            options["error_logs"] = [sys.stderr, sys.stderr]
+            options['verbose_log'] = sys.stdout
+            options['capture_errors'] = True
             game = Ants(options)
             submission_dir = self.submission_dir(submission_id)
-            bots = [("../ants/submission_test/", "python TestBot.py"),
-                    (submission_dir, compiler.get_run_cmd(submission_dir))]
-            log.debug((game, bots, options, matchup_id))
-            result = run_game(game, bots, options, matchup_id)
+            bots = [(submission_dir, compiler.get_run_cmd(submission_dir)),
+                    ("../ants/submission_test/", "python TestBot.py")]
+            log.debug((game, bots, options))
+            result = run_game(game, bots, options)
             log.info(result)
-            return True
         except Exception as ex:
             log.error(traceback.format_exc())
             return False
+        if result['status'][1] in ('crashed', 'timeout', 'invalid'):
+            raise Exception('TestBot is not operational')
+        if result['status'][0] in ('crashed', 'timeout', 'invalid'):
+            return False
+        return True
         
     def game(self, task, report_status=False):
         self.post_id += 1
@@ -385,8 +392,9 @@ class Worker:
             options['output_dir'] = output_dir
             options['log_input'] = True
             options['log_output'] = True
+            options['gameid'] = matchup_id
             log.debug((game, bots, options, matchup_id))
-            #result = run_game(game, bots, options, matchup_id)
+            result = run_game(game, bots, options)
             log.debug(result)
             result['matchup_id'] = task['matchup_id']
             result['post_id'] = self.post_id

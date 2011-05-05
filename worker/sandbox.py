@@ -128,8 +128,10 @@ def _monitor_input_channel(sandbox):
         try:
             line = sandbox.command_process.stderr.readline()
             if line:
+                pass
+                sandbox.stderr_queue.put(line.rstrip('\r\n'))
                 # print(line, file=sys.stderr)
-                sandbox.stderr.write(line)
+                # sandbox.stderr.write(line)
             else:
                 break
         except:
@@ -144,8 +146,7 @@ class Sandbox:
 
     """
 
-    def __init__(self, working_directory, shell_command, stderr=None,
-            secure=_SECURE_DEFAULT):
+    def __init__(self, working_directory, shell_command, secure=_SECURE_DEFAULT):
         """Initialize a new sandbox and invoke the given shell command inside.
 
         working_directory: the directory in which the shell command should
@@ -163,7 +164,7 @@ class Sandbox:
         self.is_alive = False
         self.command_process = None
         self.stdout_queue = Queue()
-        self.stderr = stderr
+        self.stderr_queue = Queue()
 
         if secure:
             self.jail = _Jail()
@@ -281,6 +282,12 @@ class Sandbox:
         except Empty:
             return None
 
+    def read_error(self):
+        try:
+            return self.stderr_queue.get(block=False)
+        except Empty:
+            return None
+        
 def main():
     parser = OptionParser(usage="usage: %prog [options] <command to run>")
     parser.add_option("-d", "--directory", action="store", dest="working_dir",
