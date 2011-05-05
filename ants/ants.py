@@ -432,6 +432,7 @@ class Ants(Game):
         """
         orders = []
         valid = []
+        ignored = []
         invalid = []
 
         for line in lines:
@@ -467,9 +468,9 @@ class Ants(Game):
             orders.append((loc, direction))
             valid.append(line)
 
-        return orders, valid, invalid
+        return orders, valid, ignored, invalid
 
-    def validate_orders(self, player, orders, lines, invalid):
+    def validate_orders(self, player, orders, lines, ignored, invalid):
         """ Validate orders from a given player
 
             Location (row, col) must be ant belonging to the player
@@ -493,7 +494,7 @@ class Ants(Game):
                 continue
             dest = self.destination(loc, AIM[direction])
             if self.map[dest[0]][dest[1]] in (FOOD, WATER):
-                invalid.append((line,'move blocked'))
+                ignored.append((line,'move blocked'))
                 continue
 
             # this order is valid!
@@ -501,7 +502,7 @@ class Ants(Game):
             valid.append(line)
             seen_locations.add(loc)
 
-        return valid_orders, valid, invalid
+        return valid_orders, valid, ignored, invalid
 
     def do_orders(self):
         """ Execute player orders and handle conflicts
@@ -1146,10 +1147,10 @@ class Ants(Game):
 
     def do_moves(self, player, moves):
         """ Called by engine to give latest player orders """
-        orders, valid, invalid = self.parse_orders(player, moves)
-        orders, valid, invalid = self.validate_orders(player, orders, valid, invalid)
+        orders, valid, ignored, invalid = self.parse_orders(player, moves)
+        orders, valid, ignored, invalid = self.validate_orders(player, orders, valid, ignored, invalid)
         self.orders[player] = orders
-        return valid, ['%s # %s' %error for error in invalid]
+        return valid, ['%s # %s' % ignore for ignore in ignored], ['%s # %s' % error for error in invalid]
 
     def get_scores(self):
         """ Gets the scores of all players

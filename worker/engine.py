@@ -24,8 +24,8 @@ def run_game(game, botcmds, options):
     turntime = float(options['turntime']) / 1000
     strict = options.get('strict', False)
     
-    location = options.get('location', 'local')
-    gameid = options.get('gameid', 0)
+    location = options.get('location', 'localhost')
+    game_id = options.get('game_id', 0)
 
     error = ''
 
@@ -130,13 +130,21 @@ def run_game(game, botcmds, options):
                 if turn > 0 and not game.game_over():
                     for b, moves in enumerate(bot_moves):
                         if game.is_alive(b):
-                            valid, invalid = game.do_moves(b, moves)
+                            valid, ignored, invalid = game.do_moves(b, moves)
                             if output_logs and output_logs[b]:
                                 output_logs[b].write('# turn %s\n' % turn)
                                 if valid:
                                     if output_logs and output_logs[b]:
                                         output_logs[b].write('\n'.join(valid)+'\n')
                                         output_logs[b].flush()
+                            if ignored:
+                                if error_logs and error_logs[b]:
+                                    error_logs[b].write('turn %4d bot %s ignored actions:\n' % (turn, b))
+                                    error_logs[b].write('\n'.join(ignored)+'\n')
+                                    error_logs[b].flush()
+                                if output_logs and output_logs[b]:
+                                    output_logs[b].write('\n'.join(ignored)+'\n')
+                                    output_logs[b].flush()
                             if invalid:
                                 if strict:
                                     game.kill_player(b)
@@ -221,7 +229,7 @@ def run_game(game, botcmds, options):
         game_result = {
             'challenge': game.__class__.__name__.lower(),
             'location': location,
-            'gameid': gameid,
+            'game_id': game_id,
             'player_info': [{} for x in range(len(bots))],
             'status': bot_status,
             'score': scores,
