@@ -493,7 +493,7 @@ class Ants(Game):
                 continue
             dest = self.destination(loc, AIM[direction])
             if self.map[dest[0]][dest[1]] in (FOOD, WATER):
-                invalid.append((line,'moved blocked'))
+                invalid.append((line,'move blocked'))
                 continue
 
             # this order is valid!

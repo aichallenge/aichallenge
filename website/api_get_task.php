@@ -25,13 +25,19 @@ if ($compile_result) {
 // look for match
 $match_result = contest_query("select_next_matchup",
                               $worker["worker_id"]);
-if (!$match_result) {
-    $match_result = mysql_query("call generate_matchup;");
+if (!$match_result or mysql_num_rows($match_result) == 0) {
+    api_log('create matchup');
+    api_log($db_host);
+    $tmp_conn = mysql_connect($db_host, $db_username, $db_password, true);
+    mysql_select_db($db_name, $tmp_conn);
+    mysql_query("call generate_matchup();", $tmp_conn);
+    mysql_close($tmp_conn);
     $match_result = contest_query("select_next_matchup",
                                   $worker["worker_id"]);
 }
 
 if ($match_result) {
+    api_log(mysql_num_rows($match_result));
 	while ($match_row = mysql_fetch_assoc($match_result)) {
 		$json = array( "task" => "game",
 		               "matchup_id" => $match_row["matchup_id"],

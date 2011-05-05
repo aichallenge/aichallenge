@@ -300,7 +300,7 @@ class Worker:
                     report(STATUS_RUNABLE)
                     return True
                 else:
-                    log.error("Functional Test Error")
+                    log.info("Functional Test Failure")
                     report(STATUS_TEST_ERROR)
                     return False
 
@@ -336,24 +336,24 @@ class Worker:
     
     def functional_test(self, submission_id):
         self.post_id += 1
-        try:
-            log.info("Running functional test for %s" % submission_id)
-            options = server_info["game_options"]
-            options['strict'] = True # kills bot on invalid inputs
-            options["map"] = self.get_test_map()
-            options["error_logs"] = [sys.stderr, sys.stderr]
-            options['verbose_log'] = sys.stdout
-            options['capture_errors'] = True
-            game = Ants(options)
-            submission_dir = self.submission_dir(submission_id)
-            bots = [(submission_dir, compiler.get_run_cmd(submission_dir)),
-                    ("../ants/submission_test/", "python TestBot.py")]
-            log.debug((game, bots, options))
-            result = run_game(game, bots, options)
-            log.info(result)
-        except Exception as ex:
-            log.error(traceback.format_exc())
-            return False
+        log.info("Running functional test for %s" % submission_id)
+        options = server_info["game_options"]
+        options['strict'] = True # kills bot on invalid inputs
+        options['food'] = 'none'
+        log.debug(options)
+        options["map"] = self.get_test_map()
+        options['capture_errors'] = True
+        game = Ants(options)
+        # options['verbose_log'] = sys.stdout
+        # options['error_logs'] = [sys.stdout, None]
+        submission_dir = self.submission_dir(submission_id)
+        bots = [(submission_dir, compiler.get_run_cmd(submission_dir)),
+                ("../ants/submission_test/", "python TestBot.py")]
+        result = run_game(game, bots, options)
+        log.info(result['status'][0])
+        for error in result['errors'][0]:
+            log.info(error)
+            
         if result['status'][1] in ('crashed', 'timeout', 'invalid'):
             raise Exception('TestBot is not operational')
         if result['status'][0] in ('crashed', 'timeout', 'invalid'):
@@ -411,15 +411,20 @@ class Worker:
     def task(self, last=False):
         task = self.cloud.get_task()
         if task:
-            log.info("Recieved task: %s" % task)
-            if task['task'] == 'compile':
-                submission_id = int(task['submission_id'])
-                self.compile(submission_id, True)
-            elif task['task'] == 'game':
-                self.game(task, True)
-            else:
-                if not last:
-                    time.sleep(20)
+            try:
+                log.info("Recieved task: %s" % task)
+                if task['task'] == 'compile':
+                    submission_id = int(task['submission_id'])
+                    self.compile(submission_id, True)
+                elif task['task'] == 'game':
+                    self.game(task, True)
+                else:
+                    if not last:
+                        time.sleep(20)
+            except:
+                log.error('Task Failure')
+                log.error(traceback.format_exc())
+                quit()
         else:
             log.error("Error retrieving task from server.")
 

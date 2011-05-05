@@ -12,7 +12,7 @@ set @twiceBetaSq = 2 * pow(@init_beta, 2);
 select s.user_id, s.submission_id, s.mu, s.sigma
 into @seed_id, @submission_id, @mu, @sigma
 from submission s
-where s.latest = 1
+where s.latest = 1 and s.status = 40
 -- this selects the user that was least recently used player for a seed
 -- from both the game and matchup tables
 order by ( select max(matchup_id)
@@ -124,7 +124,7 @@ while @player_count < @players do
             submission s
 
         where mp.matchup_id = @matchup_id
-            and s.latest = 1
+            and s.latest = 1 and status = 40
 
         -- this order by causes a filesort, but I don't see a way around it
         -- limiting to 100 saves us from doing extra trueskill calculations

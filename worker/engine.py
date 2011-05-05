@@ -141,6 +141,8 @@ def run_game(game, botcmds, options):
                                 if strict:
                                     game.kill_player(b)
                                     bot_status[b] = 'invalid'
+                                if capture_errors:
+                                    bot_errors[b].extend(invalid)
                                 if error_logs and error_logs[b]:
                                     error_logs[b].write('turn %4d bot %s invalid actions:\n' % (turn, b))
                                     error_logs[b].write('\n'.join(invalid)+'\n')
