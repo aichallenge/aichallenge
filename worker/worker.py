@@ -22,11 +22,11 @@ from engine import run_game
 
 # Set up logging
 log = logging.getLogger('worker')
-log.setLevel(logging.DEBUG)
+log.setLevel(logging.INFO)
 handler = logging.handlers.RotatingFileHandler("worker.log",
                                                maxBytes=1000000,
                                                backupCount=5)
-handler.setLevel(logging.DEBUG)
+handler.setLevel(logging.INFO)
 handler2 = logging.StreamHandler()
 formatter = logging.Formatter("%(asctime)s - " + str(os.getpid()) +
                               " - %(levelname)s - %(message)s")
@@ -389,7 +389,7 @@ class Worker:
                     os.makedirs(output_dir)
                 except:
                     pass
-            options['verbose_log'] = sys.stdout
+            #options['verbose_log'] = sys.stdout
             options['game_id'] = matchup_id
             log.debug((game.__class__.__name__, task['submissions'], options, matchup_id))
             result = run_game(game, bots, options)

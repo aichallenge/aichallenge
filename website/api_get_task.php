@@ -44,12 +44,17 @@ if (!$match_result or mysql_num_rows($match_result) == 0) {
      * django is not far away, FML
      * P.S. the space.invaders genetic programming guys are still cool
      */    
-    $link = new MySQLI($db_host, $db_username, $db_password, $db_name);
-    $link->query('call generate_matchup;');
-    $link->close();
+    $mysqli = new MySQLI($db_host, $db_username, $db_password, $db_name);
+    $mysqli->multi_query('call generate_matchup;');
+    while ($mysqli->more_results() && $mysqli->next_result());
+    $mysqli->close();
     
     $match_result = contest_query("select_next_matchup",
                                   $worker["worker_id"]);
+    if (mysql_num_rows($match_result) == 0) {
+        api_log('trying to reset mysql...');
+        // mysql_query('ROLLBACK;');        
+    }
 }
 
 if ($match_result) {
@@ -82,5 +87,5 @@ if ($match_result) {
 }
 
 // nothing to do
-echo json_encode(array( "task" => "expand lolcode specification" ));
+echo json_encode(array( "task" => mysql_error() ));
 ?>

@@ -24,13 +24,13 @@ if ($gamedata == null) {
     	}
     } else {
         // move matchup data to game table
-        mysql_query("SET AUTOCOMMIT=0");
-        mysql_query("START TRANSACTION");
+        // mysql_query("SET AUTOCOMMIT=0;");
+        // mysql_query("START TRANSACTION;");
     	if (!contest_query("insert_game_data", $gamedata->matchup_id)) {
     	    api_log(sprintf("Error updating game table for matchup %s",
     		                $gamedata->matchup_id));
             api_log(mysql_error());
-            mysql_query("ROLLBACK");
+            // mysql_query("ROLLBACK;");
             die();
     	}
 	    $game_id = mysql_insert_id();
@@ -44,19 +44,19 @@ if ($gamedata == null) {
     		    api_log(sprintf("Error updating game players for matchup %s",
     		                    $gamedata->matchup_id));
 	            api_log(mysql_error());
-                mysql_query("ROLLBACK");
+                // mysql_query("ROLLBACK;");
 	            die();
     		}
 	    }
 	    if (!contest_query("delete_matchup_player", $gamedata->matchup_id)) {
-            mysql_query("ROLLBACK");
+            // mysql_query("ROLLBACK;");
     	    api_log(sprintf("Error deleting players for matchup %s",
     		                $gamedata->matchup_id));
     		api_log(mysql_error());
     		die();
 	    }
         if (!contest_query("delete_matchup", $gamedata->matchup_id)) {
-            mysql_query("ROLLBACK");
+            // mysql_query("ROLLBACK;");
     	    api_log(sprintf("Error deleting matchup %s",
     		                $gamedata->matchup_id));
     		api_log(mysql_error());
@@ -77,7 +77,8 @@ if ($gamedata == null) {
         }
         $gamedata->user_url = "http://localhost/profile.php?user_id=~";
         $gamedata->game_url = "http://localhost/visualizer.php?game_id=~";
-        // $gamedata->date = date(DATE_ATOM);
+        $gamedata->date = date(DATE_ATOM);
+        $gamedata->game_id = $game_id;
         // create pathname to replay file
         $replay_dir = $server_info["replay_path"] . strval((int) ($game_id / 10000));
         if (!file_exists($replay_dir)) {
@@ -92,10 +93,12 @@ if ($gamedata == null) {
             fwrite($replay_file, json_encode($gamedata));
             fclose($replay_file);
             echo json_encode(array( "hash" => $json_hash ));
-            mysql_query("COMMIT");
+            // mysql_query("COMMIT;");
+            // put game id in memcache for front page
+            $memcache->set('last_game_id', $game_id);
         } catch (Exception $e) {
             api_log(json_encode($e));
-            mysql_query("ROLLBACK");
+            // mysql_query("ROLLBACK;");
         }
     }        
 }

@@ -487,7 +487,7 @@ Visualizer.prototype.tryStart = function() {
 			// add player buttons
 			bg = this.btnMgr.addTextGroup('players', TextButtonGroup.FLOW,
 					ButtonGroup.MODE_NORMAL, 2);
-			bg.addButton('Players:', '#000');
+			bg.addButton('Game #' + vis.replay.meta['game_id'] + ':', '#000');
 			buttonAdder = function(i) {
 				var color = vis.replay.htmlPlayerColors[i];
 				var func = null;

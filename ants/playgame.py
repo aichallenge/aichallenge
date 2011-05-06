@@ -7,6 +7,7 @@ import time
 from optparse import OptionParser
 import random
 import cProfile
+import visualizer.visualize_locally
 
 from ants import Ants
 
@@ -131,6 +132,9 @@ def main(argv):
     parser.add_option("--profile", dest="profile",
                        action="store_true", default=False,
                        help="Run under the python profiler")
+    parser.add_option("--nolaunch", dest="nolaunch",
+                      action='store_true', default=False,
+                      help="Prevent visualizer from launching")
 
     (opts, args) = parser.parse_args(argv)
     if opts.map is None or not os.path.exists(opts.map):
@@ -201,12 +205,16 @@ def run_rounds(opts,args):
                 print("Bot Cmd: %s" % arg, file=sys.stderr)
             break
         # initialize file descriptors
+        if opts.log_dir and not os.path.exists(opts.log_dir):
+            os.mkdir(opts.log_dir)
         if not opts.log_replay and not opts.log_stream:
             opts.log_replay = True
-            
+        replay_path = None # used for visualizer launch
+        
         if opts.log_replay:
             if opts.log_dir:
-                engine_options['replay_log'] = open(os.path.join(opts.log_dir, '%s.replay' % round), 'w')
+                replay_path = os.path.join(opts.log_dir, '%s.replay' % round)
+                engine_options['replay_log'] = open(replay_path, 'w')
             if opts.log_stdout:
                 if engine_options['replay_log']:
                     engine_options['replay_log'] = Tee(sys.stdout, engine_options['replay_log'])
@@ -226,17 +234,17 @@ def run_rounds(opts,args):
         else:
             engine_options['stream_log'] = None
         
-        if opts.log_input:
+        if opts.log_input and opts.log_dir:
             engine_options['input_logs'] = [open(os.path.join(opts.log_dir, '%s.bot%s.input' % (round, i)), 'w')
                              for i in range(bot_count)]
         else:
             engine_options['input_logs'] = None
-        if opts.log_output:
+        if opts.log_output and opts.log_dir:
             engine_options['output_logs'] = [open(os.path.join(opts.log_dir, '%s.bot%s.output' % (round, i)), 'w')
                               for i in range(bot_count)]
         else:
             engine_options['output_logs'] = None
-        if opts.log_error:
+        if opts.log_error and opts.log_dir:
             if opts.log_stderr:
                 if opts.log_stdout:
                     engine_options['error_logs'] = [Tee(Comment(sys.stderr), open(os.path.join(opts.log_dir, '%s.bot%s.error' % (round, i)), 'w'))
@@ -279,6 +287,7 @@ def run_rounds(opts,args):
         if engine_options['error_logs']:
             for error_log in engine_options['error_logs']:
                 error_log.close()
-
+        if not opts.nolaunch and replay_path:
+            visualizer.visualize_locally.launch(replay_path)
 if __name__ == "__main__":
     sys.exit(main(sys.argv[1:]))

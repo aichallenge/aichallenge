@@ -1,11 +1,18 @@
-<?php include 'header.php'; ?>
+<?php
+include('header.php');
+require_once('memcache.php');
+?>
 
 <!--<MarkdownReplacement with="competition.md">--><!--</MarkdownReplacement>-->
 
-<p>4 Computer Programs Duking it Out with Ants:</p>
+<p>Computer Programs Duking it Out with Ants:</p>
 <?php
+    $latest_game_id = $memcache->get('last_game_id');
+    if (!$latest_game_id) {
+        $latest_game_id = 2;
+    }
     include 'visualizer_widget.php';
-    visualizer_widget($game_id="2",550,550);
+    visualizer_widget($game_id=strval($latest_game_id),550,550);
 ?>
 
 <h2>Planet Wars Final Rankings</h2>
