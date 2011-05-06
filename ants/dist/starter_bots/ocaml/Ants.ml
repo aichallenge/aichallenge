@@ -36,6 +36,8 @@ type mapb =
  }
 ;;
 
+(* You can change this to a record if you want to remove OO stuff *)
+
 class ant ~row ~col ~owner =
    object
       method loc = row, col
@@ -154,6 +156,7 @@ let add_food gstate row col =
    {gstate with food = ((row, col) :: gstate.food)}
 ;;
 
+(*
 let remove_food gstate row col =
    if gstate.tmap.(row).(col).content = (int_of_tile `Food) then
       gstate.tmap.(row).(col) <- 
@@ -161,6 +164,7 @@ let remove_food gstate row col =
    {gstate with food = (List.filter (fun p -> not (p = (row, col)))
                         gstate.food)}
 ;;
+*)
 
 let add_water gstate row col =
    gstate.tmap.(row).(col) <- 
@@ -168,15 +172,13 @@ let add_water gstate row col =
    gstate
 ;;
 
+(* Note that this clears previously seen food. *)
+
 let clear_tile t =
    match (tile_of_int t.content) with
-    | `Water | `Food | `Unseen -> t
+    | `Water | `Unseen -> t
     | _ -> {t with content = (int_of_tile `Land)}
 ;;
-
-(* Currently this clears previously seen food from the food list, but 
-not from the map. It doesn't have to clear either, or could clear both - 
-change as you see fit. *)
 
 let clear_gstate gs =
  if gs.turn < 1 then gs else
@@ -225,7 +227,7 @@ let initialize_map gstate =
 ;;
 
 (* This add_line function is a bit tricky to modify (make sure you get 
-the parentheses in the right places if you change it.) *)
+the parentheses in the right places if you change it). *)
 
 let add_line gstate line =
    sscanf_cps "%s %d %d %d"
@@ -239,7 +241,9 @@ let add_line gstate line =
          match fw with
           | "f" -> add_food gstate row col
           | "w" -> add_water gstate row col
+(*
           | "r" -> remove_food gstate row col
+*)
           | _ -> gstate)
       (sscanf_cps "%s %d"
         (fun key v ->
@@ -288,6 +292,7 @@ let read_lines () =
       read_loop (line :: acc)
   in
   try Some (read_loop []) with End_of_file -> None
+;;
 
 let read gstate =
   let ll = read_lines () in
@@ -295,6 +300,7 @@ let read gstate =
   match ll with
   | Some lines -> Some {(update gstate lines) with go_time = go_time}
   | None -> None
+;;
 
 (* End input section *)
 
@@ -389,9 +395,10 @@ let stepdistance_ndirection (rows, cols) (row1, col1) (row2, col2) =
    in (row_dir, col_dir), (row_dist, col_dist)
 ;;
 
+(* returns d, has a type declaration for some reason *)
 let direction bounds p1 p2 =
    let d, _ = stepdistance_ndirection bounds p1 p2 in
-      (d: (dir * dir))
+      (d: (dir * dir)) 
 ;;
 
 let fsquare_int i =
@@ -410,6 +417,8 @@ let distance2 (rows, cols) (src_row, src_col) (dst_row, dst_col) =
 (* distance (not squared) *)
 let distance b p1 p2 = sqrt (float_of_int (distance2 b p1 p2));;
 
+(* returns the two directions you might travel in to get from p1 to 
+p2 ignoring water, with `Stop(s) for none, and the distance *)
 let distance_and_direction bounds p1 p2 =
    let d, (r, c) = stepdistance_ndirection bounds p1 p2 in
       d, (sqrt ((fsquare_int r) +. (fsquare_int c)))
@@ -475,8 +484,7 @@ class swrap state =
  object (self)
    val mutable state = state
    method bounds = state.setup.rows, state.setup.cols
-   method issue_order (o:order) =
-      issue_order o
+   method issue_order (o:order) = issue_order o
    method finish_turn () = finish_turn ()
    method step_dir (row, col) (d:dir) =
       step_dir d self#bounds (row, col)

@@ -102,11 +102,9 @@ This is my first attempt at making something like this for other people
 to use. If anyone would like to make improvements, that would be great. 
 Also, testing and bug reports are appreciated.
 
-Food you have seen is remembered on the map, and removed when you can 
-see that it isn't there any more. As well as the food marked on the map, 
-there is gstate.food which gives a list of food tiles seen this turn. 
-You could change this to remember old food tiles (as the map does), but 
-note that sometimes those food tiles will be eaten by enemy ants.
+Food you have seen this turn is marked on the map, and cleared between 
+turns. As well as the food marked on the map, gstate contains a list of 
+food tiles seen this turn.
 
 The loop function does not expect you to modify gstate.tmap, though in 
 theory you could. Be careful, have a look at the code to understand the 
