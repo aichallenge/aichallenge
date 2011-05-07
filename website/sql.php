@@ -56,9 +56,8 @@ $sql = array(
     "insert_game_player" => "insert into game_player
                              select %s, p.user_id, p.submission_id, player_id,
                              null, null, %s, %s,
-                             s.sigma, null, s.mu, null, 1
+                             null, null, null, null, 1
                              from matchup_player p
-                             inner join submission s on p.submission_id = s.submission_id
                              where matchup_id = %s
                              and player_id = %s;",
     "delete_matchup" => "delete from matchup where matchup_id = %s;",

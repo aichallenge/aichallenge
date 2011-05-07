@@ -47,7 +47,7 @@ def launch(filename=None, nolaunch=False):
 
     # open the page in the browser
     if not nolaunch:
-        webbrowser.open('file://'+generated_path)    
+        webbrowser.open('file://'+os.path.realpath(generated_path))    
 
 if __name__ == "__main__":
     launch(nolaunch=len(sys.argv) > 1 and sys.argv[1] == '--nolaunch')

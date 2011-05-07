@@ -94,6 +94,8 @@ if ($gamedata == null) {
             fclose($replay_file);
             echo json_encode(array( "hash" => $json_hash ));
             // mysql_query("COMMIT;");
+            // update trueskill
+            exec(sprintf("python ../manager/manager.py -g %s", $game_id));
             // put game id in memcache for front page
             $memcache->set('last_game_id', $game_id);
         } catch (Exception $e) {
