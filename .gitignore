@@ -7,3 +7,5 @@
 *.buildpath
 submissions/*
 maps/*
+server_info.py
+server_info.php

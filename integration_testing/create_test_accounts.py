@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 import MySQLdb
 import random
 from server_info import server_info

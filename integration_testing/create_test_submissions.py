@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 import MySQLdb
 import os
 import random

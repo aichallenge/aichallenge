@@ -1,8 +1,10 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 import os
 import sys
 import random
 import MySQLdb
+
+sys.path.append("../manager")
 from server_info import server_info
 
 def create_test_data(user_count=10000, map_count=1000, game_count=30000, matchup_count=10):
@@ -27,8 +29,8 @@ def create_test_data(user_count=10000, map_count=1000, game_count=30000, matchup
     while user_max > 1:
         cursor.execute("""
         insert into submission (user_id, version, status, timestamp, language_id, latest)
-        select USER_ID, %s, 40, CURRENT_TIMESTAMP, 6, 0
-        from USER
+        select user_id, %s, 40, CURRENT_TIMESTAMP, 6, 0
+        from user
         order by user_id
         limit %s;
         """ % (version, user_max))
