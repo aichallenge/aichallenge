@@ -120,5 +120,3 @@ def check_ubuntu_version():
         raise Exception("This contest framework was designed to work on Ubuntu Natty(11.04) only.")
     
     return version, arch
-
-check_ubuntu_version()

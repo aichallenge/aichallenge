@@ -10,7 +10,7 @@ import sys
 from optparse import OptionParser
 
 import create_worker_archive
-from install_tools import CD, Environ, install_apt_packages, run_cmd, CmdError
+from install_tools import CD, Environ, install_apt_packages, run_cmd, CmdError, check_ubuntu_version
 from install_tools import get_choice, get_password
 
 TEMPLATE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -221,6 +221,7 @@ def get_options(argv):
     return options
 
 def main(argv=["server_setup.py"]):
+    check_ubuntu_version()
     opts = get_options(argv)
     with Environ("DEBIAN_FRONTEND", "noninteractive"):
         for install in opts.installs:
