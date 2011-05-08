@@ -9,9 +9,11 @@ import sys
 from optparse import OptionParser, SUPPRESS_HELP
 
 from install_tools import CD, Environ, install_apt_packages, run_cmd
-from install_tools import append_line, file_contains, get_choice, get_password
+from install_tools import append_line, file_contains, get_choice, get_password, get_ubuntu_release_info
 
 TEMPLATE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+ubuntu_version, ubuntu_arch = get_ubuntu_release_info()
 
 def install_required_packages():
     """ This installs the packages that are required to run the worker scripts
@@ -150,8 +152,8 @@ def setup_base_chroot(options):
     if os.path.exists(base_chroot_dir):
         return
     os.makedirs(base_chroot_dir)
-    run_cmd("debootstrap --variant=buildd --arch amd64 natty \
-            %s http://us.archive.ubuntu.com/ubuntu/" % (base_chroot_dir,))
+    run_cmd("debootstrap --variant=buildd --arch %s %s \
+            %s http://us.archive.ubuntu.com/ubuntu/" % (ubuntu_arch, ubuntu_version, base_chroot_dir,))
     with CD(TEMPLATE_DIR):
         run_cmd("cp chroot_configs/chroot.d/aic-base /etc/schroot/chroot.d/")
         run_cmd("cp chroot_configs/sources.list %s/etc/apt/"
