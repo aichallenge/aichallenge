@@ -523,7 +523,11 @@ let rec print_food = function
 
 (* Main game loop. Bots should define a main function taking a swrap for 
 an argument (see above), and then call loop main_function. See how the 
-starter bot in MyBot.ml does it if this doesn't make sense.*)
+starter bot in MyBot.ml does it if this doesn't make sense.
+   This loop function will exit the program, killing your bot if an 
+exception is raised. This is good for debugging, but should be changed 
+before release. Calling the finish_turn function might be a good 
+alternative. *)
 
 let loop engine =
   let proto_setup =
@@ -575,11 +579,6 @@ let loop engine =
 *)
           ddebug (Printf.sprintf "EXCEPTION:\n  %s\n" 
              (Printexc.to_string exc));
-(* Before releasing your bot into the final contest, I strongly suggest 
-changing this "raise exc" to something less fatal. In order to pass your 
-turn correctly, it would be good to know whether "go" has already been 
-printed on stdout (which it almost certainly hasn't), so you can print 
-it now. This shouldn't be done before release, of course. :) *)
           raise exc
          )
         end;
