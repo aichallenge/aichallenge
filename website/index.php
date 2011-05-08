@@ -7,7 +7,8 @@ require_once('memcache.php');
 
 <p>Computer Programs Duking it Out with Ants:</p>
 <?php
-    $latest_game_id = $memcache->get('last_game_id');
+    if ($memcache)
+        $latest_game_id = $memcache->get('last_game_id');
     if (!$latest_game_id) {
         $latest_game_id = 2;
     }
