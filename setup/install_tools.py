@@ -97,6 +97,28 @@ def get_password(pw_name):
         print "Sorry, passwords did not match."
 
 def get_ubuntu_release_info():
-    version=run_cmd("lsb_release -c -s",True).strip()
-    arch=run_cmd("dpkg --print-architecture",True).strip()
+    version="notubuntu"
+    arch="unknown"
+    try:
+        version=re.match(".*DISTRIB_CODENAME=(\w*).*",open("/etc/lsb-release").read(),re.DOTALL).group(1)
+        arch=run_cmd("dpkg --print-architecture",True).strip()
+    except CmdError, IOError:
+        arch=run_cmd("uname -p",True).strip()
+    except:
+        pass
+    
     return version, arch
+
+def check_ubuntu_version():
+    version,arch=get_ubuntu_release_info()
+    if version!="notubuntu":
+        print "Install tools on Ubuntu version:%s arch:%s." % (version, arch)
+    else:
+        print "Installing on an %s non-Ubuntu host." % (arch)
+    
+    if version!="natty":
+        raise Exception("This contest framework was designed to work on Ubuntu Natty(11.04) only.")
+    
+    return version, arch
+
+check_ubuntu_version()
