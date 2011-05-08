@@ -1,4 +1,3 @@
-
 import getpass
 import os
 import re
@@ -97,3 +96,7 @@ def get_password(pw_name):
             return passwd
         print "Sorry, passwords did not match."
 
+def get_ubuntu_release_info():
+    version=run_cmd("lsb_release -c -s",True).strip()
+    arch=run_cmd("dpkg --print-architecture",True).strip()
+    return version, arch
