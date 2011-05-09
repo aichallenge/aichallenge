@@ -1,3 +1,4 @@
+#!/usr/bin/python
 # compiler.py
 # Author: Jeff Cameron (jeff@jpcameron.com)
 #
@@ -42,6 +43,7 @@ import subprocess
 import fnmatch
 import errno
 import shutil
+from optparse import OptionParser
 
 BOT = "MyBot"
 SAFEPATH = re.compile('[a-zA-Z0-9_.$-]+$')
@@ -464,15 +466,27 @@ def compile_anything(submission_dir=None):
         else:
             return None, errors
 
-if __name__ == '__main__':
-    if len(sys.argv) == 2:
-        detected_lang, errors = compile_anything(sys.argv[1])
-    else:
+def main(argv=sys.argv):
+    parser = OptionParser(usage="Usage: %prog [options] [directory]")
+    parser.add_option("-j", "--json", action="store_true", dest="json",
+            default=False,
+            help="Give compilation results in json format")
+    options, args = parser.parse_args(argv)
+    if len(args) == 1:
         detected_lang, errors = compile_anything()
-    import json
-    if detected_lang:
-        print(json.dumps({'language': detected_lang}))
+    elif len(args) == 2:
+        detected_lang, errors = compile_anything(args[1])
     else:
-        print(json.dumps(errors))
-        for error in errors['errors']:
-            print(error)
+        parser.error("Extra arguments found, use --help for usage")
+    if options.json:
+        import json
+        print json.dumps([detected_lang, errors])
+    else:
+        print "Detected language:", detected_lang
+        if len(errors['errors']) != 0:
+            for error in errors['errors']:
+                print(error)
+
+if __name__ == "__main__":
+    main()
+
