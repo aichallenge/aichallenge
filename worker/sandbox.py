@@ -84,17 +84,20 @@ class _Jail(object):
         if os.system("%s j %d" % (self.jchown, self.number)) != 0:
             raise JailError("Error returned from jail_own j %d in prepare"
                     % (self.number,))
+        self.home_dir = home_dir
 
     def signal(self, signal):
         if not self.locked:
             raise JailError("Attempt to send %s to unlocked jail" % (signal,))
-        if os.system("sudo -u {0} killall -{1} -u {0}".format(
-                self.name, signal)) != 0:
-            raise JailError("Error returned from jail kill for %s"
-                    % (self.name,))
+        result = subprocess.call("sudo -u {0} kill -{1} -1".format(
+            self.name, signal), shell=True)
+        if result != 0:
+            raise JailError("Error returned from jail %s sending signal %s"
+                    % (self.name, signal))
 
     def kill(self):
         self.signal("KILL")
+        self.signal("CONT")
 
     def pause(self):
         self.signal("STOP")
@@ -104,39 +107,32 @@ class _Jail(object):
 
 
 def _monitor_input_channel(sandbox):
-    while sandbox.is_alive:
+    while True:
         try:
             line = sandbox.command_process.stdout.readline()
         except:
             print('error', file=sys.stderr)
             print(sys.exc_info(), file=sys.stderr)
-#            print("bot error", file=sys.stderr)
-#            while true:
-#                try:
-#                    line = sandbox.command_process.stderr.readline()
-#                    print(line, file=sys.stderr)
-#                    sandbox.stderr.write(line)
-#                except:
-#                    break
-            sandbox.kill()
+            if sandbox.is_alive:
+                sandbox.kill()
             break
         if not line:
-            sandbox.kill()
             break
         sandbox.stdout_queue.put(line.strip())
+    sandbox.stdout_queue.put(None)
+    # FIXME: This will cause the sandboxed program to deadlock if it outputs
+    # more than the os buffer size on stderr
     while True:
         try:
             line = sandbox.command_process.stderr.readline()
             if line:
                 pass
                 sandbox.stderr_queue.put(line.rstrip('\r\n'))
-                # print(line, file=sys.stderr)
-                # sandbox.stderr.write(line)
             else:
                 break
         except:
             break
-    
+
 class Sandbox:
     """Provide a sandbox to run arbitrary commands in.
 
@@ -146,22 +142,19 @@ class Sandbox:
 
     """
 
-    def __init__(self, working_directory, shell_command, secure=_SECURE_DEFAULT):
+    def __init__(self, working_directory, secure=_SECURE_DEFAULT):
         """Initialize a new sandbox and invoke the given shell command inside.
 
         working_directory: the directory in which the shell command should
                            be launched. If security is enabled, files from
                            this directory are copied into the VM before the
                            shell command is executed.
-        shell_command: the shell command to launch inside the sandbox.
-        stderr: where the bot's stderr output should be written out to
-                defaults to keeping the current stderr for the child process
         secure: really use a jail or just run the command directly
                 defaults to True when a server_info module is found, False
                 otherwise
 
         """
-        self.is_alive = False
+        self._is_alive = False
         self.command_process = None
         self.stdout_queue = Queue()
         self.stderr_queue = Queue()
@@ -169,21 +162,58 @@ class Sandbox:
         if secure:
             self.jail = _Jail()
             self.jail.prepare_with(working_directory)
+            self.working_directory = self.jail.home_dir
+        else:
+            self.jail = None
+            self.working_directory = working_directory
+
+    @property
+    def is_alive(self):
+        """Indicates whether a command is currently running in the sandbox"""
+        if self._is_alive:
+            sub_result = self.command_process.poll()
+            if sub_result is None:
+                return True
+            self._is_alive = False
+        return False
+
+    def start(self, shell_command):
+        """Start a command running in the sandbox"""
+        if self.is_alive:
+            raise JailError("Tried to run command with one in progress.")
+        if self.jail:
             shell_command = self.jail.chroot_cmd + shell_command
             working_directory = None
         else:
-            self.jail = None
-
+            working_directory = self.working_directory
         shell_command = shlex.split(shell_command.replace('\\','/'))
         self.command_process = subprocess.Popen(shell_command,
                                                 stdin=subprocess.PIPE,
                                                 stdout=subprocess.PIPE,
                                                 stderr=subprocess.PIPE,
                                                 cwd=working_directory)
-        self.is_alive = not self.command_process is None
+        self._is_alive = True
         stdout_monitor = Thread(target=_monitor_input_channel, args=(self,))
         stdout_monitor.daemon = True
         stdout_monitor.start()
+
+    def kill(self):
+        """Stops the sandbox.
+
+        Stops down the sandbox, cleaning up any spawned processes, threads, and
+        other resources. The shell command running inside the sandbox may be
+        suddenly terminated.
+
+        """
+        if self.is_alive:
+            if self.jail:
+                self.jail.kill()
+            else:
+                try:
+                    self.command_process.kill()
+                except OSError:
+                    pass
+            self.command_process.wait()
 
     def release(self):
         """Release the sandbox for further use
@@ -196,25 +226,6 @@ class Sandbox:
             raise JailError("Jail released while still alive")
         if self.jail:
             self.jail.release()
-
-    def kill(self):
-        """Shuts down the sandbox.
-
-        Shuts down the sandbox, cleaning up any spawned processes, threads, and
-        other resources. The shell command running inside the sandbox may be
-        suddenly terminated.
-
-        """
-        if self.is_alive:
-            if self.jail:
-                self.jail.kill()
-            else:
-                try:
-                    self.command_process.kill()
-                    self.command_process.wait()
-                except OSError:
-                    pass
-            self.is_alive = False
 
     def pause(self):
         """Pause the process by sending a SIGSTOP to the child
@@ -270,15 +281,17 @@ class Sandbox:
             return False
         return True
 
-    def read_line(self):
+    def read_line(self, timeout=0):
         """Read line from child process
 
         Returns a line of the child process' stdout, if one isn't available
-        returns None.
+        within timeout seconds it returns None.
 
         """
+        if not self.is_alive:
+            timeout=0
         try:
-            return self.stdout_queue.get(block=False)
+            return self.stdout_queue.get(timeout)
         except Empty:
             return None
 
@@ -287,7 +300,7 @@ class Sandbox:
             return self.stderr_queue.get(block=False)
         except Empty:
             return None
-        
+
 def main():
     parser = OptionParser(usage="usage: %prog [options] <command to run>")
     parser.add_option("-d", "--directory", action="store", dest="working_dir",
@@ -298,9 +311,9 @@ def main():
     parser.add_option("-s", "--send-delay", action="store", dest="send_delay",
             type="float", default=0.0,
             help="Time in seconds to sleep after sending a line")
-    parser.add_option("-r", "--receive-delay", action="store",
-            dest="resp_delay", type="float", default=0.01,
-            help="Time in seconds to sleep before checking for a response line")
+    parser.add_option("-r", "--receive-wait", action="store",
+            dest="resp_wait", type="float", default=600,
+            help="Time in seconds to wait for another response line")
     parser.add_option("-j", "--jail", action="store_true", dest="secure",
             default=_SECURE_DEFAULT,
             help="Run in a secure jail")
@@ -311,23 +324,25 @@ def main():
         parser.error("Must include a command to run.\
                 \nRun with --help for more information.")
 
-    sandbox = Sandbox(options.working_dir, " ".join(args),
-            secure=options.secure)
-    for line in options.send_lines:
-        if not sandbox.write_line(line):
-            print("Could not send line '%s'" % (line,), file=sys.stderr)
-            sandbox.kill()
-            sys.exit(1)
-        print("sent: " + line)
-        time.sleep(options.send_delay)
-    while True:
-        time.sleep(options.resp_delay)
-        response = sandbox.read_line()
-        if response is None:
-            print("No more responses. Terminating.")
-            break
-        print("response: " + response)
-    sandbox.kill()
+    sandbox = Sandbox(options.working_dir, secure=options.secure)
+    try:
+        sandbox.start(" ".join(args))
+        for line in options.send_lines:
+            if not sandbox.write_line(line):
+                print("Could not send line '%s'" % (line,), file=sys.stderr)
+                sandbox.kill()
+                sys.exit(1)
+            print("sent: " + line)
+            time.sleep(options.send_delay)
+        while True:
+            response = sandbox.read_line(options.resp_wait)
+            if response is None:
+                print("No more responses. Terminating.")
+                break
+            print("response: " + response)
+        sandbox.kill()
+    finally:
+        sandbox.release()
 
 if __name__ == "__main__":
     main()

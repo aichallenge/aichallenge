@@ -36,7 +36,9 @@ def run_game(game, botcmds, options):
     try:
         # create bot sandboxes
         for b, bot in enumerate(botcmds):
-            sandbox = Sandbox(*bot)
+            bot_cwd, bot_cmd = bot
+            sandbox = Sandbox(bot_cwd)
+            sandbox.start(bot_cmd)
             bots.append(sandbox)
             bot_status.append('survived')
 
