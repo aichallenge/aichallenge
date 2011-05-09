@@ -1,5 +1,3 @@
-var fs = require('fs');
-
 ants = {
 	'bot': null,
 	'currentTurn': -1,
