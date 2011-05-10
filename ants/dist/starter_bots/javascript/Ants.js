@@ -80,8 +80,6 @@ ants = {
 					});
 				} else if (dataline[0] == 'd') {
 					exports.map[parseInt(dataline[1])][parseInt(dataline[2])] = {'type': exports.landTypes.DEAD, 'data': {
-						'row': parseInt(dataline[1]),
-						'col': parseInt(dataline[2]),
 						'owner': parseInt(dataline[3])
 					}};
 				}
