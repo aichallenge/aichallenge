@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+from __future__ import print_function
 import sys
 import os
 import json
@@ -11,6 +13,7 @@ import time
 import stat
 import platform
 import traceback
+import tempfile
 
 from optparse import OptionParser
 
@@ -161,12 +164,21 @@ class Worker:
         self.cloud = GameAPIClient( server_info['api_base_url'], server_info['api_key'])
         self.post_id = 0
         self.test_map = None
+        self.download_dirs = {}
 
     def submission_dir(self, submission_id):
-        return os.path.join(server_info["submissions_path"], "compiled", str(submission_id//1000), str(submission_id))
+        return os.path.join(server_info["compiled_path"], str(submission_id//1000), str(submission_id))
         
     def download_dir(self, submission_id):
-        return os.path.join(server_info["submissions_path"], "downloaded", str(submission_id//1000), str(submission_id))
+        if submission_id not in self.download_dirs:
+            tmp_dir = tempfile.mkdtemp(dir=server_info["compiled_path"])
+            self.download_dirs[submission_id] = tmp_dir
+        return self.download_dirs[submission_id]
+    
+    def clean_download(self, submission_id):
+        if submission_id in self.download_dirs:
+            os.rmdir(self.download_dirs[submission_id])
+            del self.download_dirs[submission_id]
 
     def download_submission(self, submission_id):
         submission_dir = self.submission_dir(submission_id)
@@ -226,15 +238,15 @@ class Worker:
         with CD(download_dir):
             if platform.system() == 'Windows':
                 zip_files = [
-                    ("entry.tar.gz", "7z x -y entry.tar.gz > NUL"),
-                    ("entry.tgz", "7z x -y entry.tgz > NUL"),
-                    ("entry.zip", "7z x -y entry.zip > NUL")
+                    ("entry.tar.gz", "7z x -obot -y entry.tar.gz > NUL"),
+                    ("entry.tgz", "7z x -obot -y entry.tgz > NUL"),
+                    ("entry.zip", "7z x -obot -y entry.zip > NUL")
                 ]
             else:
                 zip_files = [
-                    ("entry.tar.gz", "tar xfz entry.tar.gz > /dev/null 2> /dev/null"),
-                    ("entry.tgz", "tar xfz entry.tgz > /dev/null 2> /dev/null"),
-                    ("entry.zip", "unzip -u entry.zip > /dev/null 2> /dev/null")
+                    ("entry.tar.gz", "mkdir bot; tar xfz -C bot entry.tar.gz > /dev/null 2> /dev/null"),
+                    ("entry.tgz", "mkdir bot; tar xfz -C bot entry.tgz > /dev/null 2> /dev/null"),
+                    ("entry.zip", "unzip -u -dbot entry.zip > /dev/null 2> /dev/null")
                 ]
             found_archive_file = False
             for file_name, command in zip_files:
@@ -285,7 +297,8 @@ class Worker:
                     log.error("Unpack Error")
                     return False
             log.info("Compiling %s " % submission_id)
-            detected_lang, errors = compiler.compile_anything(download_dir)
+            bot_dir = os.path.join(download_dir, 'bot')
+            detected_lang, errors = compiler.compile_anything(bot_dir)
             if not detected_lang:
                 shutil.rmtree(download_dir)
                 log.error('\n'.join(errors))
@@ -295,8 +308,9 @@ class Worker:
             else:
                 if not os.path.exists(os.path.split(submission_dir)[0]):
                     os.makedirs(os.path.split(submission_dir)[0])
-                os.rename(download_dir, submission_dir)
                 if not run_test or self.functional_test(submission_id):
+                    os.rename(download_dir, submission_dir)
+                    del self.download_dirs[submission_id]
                     report(STATUS_RUNABLE)
                     return True
                 else:
@@ -306,7 +320,7 @@ class Worker:
 
     def check_hash(self, submission_id):
         try:
-            for filename in os.listdir(os.path.join(server_info["submissions_path"], str(submission_id))):
+            for filename in os.listdir(os.path.join(server_info["compiled_path"], str(submission_id))):
                 if filename.endswith(".zip") or filename.endswith(".tgz"):
                     log.info("%s: %s" % (filename, hash_file_sha1(filename)))
         except:
@@ -346,8 +360,8 @@ class Worker:
         game = Ants(options)
         # options['verbose_log'] = sys.stdout
         # options['error_logs'] = [sys.stdout, None]
-        submission_dir = self.submission_dir(submission_id)
-        bots = [(submission_dir, compiler.get_run_cmd(submission_dir)),
+        bot_dir = os.path.join(self.submission_dir(submission_id), 'bot')
+        bots = [(bot_dir, compiler.get_run_cmd(bot_dir)),
                 ("../ants/submission_test/", "python TestBot.py")]
         result = run_game(game, bots, options)
         log.info(result['status'][0])
@@ -378,18 +392,13 @@ class Worker:
                 if self.compile(submission_id, run_test=False):
                     submission_dir = self.submission_dir(submission_id)
                     run_cmd = compiler.get_run_cmd(submission_dir)
-                    #run_dir = tempfile.mkdtemp(dir=server_info["submissions_path"])
-                    bots.append((submission_dir, run_cmd))
+                    #run_dir = tempfile.mkdtemp(dir=server_info["compiled_path"])
+                    bot_dir = os.path.join(submission_dir, 'bot')
+                    bots.append((bot_dir, run_cmd))
                     #shutil.copytree(submission_dir, run_dir)
                 else:
+                    self.clean_download(submission_id)
                     raise Exception('bot', 'Can not compile bot %s' % submission_id)
-            output_dir = os.path.join(server_info["root_path"], "games", str(matchup_id))
-            if not os.path.exists(output_dir):
-                try:
-                    os.makedirs(output_dir)
-                except:
-                    pass
-            #options['verbose_log'] = sys.stdout
             options['game_id'] = matchup_id
             log.debug((game.__class__.__name__, task['submissions'], options, matchup_id))
             result = run_game(game, bots, options)
@@ -414,7 +423,8 @@ class Worker:
                 log.info("Recieved task: %s" % task)
                 if task['task'] == 'compile':
                     submission_id = int(task['submission_id'])
-                    self.compile(submission_id, True)
+                    if not self.compile(submission_id, True):
+                        self.clean_download(submission_id)
                 elif task['task'] == 'game':
                     self.game(task, True)
                 else:
@@ -453,6 +463,9 @@ def main(argv):
     (opts, args) = parser.parse_args(argv)
     
     worker = Worker()
+
+    # if the worker is not run in task mode, it will not clean up the download
+    #    dir, so that debugging can be done on what had been downloaded/unzipped
 
     # print hash values for submission, must be downloaded
     if opts.submission_id != 0 and opts.hash:

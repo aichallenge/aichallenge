@@ -9,11 +9,11 @@ $server_info = array(
     "mailer_name" => "AI Contest",
     "mailer_password" => "",
     "submissions_open" => True,
-    "submissions_path" => "{sub_dir}",
+    "upload_path" => "{upload_dir}",
     "maps_path" => "{map_dir}",
     "replay_path" => "{replay_dir}",
     "api_create_key" => "",
-    "api_log" => "{api_log_file}"
+    "api_log" => "{log_dir}/api_log.txt"
 );
 
 ?>

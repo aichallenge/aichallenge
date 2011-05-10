@@ -288,7 +288,12 @@ def get_options(argv):
     """ Get all the options required for setup """
     current_username = os.environ.get("SUDO_USER", getpass.getuser())
     top_level = os.path.abspath(os.path.join(TEMPLATE_DIR, ".."))
-    root_dir, local_repo = os.path.split(top_level)
+    root_dir = os.path.split(top_level)[0]
+    map_dir = os.path.join(root_dir, 'maps')
+    replay_dir = os.path.join(root_dir, 'games')
+    upload_dir = os.path.join(root_dir, 'uploads')
+    compiled_dir = os.path.join(root_dir, 'compiled')
+    log_dir = os.path.join(root_dir, 'logs')
     default_setup = {
         "update_system": True,
         "install_required": True,
@@ -297,9 +302,14 @@ def get_options(argv):
         "packages_only": False,
         "username": current_username,
         "root_dir": root_dir,
-        "local_repo": local_repo,
+        "map_dir": map_dir,
+        "replay_dir": replay_dir,
+        "upload_dir": upload_dir,
+        "compiled_dir": compiled_dir,
+        "log_dir": log_dir,
+        "local_repo": top_level,
         "create_jails": True,
-        "api_url": "http://ai-contest.com/",
+        "api_url": "ai-contest.com",
         "api_key": "",
         "install_cronjob": False,
         "run_worker": False,

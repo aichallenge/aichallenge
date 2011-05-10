@@ -125,7 +125,10 @@ def setup_website(opts):
         with open(site_filename, "r") as site_file:
             site_template = site_file.read()
         site_contents = site_template.format(web_hostname="ai-contest.com",
-                web_root=website_root, log_dir=log_dir)
+                web_root=website_root,
+                log_dir=log_dir,
+                map_dir=map_dir,
+                replay_dir=replay_dir)
         with open(site_config, "w") as site_file:
             site_file.write(site_contents)
         if opts.website_as_default:
@@ -176,7 +179,12 @@ def get_options(argv):
     current_username = os.environ.get("SUDO_USER", getpass.getuser())
     # find default paths
     top_level = os.path.abspath(os.path.join(TEMPLATE_DIR, ".."))
-    root_dir, local_repo = os.path.split(top_level)
+    root_dir = os.path.split(top_level)[0]
+    map_dir = os.path.join(root_dir, 'maps')
+    replay_dir = os.path.join(root_dir, 'games')
+    upload_dir = os.path.join(root_dir, 'uploads')
+    compiled_dir = os.path.join(root_dir, 'compiled')
+    log_dir = os.path.join(root_dir, 'logs')
     default_install = {
         "installs": set([install_manager_packages, install_website_packages]),
         "packages_only": False,
@@ -185,7 +193,12 @@ def get_options(argv):
         "database_user": current_username, "database_password": "",
         "database_name": "aichallenge",
         "root_dir": root_dir,
-        "local_repo": local_repo,
+        "map_dir": map_dir,
+        "replay_dir": replay_dir,
+        "upload_dir": upload_dir,
+        "compiled_dir": compiled_dir,
+        "log_dir": log_dir,
+        "local_repo": top_level,
         "website_as_default": False,
         "website_hostname": "ai-contest.com",
         "interactive": True,

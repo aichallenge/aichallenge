@@ -80,7 +80,7 @@ if ($gamedata == null) {
         $gamedata->date = date(DATE_ATOM);
         $gamedata->game_id = $game_id;
         // create pathname to replay file
-        $replay_dir = $server_info["replay_path"] . strval((int) ($game_id / 10000));
+        $replay_dir = $server_info["replay_path"] . "/" . strval((int) ($game_id / 1000000)) . "/" . strval((int) (($game_id / 1000) % 1000));
         if (!file_exists($replay_dir)) {
             api_log($replay_dir);
             mkdir($replay_dir);
