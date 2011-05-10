@@ -6,7 +6,6 @@ server_info = {{
   "mail_username": "donotreply@ai-contest.com",
   "mail_name": "AI Contest",
   "mail_password": "",
-  "root_path": "{contest_root}",
   "maps_path": "{map_dir}",
   "submissions_path": "{sub_dir}"
 }}

@@ -1,12 +1,21 @@
 server_info = {{
-  "mail_username": "donotreply@ai-contest.com",
-  "mail_name": "AI Contest",
-  "mail_password": "",
-  "root_path": "{contest_root}",
-  "repo_path": "{repo_dir}",
-  "maps_path": "{map_dir}",
-  "submissions_path": "{compiled_dir}",
-  "api_base_url": "{api_url}",
-  "api_key": "{api_key}",
+    "mail_username": "donotreply@ai-contest.com",
+    "mail_name": "AI Contest",
+    "mail_password": "",
+    "repo_path": "{repo_dir}",
+    "root_path": "{contest_root}",
+    "maps_path": "{map_dir}",
+    "submissions_path": "{compiled_dir}",
+    "api_base_url": "{api_url}",
+    "api_key": "{api_key}",
+    "game_options": {{
+        "turns": 1000,
+        "loadtime": 3000,
+        "turntime": 1000,
+        "viewradius2": 55,
+        "attackradius2": 4,
+        "spawnradius2": 1,
+        "location": "{api_url}"
+    }}
 }}
 
