@@ -6,7 +6,7 @@
     for ubuntu, `sudo useradd -d /home/contest -m -s /bin/bash contest`
 * Switch to contest user: `sudo su contest; cd ~`
 * `git clone` the repository inside
-* Initialize the git submodules, see the README for more details.
+* Initialize the git submodules. `git submodule init; git submodule update`
 * `sudo python setup/server_setup.py`
 
     * Leave blank for root mysql password (TODO: Fix this) if there's no mysql installed (change it later after install).
