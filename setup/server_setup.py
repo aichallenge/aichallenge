@@ -192,7 +192,7 @@ def interactive_options(options):
     webname = raw_input("Website hostname? [%s] " % (webname,))
     options.website_hostname = webname if webname else options.website_hostname
     enable_email = options.enable_email
-    enable_email = raw_input("Enable email? [%s] " % (enable_email,))
+    enable_email = get_choice("Make contest site the default website?", enable_email)
     options.enable_email = enable_email
     default = options.website_as_default
     default = get_choice("Make contest site the default website?", default)
