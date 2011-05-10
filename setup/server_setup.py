@@ -29,14 +29,19 @@ def install_website_packages():
 
 def setup_base_files(opts):
     """ Setup all the contest specific files and directories """
-    sub_dir = os.path.join(opts.root_dir, "submissions")
-    if not os.path.exists(sub_dir):
-        os.mkdir(sub_dir)
-        run_cmd("chown {0}:www-data {1}".format(opts.username, sub_dir))
-    map_dir = os.path.join(opts.root_dir, "maps")
-    if not os.path.exists(map_dir):
-        os.mkdir(map_dir)
-        run_cmd("chown {0}:{0} {1}".format(opts.username, map_dir))
+    if not os.path.exists(opts.upload_dir):
+        os.mkdir(opts.upload_dir)
+        run_cmd("chown {0}:www-data {1}".format(opts.username, opts.upload_dir))
+    if not os.path.exists(opts.compiled_dir):
+        os.mkdir(opts.compiled_dir)
+        run_cmd("chown {0}:{0} {1}".format(opts.username, opts.map_dir))
+    if not os.path.exists(opts.replay_dir):
+        os.mkdir(opts.replay_dir)
+        run_cmd("chown {0}:{0} {1}".format(opts.username, opts.replay_dir))
+    if not os.path.exists(opts.log_dir):
+        os.mkdir(opts.log_dir)
+        run_cmd("chown {0}:www-data {1}".format(opts.username, opts.log_dir))
+        os.chmod(log_dir, 0775)
     si_filename = os.path.join(TEMPLATE_DIR, "server_info.py.template")
     with open(si_filename, 'r') as si_file:
         si_template = si_file.read()
@@ -44,8 +49,8 @@ def setup_base_files(opts):
             database_user=opts.database_user,
             database_password=opts.database_password,
             database_name=opts.database_name,
-            map_dir=map_dir, sub_dir=sub_dir)
-    manager_dir = os.path.join(opts.root_dir, opts.local_repo, "manager")
+            map_dir=opts.map_dir, upload_dir=opts.upload_dir)
+    manager_dir = os.path.join(opts.local_repo, "manager")
     with CD(manager_dir):
         if not os.path.exists("server_info.py"):
             with open("server_info.py", "w") as si_file:
@@ -87,7 +92,7 @@ def setup_database(opts):
         password_opt = ""
         if opts.database_password:
             password_opt = "-p'%s'" % (opts.database_password,)
-        schema_dir = os.path.join(opts.root_dir, opts.local_repo, "sql")
+        schema_dir = os.path.join(opts.local_repo, "sql")
         schema_files = os.listdir(schema_dir)
         schema_files = [f for f in schema_files if f.endswith(".sql")]
         schema_files.sort()
@@ -98,12 +103,13 @@ def setup_database(opts):
 
 def setup_website(opts):
     """ Configure apache to serve the website and set a server_info.php """
-    website_root = os.path.join(opts.root_dir, opts.local_repo, "website")
-    subs_dir = os.path.join(opts.root_dir, "submissions")
+    website_root = os.path.join(opts.local_repo, "website")
     si_filename = os.path.join(TEMPLATE_DIR, "server_info.php.template")
     with open(si_filename, 'r') as si_file:
         si_template = si_file.read()
-    si_contents = si_template.format(sub_dir=subs_dir,
+    si_contents = si_template.format(upload_dir=opts.upload_dir,
+            map_dir=opts.map_dir, replay_dir=opts.replay_dir,
+            log_dir=opts.log_dir,
             database_user=opts.database_user,
             database_password=opts.database_password,
             database_name=opts.database_name,
@@ -114,11 +120,6 @@ def setup_website(opts):
                 si_file.write(si_contents)
     if not os.path.exists(os.path.join(website_root, "aicontest.tgz")):
         create_worker_archive.main(website_root)
-    log_dir = os.path.join(opts.root_dir, "html_logs")
-    if not os.path.exists(log_dir):
-       os.mkdir(log_dir)
-       run_cmd("chown %s:www-data %s" % (opts.username, log_dir))
-       os.chmod(log_dir, 0775)
     site_config = "/etc/apache2/sites-available/ai-contest"
     if not os.path.exists(site_config):
         site_filename = os.path.join(TEMPLATE_DIR, "apache_site.template")
@@ -126,9 +127,9 @@ def setup_website(opts):
             site_template = site_file.read()
         site_contents = site_template.format(web_hostname="ai-contest.com",
                 web_root=website_root,
-                log_dir=log_dir,
-                map_dir=map_dir,
-                replay_dir=replay_dir)
+                log_dir=opts.log_dir,
+                map_dir=opts.map_dir,
+                replay_dir=opts.replay_dir)
         with open(site_config, "w") as site_file:
             site_file.write(site_contents)
         if opts.website_as_default:
@@ -138,6 +139,7 @@ def setup_website(opts):
         if os.path.exists(enabled_link):
             os.remove(enabled_link)
         os.symlink(site_config, enabled_link)
+        run_cmd("a2enmod rewrite") # FIXME: ubuntu specific
         run_cmd("/etc/init.d/apache2 restart")
 
 def interactive_options(options):
@@ -167,6 +169,15 @@ def interactive_options(options):
     repo_dir = options.local_repo
     repo_dir = raw_input("Directory of source repository? [%s] " % (repo_dir,))
     options.local_repo = repo_dir if repo_dir else options.local_repo
+    upload_dir = options.upload_dir
+    upload_dir = raw_input("Directory of uploaded submissions? [%s] " % (upload_dir,))
+    options.upload_dir = upload_dir if upload_dir else options.upload_dir
+    map_dir = options.map_dir
+    map_dir = raw_input("Directory of game maps? [%s] " % (map_dir,))
+    options.map_dir = map_dir if map_dir else options.map_dir
+    replay_dir = options.replay_dir
+    replay_dir = raw_input("Directory of game replays? [%s] " % (replay_dir,))
+    options.replay_dir = replay_dir if replay_dir else options.replay_dir
     webname = options.website_hostname
     webname = raw_input("Website hostname? [%s] " % (webname,))
     options.website_hostname = webname if webname else options.website_hostname
@@ -246,5 +257,8 @@ def main(argv=["server_setup.py"]):
     setup_website(opts)
 
 if __name__ == "__main__":
-    main(sys.argv)
+    try:
+        main(sys.argv)
+    except KeyboardInterrupt:
+        print('Setup Aborted')
 
