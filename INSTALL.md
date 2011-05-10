@@ -3,6 +3,8 @@
 * Install Ubuntu 11.04
 * Install git and a few of your favorite admin tools
 * Create the `contest` user
+    for ubuntu, `sudo useradd -d /home/contest -m -s /bin/bash contest`
+* Switch to contest user: `sudo su contest`
 * `git clone` the repository inside
 * Initialize the git submodules, see the README for more details.
 * `sudo python setup/server_setup.py`
