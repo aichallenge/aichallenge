@@ -5,11 +5,15 @@ var bot = {
 		ants.finishTurn();
     },
     'onTurn': function() {
-		for (var i in ants.ants) {
-			var ant = ants.ants[i];
-			if (ant.owner == 0) {
-				if (ants.tileInDirection(ant.row, ant.col, 'N') != ants.landTypes.WATER) {
-					ants.issueOrder(ant.row, ant.col, 'N');
+		var myAnts = ants.myAnts();
+		var directions = ['N', 'E', 'S', 'W'];
+		for (var i in myAnts) {
+			var ant = myAnts[i];
+			for (dirI in directions) {
+				var dir = directions[dirI];
+				if (ants.passable(ant.row, ant.col, dir)) {
+					ants.issueOrder(ant.row, ant.col, dir);
+					break;
 				}
 			}
 		}

@@ -5,6 +5,7 @@ ants = {
 	'map': [],
 	'orders': [],
 	'ants': [],
+	'food': [],
 	'landTypes': {
 		'LAND': 0,
 		'DEAD': 1,
@@ -56,6 +57,7 @@ ants = {
 					}
 				}
 				exports.ants = [];
+				exports.food = [];
 			}
 		} else {
 			if (exports.currentTurn == 0 && line != 'ready') {
@@ -67,6 +69,10 @@ ants = {
 					exports.map[parseInt(dataline[1])][parseInt(dataline[2])] = {'type': exports.landTypes.WATER, 'data': {}};
 				} else if (dataline[0] == 'f') {
 					exports.map[parseInt(dataline[1])][parseInt(dataline[2])] = {'type': exports.landTypes.FOOD, 'data': {}};
+					exports.food.push({
+						'row': parseInt(dataline[1]),
+						'col': parseInt(dataline[2])
+					});
 				} else if (dataline[0] == 'r') {
 					exports.map[parseInt(dataline[1])][parseInt(dataline[2])] = {'type': exports.landTypes.LAND, 'data': {}};//Introduce new landtype?
 				} else if (dataline[0] == 'a') {
@@ -126,6 +132,72 @@ ants = {
 			newcol = 0;
 		}
 		return exports.map[newrow][newcol];
+	},
+	'myAnts': function() {
+		var result = [];
+		for (var i in exports.ants) {
+			if (exports.ants[i].owner == 0) {
+				result.push(exports.ants[i]);
+			}
+		}
+		return result;
+	},
+	'enemyAnts': function() {
+		var result = [];
+		for (var i in exports.ants) {
+			if (exports.ants[i].owner != 0) {
+				result.push(exports.ants[i]);
+			}
+		}
+		return result;
+	},
+	'passable': function(row, col, direction) {
+		return (exports.tileInDirection(row, col, direction).type != exports.landTypes.WATER);
+	},
+	'distance': function(fromRow, fromCol, toRow, toCol) {
+		var dr = Math.min(Math.abs(fromRow - toRow), exports.config.rows - Math.abs(fromRow - toRow));
+		var dc = Math.min(Math.abs(fromCol - toCol), exports.config.cols - Math.abs(fromCol - toCol));
+		return Math.sqrt((dr * dr) + (dc * dc));
+	},
+	'direction': function(fromRow, fromCol, toRow, toCol) {
+		var d = [];
+		fromRow = fromRow % exports.config.rows;
+		toRow = toRow % exports.config.rows;
+		fromCol = fromCol % exports.config.cols;
+		toCol = toCol % exports.config.cols;
+		
+		if (fromRow < toRow) {
+			if (toRow - fromRow >= exports.config.rows/2) {
+				d.push('N');
+			}
+			if (toRow - fromRow <= exports.config.rows/2) {
+				d.push('S');
+			}
+		} else if (toRow < fromRow) {
+			if (fromRow - toRow >= exports.config.rows/2) {
+				d.push('S');
+			}
+			if (fromRow - toRow <= exports.config.rows/2) {
+				d.push('N');
+			}
+		}
+		
+		if (fromCol < toCol) {
+			if (toCol - fromCol >= exports.config.cols/2) {
+				d.push('W');
+			}
+			if (toCol - fromCol <= exports.config.cols/2) {
+				d.push('E');
+			}
+		} else if (toCol < fromCol) {
+			if (fromCol - toCol >= exports.config.cols/2) {
+				d.push('E');
+			}
+			if (fromCol - toCol <= exports.config.cols/2) {
+				d.push('W');
+			}
+		}
+		return d;
 	}
 };
 exports.currentTurn = ants.currentTurn;
@@ -138,4 +210,10 @@ exports.issueOrder = ants.issueOrder;
 exports.finishTurn = ants.finishTurn;
 exports.orders = ants.orders;
 exports.ants = ants.ants;
+exports.myAnts = ants.myAnts;
+exports.enemyAnts = ants.enemyAnts;
+exports.food = ants.food;
 exports.tileInDirection = ants.tileInDirection;
+exports.passable = ants.passable;
+exports.distance = ants.distance;
+exports.direction = ants.direction;
