@@ -337,7 +337,10 @@ class Worker:
         game = Ants(options)
         # options['verbose_log'] = sys.stdout
         # options['error_logs'] = [sys.stdout, None]
-        bot_dir = os.path.join(self.submission_dir(submission_id), 'bot')
+        if submission_id in self.download_dirs:
+            bot_dir = os.path.join(self.download_dirs[submission_id], 'bot')
+        else:
+            bot_dir = os.path.join(self.submission_dir(submission_id), 'bot')
         bots = [(bot_dir, compiler.get_run_cmd(bot_dir)),
                 ("../ants/submission_test/", "python TestBot.py")]
         result = run_game(game, bots, options)
