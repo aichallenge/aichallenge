@@ -1,4 +1,4 @@
-ants = {
+exports.ants = {
 	'bot': null,
 	'currentTurn': -1,
 	'config': {},
@@ -14,13 +14,14 @@ ants = {
 		'FOOD': 4
 	},
 	'start': function(botInput) {
-		exports.bot = botInput;
+		this.bot = botInput;
 		process.stdin.resume();
 		process.stdin.setEncoding('utf8');
+		var thisoutside = this;
 		process.stdin.on('data', function(chunk) {
 			var lines = chunk.split("\n");
 			for (var i in lines) {
-				exports.processLine(lines[i]);
+				thisoutside.processLine(lines[i]);
 			}
 		});
 	},
@@ -28,64 +29,64 @@ ants = {
 		line = line.trim();
 
 		if (line == 'ready') {
-			for (var row = 0; row < exports.config.rows; ++row) {
-				for (var col = 0; col < exports.config.cols; ++col) {
+			for (var row = 0; row < this.config.rows; ++row) {
+				for (var col = 0; col < this.config.cols; ++col) {
 					if (col == 0) {
-						exports.map[row] = [];
+						this.map[row] = [];
 					}
-					exports.map[row][col] = {'type': exports.landTypes.LAND};
+					this.map[row][col] = {'type': this.landTypes.LAND};
 				}
 			}
-			exports.bot.onReady();
+			this.bot.onReady();
 			return;
 		} else if(line == 'go') {
-			exports.bot.onTurn();
+			this.bot.onTurn();
 			return;
 		} else if(line == 'end') {
-			exports.bot.onEnd();
+			this.bot.onEnd();
 			return;
 		}
 		if (line.substring(0,5) == 'turn ') {
-			exports.currentTurn = parseInt(line.substring(5));
-			if (exports.currentTurn > 0) {
+			this.currentTurn = parseInt(line.substring(5));
+			if (this.currentTurn > 0) {
 				//Reset map except for water:
-				for (var row in exports.map) {
-					for (var col in exports.map[row]) {
-						if (exports.map[row][col].type != exports.landTypes.WATER) {
-							exports.map[row][col] = {'type': exports.landTypes.LAND};
+				for (var row in this.map) {
+					for (var col in this.map[row]) {
+						if (this.map[row][col].type != this.landTypes.WATER) {
+							this.map[row][col] = {'type': this.landTypes.LAND};
 						}
 					}
 				}
-				exports.ants = [];
-				exports.food = [];
+				this.ants = [];
+				this.food = [];
 			}
 		} else {
-			if (exports.currentTurn == 0 && line != 'ready') {
+			if (this.currentTurn == 0 && line != 'ready') {
 				var configline = line.split(' ');
-				exports.config[configline[0]] = configline[1];
+				this.config[configline[0]] = configline[1];
 			} else {
 				var dataline = line.split(' ');
 				if (dataline[0] == 'w') {
-					exports.map[parseInt(dataline[1])][parseInt(dataline[2])] = {'type': exports.landTypes.WATER, 'data': {}};
+					this.map[parseInt(dataline[1])][parseInt(dataline[2])] = {'type': this.landTypes.WATER, 'data': {}};
 				} else if (dataline[0] == 'f') {
-					exports.map[parseInt(dataline[1])][parseInt(dataline[2])] = {'type': exports.landTypes.FOOD, 'data': {}};
-					exports.food.push({
+					this.map[parseInt(dataline[1])][parseInt(dataline[2])] = {'type': this.landTypes.FOOD, 'data': {}};
+					this.food.push({
 						'row': parseInt(dataline[1]),
 						'col': parseInt(dataline[2])
 					});
 				} else if (dataline[0] == 'r') {
-					exports.map[parseInt(dataline[1])][parseInt(dataline[2])] = {'type': exports.landTypes.LAND, 'data': {}};//Introduce new landtype?
+					this.map[parseInt(dataline[1])][parseInt(dataline[2])] = {'type': this.landTypes.LAND, 'data': {}};//Introduce new landtype?
 				} else if (dataline[0] == 'a') {
-					exports.map[parseInt(dataline[1])][parseInt(dataline[2])] = {'type': exports.landTypes.ANT, 'data': {
+					this.map[parseInt(dataline[1])][parseInt(dataline[2])] = {'type': this.landTypes.ANT, 'data': {
 						'owner': parseInt(dataline[3])
 					}};
-					exports.ants.push({
+					this.ants.push({
 						'row': parseInt(dataline[1]),
 						'col': parseInt(dataline[2]),
 						'owner': parseInt(dataline[3])
 					});
 				} else if (dataline[0] == 'd') {
-					exports.map[parseInt(dataline[1])][parseInt(dataline[2])] = {'type': exports.landTypes.DEAD, 'data': {
+					this.map[parseInt(dataline[1])][parseInt(dataline[2])] = {'type': this.landTypes.DEAD, 'data': {
 						'owner': parseInt(dataline[3])
 					}};
 				}
@@ -93,18 +94,18 @@ ants = {
 		}
 	},
 	'issueOrder': function(row, col, direction) {
-		exports.orders.push({
+		this.orders.push({
 			'row': parseInt(row),
 			'col': parseInt(col),
 			'direction': direction
 		});
 	},
 	'finishTurn': function() {
-		for (var i in exports.orders) {
-			var order = exports.orders[i];
+		for (var i in this.orders) {
+			var order = this.orders[i];
 			console.log('o '+order.row+' '+order.col+' '+order.direction);
 		}
-		exports.orders = [];
+		this.orders = [];
 		console.log('go');
 	},
 	'tileInDirection': function(row, col, direction) {
@@ -122,98 +123,81 @@ ants = {
 		var newrow = row + rowd;
 		var newcol = col + cold;
 		if (newrow < 0) {
-			newrow = exports.config.rows-1;
-		} else if (newrow > exports.config.rows-1) {
+			newrow = this.config.rows-1;
+		} else if (newrow > this.config.rows-1) {
 			newrow = 0;
 		}
 		if (newcol < 0) {
-			newcol = exports.config.cols-1;
-		} else if (newcol > exports.config.cols-1) {
+			newcol = this.config.cols-1;
+		} else if (newcol > this.config.cols-1) {
 			newcol = 0;
 		}
-		return exports.map[newrow][newcol];
+		return this.map[newrow][newcol];
 	},
 	'myAnts': function() {
 		var result = [];
-		for (var i in exports.ants) {
-			if (exports.ants[i].owner == 0) {
-				result.push(exports.ants[i]);
+		for (var i in this.ants) {
+			if (this.ants[i].owner == 0) {
+				result.push(this.ants[i]);
 			}
 		}
 		return result;
 	},
 	'enemyAnts': function() {
 		var result = [];
-		for (var i in exports.ants) {
-			if (exports.ants[i].owner != 0) {
-				result.push(exports.ants[i]);
+		for (var i in this.ants) {
+			if (this.ants[i].owner != 0) {
+				result.push(this.ants[i]);
 			}
 		}
 		return result;
 	},
 	'passable': function(row, col, direction) {
-		return (exports.tileInDirection(row, col, direction).type != exports.landTypes.WATER);
+		return (this.tileInDirection(row, col, direction).type != this.landTypes.WATER);
 	},
 	'distance': function(fromRow, fromCol, toRow, toCol) {
-		var dr = Math.min(Math.abs(fromRow - toRow), exports.config.rows - Math.abs(fromRow - toRow));
-		var dc = Math.min(Math.abs(fromCol - toCol), exports.config.cols - Math.abs(fromCol - toCol));
+		var dr = Math.min(Math.abs(fromRow - toRow), this.config.rows - Math.abs(fromRow - toRow));
+		var dc = Math.min(Math.abs(fromCol - toCol), this.config.cols - Math.abs(fromCol - toCol));
 		return Math.sqrt((dr * dr) + (dc * dc));
 	},
 	'direction': function(fromRow, fromCol, toRow, toCol) {
 		var d = [];
-		fromRow = fromRow % exports.config.rows;
-		toRow = toRow % exports.config.rows;
-		fromCol = fromCol % exports.config.cols;
-		toCol = toCol % exports.config.cols;
+		fromRow = fromRow % this.config.rows;
+		toRow = toRow % this.config.rows;
+		fromCol = fromCol % this.config.cols;
+		toCol = toCol % this.config.cols;
 		
 		if (fromRow < toRow) {
-			if (toRow - fromRow >= exports.config.rows/2) {
+			if (toRow - fromRow >= this.config.rows/2) {
 				d.push('N');
 			}
-			if (toRow - fromRow <= exports.config.rows/2) {
+			if (toRow - fromRow <= this.config.rows/2) {
 				d.push('S');
 			}
 		} else if (toRow < fromRow) {
-			if (fromRow - toRow >= exports.config.rows/2) {
+			if (fromRow - toRow >= this.config.rows/2) {
 				d.push('S');
 			}
-			if (fromRow - toRow <= exports.config.rows/2) {
+			if (fromRow - toRow <= this.config.rows/2) {
 				d.push('N');
 			}
 		}
 		
 		if (fromCol < toCol) {
-			if (toCol - fromCol >= exports.config.cols/2) {
+			if (toCol - fromCol >= this.config.cols/2) {
 				d.push('W');
 			}
-			if (toCol - fromCol <= exports.config.cols/2) {
+			if (toCol - fromCol <= this.config.cols/2) {
 				d.push('E');
 			}
 		} else if (toCol < fromCol) {
-			if (fromCol - toCol >= exports.config.cols/2) {
+			if (fromCol - toCol >= this.config.cols/2) {
 				d.push('E');
 			}
-			if (fromCol - toCol <= exports.config.cols/2) {
+			if (fromCol - toCol <= this.config.cols/2) {
 				d.push('W');
 			}
 		}
 		return d;
 	}
 };
-exports.currentTurn = ants.currentTurn;
-exports.start = ants.start;
-exports.processLine = ants.processLine;
-exports.landTypes = ants.landTypes;
-exports.config = ants.config;
-exports.map = ants.map;
-exports.issueOrder = ants.issueOrder;
-exports.finishTurn = ants.finishTurn;
-exports.orders = ants.orders;
-exports.ants = ants.ants;
-exports.myAnts = ants.myAnts;
-exports.enemyAnts = ants.enemyAnts;
-exports.food = ants.food;
-exports.tileInDirection = ants.tileInDirection;
-exports.passable = ants.passable;
-exports.distance = ants.distance;
-exports.direction = ants.direction;

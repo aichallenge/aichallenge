@@ -1,4 +1,4 @@
-var ants = require('./Ants');
+var ants = require('./Ants').ants;
 
 var bot = {
     'onReady': function() {
