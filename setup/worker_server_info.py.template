@@ -5,6 +5,7 @@ server_info = {{
     "repo_path": "{repo_dir}",
     "maps_path": "{map_dir}",
     "compiled_path": "{compiled_dir}",
+    "logs_path": "{log_dir}",
     "api_base_url": "http://{api_url}/",
     "api_key": "{api_key}",
     "game_options": {{

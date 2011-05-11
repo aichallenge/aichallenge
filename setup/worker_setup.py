@@ -10,6 +10,7 @@ from optparse import OptionParser, SUPPRESS_HELP
 
 from install_tools import CD, Environ, install_apt_packages, run_cmd
 from install_tools import append_line, file_contains, get_choice, get_password, check_ubuntu_version
+from socket import getfqdn 
 
 TEMPLATE_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -182,11 +183,11 @@ def create_jail_group(options):
     if not file_contains(limits_conf, "@jailusers"):
         # limit jailuser processes to:
         # 10 processes or system threads
-        append_line(limits_conf, "@jailusers hard nproc 10 # ai-contest")
+        append_line(limits_conf, "@jailusers hard nproc 10 # " + options.api_url)
         # 20 minutes of cpu time
-        append_line(limits_conf, "@jailusers hard cpu 20 # ai-contest")
+        append_line(limits_conf, "@jailusers hard cpu 20 # " + options.api_url)
         # slightly more than 1GB of ram
-        append_line(limits_conf, "@jailusers hard rss 1048600 # ai-contest")
+        append_line(limits_conf, "@jailusers hard rss 1048600 # " + options.api_url)
     if not file_contains("/etc/sudoers",
             "^%s.+jailusers" % (options.username,)):
         org_mode = os.stat("/etc/sudoers")[0]
@@ -309,7 +310,7 @@ def get_options(argv):
         "log_dir": log_dir,
         "local_repo": top_level,
         "create_jails": True,
-        "api_url": "ai-contest.com",
+        "api_url":  '.'.join(split(getfqdn(),'.')[1:]),
         "api_key": "",
         "install_cronjob": False,
         "run_worker": False,
@@ -382,7 +383,7 @@ def main(argv=["worker_setup.py"]):
     start_script = os.path.join(opts.root_dir, opts.local_repo,
             "worker/start_worker.sh")
     if opts.install_cronjob:
-        cron_file = "/etc/cron.d/ai-contest"
+        cron_file = "/etc/cron.d/" + opts.api_url
         if not file_contains(cron_file, start_script):
             append_line(cron_file, "@reboot root %s" % (start_script,))
     if opts.run_worker:

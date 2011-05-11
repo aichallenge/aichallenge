@@ -14,7 +14,8 @@ import os
 # Set up logging
 log = logging.getLogger('manager')
 log.setLevel(logging.INFO)
-handler = logging.handlers.RotatingFileHandler("manager.log",
+log_file = os.path.join(server_info['logs_path'], 'manager.log')
+handler = logging.handlers.RotatingFileHandler(log_file,
                                                maxBytes=1000000,
                                                backupCount=5)
 handler.setLevel(logging.INFO)

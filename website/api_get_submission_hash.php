@@ -30,8 +30,6 @@ if (file_exists("entry.zip")) {
 }
 
 header("Content-type: application/json");
-echo "{ \"hash\": \"";
-passthru($server_info["manager_path"] . 'submission_hash.py ' . $file);
-echo "\" }\n";
+echo "{ \"hash\": \"".md5_file($file)."\" }\n";
 
 ?>

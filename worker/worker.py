@@ -26,7 +26,8 @@ from engine import run_game
 # Set up logging
 log = logging.getLogger('worker')
 log.setLevel(logging.INFO)
-handler = logging.handlers.RotatingFileHandler("worker.log",
+log_file = os.path.join(server_info['logs_path'], 'worker.log')
+handler = logging.handlers.RotatingFileHandler(log_file,
                                                maxBytes=1000000,
                                                backupCount=5)
 handler.setLevel(logging.INFO)
@@ -177,7 +178,8 @@ class Worker:
     
     def clean_download(self, submission_id):
         if submission_id in self.download_dirs:
-            os.rmdir(self.download_dirs[submission_id])
+            if os.path.exists(self.download_dirs[submission_id]):
+                os.rmdir(self.download_dirs[submission_id])
             del self.download_dirs[submission_id]
 
     def download_submission(self, submission_id):
@@ -186,20 +188,17 @@ class Worker:
         if os.path.exists(submission_dir):
             log.info("Already downloaded and compiled: %s..." % submission_id)
             return True
-        elif os.path.exists(download_dir):
+        elif len(os.listdir(download_dir)) > 0:
             log.info("Already downloaded: %s..." % submission_id)
             return True
         else:
             log.info("Downloading %s..." % submission_id)
-            try:
-                os.makedirs(download_dir)
-            except:
-                pass
             os.chmod(download_dir, 0755)
             filename = self.cloud.get_submission(submission_id, download_dir)
             if filename != None:
                 remote_hash = self.cloud.get_submission_hash(submission_id)
-                local_hash = hash_file_sha(filename)
+                with open(filename, 'rb') as f:
+                    local_hash = hashlib.md5(f.read()).hexdigest()
                 if local_hash != remote_hash:
                     log.error("After downloading submission %s to %s hash didn't match" %
                             (submission_id, download_dir))
@@ -212,25 +211,6 @@ class Worker:
                 shutil.rmtree(download_dir)
                 log.error("Submission not found on server.")
                 return False
-            
-    def clean_old_submission(self, submission_dir):
-        with CD(submission_dir):
-            # this is for dealing with starter packs being submitted
-            #    start pack structer should be changed
-            files = os.listdir(os.getcwd())
-            num_files = 0
-            num_dirs = 0
-            dir_names = []
-            for file in files:
-                if os.path.isfile(file):
-                    num_files += 1
-                if os.path.isdir(file):
-                    dir_names.append(file)
-            if len(dir_names) > 0 and num_files == 1:
-                for dir_name in dir_names:
-                    os.system("mv " + str(dir_name) + "/* .")
-                    os.system("rm -rf " + str(dir_name))
-            os.system("rm -rf tools maps example_bots")
         
     def unpack(self, submission_id):
         download_dir = self.download_dir(submission_id)
@@ -248,20 +228,17 @@ class Worker:
                     ("entry.tgz", "mkdir bot; tar xfz -C bot entry.tgz > /dev/null 2> /dev/null"),
                     ("entry.zip", "unzip -u -dbot entry.zip > /dev/null 2> /dev/null")
                 ]
-            found_archive_file = False
             for file_name, command in zip_files:
                 if os.path.exists(file_name):
                     log.info("unnzip status: %s" % os.system(command))
-                    found_archive_file = True
                     for dirpath, dirnames, filenames in os.walk(".."):
-                        os.chmod(dirpath, 755)
+                        os.chmod(dirpath, 0755)
                         for filename in filenames:
                             filename = os.path.join(dirpath, filename)
                             os.chmod(filename,stat.S_IMODE(os.stat(filename).st_mode) | stat.S_IRGRP | stat.S_IROTH)
                     break
-            if not found_archive_file:
+            else:
                 return False
-            self.clean_old_submission(download_dir)
             return True
 
     def compile(self, submission_id=None, report_status=False, run_test=True):
@@ -286,7 +263,7 @@ class Worker:
                 else:
                     report(STATUS_TEST_ERROR)
                     return False
-            if not os.path.exists(download_dir):
+            if len(os.listdir(download_dir)) == 0:
                 if not self.download_submission(submission_id):
                     report(STATUS_DOWNLOAD_ERROR)
                     log.error("Download Error")

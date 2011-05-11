@@ -7,6 +7,7 @@ server_info = {{
   "mail_name": "AI Contest",
   "mail_password": "",
   "maps_path": "{map_dir}",
-  "upload_path": "{upload_dir}"
+  "uploads_path": "{upload_dir}",
+  "logs_path": "{log_dir}"
 }}
 

@@ -12,6 +12,7 @@ from optparse import OptionParser
 import create_worker_archive
 from install_tools import CD, Environ, install_apt_packages, run_cmd, CmdError, check_ubuntu_version
 from install_tools import get_choice, get_password
+from socket import getfqdn
 
 TEMPLATE_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -128,14 +129,14 @@ def setup_website(opts):
         if not os.path.exists("server_info.php"):
             with open("server_info.php", "w") as si_file:
                 si_file.write(si_contents)
-    if not os.path.exists(os.path.join(website_root, "aicontest.tgz")):
+    if not os.path.exists(os.path.join(website_root, opts.website_hostname + ".tgz")):
         create_worker_archive.main(website_root)
-    site_config = "/etc/apache2/sites-available/ai-contest"
+    site_config = "/etc/apache2/sites-available/" + opts.website_hostname
     if not os.path.exists(site_config):
         site_filename = os.path.join(TEMPLATE_DIR, "apache_site.template")
         with open(site_filename, "r") as site_file:
             site_template = site_file.read()
-        site_contents = site_template.format(web_hostname="ai-contest.com",
+        site_contents = site_template.format(web_hostname=opts.website_hostname,
                 web_root=website_root,
                 log_dir=opts.log_dir,
                 map_dir=opts.map_dir,
@@ -145,7 +146,7 @@ def setup_website(opts):
         if opts.website_as_default:
             enabled_link = "/etc/apache2/sites-enabled/000-default"
         else:
-            enabled_link = "/etc/apache2/sites-enabled/ai-contest"
+            enabled_link = "/etc/apache2/sites-enabled/" + opts.website_hostname
         if os.path.exists(enabled_link):
             os.remove(enabled_link)
         os.symlink(site_config, enabled_link)
@@ -192,7 +193,7 @@ def interactive_options(options):
     webname = raw_input("Website hostname? [%s] " % (webname,))
     options.website_hostname = webname if webname else options.website_hostname
     enable_email = options.enable_email
-    enable_email = get_choice("Make contest site the default website?", enable_email)
+    enable_email = get_choice("Enable email?", enable_email)
     options.enable_email = enable_email
     default = options.website_as_default
     default = get_choice("Make contest site the default website?", default)
@@ -224,7 +225,7 @@ def get_options(argv):
         "log_dir": log_dir,
         "local_repo": top_level,
         "website_as_default": False,
-        "website_hostname": "ai-contest.com",
+        "website_hostname": '.'.join(split(getfqdn(),'.')[1:]),
         "interactive": True,
         "enable_email": True
     }
