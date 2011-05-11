@@ -133,7 +133,7 @@ def setup_contest_files(opts):
     with open(si_filename, 'r') as si_file:
         si_template = si_file.read()
     si_contents = si_template.format(contest_root=contest_root,
-            repo_dir=opts.local_repo,
+            repo_dir=opts.local_repo, log_dir=opts.log_dir,
             map_dir=map_dir, compiled_dir=compiled_dir,
             api_url=opts.api_url, api_key=opts.api_key)
     with CD(worker_dir):
@@ -310,7 +310,7 @@ def get_options(argv):
         "log_dir": log_dir,
         "local_repo": top_level,
         "create_jails": True,
-        "api_url":  '.'.join(split(getfqdn(),'.')[1:]),
+        "api_url":  '.'.join(getfqdn().split('.')[1:]),
         "api_key": "",
         "install_cronjob": False,
         "run_worker": False,

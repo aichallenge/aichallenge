@@ -55,7 +55,8 @@ def setup_base_files(opts):
             database_password=opts.database_password,
             database_name=opts.database_name,
             map_dir=opts.map_dir, upload_dir=opts.upload_dir,
-            reply_email=reply_email)
+            reply_email=reply_email,
+            log_dir=opts.log_dir)
     manager_dir = os.path.join(opts.local_repo, "manager")
     with CD(manager_dir):
         if not os.path.exists("server_info.py"):
@@ -225,7 +226,7 @@ def get_options(argv):
         "log_dir": log_dir,
         "local_repo": top_level,
         "website_as_default": False,
-        "website_hostname": '.'.join(split(getfqdn(),'.')[1:]),
+        "website_hostname": '.'.join(getfqdn().split('.')[1:]),
         "interactive": True,
         "enable_email": True
     }
