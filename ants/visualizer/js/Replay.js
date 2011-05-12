@@ -329,7 +329,13 @@ function Replay(replay) {
 	}
 	// add missing meta data
 	if (!(this.meta['playernames'] instanceof Array)) {
-		this.meta['playernames'] = new Array(this.players);
+		if (this.meta['players'] instanceof Array) {
+			// move players to playernames in old replays
+			this.meta['playernames'] = this.meta['players'];
+			delete this.meta['players'];
+		} else {
+			this.meta['playernames'] = new Array(this.players);
+		}
 	}
 	if (!(this.meta['playercolors'] instanceof Array)) {
 		this.meta['playercolors'] = new Array(this.players);

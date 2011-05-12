@@ -4,11 +4,9 @@
  */
 
 /*
- * @todo zoom in/out as two buttons with intermediate steps
  * @todo info button showing a message box with game meta data
  * @todo zoom in to 20x20 squares with animated ants
- * @todo menu items: clear, show attack, show birth,
- *     zoom, toggle graph/score bars, cpu use
+ * @todo menu items: show attack, show birth, toggle graph/score bars, cpu use
  * @todo setting for cpu usage
  * @todo keep a minimum size to allow the controls to render
  * @todo show when a bot crashed
