@@ -78,6 +78,9 @@ def main(argv):
     parser.add_option('--strict', dest='strict',
                       action='store_true', default=False,
                       help='Strict mode enforces valid moves for bots')
+    parser.add_option('--end_wait', dest='end_wait',
+                      default=0, type="float",
+                      help='Seconds to wait at end for bots to process end')
 
     # ants specific game options
     parser.add_option("--attack", dest="attack",
@@ -187,7 +190,8 @@ def run_rounds(opts,args):
         "log_output": opts.log_output,
         "log_error": opts.log_error,
         "serial": opts.serial,
-        "strict": opts.strict }
+        "strict": opts.strict,
+        "end_wait": opts.end_wait }
     random.seed(opts.seed)
     for round in range(opts.rounds):
         # initialize game

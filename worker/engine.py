@@ -23,6 +23,7 @@ def run_game(game, botcmds, options):
     loadtime = float(options['loadtime']) / 1000
     turntime = float(options['turntime']) / 1000
     strict = options.get('strict', False)
+    end_wait = options.get('end_wait', 0.0)
     
     location = options.get('location', 'localhost')
     game_id = options.get('game_id', 0)
@@ -164,18 +165,28 @@ def run_game(game, botcmds, options):
                     game.finish_turn()
 
                 # send ending info to eliminated bots
+                bots_eliminated = []
                 for b, alive in enumerate(bot_alive):
                     if alive and not game.is_alive(b):
-                        if verbose_log:
-                            verbose_log.write('turn %4d bot %s eliminated\n' % (turn, b))
-                        if bot_status[b] == 'survived': # could be invalid move
-                            bot_status[b] = 'eliminated'
-                        end_line = 'end\nscore %s\n' % ' '.join([str(s) for s in game.get_scores()])
-                        end_line += game.get_player_state(b)
-                        bots[b].write(end_line)
-                        if output_logs and output_logs[b]:
-                            output_logs[b].write(end_line)
-                            output_logs[b].flush()
+                        bots_eliminated.append(b)
+                for b in bots_eliminated:
+                    if verbose_log:
+                        verbose_log.write('turn %4d bot %s eliminated\n' % (turn, b))
+                    if bot_status[b] == 'survived': # could be invalid move
+                        bot_status[b] = 'eliminated'
+                    end_line = 'end\nscore %s\n' % ' '.join([str(s) for s in game.get_scores()])
+                    end_line += game.get_player_state(b)
+                    bots[b].write(end_line)
+                    if output_logs and output_logs[b]:
+                        output_logs[b].write(end_line)
+                        output_logs[b].flush()
+                    if end_wait:
+                        bots[b].resume()
+                if bots_eliminated and end_wait:
+                    verbose_log.write('waiting {0} seconds for bots to process end turn\n'.format(end_wait))
+                    time.sleep(end_wait)
+                    for b in bots_eliminated:
+                        bots[b].pause()
 
             except:
                 raise
@@ -219,6 +230,11 @@ def run_game(game, botcmds, options):
             verbose_log.write(traceback.format_exc())
         error = str(e)
     finally:
+        if end_wait:
+            for bot in bots:
+                bot.resume()
+            verbose_log.write('waiting {0} seconds for bots to process end turn\n'.format(end_wait))
+            time.sleep(end_wait)
         for bot in bots:
             if bot.is_alive:
                 bot.kill()
