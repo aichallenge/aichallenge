@@ -3,6 +3,10 @@ delimiter $$
 create procedure generate_matchup()
 begin
 
+select min(players) into @min_players from map;
+select count(*) into @max_players from submission where status = 40 and latest = 1;
+if @min_players <= @max_players then
+
 set @init_mu = 25.0;
 set @init_beta = @init_mu / 6;
 set @twiceBetaSq = 2 * pow(@init_beta, 2);
@@ -214,6 +218,8 @@ where matchup_id = @matchup_id;
 
 -- return new matchup id
 select @matchup_id as matchup_id;
+
+end if;
 
 end$$
 delimiter ;
