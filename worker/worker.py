@@ -25,12 +25,12 @@ from engine import run_game
 
 # Set up logging
 log = logging.getLogger('worker')
-log.setLevel(logging.INFO)
+log.setLevel(logging.DEBUG)
 log_file = os.path.join(server_info['logs_path'], 'worker.log')
 handler = logging.handlers.RotatingFileHandler(log_file,
                                                maxBytes=1000000,
                                                backupCount=5)
-handler.setLevel(logging.INFO)
+handler.setLevel(logging.DEBUG)
 handler2 = logging.StreamHandler()
 formatter = logging.Formatter("%(asctime)s - " + str(os.getpid()) +
                               " - %(levelname)s - %(message)s")
@@ -331,6 +331,7 @@ class Worker:
         options = server_info["game_options"]
         options['strict'] = True # kills bot on invalid inputs
         options['food'] = 'none'
+        options['turns'] = 30
         log.debug(options)
         options["map"] = self.get_test_map()
         options['capture_errors'] = True
@@ -338,11 +339,13 @@ class Worker:
         # options['verbose_log'] = sys.stdout
         # options['error_logs'] = [sys.stdout, None]
         if submission_id in self.download_dirs:
-            bot_dir = os.path.join(self.download_dirs[submission_id], 'bot')
+            bot_dir = self.download_dirs[submission_id]
         else:
-            bot_dir = os.path.join(self.submission_dir(submission_id), 'bot')
-        bots = [(bot_dir, compiler.get_run_cmd(bot_dir)),
+            bot_dir = self.submission_dir(submission_id)
+        bots = [(os.path.join(bot_dir, 'bot'),
+                 compiler.get_run_cmd(bot_dir)),
                 ("../ants/submission_test/", "python TestBot.py")]
+        log.debug(bots)
         result = run_game(game, bots, options)
         log.info(result['status'][0])
         for error in result['errors'][0]:

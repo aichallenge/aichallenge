@@ -459,7 +459,7 @@ def compile_anything(submission_dir=None):
             run_cmd = detected_language[2]
             if compile_function(detected_lang, errors['errors']):
                 with open('../run.sh', 'w') as f:
-                    f.write('#%s\n%s' % (detected_lang, run_cmd))
+                    f.write('#%s\n%s\n' % (detected_lang, run_cmd))
                 return detected_lang, errors
             else:
                 return None, errors
