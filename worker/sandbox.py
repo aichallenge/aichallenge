@@ -105,7 +105,16 @@ class _Jail(object):
     def resume(self):
         self.signal("CONT")
 
-
+def _monitor_file(fd, q):
+    while True:
+        try:
+            line = fd.readline()
+        except:
+            break
+        if not line:
+            break
+        q.put(line.rstrip('\r\n'))
+        
 def _monitor_input_channel(sandbox):
     while True:
         try:
@@ -193,9 +202,14 @@ class Sandbox:
                                                 stderr=subprocess.PIPE,
                                                 cwd=working_directory)
         self._is_alive = True
-        stdout_monitor = Thread(target=_monitor_input_channel, args=(self,))
+        stdout_monitor = Thread(target=_monitor_file,
+                                args=(self.command_process.stdout, self.stdout_queue))
         stdout_monitor.daemon = True
         stdout_monitor.start()
+        stderr_monitor = Thread(target=_monitor_file,
+                                args=(self.command_process.stderr, self.stderr_queue))
+        stderr_monitor.daemon = True
+        stderr_monitor.start()
 
     def kill(self):
         """Stops the sandbox.
@@ -291,7 +305,7 @@ class Sandbox:
         if not self.is_alive:
             timeout=0
         try:
-            return self.stdout_queue.get(timeout)
+            return self.stdout_queue.get(block=False)
         except Empty:
             return None
 

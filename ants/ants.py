@@ -1152,12 +1152,24 @@ class Ants(Game):
         self.orders[player] = orders
         return valid, ['%s # %s' % ignore for ignore in ignored], ['%s # %s' % error for error in invalid]
 
-    def get_scores(self):
+    def get_scores(self, player=None):
         """ Gets the scores of all players
 
             Used by engine for ranking
         """
-        return [int(score) for score in self.score]
+        if player == None:
+            return [int(score) for score in self.score]
+        else:
+            return self.order_for_player(player, map(int, self.score))
+
+    def order_for_player(self, player, data):
+        """ Orders a list of items for a players perspective of player #
+        
+            Used by engine for ending bot states
+        """
+        s = self.switch[player]
+        return [None if not i in s else data[s.index(i)] 
+                for i in range(max(len(data),self.num_players))]
 
     def get_stats(self):
         """ Get current ant counts
