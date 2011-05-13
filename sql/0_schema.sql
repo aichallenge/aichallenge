@@ -148,11 +148,11 @@ CREATE TABLE `ranking` (
   `version` int(11) NOT NULL,
   `seq` int(11) NOT NULL,
   `rank` int(11) NOT NULL,
-  `rank_change` int(11) NOT NULL,
+  `rank_change` int(11) NULL,
   `skill` float NOT NULL,
-  `skill_change` float NOT NULL,
+  `skill_change` float NULL,
   `latest` tinyint(1) NOT NULL,
-  `age` timestamp NOT NULL,
+  `age` time NOT NULL,
   KEY `submission_id` (`submission_id`),
   KEY `leaderboard_id` (`leaderboard_id`,`submission_id`,`rank`)
 );
@@ -165,11 +165,11 @@ CREATE TABLE `ranking_archive` (
   `version` int(11) NOT NULL,
   `seq` int(11) NOT NULL,
   `rank` int(11) NOT NULL,
-  `rank_change` int(11) NOT NULL,
+  `rank_change` int(11) NULL,
   `skill` float NOT NULL,
-  `skill_change` float NOT NULL,
+  `skill_change` float NULL,
   `latest` tinyint(4) NOT NULL,
-  `age` timestamp NOT NULL ,
+  `age` time NOT NULL ,
   KEY `submission_id` (`submission_id`),
   KEY `leaderboard_id` (`leaderboard_id`,`submission_id`,`rank`)
 );

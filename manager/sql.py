@@ -41,6 +41,7 @@ sql = {
     
     # used in manager.py
     "select_game_players": "select gp.submission_id, gp.game_rank, s.mu, s.sigma, gp.mu_after from game_player gp inner join submission s on s.submission_id = gp.submission_id where gp.game_id = %s",
+    
     "update_game_player_trueskill": """
         update game_player
         set mu_before = %s,
@@ -49,11 +50,44 @@ sql = {
             sigma_after = %s
         where game_id = %s and
               submission_id = %s""",
+    
     "update_submission_trueskill": """
         update submission s
         inner join game_player gp
             on s.submission_id = gp.submission_id
         set s.mu = gp.mu_after,
             s.sigma = gp.sigma_after
-        where game_id = %s;"""
+        where game_id = %s;""",
+    
+    "insert_leaderboard": """
+        insert into leaderboard (timestamp, algorithm_name, calculation_time, complete)
+        values (now(), 'TrueSkill', 0, 1);""",
+    
+    "insert_leaderboard_data": """
+        insert into ranking (leaderboard_id, user_id, submission_id, version, seq, rank, rank_change, skill, skill_change, latest, age)
+        select
+            @leader := (select max(leaderboard_id) from leaderboard) as leaderboard_id, 
+            s.user_id, s.submission_id, s.version,
+            @count1 := @count1 + 1 as seq,
+            @rank := if(s.latest > 0, @count2 := @count2 + 1 , null) as rank,
+            r.rank - @rank as rank_change, s.mu as skill, r.skill - s.mu as skill_change, s.latest, timediff(now(),s.timestamp) as age
+        from
+            submission s
+            left outer join ranking r
+                on s.submission_id = r.submission_id and r.leaderboard_id = @leader - 1,
+            (select @count1 := 0) c1,
+            (select @count2 := 0) c2
+        where s.latest = 1
+        or s.submission_id in (
+            select submission_id
+            from ranking
+            where leaderboard_id = @leader - 1
+            and seq in (
+                select min(seq)
+                from ranking
+                where leaderboard_id = @leader - 1
+                group by user_id
+            )
+        )
+        order by s.mu desc, s.sigma asc, s.timestamp asc"""    
 }

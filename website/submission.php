@@ -106,7 +106,7 @@ function update_current_submission_status($new_status) {
 function submission_directory($submission_id) {
     global $server_info;
     $submission_id = intval($submission_id);
-    return $server_info["submissions_path"]."/".strval((int)($submission_id/1000))."/".strval($submission_id);
+    return $server_info["uploads_path"]."/".strval((int)($submission_id/1000))."/".strval($submission_id);
 }
 
 ?>

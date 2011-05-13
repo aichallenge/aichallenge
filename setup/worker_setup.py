@@ -10,6 +10,7 @@ from optparse import OptionParser, SUPPRESS_HELP
 
 from install_tools import CD, Environ, install_apt_packages, run_cmd
 from install_tools import append_line, file_contains, get_choice, get_password, check_ubuntu_version
+from socket import getfqdn 
 
 TEMPLATE_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -132,7 +133,7 @@ def setup_contest_files(opts):
     with open(si_filename, 'r') as si_file:
         si_template = si_file.read()
     si_contents = si_template.format(contest_root=contest_root,
-            repo_dir=opts.local_repo,
+            repo_dir=opts.local_repo, log_dir=opts.log_dir,
             map_dir=map_dir, compiled_dir=compiled_dir,
             api_url=opts.api_url, api_key=opts.api_key)
     with CD(worker_dir):
@@ -182,11 +183,11 @@ def create_jail_group(options):
     if not file_contains(limits_conf, "@jailusers"):
         # limit jailuser processes to:
         # 10 processes or system threads
-        append_line(limits_conf, "@jailusers hard nproc 10 # ai-contest")
+        append_line(limits_conf, "@jailusers hard nproc 10 # " + options.api_url)
         # 20 minutes of cpu time
-        append_line(limits_conf, "@jailusers hard cpu 20 # ai-contest")
+        append_line(limits_conf, "@jailusers hard cpu 20 # " + options.api_url)
         # slightly more than 1GB of ram
-        append_line(limits_conf, "@jailusers hard rss 1048600 # ai-contest")
+        append_line(limits_conf, "@jailusers hard rss 1048600 # " + options.api_url)
     if not file_contains("/etc/sudoers",
             "^%s.+jailusers" % (options.username,)):
         org_mode = os.stat("/etc/sudoers")[0]
@@ -288,7 +289,12 @@ def get_options(argv):
     """ Get all the options required for setup """
     current_username = os.environ.get("SUDO_USER", getpass.getuser())
     top_level = os.path.abspath(os.path.join(TEMPLATE_DIR, ".."))
-    root_dir, local_repo = os.path.split(top_level)
+    root_dir = os.path.split(top_level)[0]
+    map_dir = os.path.join(root_dir, 'maps')
+    replay_dir = os.path.join(root_dir, 'games')
+    upload_dir = os.path.join(root_dir, 'uploads')
+    compiled_dir = os.path.join(root_dir, 'compiled')
+    log_dir = os.path.join(root_dir, 'logs')
     default_setup = {
         "update_system": True,
         "install_required": True,
@@ -297,9 +303,14 @@ def get_options(argv):
         "packages_only": False,
         "username": current_username,
         "root_dir": root_dir,
-        "local_repo": local_repo,
+        "map_dir": map_dir,
+        "replay_dir": replay_dir,
+        "upload_dir": upload_dir,
+        "compiled_dir": compiled_dir,
+        "log_dir": log_dir,
+        "local_repo": top_level,
         "create_jails": True,
-        "api_url": "http://ai-contest.com/",
+        "api_url":  '.'.join(getfqdn().split('.')[1:]),
         "api_key": "",
         "install_cronjob": False,
         "run_worker": False,
@@ -372,7 +383,7 @@ def main(argv=["worker_setup.py"]):
     start_script = os.path.join(opts.root_dir, opts.local_repo,
             "worker/start_worker.sh")
     if opts.install_cronjob:
-        cron_file = "/etc/cron.d/ai-contest"
+        cron_file = "/etc/cron.d/" + opts.api_url
         if not file_contains(cron_file, start_script):
             append_line(cron_file, "@reboot root %s" % (start_script,))
     if opts.run_worker:

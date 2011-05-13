@@ -19,7 +19,7 @@ support = { 'python': ['ants.py',
 # this path structure should match the php api code
 # the worker code uses a different path structure
 def submission_dir(submission_id):
-    return os.path.join(server_info["submissions_path"], str(submission_id//1000), str(submission_id))
+    return os.path.join(server_info["uploads_path"], str(submission_id//1000), str(submission_id))
     
 def create_test_bot(name, language):
     botpath = os.path.join(os.path.split(os.path.dirname(__file__))[0],

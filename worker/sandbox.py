@@ -40,8 +40,7 @@ class _Jail(object):
             break
         else:
             raise JailError("Could not find an unlocked jail")
-        self.jchown = os.path.join(server_info["root_path"],
-                server_info["repo_path"], "worker/jail_own")
+        self.jchown = os.path.join(server_info["repo_path"], "worker/jail_own")
         self.base_dir = os.path.join(jail_base, jail)
         self.number = int(jail[len("jailuser"):])
         self.chroot_cmd = "sudo -u {0} schroot -u {0} -c {0} -d {1} ".format(

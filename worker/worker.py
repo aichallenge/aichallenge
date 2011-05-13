@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+from __future__ import print_function
 import sys
 import os
 import json
@@ -11,6 +13,7 @@ import time
 import stat
 import platform
 import traceback
+import tempfile
 
 from optparse import OptionParser
 
@@ -23,7 +26,8 @@ from engine import run_game
 # Set up logging
 log = logging.getLogger('worker')
 log.setLevel(logging.INFO)
-handler = logging.handlers.RotatingFileHandler("worker.log",
+log_file = os.path.join(server_info['logs_path'], 'worker.log')
+handler = logging.handlers.RotatingFileHandler(log_file,
                                                maxBytes=1000000,
                                                backupCount=5)
 handler.setLevel(logging.INFO)
@@ -161,12 +165,22 @@ class Worker:
         self.cloud = GameAPIClient( server_info['api_base_url'], server_info['api_key'])
         self.post_id = 0
         self.test_map = None
+        self.download_dirs = {}
 
     def submission_dir(self, submission_id):
-        return os.path.join(server_info["submissions_path"], "compiled", str(submission_id//1000), str(submission_id))
+        return os.path.join(server_info["compiled_path"], str(submission_id//1000), str(submission_id))
         
     def download_dir(self, submission_id):
-        return os.path.join(server_info["submissions_path"], "downloaded", str(submission_id//1000), str(submission_id))
+        if submission_id not in self.download_dirs:
+            tmp_dir = tempfile.mkdtemp(dir=server_info["compiled_path"])
+            self.download_dirs[submission_id] = tmp_dir
+        return self.download_dirs[submission_id]
+    
+    def clean_download(self, submission_id):
+        if submission_id in self.download_dirs:
+            if os.path.exists(self.download_dirs[submission_id]):
+                os.rmdir(self.download_dirs[submission_id])
+            del self.download_dirs[submission_id]
 
     def download_submission(self, submission_id):
         submission_dir = self.submission_dir(submission_id)
@@ -174,20 +188,17 @@ class Worker:
         if os.path.exists(submission_dir):
             log.info("Already downloaded and compiled: %s..." % submission_id)
             return True
-        elif os.path.exists(download_dir):
+        elif len(os.listdir(download_dir)) > 0:
             log.info("Already downloaded: %s..." % submission_id)
             return True
         else:
             log.info("Downloading %s..." % submission_id)
-            try:
-                os.makedirs(download_dir)
-            except:
-                pass
             os.chmod(download_dir, 0755)
             filename = self.cloud.get_submission(submission_id, download_dir)
             if filename != None:
                 remote_hash = self.cloud.get_submission_hash(submission_id)
-                local_hash = hash_file_sha(filename)
+                with open(filename, 'rb') as f:
+                    local_hash = hashlib.md5(f.read()).hexdigest()
                 if local_hash != remote_hash:
                     log.error("After downloading submission %s to %s hash didn't match" %
                             (submission_id, download_dir))
@@ -200,25 +211,6 @@ class Worker:
                 shutil.rmtree(download_dir)
                 log.error("Submission not found on server.")
                 return False
-            
-    def clean_old_submission(self, submission_dir):
-        with CD(submission_dir):
-            # this is for dealing with starter packs being submitted
-            #    start pack structer should be changed
-            files = os.listdir(os.getcwd())
-            num_files = 0
-            num_dirs = 0
-            dir_names = []
-            for file in files:
-                if os.path.isfile(file):
-                    num_files += 1
-                if os.path.isdir(file):
-                    dir_names.append(file)
-            if len(dir_names) > 0 and num_files == 1:
-                for dir_name in dir_names:
-                    os.system("mv " + str(dir_name) + "/* .")
-                    os.system("rm -rf " + str(dir_name))
-            os.system("rm -rf tools maps example_bots")
         
     def unpack(self, submission_id):
         download_dir = self.download_dir(submission_id)
@@ -226,30 +218,27 @@ class Worker:
         with CD(download_dir):
             if platform.system() == 'Windows':
                 zip_files = [
-                    ("entry.tar.gz", "7z x -y entry.tar.gz > NUL"),
-                    ("entry.tgz", "7z x -y entry.tgz > NUL"),
-                    ("entry.zip", "7z x -y entry.zip > NUL")
+                    ("entry.tar.gz", "7z x -obot -y entry.tar.gz > NUL"),
+                    ("entry.tgz", "7z x -obot -y entry.tgz > NUL"),
+                    ("entry.zip", "7z x -obot -y entry.zip > NUL")
                 ]
             else:
                 zip_files = [
-                    ("entry.tar.gz", "tar xfz entry.tar.gz > /dev/null 2> /dev/null"),
-                    ("entry.tgz", "tar xfz entry.tgz > /dev/null 2> /dev/null"),
-                    ("entry.zip", "unzip -u entry.zip > /dev/null 2> /dev/null")
+                    ("entry.tar.gz", "mkdir bot; tar xfz -C bot entry.tar.gz > /dev/null 2> /dev/null"),
+                    ("entry.tgz", "mkdir bot; tar xfz -C bot entry.tgz > /dev/null 2> /dev/null"),
+                    ("entry.zip", "unzip -u -dbot entry.zip > /dev/null 2> /dev/null")
                 ]
-            found_archive_file = False
             for file_name, command in zip_files:
                 if os.path.exists(file_name):
                     log.info("unnzip status: %s" % os.system(command))
-                    found_archive_file = True
                     for dirpath, dirnames, filenames in os.walk(".."):
-                        os.chmod(dirpath, 755)
+                        os.chmod(dirpath, 0755)
                         for filename in filenames:
                             filename = os.path.join(dirpath, filename)
                             os.chmod(filename,stat.S_IMODE(os.stat(filename).st_mode) | stat.S_IRGRP | stat.S_IROTH)
                     break
-            if not found_archive_file:
+            else:
                 return False
-            self.clean_old_submission(download_dir)
             return True
 
     def compile(self, submission_id=None, report_status=False, run_test=True):
@@ -274,7 +263,7 @@ class Worker:
                 else:
                     report(STATUS_TEST_ERROR)
                     return False
-            if not os.path.exists(download_dir):
+            if len(os.listdir(download_dir)) == 0:
                 if not self.download_submission(submission_id):
                     report(STATUS_DOWNLOAD_ERROR)
                     log.error("Download Error")
@@ -285,7 +274,8 @@ class Worker:
                     log.error("Unpack Error")
                     return False
             log.info("Compiling %s " % submission_id)
-            detected_lang, errors = compiler.compile_anything(download_dir)
+            bot_dir = os.path.join(download_dir, 'bot')
+            detected_lang, errors = compiler.compile_anything(bot_dir)
             if not detected_lang:
                 shutil.rmtree(download_dir)
                 log.error('\n'.join(errors))
@@ -295,8 +285,9 @@ class Worker:
             else:
                 if not os.path.exists(os.path.split(submission_dir)[0]):
                     os.makedirs(os.path.split(submission_dir)[0])
-                os.rename(download_dir, submission_dir)
                 if not run_test or self.functional_test(submission_id):
+                    os.rename(download_dir, submission_dir)
+                    del self.download_dirs[submission_id]
                     report(STATUS_RUNABLE)
                     return True
                 else:
@@ -306,7 +297,7 @@ class Worker:
 
     def check_hash(self, submission_id):
         try:
-            for filename in os.listdir(os.path.join(server_info["submissions_path"], str(submission_id))):
+            for filename in os.listdir(os.path.join(server_info["compiled_path"], str(submission_id))):
                 if filename.endswith(".zip") or filename.endswith(".tgz"):
                     log.info("%s: %s" % (filename, hash_file_sha1(filename)))
         except:
@@ -340,15 +331,21 @@ class Worker:
         options = server_info["game_options"]
         options['strict'] = True # kills bot on invalid inputs
         options['food'] = 'none'
+        options['turns'] = 30
         log.debug(options)
         options["map"] = self.get_test_map()
         options['capture_errors'] = True
         game = Ants(options)
         # options['verbose_log'] = sys.stdout
         # options['error_logs'] = [sys.stdout, None]
-        submission_dir = self.submission_dir(submission_id)
-        bots = [(submission_dir, compiler.get_run_cmd(submission_dir)),
+        if submission_id in self.download_dirs:
+            bot_dir = self.download_dirs[submission_id]
+        else:
+            bot_dir = self.submission_dir(submission_id)
+        bots = [(os.path.join(bot_dir, 'bot'),
+                 compiler.get_run_cmd(bot_dir)),
                 ("../ants/submission_test/", "python TestBot.py")]
+        log.debug(bots)
         result = run_game(game, bots, options)
         log.info(result['status'][0])
         for error in result['errors'][0]:
@@ -378,18 +375,13 @@ class Worker:
                 if self.compile(submission_id, run_test=False):
                     submission_dir = self.submission_dir(submission_id)
                     run_cmd = compiler.get_run_cmd(submission_dir)
-                    #run_dir = tempfile.mkdtemp(dir=server_info["submissions_path"])
-                    bots.append((submission_dir, run_cmd))
+                    #run_dir = tempfile.mkdtemp(dir=server_info["compiled_path"])
+                    bot_dir = os.path.join(submission_dir, 'bot')
+                    bots.append((bot_dir, run_cmd))
                     #shutil.copytree(submission_dir, run_dir)
                 else:
+                    self.clean_download(submission_id)
                     raise Exception('bot', 'Can not compile bot %s' % submission_id)
-            output_dir = os.path.join(server_info["root_path"], "games", str(matchup_id))
-            if not os.path.exists(output_dir):
-                try:
-                    os.makedirs(output_dir)
-                except:
-                    pass
-            #options['verbose_log'] = sys.stdout
             options['game_id'] = matchup_id
             log.debug((game.__class__.__name__, task['submissions'], options, matchup_id))
             result = run_game(game, bots, options)
@@ -414,7 +406,8 @@ class Worker:
                 log.info("Recieved task: %s" % task)
                 if task['task'] == 'compile':
                     submission_id = int(task['submission_id'])
-                    self.compile(submission_id, True)
+                    if not self.compile(submission_id, True):
+                        self.clean_download(submission_id)
                 elif task['task'] == 'game':
                     self.game(task, True)
                 else:
@@ -453,6 +446,9 @@ def main(argv):
     (opts, args) = parser.parse_args(argv)
     
     worker = Worker()
+
+    # if the worker is not run in task mode, it will not clean up the download
+    #    dir, so that debugging can be done on what had been downloaded/unzipped
 
     # print hash values for submission, must be downloaded
     if opts.submission_id != 0 and opts.hash:

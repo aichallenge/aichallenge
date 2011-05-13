@@ -3,10 +3,11 @@ server_info = {{
   "db_password": "{database_password}",
   "db_name": "{database_name}",
   "db_host": "127.0.0.1",
-  "mail_username": "donotreply@ai-contest.com",
+  "mail_username": "{reply_email}",
   "mail_name": "AI Contest",
   "mail_password": "",
   "maps_path": "{map_dir}",
-  "submissions_path": "{sub_dir}"
+  "uploads_path": "{upload_dir}",
+  "logs_path": "{log_dir}"
 }}
 
