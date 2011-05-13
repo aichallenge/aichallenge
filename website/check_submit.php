@@ -79,7 +79,7 @@ if (count($errors) == 0) {
   if (ends_with($filename, ".tgz")) { $filename = "entry.tgz"; }
   $target_path = $destination_folder . '/' . $filename;
   delete_directory($destination_folder);
-  if (!mkdir($destination_folder, 777, true)) {
+  if (!mkdir($destination_folder, 0777, true)) {
       $errors[] = "Problem while creating submission directory.";
   } else {
     if (!move_uploaded_file($_FILES['uploadedfile']['tmp_name'],
