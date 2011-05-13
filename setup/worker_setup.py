@@ -123,11 +123,11 @@ def setup_contest_files(opts):
     compiled_dir = os.path.join(contest_root, "compiled")
     if not os.path.exists(compiled_dir):
         os.mkdir(compiled_dir)
-        run_cmd("chown {0}:{0} {1}".format(opts.username, compiled_dir))
+        run_cmd("chown {0}: {1}".format(opts.username, compiled_dir))
     map_dir = os.path.join(contest_root, "maps")
     if not os.path.exists(map_dir):
         os.mkdir(map_dir)
-        run_cmd("chown {0}:{0} {1}".format(opts.username, map_dir))
+        run_cmd("chown {0}: {1}".format(opts.username, map_dir))
     worker_dir = os.path.join(contest_root, opts.local_repo, "worker")
     si_filename = os.path.join(TEMPLATE_DIR, "worker_server_info.py.template")
     with open(si_filename, 'r') as si_file:
@@ -141,7 +141,7 @@ def setup_contest_files(opts):
             with open("server_info.py", "w") as si_file:
                 si_file.write(si_contents)
             run_cmd("chmod 600 server_info.py")
-    run_cmd("chown -R {0}:{0} {1}".format(opts.username, contest_root))
+    run_cmd("chown -R {0}: {1}".format(opts.username, contest_root))
 
 def setup_base_chroot(options):
     """ Create and setup the base chroot jail users will run in. """
