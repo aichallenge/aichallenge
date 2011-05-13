@@ -25,12 +25,12 @@ from engine import run_game
 
 # Set up logging
 log = logging.getLogger('worker')
-log.setLevel(logging.DEBUG)
+log.setLevel(logging.INFO)
 log_file = os.path.join(server_info['logs_path'], 'worker.log')
 handler = logging.handlers.RotatingFileHandler(log_file,
                                                maxBytes=1000000,
                                                backupCount=5)
-handler.setLevel(logging.DEBUG)
+handler.setLevel(logging.INFO)
 handler2 = logging.StreamHandler()
 formatter = logging.Formatter("%(asctime)s - " + str(os.getpid()) +
                               " - %(levelname)s - %(message)s")

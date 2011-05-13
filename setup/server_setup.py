@@ -33,12 +33,14 @@ def setup_base_files(opts):
     if not os.path.exists(opts.upload_dir):
         os.mkdir(opts.upload_dir)
         run_cmd("chown {0}:www-data {1}".format(opts.username, opts.upload_dir))
+        os.chmod(opts.upload_dir, 0775)
     if not os.path.exists(opts.map_dir):
         os.mkdir(opts.map_dir)
-        run_cmd("chown {0}:{0} {1}".format(opts.username, opts.map_dir))
+        run_cmd("chown {0}:www-data {1}".format(opts.username, opts.map_dir))
     if not os.path.exists(opts.replay_dir):
         os.mkdir(opts.replay_dir)
         run_cmd("chown {0}:{0} {1}".format(opts.username, opts.replay_dir))
+        os.chmod(opts.replay_dir, 0775)
     if not os.path.exists(opts.log_dir):
         os.mkdir(opts.log_dir)
         run_cmd("chown {0}:www-data {1}".format(opts.username, opts.log_dir))

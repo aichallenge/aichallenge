@@ -83,7 +83,7 @@ if ($gamedata == null) {
         $replay_dir = $server_info["replay_path"] . "/" . strval((int) ($game_id / 1000000)) . "/" . strval((int) (($game_id / 1000) % 1000));
         if (!file_exists($replay_dir)) {
             api_log($replay_dir);
-            mkdir($replay_dir);
+            mkdir($replay_dir, 0775, true);
         }
         $replay_filename = $replay_dir . "/" . $game_id . ".replay";
         api_log($replay_filename);
@@ -97,7 +97,9 @@ if ($gamedata == null) {
             // update trueskill
             exec(sprintf("python ../manager/manager.py -g %s", $game_id));
             // put game id in memcache for front page
-            $memcache->set('last_game_id', $game_id);
+            if ($memcache) {
+                $memcache->set('last_game_id', $game_id);
+            }
         } catch (Exception $e) {
             api_log(json_encode($e));
             // mysql_query("ROLLBACK;");
