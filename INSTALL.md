@@ -20,7 +20,7 @@
         * 10.10: `/usr/lib/jvm/java-6-openjdk/jre/lib/plugin.jar` requiring the `openjdk-6-jre-lib` package
         * 11.04: `/usr/share/icedtea-web/plugin.jar` requiring the `icedtea-plugin` package
 * Install the content on the website, cd to the website dir:
-    
+    * `sudo apt-get install markdown`
     * `git clone git://github.com/aichallenge/aichallenge.wiki.git`
     * `./setup.py`
 
