@@ -107,10 +107,7 @@ class _Jail(object):
 
 def _monitor_file(fd, q):
     while True:
-        try:
-            line = fd.readline()
-        except:
-            break
+        line = fd.readline()
         if not line:
             break
         q.put(line.rstrip('\r\n'))
@@ -224,7 +221,7 @@ class Sandbox:
         else:
             try:
                 self.command_process.send_signal(signal.SIGSTOP)
-            except (ValueError, AttributeError):
+            except (ValueError, AttributeError, OSError):
                 pass
 
     def resume(self):
@@ -237,7 +234,7 @@ class Sandbox:
         else:
             try:
                 self.command_process.send_signal(signal.SIGCONT)
-            except (ValueError, AttributeError):
+            except (ValueError, AttributeError, OSError):
                 pass
 
     def write(self, str):
