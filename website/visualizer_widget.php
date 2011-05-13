@@ -14,7 +14,7 @@ if ($match != 0 && floatval($reg[1]) < 9 || isset ($_GET["java"]) && $_GET["java
 function visualizer_widget($game_id, $width=690, $height=700) {
     echo '<div id="visualizerDiv">';
 
-    $replay = "ants/games/" . strval((int)($game_id / 10000)) . "/" . $game_id . ".replay";
+    $replay = "games/" . $game_id;
     // Write applet tag if we use Java
     if (isset ($java)) {
         ?>
