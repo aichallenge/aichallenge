@@ -7,13 +7,14 @@ require_once('memcache.php');
 
 <p>Computer Programs Duking it Out with Ants:</p>
 <?php
+    $last_game_id = 0;
     if ($memcache)
-        $latest_game_id = $memcache->get('last_game_id');
-    if (!$latest_game_id) {
-        $latest_game_id = 2;
+        $last_game_id = $memcache->get('last_game_id');
+    if (!last_game_id) {
+        $last_game_id = 0;
     }
     include 'visualizer_widget.php';
-    visualizer_widget($game_id=strval($latest_game_id),550,550);
+    visualizer_widget($game_id=strval($last_game_id),550,550);
 ?>
 
 <h2>Planet Wars Final Rankings</h2>

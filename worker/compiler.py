@@ -124,10 +124,10 @@ class ExternalCompiler(Compiler):
         files = safeglob_multi(globs)
         if self.separate:
             for file in files:
-                if not system(self.args + [file], log):
+                if not system(self.args + [file], errors):
                     return False
         else:
-            if not system(self.args + files, log):
+            if not system(self.args + files, errors):
                 return False
         return True
 

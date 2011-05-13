@@ -347,7 +347,11 @@ class Worker:
                 ("../ants/submission_test/", "python TestBot.py")]
         log.debug(bots)
         result = run_game(game, bots, options)
-        log.info(result['status'][0])
+        if 'status' in result:
+            log.info(result['status'][0]) # player 0 is the bot we are testing
+        elif 'error' in result:
+            log.info(result['error']);
+            raise Exception('Engine failure')
         for error in result['errors'][0]:
             log.info(error)
             
