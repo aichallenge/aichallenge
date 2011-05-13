@@ -21,8 +21,8 @@
         * 11.04: `/usr/share/icedtea-web/plugin.jar` requiring the `icedtea-plugin` package
 * Install the content on the website, cd to the website dir:
     
-    git clone git://github.com/aichallenge/aichallenge.wiki.git
-    ./setup.py
+    * `git clone git://github.com/aichallenge/aichallenge.wiki.git`
+    * `./setup.py`
 
 * Install the starter packs, TODO
     
