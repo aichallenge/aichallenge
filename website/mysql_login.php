@@ -34,7 +34,6 @@ function contest_query() {
         if (count($args) > 1) {
             $query_args = array_map('mysql_real_escape_string',
                                     array_slice($args, 1));
-            api_log(vsprintf($sql[$query_name], $query_args));
             return mysql_query(vsprintf($sql[$query_name], $query_args));
         } else {
             return mysql_query($sql[$query_name]);
