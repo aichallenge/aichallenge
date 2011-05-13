@@ -114,33 +114,6 @@ def _monitor_file(fd, q):
         if not line:
             break
         q.put(line.rstrip('\r\n'))
-        
-def _monitor_input_channel(sandbox):
-    while True:
-        try:
-            line = sandbox.command_process.stdout.readline()
-        except:
-            print('error', file=sys.stderr)
-            print(sys.exc_info(), file=sys.stderr)
-            if sandbox.is_alive:
-                sandbox.kill()
-            break
-        if not line:
-            break
-        sandbox.stdout_queue.put(line.strip())
-    sandbox.stdout_queue.put(None)
-    # FIXME: This will cause the sandboxed program to deadlock if it outputs
-    # more than the os buffer size on stderr
-    while True:
-        try:
-            line = sandbox.command_process.stderr.readline()
-            if line:
-                pass
-                sandbox.stderr_queue.put(line.rstrip('\r\n'))
-            else:
-                break
-        except:
-            break
 
 class Sandbox:
     """Provide a sandbox to run arbitrary commands in.
