@@ -104,8 +104,8 @@ int main(int argc, char *argv[]) {
     Game.dead_ants = 0;
 
     while (42) {
-        char data[10000];
-        memset(data, 0, 10000);
+        char data[100000];
+        memset(data, 0, 100000);
 
         *data = '\n';
 
