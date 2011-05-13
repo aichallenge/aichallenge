@@ -1,5 +1,5 @@
-VirtualHost *:80>
-	ServerAdmin webmaster@localhost
+<VirtualHost *:80>
+    ServerAdmin webmaster@localhost
     ServerName {web_hostname}
     ServerAlias www.{web_hostname}
 
@@ -17,17 +17,17 @@ VirtualHost *:80>
     RewriteRule ^/games/[0-9]+/([0-9]+)(.replay)?$ /games/$1 [L,R]
     RewriteRule ^/games/([0-9]+).replay$ /games/$1 [L,R]
 
-	DocumentRoot {web_root}
-	<Directory />
-		Options FollowSymLinks
-		AllowOverride None
-	</Directory>
-	<Directory {web_root}>
-		Options FollowSymLinks
-		AllowOverride None
-		Order allow,deny
-		allow from all
-	</Directory>
+    DocumentRoot {web_root}
+    <Directory />
+        Options FollowSymLinks
+        AllowOverride None
+    </Directory>
+    <Directory {web_root}>
+        Options FollowSymLinks
+        AllowOverride None
+        Order allow,deny
+        allow from all
+    </Directory>
 
     Alias /maps {map_dir}
     <Directory {map_dir}>
@@ -44,12 +44,12 @@ VirtualHost *:80>
         Allow from all
     </Directory>
     
-	ErrorLog {log_dir}/error.log
+    ErrorLog {log_dir}/error.log
 
-	# Possible values include: debug, info, notice, warn, error, crit,
-	# alert, emerg.
-	LogLevel warn
+    # Possible values include: debug, info, notice, warn, error, crit,
+    # alert, emerg.
+    LogLevel warn
 
-	CustomLog {log_dir}/access.log combined
+    CustomLog {log_dir}/access.log combined
 
 </VirtualHost>
