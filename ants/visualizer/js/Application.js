@@ -166,6 +166,7 @@ Visualizer = function(container, dataDir, w, h) {
 	/**
 	 * @private
 	 */
+	this.mouseOverVis = false;
 	/**
 	 * buttons
 	 * @private
@@ -1096,8 +1097,52 @@ Visualizer.prototype.draw = function(time, tick) {
 		}
 		ctx.restore();
 	}
+	// calculate mouse position
+	dx = (Math.ceil(this.loc.map.w / 2) + this.shiftX) % this.scale;
+	var mc = Math.floor((this.mouseX - this.loc.map.x - dx) / this.scale);
+	mc += Math.ceil((Math.ceil((colPixels - this.loc.map.w) / 2) - this.shiftX) / this.scale);
+	mc -= Math.floor(mc / this.replay.cols) * this.replay.cols;
+	var mx = Math.round(this.scale * mc) + x + this.scale - 1;
+	mx -= Math.floor(mx / colPixels) * colPixels + this.scale - 1;
+	dy = (Math.ceil(this.loc.map.h / 2) + this.shiftY) % this.scale;
+	var mr = Math.floor((this.mouseY - this.loc.map.y - dy) / this.scale);
+	mr += Math.ceil((Math.ceil((rowPixels - this.loc.map.h) / 2) - this.shiftY) / this.scale);
+	mr -= Math.floor(mr / this.replay.rows) * this.replay.rows;
+	var my = Math.round(this.scale * mr) + y + this.scale - 1;
+	my -= Math.floor(my / colPixels) * colPixels + this.scale - 1;
+	// draw attack and spawn radii
+	if (this.scale === ZOOM_SCALE) {
+		var ar = ZOOM_SCALE * Math.sqrt(this.replay.meta['replaydata']['attackradius2']);
+		var sr = ZOOM_SCALE * Math.sqrt(this.replay.meta['replaydata']['spawnradius2']);
+		ctx.save();
+		ctx.translate(halfScale, halfScale);
+		ctx.lineWidth = 2;
+		for (key in drawStates) {
+			ctx.strokeStyle = '#' + key;
+			drawList = drawStates[key];
+			for (n = 0; n < drawList.length; n++) {
+				ant = drawList[n];
+				var radius = (ant['owner'] !== undefined) ? ar : sr;
+				dx = ant['x'] - mx;
+				dy = ant['y'] - my;
+				if (radius * radius >= dx * dx + dy * dy) {
+					ctx.beginPath();
+					ctx.arc(ant['x'], ant['y'], radius, 0, 2 * Math.PI, false);
+					ctx.moveTo(ant['x'], ant['y']);
+					ctx.lineTo(mx, my);
+					ctx.stroke();
+				}
+			}
+		}
+		ctx.restore();
+	}
 	// render fog onto map
 	if (this.fog) ctx.drawImage(this.overlay.canvas, 0, 0);
+	// draw mouse location
+	if (this.mouseOverVis) {
+		ctx.strokeStyle = '#fff';
+		ctx.strokeRect(mx + 0.5, my + 0.5, this.scale - 1, this.scale - 1);
+	}
 	// draw buffer on screen
 	ctx = this.main.ctx;
 	ctx.save();
@@ -1136,7 +1181,7 @@ Visualizer.prototype.draw = function(time, tick) {
 	if (this.config['zoom'] !== 1) {
 		ctx.save();
 		// border
-		ctx.strokeStyle = '#FFF';
+		ctx.strokeStyle = '#fff';
 		ctx.lineWidth = 2;
 		ctx.beginPath();
 		loc = this.minimap.loc;
@@ -1162,12 +1207,22 @@ Visualizer.prototype.draw = function(time, tick) {
 		ctx.stroke();
 		ctx.restore();
 	}
+	// draw mouse location
+	if (this.mouseOverVis) {
+		var text = 'row ' + mr + ' | col ' +  mc;
+		ctx.fillRect(this.loc.vis.x, this.loc.vis.y, ctx.measureText(text).width, 20);
+		ctx.fillStyle = '#fff';
+		ctx.fillText(text, this.loc.vis.x, this.loc.vis.y + 10);
+	}
 };
 Visualizer.prototype.mouseMoved = function(mx, my) {
 	var deltaX = mx - this.mouseX;
 	var deltaY = my - this.mouseY;
 	this.mouseX = mx;
 	this.mouseY = my;
+	var mouseWasOverVis = this.mouseOverVis;
+	this.mouseOverVis = this.loc.map.contains(this.mouseX, this.mouseY) 
+			&& this.loc.vis.contains(this.mouseX, this.mouseY);
 	if (this.mouseDown === 1) {
 		mx = (this.mouseX - this.loc.graph.x) / (this.loc.graph.w - 1);
 		mx = Math.round(mx * (this.replay.turns.length - 1));
@@ -1181,6 +1236,9 @@ Visualizer.prototype.mouseMoved = function(mx, my) {
 		this.director.draw();
 	} else {
 		this.btnMgr.mouseMove(mx, my);
+	}
+	if (this.mouseOverVis || mouseWasOverVis) {
+		this.director.draw();
 	}
 };
 Visualizer.prototype.mousePressed = function() {
