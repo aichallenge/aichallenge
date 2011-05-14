@@ -14,6 +14,7 @@ struct game_info {
 	int viewradius_sq;
 	int attackradius_sq;
 	int spawnradius_sq;
+    int seed;
 	char *map;
 };
 
