@@ -170,5 +170,7 @@ int main(int argc, char *argv[]) {
             fprintf(stdout, "go\n");
             fflush(stdout);
         }
+
+        free(data);
     }
 }
