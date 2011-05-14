@@ -181,7 +181,7 @@ function TextButton(group, text, color, onclick) {
 	var ctx = this.group.manager.vis.main.ctx;
 	this.x = 0;
 	this.y = 0;
-	ctx.font = 'bold 20px Arial';
+	ctx.font = FONT;
 	this.w = ctx.measureText(text).width + 8;
 	this.h = 28;
 }
@@ -190,7 +190,7 @@ TextButton.prototype.drawInternal = function(ctx) {
 	ctx.shadowColor = 'rgba(255,255,255,1)';
 	ctx.textAlign = 'left';
 	ctx.textBaseline = 'bottom';
-	ctx.font = 'bold 20px Arial';
+	ctx.font = FONT;
 	ctx.fillStyle = this.color;
 	ctx.fillText(this.text, 4, 25);
 };

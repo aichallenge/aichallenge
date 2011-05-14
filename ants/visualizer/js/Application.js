@@ -197,10 +197,10 @@ Visualizer = function(container, dataDir, w, h) {
 	 */
 	this.imgMgr = new ImageManager((dataDir || '') + 'img/', this,
 			this.completedImages);
-	this.imgMgr.add('wood.jpg');
 	this.imgMgr.add('playback.png');
 	this.imgMgr.add('fog.png');
 	this.imgMgr.add('toolbar.png');
+	this.imgMgr.add('water.png');
 	/**
 	 * the highest player count in a previous replay to avoid button repaints
 	 * @private
@@ -413,7 +413,7 @@ Visualizer.prototype.tryStart = function() {
 			// add static buttons
 			if (!vis.btnMgr.groups['playback']) {
 				var bg = vis.btnMgr.addImageGroup('playback',
-						vis.imgMgr.images[1], ImageButtonGroup.HORIZONTAL,
+						vis.imgMgr.images[0], ImageButtonGroup.HORIZONTAL,
 						ButtonGroup.MODE_NORMAL, 2);
 				bg.addButton(3, function() {vis.director.gotoTick(0)});
 				bg.addSpace(32);
@@ -421,10 +421,10 @@ Visualizer.prototype.tryStart = function() {
 					var stop = (Math.ceil(vis.director.position * 2) - 1) / 2;
 					vis.director.slowmoTo(stop);
 				});
-				//drawImage(this.imgMgr.images[1], 0 * 64, 0, 64, 64, x + 2.5 * 64, y, 64, 64);
+				//drawImage(this.imgMgr.images[0], 0 * 64, 0, 64, 64, x + 2.5 * 64, y, 64, 64);
 				bg.addSpace(64);
 				bg.addButton(4, function() {vis.director.playStop()});
-				//drawImage(this.imgMgr.images[1], 1 * 64, 0, 64, 64, x + 4.5 * 64, y, 64, 64);
+				//drawImage(this.imgMgr.images[0], 1 * 64, 0, 64, 64, x + 4.5 * 64, y, 64, 64);
 				bg.addSpace(64);
 				bg.addButton(6, function() {
 					var stop = (Math.floor(vis.director.position * 2) + 1) / 2;
@@ -434,7 +434,7 @@ Visualizer.prototype.tryStart = function() {
 				bg.addButton(2, function() {
 					vis.director.gotoTick(vis.director.duration);
 				});
-				bg = vis.btnMgr.addImageGroup('toolbar', vis.imgMgr.images[3],
+				bg = vis.btnMgr.addImageGroup('toolbar', vis.imgMgr.images[2],
 						ImageButtonGroup.VERTICAL, ButtonGroup.MODE_NORMAL, 2);
 				if (this.config.hasLocalStorage()) {
 					bg.addButton(0, function() {vis.config.save()});
@@ -453,9 +453,13 @@ Visualizer.prototype.tryStart = function() {
 					vis.director.draw();
 				});
 				bg.addButton(4, function() {
-					vis.setBorder(!vis.config['border']);
+					vis.shiftX = 0;
+					vis.shiftY = 0;
+					var btn = vis.btnMgr.groups['toolbar'].getButton(4);
+					btn.enabled = false;
+					btn.draw();
 					vis.director.draw();
-				});
+				}).enabled = false;
 				bg.addButton(5, function() {
 					vis.setAntLabels(!vis.config['label']);
 					vis.director.draw();
@@ -468,9 +472,9 @@ Visualizer.prototype.tryStart = function() {
 			}
 			if (this.highestPlayerCount < this.replay.players) {
 				this.highestPlayerCount = this.replay.players;
-				this.imgMgr.colorize(2, colors);
+				this.imgMgr.colorize(1, colors);
 			}
-			bg = this.btnMgr.addImageGroup('fog', this.imgMgr.patterns[2],
+			bg = this.btnMgr.addImageGroup('fog', this.imgMgr.patterns[1],
 				ImageButtonGroup.VERTICAL, ButtonGroup.MODE_RADIO, 2);
 			var buttonAdder = function(fog) {
 				return bg.addButton(i, function() {vis.showFog(fog);});
@@ -485,7 +489,22 @@ Visualizer.prototype.tryStart = function() {
 			// add player buttons
 			bg = this.btnMgr.addTextGroup('players', TextButtonGroup.FLOW,
 					ButtonGroup.MODE_NORMAL, 2);
-			bg.addButton('Game #' + vis.replay.meta['game_id'] + ':', '#000');
+			var gameId = vis.replay.meta['game_id'] || vis.options['game_id'];
+			if (gameId === undefined) {
+				bg.addButton('Players:', '#000');
+			} else {
+				bg.addButton('Game #' + gameId + ':', '#000');
+			}
+			var scores = this.replay.scores[this.replay.scores.length - 1];
+			var ranks = new Array(scores.length);
+			for (i = 0; i < scores.length; i++) {
+				ranks[i] = 1;
+				for (var k = 0; k < scores.length; k++) {
+					if (scores[i] < scores[k]) {
+						ranks[i]++;
+					}
+				}
+			}
 			buttonAdder = function(i) {
 				var color = vis.replay.htmlPlayerColors[i];
 				var func = null;
@@ -497,7 +516,32 @@ Visualizer.prototype.tryStart = function() {
 										vis.replay.meta['user_ids'][i]);
 					};
 				}
-				bg.addButton(vis.replay.meta['playernames'][i], color, func);
+				var caption = vis.replay.meta['playernames'][i];
+				if (ranks[i] === 1) {
+					caption = '★' + caption + '★';
+				} else if (ranks[i] === 2) {
+					caption = '☆' + caption + '☆';
+				} else {
+					caption += ' (' + ranks[i];
+					if ((ranks[i] / 10) | 0 !== 1) {
+						switch (ranks[i] % 10) {
+							case 1:
+								caption += 'st)';
+								break;
+							case 2:
+								caption += 'nd)';
+								break;
+							case 3:
+								caption += 'rd)';
+								break;
+							default:
+								caption += 'th)';
+						}
+					} else {
+						caption += 'th)';
+					}
+				}
+				bg.addButton(caption, color, func);
 			}
 			for (i = 0; i < this.replay.players; i++) {
 				buttonAdder(i);
@@ -507,7 +551,7 @@ Visualizer.prototype.tryStart = function() {
 			this.director.defaultSpeed = Math.max(this.director.duration / 60, 1);
 			this.director.onstate = function() {
 				var btn = vis.btnMgr.groups['playback'].buttons[4];
-				btn.offset = (vis.director.playing() ? 7 : 4) * vis.imgMgr.images[1].height;
+				btn.offset = (vis.director.playing() ? 7 : 4) * vis.imgMgr.images[0].height;
 				if (btn === vis.btnMgr.nailed) {
 					vis.btnMgr.nailed = null;
 				}
@@ -628,75 +672,14 @@ Visualizer.prototype.setZoom = function(zoom) {
 	this.renderMap(this.map.ctx, this.scale);
 	this.overlay.canvas.width = Math.min(this.loc.map.w, this.loc.vis.w);
 	this.overlay.canvas.height = Math.min(this.loc.map.h, this.loc.vis.h);
-	this.setBorder(this.config['border']);
+	this.border.canvas.width = Math.min(this.loc.vis.w, this.loc.map.w);
+	this.border.canvas.height = Math.min(this.loc.vis.h, this.loc.map.h);
 	var zoomInBtn = this.btnMgr.groups['toolbar'].getButton(2);
 	zoomInBtn.enabled = !(this.scale === ZOOM_SCALE);
 	zoomInBtn.draw();
 	var zoomOutBtn = this.btnMgr.groups['toolbar'].getButton(3);
 	zoomOutBtn.enabled = !(zoom === 1);
 	zoomOutBtn.draw();
-	var borderBtn = this.btnMgr.groups['toolbar'].getButton(4);
-	borderBtn.enabled = zoom === 1;
-	borderBtn.draw();
-};
-Visualizer.prototype.setBorder = function(enable) {
-	this.config['border'] = enable;
-	if (enable && this.config['zoom'] == 1) {
-		var loc = this.loc.vis;
-		this.main.ctx.fillStyle = '#fff';
-		this.main.ctx.fillRect(loc.x, loc.y, loc.w, loc.h);
-		loc = this.loc.map;
-		this.border.canvas.width = loc.w + 2 * ZOOM_SCALE;
-		this.border.canvas.height = loc.h + 2 * ZOOM_SCALE;
-		var ctx = this.border.ctx;
-		ctx.save();
-			this.imgMgr.pattern(0, ctx, 'repeat');
-			ctx.translate(ZOOM_SCALE, ZOOM_SCALE);
-			var m = this.loc.map;
-			ctx.save();
-				ctx.beginPath();
-				ctx.moveTo(0, 0);
-				ctx.lineTo(m.w, 0);
-				ctx.lineTo(m.w + ZOOM_SCALE, -ZOOM_SCALE);
-				ctx.lineTo(-ZOOM_SCALE, -ZOOM_SCALE);
-				ctx.closePath();
-				ctx.fill();
-			ctx.restore();
-			ctx.save();
-				ctx.translate(0, m.h);
-				ctx.beginPath();
-				ctx.moveTo(0, 0);
-				ctx.lineTo(m.w, 0);
-				ctx.lineTo(m.w + ZOOM_SCALE, +ZOOM_SCALE);
-				ctx.lineTo(-ZOOM_SCALE, +ZOOM_SCALE);
-				ctx.closePath();
-				ctx.fill();
-			ctx.restore();
-			ctx.rotate(0.5 * Math.PI);
-			ctx.save();
-				ctx.beginPath();
-				ctx.moveTo(0, 0);
-				ctx.lineTo(m.h, 0);
-				ctx.lineTo(m.h + ZOOM_SCALE, ZOOM_SCALE);
-				ctx.lineTo(-ZOOM_SCALE, ZOOM_SCALE);
-				ctx.closePath();
-				ctx.fill();
-			ctx.restore();
-			ctx.save();
-				ctx.translate(0, -m.w);
-				ctx.beginPath();
-				ctx.moveTo(0, 0);
-				ctx.lineTo(m.h, 0);
-				ctx.lineTo(m.h + ZOOM_SCALE, -ZOOM_SCALE);
-				ctx.lineTo(-ZOOM_SCALE, -ZOOM_SCALE);
-				ctx.closePath();
-				ctx.fill();
-		   ctx.restore();
-		ctx.restore();
-	} else {
-		this.border.canvas.width = Math.min(this.loc.vis.w, this.loc.map.w);
-		this.border.canvas.height = Math.min(this.loc.vis.h, this.loc.map.h);
-	}
 };
 Visualizer.prototype.setAntLabels = function(enable) {
 	this.config['label'] = enable;
@@ -734,9 +717,9 @@ Visualizer.prototype.resize = function(forced) {
 		ctx.fillStyle = '#888';
 		ctx.textAlign = 'left';
 		ctx.textBaseline = 'middle';
-		ctx.font = 'bold 20px Arial';
-		ctx.fillText('scores', 4, y + 15);
-		ctx.fillText('# of ants', 4, y + 49);
+		ctx.font = FONT;
+		ctx.fillText('scores', 4, y + 14);
+		ctx.fillText('# of ants', 4, y + 48);
 		y += 134;
 		// 3. visualizer placement
 		this.loc.vis = new Location(LEFT_PANEL_W, y,
@@ -751,7 +734,8 @@ Visualizer.prototype.resize = function(forced) {
 		bg.x = this.loc.vis.x + this.loc.vis.w;
 		bg.y = this.loc.vis.y + 8;
 		this.setZoom(this.config['zoom']);
-		this.setBorder(this.config['border']);
+		this.border.canvas.width = Math.min(this.loc.vis.w, this.loc.map.w);
+		this.border.canvas.height = Math.min(this.loc.vis.h, this.loc.map.h);
 		this.scores.canvas.width = this.loc.graph.w;
 		this.scores.canvas.height = this.loc.graph.h;
 		this.renderCounts();
@@ -771,7 +755,7 @@ Visualizer.prototype.resize = function(forced) {
 Visualizer.prototype.renderMap = function(ctx, scale) {
 	ctx.fillStyle = COLOR_SAND;
 	ctx.fillRect(0, 0, this.loc.map.w, this.loc.map.h);
-	ctx.fillStyle = COLOR_WATER;
+	ctx.fillStyle = ctx.createPattern(this.imgMgr.images[3], 'repeat');
 	for (var row = 0; row < this.replay.rows; row++) {
 		var start = undefined;
 		for (var col = 0; col < this.replay.cols; col++) {
@@ -834,14 +818,7 @@ Visualizer.prototype.renderCounts = function() {
  * @private
  */
 Visualizer.prototype.renderFog = function(turn) {
-	var useOverlay = !this.config['border'] || this.config['zoom'] !== 1;
-	if (useOverlay) {
-		var ctx = this.overlay.ctx;
-	} else {
-		ctx = this.border.ctx;
-		ctx.save();
-		ctx.translate(ZOOM_SCALE, ZOOM_SCALE);
-	}
+	var ctx = this.overlay.ctx;
 	ctx.clearRect(0, 0, this.overlay.canvas.width, this.overlay.canvas.height);
 	if (this.fog) {
 		if (!this.fog.ctx) {
@@ -883,9 +860,6 @@ Visualizer.prototype.renderFog = function(turn) {
 				}
 			}
 		}
-	}
-	if (!useOverlay) {
-		ctx.restore();
 	}
 };
 Visualizer.prototype.showFog = function(fog) {
@@ -1026,18 +1000,10 @@ Visualizer.prototype.draw = function(time, tick) {
 		}
 	}
 	// draw the map background
-	var bordered = this.config['border'] && this.config['zoom'] === 1;
-	if (bordered) {
-		var ctx = this.main.ctx;
-		ctx.save();
-		ctx.translate(this.loc.map.x, this.loc.map.y);
-		ctx.drawImage(this.map.canvas, 0, 0);
-	} else {
-		ctx = this.border.ctx;
-		for (dy = y; dy < this.loc.vis.h; dy += rowPixels) {
-			for (dx = x; dx < this.loc.vis.w; dx += colPixels) {
-				ctx.drawImage(this.map.canvas, dx, dy);
-			}
+	var ctx = this.border.ctx;
+	for (dy = y; dy < this.loc.vis.h; dy += rowPixels) {
+		for (dx = x; dx < this.loc.vis.w; dx += colPixels) {
+			ctx.drawImage(this.map.canvas, dx, dy);
 		}
 	}
 	// sorting by render state gives slight fps improvements
@@ -1130,78 +1096,71 @@ Visualizer.prototype.draw = function(time, tick) {
 		}
 		ctx.restore();
 	}
-	if (bordered) {
-		// draw border over ants, that moved out of the map
-		ctx.drawImage(this.border.canvas, -ZOOM_SCALE, -ZOOM_SCALE);
-		ctx.restore();
+	// render fog onto map
+	if (this.fog) ctx.drawImage(this.overlay.canvas, 0, 0);
+	// draw buffer on screen
+	ctx = this.main.ctx;
+	ctx.save();
+	ctx.beginPath();
+	ctx.rect(loc.x, loc.y, loc.w, loc.h);
+	ctx.clip();
+	if (this.border.canvas.width < loc.w) {
+		var sx = this.loc.map.x - loc.x + this.shiftX;
+		sx += loc.x - Math.ceil(sx / this.loc.map.w) * this.loc.map.w;
 	} else {
-		// render fog onto map
-		if (this.fog) ctx.drawImage(this.overlay.canvas, 0, 0);
-		// draw buffer on screen
-		ctx = this.main.ctx;
+		sx = loc.x;
+	}
+	if (this.border.canvas.height < loc.h) {
+		var sy = this.loc.map.y - loc.y + this.shiftY;
+		sy += loc.y - Math.ceil(sy / this.loc.map.h) * this.loc.map.h;
+	} else {
+		sy = loc.y;
+	}
+	for (dy = sy; dy < loc.y + loc.h; dy += this.loc.map.h) {
+		for (dx = sx; dx < loc.x + loc.w; dx += this.loc.map.w) {
+			ctx.drawImage(this.border.canvas, dx, dy);
+		}
+	}
+	ctx.restore();
+	// shade repeated parts
+	ctx.fillStyle = 'rgba(0,0,0,0.3)';
+	w = this.loc.map.y - loc.y;
+	if (w > 0) ctx.fillRect(loc.x, loc.y, loc.w, w);
+	w = loc.y + loc.h - this.loc.map.y - this.loc.map.h;
+	if (w > 0) ctx.fillRect(loc.x, this.loc.map.y + this.loc.map.h, loc.w, w);
+	w = this.loc.map.x - loc.x;
+	if (w > 0) ctx.fillRect(loc.x, loc.y, w, loc.h);
+	w = loc.x + loc.w - this.loc.map.x - this.loc.map.w;
+	if (w > 0) ctx.fillRect(this.loc.map.x + this.loc.map.w, loc.y, w, loc.h);
+	// minimap
+	if (this.config['zoom'] !== 1) {
 		ctx.save();
+		// border
+		ctx.strokeStyle = '#FFF';
+		ctx.lineWidth = 2;
+		ctx.beginPath();
+		loc = this.minimap.loc;
+		ctx.rect(loc.x - 1, loc.y - 1, loc.w + 2, loc.h + 2);
+		ctx.stroke();
+		// map
+		ctx.drawImage(this.minimap.canvas, loc.x, loc.y, loc.w, loc.h);
+		// position indicator
 		ctx.beginPath();
 		ctx.rect(loc.x, loc.y, loc.w, loc.h);
 		ctx.clip();
-		if (this.border.canvas.width < loc.w) {
-			var sx = this.loc.map.x - loc.x + this.shiftX;
-			sx += loc.x - Math.ceil(sx / this.loc.map.w) * this.loc.map.w;
-		} else {
-			sx = loc.x;
-		}
-		if (this.border.canvas.height < loc.h) {
-			var sy = this.loc.map.y - loc.y + this.shiftY;
-			sy += loc.y - Math.ceil(sy / this.loc.map.h) * this.loc.map.h;
-		} else {
-			sy = loc.y;
-		}
-		for (dy = sy; dy < loc.y + loc.h; dy += this.loc.map.h) {
-			for (dx = sx; dx < loc.x + loc.w; dx += this.loc.map.w) {
-				ctx.drawImage(this.border.canvas, dx, dy);
-			}
-		}
+		w = this.loc.vis.w / this.scale;
+		h = this.loc.vis.h / this.scale;
+		dx = this.replay.cols / 2 - this.shiftX / this.scale - w / 2;
+		dy = this.replay.rows / 2 - this.shiftY / this.scale - h / 2;
+		dx -= Math.floor(dx / this.replay.cols) * this.replay.cols;
+		dy -= Math.floor(dy / this.replay.rows) * this.replay.rows;
+		ctx.beginPath();
+		ctx.rect(loc.x + dx, loc.y + dy, w, h);
+		ctx.rect(loc.x + dx - this.replay.cols, loc.y + dy, w, h);
+		ctx.rect(loc.x + dx, loc.y + dy - this.replay.rows, w, h);
+		ctx.rect(loc.x + dx - this.replay.cols, loc.y + dy - this.replay.rows, w, h);
+		ctx.stroke();
 		ctx.restore();
-		// shade repeated parts
-		ctx.fillStyle = 'rgba(0,0,0,0.5)';
-		w = this.loc.map.y - loc.y;
-		if (w > 0) ctx.fillRect(loc.x, loc.y, loc.w, w);
-		w = loc.y + loc.h - this.loc.map.y - this.loc.map.h;
-		if (w > 0) ctx.fillRect(loc.x, this.loc.map.y + this.loc.map.h, loc.w, w);
-		w = this.loc.map.x - loc.x;
-		if (w > 0) ctx.fillRect(loc.x, loc.y, w, loc.h);
-		w = loc.x + loc.w - this.loc.map.x - this.loc.map.w;
-		if (w > 0) ctx.fillRect(this.loc.map.x + this.loc.map.w, loc.y, w, loc.h);
-		// minimap
-		if (this.config['zoom'] !== 1) {
-			ctx.save();
-			// border
-			ctx.fillStyle = '#000';
-			ctx.lineWidth = 2;
-			ctx.beginPath();
-			loc = this.minimap.loc;
-			ctx.rect(loc.x - 1, loc.y - 1, loc.w + 2, loc.h + 2);
-			ctx.stroke();
-			// map
-			ctx.globalAlpha = 0.5;
-			ctx.drawImage(this.minimap.canvas, loc.x, loc.y, loc.w, loc.h);
-			// position indicator
-			ctx.beginPath();
-			ctx.rect(loc.x, loc.y, loc.w, loc.h);
-			ctx.clip();
-			w = this.loc.vis.w / this.scale;
-			h = this.loc.vis.h / this.scale;
-			dx = this.replay.cols / 2 - this.shiftX / this.scale - w / 2;
-			dy = this.replay.rows / 2 - this.shiftY / this.scale - h / 2;
-			dx -= Math.floor(dx / this.replay.cols) * this.replay.cols;
-			dy -= Math.floor(dy / this.replay.rows) * this.replay.rows;
-			ctx.beginPath();
-			ctx.rect(loc.x + dx, loc.y + dy, w, h);
-			ctx.rect(loc.x + dx - this.replay.cols, loc.y + dy, w, h);
-			ctx.rect(loc.x + dx, loc.y + dy - this.replay.rows, w, h);
-			ctx.rect(loc.x + dx - this.replay.cols, loc.y + dy - this.replay.rows, w, h);
-			ctx.stroke();
-			ctx.restore();
-		}
 	}
 };
 Visualizer.prototype.mouseMoved = function(mx, my) {
@@ -1213,9 +1172,12 @@ Visualizer.prototype.mouseMoved = function(mx, my) {
 		mx = (this.mouseX - this.loc.graph.x) / (this.loc.graph.w - 1);
 		mx = Math.round(mx * (this.replay.turns.length - 1));
 		this.director.gotoTick(mx);
-	} else if (this.mouseDown === 2 && (!this.config['border'] || this.config['zoom'] !== 1)) {
+	} else if (this.mouseDown === 2) {
 		this.shiftX += deltaX;
 		this.shiftY += deltaY;
+		var btn = this.btnMgr.groups['toolbar'].getButton(4);
+		btn.enabled = this.shiftX || this.shiftY;
+		btn.draw();
 		this.director.draw();
 	} else {
 		this.btnMgr.mouseMove(mx, my);
@@ -1229,8 +1191,11 @@ Visualizer.prototype.mousePressed = function() {
 		if (this.config['zoom'] !== 1 && miniMap.contains(this.mouseX, this.mouseY)) {
 			this.shiftX = (this.replay.cols / 2 - (this.mouseX - miniMap.x)) * this.scale;
 			this.shiftY = (this.replay.rows / 2 - (this.mouseY - miniMap.y)) * this.scale;
+			var btn = this.btnMgr.groups['toolbar'].getButton(4);
+			btn.enabled = this.shiftX || this.shiftY;
+			btn.draw();
 			this.director.draw();
-		} else if (this.loc.vis.contains(this.mouseX, this.mouseY) && (!this.config['border'] || this.config['zoom'] !== 1)) {
+		} else if (this.loc.vis.contains(this.mouseX, this.mouseY)) {
 			this.mouseDown = 2;
 		} else {
 			this.btnMgr.mouseDown();

@@ -135,15 +135,17 @@ function Replay(replay) {
 		replay = JSON.parse(replay);
 	}
 	// check if we have meta data or just replay data
+	var format = 'json';
 	if (replay['challenge'] === undefined) {
 		this.meta = {
 			'challenge': 'ants',
-			'replayformat': 'json',
+			'replayformat': format,
 			'replaydata': replay
 		};
 	} else {
 		this.meta = replay;
 		if (typeof this.meta['replaydata'] == 'string') {
+			format = 'storage';
 			this.meta['replaydata'] = this.txtToJson(this.meta['replaydata']);
 		}
 		replay = this.meta['replaydata'];
@@ -153,7 +155,7 @@ function Replay(replay) {
 		throw new Error('This visualizer is for the ants challenge,'
 				+ ' but a "' + this.meta['challenge']
 				+ '" replay was loaded.');
-	} else if (this.meta['replayformat'] !== 'json') {
+	} else if (this.meta['replayformat'] !== format) {
 		throw new Error('Replays in the format "' + this.meta['replayformat']
 				+ '" are not supported.');
 	}

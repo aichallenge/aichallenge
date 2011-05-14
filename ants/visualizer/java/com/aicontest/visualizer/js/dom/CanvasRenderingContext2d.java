@@ -126,7 +126,7 @@ public class CanvasRenderingContext2d extends RenderingContext2dState {
 	private void setFillStyle() throws Exception {
 		if (fillChanged) {
 			Object fillObj = parseStyle(fillStyle);
-			if ((fillObj instanceof CanvasPattern)) {
+			if (fillObj instanceof CanvasPattern) {
 				BufferedImage cp = ((CanvasPattern) fillObj).getPattern();
 				Point2D p = transform.transform(ONE_PIXEL, null);
 				Rectangle2D.Double anchor = new Rectangle2D.Double(0.0D, p.getX(), cp.getWidth(), cp.getHeight());
@@ -138,8 +138,7 @@ public class CanvasRenderingContext2d extends RenderingContext2dState {
 				gfx.setPaint((Paint) fillObj);
 			}
 			fillChanged = false;
-		}
-		if (fillColor != null) {
+		} else if (fillColor != gfx.getColor()) {
 			gfx.setColor(fillColor);
 		}
 	}

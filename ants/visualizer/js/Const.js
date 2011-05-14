@@ -21,7 +21,7 @@ var FOOD_COLOR = [ 200, 150, 100 ];
  * @const
  */
 var PLAYER_COLORS = [
-	[ 242,  63,  17 ], [  26, 108, 228 ], [   4, 203,   3 ], [ 249, 210,   0 ],
+	[ 240,   0,   0 ], [ 100, 220,   0 ], [ 255,   0, 255 ], [   0, 210, 210 ],
 	[  71, 203, 238 ], [ 245,  41, 249 ], [ 211, 103,  18 ], [  23,  24, 137 ],
 	[ 112, 110, 119 ], [ 242, 147,   1 ], [ 118,  26,  66 ], [  46, 133,  36 ],
 	[ 145, 179, 156 ], [  49, 110, 130 ], [ 115,  83,  56 ], [ 165,  45, 151 ],
@@ -32,11 +32,7 @@ var PLAYER_COLORS = [
 /**
  * @const
  */
-var COLOR_WATER = '#134';
-/**
- * @const
- */
-var COLOR_SAND = '#FFD';
+var COLOR_SAND = '#532';
 /**
  * @const
  */
@@ -46,4 +42,7 @@ var INT_TO_HEX = new Array(256);
 	for (var i = 0; i < 16; i++) INT_TO_HEX[i] = '0' + i.toString(16);
 	for (; i < 256; i++) INT_TO_HEX[i] = i.toString(16);
 })();
-
+/**
+ * @const
+ */
+var FONT = 'bold 19px Arial,Sans';
