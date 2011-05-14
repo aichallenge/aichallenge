@@ -254,9 +254,6 @@ void _init_map(char *data, struct game_info *game_info) {
             case 'f':
                 game_info->map[offset] = '*';
                 break;
-            case 'r':
-                game_info->map[offset] = '.';
-                break;
         }
 
         data = tmp_ptr + 1;
