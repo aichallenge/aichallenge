@@ -104,14 +104,26 @@ int main(int argc, char *argv[]) {
     Game.dead_ants = 0;
 
     while (42) {
-        char data[100000];
-        memset(data, 0, 100000);
+        int initial_buffer = 100000;
+
+        char *data = malloc(initial_buffer);
+        memset(data, 0, initial_buffer);
 
         *data = '\n';
 
         char *ins_data = data + 1;
 
+        int i = 0;
+
         while (1 > 0) {
+            ++i;
+
+            if (i > initial_buffer) {
+                initial_buffer *= 2;
+                data = realloc(data, initial_buffer);
+                memset(ins_data, 0, initial_buffer/2);
+            }
+
             *ins_data = getchar();
 
             if (*ins_data == '\n') {
