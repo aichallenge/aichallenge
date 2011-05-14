@@ -49,7 +49,10 @@ void _init_ants(char *data, struct game_info *game_info) {
                 break;
                     
             case 's':
-                game_info->spawnradius_sq = num_value;
+                if (*(data + 1) == 'p')
+                    game_info->spawnradius_sq = num_value;
+                else
+                    game_info->seed = num_value;
                 break;
 
         }
