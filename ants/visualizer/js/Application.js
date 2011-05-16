@@ -4,17 +4,16 @@
  */
 
 /*
- * @todo better player rank display
- * @todo info button showing a message box with game meta data
- * @todo zoom in to 20x20 squares with animated ants
- * @todo menu items: toggle graph/score bars, cpu use
- * @todo setting for cpu usage
- * @todo show when a bot crashed
- * @todo hyperlink button to original game if game_url is given
- *
- * @todo keep a minimum size to allow the controls to render
- * @todo switch to console.log for debug and load messages
- * @todo fix duplicate 'parsing replay...' messages
+ * @todo FEAT: info button showing a message box with game meta data
+ * @todo FEAT: zoom in to 20x20 squares with animated ants
+ * @todo FEAT: menu items: toggle graph/score bars, cpu use
+ * @todo FEAT: setting for cpu usage
+ * @todo FEAT: show when a bot crashed
+ * @todo FEAT: hyperlink button to original game if game_url is given
+ * @todo NICE: better player rank display
+ * @todo COSMETIC: keep a minimum size to allow the controls to render
+ * @todo COSMETIC: switch to console.log for debug and load messages
+ * @todo COSMETIC: fix duplicate 'parsing replay...' messages
  */
 
 LoadingState = {
@@ -232,6 +231,11 @@ Visualizer = function(container, dataDir, interactive, w, h, config) {
 	 */
 	this.minimap = {};
 	/**
+	 * a hint text overlay
+	 * @private
+	 */
+	this.hint = '';
+	/**
 	 * @private
 	 */
 	this.fog = undefined;
@@ -426,43 +430,49 @@ Visualizer.prototype.tryStart = function() {
 					var bg = vis.btnMgr.addImageGroup('playback',
 							vis.imgMgr.images[1], ImageButtonGroup.HORIZONTAL,
 							ButtonGroup.MODE_NORMAL, 2);
-					bg.addButton(3, function() {vis.director.gotoTick(0)});
+					bg.addButton(3, function() {
+						vis.director.gotoTick(0)
+					}, 'jump to start of first turn');
 					bg.addSpace(32);
 					bg.addButton(5, function() {
 						var stop = (Math.ceil(vis.director.position * 2) - 1) / 2;
 						vis.director.slowmoTo(stop);
-					});
-					//drawImage(this.imgMgr.images[1], 0 * 64, 0, 64, 64, x + 2.5 * 64, y, 64, 64);
+					}, 'play one move/attack phase backwards');
+					//bg.addButton(0, function() {vis.director.playStop()});
 					bg.addSpace(64);
-					bg.addButton(4, function() {vis.director.playStop()});
+					bg.addButton(4, function() {
+						vis.director.playStop()
+					}, 'play/stop the game');
 					//drawImage(this.imgMgr.images[1], 1 * 64, 0, 64, 64, x + 4.5 * 64, y, 64, 64);
 					bg.addSpace(64);
 					bg.addButton(6, function() {
 						var stop = (Math.floor(vis.director.position * 2) + 1) / 2;
 						vis.director.slowmoTo(stop);
-					});
+					}, 'play one move/attack phase');
 					bg.addSpace(32);
 					bg.addButton(2, function() {
 						vis.director.gotoTick(vis.director.duration);
-					});
+					}, 'jump to end of last turn');
 					bg = vis.btnMgr.addImageGroup('toolbar', vis.imgMgr.images[3],
 							ImageButtonGroup.VERTICAL, ButtonGroup.MODE_NORMAL, 2);
 					if (this.config.hasLocalStorage()) {
-						bg.addButton(0, function() {vis.config.save()});
+						bg.addButton(0, function() {
+							vis.config.save()
+						}, 'save and reuse the current settings');
 					}
 					if (!window.isFullscreenSupported || window.isFullscreenSupported()) {
 						bg.addButton(1, function() {
 							vis.setFullscreen(!vis.config['fullscreen']);
-						});
+						}, 'toggle fullscreen mode');
 					}
 					bg.addButton(2, function() {
 						vis.setZoom(2 * vis.config['zoom']);
 						vis.director.draw();
-					});
+					}, 'zoom in');
 					bg.addButton(3, function() {
 						vis.setZoom(0.5 * vis.config['zoom']);
 						vis.director.draw();
-					});
+					}, 'zoom out');
 					bg.addButton(4, function() {
 						vis.shiftX = 0;
 						vis.shiftY = 0;
@@ -470,10 +480,18 @@ Visualizer.prototype.tryStart = function() {
 						btn.enabled = false;
 						btn.draw();
 						vis.director.draw();
-					}).enabled = false;
+					}, 'center the map').enabled = false;
 					bg.addButton(5, function() {
 						vis.setAntLabels(!vis.config['label']);
 						vis.director.draw();
+					}, 'draw player letters on the ants');
+					bg.addButton(6, function() {
+						vis.config['speedFactor'] += 1;
+						vis.setReplaySpeed();
+					});
+					bg.addButton(7, function() {
+						vis.config['speedFactor'] -= 1;
+						vis.setReplaySpeed();
 					});
 				}
 				// generate fog images
@@ -488,7 +506,9 @@ Visualizer.prototype.tryStart = function() {
 				bg = this.btnMgr.addImageGroup('fog', this.imgMgr.patterns[2],
 					ImageButtonGroup.VERTICAL, ButtonGroup.MODE_RADIO, 2);
 				var buttonAdder = function(fog) {
-					return bg.addButton(i, function() {vis.showFog(fog);});
+					return bg.addButton(i, function() {
+						vis.showFog(fog);
+					}, (i == 0) ? 'clear fog of war' : 'show fog of war for ' + vis.replay.meta['playernames'][i - 1]);
 				}
 				for (var i = 0; i < colors.length; i++) {
 					if (i == 0) {
@@ -545,9 +565,9 @@ Visualizer.prototype.tryStart = function() {
 			for (i = 0; i < this.replay.players; i++) {
 				buttonAdder(order[i]);
 			}
-			// try to make the replays play 1 minute, but the turns take no more than a second
+			// calculate speed from duration and config settings
 			this.director.duration = this.replay.turns.length - 1;
-			this.director.defaultSpeed = Math.max(this.director.duration / 60, 1);
+			this.setReplaySpeed();
 			if (this.options['interactive']) {
 				this.director.onstate = function() {
 					var btn = vis.btnMgr.groups['playback'].buttons[4];
@@ -599,6 +619,24 @@ Visualizer.prototype.tryStart = function() {
 		}
 	} else if (!(this.replay instanceof XMLHttpRequest)) {
 		this.loadParseReplay();
+	}
+};
+Visualizer.prototype.setReplaySpeed = function() {
+	var speed = this.director.duration / this.config['duration'];
+	speed = Math.max(speed, this.config['speedSlowest']);
+	speed = Math.min(speed, this.config['speedFastest']);
+	this.director.defaultSpeed = speed * Math.pow(1.5, this.config['speedFactor']);
+	if (this.director.speed !== 0) {
+		this.director.speed = this.director.defaultSpeed;
+	}
+	var hintText = function(base) {
+		return 'set speed modifier to ' + ((base > 0) ? '+' + base : base);
+	}
+	if (this.options['interactive']) {
+		var speedUpBtn = this.btnMgr.groups['toolbar'].getButton(6);
+		speedUpBtn.hint = hintText(this.config['speedFactor'] + 1);
+		var slowDownBtn = this.btnMgr.groups['toolbar'].getButton(7);
+		slowDownBtn.hint = hintText(this.config['speedFactor'] - 1);
 	}
 };
 Visualizer.prototype.calculateCanvasSize = function() {
@@ -659,8 +697,8 @@ Visualizer.prototype.setZoom = function(zoom) {
 	zoom = Math.max(1, zoom);
 	this.config['zoom'] = zoom;
 	this.scale = Math.max(1, Math.min(
-		(this.loc.vis.w - 2 * ZOOM_SCALE) / (this.replay.cols),
-		(this.loc.vis.h - 2 * ZOOM_SCALE) / (this.replay.rows))) | 0;
+		(this.loc.vis.w - 20) / (this.replay.cols),
+		(this.loc.vis.h - 20) / (this.replay.rows))) | 0;
 	this.scale = Math.min(ZOOM_SCALE, this.scale * zoom);
 	if (oldScale) {
 		this.shiftX = (this.shiftX * this.scale / oldScale) | 0;
@@ -1106,13 +1144,9 @@ Visualizer.prototype.draw = function(time, tick) {
 		ctx.restore();
 	}
 	// calculate mouse position
-	var mc = this.mouseX - this.loc.map.x - this.shiftX;
-	mc = (Math.wrapAround(mc, colPixels) / this.scale) | 0;
-	var mx = Math.round(this.scale * mc) + x + this.scale - 1;
+	var mx = Math.round(this.scale * this.mouseCol) + x + this.scale - 1;
 	mx = Math.wrapAround(mx, colPixels) - this.scale + 1;
-	var mr = this.mouseY - this.loc.map.y - this.shiftY;
-	mr = (Math.wrapAround(mr, rowPixels) / this.scale) | 0;
-	var my = Math.round(this.scale * mr) + y + this.scale - 1;
+	var my = Math.round(this.scale * this.mouseRow) + y + this.scale - 1;
 	my = Math.wrapAround(my, rowPixels) - this.scale + 1;
 	// draw attack and spawn radii
 	if (this.scale === ZOOM_SCALE) {
@@ -1211,23 +1245,28 @@ Visualizer.prototype.draw = function(time, tick) {
 		ctx.stroke();
 		ctx.restore();
 	}
-	// draw mouse location
-	if (this.mouseOverVis) {
-		var text = 'row ' + mr + ' | col ' +  mc;
-		ctx.fillRect(this.loc.vis.x, this.loc.vis.y, ctx.measureText(text).width, 20);
-		ctx.fillStyle = '#fff';
-		ctx.fillText(text, this.loc.vis.x, this.loc.vis.y + 10);
-	}
+	// draw hint text
+	ctx.fillRect(this.loc.vis.x, this.loc.vis.y, ctx.measureText(this.hint).width, 20);
+	ctx.fillStyle = '#fff';
+	ctx.fillText(this.hint, this.loc.vis.x, this.loc.vis.y + 10);
 };
 Visualizer.prototype.mouseMoved = function(mx, my) {
 	var deltaX = mx - this.mouseX;
 	var deltaY = my - this.mouseY;
 	this.mouseX = mx;
 	this.mouseY = my;
+	this.mouseCol = (Math.wrapAround(mx - this.loc.map.x - this.shiftX, 
+			this.scale * this.replay.cols) / this.scale) | 0;
+	this.mouseRow = (Math.wrapAround(my - this.loc.map.y - this.shiftY, 
+			this.scale * this.replay.rows) / this.scale) | 0;
+	var oldHint = this.hint;
+	this.hint = '';
 	if (this.options['interactive']) {
-		var mouseWasOverVis = this.mouseOverVis;
 		this.mouseOverVis = this.loc.map.contains(this.mouseX, this.mouseY) 
 				&& this.loc.vis.contains(this.mouseX, this.mouseY);
+		if (this.mouseOverVis) {
+			this.hint = 'row ' + this.mouseRow + ' | col ' +  this.mouseCol;
+		}
 		if (this.mouseDown === 1) {
 			mx = (this.mouseX - this.loc.graph.x) / (this.loc.graph.w - 1);
 			mx = Math.round(mx * (this.replay.turns.length - 1));
@@ -1240,13 +1279,16 @@ Visualizer.prototype.mouseMoved = function(mx, my) {
 			btn.draw();
 			this.director.draw();
 		} else {
-			this.btnMgr.mouseMove(mx, my);
-		}
-		if (this.mouseOverVis || mouseWasOverVis) {
-			this.director.draw();
+			btn = this.btnMgr.mouseMove(mx, my);
 		}
 	} else {
-		this.btnMgr.mouseMove(mx, my);
+		btn = this.btnMgr.mouseMove(mx, my);
+	}
+	if (btn && btn.hint) {
+		this.hint = btn.hint;
+	}
+	if (oldHint !== this.hint) {
+		this.director.draw();
 	}
 };
 Visualizer.prototype.mousePressed = function() {
@@ -1277,6 +1319,7 @@ Visualizer.prototype.mousePressed = function() {
 Visualizer.prototype.mouseReleased = function() {
 	this.mouseDown = 0;
 	this.btnMgr.mouseUp();
+	this.mouseMoved(this.mouseX, this.mouseY);
 };
 Visualizer.prototype.mouseExited = function() {
 	this.btnMgr.mouseMove(-1, -1);

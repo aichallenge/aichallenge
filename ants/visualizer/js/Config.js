@@ -10,10 +10,14 @@ function Config(preset) {
 		this[key] = preset[key];
 	}	
 }
-Config.prototype.fullscreen = false;
-Config.prototype.label = false;
-Config.prototype.graphics = false;
-Config.prototype.zoom = 1;
+Config.prototype['fullscreen'] = false;
+Config.prototype['label'] = false;
+Config.prototype['graphics'] = false;
+Config.prototype['zoom'] = 1;
+Config.prototype['duration'] = 100;
+Config.prototype['speedSlowest'] = 2;
+Config.prototype['speedFastest'] = 5;
+Config.prototype['speedFactor'] = 0;
 /**
  * checks if local storage is available
  */

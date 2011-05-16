@@ -72,9 +72,9 @@ Director.prototype.slowmoTo = function(time) {
 	this.stopAt = time;
 	var playing = this.playing();
 	if (this.position < time) {
-		this.speed = +0.5
+		this.speed = +1;
 	} else {
-		this.speed = -0.5;
+		this.speed = -1;
 	}
 	if (!playing) {
 		if (this.onstate) this.onstate();
@@ -162,4 +162,12 @@ Director.prototype.draw = function() {
  */
 Director.prototype.freeze = function() {
 	window.clearTimeout(this.timeout);
+};
+Director.prototype.speedUp = function() {
+	this.defaultSpeed *= 1.5;
+	this.speed *= 1.5;
+};
+Director.prototype.slowDown = function() {
+	this.defaultSpeed /= 1.5;
+	this.speed /= 1.5;
 };

@@ -111,11 +111,12 @@ ButtonGroup.prototype.mouseMove = function(mx, my) {
 /**
  * @constructor
  */
-function ImageButton(group, idx, offset, delta, onclick) {
+function ImageButton(group, idx, offset, delta, onclick, hint) {
 	Button.apply(this, [group, onclick]);
 	this.idx = idx;
 	this.offset = offset;
 	this.delta = delta;
+	this.hint = hint;
 }
 ImageButton.prototype.draw = Button.prototype.draw;
 ImageButton.prototype.drawInternal = function(ctx, w, h) {
@@ -149,8 +150,8 @@ function ImageButtonGroup(manager, img, layout, mode, border) {
 }
 ImageButtonGroup.HORIZONTAL = false;
 ImageButtonGroup.VERTICAL = true;
-ImageButtonGroup.prototype.addButton = function(idx, onclick) {
-	var btn = new ImageButton(this, idx, (this.size - 2 * this.border) * idx, (this.vertical) ? this.h : this.w, onclick);
+ImageButtonGroup.prototype.addButton = function(idx, onclick, hint) {
+	var btn = new ImageButton(this, idx, (this.size - 2 * this.border) * idx, (this.vertical) ? this.h : this.w, onclick, hint);
 	this.buttons.push(btn);
 	this.vertical ? this.h += this.size : this.w += this.size;
 	return btn;
