@@ -210,7 +210,7 @@ def run_rounds(opts,args):
             for part in cmd.split():
                 if wd == None and os.path.exists(part):
                     wd = os.path.split(os.path.realpath(part))[0]
-                    new_cmd.append(os.path.basename(part))
+                    new_cmd.append(os.path.join(".", os.path.basename(part)))
                 else:
                     new_cmd.append(part)
             return wd, ' '.join(new_cmd)
