@@ -161,11 +161,12 @@ class GameAPIClient:
                 time.sleep(5)
 
 class Worker:
-    def __init__(self):
+    def __init__(self, debug=False):
         self.cloud = GameAPIClient( server_info['api_base_url'], server_info['api_key'])
         self.post_id = 0
         self.test_map = None
         self.download_dirs = {}
+        self.debug = debug
 
     def submission_dir(self, submission_id):
         return os.path.join(server_info["compiled_path"], str(submission_id//1000), str(submission_id))
@@ -177,9 +178,11 @@ class Worker:
         return self.download_dirs[submission_id]
     
     def clean_download(self, submission_id):
-        if submission_id in self.download_dirs:
-            if os.path.exists(self.download_dirs[submission_id]):
-                os.rmdir(self.download_dirs[submission_id])
+        if not self.debug and submission_id in self.download_dirs:
+            d_dir = self.download_dirs[submission_id]
+            log.debug('Cleaning up {0}'.format(d_dir))
+            if os.path.exists(d_dir):
+                shutil.rmtree(d_dir)
             del self.download_dirs[submission_id]
 
     def download_submission(self, submission_id):
@@ -336,8 +339,6 @@ class Worker:
         options["map"] = self.get_test_map()
         options['capture_errors'] = True
         game = Ants(options)
-        # options['verbose_log'] = sys.stdout
-        # options['error_logs'] = [sys.stdout, None]
         if submission_id in self.download_dirs:
             bot_dir = self.download_dirs[submission_id]
         else:
@@ -346,6 +347,13 @@ class Worker:
                  compiler.get_run_cmd(bot_dir)),
                 ("../ants/submission_test/", "python TestBot.py")]
         log.debug(bots)
+        # set worker debug logging
+        if self.debug:
+            options['verbose_log'] = sys.stdout
+            options['stream_log'] = sys.stdout
+            options['error_logs'] = [sys.stderr, sys.stderr] 
+            # options['output_logs'] = [sys.stdout, sys.stdout]
+            # options['input_logs'] = [sys.stdout, sys.stdout]
         result = run_game(game, bots, options)
         if 'status' in result:
             log.info(result['status'][0]) # player 0 is the bot we are testing
@@ -402,6 +410,8 @@ class Worker:
                       "matchup_id": matchup_id,
                       "error": str(ex) }
             self.cloud.post_result('api_game_result', result)
+            # cleanup download dirs
+            map(self.clean_download, map(int, task['submissions']))
             
     def task(self, last=False):
         task = self.cloud.get_task()
@@ -410,7 +420,10 @@ class Worker:
                 log.info("Recieved task: %s" % task)
                 if task['task'] == 'compile':
                     submission_id = int(task['submission_id'])
-                    if not self.compile(submission_id, True):
+                    try:
+                        if not self.compile(submission_id, True):
+                            self.clean_download(submission_id)
+                    except:
                         self.clean_download(submission_id)
                 elif task['task'] == 'game':
                     self.game(task, True)
@@ -446,10 +459,16 @@ def main(argv):
     parser.add_option("-n", "--num_tasks", dest="num_tasks",
                       type="int", default=1,
                       help="Number of tasks to get from server")
+    parser.add_option("--debug", dest="debug",
+                      action="store_true", default=False,
+                      help="Set the log level to debug")
     
     (opts, args) = parser.parse_args(argv)
-    
-    worker = Worker()
+    if opts.debug:
+        log.setLevel(logging.DEBUG)
+        worker = Worker(True)
+    else:
+        worker = Worker()
 
     # if the worker is not run in task mode, it will not clean up the download
     #    dir, so that debugging can be done on what had been downloaded/unzipped

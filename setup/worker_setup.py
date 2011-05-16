@@ -2,6 +2,7 @@
 
 import grp
 import getpass
+import os
 import os.path
 import pwd
 import re
@@ -10,7 +11,7 @@ from optparse import OptionParser, SUPPRESS_HELP
 
 from install_tools import CD, Environ, install_apt_packages, run_cmd
 from install_tools import append_line, file_contains, get_choice, get_password, check_ubuntu_version
-from socket import getfqdn 
+from socket import getfqdn
 
 TEMPLATE_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -117,31 +118,33 @@ def install_all_languages():
     # dmd install is broken
     #install_dmd()
 
-def setup_contest_files(opts):
+def setup_contest_files(options):
     """ Setup all the contest specific files and directories """
-    contest_root = opts.root_dir
+    contest_root = options.root_dir
+    local_repo = options.local_repo
     compiled_dir = os.path.join(contest_root, "compiled")
     if not os.path.exists(compiled_dir):
         os.mkdir(compiled_dir)
-        run_cmd("chown {0}: {1}".format(opts.username, compiled_dir))
+        run_cmd("chown {0}: {1}".format(options.username, compiled_dir))
     map_dir = os.path.join(contest_root, "maps")
     if not os.path.exists(map_dir):
         os.mkdir(map_dir)
-        run_cmd("chown {0}: {1}".format(opts.username, map_dir))
-    worker_dir = os.path.join(contest_root, opts.local_repo, "worker")
+        run_cmd("chown {0}: {1}".format(options.username, map_dir))
+    worker_dir = os.path.join(contest_root, local_repo, "worker")
     si_filename = os.path.join(TEMPLATE_DIR, "worker_server_info.py.template")
     with open(si_filename, 'r') as si_file:
         si_template = si_file.read()
     si_contents = si_template.format(contest_root=contest_root,
-            repo_dir=opts.local_repo, log_dir=opts.log_dir,
+            repo_dir=local_repo, log_dir=options.log_dir,
             map_dir=map_dir, compiled_dir=compiled_dir,
-            api_url=opts.api_url, api_key=opts.api_key)
+            api_url=options.api_url, api_key=options.api_key)
     with CD(worker_dir):
         if not os.path.exists("server_info.py"):
             with open("server_info.py", "w") as si_file:
                 si_file.write(si_contents)
             run_cmd("chmod 600 server_info.py")
-    run_cmd("chown -R {0}: {1}".format(opts.username, contest_root))
+    if os.stat(local_repo).st_uid != pwd.getpwnam(options.username).pw_uid:
+        run_cmd("chown -R {0}: {1}".format(options.username, local_repo))
 
 def setup_base_chroot(options):
     """ Create and setup the base chroot jail users will run in. """
@@ -166,9 +169,9 @@ def setup_base_chroot(options):
     worker_dir = os.path.join(options.root_dir, options.local_repo, "worker")
     with CD(worker_dir):
         user_info = pwd.getpwnam(options.username)
-        cuid = user_info[2]
-        cgid = user_info[3]
-        jgid = grp.getgrnam("jailusers")[2]
+        cuid = user_info.pw_uid
+        cgid = user_info.pw_gid
+        jgid = grp.getgrnam("jailusers").gr_gid
         run_cmd("gcc -DCONTEST_UID=%d -DCONTEST_GID=%d -DJAIL_GID=%d jail_own.c -o jail_own" % (cuid, cgid, jgid))
         run_cmd("chown root:%s jail_own" % (cgid,))
         run_cmd("chmod u=rwxs,g=rwx,o= jail_own")
@@ -202,8 +205,6 @@ def create_jail_user(username):
     # Add rule to drop any network communication from this user
     run_cmd("iptables -A OUTPUT -m owner --uid-owner %s -j DROP" % (username,))
     # Create user specific chroot
-    # FIXME: the problem with this chroot currently is that the contest user
-    # is unable to clean it back up after use
     chroot_dir = "/srv/chroot"
     jail_dir = os.path.join(chroot_dir, username)
     os.makedirs(os.path.join(jail_dir, "scratch"))

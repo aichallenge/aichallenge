@@ -12,7 +12,7 @@ from threading import Thread
 
 try:
     from server_info import server_info
-    _SECURE_DEFAULT = server_info.get("secure_jail", True)
+    _SECURE_DEFAULT = server_info.get('secure_jail', True)
 except ImportError:
     _SECURE_DEFAULT = False
 
@@ -120,7 +120,7 @@ class Sandbox:
 
     """
 
-    def __init__(self, working_directory, secure=_SECURE_DEFAULT):
+    def __init__(self, working_directory, secure=None):
         """Initialize a new sandbox and invoke the given shell command inside.
 
         working_directory: the directory in which the shell command should
@@ -137,6 +137,8 @@ class Sandbox:
         self.stdout_queue = Queue()
         self.stderr_queue = Queue()
 
+        if secure == None:
+            secure = _SECURE_DEFAULT
         if secure:
             self.jail = _Jail()
             self.jail.prepare_with(working_directory)
