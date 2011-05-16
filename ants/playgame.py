@@ -81,6 +81,9 @@ def main(argv):
     parser.add_option('--end_wait', dest='end_wait',
                       default=0, type="float",
                       help='Seconds to wait at end for bots to process end')
+    parser.add_option('--secure_jail', dest='secure_jail',
+                      action='store_true', default=False,
+                      help='Use the secure jail for each bot (*nix only)')
 
     # ants specific game options
     parser.add_option("--attack", dest="attack",
@@ -191,6 +194,7 @@ def run_rounds(opts,args):
         "log_error": opts.log_error,
         "serial": opts.serial,
         "strict": opts.strict,
+        "secure_jail": opts.secure_jail,
         "end_wait": opts.end_wait }
     random.seed(opts.seed)
     for round in range(opts.rounds):
