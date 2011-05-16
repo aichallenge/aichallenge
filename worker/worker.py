@@ -4,11 +4,10 @@ import sys
 import os
 import json
 import urllib
-import tempfile
-import logging
 import logging.handlers
+import logging
 import shutil
-import hashlib
+from hashlib import md5
 import time
 import stat
 import platform
@@ -18,7 +17,6 @@ import tempfile
 from optparse import OptionParser
 
 from server_info import server_info
-from submission_hash import hash_file_sha
 
 import compiler
 from engine import run_game
@@ -28,7 +26,7 @@ log = logging.getLogger('worker')
 log.setLevel(logging.INFO)
 log_file = os.path.join(server_info['logs_path'], 'worker.log')
 handler = logging.handlers.RotatingFileHandler(log_file,
-                                               maxBytes=1000000,
+                                               maxBytes=10000000,
                                                backupCount=5)
 handler.setLevel(logging.INFO)
 handler2 = logging.StreamHandler()
@@ -125,12 +123,12 @@ class GameAPIClient:
             url = '%s/maps/%s' % (self.base_url, map_filename)
             log.info("Downloading map %s" % url)
             data = urllib.urlopen(url).read()
-            return data.read()
+            log.debug(data)
+            return data
         except Exception as ex:
             log.error("Get map error: %s" % ex)
             return None
 
-    # TODO: save failed posts locally and retry on worker startup
     def post_result(self, method, result):
         # retry 10 times or until post is successful
         retry = 1
@@ -138,7 +136,7 @@ class GameAPIClient:
             url = self.get_url(method)
             log.info(url)
             json_data = json.dumps(result)
-            hash = hashlib.md5(json_data).hexdigest()
+            hash = md5(json_data).hexdigest()
             log.debug("Posting result %s: %s" % (method, json_data))
             log.info("Posting hash: %s" % hash)
             response = urllib.urlopen(url, json.dumps(result))
@@ -152,7 +150,7 @@ class GameAPIClient:
                         break
                     elif i < retry-1:
                         time.sleep(5)
-                except ValueError as ex:
+                except ValueError:
                     log.info("Bad json from server during post result: %s" % data)
                     if i < retry-1:
                         time.sleep(5)                    
@@ -201,7 +199,7 @@ class Worker:
             if filename != None:
                 remote_hash = self.cloud.get_submission_hash(submission_id)
                 with open(filename, 'rb') as f:
-                    local_hash = hashlib.md5(f.read()).hexdigest()
+                    local_hash = md5(f.read()).hexdigest()
                 if local_hash != remote_hash:
                     log.error("After downloading submission %s to %s hash didn't match" %
                             (submission_id, download_dir))
@@ -234,7 +232,7 @@ class Worker:
             for file_name, command in zip_files:
                 if os.path.exists(file_name):
                     log.info("unnzip status: %s" % os.system(command))
-                    for dirpath, dirnames, filenames in os.walk(".."):
+                    for dirpath, _, filenames in os.walk(".."):
                         os.chmod(dirpath, 0755)
                         for filename in filenames:
                             filename = os.path.join(dirpath, filename)
@@ -297,14 +295,6 @@ class Worker:
                     log.info("Functional Test Failure")
                     report(STATUS_TEST_ERROR)
                     return False
-
-    def check_hash(self, submission_id):
-        try:
-            for filename in os.listdir(os.path.join(server_info["compiled_path"], str(submission_id))):
-                if filename.endswith(".zip") or filename.endswith(".tgz"):
-                    log.info("%s: %s" % (filename, hash_file_sha1(filename)))
-        except:
-            log.error("Submission path not found.")
     
     def get_map(self, map_filename):
         map_file = os.path.join(server_info["maps_path"], map_filename)
@@ -312,6 +302,9 @@ class Worker:
             data = self.cloud.get_map(map_filename)
             if data == None:
                 raise Exception("map", "Could not download map from main server.")
+            map_dir = os.path.split(map_file)[0]
+            if not os.path.exists(map_dir):
+                os.makedirs(map_dir)
             f = open(map_file, 'w')
             f.write(data)
             f.close()
@@ -405,7 +398,6 @@ class Worker:
             if report_status:
                 self.cloud.post_result('api_game_result', result)
         except Exception as ex:
-            import traceback
             log.debug(traceback.format_exc())
             result = {"post_id": self.post_id,
                       "matchup_id": matchup_id,
@@ -418,13 +410,13 @@ class Worker:
         task = self.cloud.get_task()
         if task:
             try:
-                log.info("Recieved task: %s" % task)
+                log.info("Received task: %s" % task)
                 if task['task'] == 'compile':
                     submission_id = int(task['submission_id'])
                     try:
                         if not self.compile(submission_id, True):
                             self.clean_download(submission_id)
-                    except Exception as e:
+                    except Exception:
                         log.error(traceback.format_exc())
                         self.clean_download(submission_id)
                 elif task['task'] == 'game':
@@ -446,9 +438,6 @@ def main(argv):
     parser.add_option("-s", "--submission_id", dest="submission_id",
                       type="int", default=0,
                       help="Submission id to use for hash, download and compile")
-    parser.add_option("--hash", dest="hash",
-                      action="store_true", default=False,
-                      help="Display submission hash")
     parser.add_option("-d", "--download", dest="download",
                       action="store_true", default=False,
                       help="Download submission")
@@ -465,7 +454,7 @@ def main(argv):
                       action="store_true", default=False,
                       help="Set the log level to debug")
     
-    (opts, args) = parser.parse_args(argv)
+    (opts, _) = parser.parse_args(argv)
     if opts.debug:
         log.setLevel(logging.DEBUG)
         worker = Worker(True)
