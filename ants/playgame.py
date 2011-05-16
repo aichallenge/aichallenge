@@ -204,7 +204,17 @@ def run_rounds(opts,args):
             #opts['map'] = map_file.read()
         game = Ants(game_options)
         # initialize bots
-        bots = [('.', arg) for arg in args]
+        def get_cmd_wd(cmd):
+            new_cmd = []
+            wd = None
+            for part in cmd.split():
+                if wd == None and os.path.exists(part):
+                    wd = os.path.split(os.path.realpath(part))[0]
+                    new_cmd.append(os.path.basename(part))
+                else:
+                    new_cmd.append(part)
+            return wd, ' '.join(new_cmd)
+        bots = [get_cmd_wd(arg) for arg in args]
         bot_count = len(bots)
         if game.num_players != len(bots):
             print("Incorrect number of bots for map.  Need %s, got %s" %

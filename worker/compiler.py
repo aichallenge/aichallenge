@@ -433,7 +433,7 @@ def get_run_cmd(submission_dir):
             with open('run.sh') as f:
                 for line in f:
                     if line[0] != '#':
-                        return line
+                        return line.rstrip('\r\n')
 
 def get_run_lang(submission_dir):
     with CD(submission_dir):
