@@ -9,7 +9,8 @@
 		};
 
 		function init() {
-			var visualizer = new Visualizer(document.body, '## PATH PLACEHOLDER ##data/');
+			var visualizer = new Visualizer(document.body, 
+'## PATH PLACEHOLDER ##data/');
 			visualizer.loadReplayData('## REPLAY PLACEHOLDER ##');
 		}
 	</script>

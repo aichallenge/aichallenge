@@ -14,7 +14,7 @@ require_once('memcache.php');
         $last_game_id = 0;
     }
     include 'visualizer_widget.php';
-    visualizer_widget($game_id=strval($last_game_id),550,550);
+    visualizer_widget($game_id=strval($last_game_id),false,550,550);
 ?>
 
 <h2>Planet Wars Final Rankings</h2>
