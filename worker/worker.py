@@ -53,7 +53,7 @@ STATUS_COMPILE_ERROR = 70
 STATUS_TEST_ERROR = 80
 
 # get game from ants dir
-sys.path.append("../ants")
+sys.path.append(os.path.join(server_info['repo_path'], 'ants'))
 from ants import Ants
 
 class CD(object):
@@ -323,7 +323,8 @@ class Worker:
     
     def get_test_map(self):
         if self.test_map == None:
-            f = open('../ants/submission_test/test.map', 'r')
+            f = open(os.path.join(server_info['repo_path'],
+                                  'ants/submission_test/test.map'), 'r')
             self.test_map = f.read()
             f.close()
         return self.test_map
@@ -345,7 +346,7 @@ class Worker:
             bot_dir = self.submission_dir(submission_id)
         bots = [(os.path.join(bot_dir, 'bot'),
                  compiler.get_run_cmd(bot_dir)),
-                ("../ants/submission_test/", "python TestBot.py")]
+                (os.path.join(server_info['repo_path'],"ants","submission_test"), "python TestBot.py")]
         log.debug(bots)
         # set worker debug logging
         if self.debug:
@@ -423,7 +424,8 @@ class Worker:
                     try:
                         if not self.compile(submission_id, True):
                             self.clean_download(submission_id)
-                    except:
+                    except Exception as e:
+                        log.error(traceback.format_exc())
                         self.clean_download(submission_id)
                 elif task['task'] == 'game':
                     self.game(task, True)
