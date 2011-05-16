@@ -5,7 +5,9 @@
 #
 
 import getpass
+import os
 import os.path
+import pwd
 import sys
 from optparse import OptionParser
 
@@ -65,7 +67,8 @@ def setup_base_files(opts):
             with open("server_info.py", "w") as si_file:
                 si_file.write(si_contents)
             run_cmd("chmod 600 server_info.py")
-    run_cmd("chown -R {0}:{0} {1}".format(opts.username, opts.root_dir))
+    if os.stat(opts.local_repo).st_uid != pwd.getpwnam(opts.username).pw_uid:
+        run_cmd("chown -R {0}:{0} {1}".format(opts.username, opts.local_repo))
 
 SETUP_SQL = {
     "creation": "create database %s",
