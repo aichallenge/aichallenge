@@ -46,7 +46,7 @@ function visualizer_widget($game_id, $interactive=true, $width=690, $height=700)
         ?>
             <script type="text/javascript" src="<?php echo $js; ?>"></script>
             <script type="text/javascript">
-                visualizer = new Visualizer(document.getElementById('visualizerDiv'), 'visualizer/', <?php echo ($interactive) ? 'true' : 'false'; ?>, <?php echo $width; ?>, <?php echo $height; ?>);
+                visualizer = new Visualizer(document.getElementById('visualizerDiv'), 'visualizer/', <?php echo ($interactive) ? 'true' : 'false'; ?>, <?php echo $width; ?>, <?php echo $height; if (!$interactive) echo ', {fullscreen:false}'?>);
                 visualizer.loadReplayDataFromURI('<?php echo $replay; ?>');
             </script>
         <?php

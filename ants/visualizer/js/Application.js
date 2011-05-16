@@ -4,19 +4,17 @@
  */
 
 /*
- * @todo fix % operator error when scrolling the map up
  * @todo better player rank display
- * @todo constructor parameter that overrides config
- * @todo hide scrollbars in fullscreen mode (if still a problem)
  * @todo info button showing a message box with game meta data
  * @todo zoom in to 20x20 squares with animated ants
  * @todo menu items: toggle graph/score bars, cpu use
  * @todo setting for cpu usage
- * @todo keep a minimum size to allow the controls to render
  * @todo show when a bot crashed
+ * @todo hyperlink button to original game if game_url is given
+ *
+ * @todo keep a minimum size to allow the controls to render
  * @todo switch to console.log for debug and load messages
  * @todo fix duplicate 'parsing replay...' messages
- * @todo hyperlink button to original game if game_url is given
  */
 
 LoadingState = {
@@ -66,8 +64,10 @@ Location.prototype.contains = function(x, y) {
  *     visualizer is interactive
  * @param {Number} w an optional maximum width or undefined
  * @param {Number} h an optional maximum height or undefined
+ * @param {Object} config an optional configuration; each field overrides the
+ *     respective value in the user's configuration or the default
  */
-Visualizer = function(container, dataDir, interactive, w, h) {
+Visualizer = function(container, dataDir, interactive, w, h, config) {
 	/**
 	 * any generated DOM elements will be placed here
 	 * @private
@@ -127,7 +127,7 @@ Visualizer = function(container, dataDir, interactive, w, h) {
 	 * presistable configuration values
 	 * @private
 	 */
-	this.config = new Config();
+	this.config = new Config(config);
 	/**
 	 * Options from URL GET parameters or the constructor arguments
 	 * @private
@@ -509,6 +509,7 @@ Visualizer.prototype.tryStart = function() {
 			}
 			var scores = this.replay.scores[this.replay.scores.length - 1];
 			var ranks = new Array(scores.length);
+			var order = new Array(scores.length);
 			for (i = 0; i < scores.length; i++) {
 				ranks[i] = 1;
 				for (var k = 0; k < scores.length; k++) {
@@ -516,6 +517,9 @@ Visualizer.prototype.tryStart = function() {
 						ranks[i]++;
 					}
 				}
+				k = ranks[i] - 1;
+				while(order[k] !== undefined) k++;
+				order[k] = i;
 			}
 			buttonAdder = function(i) {
 				var color = vis.replay.htmlPlayerColors[i];
@@ -530,33 +534,16 @@ Visualizer.prototype.tryStart = function() {
 				}
 				var caption = vis.replay.meta['playernames'][i];
 				if (ranks[i] === 1) {
-					caption = '★' + caption + '★';
+					caption = '★ ' + caption;
 				} else if (ranks[i] === 2) {
-					caption = '☆' + caption + '☆';
+					caption = '☆ ' + caption;
 				} else {
-					caption += ' (' + ranks[i];
-					if ((ranks[i] / 10) | 0 !== 1) {
-						switch (ranks[i] % 10) {
-							case 1:
-								caption += 'st)';
-								break;
-							case 2:
-								caption += 'nd)';
-								break;
-							case 3:
-								caption += 'rd)';
-								break;
-							default:
-								caption += 'th)';
-						}
-					} else {
-						caption += 'th)';
-					}
+					caption = ranks[i] + '. ' + caption;
 				}
 				bg.addButton(caption, color, func);
 			}
 			for (i = 0; i < this.replay.players; i++) {
-				buttonAdder(i);
+				buttonAdder(order[i]);
 			}
 			// try to make the replays play 1 minute, but the turns take no more than a second
 			this.director.duration = this.replay.turns.length - 1;

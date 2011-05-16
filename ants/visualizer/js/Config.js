@@ -2,13 +2,18 @@
  * keeps track of persistent configuration values
  * @constructor
  */
-function Config() {
-	this['fullscreen'] = false;
-	this['border'] = true;
-	this['label'] = false;
-	this['zoom'] = 1;
+function Config(preset) {
+	// user settings
 	this.load();
+	// override
+	if (preset) for (var key in preset) {
+		this[key] = preset[key];
+	}	
 }
+Config.prototype.fullscreen = false;
+Config.prototype.label = false;
+Config.prototype.graphics = false;
+Config.prototype.zoom = 1;
 /**
  * checks if local storage is available
  */
