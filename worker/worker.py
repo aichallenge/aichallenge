@@ -178,7 +178,7 @@ class Worker:
         return self.download_dirs[submission_id]
     
     def clean_download(self, submission_id):
-        if submission_id in self.download_dirs:
+        if not self.debug and submission_id in self.download_dirs:
             d_dir = self.download_dirs[submission_id]
             log.debug('Cleaning up {0}'.format(d_dir))
             if os.path.exists(d_dir):
