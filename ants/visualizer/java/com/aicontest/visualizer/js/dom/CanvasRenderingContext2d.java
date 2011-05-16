@@ -156,6 +156,16 @@ public class CanvasRenderingContext2d extends RenderingContext2dState {
 		drawn = true;
 	}
 
+	public void strokeRect(double x, double y, double w, double h) throws Exception {
+		setStrokeStyle();
+		Path2D.Double oldPath = path;
+		beginPath();
+		rect(x, y, w, h);
+		gfx.draw(path);
+		path = oldPath;
+		drawn = true;
+	}
+
 	public void fillRect(double x, double y, double w, double h) throws Exception {
 		setFillStyle();
 		Path2D.Double oldPath = path;

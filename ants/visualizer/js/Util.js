@@ -18,3 +18,7 @@ Random = {
 		return from + (Math.random() * (1 + to - from) | 0);
 	}
 };
+
+Math.wrapAround = function (x, range) {
+	return x - Math.floor(x / range) * range;
+}

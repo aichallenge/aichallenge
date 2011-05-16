@@ -4,9 +4,13 @@
  */
 
 /*
+ * @todo fix % operator error when scrolling the map up
+ * @todo better player rank display
+ * @todo constructor parameter that overrides config
+ * @todo hide scrollbars in fullscreen mode (if still a problem)
  * @todo info button showing a message box with game meta data
  * @todo zoom in to 20x20 squares with animated ants
- * @todo menu items: show attack, show birth, toggle graph/score bars, cpu use
+ * @todo menu items: toggle graph/score bars, cpu use
  * @todo setting for cpu usage
  * @todo keep a minimum size to allow the controls to render
  * @todo show when a bot crashed
@@ -58,10 +62,12 @@ Location.prototype.contains = function(x, y) {
  * @param {Node} container the html element, that the visualizer will embed into
  * @param {String} dataDir This relative path to the visualizer data files. You
  *     will get an error message if you forget the tailing '/'.
+ * @param {Boolean} interactive optional, if true or omitted, then the 
+ *     visualizer is interactive
  * @param {Number} w an optional maximum width or undefined
  * @param {Number} h an optional maximum height or undefined
  */
-Visualizer = function(container, dataDir, w, h) {
+Visualizer = function(container, dataDir, interactive, w, h) {
 	/**
 	 * any generated DOM elements will be placed here
 	 * @private
@@ -128,6 +134,7 @@ Visualizer = function(container, dataDir, w, h) {
 	 */
 	this.options = {};
 	this.options['data_dir'] = dataDir;
+	this.options['interactive'] = !(interactive === false);
 	// read URL parameters and store them in the parameters object
 	var equalPos, value, key, i;
 	var parameters = window.location.href;
@@ -137,8 +144,8 @@ Visualizer = function(container, dataDir, w, h) {
 			equalPos = parameters[i].indexOf('=');
 			key = parameters[i].substr(0, equalPos);
 			value = parameters[i].substr(equalPos + 1);
-			if (key === 'debug' || key === 'profile') {
-				value = new Boolean(value);
+			if (key === 'debug' || key === 'profile' || key === 'interactive') {
+				value = value == 'true' || value == '1';
 			}
 			this.options[key] = value;
 		}
@@ -154,18 +161,19 @@ Visualizer = function(container, dataDir, w, h) {
 	/**
 	 * @private
 	 */
+	this.mouseDown = 0;
+	/**
+	 * @private
+	 */
+	this.mouseOverVis = false;
+	/**
+	 * @private
+	 */
 	this.shiftX = 0;
 	/**
 	 * @private
 	 */
 	this.shiftY = 0;
-	/**
-	 * @private
-	 */
-	this.mouseDown = 0;
-	/**
-	 * @private
-	 */
 	/**
 	 * buttons
 	 * @private
@@ -197,15 +205,17 @@ Visualizer = function(container, dataDir, w, h) {
 	 */
 	this.imgMgr = new ImageManager((dataDir || '') + 'img/', this,
 			this.completedImages);
-	this.imgMgr.add('playback.png');
-	this.imgMgr.add('fog.png');
-	this.imgMgr.add('toolbar.png');
 	this.imgMgr.add('water.png');
+	if (this.options['interactive']) {
+		this.imgMgr.add('playback.png');
+		this.imgMgr.add('fog.png');
+		this.imgMgr.add('toolbar.png');
+	}
 	/**
 	 * the highest player count in a previous replay to avoid button repaints
 	 * @private
 	 */
-	this.highestPlayerCount = 0;
+	this.colorizedPlayerCount = 0;
 	// state information that must be reset on error/reload
 	/**
 	 * @private
@@ -410,80 +420,82 @@ Visualizer.prototype.tryStart = function() {
 	if (this.replay instanceof Replay) {
 		if (this.main.ctx && !this.imgMgr.error && !this.imgMgr.pending) {
 			var vis = this;
-			// add static buttons
-			if (!vis.btnMgr.groups['playback']) {
-				var bg = vis.btnMgr.addImageGroup('playback',
-						vis.imgMgr.images[0], ImageButtonGroup.HORIZONTAL,
-						ButtonGroup.MODE_NORMAL, 2);
-				bg.addButton(3, function() {vis.director.gotoTick(0)});
-				bg.addSpace(32);
-				bg.addButton(5, function() {
-					var stop = (Math.ceil(vis.director.position * 2) - 1) / 2;
-					vis.director.slowmoTo(stop);
-				});
-				//drawImage(this.imgMgr.images[0], 0 * 64, 0, 64, 64, x + 2.5 * 64, y, 64, 64);
-				bg.addSpace(64);
-				bg.addButton(4, function() {vis.director.playStop()});
-				//drawImage(this.imgMgr.images[0], 1 * 64, 0, 64, 64, x + 4.5 * 64, y, 64, 64);
-				bg.addSpace(64);
-				bg.addButton(6, function() {
-					var stop = (Math.floor(vis.director.position * 2) + 1) / 2;
-					vis.director.slowmoTo(stop);
-				});
-				bg.addSpace(32);
-				bg.addButton(2, function() {
-					vis.director.gotoTick(vis.director.duration);
-				});
-				bg = vis.btnMgr.addImageGroup('toolbar', vis.imgMgr.images[2],
-						ImageButtonGroup.VERTICAL, ButtonGroup.MODE_NORMAL, 2);
-				if (this.config.hasLocalStorage()) {
-					bg.addButton(0, function() {vis.config.save()});
-				}
-				if (!window.isFullscreenSupported || window.isFullscreenSupported()) {
-					bg.addButton(1, function() {
-						vis.setFullscreen(!vis.config['fullscreen']);
+			if (this.options['interactive']) {
+				// add static buttons
+				if (!vis.btnMgr.groups['playback']) {
+					var bg = vis.btnMgr.addImageGroup('playback',
+							vis.imgMgr.images[1], ImageButtonGroup.HORIZONTAL,
+							ButtonGroup.MODE_NORMAL, 2);
+					bg.addButton(3, function() {vis.director.gotoTick(0)});
+					bg.addSpace(32);
+					bg.addButton(5, function() {
+						var stop = (Math.ceil(vis.director.position * 2) - 1) / 2;
+						vis.director.slowmoTo(stop);
+					});
+					//drawImage(this.imgMgr.images[1], 0 * 64, 0, 64, 64, x + 2.5 * 64, y, 64, 64);
+					bg.addSpace(64);
+					bg.addButton(4, function() {vis.director.playStop()});
+					//drawImage(this.imgMgr.images[1], 1 * 64, 0, 64, 64, x + 4.5 * 64, y, 64, 64);
+					bg.addSpace(64);
+					bg.addButton(6, function() {
+						var stop = (Math.floor(vis.director.position * 2) + 1) / 2;
+						vis.director.slowmoTo(stop);
+					});
+					bg.addSpace(32);
+					bg.addButton(2, function() {
+						vis.director.gotoTick(vis.director.duration);
+					});
+					bg = vis.btnMgr.addImageGroup('toolbar', vis.imgMgr.images[3],
+							ImageButtonGroup.VERTICAL, ButtonGroup.MODE_NORMAL, 2);
+					if (this.config.hasLocalStorage()) {
+						bg.addButton(0, function() {vis.config.save()});
+					}
+					if (!window.isFullscreenSupported || window.isFullscreenSupported()) {
+						bg.addButton(1, function() {
+							vis.setFullscreen(!vis.config['fullscreen']);
+						});
+					}
+					bg.addButton(2, function() {
+						vis.setZoom(2 * vis.config['zoom']);
+						vis.director.draw();
+					});
+					bg.addButton(3, function() {
+						vis.setZoom(0.5 * vis.config['zoom']);
+						vis.director.draw();
+					});
+					bg.addButton(4, function() {
+						vis.shiftX = 0;
+						vis.shiftY = 0;
+						var btn = vis.btnMgr.groups['toolbar'].getButton(4);
+						btn.enabled = false;
+						btn.draw();
+						vis.director.draw();
+					}).enabled = false;
+					bg.addButton(5, function() {
+						vis.setAntLabels(!vis.config['label']);
+						vis.director.draw();
 					});
 				}
-				bg.addButton(2, function() {
-					vis.setZoom(2 * vis.config['zoom']);
-					vis.director.draw();
-				});
-				bg.addButton(3, function() {
-					vis.setZoom(0.5 * vis.config['zoom']);
-					vis.director.draw();
-				});
-				bg.addButton(4, function() {
-					vis.shiftX = 0;
-					vis.shiftY = 0;
-					var btn = vis.btnMgr.groups['toolbar'].getButton(4);
-					btn.enabled = false;
-					btn.draw();
-					vis.director.draw();
-				}).enabled = false;
-				bg.addButton(5, function() {
-					vis.setAntLabels(!vis.config['label']);
-					vis.director.draw();
-				});
-			}
-			// generate fog images
-			var colors = [null];
-			for (i = 0; i < this.replay.players; i++) {
-				colors.push(this.replay.meta['playercolors'][i]);
-			}
-			if (this.highestPlayerCount < this.replay.players) {
-				this.highestPlayerCount = this.replay.players;
-				this.imgMgr.colorize(1, colors);
-			}
-			bg = this.btnMgr.addImageGroup('fog', this.imgMgr.patterns[1],
-				ImageButtonGroup.VERTICAL, ButtonGroup.MODE_RADIO, 2);
-			var buttonAdder = function(fog) {
-				return bg.addButton(i, function() {vis.showFog(fog);});
-			}
-			for (var i = 0; i < colors.length; i++) {
-				if (i == 0) {
-					buttonAdder(undefined).down = true;
-				} else {
-					buttonAdder(i - 1);
+				// generate fog images
+				var colors = [null];
+				for (i = 0; i < this.replay.players; i++) {
+					colors.push(this.replay.meta['playercolors'][i]);
+				}
+				if (this.colorizedPlayerCount < this.replay.players) {
+					this.colorizedPlayerCount = this.replay.players;
+					this.imgMgr.colorize(2, colors);
+				}
+				bg = this.btnMgr.addImageGroup('fog', this.imgMgr.patterns[2],
+					ImageButtonGroup.VERTICAL, ButtonGroup.MODE_RADIO, 2);
+				var buttonAdder = function(fog) {
+					return bg.addButton(i, function() {vis.showFog(fog);});
+				}
+				for (var i = 0; i < colors.length; i++) {
+					if (i == 0) {
+						buttonAdder(undefined).down = true;
+					} else {
+						buttonAdder(i - 1);
+					}
 				}
 			}
 			// add player buttons
@@ -549,22 +561,24 @@ Visualizer.prototype.tryStart = function() {
 			// try to make the replays play 1 minute, but the turns take no more than a second
 			this.director.duration = this.replay.turns.length - 1;
 			this.director.defaultSpeed = Math.max(this.director.duration / 60, 1);
-			this.director.onstate = function() {
-				var btn = vis.btnMgr.groups['playback'].buttons[4];
-				btn.offset = (vis.director.playing() ? 7 : 4) * vis.imgMgr.images[0].height;
-				if (btn === vis.btnMgr.nailed) {
-					vis.btnMgr.nailed = null;
-				}
-				btn.mouseUp();
-			};
-			// this will fire once in FireFox when a key is held down
-			document.onkeydown = function(event) {
-				if (!event) {
-					// IE doesn't pass this as an argument
-					event = window.event;
-				}
-				vis.keyPressed(event.keyCode);
-			};
+			if (this.options['interactive']) {
+				this.director.onstate = function() {
+					var btn = vis.btnMgr.groups['playback'].buttons[4];
+					btn.offset = (vis.director.playing() ? 7 : 4) * vis.imgMgr.images[1].height;
+					if (btn === vis.btnMgr.nailed) {
+						vis.btnMgr.nailed = null;
+					}
+					btn.mouseUp();
+				};
+				// this will fire once in FireFox when a key is held down
+				document.onkeydown = function(event) {
+					if (!event) {
+						// IE doesn't pass this as an argument
+						event = window.event;
+					}
+					vis.keyPressed(event.keyCode);
+				};
+			}
 			// setup mouse handlers
 			this.main.canvas.onmousemove = function(event) {
 				var mx = 0;
@@ -637,13 +651,15 @@ Visualizer.prototype.setFullscreen = function(enable) {
 				if (enable) {
 					this.container.removeChild(this.main.canvas);
 					var tempBody = document.createElement("body");
-					tempBody.style.overflow = 'hidden';
+					this.savedOverflow = html.style.overflow;
+					html.style.overflow = 'hidden';
 					tempBody.appendChild(this.main.canvas);
 					this.savedBody = html.replaceChild(tempBody, document.body);
 				} else if (this.savedBody) {
 					document.body.removeChild(this.main.canvas);
 					this.container.appendChild(this.main.canvas);
 					html.replaceChild(this.savedBody, document.body);
+					html.style.overflow = this.savedOverflow;
 					delete this.savedBody;
 				}
 			}
@@ -674,12 +690,14 @@ Visualizer.prototype.setZoom = function(zoom) {
 	this.overlay.canvas.height = Math.min(this.loc.map.h, this.loc.vis.h);
 	this.border.canvas.width = Math.min(this.loc.vis.w, this.loc.map.w);
 	this.border.canvas.height = Math.min(this.loc.vis.h, this.loc.map.h);
-	var zoomInBtn = this.btnMgr.groups['toolbar'].getButton(2);
-	zoomInBtn.enabled = !(this.scale === ZOOM_SCALE);
-	zoomInBtn.draw();
-	var zoomOutBtn = this.btnMgr.groups['toolbar'].getButton(3);
-	zoomOutBtn.enabled = !(zoom === 1);
-	zoomOutBtn.draw();
+	if (this.options['interactive']) {
+		var zoomInBtn = this.btnMgr.groups['toolbar'].getButton(2);
+		zoomInBtn.enabled = !(this.scale === ZOOM_SCALE);
+		zoomInBtn.draw();
+		var zoomOutBtn = this.btnMgr.groups['toolbar'].getButton(3);
+		zoomOutBtn.enabled = !(zoom === 1);
+		zoomOutBtn.draw();
+	}
 };
 Visualizer.prototype.setAntLabels = function(enable) {
 	this.config['label'] = enable;
@@ -722,17 +740,21 @@ Visualizer.prototype.resize = function(forced) {
 		ctx.fillText('# of ants', 4, y + 48);
 		y += 134;
 		// 3. visualizer placement
-		this.loc.vis = new Location(LEFT_PANEL_W, y,
-			news.width - LEFT_PANEL_W - RIGHT_PANEL_W,
-			news.height - y - BOTTOM_PANEL_H);
-		var bg = this.btnMgr.groups['playback'];
-		bg.x = ((news.width - 8 * 64) / 2) | 0;
-		bg.y = this.loc.vis.y + this.loc.vis.h;
-		bg = this.btnMgr.groups['fog'];
-		bg.y = this.loc.vis.y + 8;
-		bg = this.btnMgr.groups['toolbar'];
-		bg.x = this.loc.vis.x + this.loc.vis.w;
-		bg.y = this.loc.vis.y + 8;
+		if (this.options['interactive']) {
+			this.loc.vis = new Location(LEFT_PANEL_W, y,
+				news.width - LEFT_PANEL_W - RIGHT_PANEL_W,
+				news.height - y - BOTTOM_PANEL_H);
+			var bg = this.btnMgr.groups['playback'];
+			bg.x = ((news.width - 8 * 64) / 2) | 0;
+			bg.y = this.loc.vis.y + this.loc.vis.h;
+			bg = this.btnMgr.groups['fog'];
+			bg.y = this.loc.vis.y + 8;
+			bg = this.btnMgr.groups['toolbar'];
+			bg.x = this.loc.vis.x + this.loc.vis.w;
+			bg.y = this.loc.vis.y + 8;
+		} else {
+			this.loc.vis = new Location(0, y, news.width, news.height - y);
+		}
 		this.setZoom(this.config['zoom']);
 		this.border.canvas.width = Math.min(this.loc.vis.w, this.loc.map.w);
 		this.border.canvas.height = Math.min(this.loc.vis.h, this.loc.map.h);
@@ -755,7 +777,7 @@ Visualizer.prototype.resize = function(forced) {
 Visualizer.prototype.renderMap = function(ctx, scale) {
 	ctx.fillStyle = COLOR_SAND;
 	ctx.fillRect(0, 0, this.loc.map.w, this.loc.map.h);
-	ctx.fillStyle = ctx.createPattern(this.imgMgr.images[3], 'repeat');
+	ctx.fillStyle = ctx.createPattern(this.imgMgr.images[0], 'repeat');
 	for (var row = 0; row < this.replay.rows; row++) {
 		var start = undefined;
 		for (var col = 0; col < this.replay.cols; col++) {
@@ -1096,8 +1118,48 @@ Visualizer.prototype.draw = function(time, tick) {
 		}
 		ctx.restore();
 	}
+	// calculate mouse position
+	var mc = this.mouseX - this.loc.map.x - this.shiftX;
+	mc = (Math.wrapAround(mc, colPixels) / this.scale) | 0;
+	var mx = Math.round(this.scale * mc) + x + this.scale - 1;
+	mx = Math.wrapAround(mx, colPixels) - this.scale + 1;
+	var mr = this.mouseY - this.loc.map.y - this.shiftY;
+	mr = (Math.wrapAround(mr, rowPixels) / this.scale) | 0;
+	var my = Math.round(this.scale * mr) + y + this.scale - 1;
+	my = Math.wrapAround(my, rowPixels) - this.scale + 1;
+	// draw attack and spawn radii
+	if (this.scale === ZOOM_SCALE) {
+		var ar = ZOOM_SCALE * Math.sqrt(this.replay.meta['replaydata']['attackradius2']);
+		var sr = ZOOM_SCALE * Math.sqrt(this.replay.meta['replaydata']['spawnradius2']);
+		ctx.save();
+		ctx.translate(halfScale, halfScale);
+		ctx.lineWidth = 2;
+		for (key in drawStates) {
+			ctx.strokeStyle = '#' + key;
+			drawList = drawStates[key];
+			for (n = 0; n < drawList.length; n++) {
+				ant = drawList[n];
+				var radius = (ant['owner'] !== undefined) ? ar : sr;
+				dx = ant['x'] - mx;
+				dy = ant['y'] - my;
+				if (radius * radius >= dx * dx + dy * dy) {
+					ctx.beginPath();
+					ctx.arc(ant['x'], ant['y'], radius, 0, 2 * Math.PI, false);
+					ctx.moveTo(ant['x'], ant['y']);
+					ctx.lineTo(mx, my);
+					ctx.stroke();
+				}
+			}
+		}
+		ctx.restore();
+	}
 	// render fog onto map
 	if (this.fog) ctx.drawImage(this.overlay.canvas, 0, 0);
+	// draw mouse location
+	if (this.mouseOverVis) {
+		ctx.strokeStyle = '#fff';
+		ctx.strokeRect(mx + 0.5, my + 0.5, this.scale - 1, this.scale - 1);
+	}
 	// draw buffer on screen
 	ctx = this.main.ctx;
 	ctx.save();
@@ -1136,7 +1198,7 @@ Visualizer.prototype.draw = function(time, tick) {
 	if (this.config['zoom'] !== 1) {
 		ctx.save();
 		// border
-		ctx.strokeStyle = '#FFF';
+		ctx.strokeStyle = '#fff';
 		ctx.lineWidth = 2;
 		ctx.beginPath();
 		loc = this.minimap.loc;
@@ -1162,47 +1224,68 @@ Visualizer.prototype.draw = function(time, tick) {
 		ctx.stroke();
 		ctx.restore();
 	}
+	// draw mouse location
+	if (this.mouseOverVis) {
+		var text = 'row ' + mr + ' | col ' +  mc;
+		ctx.fillRect(this.loc.vis.x, this.loc.vis.y, ctx.measureText(text).width, 20);
+		ctx.fillStyle = '#fff';
+		ctx.fillText(text, this.loc.vis.x, this.loc.vis.y + 10);
+	}
 };
 Visualizer.prototype.mouseMoved = function(mx, my) {
 	var deltaX = mx - this.mouseX;
 	var deltaY = my - this.mouseY;
 	this.mouseX = mx;
 	this.mouseY = my;
-	if (this.mouseDown === 1) {
-		mx = (this.mouseX - this.loc.graph.x) / (this.loc.graph.w - 1);
-		mx = Math.round(mx * (this.replay.turns.length - 1));
-		this.director.gotoTick(mx);
-	} else if (this.mouseDown === 2) {
-		this.shiftX += deltaX;
-		this.shiftY += deltaY;
-		var btn = this.btnMgr.groups['toolbar'].getButton(4);
-		btn.enabled = this.shiftX || this.shiftY;
-		btn.draw();
-		this.director.draw();
+	if (this.options['interactive']) {
+		var mouseWasOverVis = this.mouseOverVis;
+		this.mouseOverVis = this.loc.map.contains(this.mouseX, this.mouseY) 
+				&& this.loc.vis.contains(this.mouseX, this.mouseY);
+		if (this.mouseDown === 1) {
+			mx = (this.mouseX - this.loc.graph.x) / (this.loc.graph.w - 1);
+			mx = Math.round(mx * (this.replay.turns.length - 1));
+			this.director.gotoTick(mx);
+		} else if (this.mouseDown === 2) {
+			this.shiftX += deltaX;
+			this.shiftY += deltaY;
+			var btn = this.btnMgr.groups['toolbar'].getButton(4);
+			btn.enabled = this.shiftX || this.shiftY;
+			btn.draw();
+			this.director.draw();
+		} else {
+			this.btnMgr.mouseMove(mx, my);
+		}
+		if (this.mouseOverVis || mouseWasOverVis) {
+			this.director.draw();
+		}
 	} else {
 		this.btnMgr.mouseMove(mx, my);
 	}
 };
 Visualizer.prototype.mousePressed = function() {
-	if (this.loc.graph.contains(this.mouseX, this.mouseY)) {
-		this.mouseDown = 1;
-	} else {
-		var miniMap = new Location(this.loc.vis.x + this.loc.vis.w - this.replay.cols - 2, this.loc.vis.y + 2, this.replay.cols, this.replay.rows);
-		if (this.config['zoom'] !== 1 && miniMap.contains(this.mouseX, this.mouseY)) {
-			this.shiftX = (this.replay.cols / 2 - (this.mouseX - miniMap.x)) * this.scale;
-			this.shiftY = (this.replay.rows / 2 - (this.mouseY - miniMap.y)) * this.scale;
-			var btn = this.btnMgr.groups['toolbar'].getButton(4);
-			btn.enabled = this.shiftX || this.shiftY;
-			btn.draw();
-			this.director.draw();
-		} else if (this.loc.vis.contains(this.mouseX, this.mouseY)) {
-			this.mouseDown = 2;
+	if (this.options['interactive']) {
+		if (this.loc.graph.contains(this.mouseX, this.mouseY)) {
+			this.mouseDown = 1;
 		} else {
-			this.btnMgr.mouseDown();
-			return;
+			var miniMap = new Location(this.loc.vis.x + this.loc.vis.w - this.replay.cols - 2, this.loc.vis.y + 2, this.replay.cols, this.replay.rows);
+			if (this.config['zoom'] !== 1 && miniMap.contains(this.mouseX, this.mouseY)) {
+				this.shiftX = (this.replay.cols / 2 - (this.mouseX - miniMap.x)) * this.scale;
+				this.shiftY = (this.replay.rows / 2 - (this.mouseY - miniMap.y)) * this.scale;
+				var btn = this.btnMgr.groups['toolbar'].getButton(4);
+				btn.enabled = this.shiftX || this.shiftY;
+				btn.draw();
+				this.director.draw();
+			} else if (this.loc.vis.contains(this.mouseX, this.mouseY)) {
+				this.mouseDown = 2;
+			} else {
+				this.btnMgr.mouseDown();
+				return;
+			}
 		}
+		this.mouseMoved(this.mouseX, this.mouseY);
+	} else {
+		this.btnMgr.mouseDown();
 	}
-	this.mouseMoved(this.mouseX, this.mouseY);
 };
 Visualizer.prototype.mouseReleased = function() {
 	this.mouseDown = 0;

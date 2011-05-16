@@ -1,17 +1,15 @@
 <?php
-
-$match = preg_match('/MSIE ([0-9]\.[0-9])/', $_SERVER['HTTP_USER_AGENT'], $reg);
-if ($match != 0 && floatval($reg[1]) < 9 || isset ($_GET["java"]) && $_GET["java"] == true) {
-	// we have IE < 9 or explicitly want to use Java
-	if (file_exists(dirname(__FILE__)."/visualizer/java")) {
-		$java = 'codebase="visualizer/java/"';
-	} else {
-		$java = 'archive="visualizer/visualizer.jar"';
+function visualizer_widget($game_id, $interactive=true, $width=690, $height=700) 
+{
+	$match = preg_match('/MSIE ([0-9]\.[0-9])/', $_SERVER['HTTP_USER_AGENT'], $reg);
+	if ($match != 0 && floatval($reg[1]) < 9 || isset ($_GET["java"]) && $_GET["java"] == "true") {
+		// we have IE < 9 or explicitly want to use Java
+		if (file_exists(dirname(__FILE__)."/visualizer/java")) {
+			$java = 'codebase="visualizer/java/"';
+		} else {
+			$java = 'archive="visualizer/visualizer.jar"';
+		}
 	}
-}
-?>
-<?php
-function visualizer_widget($game_id, $width=690, $height=700) {
     echo '<div id="visualizerDiv">';
 
     $replay = "games/" . $game_id;
@@ -20,6 +18,7 @@ function visualizer_widget($game_id, $width=690, $height=700) {
         ?>
             <applet <?php echo $java; ?> code="com.aicontest.visualizer.VisualizerApplet" width="<?php echo $width; ?>" height="<?php echo $height; ?>">
             <param name="replay" value="<?php echo $replay; ?>">
+            <param name="interactive" value="<?php echo $interactive; ?>">
         <?php
         if ($_GET["debug"] == "true") {
             ?>
@@ -47,7 +46,7 @@ function visualizer_widget($game_id, $width=690, $height=700) {
         ?>
             <script type="text/javascript" src="<?php echo $js; ?>"></script>
             <script type="text/javascript">
-                visualizer = new Visualizer(document.getElementById('visualizerDiv'), 'visualizer/', <?php echo $width; ?>, <?php echo $height; ?>);
+                visualizer = new Visualizer(document.getElementById('visualizerDiv'), 'visualizer/', <?php echo ($interactive) ? 'true' : 'false'; ?>, <?php echo $width; ?>, <?php echo $height; ?>);
                 visualizer.loadReplayDataFromURI('<?php echo $replay; ?>');
             </script>
         <?php

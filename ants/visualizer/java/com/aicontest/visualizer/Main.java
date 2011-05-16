@@ -40,7 +40,7 @@ public class Main implements IVisualizerUser, WindowListener {
 	private ScriptableObject init() throws InstantiationException, IllegalAccessException, IOException {
 		visualizer = new Visualizer(this, 640, 640);
 		HTMLDocument document = visualizer.getDomWindow().getDocument();
-		return visualizer.construct("Visualizer", new Object[] { document, "/" });
+		return visualizer.construct("Visualizer", new Object[] { document, "/" , true });
 	}
 
 	public Main(String replay) throws InstantiationException, IllegalAccessException, IOException, URISyntaxException {
