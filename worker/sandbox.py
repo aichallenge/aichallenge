@@ -293,7 +293,7 @@ class Sandbox:
         if not self.is_alive:
             timeout=0
         try:
-            return self.stderr_queue.get(Block=True, timeout=timeout)
+            return self.stderr_queue.get(block=True, timeout=timeout)
         except Empty:
             return None
 
