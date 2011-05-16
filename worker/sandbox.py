@@ -108,6 +108,7 @@ def _monitor_file(fd, q):
     while True:
         line = fd.readline()
         if not line:
+            q.put(None)
             break
         q.put(line.rstrip('\r\n'))
 
@@ -270,19 +271,29 @@ class Sandbox:
         """Read line from child process
 
         Returns a line of the child process' stdout, if one isn't available
-        within timeout seconds it returns None.
+        within timeout seconds it returns None. Also guaranteed to return None
+        at least once after each command that is run in the sandbox.
 
         """
         if not self.is_alive:
             timeout=0
         try:
-            return self.stdout_queue.get(block=False)
+            return self.stdout_queue.get(block=timeout)
         except Empty:
             return None
 
-    def read_error(self):
+    def read_error(self, timeout=0):
+        """Read line from child process' stderr
+
+        Returns a line of the child process' stderr, if one isn't available
+        within timeout seconds it returns None. Also guaranteed to return None
+        at least once after each command that is run in the sandbox.
+
+        """
+        if not self.is_alive:
+            timeout=0
         try:
-            return self.stderr_queue.get(block=False)
+            return self.stderr_queue.get(block=timeout)
         except Empty:
             return None
 
@@ -309,8 +320,11 @@ def main():
         parser.error("Must include a command to run.\
                 \nRun with --help for more information.")
 
+    print("Using secure sandbox: %s" % (options.secure))
+    print("Sandbox working directory: %s" % (options.working_dir))
     sandbox = Sandbox(options.working_dir, secure=options.secure)
     try:
+        print()
         sandbox.start(" ".join(args))
         for line in options.send_lines:
             if not sandbox.write_line(line):
@@ -322,6 +336,7 @@ def main():
         while True:
             response = sandbox.read_line(options.resp_wait)
             if response is None:
+                print()
                 print("No more responses. Terminating.")
                 break
             print("response: " + response)
