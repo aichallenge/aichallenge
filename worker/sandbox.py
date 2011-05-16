@@ -76,7 +76,7 @@ class _Jail(object):
             raise JailError("Could not remove old scratch area from jail %d"
                     % (self.number,))
         home_dir = os.path.join(scratch_dir, "home/jailuser")
-        os.makedirs(home_dir)
+        os.makedirs(os.path.join(scratch_dir, "home"))
         if os.system("cp -r %s %s" % (command_dir, home_dir)) != 0:
             raise JailError("Error copying working directory '%s' to jail %d"
                     % (command_dir, self.number))
