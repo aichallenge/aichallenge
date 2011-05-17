@@ -66,7 +66,6 @@ def setup_base_files(opts):
         if not os.path.exists("server_info.py"):
             with open("server_info.py", "w") as si_file:
                 si_file.write(si_contents)
-            run_cmd("chmod 600 server_info.py")
     if os.stat(opts.local_repo).st_uid != pwd.getpwnam(opts.username).pw_uid:
         run_cmd("chown -R {0}:{0} {1}".format(opts.username, opts.local_repo))
 
