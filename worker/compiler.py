@@ -59,7 +59,7 @@ class CD(object):
 
     def __exit__(self, type, value, traceback):
         os.chdir(self.org_dir)
-        
+
 def safeglob(pattern):
     safepaths = []
     paths = glob.glob(pattern)
@@ -222,7 +222,7 @@ targets = {
     "C"     : { ".c" : ".o" },
     "C++" : { ".c" : ".o", ".cpp" : ".o", ".cc" : ".o" },
     }
-   
+
 # TODO: turn these into objects or dicts
 languages = {
     # lang :
@@ -250,7 +250,7 @@ languages = {
          [BOT + ".exe"],
          [(["*.cs"], ExternalCompiler(comp_args["C#"][0]))]
         ),
-    "C++": 
+    "C++":
         ("",
          "MyBot.cc",
          "./MyBot",
@@ -272,7 +272,7 @@ languages = {
          [],
          [(["*.coffee"], ChmodCompiler("CoffeeScript"))]
         ),
-    "D": 
+    "D":
         ("",
          "MyBot.d",
          "./MyBot",
@@ -302,7 +302,7 @@ languages = {
          [BOT],
          [([""], ExternalCompiler(comp_args["Haskell"][0]))]
         ),
-    "Java": 
+    "Java":
         (".jar",
          "MyBot.java",
          "java -jar MyBot.jar",
@@ -317,7 +317,7 @@ languages = {
          [],
          [(["*.js"], ChmodCompiler("Javascript"))]
         ),
-    "Lisp": 
+    "Lisp":
         ("",
          "MyBot.lisp",
          "./MyBot",
@@ -357,14 +357,14 @@ languages = {
          "python MyBot.py",
         ["*.pyc"],
         [(["*.py"], ChmodCompiler("Python"))]),
-    "Ruby": 
+    "Ruby":
         (".rb",
          "MyBot.rb",
          "ruby MyBot.rb",
          [],
          [(["*.rb"], ChmodCompiler("Ruby"))]
         ),
-    "Scala": 
+    "Scala":
         (".class",
          "MyBot.class",
          "?",
@@ -381,7 +381,8 @@ languages = {
     }
 
 
-def compile_function(language, log):
+def compile_function(language, errors):
+    """Compile submission in the current directory with a specified language."""
     extension, main_code_file, command, nukeglobs, compilers = languages[language]
 
     if language == "Java":
@@ -392,17 +393,16 @@ def compile_function(language, log):
             nukeglob(glob)
 
     for globs, compiler in compilers:
-        if not compiler.compile(globs, log):
+        if not compiler.compile(globs, errors):
             return False
 
-    return check_path(BOT + extension, log)
+    return check_path(BOT + extension, errors)
 
-def detect_language(submission_dir=None):
-    if submission_dir == None:
-        submission_dir = os.getcwd()
-    with CD(submission_dir):
+def detect_language(bot_dir):
+    """Try and detect what language a submission is using"""
+    with CD(bot_dir):
         # Autodetects the language of the entry in the current working directory
-        detected_lang = get_run_lang(submission_dir)
+        detected_lang = get_run_lang(bot_dir)
         if detected_lang and detected_lang in languages:
             detected_langs = [languages[detected_lang] + (detected_lang,)]
         else:
@@ -410,7 +410,7 @@ def detect_language(submission_dir=None):
                 lang_data + (lang_name,) for lang_name, lang_data
                 in languages.items() if os.path.exists(lang_data[1])
             ]
-        
+
         # If no language was detected
         if len(detected_langs) > 1:
             return None, {'errors': [],
@@ -422,12 +422,8 @@ def detect_language(submission_dir=None):
         else:
             return detected_langs[0], {'errors': []}
 
-# detect language looks for MyBot.* files
-# in the case of java, a MyBot.class file is created after compile
-# if detect is called again, it will think this could be a scala bot
-# a work around is to write a run.sh file in the compile dir so that
-# we don't have to detect the language more than once
 def get_run_cmd(submission_dir):
+    """Get the language of a submission"""
     with CD(submission_dir):
         if os.path.exists('run.sh'):
             with open('run.sh') as f:
@@ -436,24 +432,21 @@ def get_run_cmd(submission_dir):
                         return line.rstrip('\r\n')
 
 def get_run_lang(submission_dir):
+    """Get the command to run a submission"""
     with CD(submission_dir):
         if os.path.exists('run.sh'):
             with open('run.sh') as f:
                 for line in f:
                     if line[0] == '#':
                         return line[1:-1]
-            
-                                
-# Autodetects the language of the entry in the current working directory and
-# compiles it.
-def compile_anything(submission_dir=None):
-    if submission_dir == None:
-        submission_dir = os.getcwd()
-    with CD(submission_dir):
-        # If we get this far, then we have successfully auto-detected the language
-        # that this contestant is using.
-        detected_language, errors = detect_language()
+
+def compile_anything(bot_dir):
+    """Autodetect the language of an entry and compile it."""
+    with CD(bot_dir):
+        detected_language, errors = detect_language(bot_dir)
         if detected_language:
+            # If we get this far, then we have successfully auto-detected 
+            # the language that this entry is using.
             main_code_file = detected_language[1]
             detected_lang = detected_language[-1]
             run_cmd = detected_language[2]
@@ -473,7 +466,7 @@ def main(argv=sys.argv):
             help="Give compilation results in json format")
     options, args = parser.parse_args(argv)
     if len(args) == 1:
-        detected_lang, errors = compile_anything()
+        detected_lang, errors = compile_anything(os.getcwd())
     elif len(args) == 2:
         detected_lang, errors = compile_anything(args[1])
     else:
