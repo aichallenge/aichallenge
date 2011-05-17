@@ -124,7 +124,7 @@ def setup_website(opts):
         si_template = si_file.read()
     si_contents = si_template.format(upload_dir=opts.upload_dir,
             map_dir=opts.map_dir, replay_dir=opts.replay_dir,
-            log_dir=opts.log_dir, repo_dir=opts.repo_dir,
+            log_dir=opts.log_dir, repo_dir=opts.local_repo,
             database_user=opts.database_user,
             database_password=opts.database_password,
             database_name=opts.database_name,
