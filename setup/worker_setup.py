@@ -142,7 +142,7 @@ def setup_contest_files(options):
         if not os.path.exists("server_info.py"):
             with open("server_info.py", "w") as si_file:
                 si_file.write(si_contents)
-            run_cmd("chmod 600 server_info.py")
+            run_cmd("chown {0}:{0} server_info.py".format(options.username))
     if os.stat(local_repo).st_uid != pwd.getpwnam(options.username).pw_uid:
         run_cmd("chown -R {0}: {1}".format(options.username, local_repo))
 
