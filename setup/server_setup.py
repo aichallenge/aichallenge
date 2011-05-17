@@ -66,6 +66,7 @@ def setup_base_files(opts):
         if not os.path.exists("server_info.py"):
             with open("server_info.py", "w") as si_file:
                 si_file.write(si_contents)
+            run_cmd("chown {0}:{0} server_info.py".format(opts.username))
     if os.stat(opts.local_repo).st_uid != pwd.getpwnam(opts.username).pw_uid:
         run_cmd("chown -R {0}:{0} {1}".format(opts.username, opts.local_repo))
 
@@ -174,7 +175,7 @@ def interactive_options(options):
     options.database_root_password = get_password("database root")
     db_user = options.username
     db_user = raw_input("Contest database username? [%s] " % (db_user,))
-    options.database_user = db_user if db_user else options.database_user
+    options.database_user = db_user if db_user else options.username
     options.database_password = get_password("contest database")
     db_name = options.database_name
     db_name = raw_input("Name of contest database? [%s] " % (db_name,))
