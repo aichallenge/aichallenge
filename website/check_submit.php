@@ -79,17 +79,18 @@ if (count($errors) == 0) {
   if (ends_with($filename, ".tgz")) { $filename = "entry.tgz"; }
   $target_path = $destination_folder . '/' . $filename;
   delete_directory($destination_folder);
-  if (!mkdir($destination_folder, 0777, true)) {
+  if (!mkdir($destination_folder, 0775, true)) {
+      update_current_submission_status(90);
       $errors[] = "Problem while creating submission directory.";
   } else {
-    if (!move_uploaded_file($_FILES['uploadedfile']['tmp_name'],
-                            $target_path)) {
+    if (!move_uploaded_file($_FILES['uploadedfile']['tmp_name'], $target_path)) {
+      update_current_submission_status(90);
       $errors[] = "Failed to move file from temporary to permanent " .
                   "location.";
       update_current_submission_status(30);
     } else {
-      chmod($destination_folder, 0777);
-      chmod($target_path, 0777);
+      chmod($destination_folder, 0775);
+      chmod($target_path, 0664);
       if (!update_current_submission_status(20)) {
         $errors[] = "Failed to update the submission status in the " .
                     "database.";

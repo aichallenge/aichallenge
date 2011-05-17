@@ -22,7 +22,7 @@ def submission_dir(submission_id):
     return os.path.join(server_info["uploads_path"], str(submission_id//1000), str(submission_id))
     
 def create_test_bot(name, language):
-    botpath = os.path.join(os.path.split(os.path.dirname(__file__))[0],
+    botpath = os.path.join(server_info["repo_path"],
                            'ants','dist','sample_bots',language)
     bot_filename = os.path.join(botpath, name + extension[language])
     if not os.path.exists(bot_filename):
@@ -59,7 +59,7 @@ def create_test_bot(name, language):
     # create submission entry
     cursor.execute('''
     insert into submission (user_id, version, status, timestamp, language_id)  
-    values (%s, 1, 20, current_timestamp(), 6)
+    values (%s, 1, 20, current_timestamp(), 0)
     ''' % (user_id))
     submission_id = cursor.lastrowid
     print('submission_id: %s' % submission_id)
@@ -83,17 +83,23 @@ def create_test_bot(name, language):
                 bot_zip.write(support_filename, filename)
             else:
                 print('No support file {0}'.format(filename))
-
+    
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('name')
     parser.add_argument('language', nargs='?', default='python')
     parser.add_argument('-c', '--count', type=int, default=1)
+    #parser.add_argument('-u', '--user', type=str, default='contest')
     args = parser.parse_args()
 
     for i in range(args.count):
         create_test_bot(args.name, args.language)
-        
+    
+    # ensure correct dir permissions, www-data must be group for uploads
+    os.system("chown -R www-data:www-data %s/*" % (server_info["uploads_path"]))
+    os.system("find %s -type d -exec chmod 775 {} \;" % (server_info["uploads_path"]))
+    os.system("find %s -type f -exec chmod 664 {} \;" % (server_info["uploads_path"]))
+
 if __name__ == '__main__':
     main()
     

@@ -13,13 +13,20 @@ $sql = array(
                                       where submission_id = %s;",
     "update_submission_success" => "update submission
                                       set status = 40,
+                                          language_id = %s
                                           latest = 1
                                       where worker_id = %s
                                       and submission_id = %s;",
     "update_submission_failure" => "update submission
-                                      set status = %s
+                                      set status = %s,
+                                          language_id = %s,
+                                          errors = '%s',
                                       where worker_id = %s
                                       and submission_id = %s;",
+    "select_submission_language_id" => "select language_id
+                                        from language
+                                        where name = '%s'",
+    "insert_new_language" => "insert into language (name) values ('%s')",
     "select_next_matchup" => "select matchup.*, map.filename
                               from matchup
                               left join map on matchup.map_id = map.map_id
@@ -42,6 +49,9 @@ $sql = array(
     "lock_matchup" => "update matchup
                        set worker_id = %s
                        where matchup_id = %s;",
+    "update_matchup_failed" => "update matchup
+                                set error = error + '%s'
+                                where matchup_id = %s",
     "select_languages" => "select *
                            from language;",
     "select_player_skills" => "select player_id, sigma, mu

@@ -16,7 +16,7 @@ if ($gamedata == null) {
 } else {
     if (array_key_exists('error', $gamedata)) {
     	// set to non-existant worker and email admin
-    	if (contest_query('update_matchup_failed')) {
+    	if (contest_query('update_matchup_failed', $gamedata->matchup_id, $gamedata->error)) {
     		echo json_encode(array( "hash" => $json_hash ));
     	} else {
     		api_log(sprintf("Error updating failed matchup %s",
@@ -75,8 +75,8 @@ if ($gamedata == null) {
                 $gamedata->submission_ids[] = $meta_row["submission_id"];
             }
         }
-        $gamedata->user_url = "http://localhost/profile.php?user_id=~";
-        $gamedata->game_url = "http://localhost/visualizer.php?game_id=~";
+        $gamedata->user_url = "http://" . $gamedata->location . "/profile.php?user_id=~";
+        $gamedata->game_url = "http://" . $gamedata->location . "/visualizer.php?game_id=~";
         $gamedata->date = date(DATE_ATOM);
         $gamedata->game_id = $game_id;
         // create pathname to replay file

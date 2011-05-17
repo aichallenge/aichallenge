@@ -106,7 +106,11 @@ class GameAPIClient:
             url += '&submission_id=%s' % submission_id
             log.debug(url)
             remote_zip = urllib.urlopen(url)
-            filename = remote_zip.info().getheader('Content-disposition').split('filename=')[1]
+            filename = remote_zip.info().getheader('Content-disposition')
+            if filename == None:
+                log.error("File not returned by server: {0}".format(remote_zip.read()))
+                return None
+            filename = filename.split('filename=')[1]
             filename = os.path.join(download_dir, filename)
             local_zip = open(filename, 'wb')
             local_zip.write(remote_zip.read())
@@ -243,12 +247,15 @@ class Worker:
             return True
 
     def compile(self, submission_id=None, report_status=False, run_test=True):
-        def report(status):
+        def report(status, language="Unknown", errors=None):
             if report_status:
                 self.post_id += 1
                 result = {"post_id": self.post_id,
                           "submission_id": submission_id, 
-                          "status_id": status }
+                          "status_id": status,
+                          "language": language }
+                if status != 40:
+                    result['errors'] = json.dumps(errors)
                 self.cloud.post_result('api_compile_result', result)
         if submission_id == None:
             # compile in current directory
@@ -277,10 +284,11 @@ class Worker:
             log.info("Compiling %s " % submission_id)
             bot_dir = os.path.join(download_dir, 'bot')
             detected_lang, errors = compiler.compile_anything(bot_dir)
+            log.debug(detected_lang, errors)
             if not detected_lang:
                 shutil.rmtree(download_dir)
-                log.error('\n'.join(errors))
-                report(STATUS_COMPILE_ERROR);
+                log.error(str(errors))
+                report(STATUS_COMPILE_ERROR, errors=errors);
                 log.error("Compile Error")
                 return False
             else:
@@ -289,11 +297,11 @@ class Worker:
                 if not run_test or self.functional_test(submission_id):
                     os.rename(download_dir, submission_dir)
                     del self.download_dirs[submission_id]
-                    report(STATUS_RUNABLE)
+                    report(STATUS_RUNABLE, detected_lang)
                     return True
                 else:
                     log.info("Functional Test Failure")
-                    report(STATUS_TEST_ERROR)
+                    report(STATUS_TEST_ERROR, detected_lang)
                     return False
     
     def get_map(self, map_filename):

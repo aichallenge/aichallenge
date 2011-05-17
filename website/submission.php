@@ -10,6 +10,7 @@
  * 60: Unpack Error: error while unzipping submission file.
  * 70: Compile Error: error while compiling submission.
  * 80: Test Error: compiled successfully but failed test cases.
+ * 90: Upload Error: server failed to retrieve uploaded file correctly.
  */
 
 function create_new_submission_for_current_user() {

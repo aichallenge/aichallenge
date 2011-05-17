@@ -87,7 +87,9 @@ def update_leaderboard(wait_time):
             cursor.execute(sql['insert_leaderboard'])
             conn.commit()
             cursor.execute(sql['insert_leaderboard_data'])
-            conn.commit()    
+            conn.commit()
+            if wait_time == 0:
+                break
         except KeyboardInterrupt:
             break
         except:
@@ -106,18 +108,24 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("-g", "--game_id", type=int,
                         help="game_id to update")
-    parser.add_argument("-l", "--leaderboard", type=int,
+    parser.add_argument("-l", "--leaderboard", type=int, default=None,
                         help="produce a new leaderboard every X seconds")
     parser.add_argument('-r', '--reset', type=int,
                         help="reset submissions to status")
+    parser.add_argument('--debug', default=False,
+                        action='store_true',
+                        help="Set the log level to debug")
     args = parser.parse_args()
+
+    if args.debug:
+        log.setLevel(logging.DEBUG)
     
     if args.game_id:
         if update_trueskill(args.game_id):
             sys.exit(0)
         else:
             sys.exit(-1)
-    elif args.leaderboard:
+    elif args.leaderboard != None:
         update_leaderboard(args.leaderboard)
     elif args.reset:
         reset_submissions(args.reset)
