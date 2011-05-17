@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 from __future__ import print_function
 import MySQLdb
 from server_info import server_info
@@ -103,9 +103,6 @@ def reset_submissions(status):
     conn.commit()
     
 def main():
-    reset_submissions()
-    
-if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("-g", "--game_id", type=int,
                         help="game_id to update")
@@ -126,3 +123,7 @@ if __name__ == '__main__':
         reset_submissions(args.reset)
     else:
         parser.print_usage()
+
+if __name__ == '__main__':
+    main()
+

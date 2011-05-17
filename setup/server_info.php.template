@@ -9,6 +9,7 @@ $server_info = array(
     "mailer_name" => "AI Contest",
     "mailer_password" => "",
     "submissions_open" => True,
+    "repo_path" => "{repo_dir}",
     "uploads_path" => "{upload_dir}",
     "maps_path" => "{map_dir}",
     "replay_path" => "{replay_dir}",
