@@ -259,7 +259,7 @@ class Worker:
                 self.cloud.post_result('api_compile_result', result)
         if submission_id == None:
             # compile in current directory
-            compiler.compile_anything()
+            compiler.compile_anything(os.getcwd())
         else:
             submission_dir = self.submission_dir(submission_id)
             download_dir = self.download_dir(submission_id)
