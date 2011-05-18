@@ -90,7 +90,8 @@ def nukeglob(pattern):
 def system(args, errors):
     proc = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     (out, err) = proc.communicate()
-    errors.append(err)
+    if err:
+        errors.append(err)
     return proc.returncode == 0
 
 def check_path(path, errors):
@@ -369,10 +370,10 @@ languages = {
          [(["*.rb"], ChmodCompiler("Ruby"))]
         ),
     "Scala":
-        (".class",
-         "MyBot.class",
+        (".scala",
+         "MyBot.scala",
          "?",
-         ["*.class, *.jar"],
+         ["*.scala, *.jar"],
          [(["*.scala"], ExternalCompiler(comp_args["Scala"][0]))]
         ),
     "Scheme":

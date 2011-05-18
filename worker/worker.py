@@ -304,7 +304,8 @@ class Worker:
             if errors and errors['errors']:
                 log.info(errors)
             if not detected_lang:
-                shutil.rmtree(download_dir)
+                if not self.debug:
+                    shutil.rmtree(download_dir)
                 log.error(str(errors))
                 report(STATUS_COMPILE_ERROR, errors=errors);
                 log.error("Compile Error")

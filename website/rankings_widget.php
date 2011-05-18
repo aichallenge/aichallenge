@@ -1,5 +1,7 @@
 <?php
-include_once 'pagination.php';
+
+require_once('mysql_login.php');
+include_once('pagination.php');
 
 /*
  * getRankingsTableString
@@ -13,109 +15,17 @@ include_once 'pagination.php';
  */
 function getRankingsTableString($user_id, $viewmore = true, $viewresults = 10, $viewlink, $page=0, $filter=null, $filterparam=null)
 {
-
-    // Avoid SQL injections
-    if(!filter_var($user_id, FILTER_VALIDATE_INT)) {
-        return "";
-    } else {
-        $user_id = intval($user_id);
-    }
-    if (!filter_var($page, FILTER_VALIDATE_INT)) {
-        $page = 0;
-    } else {
-        $page = intval($page);
-    }
-    $user_id = mysql_real_escape_string($user_id);
-    $page = mysql_real_escape_string($page);
-    $filter = mysql_real_escape_string($filter);
-    $filterparam = mysql_real_escape_string($filterparam);
-
-    $page = $_GET["page"];
-    if(!filter_var($page, FILTER_VALIDATE_INT)) {
-        $page = 1;
-    }
-
-    $filter_text = ($filter == NULL)?"":"and $filter = '$filterparam'";
-
-    $leaderboard_result = mysql_query("SELECT MAX(leaderboard_id) as id
-        FROM leaderboards where complete=1");
-    $row = mysql_fetch_assoc($leaderboard_result);
-    $leaderboard_id = $row['id'];
-
-    // Fetch row count
-$rowcount_query = <<<EOT
-select
-    count(1)
-from
-    ranking r 
-    inner join submission s on s.submission_id = r.submission_id
-    inner join user u on u.user_id = s.user_id
-    left outer join organization o on o.org_id = u.org_id
-    left outer join country c on c.country_id = u.country_id
-    inner join languages l on l.language_id = s.language_id
-where
-    leaderboard_id = $leaderboard_id
-    $filter_text
-EOT;
-
-    $rowcount_data = mysql_query($rowcount_query);
-    if ($rowcount_data) {
-        list($rowcount) = mysql_fetch_row($rowcount_data);
-    } else {
-        $rowcount = 0;
-    }
-
-    // Fetch Only Rows Needed For Current Page
-    $offset = ($viewresults * ($page-1));
-$rankings_query = <<<EOT
-select
-    u.user_id,
-    u.username,
-    s.*,
-    r.*,
-    c.country_id,
-    c.name as country_name,
-    c.flag_filename,
-    o.org_id,
-    o.name as org_name,
-    l.language_id as language_id,
-    l.name as programming_language,
-    round(((r.wins + 0.5*r.draws)/(r.wins+r.draws+r.losses))*100, 2) as rank_percent
-from
-    ranking r 
-    inner join submission s on s.submission_id = r.submission_id
-    inner join user u on u.user_id = s.user_id
-    left outer join organization o on o.org_id = u.org_id
-    left outer join country c on c.country_id = u.country_id
-    inner join language l on l.language_id = s.language_id
-where
-    leaderboard_id = $leaderboard_id
-    $filter_text
-order by
-    rank asc
-EOT;
-
-    if ($viewmore) {
-        $rankings_query .= " limit $viewresults";
-    } else if ($page != 0) {
-        $rankings_query .= " limit $viewresults OFFSET " . ($viewresults * ($page-1));
-    }
-    $rankings_results = mysql_query($rankings_query);
-
+    $rankings_results = contest_query("select_rankings");
     // If query fails
-    if (!$rankings_results || $rowcount == 0) {
+    if (!$rankings_results) {
         return "<p>Rankings are not available at the moment. Check back soon!</p>";
     }
-
-    $pagination .= getPaginationString($page, $rowcount, $viewresults, $viewlink);
 
     $table = "";
     if ($filter != NULL) {
         $table .= "<a href=\"rankings.php\">&#0171; Back to Main Leaderboard</a>";
     }
-    if (!$viewmore) {
-        $table .= $pagination;
-    }
+
 $table .= <<<EOT
 <table class="leaderboard">
 <thead>
@@ -126,7 +36,7 @@ $table .= <<<EOT
   <th>Country</th>
   <th>Organization</th>
   <th>Language</th>
-  <th>Elo Score</th>
+  <th>Skill</th>
   <!--<th>Wins</th>-->
   <!--<th>Losses</th>-->
   <!--<th>Draws</th>-->
@@ -139,7 +49,7 @@ EOT;
     for ($i = 1; $row = mysql_fetch_assoc($rankings_results); $i += 1) {
         $username = htmlentities($row["username"]);
         $programming_language = $row["programming_language"];
-	$score = $row["score"];
+	$score = $row["skill"];
         $programming_language_link = urlencode($row["programming_language"]);
         $rank = $row["rank"];
 	if ($score == $old_score) {
