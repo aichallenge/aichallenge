@@ -147,7 +147,7 @@ class GameAPIClient:
             if response.getcode() == 200:
                 data = response.read()
                 try:
-                    log.debug(data)
+                    log.debug(data.strip())
                     data = json.loads(data)["hash"]
                     log.info("Server returned hash: %s" % data)
                     if hash == data:
@@ -161,6 +161,9 @@ class GameAPIClient:
             else:
                 log.warning("Server did not receive post: %s, %s" % (response.getcode(), response.read()))
                 time.sleep(5)
+        else:
+            return False
+        return True
 
 class Worker:
     def __init__(self, debug=False):
@@ -189,14 +192,14 @@ class Worker:
 
     def download_submission(self, submission_id):
         submission_dir = self.submission_dir(submission_id)
-        download_dir = self.download_dir(submission_id)
         if os.path.exists(submission_dir):
             log.info("Already downloaded and compiled: %s..." % submission_id)
             return True
-        elif len(os.listdir(download_dir)) > 0:
+        elif submission_id in self.download_dirs:
             log.info("Already downloaded: %s..." % submission_id)
             return True
         else:
+            download_dir = self.download_dir(submission_id)
             log.info("Downloading %s..." % submission_id)
             os.chmod(download_dir, 0755)
             filename = self.cloud.get_submission(submission_id, download_dir)
@@ -218,7 +221,10 @@ class Worker:
                 return False
         
     def unpack(self, submission_id):
-        download_dir = self.download_dir(submission_id)
+        if submission_id in self.download_dirs:
+            download_dir = self.download_dir(submission_id)
+        else:
+            return False
         log.info("Unpacking %s..." % download_dir)
         with CD(download_dir):
             if platform.system() == 'Windows':
@@ -256,35 +262,47 @@ class Worker:
                           "language": language }
                 if status != 40:
                     result['errors'] = json.dumps(errors)
-                self.cloud.post_result('api_compile_result', result)
+                return self.cloud.post_result('api_compile_result', result)
+            else:
+                return True
         if submission_id == None:
             # compile in current directory
             compiler.compile_anything(os.getcwd())
         else:
             submission_dir = self.submission_dir(submission_id)
-            download_dir = self.download_dir(submission_id)
             if os.path.exists(submission_dir):
                 log.info("Already compiled: %s" % submission_id)
                 if not run_test or self.functional_test(submission_id):
-                    report(STATUS_RUNABLE)
-                    return True
+                    if report(STATUS_RUNABLE, compiler.get_run_lang(submission_dir)):
+                        return True
+                    else:
+                        log.debug("Cleanup of compiled dir: {0}".format(submission_dir))
+                        shutil.rmtree(submission_dir)
+                        return False
                 else:
                     report(STATUS_TEST_ERROR)
+                    log.debug("Cleanup of compiled dir: {0}".format(submission_dir))
+                    shutil.rmtree(submission_dir)
                     return False
-            if len(os.listdir(download_dir)) == 0:
+            if (not submission_id in self.download_dirs or
+                len(os.listdir(self.download_dir(submission_id))) == 0):
                 if not self.download_submission(submission_id):
                     report(STATUS_DOWNLOAD_ERROR)
                     log.error("Download Error")
                     return False
-            if len(os.listdir(download_dir)) == 1:
-                if not self.unpack(submission_id):
-                    report(STATUS_UNPACK_ERROR)
-                    log.error("Unpack Error")
-                    return False
+            download_dir = self.download_dir(submission_id)
+            if not os.path.exists(os.path.join(self.download_dir(submission_id),
+                                               'bot')):
+                if len(os.listdir(download_dir)) == 1:
+                    if not self.unpack(submission_id):
+                        report(STATUS_UNPACK_ERROR)
+                        log.error("Unpack Error")
+                        return False
             log.info("Compiling %s " % submission_id)
             bot_dir = os.path.join(download_dir, 'bot')
             detected_lang, errors = compiler.compile_anything(bot_dir)
-            log.debug(detected_lang, errors)
+            if errors and errors['errors']:
+                log.info(errors)
             if not detected_lang:
                 shutil.rmtree(download_dir)
                 log.error(str(errors))
@@ -292,13 +310,19 @@ class Worker:
                 log.error("Compile Error")
                 return False
             else:
+                log.info("Detected language: {0}".format(detected_lang))
                 if not os.path.exists(os.path.split(submission_dir)[0]):
                     os.makedirs(os.path.split(submission_dir)[0])
                 if not run_test or self.functional_test(submission_id):
                     os.rename(download_dir, submission_dir)
                     del self.download_dirs[submission_id]
-                    report(STATUS_RUNABLE, detected_lang)
-                    return True
+                    if report(STATUS_RUNABLE, detected_lang):
+                        return True
+                    else:
+                        # could not report back to server, cleanup compiled dir
+                        log.debug("Cleanup of compiled dir: {0}".format(submission_dir))
+                        shutil.rmtree(submission_dir)
+                        return False
                 else:
                     log.info("Functional Test Failure")
                     report(STATUS_TEST_ERROR, detected_lang)
@@ -352,7 +376,7 @@ class Worker:
         # set worker debug logging
         if self.debug:
             options['verbose_log'] = sys.stdout
-            options['stream_log'] = sys.stdout
+            #options['stream_log'] = sys.stdout
             options['error_logs'] = [sys.stderr, sys.stderr] 
             # options['output_logs'] = [sys.stdout, sys.stdout]
             # options['input_logs'] = [sys.stdout, sys.stdout]
@@ -505,12 +529,14 @@ def main(argv):
                 while True:
                     log.info("Getting task infinity + 1")
                     worker.task()
+                    print()
             except KeyboardInterrupt:
                 log.info("[Ctrl] + C, Stopping worker")
         else:
             for task_count in range(opts.num_tasks):
                 log.info("Getting task %s" % (task_count + 1))
                 worker.task((task_count+1)==opts.num_tasks)
+                print()
         return
     
     parser.print_help()

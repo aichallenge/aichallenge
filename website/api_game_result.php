@@ -15,52 +15,52 @@ if ($gamedata == null) {
     api_log("Did not recieve post data for game result as proper json.");
 } else {
     if (array_key_exists('error', $gamedata)) {
-    	// set to non-existant worker and email admin
-    	if (contest_query('update_matchup_failed', $gamedata->matchup_id, $gamedata->error)) {
-    		echo json_encode(array( "hash" => $json_hash ));
-    	} else {
-    		api_log(sprintf("Error updating failed matchup %s",
-    		                $gamedata->matchup_id));
-    	}
+        // set to non-existant worker and email admin
+        if (contest_query('update_matchup_failed', $gamedata->matchup_id, $gamedata->error)) {
+            echo json_encode(array( "hash" => $json_hash ));
+        } else {
+            api_log(sprintf("Error updating failed matchup %s",
+                            $gamedata->matchup_id));
+        }
     } else {
         // move matchup data to game table
         // mysql_query("SET AUTOCOMMIT=0;");
         // mysql_query("START TRANSACTION;");
-    	if (!contest_query("insert_game_data", $gamedata->matchup_id)) {
-    	    api_log(sprintf("Error updating game table for matchup %s",
-    		                $gamedata->matchup_id));
+        if (!contest_query("insert_game_data", $gamedata->matchup_id)) {
+            api_log(sprintf("Error updating game table for matchup %s",
+                            $gamedata->matchup_id));
             api_log(mysql_error());
             // mysql_query("ROLLBACK;");
             die();
-    	}
-	    $game_id = mysql_insert_id();
-	    for ($i = 0, $size = sizeof($gamedata->rank); $i < $size; ++$i) {
-	        if (!contest_query("insert_game_player",
-	                           $game_id,
-	                           $gamedata->rank[$i],
-	                           $gamedata->score[$i],
-	                           $gamedata->matchup_id,
-	                           $i)) {
-    		    api_log(sprintf("Error updating game players for matchup %s",
-    		                    $gamedata->matchup_id));
-	            api_log(mysql_error());
+        }
+        $game_id = mysql_insert_id();
+        for ($i = 0, $size = sizeof($gamedata->rank); $i < $size; ++$i) {
+            if (!contest_query("insert_game_player",
+                               $game_id,
+                               $gamedata->rank[$i],
+                               $gamedata->score[$i],
+                               $gamedata->matchup_id,
+                               $i)) {
+                api_log(sprintf("Error updating game players for matchup %s",
+                                $gamedata->matchup_id));
+                api_log(mysql_error());
                 // mysql_query("ROLLBACK;");
-	            die();
-    		}
-	    }
-	    if (!contest_query("delete_matchup_player", $gamedata->matchup_id)) {
+                die();
+            }
+        }
+        if (!contest_query("delete_matchup_player", $gamedata->matchup_id)) {
             // mysql_query("ROLLBACK;");
-    	    api_log(sprintf("Error deleting players for matchup %s",
-    		                $gamedata->matchup_id));
-    		api_log(mysql_error());
-    		die();
-	    }
+            api_log(sprintf("Error deleting players for matchup %s",
+                            $gamedata->matchup_id));
+            api_log(mysql_error());
+            die();
+        }
         if (!contest_query("delete_matchup", $gamedata->matchup_id)) {
             // mysql_query("ROLLBACK;");
-    	    api_log(sprintf("Error deleting matchup %s",
-    		                $gamedata->matchup_id));
-    		api_log(mysql_error());
-    		die();
+            api_log(sprintf("Error deleting matchup %s",
+                            $gamedata->matchup_id));
+            api_log(mysql_error());
+            die();
         }
         // update game data with meta data
         $gamedata->playernames = array();
@@ -92,6 +92,7 @@ if ($gamedata == null) {
             $replay_file = fopen($replay_filename, 'w') or api_log(json_encode(error_get_last()));
             fwrite($replay_file, json_encode($gamedata));
             fclose($replay_file);
+            chmod($replay_filename, 0664);
             echo json_encode(array( "hash" => $json_hash ));
             // mysql_query("COMMIT;");
             // update trueskill

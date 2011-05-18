@@ -116,6 +116,10 @@ th {
     font-size: 70%;
 }
 
+.large {
+    font-size: 130%;
+}
+
 strong {
     font-weight: bold;
     text-shadow: #aaa 1px 1px 2px;

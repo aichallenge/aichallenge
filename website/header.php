@@ -33,12 +33,12 @@
                     <div id="login">
                         <?php if (logged_in_with_valid_credentials()) { ?>
                             <a href="profile.php?user_id=<?php echo current_user_id(); ?>">
-                            My Profile: <span class="small"><?php echo htmlspecialchars(current_username()); ?></span>
+                            My Profile: <span class="large"><?php echo htmlspecialchars(current_username()); ?></span>
                             </a> |
                             <a href="logout.php">Sign Out</a>
                         <?php } else { ?>
                             <a href="login.php">Sign In</a> |
-                            <a href="register.php">Sign Up</a>
+                            <span class="large"><a href="register.php">Sign Up</a></span>
                         <?php } ?>
                     </div>
                     <div id="content">

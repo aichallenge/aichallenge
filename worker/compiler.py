@@ -43,6 +43,7 @@ import subprocess
 import fnmatch
 import errno
 import shutil
+import json
 from optparse import OptionParser
 
 BOT = "MyBot"
@@ -119,6 +120,9 @@ class ExternalCompiler(Compiler):
     def __init__(self, args, separate=False):
         self.args = args
         self.separate = separate
+        
+    def __repr__(self):
+        return 'ExternalCompiler: ' + ' '.join(self.args)
 
     def compile(self, globs, errors):
         files = safeglob_multi(globs)
@@ -393,7 +397,11 @@ def compile_function(language, errors):
             nukeglob(glob)
 
     for globs, compiler in compilers:
-        if not compiler.compile(globs, errors):
+        try:
+            if not compiler.compile(globs, errors):
+                return False
+        except:
+            errors.append("Compiler failed: " + str(compiler))
             return False
 
     return check_path(BOT + extension, errors)
