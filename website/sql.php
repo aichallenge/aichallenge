@@ -111,7 +111,76 @@ $sql = array(
             select max(leaderboard_id)
             from leaderboard
         )
-        order by seq"                           
+        order by seq",
+    "select_rankings_by_org" => "
+        select u.user_id, u.username,
+               c.country_id, c.name as country, c.flag_filename,
+               l.language_id, l.name as programming_language,
+               o.org_id, o.name as org_name,
+               r.*
+        from ranking r
+        inner join user u
+            on r.user_id = u.user_id
+        inner join organization o
+            on u.org_id = o.org_id
+        inner join submission s
+            on r.submission_id = s.submission_id
+        inner join language l
+            on l.language_id = s.language_id
+        inner join country c
+            on u.country_id = c.country_id
+        where r.leaderboard_id = (
+            select max(leaderboard_id)
+            from leaderboard
+        )
+        and o.org_id = %s
+        order by seq",
+    "select_rankings_by_language" => "
+        select u.user_id, u.username,
+               c.country_id, c.name as country, c.flag_filename,
+               l.language_id, l.name as programming_language,
+               o.org_id, o.name as org_name,
+               r.*
+        from ranking r
+        inner join user u
+            on r.user_id = u.user_id
+        inner join organization o
+            on u.org_id = o.org_id
+        inner join submission s
+            on r.submission_id = s.submission_id
+        inner join language l
+            on l.language_id = s.language_id
+        inner join country c
+            on u.country_id = c.country_id
+        where r.leaderboard_id = (
+            select max(leaderboard_id)
+            from leaderboard
+        )
+        and l.language_id = %s
+        order by seq",
+    "select_rankings_by_country" => "
+        select u.user_id, u.username,
+               c.country_id, c.name as country, c.flag_filename,
+               l.language_id, l.name as programming_language,
+               o.org_id, o.name as org_name,
+               r.*
+        from ranking r
+        inner join user u
+            on r.user_id = u.user_id
+        inner join organization o
+            on u.org_id = o.org_id
+        inner join submission s
+            on r.submission_id = s.submission_id
+        inner join language l
+            on l.language_id = s.language_id
+        inner join country c
+            on u.country_id = c.country_id
+        where r.leaderboard_id = (
+            select max(leaderboard_id)
+            from leaderboard
+        )
+        and c.country_id = %s
+        order by seq"
 );
 
 ?>

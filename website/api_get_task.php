@@ -8,19 +8,19 @@ header("Content-type: application/json");
 $compile_result = contest_query("select_next_compile",
                                 $worker["worker_id"]);
 if ($compile_result) {
-	while ($row = mysql_fetch_assoc($compile_result)) {
-		if (contest_query("update_submission_compiling",
-		                  $worker["worker_id"],
-		                  $row["submission_id"])) {
-			echo json_encode(array( "task" => "compile",
-			                        "submission_id" => $row["submission_id"]));
-			die();
-		} else {
-			api_log(sprintf("Error updating submission for compile task: %s", mysql_error()));
-		}
-	}
+    while ($row = mysql_fetch_assoc($compile_result)) {
+        if (contest_query("update_submission_compiling",
+                          $worker["worker_id"],
+                          $row["submission_id"])) {
+            echo json_encode(array( "task" => "compile",
+                                    "submission_id" => $row["submission_id"]));
+            die();
+        } else {
+            api_log(sprintf("Error updating submission for compile task: %s", mysql_error()));
+        }
+    }
 } else {
-	api_log(sprintf("Error selecting next compile: %s", mysql_error()));
+    api_log(sprintf("Error selecting next compile: %s", mysql_error()));
 }
 		
 // look for match
@@ -58,32 +58,32 @@ if (!$match_result or mysql_num_rows($match_result) == 0) {
 }
 
 if ($match_result) {
-	while ($match_row = mysql_fetch_assoc($match_result)) {
-		$json = array( "task" => "game",
-		               "matchup_id" => $match_row["matchup_id"],
-		               "map_filename" => $match_row["filename"],
-		               "submissions" => array());
-	    $lock_result = contest_query("lock_matchup",
-	                                 $worker["worker_id"],
-	                                 $json["matchup_id"]);
-	    if ($lock_result) {    		
-    		$player_result = contest_query("select_matchup_players",
-    		                               $json["matchup_id"]);
-    		if ($player_result) {
-    			while ($player_row = mysql_fetch_assoc($player_result)) {
-    				$json["submissions"][] = $player_row["submission_id"];
-    			}
-    			echo json_encode($json);
-    			die();
-    		} else {
-    			api_log(sprintf("Error selecting matchup players: %s", mysql_error()));
-    		}
-	    } else {
-	        api_log(sprintf("Error locking matchup %s for worker %s", $json["matchup_id"], $worker["worker_id"]));
-	    }
-	}
+    while ($match_row = mysql_fetch_assoc($match_result)) {
+            $json = array( "task" => "game",
+                           "matchup_id" => $match_row["matchup_id"],
+                           "map_filename" => $match_row["filename"],
+                           "submissions" => array());
+        $lock_result = contest_query("lock_matchup",
+                                     $worker["worker_id"],
+                                     $json["matchup_id"]);
+        if ($lock_result) {    		
+            $player_result = contest_query("select_matchup_players",
+                                           $json["matchup_id"]);
+            if ($player_result) {
+                while ($player_row = mysql_fetch_assoc($player_result)) {
+                    $json["submissions"][] = $player_row["submission_id"];
+                }
+                echo json_encode($json);
+                die();
+            } else {
+                api_log(sprintf("Error selecting matchup players: %s", mysql_error()));
+            }
+        } else {
+            api_log(sprintf("Error locking matchup %s for worker %s", $json["matchup_id"], $worker["worker_id"]));
+        }
+    }
 } else {
-	api_log(sprintf("Error selected next match: %s", mysql_error()));
+    api_log(sprintf("Error selected next match: %s", mysql_error()));
 }
 
 // nothing to do
