@@ -92,6 +92,9 @@ def system(args, errors):
     (out, err) = proc.communicate()
     if err:
         errors.append(err)
+    if proc.returncode != 0:
+        errors.append("Command '%s' had error return code %d"
+                % (" ".join(args), proc.returncode))
     return proc.returncode == 0
 
 def check_path(path, errors):
