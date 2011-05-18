@@ -214,10 +214,7 @@ comp_args = {
     "Haskell" : [["ghc", "--make", BOT + ".hs", "-O", "-v0"]],
     "Java"        : [["javac"],
                              ["jar", "cfe", BOT + ".jar", BOT]],
-    "Lisp"        : [['sbcl', '--end-runtime-options', '--no-sysinit',
-                                '--no-userinit', '--disable-debugger', '--load',
-                                BOT + '.lisp', '--eval', "(save-lisp-and-die \"" + BOT
-                                + "\" :executable t :toplevel #'pwbot::main)"]],
+    "Lisp"      : [['sbcl', '--script', BOT + '.lisp']],
     "OCaml"     : [["ocamlbuild", BOT + ".native"]],
     "Scala"     : [["scalac"]],
     }
