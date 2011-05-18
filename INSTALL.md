@@ -19,13 +19,13 @@
     * $plugin being different between ubuntu versions:
         * 10.10: `/usr/lib/jvm/java-6-openjdk/jre/lib/plugin.jar` requiring the `openjdk-6-jre-lib` package
         * 11.04: `/usr/share/icedtea-web/plugin.jar` requiring the `icedtea-plugin` package
+
 * Install the content on the website, cd to the website dir:
     * `sudo apt-get install markdown`
     * `git clone git://github.com/aichallenge/aichallenge.wiki.git`
     * `./setup.py`
 
-* Install the starter packs, TODO
-    
-* Configure email sending, change website/server_info.php
-
-    * set "mailer_address" => "donotsend" if you do not want emails
+* Install the starter packs
+    * `cd aichallenge/ants/dist/starter_bots`
+    * `make`, creates all of the zip files
+    * `make install`, moves them to the aichallenge/website/starter_packages dir
