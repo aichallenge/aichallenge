@@ -63,10 +63,11 @@ class CD(object):
 
 def safeglob(pattern):
     safepaths = []
-    paths = glob.glob(pattern)
-    for path in paths:
-        if SAFEPATH.match(path):
-            safepaths.append(path)
+    for root, dirs, files in os.walk("."):
+        files = fnmatch.filter(files, pattern)
+        for fname in files:
+            if SAFEPATH.match(fname):
+                safepaths.append(os.path.join(root, fname))
     return safepaths
 
 def safeglob_multi(patterns):
@@ -76,13 +77,11 @@ def safeglob_multi(patterns):
     return safepaths
 
 def nukeglob(pattern):
-    paths = glob.glob(pattern)
+    paths = safeglob(pattern)
     for path in paths:
+        # Ought to be all files, not folders
         try:
-            if os.path.isdir(path):
-                shutil.rmtree(path)
-            else:
-                os.unlink(path)
+            os.unlink(path)
         except OSError, e:
             if e.errno != errno.ENOENT:
                 raise
@@ -124,52 +123,12 @@ class ExternalCompiler(Compiler):
     def __init__(self, args, separate=False):
         self.args = args
         self.separate = separate
-        
+
     def __repr__(self):
         return 'ExternalCompiler: ' + ' '.join(self.args)
 
     def compile(self, globs, errors):
         files = safeglob_multi(globs)
-        if self.separate:
-            for file in files:
-                if not system(self.args + [file], errors):
-                    return False
-        else:
-            if not system(self.args + files, errors):
-                return False
-        return True
-
-class JavaCompiler(ExternalCompiler):
-    @staticmethod
-    def safeglob(pattern):
-        safepaths = []
-        for root, dirs, files in os.walk("."):
-            files = fnmatch.filter(files, pattern)
-            for fname in files:
-                if SAFEPATH.match(fname):
-                    safepaths.append(os.path.join(root, fname))
-        return safepaths
-
-    @staticmethod
-    def safeglob_multi(patterns):
-        safepaths = []
-        for pattern in patterns:
-            safepaths.extend(JavaCompiler.safeglob(pattern))
-        return safepaths
-
-    @staticmethod
-    def nukeglob(pattern):
-        paths = JavaCompiler.safeglob(pattern)
-        for path in paths:
-            # Ought to be all files, not folders
-            try:
-                os.unlink(path)
-            except OSError, e:
-                if e.errno != errno.ENOENT:
-                    raise
-
-    def compile(self, globs, errors):
-        files = JavaCompiler.safeglob_multi(globs)
         if self.separate:
             for file in files:
                 if not system(self.args + [file], errors):
@@ -282,7 +241,7 @@ languages = {
          "MyBot.d",
          "./MyBot",
          ["*.o", BOT],
-         [(["*.d"], JavaCompiler(comp_args["D"][0]))]
+         [(["*.d"], ExternalCompiler(comp_args["D"][0]))]
         ),
     "Go":
         ("",
@@ -312,8 +271,8 @@ languages = {
          "MyBot.java",
          "java -jar MyBot.jar",
          ["*.class", "*.jar"],
-         [(["*.java"], JavaCompiler(comp_args["Java"][0])),
-         (["*.class"], JavaCompiler(comp_args["Java"][1]))]
+         [(["*.java"], ExternalCompiler(comp_args["Java"][0])),
+         (["*.class"], ExternalCompiler(comp_args["Java"][1]))]
         ),
     "Javascript":
         (".js",
@@ -390,12 +349,8 @@ def compile_function(language, errors):
     """Compile submission in the current directory with a specified language."""
     extension, main_code_file, command, nukeglobs, compilers = languages[language]
 
-    if language == "Java":
-        for glob in nukeglobs:
-            JavaCompiler.nukeglob(glob)
-    else:
-        for glob in nukeglobs:
-            nukeglob(glob)
+    for glob in nukeglobs:
+        nukeglob(glob)
 
     for globs, compiler in compilers:
         try:
