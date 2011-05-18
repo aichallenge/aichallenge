@@ -92,6 +92,9 @@ def system(args, errors):
     (out, err) = proc.communicate()
     if err:
         errors.append(err)
+    if proc.returncode != 0:
+        errors.append("Command '%s' had error return code %d"
+                % (" ".join(args), proc.returncode))
     return proc.returncode == 0
 
 def check_path(path, errors):
@@ -207,17 +210,14 @@ comp_args = {
     "C++"         : [["g++", "-O3", "-funroll-loops", "-c"],
                              ["g++", "-O2", "-lm", "-o", BOT]],
     "D"             : [["dmd", "-O", "-inline", "-release", "-of" + BOT]],
-    "Go"            : [["/usr/local/bin/8g", "-o", "_go_.8"],
-                             ["/usr/local/bin/8l", "-o", BOT, "_go_.8"]],
+    "Go"            : [["/usr/local/bin/6g", "-o", "_go_.6"],
+                             ["/usr/local/bin/6l", "-o", BOT, "_go_.6"]],
     "Groovy"    : [["groovyc"],
                              ["jar", "cfe", BOT + ".jar", BOT]],
     "Haskell" : [["ghc", "--make", BOT + ".hs", "-O", "-v0"]],
     "Java"        : [["javac"],
                              ["jar", "cfe", BOT + ".jar", BOT]],
-    "Lisp"        : [['sbcl', '--end-runtime-options', '--no-sysinit',
-                                '--no-userinit', '--disable-debugger', '--load',
-                                BOT + '.lisp', '--eval', "(save-lisp-and-die \"" + BOT
-                                + "\" :executable t :toplevel #'pwbot::main)"]],
+    "Lisp"      : [['sbcl', '--script', BOT + '.lisp']],
     "OCaml"     : [["ocamlbuild", BOT + ".native"]],
     "Scala"     : [["scalac"]],
     }
