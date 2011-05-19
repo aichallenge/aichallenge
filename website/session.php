@@ -11,7 +11,11 @@ function logged_in_as_admin() {
 }
 
 function current_username() {
-    return $_SESSION['username'];
+    if (isset($_SESSION['username'])) {
+        return $_SESSION['username'];
+    } else {
+        return NULL;
+    }
 }
 
 function current_user_id() {

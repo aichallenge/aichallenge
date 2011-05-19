@@ -92,7 +92,7 @@ $sql = array(
                                         user_row.language_id;",
     "select_rankings" => "
         select u.user_id, u.username,
-               c.country_id, c.name as country, c.flag_filename,
+               c.country_id, c.name as country, c.country_code, c.flag_filename,
                l.language_id, l.name as programming_language,
                o.org_id, o.name as org_name,
                r.*
@@ -114,7 +114,7 @@ $sql = array(
         order by seq",
     "select_rankings_by_org" => "
         select u.user_id, u.username,
-               c.country_id, c.name as country, c.flag_filename,
+               c.country_id, c.name as country, c.country_code, c.flag_filename,
                l.language_id, l.name as programming_language,
                o.org_id, o.name as org_name,
                r.*
@@ -137,7 +137,7 @@ $sql = array(
         order by seq",
     "select_rankings_by_language" => "
         select u.user_id, u.username,
-               c.country_id, c.name as country, c.flag_filename,
+               c.country_id, c.name as country, c.country_code, c.flag_filename,
                l.language_id, l.name as programming_language,
                o.org_id, o.name as org_name,
                r.*
@@ -160,7 +160,7 @@ $sql = array(
         order by seq",
     "select_rankings_by_country" => "
         select u.user_id, u.username,
-               c.country_id, c.name as country, c.flag_filename,
+               c.country_id, c.name as country, c.country_code, c.flag_filename,
                l.language_id, l.name as programming_language,
                o.org_id, o.name as org_name,
                r.*
@@ -180,7 +180,9 @@ $sql = array(
             from leaderboard
         )
         and c.country_id = %s
-        order by seq"
+        order by seq",
+    "select_countries" => "select * from country",
+    "select_languages" => "select * from language"
 );
 
 ?>
