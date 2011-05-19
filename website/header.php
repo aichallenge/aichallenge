@@ -32,7 +32,7 @@
                 <div class="left">
                     <div id="login">
                         <?php if (logged_in_with_valid_credentials()) { ?>
-                            <a href="profile.php?user_id=<?php echo current_user_id(); ?>">
+                            <a href="profile.php?user=<?php echo current_user_id(); ?>">
                             My Profile: <span class="large"><?php echo htmlspecialchars(current_username()); ?></span>
                             </a> |
                             <a href="logout.php">Sign Out</a>

@@ -25,11 +25,11 @@ require_once('memcache.php');
   Gábor has solidly taken the top spot with an innovative algorithm. His
   entry is one of just 33 submissions written in
   <a href="http://ai-contest.com/language_profile.php?lang=Lisp">Lisp</a>,
-  and is entitled <a href="http://ai-contest.com/profile.php?user_id=8565">
+  and is entitled <a href="http://ai-contest.com/profile.php?user=8565">
   bocsimacko</a>. Congratulations Gábor!</p>
 <p>A big congratulations also goes out to the runners up,
-  <a href="http://ai-contest.com/profile.php?user_id=7026">_iouri_</a> and
-  <a href="http://ai-contest.com/profile.php?user_id=11248">Slin-.-</a>,
+  <a href="http://ai-contest.com/profile.php?user=7026">_iouri_</a> and
+  <a href="http://ai-contest.com/profile.php?user=11248">Slin-.-</a>,
   as well as all the finalists in the top 100. With over 4600 submissions
   received, securing a spot in the top 100 was no easy task!</p>
 <p>On behalf of <a href="http://www.google.com">Google</a> and the

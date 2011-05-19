@@ -33,8 +33,8 @@ EOT;
         $activated = $row['activated'];
         echo <<< EOT
 <tr class="$tr_class">
-    <td><a href="profile.php?user_id=$user_id">$user_id</a></td>
-    <td><a href="profile.php?user_id=$user_id">$username</a></td>
+    <td><a href="profile.php?user=$user_id">$user_id</a></td>
+    <td><a href="profile.php?user=$user_id">$username</a></td>
     <td>$email</td><td>$activated</td>
 </tr>
 EOT;

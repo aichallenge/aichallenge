@@ -21,7 +21,7 @@ if (!$result) {
 $num_found = mysql_num_rows($result);
 if ($num_found == 1) {
     $row = mysql_fetch_assoc($result);
-    header("Location: profile.php?user_id=".$row['user_id']);
+    header("Location: profile.php?user=".$row['user_id']);
     die();
 }
 
@@ -33,7 +33,7 @@ if ($num_found > 0) {
 <ul>
 EOT;
     while ($row = mysql_fetch_assoc($result)) {
-        echo "<li><a href='profile.php?user_id=".$row['user_id']."'>".
+        echo "<li><a href='profile.php?user=".$row['user_id']."'>".
             $row['username']."</a></li>";
     }
     echo "</ul>";

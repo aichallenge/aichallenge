@@ -79,10 +79,10 @@ EOT;
         }
         $table .= "    <td>$rank</td>\n";
         //$table .= "    <td>$rank_percent</td>\n";
-        $table .= "    <td><a href=\"profile.php?user_id=$user_id\">$username</a></td>\n";
-        $table .= "    <td><a href=\"country_profile.php?country_id=$country_id\">$flag_filename</a></td>";
-        $table .= "    <td><a href=\"organization_profile.php?org_id=$org_id\">$org_name</a></td>";
-        $table .= "    <td><a href=\"language_profile.php?lang=$programming_language_link\">$programming_language</a></td>";
+        $table .= "    <td><a href=\"profile.php?user= $user_id\">$username</a></td>\n";
+        $table .= "    <td><a href=\"country_profile.php?country=$country_id\">$flag_filename</a></td>";
+        $table .= "    <td><a href=\"organization_profile.php?org=$org_id\">$org_name</a></td>";
+        $table .= "    <td><a href=\"language_profile.php?language=$programming_language_link\">$programming_language</a></td>";
 	$table .= "    <td>$score</td>";
         //$table .= "    <td>$wins</td>";
         //$table .= "    <td>$losses</td>";

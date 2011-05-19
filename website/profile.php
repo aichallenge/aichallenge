@@ -2,7 +2,7 @@
 include('header.php');
 include('mysql_login.php');
 
-$user_id = $_GET["user_id"];
+$user_id = $_GET["user"];
 if(!filter_var($user_id, FILTER_VALIDATE_INT)) {
     $user_id = NULL;
 }
@@ -225,7 +225,7 @@ EOT;
     echo "<p><strong>Current Rank:</strong>&nbsp;$rank</p>";
 
     $query = "SELECT * FROM submission
-        WHERE user_id='$user_id' AND status = 40 and latest = 1";
+        WHERE user_id = '$user_id' AND status = 40 and latest = 1";
     $result = mysql_query($query);
     if ($row = mysql_fetch_assoc($result)) {
         $sub_id = $row['submission_id'];
@@ -245,10 +245,10 @@ EOT;
     }
 
     echo "<h3><span>Latest Games</span><div class=\"divider\" /></h3>";
-    echo getGamesTableString($user_id, true, 15, "profile_games.php?user_id=$user_id");
+    echo getGamesTableString($user_id, true, 15, "profile_games.php?user=$user_id");
     echo "<p></p>";
     echo "<h3><span>Recent Submissions</span><div class=\"divider\" /></h3>";
-    echo getSubmissionTableString($user_id, true, 10, "profile_submissions.php?user_id=$user_id");
+    echo getSubmissionTableString($user_id, true, 10, "profile_submissions.php?user=$user_id");
 
 }
 //$cache->end();

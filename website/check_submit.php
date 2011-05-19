@@ -45,7 +45,7 @@ if (!logged_in_with_valid_credentials()) {
   die();
 }
 
-$result = mysql_query("SELECT * FROM user WHERE user_id=".current_user_id());
+$result = mysql_query("SELECT * FROM user WHERE user_id = ".current_user_id());
 $userdata = mysql_fetch_assoc($result);
 $sid = session_id();
 $local_key = sha1($sid . $userdata['activation_code'] . $userdata['email']);

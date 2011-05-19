@@ -10,14 +10,16 @@ require_once('pagination.php');
 // you must include it in your php if you wish to render html tables
 
 // this function doesn't really belong here, but I can't think of a good place
+// it works like filter_input with an optional filter and default value
 function get_type_or_else($key, $type=NULL, $default=NULL) {
-    if (!empty($_GET[$key])) {
+    if (isset($_GET[$key])) {
         $value = $_GET[$key];
         if ($type == NULL) {
             return $value;
         } else {
-            if(filter_var($value, $type)) {
-              return filter_var($value, $type);
+            $filter_value = filter_var($value, $type, FILTER_NULL_ON_FAILURE);
+            if ($filter_value !== NULL) {
+                return $filter_value;
             }
         }
     }
@@ -46,17 +48,17 @@ function produce_cache_results($page=0, $org_id=NULL, $country_id=NULL, $languag
     $page_size = 10;
     $json = array("fields" => array(),
                   "values" => array());
-    if ($org_id) {
+    if ($org_id !== NULL) {
         $rank_results = contest_query("select_rankings_by_org", $org_id);
-        $rank_type = "organization";
+        $rank_type = "org";
         $rank_id = $org_id;
         $rank_id_field = "org_name";
-    } elseif ($country_id) {
+    } elseif ($country_id !== NULL) {
         $rank_results = contest_query("select_rankings_by_country", $country_id);
         $rank_type = "country";
         $rank_id = $country_id;
         $rank_id_field = "country";
-    } elseif ($language_id) {
+    } elseif ($language_id !== NULL) {
         $rank_results = contest_query("select_rankings_by_language", $language_id);
         $rank_type = "language";
         $rank_id = $language_id;
@@ -115,8 +117,10 @@ function produce_cache_results($page=0, $org_id=NULL, $country_id=NULL, $languag
         } else {
             $json["type"] = "all";
         }
-        $memcache->set(cache_key($page_num, $org_id, $country_id, $language_id),
-                       json_encode($json_page));
+        if (isset($json_page)) {
+            $memcache->set(cache_key($page_num, $org_id, $country_id, $language_id),
+                           json_encode($json_page));
+        }
         $memcache->set(cache_key(-1, $org_id, $country_id, $language_id),
                        $page_num);
         $memcache->set(cache_key(0, $org_id, $country_id, $language_id),
@@ -127,8 +131,10 @@ function produce_cache_results($page=0, $org_id=NULL, $country_id=NULL, $languag
 }
 
 function create_ranking_table($json) {
+    if ($json == NULL) {
+        return '<h4>There are no rankings at this time.  Please check back later.</h4>';
+    }
     $table = '<table class="ranking">';
-    reset($json);
     if (array_key_exists('type', $json)) {
         // language by name, others by id
         if ($json['type'] == 'language') {
@@ -151,46 +157,48 @@ function create_ranking_table($json) {
   <th>Skill</th>
 </tr>
 </thead>';
-    $table .= '<tbody>';
-    $oddity = 'even';
-    $fields = $json["fields"];
-    foreach ($json["values"] as $values) {
-        $row = array_combine($fields, $values);
-        
-        // $rank = ($filter == null)? $rank : ($i + $offset) . " <span title='Global Rank'>($rank)</span>";
-        // $rank_percent = $row["rank_percent"];
-        
-        $oddity = $oddity == 'odd' ? 'even' : 'odd';  // quite odd?
-        $user_class = current_username() == $row["username"] ? ' user' : '';
-        $table .= "<tr class=\"$oddity$user_class\">";
-                
-        $rank = $row["rank"];
-        $table .= "<td>$rank</td>";
-
-        $user_id = $row["user_id"];
-        $username = htmlentities($row["username"]);
-        $table .= "<td><a href=\"profile.php?user_id=$user_id\">$username</a></td>";
-
-        $country_id = $row["country_id"];
-        $country_name = htmlentities($row["country"]);
-        $flag_filename = $row["flag_filename"];
-        $flag_filename = "<img alt=\"$country_name\" width=\"16\" height=\"11\" title=\"$country_name\" src=\"flags/$flag_filename\" />";
-        $table .= "<td><a href=\"country_profile.php?country=$country_id\">$flag_filename</a></td>";
-
-        $org_name = htmlentities($row["org_name"]);
-        $org_id = $row["org_id"];
-        $table .= "<td><a href=\"organization_profile.php?org_id=$org_id\">$org_name</a></td>";
-        
-        $programming_language = htmlentities($row["programming_language"]);
-        $programming_language_link = urlencode($row["programming_language"]);
-        $table .= "<td><a href=\"language_profile.php?language=$programming_language_link\">$programming_language</a></td>";
-        
-        $skill = $row["skill"];
-        $table .= "<td>$skill</td>";
-        
-        $table .= "</tr>";
+    if (count($json["values"]) > 0) {
+        $table .= '<tbody>';
+        $oddity = 'even';
+        $fields = $json["fields"];
+        foreach ($json["values"] as $values) {
+            $row = array_combine($fields, $values);
+            
+            // $rank = ($filter == null)? $rank : ($i + $offset) . " <span title='Global Rank'>($rank)</span>";
+            // $rank_percent = $row["rank_percent"];
+            
+            $oddity = $oddity == 'odd' ? 'even' : 'odd';  // quite odd?
+            $user_class = current_username() == $row["username"] ? ' user' : '';
+            $table .= "<tr class=\"$oddity$user_class\">";
+                    
+            $rank = $row["rank"];
+            $table .= "<td>$rank</td>";
+    
+            $user_id = $row["user_id"];
+            $username = htmlentities($row["username"]);
+            $table .= "<td><a href=\"profile.php?user=$user_id\">$username</a></td>";
+    
+            $country_id = $row["country_id"];
+            $country_name = htmlentities($row["country"]);
+            $flag_filename = $row["flag_filename"];
+            $flag_filename = "<img alt=\"$country_name\" width=\"16\" height=\"11\" title=\"$country_name\" src=\"flags/$flag_filename\" />";
+            $table .= "<td><a href=\"country_profile.php?country=$country_id\">$flag_filename</a></td>";
+    
+            $org_name = htmlentities($row["org_name"]);
+            $org_id = $row["org_id"];
+            $table .= "<td><a href=\"organization_profile.php?org=$org_id\">$org_name</a></td>";
+            
+            $programming_language = htmlentities($row["programming_language"]);
+            $programming_language_link = urlencode($row["programming_language"]);
+            $table .= "<td><a href=\"language_profile.php?language=$programming_language_link\">$programming_language</a></td>";
+            
+            $skill = $row["skill"];
+            $table .= "<td>$skill</td>";
+            
+            $table .= "</tr>";
+        }
+        $table .= '</tbody>';
     }
-    $table .= '</tbody>';
     $table .= '</table>';
     
     return $table;
@@ -309,6 +317,45 @@ function get_language_row($language) {
     if ($language_row_by_name) {
         if (array_key_exists($language, $language_row_by_name)) {
             return $language_row_by_name[$language];
+        }
+    }
+    return NULL;
+}
+
+function get_org_row($org) {
+    global $memcache;    
+
+    $org_row_by_id = NULL;
+    if ($memcache) {
+        $org_row_by_id = $memcache->get('lookup:org_id');
+        $org_row_by_name = $memcache->get('lookup:org_name');
+    }
+    $org_row_by_id = NULL;
+    if (!$org_row_by_id) {
+        $org_result = contest_query("select_organizations");
+        if ($org_result) {
+            $org_row_by_id = array();
+            $org_row_by_name = array();
+            while ($org_row = mysql_fetch_assoc($org_result)) {
+                $org_row_by_id[$org_row['org_id']] = $org_row;
+                $org_row_by_name[$org_row['name']] = $org_row;
+            }
+            if ($memcache) {
+                $memcache->set('lookup:org_id', $org_row_by_id);
+                $memcache->set('lookup:org_name', $org_row_by_name);
+            }
+        }
+    }
+
+    // search by id, then name
+    if ($org_row_by_id) {
+        if (array_key_exists($org, $org_row_by_id)) {
+            return $org_row_by_id[$org];
+        }
+    }
+    if ($org_row_by_name) {
+        if (array_key_exists($org, $org_row_by_name)) {
+            return $org_row_by_name[$org];
         }
     }
     return NULL;

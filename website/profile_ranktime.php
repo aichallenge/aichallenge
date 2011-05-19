@@ -1,5 +1,5 @@
 <?php 
-$user_id = $_GET["user_id"];
+$user_id = $_GET["user"];
 if(!filter_var($user_id, FILTER_VALIDATE_INT)) {
     header("Location: blank.gif");
     exit;

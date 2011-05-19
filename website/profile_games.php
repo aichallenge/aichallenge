@@ -3,7 +3,7 @@ include 'header.php';
 include_once 'profile_games_widget.php';
 require_once('mysql_query.php');
 
-$user_id = $_GET["user_id"];
+$user_id = $_GET["user"];
 if(!filter_var($user_id, FILTER_VALIDATE_INT)) {
     $user_id = NULL;
 } else {
@@ -36,8 +36,8 @@ if ($username_data) {
 
 $username = htmlspecialchars($username);
 
-echo "<h2><a href=\"profile.php?user_id=$user_id\">$username</a>'s latest submission's games</h2>";
-echo getGamesTableString($user_id, false, 200, "?user_id=$user_id&page=", $page);
+echo "<h2><a href=\"profile.php?user=$user_id\">$username</a>'s latest submission's games</h2>";
+echo getGamesTableString($user_id, false, 200, "?user=$user_id&page=", $page);
 
 include 'footer.php';
 ?>

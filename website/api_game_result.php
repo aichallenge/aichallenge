@@ -75,7 +75,7 @@ if ($gamedata == null) {
                 $gamedata->submission_ids[] = $meta_row["submission_id"];
             }
         }
-        $gamedata->user_url = "http://" . $gamedata->location . "/profile.php?user_id=~";
+        $gamedata->user_url = "http://" . $gamedata->location . "/profile.php?user=~";
         $gamedata->game_url = "http://" . $gamedata->location . "/visualizer.php?game_id=~";
         $gamedata->date = date(DATE_ATOM);
         $gamedata->game_id = $game_id;

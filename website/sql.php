@@ -182,7 +182,8 @@ $sql = array(
         and c.country_id = %s
         order by seq",
     "select_countries" => "select * from country",
-    "select_languages" => "select * from language"
+    "select_languages" => "select * from language",
+    "select_organizations" => "select * from organization"
 );
 
 ?>
