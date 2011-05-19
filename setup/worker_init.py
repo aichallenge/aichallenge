@@ -32,9 +32,9 @@ def get_contest_files(download_url):
     """ Get the contest files downloaded and placed in the current directory """
     if os.path.exists("aichallenge"):
         return
-    run_cmd("wget %s/aicontest.tgz" % (download_url,))
-    run_cmd("tar -xf aicontest.tgz")
-    run_cmd("rm aicontest.tgz")
+    run_cmd("wget %s/worker-src.tgz" % (download_url,))
+    run_cmd("tar -xf worker-src.tgz")
+    run_cmd("rm worker-src.tgz")
 
 def main():
     if len(sys.argv) < 3:

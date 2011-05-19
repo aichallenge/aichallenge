@@ -11,7 +11,7 @@ def main(output_directory):
     repo_root = run_cmd("git rev-parse --show-toplevel", True).strip()
     output_directory = os.path.abspath(output_directory)
     with CD(repo_root):
-        run_cmd(ARCHIVE_CMD + os.path.join(output_directory, "aicontest.tgz"))
+        run_cmd(ARCHIVE_CMD + os.path.join(output_directory, "worker-src.tgz"))
 
 if __name__ == "__main__":
     out_dir = "."

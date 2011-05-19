@@ -27,7 +27,8 @@ def install_manager_packages():
 def install_website_packages():
     """ Install system packages required for the website """
     pkg_list = ["apache2", "php5", "libapache2-mod-php5", "php5-mysql",
-            "memcached", "php5-memcache", "libphp-phpmailer", "zip"]
+            "memcached", "php5-memcache", "libphp-phpmailer", "zip",
+            "cvs", "openjdk-6-jdk", "ant", "icedtea-plugin"]
     install_apt_packages(pkg_list)
 
 def setup_base_files(opts):
@@ -140,8 +141,13 @@ def setup_website(opts):
         with CD(os.path.join(opts.local_repo, "ants/dist/starter_bots")):
             run_cmd("make")
             run_cmd("make install")
-    if not os.path.exists(os.path.join(website_root, opts.website_hostname + ".tgz")):
+    if not os.path.exists(os.path.join(website_root, "worker-src.tgz")):
         create_worker_archive.main(website_root)
+    visualizer_path = os.path.join(opts.local_repo, "ants/visualizer")
+    plugin_path = "/usr/share/icedtea-web/plugin.jar"
+    with CD(visualizer_path):
+        run_cmd("ant deploy -Djava.plugin=%s -Ddeploy.path=%s"
+                % (plugin_path, website_root))
     site_config = "/etc/apache2/sites-available/" + opts.website_hostname
     if not os.path.exists(site_config):
         site_filename = os.path.join(TEMPLATE_DIR, "apache_site.template")
