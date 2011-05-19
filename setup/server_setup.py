@@ -28,7 +28,7 @@ def install_website_packages():
     """ Install system packages required for the website """
     pkg_list = ["apache2", "php5", "libapache2-mod-php5", "php5-mysql",
             "memcached", "php5-memcache", "libphp-phpmailer", "zip",
-            "cvs", "openjdk-6-jdk", "ant", "icedtea-plugin"]
+            "cvs", "openjdk-6-jdk", "ant", "icedtea-plugin", "markdown"]
     install_apt_packages(pkg_list)
 
 def setup_base_files(opts):
@@ -136,6 +136,9 @@ def setup_website(opts):
         if not os.path.exists("server_info.php"):
             with open("server_info.php", "w") as si_file:
                 si_file.write(si_contents)
+        if not os.path.exists("aichallenge.wiki"):
+            run_cmd("git clone git://github.com/aichallenge/aichallenge.wiki.git")
+            run_cmd("python setup.py")
     if not os.path.exists(os.path.join(website_root, "starter_packages")):
         os.mkdir(os.path.join(website_root, "starter_packages"))
         with CD(os.path.join(opts.local_repo, "ants/dist/starter_bots")):
@@ -145,9 +148,10 @@ def setup_website(opts):
         create_worker_archive.main(website_root)
     visualizer_path = os.path.join(opts.local_repo, "ants/visualizer")
     plugin_path = "/usr/share/icedtea-web/plugin.jar"
-    with CD(visualizer_path):
-        run_cmd("ant deploy -Djava.plugin=%s -Ddeploy.path=%s"
-                % (plugin_path, website_root))
+    if not os.path.exists(os.path.join(website_root, "visualizer")):
+        with CD(visualizer_path):
+            run_cmd("ant deploy -Djava.plugin=%s -Ddeploy.path=%s"
+                    % (plugin_path, website_root))
     site_config = "/etc/apache2/sites-available/" + opts.website_hostname
     if not os.path.exists(site_config):
         site_filename = os.path.join(TEMPLATE_DIR, "apache_site.template")
