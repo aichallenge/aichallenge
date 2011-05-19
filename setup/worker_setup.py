@@ -100,13 +100,12 @@ def install_scala():
 
 def install_dmd():
     """ Install the D language """
-    # FIXME: This is broken because the package below is for i386 only and we
-    # are using amd64 workers
     if os.path.exists("/usr/bin/dmd"):
         return
+    install_apt_packages("gcc-multilib")
     with CD("/root"):
-        run_cmd("curl 'http://ftp.digitalmars.com/dmd_2.052-0_i386.deb' > dmd_2.052-0_i386.deb")
-        run_cmd("dpkg -i dmd_2.052-0_i386.deb")
+        run_cmd("curl 'http://ftp.digitalmars.com/dmd_2.053-0_amd64.deb' > dmd_2.053-0_amd64.deb")
+        run_cmd("dpkg -i dmd_2.053-0_amd64.deb")
 
 def install_all_languages():
     install_basic_languages()
@@ -115,8 +114,7 @@ def install_all_languages():
     install_nodejs()
     install_groovy()
     install_scala()
-    # dmd install is broken
-    #install_dmd()
+    install_dmd()
 
 def setup_contest_files(options):
     """ Setup all the contest specific files and directories """
