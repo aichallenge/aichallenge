@@ -10,9 +10,8 @@ LAND = -2
 FOOD = -3
 WATER = -4
 UNSEEN = -5
-
+MAX_INT=99999999
 MAP_RENDER = 'abcdefghijklmnopqrstuvwxyz?!%*.'
-MAP_READ = '?!%*.abcdefghijklmnopqrstuvwxyz'
 
 
 AIM = {'n': (-1, 0),
@@ -42,6 +41,7 @@ class Ants():
         self.dead_list = []
 
     def setup(self, data):
+        'parse initial input and setup starting game state'
         for line in data.split('\n'):
             line = line.strip().lower()
             if len(line) > 0:
@@ -53,6 +53,16 @@ class Ants():
                     self.height = int(tokens[1])
                 elif key == 'seed':
                     random.seed(int(tokens[1]))
+                elif key == 'turntime':
+                    self.turntime = int(tokens[1])
+                elif key == 'loadtime':
+                    self.loadtime = int(tokens[1])
+                elif key == 'viewradius2':
+                    self.viewradius2 = int(tokens[1])
+                elif key == 'attackradius2':
+                    self.attackradius2 = int(tokens[1])
+                elif key == 'spawnradius2':
+                    self.spawnradius2 = int(tokens[1])
         self.map = [[LAND for col in range(self.width)]
                     for row in range(self.height)]
 
@@ -154,6 +164,28 @@ class Ants():
                 d.append('w')
         return d
 
+    def closest_food(self,row1,col1):
+        #find the closest food from this row/col
+        min_dist=MAX_INT
+        closest_food = None
+        for food in self.food_list:
+            dist = self.distance(row1,col1,food[0],food[1])
+            if dist<min_dist:
+                min_dist = dist
+                closest_food = food
+        return closest_food    
+
+    def closest_enemy_ant(self,row1,col1):
+        #find the closest enemy ant from this row/col
+        min_dist=MAX_INT
+        closest_ant = None
+        for ant in self.enemy_ants():
+            dist = self.distance(row1,col1,ant[0][0],ant[0][1])
+            if dist<min_dist:
+                min_dist = dist
+                closest_ant = ant[0]
+        return closest_ant    
+        
     def render_text_map(self):
         tmp = ''
         for row in self.map:
@@ -180,5 +212,6 @@ class Ants():
                     map_data += current_line + '\n'
             except EOFError:
                 break
-            except:
+            except Exception as e:
                 traceback.print_exc(file=sys.stderr)
+                break

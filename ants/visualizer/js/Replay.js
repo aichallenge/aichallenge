@@ -135,15 +135,17 @@ function Replay(replay) {
 		replay = JSON.parse(replay);
 	}
 	// check if we have meta data or just replay data
+	var format = 'json';
 	if (replay['challenge'] === undefined) {
 		this.meta = {
 			'challenge': 'ants',
-			'replayformat': 'storage',
+			'replayformat': format,
 			'replaydata': replay
 		};
 	} else {
 		this.meta = replay;
 		if (typeof this.meta['replaydata'] == 'string') {
+			format = 'storage';
 			this.meta['replaydata'] = this.txtToJson(this.meta['replaydata']);
 		}
 		replay = this.meta['replaydata'];
@@ -153,7 +155,7 @@ function Replay(replay) {
 		throw new Error('This visualizer is for the ants challenge,'
 				+ ' but a "' + this.meta['challenge']
 				+ '" replay was loaded.');
-	} else if (this.meta['replayformat'] !== 'storage') {
+	} else if (this.meta['replayformat'] !== format) {
 		throw new Error('Replays in the format "' + this.meta['replayformat']
 				+ '" are not supported.');
 	}
@@ -328,15 +330,21 @@ function Replay(replay) {
 		this.aniAnts = new Array(ants.length);
 	}
 	// add missing meta data
-	if (!(this.meta['players'] instanceof Array)) {
-		this.meta['players'] = new Array(this.players);
+	if (!(this.meta['playernames'] instanceof Array)) {
+		if (this.meta['players'] instanceof Array) {
+			// move players to playernames in old replays
+			this.meta['playernames'] = this.meta['players'];
+			delete this.meta['players'];
+		} else {
+			this.meta['playernames'] = new Array(this.players);
+		}
 	}
 	if (!(this.meta['playercolors'] instanceof Array)) {
 		this.meta['playercolors'] = new Array(this.players);
 	}
-	for (i = 0; i < this.meta['players'].length; i++) {
-		if (!this.meta['players'][i]) {
-			this.meta['players'][i] = 'player ' + (i + 1);
+	for (i = 0; i < this.meta['playernames'].length; i++) {
+		if (!this.meta['playernames'][i]) {
+			this.meta['playernames'][i] = 'player ' + (i + 1);
 		}
 		if (!(this.meta['playercolors'][i] instanceof Array)) {
 			this.meta['playercolors'][i] = PLAYER_COLORS[i];

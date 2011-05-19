@@ -2,3 +2,4 @@
 *.output
 *.replay
 *.stream
+*.stderr

@@ -1,4 +1,7 @@
-<?php include 'session.php';
+<?php
+
+require_once('session.php');
+require_once('mysql_query.php');
 
 function safe_str($str) {
     return mysql_real_escape_string(stripslashes($str));

@@ -1,8 +1,21 @@
-<?php include 'header.php';
+<?php
+include('header.php');
+require_once('memcache.php');
 ?>
 
-<h2>Ants</h2>
-<p>TODO: Write something about the ants challenge.</p>
+<!--<MarkdownReplacement with="competition.md">--><!--</MarkdownReplacement>-->
+
+<p>Computer Programs Duking it Out with Ants:</p>
+<?php
+    $last_game_id = 0;
+    if ($memcache)
+        $last_game_id = $memcache->get('last_game_id');
+    if (!$last_game_id) {
+        $last_game_id = 0;
+    }
+    include 'visualizer_widget.php';
+    visualizer_widget($game_id=strval($last_game_id),false,550,550);
+?>
 
 <h2>Planet Wars Final Rankings</h2>
 <p>Congratulations to this term's winner, <a href="http://quotenil.com/">

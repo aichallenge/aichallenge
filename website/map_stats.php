@@ -1,4 +1,7 @@
-<?php include 'header.php';
+<?php
+
+include 'header.php';
+require_once('mysql_query.php');
 
 $query = "SELECT map_id, count(1), MAX(game_id) FROM games GROUP BY map_id";
 $result = mysql_query($query);

@@ -24,7 +24,7 @@ Button.prototype.draw = function() {
 	ctx.closePath();
 	ctx.clip();
 	var r = 0.2 * Math.min(loc.w, loc.h);
-	if (this.onclick) {
+	if (this.onclick && this.enabled) {
 		if (this.hover || this.down) {
 			shapeRoundedRect(ctx, loc.x, loc.y, loc.w, loc.h, 1, r);
 			ctx.fillStyle = /*this.down
@@ -45,7 +45,7 @@ Button.prototype.draw = function() {
 	ctx.translate(loc.x, (this.down) ? loc.y + 1 : loc.y - 1);
 	this.drawInternal(ctx, loc.w, loc.h);
 	ctx.restore();
-	if (this.onclick && (this.hover || this.down)) {
+	if (this.onclick && this.enabled && (this.hover || this.down)) {
 		ctx.shadowColor = 'rgba(0, 0, 0, 0)';
 		ctx.lineWidth = 2;
 		ctx.strokeStyle = 'rgba(0, 0, 0, 1)';
@@ -111,10 +111,12 @@ ButtonGroup.prototype.mouseMove = function(mx, my) {
 /**
  * @constructor
  */
-function ImageButton(group, offset, delta, onclick) {
+function ImageButton(group, idx, offset, delta, onclick, hint) {
 	Button.apply(this, [group, onclick]);
+	this.idx = idx;
 	this.offset = offset;
 	this.delta = delta;
+	this.hint = hint;
 }
 ImageButton.prototype.draw = Button.prototype.draw;
 ImageButton.prototype.drawInternal = function(ctx, w, h) {
@@ -148,8 +150,8 @@ function ImageButtonGroup(manager, img, layout, mode, border) {
 }
 ImageButtonGroup.HORIZONTAL = false;
 ImageButtonGroup.VERTICAL = true;
-ImageButtonGroup.prototype.addButton = function(idx, onclick) {
-	var btn = new ImageButton(this, (this.size - 2 * this.border) * idx, (this.vertical) ? this.h : this.w, onclick);
+ImageButtonGroup.prototype.addButton = function(idx, onclick, hint) {
+	var btn = new ImageButton(this, idx, (this.size - 2 * this.border) * idx, (this.vertical) ? this.h : this.w, onclick, hint);
 	this.buttons.push(btn);
 	this.vertical ? this.h += this.size : this.w += this.size;
 	return btn;
@@ -160,6 +162,12 @@ ImageButtonGroup.prototype.addSpace = function(size) {
 		size: size
 	});
 	this.vertical ? this.h += size : this.w += size;
+};
+ImageButtonGroup.prototype.getButton = function(idx) {
+	for (var i = 0; i < this.buttons.length; i++) {
+		if (this.buttons[i].idx === idx) return this.buttons[i];
+	}
+	return null;
 };
 ImageButtonGroup.prototype.draw = ButtonGroup.prototype.draw;
 ImageButtonGroup.prototype.mouseMove = ButtonGroup.prototype.mouseMove;
@@ -174,7 +182,7 @@ function TextButton(group, text, color, onclick) {
 	var ctx = this.group.manager.vis.main.ctx;
 	this.x = 0;
 	this.y = 0;
-	ctx.font = 'bold 20px Arial';
+	ctx.font = FONT;
 	this.w = ctx.measureText(text).width + 8;
 	this.h = 28;
 }
@@ -183,7 +191,7 @@ TextButton.prototype.drawInternal = function(ctx) {
 	ctx.shadowColor = 'rgba(255,255,255,1)';
 	ctx.textAlign = 'left';
 	ctx.textBaseline = 'bottom';
-	ctx.font = 'bold 20px Arial';
+	ctx.font = FONT;
 	ctx.fillStyle = this.color;
 	ctx.fillText(this.text, 4, 25);
 };
@@ -301,7 +309,7 @@ ButtonManager.prototype.mouseUp = function() {
 	}
 };
 ButtonManager.prototype.mouseDown = function() {
-	if (this.hover) {
+	if (this.hover && this.hover.enabled) {
 		this.hover.mouseDown();
 		this.nailed = this.hover;
 	}

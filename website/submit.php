@@ -1,13 +1,16 @@
 <?php
+ini_set('error_reporting', E_ALL);
+ini_set('display_errors', true);
 
-include 'session.php';
-include 'server_info.php';
+require_once('session.php');
+require_once('server_info.php');
 
 if (!logged_in_with_valid_credentials()) {
   header('location:login.php');
 }
 
-include 'submission.php';
+require_once('mysql_login.php');
+require_once('submission.php');
 include 'header.php';
 ?>
 

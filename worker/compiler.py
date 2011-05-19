@@ -1,3 +1,4 @@
+#!/usr/bin/python
 # compiler.py
 # Author: Jeff Cameron (jeff@jpcameron.com)
 #
@@ -42,6 +43,8 @@ import subprocess
 import fnmatch
 import errno
 import shutil
+import json
+from optparse import OptionParser
 
 BOT = "MyBot"
 SAFEPATH = re.compile('[a-zA-Z0-9_.$-]+$')
@@ -57,13 +60,14 @@ class CD(object):
 
     def __exit__(self, type, value, traceback):
         os.chdir(self.org_dir)
-        
+
 def safeglob(pattern):
     safepaths = []
-    paths = glob.glob(pattern)
-    for path in paths:
-        if SAFEPATH.match(path):
-            safepaths.append(path)
+    for root, dirs, files in os.walk("."):
+        files = fnmatch.filter(files, pattern)
+        for fname in files:
+            if SAFEPATH.match(fname):
+                safepaths.append(os.path.join(root, fname))
     return safepaths
 
 def safeglob_multi(patterns):
@@ -73,13 +77,11 @@ def safeglob_multi(patterns):
     return safepaths
 
 def nukeglob(pattern):
-    paths = glob.glob(pattern)
+    paths = safeglob(pattern)
     for path in paths:
+        # Ought to be all files, not folders
         try:
-            if os.path.isdir(path):
-                shutil.rmtree(path)
-            else:
-                os.unlink(path)
+            os.unlink(path)
         except OSError, e:
             if e.errno != errno.ENOENT:
                 raise
@@ -87,7 +89,11 @@ def nukeglob(pattern):
 def system(args, errors):
     proc = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     (out, err) = proc.communicate()
-    errors.append(err)
+    if err:
+        errors.append(err)
+    if proc.returncode != 0:
+        errors.append("Command '%s' had error return code %d"
+                % (" ".join(args), proc.returncode))
     return proc.returncode == 0
 
 def check_path(path, errors):
@@ -118,48 +124,11 @@ class ExternalCompiler(Compiler):
         self.args = args
         self.separate = separate
 
+    def __repr__(self):
+        return 'ExternalCompiler: ' + ' '.join(self.args)
+
     def compile(self, globs, errors):
         files = safeglob_multi(globs)
-        if self.separate:
-            for file in files:
-                if not system(self.args + [file], log):
-                    return False
-        else:
-            if not system(self.args + files, log):
-                return False
-        return True
-
-class JavaCompiler(ExternalCompiler):
-    @staticmethod
-    def safeglob(pattern):
-        safepaths = []
-        for root, dirs, files in os.walk("."):
-            files = fnmatch.filter(files, pattern)
-            for fname in files:
-                if SAFEPATH.match(fname):
-                    safepaths.append(os.path.join(root, fname))
-        return safepaths
-
-    @staticmethod
-    def safeglob_multi(patterns):
-        safepaths = []
-        for pattern in patterns:
-            safepaths.extend(JavaCompiler.safeglob(pattern))
-        return safepaths
-
-    @staticmethod
-    def nukeglob(pattern):
-        paths = JavaCompiler.safeglob(pattern)
-        for path in paths:
-            # Ought to be all files, not folders
-            try:
-                os.unlink(path)
-            except OSError, e:
-                if e.errno != errno.ENOENT:
-                    raise
-
-    def compile(self, globs, errors):
-        files = JavaCompiler.safeglob_multi(globs)
         if self.separate:
             for file in files:
                 if not system(self.args + [file], errors):
@@ -200,17 +169,14 @@ comp_args = {
     "C++"         : [["g++", "-O3", "-funroll-loops", "-c"],
                              ["g++", "-O2", "-lm", "-o", BOT]],
     "D"             : [["dmd", "-O", "-inline", "-release", "-of" + BOT]],
-    "Go"            : [["/usr/local/bin/8g", "-o", "_go_.8"],
-                             ["/usr/local/bin/8l", "-o", BOT, "_go_.8"]],
+    "Go"            : [["/usr/local/bin/6g", "-o", "_go_.6"],
+                             ["/usr/local/bin/6l", "-o", BOT, "_go_.6"]],
     "Groovy"    : [["groovyc"],
                              ["jar", "cfe", BOT + ".jar", BOT]],
     "Haskell" : [["ghc", "--make", BOT + ".hs", "-O", "-v0"]],
     "Java"        : [["javac"],
                              ["jar", "cfe", BOT + ".jar", BOT]],
-    "Lisp"        : [['sbcl', '--end-runtime-options', '--no-sysinit',
-                                '--no-userinit', '--disable-debugger', '--load',
-                                BOT + '.lisp', '--eval', "(save-lisp-and-die \"" + BOT
-                                + "\" :executable t :toplevel #'pwbot::main)"]],
+    "Lisp"      : [['sbcl', '--script', BOT + '.lisp']],
     "OCaml"     : [["ocamlbuild", BOT + ".native"]],
     "Scala"     : [["scalac"]],
     }
@@ -220,7 +186,7 @@ targets = {
     "C"     : { ".c" : ".o" },
     "C++" : { ".c" : ".o", ".cpp" : ".o", ".cc" : ".o" },
     }
-   
+
 # TODO: turn these into objects or dicts
 languages = {
     # lang :
@@ -248,7 +214,7 @@ languages = {
          [BOT + ".exe"],
          [(["*.cs"], ExternalCompiler(comp_args["C#"][0]))]
         ),
-    "C++": 
+    "C++":
         ("",
          "MyBot.cc",
          "./MyBot",
@@ -270,12 +236,12 @@ languages = {
          [],
          [(["*.coffee"], ChmodCompiler("CoffeeScript"))]
         ),
-    "D": 
+    "D":
         ("",
          "MyBot.d",
          "./MyBot",
          ["*.o", BOT],
-         [(["*.d"], JavaCompiler(comp_args["D"][0]))]
+         [(["*.d"], ExternalCompiler(comp_args["D"][0]))]
         ),
     "Go":
         ("",
@@ -300,13 +266,13 @@ languages = {
          [BOT],
          [([""], ExternalCompiler(comp_args["Haskell"][0]))]
         ),
-    "Java": 
+    "Java":
         (".jar",
          "MyBot.java",
          "java -jar MyBot.jar",
          ["*.class", "*.jar"],
-         [(["*.java"], JavaCompiler(comp_args["Java"][0])),
-         (["*.class"], JavaCompiler(comp_args["Java"][1]))]
+         [(["*.java"], ExternalCompiler(comp_args["Java"][0])),
+         (["*.class"], ExternalCompiler(comp_args["Java"][1]))]
         ),
     "Javascript":
         (".js",
@@ -315,7 +281,7 @@ languages = {
          [],
          [(["*.js"], ChmodCompiler("Javascript"))]
         ),
-    "Lisp": 
+    "Lisp":
         ("",
          "MyBot.lisp",
          "./MyBot",
@@ -355,18 +321,18 @@ languages = {
          "python MyBot.py",
         ["*.pyc"],
         [(["*.py"], ChmodCompiler("Python"))]),
-    "Ruby": 
+    "Ruby":
         (".rb",
          "MyBot.rb",
          "ruby MyBot.rb",
          [],
          [(["*.rb"], ChmodCompiler("Ruby"))]
         ),
-    "Scala": 
-        (".class",
-         "MyBot.class",
+    "Scala":
+        (".scala",
+         "MyBot.scala",
          "?",
-         ["*.class, *.jar"],
+         ["*.scala, *.jar"],
          [(["*.scala"], ExternalCompiler(comp_args["Scala"][0]))]
         ),
     "Scheme":
@@ -379,28 +345,28 @@ languages = {
     }
 
 
-def compile_function(language, log):
+def compile_function(language, errors):
+    """Compile submission in the current directory with a specified language."""
     extension, main_code_file, command, nukeglobs, compilers = languages[language]
 
-    if language == "Java":
-        for glob in nukeglobs:
-            JavaCompiler.nukeglob(glob)
-    else:
-        for glob in nukeglobs:
-            nukeglob(glob)
+    for glob in nukeglobs:
+        nukeglob(glob)
 
     for globs, compiler in compilers:
-        if not compiler.compile(globs, log):
+        try:
+            if not compiler.compile(globs, errors):
+                return False
+        except:
+            errors.append("Compiler failed: " + str(compiler))
             return False
 
-    return check_path(BOT + extension, log)
+    return check_path(BOT + extension, errors)
 
-def detect_language(submission_dir=None):
-    if submission_dir == None:
-        submission_dir = os.getcwd()
-    with CD(submission_dir):
+def detect_language(bot_dir):
+    """Try and detect what language a submission is using"""
+    with CD(bot_dir):
         # Autodetects the language of the entry in the current working directory
-        detected_lang = get_run_lang(submission_dir)
+        detected_lang = get_run_lang(bot_dir)
         if detected_lang and detected_lang in languages:
             detected_langs = [languages[detected_lang] + (detected_lang,)]
         else:
@@ -408,7 +374,7 @@ def detect_language(submission_dir=None):
                 lang_data + (lang_name,) for lang_name, lang_data
                 in languages.items() if os.path.exists(lang_data[1])
             ]
-        
+
         # If no language was detected
         if len(detected_langs) > 1:
             return None, {'errors': [],
@@ -420,59 +386,64 @@ def detect_language(submission_dir=None):
         else:
             return detected_langs[0], {'errors': []}
 
-# detect language looks for MyBot.* files
-# in the case of java, a MyBot.class file is created after compile
-# if detect is called again, it will think this could be a scala bot
-# a work around is to write a run.sh file in the compile dir so that
-# we don't have to detect the language more than once
 def get_run_cmd(submission_dir):
+    """Get the language of a submission"""
     with CD(submission_dir):
         if os.path.exists('run.sh'):
             with open('run.sh') as f:
                 for line in f:
                     if line[0] != '#':
-                        return line
+                        return line.rstrip('\r\n')
 
 def get_run_lang(submission_dir):
+    """Get the command to run a submission"""
     with CD(submission_dir):
         if os.path.exists('run.sh'):
             with open('run.sh') as f:
                 for line in f:
                     if line[0] == '#':
                         return line[1:-1]
-            
-                                
-# Autodetects the language of the entry in the current working directory and
-# compiles it.
-def compile_anything(submission_dir=None):
-    if submission_dir == None:
-        submission_dir = os.getcwd()
-    with CD(submission_dir):
-        # If we get this far, then we have successfully auto-detected the language
-        # that this contestant is using.
-        detected_language, errors = detect_language()
+
+def compile_anything(bot_dir):
+    """Autodetect the language of an entry and compile it."""
+    with CD(bot_dir):
+        detected_language, errors = detect_language(bot_dir)
         if detected_language:
+            # If we get this far, then we have successfully auto-detected 
+            # the language that this entry is using.
             main_code_file = detected_language[1]
             detected_lang = detected_language[-1]
             run_cmd = detected_language[2]
             if compile_function(detected_lang, errors['errors']):
-                with open('run.sh', 'w') as f:
-                    f.write('#%s\n%s' % (detected_lang, run_cmd))
+                with open('../run.sh', 'w') as f:
+                    f.write('#%s\n%s\n' % (detected_lang, run_cmd))
                 return detected_lang, errors
             else:
                 return None, errors
         else:
             return None, errors
 
-if __name__ == '__main__':
-    if len(sys.argv) == 2:
-        detected_lang, errors = compile_anything(sys.argv[1])
+def main(argv=sys.argv):
+    parser = OptionParser(usage="Usage: %prog [options] [directory]")
+    parser.add_option("-j", "--json", action="store_true", dest="json",
+            default=False,
+            help="Give compilation results in json format")
+    options, args = parser.parse_args(argv)
+    if len(args) == 1:
+        detected_lang, errors = compile_anything(os.getcwd())
+    elif len(args) == 2:
+        detected_lang, errors = compile_anything(args[1])
     else:
-        detected_lang, errors = compile_anything()
-    import json
-    if detected_lang:
-        print(json.dumps({'language': detected_lang}))
+        parser.error("Extra arguments found, use --help for usage")
+    if options.json:
+        import json
+        print json.dumps([detected_lang, errors])
     else:
-        print(json.dumps(errors))
-        for error in errors['errors']:
-            print(error)
+        print "Detected language:", detected_lang
+        if len(errors['errors']) != 0:
+            for error in errors['errors']:
+                print(error)
+
+if __name__ == "__main__":
+    main()
+

@@ -29,7 +29,7 @@
   </target>
 
   <target name="compile-visualizer" depends="compile-rhino">
-    <javac destdir="${build.java}" debug="${java.debug}" target="${java.target}" includeAntRuntime="false" srcdir="${src.java}" classpath="${java.home}/lib/plugin.jar" />
+    <javac destdir="${build.java}" debug="${java.debug}" target="${java.target}" includeAntRuntime="false" srcdir="${src.java}" classpath="${java.plugin}" />
   </target>
 
   <target name="compile-js" depends="compile-visualizer">
@@ -171,7 +171,7 @@
 
   <target name="run-visualizer" depends="compile-visualizer,compile-js" description="runs the visualizer with a sample replay">
     <java classname="com.aicontest.visualizer.Main" classpath="${build.java}:${src.data}" dir="${build.java}" fork="yes" failonerror="yes">
-      <arg value="${basedir}/games/0/2.replay" />
+      <arg value="${basedir}/games/0/1.replay" />
     </java>
   </target>
 

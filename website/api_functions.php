@@ -1,6 +1,6 @@
 <?php
-// ini_set('error_reporting', E_ALL);
-// ini_set('display_errors', true);
+ini_set('error_reporting', E_ALL);
+ini_set('display_errors', true);
 
 require_once('memcache.php');
 require_once('mysql_login.php');
@@ -63,4 +63,5 @@ function api_log($message) {
 	$message = sprintf("%s - %s", date(DATE_ATOM), $message) . "\n";
 	error_log($message, 3, $server_info["api_log"]);
 }
+
 ?>

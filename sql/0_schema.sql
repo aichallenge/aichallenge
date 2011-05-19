@@ -14,10 +14,11 @@ CREATE TABLE `game` (
   `map_id` int(11) NOT NULL,
   `timestamp` datetime NOT NULL,
   `worker_id` int(11) unsigned NOT NULL,
-  `replay_path` varchar(255) NOT NULL,
+  `replay_path` varchar(255) NULL,
   PRIMARY KEY (`game_id`),
-  KEY `timestamp` (`timestamp`),
-  KEY `worker_id` (`worker_id`,`timestamp`)
+  KEY `game_seed_id_idx` (`seed_id`),
+  KEY `game_map_id_idx` (`map_id`),
+  KEY `game_seed_map_idx` (`seed_id`,`map_id`)
 );
 
 DROP TABLE IF EXISTS `game_archive`;
@@ -41,13 +42,15 @@ CREATE TABLE `game_player` (
   `stderr` varchar(1024) DEFAULT NULL,
   `game_rank` int(11) NOT NULL,
   `game_score` int(11) NOT NULL,
-  `sigma_before` float NOT NULL,
-  `sigma_after` float NOT NULL,
-  `mu_before` float NOT NULL,
-  `mu_after` float NOT NULL,
+  `sigma_before` float NULL,
+  `sigma_after` float NULL,
+  `mu_before` float NULL,
+  `mu_after` float NULL,
   `valid` tinyint(1) NOT NULL DEFAULT '1',
   PRIMARY KEY (`game_id`,`user_id`),
-  UNIQUE KEY `game_player_idx` (`game_id`,`submission_id`)
+  UNIQUE KEY `game_player_idx` (`game_id`,`submission_id`),
+  KEY `game_user_id_idx` (`user_id`),
+  KEY `game_player_game_id_idx` (`game_id`)
 );
 
 DROP TABLE IF EXISTS `game_player_archive`;
@@ -110,7 +113,11 @@ CREATE TABLE `matchup` (
   `seed_id` int(11) NOT NULL,
   `map_id` int(11) NOT NULL,
   `worker_id` int(11) DEFAULT NULL,
-  PRIMARY KEY (`matchup_id`)
+  `error` varchar(4000) NULL,
+  PRIMARY KEY (`matchup_id`),
+  KEY `matchup_seed_id_idx` (`seed_id`),
+  KEY `matchup_seed_map_idx` (`seed_id`,`map_id`),
+  KEY `matchup_map_id_idx` (`map_id`)
 );
 
 DROP TABLE IF EXISTS `matchup_player`;
@@ -119,15 +126,19 @@ CREATE TABLE `matchup_player` (
   `user_id` int(11) NOT NULL,
   `submission_id` int(11) NOT NULL,
   `player_id` int(11) NOT NULL,
+  `mu` float DEFAULT NULL,
+  `sigma` float DEFAULT NULL,
   PRIMARY KEY (`matchup_id`,`user_id`),
-  UNIQUE KEY `matchup_player_idx` (`matchup_id`,`submission_id`)
+  UNIQUE KEY `matchup_player_idx` (`matchup_id`,`submission_id`),
+  KEY `matchup_player_user_id_idx` (`user_id`)
 );
 
 DROP TABLE IF EXISTS `organization`;
 CREATE TABLE `organization` (
   `org_id` int(11) NOT NULL AUTO_INCREMENT,
   `name` varchar(128) DEFAULT NULL,
-  PRIMARY KEY (`org_id`)
+  PRIMARY KEY (`org_id`),
+  UNIQUE KEY (`name`)
 );
 
 DROP TABLE IF EXISTS `ranking`;
@@ -138,14 +149,13 @@ CREATE TABLE `ranking` (
   `version` int(11) NOT NULL,
   `seq` int(11) NOT NULL,
   `rank` int(11) NOT NULL,
-  `rank_change` int(11) NOT NULL,
+  `rank_change` int(11) NULL,
   `skill` float NOT NULL,
-  `skill_change` float NOT NULL,
+  `skill_change` float NULL,
   `latest` tinyint(1) NOT NULL,
-  `age` timestamp NOT NULL,
-  KEY `leaderboard_id` (`leaderboard_id`),
+  `age` time NOT NULL,
   KEY `submission_id` (`submission_id`),
-  KEY `leaderboard_id_2` (`leaderboard_id`,`submission_id`,`rank`)
+  KEY `leaderboard_id` (`leaderboard_id`,`submission_id`,`rank`)
 );
 
 DROP TABLE IF EXISTS `ranking_archive`;
@@ -156,14 +166,13 @@ CREATE TABLE `ranking_archive` (
   `version` int(11) NOT NULL,
   `seq` int(11) NOT NULL,
   `rank` int(11) NOT NULL,
-  `rank_change` int(11) NOT NULL,
+  `rank_change` int(11) NULL,
   `skill` float NOT NULL,
-  `skill_change` float NOT NULL,
+  `skill_change` float NULL,
   `latest` tinyint(4) NOT NULL,
-  `age` timestamp NOT NULL ,
-  KEY `leaderboard_id` (`leaderboard_id`),
+  `age` time NOT NULL ,
   KEY `submission_id` (`submission_id`),
-  KEY `leaderboard_id_2` (`leaderboard_id`,`submission_id`,`rank`)
+  KEY `leaderboard_id` (`leaderboard_id`,`submission_id`,`rank`)
 );
 
 DROP TABLE IF EXISTS `settings`;
@@ -183,6 +192,7 @@ CREATE TABLE `submission` (
   `status` int(11) NOT NULL,
   `timestamp` datetime NOT NULL,
   `comments` varchar(4096) DEFAULT NULL,
+  `errors` varchar(4096) DEFAULT NULL,
   `language_id` int(11) NOT NULL,
   `last_game_timestamp` datetime DEFAULT NULL,
   `latest` tinyint(1) NOT NULL DEFAULT '1',
@@ -192,10 +202,9 @@ CREATE TABLE `submission` (
   PRIMARY KEY (`submission_id`),
   KEY `language_id` (`language_id`),
   KEY `submission_id` (`submission_id`,`user_id`),
-  KEY `user_id` (`user_id`),
-  KEY `timestamp` (`timestamp`),
-  KEY `user_id_2` (`user_id`,`timestamp`),
-  KEY `latest` (`latest`)
+  KEY `user_id` (`user_id`,`submission_id`),
+  KEY `latest` (`latest`,`user_id`),
+  KEY `mu_idx` (`mu`)
 );
 
 DROP TABLE IF EXISTS `user`;
@@ -213,7 +222,7 @@ CREATE TABLE `user` (
   `activated` tinyint(1) NOT NULL,
   `admin` tinyint(1) NOT NULL,
   PRIMARY KEY (`user_id`),
-  KEY `username` (`username`),
+  UNIQUE KEY (`username`),
   KEY `user_id` (`user_id`,`username`)
 );
 
@@ -221,7 +230,8 @@ DROP TABLE IF EXISTS `user_status_code`;
 CREATE TABLE `user_status_code` (
   `status_id` int(11) NOT NULL,
   `name` varchar(256) NOT NULL,
-  PRIMARY KEY (`status_id`)
+  PRIMARY KEY (`status_id`),
+  UNIQUE KEY (`name`)
 );
 
 DROP TABLE IF EXISTS `worker`;

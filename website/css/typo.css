@@ -1,26 +1,126 @@
-body { 
-    font-size: 75%;
-    color: #222; 
-    background: #fff;
-    font-family: "Helvetica Neue", Arial, Helvetica, sans-serif;
+@charset "utf-8";
+ 
+@import url("http://fonts.googleapis.com/css?family=Ubuntu");
+
+body {
+    font-family: 'Ubuntu', arial, serif;
+    font-size: 12px;
+    line-height: 1.5;
 }
 
-h1,h2,h3,h4,h5,h6 { font-weight: bold; color: #111; }
-h1 { font-size: 2em; line-height: 1; margin-bottom: 0.5em; }
-h2 { font-size: 1.4em; margin-bottom: 0.75em; }
-h3 { font-size: 1.3em; line-height: 1; margin-bottom: 1em; }
-h4 { font-size: 1.2em; line-height: 1.25; margin-bottom: 1.25em; }
-h5 { font-size: 1em; font-weight: bold; margin-bottom: 1.5em; }
-h6 { font-size: 1em; font-weight: bold; }
+h1, h2, h3, h4 {
+    display: block;
+    text-shadow: #aaa 1px 1px 3px;
+    line-height: 1;
+}
 
-p { font-size: 1.1em; }
-p { margin: 0 0 1.5em; }
-p img.left { float: left; margin: 1.5em 1.5em 1.5em 0; padding: 0; }
-p img.right { float: right; margin: 1.5em 0 1.5em 1.5em; }
+h1 {
+    font-size: 3em;
+}
 
-a:focus, a:hover { color: #000; }
-a { color: #009; text-decoration: underline; }
+h2 {
+    font-size: 2.5em;   
+}
 
-ul { margin: 0 1.5em 1.5em 1.5em; list-style-type: disc; }
-li ul { margin: 0 1.5em; }
+h3 {
+    font-size: 2em; 
+}
 
+h4 {
+    font-size: 1.5em; 
+    font-weight: normal;
+}
+
+p {
+    text-align: justify;
+}
+
+ul, ol {
+    list-style-position:inside;
+    margin-left: 1.5em;
+    margin-bottom: 1em;
+}
+ul ul, ol ol {
+    margin-bottom: 0em;
+}
+ul li.spacer {
+    display: none;
+}
+ul li.spacer+li {
+    margin-top: 1em;
+}
+ul li {
+    list-style-type: disc;
+}
+ol li {
+    list-style-type: decimal-leading-zero;
+}
+
+/*Spacing*/
+h1, h2, h3, h4, p {
+    margin-bottom: 0.5em;
+}
+
+p+h1, p+h2, p+h3, p+h4 {
+    margin-top: 1.5em;
+}
+
+ul+h1, ul+h2, ul+h3, ul+h4 {
+    margin-top: 1.5em;
+}
+
+ol+h1, ol+h2, ol+h3, ol+h4 {
+    margin-top: 1.5em;
+}
+
+/*Clearing*/
+h2:before, h3:before {
+    content: ".";
+    display: block;
+    height: 0;
+    clear: both;
+    visibility: hidden;
+}
+
+/*Links*/
+a {
+    color: #a00;
+    text-decoration: none;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+/* Monochrome elements */
+pre, code {
+    font-family: monospace;
+}
+code {
+    padding: 10px;
+    
+    display: block;
+    margin-bottom: 1em;
+    
+    border: 1px solid #7a0;
+    background: #ad6;
+}
+
+/*Tables*/
+th {
+    color: #900;
+}
+
+/* Misc */
+.small {
+    font-size: 70%;
+}
+
+.large {
+    font-size: 130%;
+}
+
+strong {
+    font-weight: bold;
+    text-shadow: #aaa 1px 1px 2px;
+}

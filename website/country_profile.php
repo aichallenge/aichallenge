@@ -1,45 +1,18 @@
 <?php
 include 'header.php';
-include_once 'rankings_widget.php';
+require_once('mysql_login.php');
+require_once('ranking.php');
 
-$country_id = $_GET["country_id"];
-$country_id = mysql_real_escape_string($country_id);
+$country_row = get_country_row(get_type_or_else('country'));
 
-// Grab Data
-$country_query = <<<EOT
-select
-    *
-from
-    country
-where
-    country_id = '$country_id'
-EOT;
-
-$country_result = mysql_query($country_query);
-
-if (!$country_result) {
-    echo "<p>Invalid Country ID</p>";
+if (!$country_row) {
+    echo "<p>Invalid Country</p>";
 } else {
-    $country_data = mysql_fetch_assoc($country_result);
-    $country_code = htmlentities($country_data["country_code"]);
-    $country_name = htmlentities($country_data["name"]);
-    /*
-echo <<<EOT
-<h2>$country_name's Profile</h2>
-EOT;
+    $country_name = htmlentities($country_row['name']);
+    echo "<h2><span>$country_name's User Rankings</span><div class=\"divider\" /></h2>";
 
-<h3><span>Country Information</span><div class="divider" /></h3>
-<dl class="userinfo">
-<dt>Country Code:</dt>
-<dd>$country_code</dd>
-</dl>
-     */
-echo <<<EOT
-<h2><span>$country_name's User Rankings</span><div class="divider" /></h2>
-EOT;
-
-echo getRankingsTableString(1, false, 100,"?country_id=$country_id&page=",0,"c.country_id",$country_id);
-
+    $page = get_type_or_else("page", FILTER_VALIDATE_INT, 1);
+    echo get_country_ranking($country_row['country_id'], $page);
 }
 
 include 'footer.php';

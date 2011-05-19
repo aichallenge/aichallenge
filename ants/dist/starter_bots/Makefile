@@ -14,7 +14,7 @@ starter_packages: $(STARTER_PACKAGES)
 	#Include other things in here ($<_starter_package)
 
 	#Zip that folder
-	zip -r $@ $<_starter_package
+	cd $<_starter_package; zip -r ../$@ *; cd -
 
 	#Remove temp folder
 	rm -Rf $<_starter_package
@@ -25,5 +25,9 @@ clean:
 
 	#temp folders
 	-rm -Rf *_starter_package/
+
+install:
+	#Copy to website
+	mv *.zip ../../../website/starter_packages/
 
 .PHONY: archives all clean

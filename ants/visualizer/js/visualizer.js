@@ -6,7 +6,7 @@ $import('Config');
 $import('Const');
 $import('Director');
 $import('ImageManager');
-$import('Random');
+$import('Util');
 $import('Replay');
 
 var $import_base;

@@ -4,10 +4,10 @@ import java.util.Map;
 
 
 public enum Aim {
-	NORTH (0, -1, 'n'),
-	EAST (1, 0, 'e'),
-	SOUTH (0, 1, 's'),
-	WEST (-1, 0, 'w');
+	NORTH (-1, 0, 'n'),
+	EAST (0, 1, 'e'),
+	SOUTH (1, 0, 's'),
+	WEST (0, -1, 'w');
 	
 	private static final Map<Aim, Aim> rightLookup = new EnumMap<Aim, Aim>(Aim.class);
 	private static final Map<Aim, Aim> leftLookup = new EnumMap<Aim, Aim>(Aim.class);

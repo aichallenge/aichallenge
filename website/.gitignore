@@ -1,4 +1,9 @@
 server_info.php
 *.log
-games*
-maps*
+aicontest.tgz
+
+ants/
+visualizer/
+aichallenge.wiki/
+forums/
+phpMyAdmin/

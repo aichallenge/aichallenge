@@ -1,16 +1,19 @@
 <?php
 include 'header.php';
-include_once 'rankings_widget.php';
+require_once('mysql_login.php');
+require_once('ranking.php');
 
-$lang = $_GET["lang"];
-$lang_encoded = urlencode($lang);
-$lang_display = htmlspecialchars($lang);
+$lang_row = get_language_row(get_type_or_else('language'));
 
-echo <<<EOT
-<h2><span>$lang_display's User Rankings</span><div class="divider" /></h2>
-EOT;
+if (!$lang_row) {
+    echo "<p>Invalid Language</p>";
+} else {
+    $language_name = htmlentities($lang_row['name']);
+    echo "<h2><span>$language_name's User Rankings</span><div class=\"divider\" /></h2>";
 
-echo getRankingsTableString(1, false, 100,"?lang=$lang_encoded&page=",0,"l.name",$lang);
+    $page = get_type_or_else("page", FILTER_VALIDATE_INT, 1);
+    echo get_language_ranking($lang_row['language_id'], $page);
+}
 
 include 'footer.php';
 ?>

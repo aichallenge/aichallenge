@@ -52,6 +52,8 @@ class Game:
 
     # process a single player's moves, may be appropriate to resolve during finish turn
     def do_moves(self, player, moves):
+        # returns valid, ignored, invalid
+        #         [''],  [('','')], [('','')]
         pass
 
     def do_all_moves(self, bot_moves):

@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 import sys
 import MySQLdb
 from server_info import server_info

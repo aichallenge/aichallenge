@@ -1,6 +1,7 @@
 <?php
-include 'header.php';
-include_once 'rankings_widget.php';
+include('header.php');
+require_once('ranking.php');
+//include_once 'rankings_widget.php';
 
 echo <<<EOT
 <h2>Current Rankings</h2>
@@ -9,7 +10,11 @@ echo <<<EOT
   Five Minute Quickstart Guide</a>!</p>
 EOT;
 
-echo getRankingsTableString(1, false, 100, "");
+//echo getRankingsTableString(1, false, 100, "");
+
+$page = get_type_or_else("page", FILTER_VALIDATE_INT, 1);
+
+echo get_ranking_table($page);
 
 include 'footer.php';
 ?>

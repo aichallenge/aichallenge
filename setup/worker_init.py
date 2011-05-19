@@ -32,9 +32,9 @@ def get_contest_files(download_url):
     """ Get the contest files downloaded and placed in the current directory """
     if os.path.exists("aichallenge"):
         return
-    run_cmd("wget %s/aicontest.tgz" % (download_url,))
-    run_cmd("tar -xf aicontest.tgz")
-    run_cmd("rm aicontest.tgz")
+    run_cmd("wget %s/worker-src.tgz" % (download_url,))
+    run_cmd("tar -xf worker-src.tgz")
+    run_cmd("rm worker-src.tgz")
 
 def main():
     if len(sys.argv) < 3:
@@ -45,8 +45,8 @@ def main():
     os.chdir("/home/contest")
     get_contest_files(sys.argv[1])
     os.chdir("aichallenge/setup")
-    run_cmd("./setup_worker.py -y --username contest --api-url %s --api-key %s \
-            --start" % (sys.argv[1], sys.argv[2]))
+    run_cmd("./worker_setup.py -y --username contest --api-url %s --api-key %s \
+            --install-cronjob --start" % (sys.argv[1], sys.argv[2]))
 
 if __name__=="__main__":
     main()
