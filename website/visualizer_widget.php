@@ -12,7 +12,7 @@ function visualizer_widget($game_id, $interactive=true, $width=690, $height=700)
 	}
     echo '<div id="visualizerDiv">';
 
-    $replay = "games/" . $game_id;
+    $replay = "game/" . $game_id;
     // Write applet tag if we use Java
     if (isset ($java)) {
         ?>

@@ -19,6 +19,7 @@ if(!filter_var($user_id, FILTER_VALIDATE_INT)) {
 //if (!($cache->start($cacheID))) {
 include_once 'profile_submissions_widget.php';
 include_once 'profile_games_widget.php';
+require_once('game_list.php');
 
 // Fetch Rank Data
 $rankquery = <<<EOT
@@ -245,7 +246,8 @@ EOT;
     }
 
     echo "<h3><span>Latest Games</span><div class=\"divider\" /></h3>";
-    echo getGamesTableString($user_id, true, 15, "profile_games.php?user=$user_id");
+    echo get_game_list_table(1, $user_id);
+    //echo getGamesTableString($user_id, true, 15, "profile_games.php?user=$user_id");
     echo "<p></p>";
     echo "<h3><span>Recent Submissions</span><div class=\"divider\" /></h3>";
     echo getSubmissionTableString($user_id, true, 10, "profile_submissions.php?user=$user_id");

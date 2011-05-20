@@ -183,7 +183,76 @@ $sql = array(
         order by seq",
     "select_countries" => "select * from country",
     "select_languages" => "select * from language",
-    "select_organizations" => "select * from organization"
+    "select_organizations" => "select * from organization",
+    // holy ant colony batman! all games?
+    "select_game_list" => "
+        select g.game_id, g.timestamp,
+               gp.user_id, gp.submission_id, u.username,
+               gp.sigma_after as sigma, gp.mu_after as mu, gp.player_id, gp.game_rank,
+               m.players, m.map_id, m.filename as map_name
+        from game g
+        inner join map m
+            on m.map_id = g.map_id
+        inner join game_player gp
+            on g.game_id = gp.game_id
+        inner join user u
+            on gp.user_id = u.user_id
+        order by game_id desc, gp.game_rank
+    ",
+    // yes robin. all games.
+    "select_game_list_by_user" => "
+        select g.game_id, g.timestamp,
+               gp.user_id, gp.submission_id, u.username,
+               gp.sigma_after as sigma, gp.mu_after as mu, gp.player_id, gp.game_rank,
+               m.players, m.map_id, m.filename as map_name
+        from game g
+        inner join map m
+            on m.map_id = g.map_id
+        inner join game_player gp
+            on g.game_id = gp.game_id
+        inner join user u
+            on gp.user_id = u.user_id
+        where g.game_id in (
+            select gp2.game_id
+            from game_player gp2
+            where gp2.user_id = %s
+        )
+        order by game_id desc, gp.game_rank
+    ",
+    "select_game_list_by_submission" => "
+        select g.game_id, g.timestamp,
+               gp.user_id, gp.submission_id, u.username,
+               gp.sigma_after as sigma, gp.mu_after as mu, gp.player_id, gp.game_rank,
+               m.players, m.map_id, m.filename as map_name
+        from game g
+        inner join map m
+            on m.map_id = g.map_id
+        inner join game_player gp
+            on g.game_id = gp.game_id
+        inner join user u
+            on gp.user_id = u.user_id
+        where g.game_id in (
+            select gp2.game_id
+            from game_player gp2
+            where gp2.submission_id = %s
+        )
+        order by game_id desc, gp.game_rank
+    ",
+    "select_game_list_by_map" => "
+        select g.game_id, g.timestamp,
+               gp.user_id, gp.submission_id, u.username,
+               gp.sigma_after as sigma, gp.mu_after as mu, gp.player_id, gp.game_rank,
+               m.players, m.map_id, m.filename as map_name
+        from game g
+        inner join map m
+            on m.map_id = g.map_id
+        inner join game_player gp
+            on g.game_id = gp.game_id
+        inner join user u
+            on gp.user_id = u.user_id
+        where g.map_id = %s
+        order by game_id desc, gp.game_rank
+    "
 );
 
 ?>
