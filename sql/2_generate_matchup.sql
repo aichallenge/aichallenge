@@ -58,6 +58,7 @@ left outer join (
     group by m.map_id
 ) matchups
     on m.map_id = matchups.map_id
+where m.players <= @max_players
 order by game_count, priority, max_game_id,
          matchup_count, max_matchup_id,
          all_game_count, max_all_game_id,
@@ -93,6 +94,9 @@ set @abort = 0;
 set @player_count = 1;
 
 while @abort = 0 and @player_count < @players do
+    select @matchup_id as matchup_id, @last_user_id as cur_user,
+           @use_limits as limits, @abort as abort,
+           @player_count as player_count, @players as total;
     set @last_user_id = @cur_user_id;
     if @use_limits = 1 then
         -- don't match player that played with anyone matched so far
