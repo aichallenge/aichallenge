@@ -94,9 +94,9 @@ set @abort = 0;
 set @player_count = 1;
 
 while @abort = 0 and @player_count < @players do
-    select @matchup_id as matchup_id, @last_user_id as cur_user,
-           @use_limits as limits, @abort as abort,
-           @player_count as player_count, @players as total;
+    -- select @matchup_id as matchup_id, @last_user_id as cur_user,
+    --        @use_limits as limits, @abort as abort,
+    --        @player_count as player_count, @players as total;
     set @last_user_id = @cur_user_id;
     if @use_limits = 1 then
         -- don't match player that played with anyone matched so far
