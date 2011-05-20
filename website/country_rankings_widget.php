@@ -1,5 +1,8 @@
 <?php
 
+require_once('mysql_login.php');
+require_once('session.php');
+
 /*
  * getCountryRankingsTableString
  *
@@ -13,9 +16,9 @@
 function getCountryRankingsTableString($top)
 {
 
-    $username = $_SESSION['username'];
+    $username = current_username();
 
-    if ($username != null) {
+    if ($username !== null) {
     // Fetch Country ID for logged in user
     $user_query = <<<EOT
 select
@@ -42,14 +45,14 @@ select
     c.flag_filename,
     count(*) as num_leaders
 from
-    rankings r
+    ranking r
     inner join submission s on s.submission_id = r.submission_id
     inner join user u on u.user_id = s.user_id
     inner join country c on c.country_id = u.country_id
 where
     r.leaderboard_id = (select max(leaderboard_id) from leaderboard
         where complete=1)
-    and r.rank <= $top 
+    and r.rank <= $top
 group by u.country_id
 order by num_leaders desc
 EOT;

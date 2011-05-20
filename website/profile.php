@@ -246,7 +246,7 @@ EOT;
     }
 
     echo "<h3><span>Latest Games</span><div class=\"divider\" /></h3>";
-    echo get_game_list_table(1, $user_id);
+    echo get_game_list_table(1, $user_id, NULL, NULL, TRUE, 'profile_games.php');
     //echo getGamesTableString($user_id, true, 15, "profile_games.php?user=$user_id");
     echo "<p></p>";
     echo "<h3><span>Recent Submissions</span><div class=\"divider\" /></h3>";

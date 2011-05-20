@@ -44,7 +44,7 @@ function cache_key($page=0, $org_id=NULL, $country_id=NULL, $language_id=NULL, $
 
 function produce_cache_results($page=0, $org_id=NULL, $country_id=NULL, $language_id=NULL) {
     global $memcache;
-    
+
     $page_size = 10;
     $json = array("fields" => array(),
                   "values" => array());
@@ -135,7 +135,7 @@ function create_ranking_table($json) {
         return '<h4>There are no rankings at this time.  Please check back later.</h4>';
     }
     $table = '<table class="ranking">';
-    if (array_key_exists('type', $json)) {
+    if (array_key_exists('type_id', $json)) {
         // language by name, others by id
         if ($json['type'] == 'language') {
             $page_string = '?'.$json['type'].'='.$json['type_name'].'&page=';
@@ -163,50 +163,50 @@ function create_ranking_table($json) {
         $fields = $json["fields"];
         foreach ($json["values"] as $values) {
             $row = array_combine($fields, $values);
-            
+
             // $rank = ($filter == null)? $rank : ($i + $offset) . " <span title='Global Rank'>($rank)</span>";
             // $rank_percent = $row["rank_percent"];
-            
+
             $oddity = $oddity == 'odd' ? 'even' : 'odd';  // quite odd?
             $user_class = current_username() == $row["username"] ? ' user' : '';
             $table .= "<tr class=\"$oddity$user_class\">";
-                    
+
             $rank = $row["rank"];
             $table .= "<td>$rank</td>";
-    
+
             $user_id = $row["user_id"];
             $username = htmlentities($row["username"]);
             $table .= "<td><a href=\"profile.php?user=$user_id\">$username</a></td>";
-    
+
             $country_id = $row["country_id"];
             $country_name = htmlentities($row["country"]);
             $flag_filename = $row["flag_filename"];
             $flag_filename = "<img alt=\"$country_name\" width=\"16\" height=\"11\" title=\"$country_name\" src=\"flags/$flag_filename\" />";
             $table .= "<td><a href=\"country_profile.php?country=$country_id\">$flag_filename</a></td>";
-    
+
             $org_name = htmlentities($row["org_name"]);
             $org_id = $row["org_id"];
             $table .= "<td><a href=\"organization_profile.php?org=$org_id\">$org_name</a></td>";
-            
+
             $programming_language = htmlentities($row["programming_language"]);
             $programming_language_link = urlencode($row["programming_language"]);
             $table .= "<td><a href=\"language_profile.php?language=$programming_language_link\">$programming_language</a></td>";
-            
+
             $skill = $row["skill"];
             $table .= "<td>$skill</td>";
-            
+
             $table .= "</tr>";
         }
         $table .= '</tbody>';
     }
     $table .= '</table>';
-    
+
     return $table;
 }
 
 function get_ranking_json($page=0, $org_id=NULL, $country_id=NULL, $language_id=NULL) {
     global $memcache;
-    
+
     $cache_key = cache_key($page, $org_id, $country_id, $language_id);
     if ($memcache) {
         $results = $memcache->get($cache_key);
@@ -220,7 +220,7 @@ function get_ranking_json($page=0, $org_id=NULL, $country_id=NULL, $language_id=
 
 function get_ranking_table($page=0, $org_id=NULL, $country_id=NULL, $language_id=NULL) {
     global $memcache;
-    
+
     $cache_key = cache_key($page, $org_id, $country_id, $language_id, 'table');
     if ($memcache) {
         $results = $memcache->get($cache_key);
@@ -233,132 +233,6 @@ function get_ranking_table($page=0, $org_id=NULL, $country_id=NULL, $language_id
         }
     }
     return $results;
-}
-
-function get_country_row($country) {
-    global $memcache;    
-
-    $country_row_by_id = NULL;
-    if ($memcache) {
-        $country_row_by_id = $memcache->get('lookup:country_id');
-        $country_row_by_name = $memcache->get('lookup:country_name');
-        $country_row_by_code = $memcache->get('lookup:country_code');
-    }
-    $country_row_by_id = NULL;
-    if (!$country_row_by_id) {
-        $country_result = contest_query("select_countries");
-        if ($country_result) {
-            $country_row_by_id = array();
-            $country_row_by_name = array();
-            $country_row_by_code = array();
-            while ($country_row = mysql_fetch_assoc($country_result)) {
-                $country_row_by_id[$country_row['country_id']] = $country_row;
-                $country_row_by_name[$country_row['name']] = $country_row;
-                $country_row_by_code[$country_row['country_code']] = $country_row;
-            }
-            if ($memcache) {
-                $memcache->set('lookup:country_id', $country_row_by_id);
-                $memcache->set('lookup:country_name', $country_row_by_name);
-                $memcache->set('lookup:country_code', $country_row_by_code);
-            }
-        }
-    }
-
-    // search by id, code, then name
-    if ($country_row_by_id) {
-        if (array_key_exists($country, $country_row_by_id)) {
-            return $country_row_by_id[$country];
-        }
-    }
-    if ($country_row_by_code) {
-        if (array_key_exists($country, $country_row_by_code)) {
-            return $country_row_by_code[$country];
-        }
-    }
-    if ($country_row_by_name) {
-        if (array_key_exists($country, $country_row_by_name)) {
-            return $country_row_by_name[$country];
-        }
-    }
-    return NULL;
-}
-
-function get_language_row($language) {
-    global $memcache;    
-
-    $language_row_by_id = NULL;
-    if ($memcache) {
-        $language_row_by_id = $memcache->get('lookup:language_id');
-        $language_row_by_name = $memcache->get('lookup:language_name');
-    }
-    $language_row_by_id = NULL;
-    if (!$language_row_by_id) {
-        $language_result = contest_query("select_languages");
-        if ($language_result) {
-            $language_row_by_id = array();
-            $language_row_by_name = array();
-            while ($language_row = mysql_fetch_assoc($language_result)) {
-                $language_row_by_id[$language_row['language_id']] = $language_row;
-                $language_row_by_name[$language_row['name']] = $language_row;
-            }
-            if ($memcache) {
-                $memcache->set('lookup:language_id', $language_row_by_id);
-                $memcache->set('lookup:language_name', $language_row_by_name);
-            }
-        }
-    }
-
-    // search by id, then name
-    if ($language_row_by_id) {
-        if (array_key_exists($language, $language_row_by_id)) {
-            return $language_row_by_id[$language];
-        }
-    }
-    if ($language_row_by_name) {
-        if (array_key_exists($language, $language_row_by_name)) {
-            return $language_row_by_name[$language];
-        }
-    }
-    return NULL;
-}
-
-function get_org_row($org) {
-    global $memcache;    
-
-    $org_row_by_id = NULL;
-    if ($memcache) {
-        $org_row_by_id = $memcache->get('lookup:org_id');
-        $org_row_by_name = $memcache->get('lookup:org_name');
-    }
-    $org_row_by_id = NULL;
-    if (!$org_row_by_id) {
-        $org_result = contest_query("select_organizations");
-        if ($org_result) {
-            $org_row_by_id = array();
-            $org_row_by_name = array();
-            while ($org_row = mysql_fetch_assoc($org_result)) {
-                $org_row_by_id[$org_row['org_id']] = $org_row;
-                $org_row_by_name[$org_row['name']] = $org_row;
-            }
-            if ($memcache) {
-                $memcache->set('lookup:org_id', $org_row_by_id);
-                $memcache->set('lookup:org_name', $org_row_by_name);
-            }
-        }
-    }
-
-    // search by id, then name
-    if ($org_row_by_id) {
-        if (array_key_exists($org, $org_row_by_id)) {
-            return $org_row_by_id[$org];
-        }
-    }
-    if ($org_row_by_name) {
-        if (array_key_exists($org, $org_row_by_name)) {
-            return $org_row_by_name[$org];
-        }
-    }
-    return NULL;
 }
 
 function get_language_ranking($language_id, $page=1) {

@@ -184,6 +184,7 @@ $sql = array(
     "select_countries" => "select * from country",
     "select_languages" => "select * from language",
     "select_organizations" => "select * from organization",
+    "select_users" => "select * from user",
     // holy ant colony batman! all games?
     "select_game_list" => "
         select g.game_id, g.timestamp,

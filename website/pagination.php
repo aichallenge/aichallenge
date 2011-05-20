@@ -1,8 +1,10 @@
 <?php
-function getPaginationString($page = 1, $lastpage, $perpage = 50, $pagestring = "?page=")
+function getPaginationString($page = 1, $lastpage, $perpage = 50, $pagestring = "?page=", $targetpage=NULL)
 {    
     //other vars
-    $targetpage = $_SERVER['PHP_SELF'];
+    if ($targetpage === NULL) {
+	$targetpage = $_SERVER['PHP_SELF'];
+    }
     $adjacents = 2;
     $prev = $page - 1;
     $next = $page + 1;

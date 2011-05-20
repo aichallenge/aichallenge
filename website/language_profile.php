@@ -2,6 +2,7 @@
 include 'header.php';
 require_once('mysql_login.php');
 require_once('ranking.php');
+require_once('lookup.php');
 
 $lang_row = get_language_row(get_type_or_else('language'));
 

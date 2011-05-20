@@ -1,6 +1,6 @@
 <?php
-ini_set('error_reporting', E_ALL);
-ini_set('display_errors', true);
+//ini_set('error_reporting', E_ALL);
+//ini_set('display_errors', true);
 
 require_once('memcache.php');
 require_once('mysql_login.php');
@@ -20,7 +20,7 @@ if (!isset($_GET['api_key'])) {
 /*
  * Functions
  */
- 
+
 function valid_worker($api_key,$ip_address) {
 	global $memcache;
 	if ($memcache) {
@@ -53,7 +53,7 @@ function valid_worker($api_key,$ip_address) {
 	        return false;
 	    }
 	    return $worker;
-	}	
+	}
 }
 
 function api_log($message) {

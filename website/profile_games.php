@@ -1,43 +1,17 @@
 <?php
 include 'header.php';
-include_once 'profile_games_widget.php';
-require_once('mysql_query.php');
+require_once('game_list.php');
+require_once('lookup.php');
 
-$user_id = $_GET["user"];
-if(!filter_var($user_id, FILTER_VALIDATE_INT)) {
-    $user_id = NULL;
-} else {
-    $user_id = intval($user_id);
-}
+$user_row = get_user_row(get_type_or_else('user'));
+$user_id = $user_row['user_id'];
+$username = htmlspecialchars($user_row['username']);
 
-$page = $_GET["page"];
-if(!filter_var($page, FILTER_VALIDATE_INT)) {
-    $page = 1;
-} else {
-    $page = intval($page);
-}
-
-// Fetch userid's username
-$username_query = <<<EOT
-select
-    u.username
-from
-    user u
-where
-    u.user_id = '$user_id'
-EOT;
-
-$username_data = mysql_query($username_query);
-if ($username_data) {
-    list ($username) = mysql_fetch_row($username_data);
-} else {
-    $username = "";
-}
-
-$username = htmlspecialchars($username);
+$page = get_type_or_else("page", FILTER_VALIDATE_INT, 1);
 
 echo "<h2><a href=\"profile.php?user=$user_id\">$username</a>'s latest submission's games</h2>";
-echo getGamesTableString($user_id, false, 200, "?user=$user_id&page=", $page);
+
+echo get_game_list_table($page, $user_id);
 
 include 'footer.php';
 ?>
