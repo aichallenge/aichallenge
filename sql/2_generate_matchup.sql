@@ -91,7 +91,7 @@ set @use_limits = 1;
 set @abort = 0;
 set @player_count = 1;
 
-while @player_count < @players do
+while @abort = 0 and @player_count < @players do
 
      if @use_limits = 1 then
         -- don't match player that played with anyone matched so far
@@ -152,7 +152,6 @@ while @player_count < @players do
     if @last_user_id = -1 then
         if @use_limits = 0 then
             set @abort = 1;
-            break;
         end if;
         delete from temp_unavailable;
         insert into temp_unavailable select user_id from matchup_player where matchup_id = @matchup_id;
