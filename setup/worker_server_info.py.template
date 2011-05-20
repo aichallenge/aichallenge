@@ -8,14 +8,17 @@ server_info = {{
     "logs_path": "{log_dir}",
     "api_base_url": "http://{api_url}/",
     "api_key": "{api_key}",
+    "secure_jail": True,
     "game_options": {{
-        "turns": 2000,
+        "turns": 1000,
         "loadtime": 3000,
-        "turntime": 1000,
+        "turntime": 500,
         "viewradius2": 55,
         "attackradius2": 4,
         "spawnradius2": 1,
-        "location": "{api_url}"
+        "location": "{api_url}",
+        "serial": False,
+        "food_rate": 1,
+        "food_turn": 2
     }}
 }}
-

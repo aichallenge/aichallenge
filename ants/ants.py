@@ -38,6 +38,9 @@ class Ants(Game):
         self.attackradius = int(options["attackradius2"])
         self.spawnradius = int(options["spawnradius2"])
         self.seed = options.get('seed')
+        self.food_rate = options.get('food_rate', 1) # total food
+        self.food_turn = options.get('food_turn', 1) # per turn
+        self.food_extra = Fraction(0,1)
 
         self.do_attack = {
             'power':   self.do_attack_power,
@@ -253,7 +256,7 @@ class Ants(Game):
             self.update_vision_ant(ant, self.vision_offsets_cache[order][0], -1)
 
     def update_vision_ant(self, ant, offsets, delta):
-        """ Update the vision data for a single ant 
+        """ Update the vision data for a single ant
 
             Increments all the given offsets by delta for the vision
               data for ant.owner
@@ -552,7 +555,7 @@ class Ants(Game):
         for ant in colliding_ants:
             # find living nearby enemies
             enemies = self.nearby_ants(ant.loc, self.attackradius, ant.owner)
-            # in addition to the living nearby enemies, dead nearby enemies 
+            # in addition to the living nearby enemies, dead nearby enemies
             #   should get points too!
             for other_ant in colliding_ants:
                 # only interested in enemies within range
@@ -673,7 +676,7 @@ class Ants(Game):
             Each ant deals 1/#nearby_enemy damage to each nearby enemy.
               (nearby enemies are those within the attackradius)
             Any ant with at least 1 damage dies.
-            Damage does not accumulate over turns 
+            Damage does not accumulate over turns
               (ie, ants heal at the end of the battle).
         """
 
@@ -698,7 +701,7 @@ class Ants(Game):
                     self.score[enemy.owner] += score
 
     def do_attack_support(self):
-        """ Kill ants which have more enemies nearby than friendly ants 
+        """ Kill ants which have more enemies nearby than friendly ants
 
             An ant dies if the number of enemy ants within the attackradius
             is greater than the number of friendly ants within the attackradius.
@@ -1046,7 +1049,9 @@ class Ants(Game):
             player = players[0]
             # currently 1 food is spawned per turn per player
             food_bonus = (
-                (self.turns - self.turn)*self.num_players # food that will spawn
+                (self.turns - self.turn) * # food that will spawn
+                (self.food_rate / self.food_turn)
+                + self.food_extra
                 + len(self.current_food) # food that hasn't been collected
                 + len(self.current_ants) # player AND enemy ants
             )
@@ -1072,14 +1077,17 @@ class Ants(Game):
         self.do_orders()
         self.do_attack()
         self.do_spawn()
-        self.do_food()
+        self.food_extra += Fraction(self.food_rate, self.food_turn)
+        food_now = self.food_extra // self.num_players
+        self.food_extra %= self.num_players
+        self.do_food(food_now)
 
         for i, s in enumerate(self.score):
             if i in was_alive:
                 # update score for those were alive at the START of the turn
                 self.score_history[i].append(s)
             else:
-                # otherwise undo any changes to their score made 
+                # otherwise undo any changes to their score made
                 #   during this turn
                 self.score[i] = self.score_history[i][-1]
 
@@ -1164,11 +1172,11 @@ class Ants(Game):
 
     def order_for_player(self, player, data):
         """ Orders a list of items for a players perspective of player #
-        
+
             Used by engine for ending bot states
         """
         s = self.switch[player]
-        return [None if not i in s else data[s.index(i)] 
+        return [None if not i in s else data[s.index(i)]
                 for i in range(max(len(data),self.num_players))]
 
     def get_stats(self):
@@ -1259,4 +1267,3 @@ class Food:
 
     def __str__(self):
         return '(%s, %s, %s)' % (self.loc, self.start_turn, self.end_turn)
-
