@@ -86,14 +86,15 @@ create temporary table temp_unavailable (
 );
 insert into temp_unavailable (user_id) values (@seed_id);
 
-set @last_user_id = @seed_id;
+set @last_user_id = -1;
+set @cur_user_id = @seed_id;
 set @use_limits = 1;
 set @abort = 0;
 set @player_count = 1;
 
 while @abort = 0 and @player_count < @players do
-
-     if @use_limits = 1 then
+    set @last_user_id = @cur_user_id;
+    if @use_limits = 1 then
         -- don't match player that played with anyone matched so far
         -- in the last 5 games
         insert into temp_unavailable
@@ -161,6 +162,7 @@ while @abort = 0 and @player_count < @players do
         values (@matchup_id, @last_user_id, @last_submission_id, -1, @last_mu, @last_sigma);
         insert into temp_unavailable (user_id) values (@last_user_id);
         set @player_count = @player_count + 1;
+        set @cur_user_id = @last_user_id;
     end if;
 
 end while;
