@@ -191,7 +191,7 @@ function create_game_list_table($json, $top=FALSE, $targetpage=NULL) {
 	$targetpage = $_SERVER['PHP_SELF'];
     }
     if ($json == NULL) {
-        return '<h4>There are no rankings at this time.  Please check back later.</h4>';
+        return '<h4>There are no games at this time.  Please check back later.</h4>';
     }
     if ($json['type'] == 'user') {
         $user_id = $json['type_id'];

@@ -65,12 +65,12 @@ class CD(object):
 
     def __exit__(self, type, value, traceback):
         os.chdir(self.org_dir)
-          
+
 class GameAPIClient:
     def __init__(self, base_url, api_key):
         self.base_url = base_url
         self.api_key = api_key
-    
+
     def get_url(self, method):
         return '%s/%s.php?api_key=%s' % (self.base_url, method, self.api_key)
 
@@ -86,7 +86,7 @@ class GameAPIClient:
         except Exception as ex:
             log.error("Get task error: %s" % ex)
             return None
-    
+
     def get_submission_hash(self, submission_id):
         try:
             url = self.get_url('api_get_submission_hash')
@@ -99,7 +99,7 @@ class GameAPIClient:
         except Exception as ex:
             log.error("Get submission hash error: %s" % ex)
             return None
-    
+
     def get_submission(self, submission_id, download_dir):
         try:
             url = self.get_url('api_get_submission')
@@ -157,7 +157,7 @@ class GameAPIClient:
                 except ValueError:
                     log.info("Bad json from server during post result: %s" % data)
                     if i < retry-1:
-                        time.sleep(5)                    
+                        time.sleep(5)
             else:
                 log.warning("Server did not receive post: %s, %s" % (response.getcode(), response.read()))
                 time.sleep(5)
@@ -175,13 +175,13 @@ class Worker:
 
     def submission_dir(self, submission_id):
         return os.path.join(server_info["compiled_path"], str(submission_id//1000), str(submission_id))
-        
+
     def download_dir(self, submission_id):
         if submission_id not in self.download_dirs:
             tmp_dir = tempfile.mkdtemp(dir=server_info["compiled_path"])
             self.download_dirs[submission_id] = tmp_dir
         return self.download_dirs[submission_id]
-    
+
     def clean_download(self, submission_id):
         if not self.debug and submission_id in self.download_dirs:
             d_dir = self.download_dirs[submission_id]
@@ -219,7 +219,7 @@ class Worker:
                 shutil.rmtree(download_dir)
                 log.error("Submission not found on server.")
                 return False
-        
+
     def unpack(self, submission_id):
         if submission_id in self.download_dirs:
             download_dir = self.download_dir(submission_id)
@@ -257,7 +257,7 @@ class Worker:
             if report_status:
                 self.post_id += 1
                 result = {"post_id": self.post_id,
-                          "submission_id": submission_id, 
+                          "submission_id": submission_id,
                           "status_id": status,
                           "language": language }
                 if status != 40:
@@ -328,7 +328,7 @@ class Worker:
                     log.info("Functional Test Failure")
                     report(STATUS_TEST_ERROR, detected_lang)
                     return False
-    
+
     def get_map(self, map_filename):
         map_file = os.path.join(server_info["maps_path"], map_filename)
         if not os.path.exists(map_file):
@@ -346,7 +346,7 @@ class Worker:
             data = f.read()
             f.close()
         return data
-    
+
     def get_test_map(self):
         if self.test_map == None:
             f = open(os.path.join(server_info['repo_path'],
@@ -354,7 +354,7 @@ class Worker:
             self.test_map = f.read()
             f.close()
         return self.test_map
-    
+
     def functional_test(self, submission_id):
         self.post_id += 1
         log.info("Running functional test for %s" % submission_id)
@@ -378,7 +378,7 @@ class Worker:
         if self.debug:
             options['verbose_log'] = sys.stdout
             #options['stream_log'] = sys.stdout
-            options['error_logs'] = [sys.stderr, sys.stderr] 
+            options['error_logs'] = [sys.stderr, sys.stderr]
             # options['output_logs'] = [sys.stdout, sys.stdout]
             # options['input_logs'] = [sys.stdout, sys.stdout]
         result = run_game(game, bots, options)
@@ -389,13 +389,13 @@ class Worker:
             raise Exception('Engine failure')
         for error in result['errors'][0]:
             log.info(error)
-            
+
         if result['status'][1] in ('crashed', 'timeout', 'invalid'):
             raise Exception('TestBot is not operational')
         if result['status'][0] in ('crashed', 'timeout', 'invalid'):
             return False
         return True
-        
+
     def game(self, task, report_status=False):
         self.post_id += 1
         try:
@@ -423,6 +423,13 @@ class Worker:
                     raise Exception('bot', 'Can not compile bot %s' % submission_id)
             options['game_id'] = matchup_id
             log.debug((game.__class__.__name__, task['submissions'], options, matchup_id))
+            # set worker debug logging
+            if self.debug:
+                options['verbose_log'] = sys.stdout
+                #options['stream_log'] = sys.stdout
+                options['error_logs'] = [sys.stderr, sys.stderr]
+                # options['output_logs'] = [sys.stdout, sys.stdout]
+                # options['input_logs'] = [sys.stdout, sys.stdout]
             result = run_game(game, bots, options)
             log.debug(result)
             del result['game_id']
@@ -438,7 +445,7 @@ class Worker:
             self.cloud.post_result('api_game_result', result)
             # cleanup download dirs
             map(self.clean_download, map(int, task['submissions']))
-            
+
     def task(self, last=False):
         task = self.cloud.get_task()
         if task:
@@ -486,7 +493,7 @@ def main(argv):
     parser.add_option("--debug", dest="debug",
                       action="store_true", default=False,
                       help="Set the log level to debug")
-    
+
     (opts, _) = parser.parse_args(argv)
     if opts.debug:
         log.setLevel(logging.DEBUG)
@@ -506,7 +513,7 @@ def main(argv):
     if opts.submission_id != 0 and opts.download and opts.compile:
         worker.compile(opts.submission_id)
         return
-    
+
     # download submission
     if opts.submission_id != 0 and opts.download:
         if worker.download_submission(opts.submission_id):
@@ -517,12 +524,12 @@ def main(argv):
     if opts.submission_id != 0 and opts.compile:
         worker.compile(opts.submission_id)
         return
-    
+
     # compile in current directory
     if opts.compile:
         worker.compile()
-        return   
-    
+        return
+
     # get tasks
     if opts.task:
         if opts.num_tasks <= 0:
@@ -539,8 +546,8 @@ def main(argv):
                 worker.task((task_count+1)==opts.num_tasks)
                 print()
         return
-    
+
     parser.print_help()
-    
+
 if __name__ == '__main__':
     main(sys.argv[1:])
