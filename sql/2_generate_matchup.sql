@@ -88,6 +88,7 @@ insert into temp_unavailable (user_id) values (@seed_id);
 
 set @last_user_id = @seed_id;
 set @use_limits = 1;
+set @abort = 0;
 set @player_count = 1;
 
 while @player_count < @players do
@@ -115,11 +116,11 @@ while @player_count < @players do
     end if;
 
     set @last_user_id = -1; -- used to ensure an opponent was selected
-    
+
     -- pick the closest 100 available submissions (limited for speed)
     -- and then rank by a match_quality approximation
     --   the approximation is not the true trueskill match_quality,
-    --   but will be in the same order as if we calculated it   
+    --   but will be in the same order as if we calculated it
     select s.user_id, s.submission_id, s.mu, s.sigma ,
     @c := (@twiceBetaSq + pow(mp.sigma,2) + pow(s.sigma,2)) as c,
     exp(sum(ln(
@@ -147,19 +148,30 @@ while @player_count < @players do
     group by s.user_id, s.submission_id, s.mu, s.sigma
     order by match_quality desc
     limit 1;
-    
+
     if @last_user_id = -1 then
+        if @use_limits = 0 then
+            set @abort = 1;
+            break;
+        end if;
         delete from temp_unavailable;
         insert into temp_unavailable select user_id from matchup_player where matchup_id = @matchup_id;
         set @use_limits = 0;
     else
         insert into matchup_player (matchup_id, user_id, submission_id, player_id, mu, sigma)
         values (@matchup_id, @last_user_id, @last_submission_id, -1, @last_mu, @last_sigma);
-        insert into temp_unavailable (user_id) values (@last_user_id);    
-        set @player_count = @player_count + 1;    
+        insert into temp_unavailable (user_id) values (@last_user_id);
+        set @player_count = @player_count + 1;
     end if;
 
 end while;
+
+if @abort = 1 then
+
+    delete from matchup_player where matchup_id = @matchup_id;
+    delete from matchup where matchup_id = @matchup_id;
+
+else
 
 -- Step 4: put players into map positions
 
@@ -192,7 +204,7 @@ while @player_count < @players do
     )
     order by (mp.user_id = @seed_id) desc,
     (
-        select max(g.game_id)    
+        select max(g.game_id)
         from game g
         inner join game_player gp
             on g.game_id = gp.game_id
@@ -201,14 +213,14 @@ while @player_count < @players do
         and gp.player_id = id.player_id
     ) asc
     limit 1;
-    
+
     update matchup_player
     set player_id = @pos_player_id
     where matchup_id = @matchup_id
     and user_id = @pos_user_id;
-    
+
     set @player_count = @player_count + 1;
-    
+
 end while;
 
 -- turn matchup on
@@ -218,6 +230,8 @@ where matchup_id = @matchup_id;
 
 -- return new matchup id
 select @matchup_id as matchup_id;
+
+end if;
 
 end if;
 

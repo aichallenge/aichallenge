@@ -22,7 +22,7 @@ if ($compile_result) {
 } else {
     api_log(sprintf("Error selecting next compile: %s", mysql_error()));
 }
-		
+
 // look for match
 $match_result = contest_query("select_next_matchup",
                               $worker["worker_id"]);
@@ -43,17 +43,17 @@ if (!$match_result or mysql_num_rows($match_result) == 0) {
      * 	the "php" way, to which I would say, "or I could use a real language"
      * django is not far away, FML
      * P.S. the space.invaders genetic programming guys are still cool
-     */    
+     */
     $mysqli = new MySQLI($db_host, $db_username, $db_password, $db_name);
     $mysqli->multi_query('call generate_matchup;');
     while ($mysqli->more_results() && $mysqli->next_result());
     $mysqli->close();
-    
+
     $match_result = contest_query("select_next_matchup",
                                   $worker["worker_id"]);
-    if (mysql_num_rows($match_result) == 0) {
+    if (!match_result or mysql_num_rows($match_result) == 0) {
         api_log('trying to reset mysql...');
-        // mysql_query('ROLLBACK;');        
+        // mysql_query('ROLLBACK;');
     }
 }
 
@@ -66,7 +66,7 @@ if ($match_result) {
         $lock_result = contest_query("lock_matchup",
                                      $worker["worker_id"],
                                      $json["matchup_id"]);
-        if ($lock_result) {    		
+        if ($lock_result) {
             $player_result = contest_query("select_matchup_players",
                                            $json["matchup_id"]);
             if ($player_result) {
