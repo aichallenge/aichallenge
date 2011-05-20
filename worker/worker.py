@@ -427,7 +427,7 @@ class Worker:
             if self.debug:
                 options['verbose_log'] = sys.stdout
                 #options['stream_log'] = sys.stdout
-                options['error_logs'] = [sys.stderr, sys.stderr]
+                options['error_logs'] = [sys.stderr for _ in range(len(bots))]
                 # options['output_logs'] = [sys.stdout, sys.stdout]
                 # options['input_logs'] = [sys.stdout, sys.stdout]
             result = run_game(game, bots, options)
