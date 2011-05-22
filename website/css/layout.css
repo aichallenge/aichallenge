@@ -170,3 +170,7 @@ body {
     color: #fff;
     text-shadow: #000 1px 1px 3px;
 }
+
+#footer a {
+	color: #fff;
+}
