@@ -358,7 +358,7 @@ class Worker:
     def functional_test(self, submission_id):
         self.post_id += 1
         log.info("Running functional test for %s" % submission_id)
-        options = server_info["game_options"]
+        options = server_info["game_options"][:]
         options['strict'] = True # kills bot on invalid inputs
         options['food'] = 'none'
         options['turns'] = 30
@@ -404,7 +404,7 @@ class Worker:
             if 'options' in task:
                 options = task["options"]
             else:
-                options = server_info["game_options"]
+                options = server_info["game_options"][:]
             options["map"] = self.get_map(task['map_filename'])
             options["output_json"] = True
             game = Ants(options)
