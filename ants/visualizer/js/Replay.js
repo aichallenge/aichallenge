@@ -359,8 +359,8 @@ function Replay(replay) {
 	}
 }
 Replay.prototype.txtToJson = function(replay) {
-	var i, lit, tl, args, rows, cols, owner, row, col, isAnt, conv, end;
-	var orders, fixed, scores, result;
+	var i, c, lit, tl, args, rows, cols, owner, row, col, isAnt, conv, end;
+	var orders, fixed, scores, result, isReplay;
 	lit = new LineIterator(replay);
 	result = {
 		'revision': 2,
@@ -372,19 +372,22 @@ Replay.prototype.txtToJson = function(replay) {
 	try {
 		// version check
 		tl = lit.gimmeNext();
-		tl.kw('v').as([DataType.IDENT, DataType.POSINT]);
-		tl.expectEq(0, 'ants'); // game name
-		tl.expectEq(1, 1);      // file version
-		// players
-		tl = lit.gimmeNext();
-		tl.kw('players').as([DataType.POSINT]);
-		tl.expectLE(0, 26);     // player count <= 26
-		result['players'] = tl.params[0];
-		// parameters
-		tl = lit.gimmeNext();
+		isReplay = tl.keyword === 'v';
+		if (isReplay) {
+			tl.kw('v').as([DataType.IDENT, DataType.POSINT]);
+			tl.expectEq(0, 'ants'); // game name
+			tl.expectEq(1, 1);      // file version
+			// players
+			tl = lit.gimmeNext();
+			tl.kw('players').as([DataType.POSINT]);
+			tl.expectLE(0, 26);     // player count <= 26
+			result['players'] = tl.params[0];
+			// parameters
+			tl = lit.gimmeNext();
+		}
 		while (tl.keyword !== 'm') {
 			args = [DataType.STRING];
-			if (tl.keyword === 'viewradius2' || tl.keyword === 'rows' || tl.keyword === 'cols') {
+			if (tl.keyword === 'viewradius2' || tl.keyword === 'rows' || tl.keyword === 'cols' || tl.keyword === 'players') {
 				args[0] = DataType.UINT;
 			}
 			tl.as(args);
@@ -406,45 +409,66 @@ Replay.prototype.txtToJson = function(replay) {
 				throw new Error('Map lines have different lenghts');
 			}
 			result['map']['data'].push(tl.params[0]);
-			rows++;
-			tl = lit.gimmeNext();
-		} while (tl.keyword === 'm');
-		// food / ant
-		while (tl.keyword === 'a') {
-			//     row            col            start          conversion
-			tl.as([DataType.UINT, DataType.UINT, DataType.UINT, DataType.UINT,
-					DataType.UINT, DataType.UINT, DataType.STRING], 3);
-			//  end            owner          orders            # optional
-			row = tl.params[0];
-			if (row >= this.rows) throw new Error('Row exceeds map width.');
-			col = tl.params[1];
-			if (col >= this.cols) throw new Error('Col exceeds map height.');
-			conv = tl.params[3];
-			end = tl.params[4];
-			if (end === undefined) end = conv;
-			owner = tl.params[5];
-			isAnt = owner !== undefined;
-			if (isAnt && owner >= this.players) {
-				throw new Error('Player index out of range.');
-			}
-			if (tl.params.length === 6) {
-				tl.params.push('');
-			}
-			orders = tl.params[6];
-			if (isAnt) {
-				fixed = orders.length !== end - conv;
-				if (fixed && orders.length + 1 !== end - conv) {
-					throw new Error('Number of orders does not match life span.');
+			if (!isReplay) {
+				// in a map file we want to extract starting positions
+				for (i = 0; i < cols; i++) {
+					c = tl.params[0].charAt(i);
+					if (c >= 'a' && c <= 'z') {
+						result['ants'].push([rows, i, 0, 0, 1, c.toUpperCase().charCodeAt(0) - 65, '-']);
+					} else if (c === '*') {
+						result['ants'].push([rows, i, 0, 0]);
+					}
 				}
 			}
-			result['ants'].push(tl.params);
-			tl = lit.gimmeNext();
-		}
-		// score
-		for (i = 0; i < result['players']; i++) {
-			scores = tl.kw('s').as([DataType.SCORES]).params[0];
-			result['scores'].push(scores);
-			if (i != result['players'] - 1) tl = lit.gimmeNext();
+			rows++;
+			if (isReplay || lit.moar()) {
+				tl = lit.gimmeNext();
+			} else {
+				break;
+			}
+		} while (tl.keyword === 'm');
+		// food / ant
+		if (isReplay) {
+			while (tl.keyword === 'a') {
+				//     row            col            start          conversion
+				tl.as([DataType.UINT, DataType.UINT, DataType.UINT, DataType.UINT,
+						DataType.UINT, DataType.UINT, DataType.STRING], 3);
+				//		end            owner          orders            # optional
+				row = tl.params[0];
+				if (row >= this.rows) throw new Error('Row exceeds map width.');
+				col = tl.params[1];
+				if (col >= this.cols) throw new Error('Col exceeds map height.');
+				conv = tl.params[3];
+				end = tl.params[4];
+				if (end === undefined) end = conv;
+				owner = tl.params[5];
+				isAnt = owner !== undefined;
+				if (isAnt && owner >= this.players) {
+					throw new Error('Player index out of range.');
+				}
+				if (tl.params.length === 6) {
+					tl.params.push('');
+				}
+				orders = tl.params[6];
+				if (isAnt) {
+					fixed = orders.length !== end - conv;
+					if (fixed && orders.length + 1 !== end - conv) {
+						throw new Error('Number of orders does not match life span.');
+					}
+				}
+				result['ants'].push(tl.params);
+				tl = lit.gimmeNext();
+			}
+			// score
+			for (i = 0; i < result['players']; i++) {
+				scores = tl.kw('s').as([DataType.SCORES]).params[0];
+				result['scores'].push(scores);
+				if (i != result['players'] - 1) tl = lit.gimmeNext();
+			}
+		} else {
+			for (i = 0; i < result['players']; i++) {
+				result['scores'].push([0]);
+			}
 		}
 		if (lit.moar()) {
 			tl = lit.gimmeNext();

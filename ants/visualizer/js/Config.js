@@ -8,7 +8,7 @@ function Config(preset) {
 	// override
 	if (preset) for (var key in preset) {
 		this[key] = preset[key];
-	}	
+	}
 }
 Config.prototype['fullscreen'] = false;
 Config.prototype['label'] = false;

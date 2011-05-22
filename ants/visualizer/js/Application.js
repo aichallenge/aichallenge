@@ -4,6 +4,7 @@
  */
 
 /*
+ * @todo FEAT: keyboard +/- speed setting
  * @todo FEAT: info button showing a message box with game meta data
  * @todo FEAT: zoom in to 20x20 squares with animated ants
  * @todo FEAT: menu items: toggle graph/score bars, cpu use
@@ -205,11 +206,12 @@ Visualizer = function(container, dataDir, interactive, w, h, config) {
 	this.imgMgr = new ImageManager((dataDir || '') + 'img/', this,
 			this.completedImages);
 	this.imgMgr.add('water.png');
-	if (this.options['interactive']) {
-		this.imgMgr.add('playback.png');
-		this.imgMgr.add('fog.png');
-		this.imgMgr.add('toolbar.png');
-	}
+	this.imgMgr.add('mud.jpg')
+	this.imgMgr.add('ant.png')
+	this.imgMgr.add('playback.png');
+	this.imgMgr.add('fog.png');
+	this.imgMgr.add('toolbar.png');
+	this.imgMgr.add('food.png');
 	/**
 	 * the highest player count in a previous replay to avoid button repaints
 	 * @private
@@ -427,33 +429,35 @@ Visualizer.prototype.tryStart = function() {
 			if (this.options['interactive']) {
 				// add static buttons
 				if (!vis.btnMgr.groups['playback']) {
-					var bg = vis.btnMgr.addImageGroup('playback',
-							vis.imgMgr.images[1], ImageButtonGroup.HORIZONTAL,
-							ButtonGroup.MODE_NORMAL, 2);
-					bg.addButton(3, function() {
-						vis.director.gotoTick(0)
-					}, 'jump to start of first turn');
-					bg.addSpace(32);
-					bg.addButton(5, function() {
-						var stop = (Math.ceil(vis.director.position * 2) - 1) / 2;
-						vis.director.slowmoTo(stop);
-					}, 'play one move/attack phase backwards');
-					//bg.addButton(0, function() {vis.director.playStop()});
-					bg.addSpace(64);
-					bg.addButton(4, function() {
-						vis.director.playStop()
-					}, 'play/stop the game');
-					//drawImage(this.imgMgr.images[1], 1 * 64, 0, 64, 64, x + 4.5 * 64, y, 64, 64);
-					bg.addSpace(64);
-					bg.addButton(6, function() {
-						var stop = (Math.floor(vis.director.position * 2) + 1) / 2;
-						vis.director.slowmoTo(stop);
-					}, 'play one move/attack phase');
-					bg.addSpace(32);
-					bg.addButton(2, function() {
-						vis.director.gotoTick(vis.director.duration);
-					}, 'jump to end of last turn');
-					bg = vis.btnMgr.addImageGroup('toolbar', vis.imgMgr.images[3],
+					if (this.replay.duration > 0) {
+						var bg = vis.btnMgr.addImageGroup('playback',
+								vis.imgMgr.images[3], ImageButtonGroup.HORIZONTAL,
+								ButtonGroup.MODE_NORMAL, 2);
+						bg.addButton(3, function() {
+							vis.director.gotoTick(0)
+						}, 'jump to start of first turn');
+						bg.addSpace(32);
+						bg.addButton(5, function() {
+							var stop = (Math.ceil(vis.director.position * 2) - 1) / 2;
+							vis.director.slowmoTo(stop);
+						}, 'play one move/attack phase backwards');
+						//bg.addButton(0, function() {vis.director.playStop()});
+						bg.addSpace(64);
+						bg.addButton(4, function() {
+							vis.director.playStop()
+						}, 'play/stop the game');
+						//drawImage(this.imgMgr.images[1], 1 * 64, 0, 64, 64, x + 4.5 * 64, y, 64, 64);
+						bg.addSpace(64);
+						bg.addButton(6, function() {
+							var stop = (Math.floor(vis.director.position * 2) + 1) / 2;
+							vis.director.slowmoTo(stop);
+						}, 'play one move/attack phase');
+						bg.addSpace(32);
+						bg.addButton(2, function() {
+							vis.director.gotoTick(vis.director.duration);
+						}, 'jump to end of last turn');
+					}
+					bg = vis.btnMgr.addImageGroup('toolbar', vis.imgMgr.images[5],
 							ImageButtonGroup.VERTICAL, ButtonGroup.MODE_NORMAL, 2);
 					if (this.config.hasLocalStorage()) {
 						bg.addButton(0, function() {
@@ -485,85 +489,92 @@ Visualizer.prototype.tryStart = function() {
 						vis.setAntLabels(!vis.config['label']);
 						vis.director.draw();
 					}, 'draw player letters on the ants');
-					bg.addButton(6, function() {
-						vis.config['speedFactor'] += 1;
-						vis.setReplaySpeed();
-					});
-					bg.addButton(7, function() {
-						vis.config['speedFactor'] -= 1;
-						vis.setReplaySpeed();
-					});
+					if (this.replay.duration > 0) {
+						bg.addButton(6, function() {
+							vis.config['speedFactor'] += 1;
+							vis.setReplaySpeed();
+						});
+						bg.addButton(7, function() {
+							vis.config['speedFactor'] -= 1;
+							vis.setReplaySpeed();
+						});
+					}
 				}
-				// generate fog images
-				var colors = [null];
-				for (i = 0; i < this.replay.players; i++) {
-					colors.push(this.replay.meta['playercolors'][i]);
-				}
-				if (this.colorizedPlayerCount < this.replay.players) {
-					this.colorizedPlayerCount = this.replay.players;
-					this.imgMgr.colorize(2, colors);
-				}
-				bg = this.btnMgr.addImageGroup('fog', this.imgMgr.patterns[2],
-					ImageButtonGroup.VERTICAL, ButtonGroup.MODE_RADIO, 2);
-				var buttonAdder = function(fog) {
-					return bg.addButton(i, function() {
-						vis.showFog(fog);
-					}, (i == 0) ? 'clear fog of war' : 'show fog of war for ' + vis.replay.meta['playernames'][i - 1]);
-				}
-				for (var i = 0; i < colors.length; i++) {
-					if (i == 0) {
-						buttonAdder(undefined).down = true;
-					} else {
-						buttonAdder(i - 1);
+				if (this.replay.duration > 0) {
+					// generate fog images
+					var colors = [null];
+					for (i = 0; i < this.replay.players; i++) {
+						colors.push(this.replay.meta['playercolors'][i]);
+					}
+					if (this.colorizedPlayerCount < this.replay.players) {
+						this.colorizedPlayerCount = this.replay.players;
+						this.imgMgr.colorize(4, colors);
+						this.imgMgr.colorize(2, colors);
+					}
+					bg = this.btnMgr.addImageGroup('fog', this.imgMgr.patterns[4],
+						ImageButtonGroup.VERTICAL, ButtonGroup.MODE_RADIO, 2);
+					var buttonAdder = function(fog) {
+						return bg.addButton(i, function() {
+							vis.showFog(fog);
+						}, (i == 0) ? 'clear fog of war' : 'show fog of war for ' + vis.replay.meta['playernames'][i - 1]);
+					}
+					for (var i = 0; i < colors.length; i++) {
+						if (i == 0) {
+							buttonAdder(undefined).down = true;
+						} else {
+							buttonAdder(i - 1);
+						}
 					}
 				}
 			}
 			// add player buttons
-			bg = this.btnMgr.addTextGroup('players', TextButtonGroup.FLOW,
-					ButtonGroup.MODE_NORMAL, 2);
-			var gameId = vis.replay.meta['game_id'] || vis.options['game_id'];
-			if (gameId === undefined) {
-				bg.addButton('Players:', '#000');
-			} else {
-				bg.addButton('Game #' + gameId + ':', '#000');
-			}
-			var scores = this.replay.scores[this.replay.scores.length - 1];
-			var ranks = new Array(scores.length);
-			var order = new Array(scores.length);
-			for (i = 0; i < scores.length; i++) {
-				ranks[i] = 1;
-				for (var k = 0; k < scores.length; k++) {
-					if (scores[i] < scores[k]) {
-						ranks[i]++;
-					}
-				}
-				k = ranks[i] - 1;
-				while(order[k] !== undefined) k++;
-				order[k] = i;
-			}
-			buttonAdder = function(i) {
-				var color = vis.replay.htmlPlayerColors[i];
-				var func = null;
-				if (vis.replay.meta['user_url'] && vis.replay.meta['user_ids']
-						&& vis.replay.meta['user_ids'][i]) {
-					func = function() {
-						window.location.href =
-								vis.replay.meta['user_url'].replace('~',
-										vis.replay.meta['user_ids'][i]);
-					};
-				}
-				var caption = vis.replay.meta['playernames'][i];
-				if (ranks[i] === 1) {
-					caption = '★ ' + caption;
-				} else if (ranks[i] === 2) {
-					caption = '☆ ' + caption;
+			if (this.replay.duration > 0) {
+				bg = this.btnMgr.addTextGroup('players', TextButtonGroup.FLOW,
+						ButtonGroup.MODE_NORMAL, 2);
+				var gameId = vis.replay.meta['game_id'] || vis.options['game_id'];
+				if (gameId === undefined) {
+					bg.addButton('Players:', '#000');
 				} else {
-					caption = ranks[i] + '. ' + caption;
+					bg.addButton('Game #' + gameId + ':', '#000');
 				}
-				bg.addButton(caption, color, func);
-			}
-			for (i = 0; i < this.replay.players; i++) {
-				buttonAdder(order[i]);
+				var scores = this.replay.scores[this.replay.scores.length - 1];
+				var ranks = new Array(scores.length);
+				var order = new Array(scores.length);
+				for (i = 0; i < scores.length; i++) {
+					ranks[i] = 1;
+					for (var k = 0; k < scores.length; k++) {
+						if (scores[i] < scores[k]) {
+							ranks[i]++;
+						}
+					}
+					k = ranks[i] - 1;
+					while(order[k] !== undefined) k++;
+					order[k] = i;
+				}
+				buttonAdder = function(i) {
+					var color = vis.replay.htmlPlayerColors[i];
+					var func = null;
+					if (vis.replay.meta['user_url'] && vis.replay.meta['user_ids']
+							&& vis.replay.meta['user_ids'][i]) {
+						func = function() {
+							window.location.href =
+									vis.replay.meta['user_url'].replace('~',
+											vis.replay.meta['user_ids'][i]);
+						};
+					}
+					var caption = vis.replay.meta['playernames'][i];
+					if (ranks[i] === 1) {
+						caption = '★ ' + caption;
+					} else if (ranks[i] === 2) {
+						caption = '☆ ' + caption;
+					} else {
+						caption = ranks[i] + '. ' + caption;
+					}
+					bg.addButton(caption, color, func);
+				}
+				for (i = 0; i < this.replay.players; i++) {
+					buttonAdder(order[i]);
+				}
 			}
 			// calculate speed from duration and config settings
 			this.director.duration = this.replay.turns.length - 1;
@@ -571,7 +582,7 @@ Visualizer.prototype.tryStart = function() {
 			if (this.options['interactive']) {
 				this.director.onstate = function() {
 					var btn = vis.btnMgr.groups['playback'].buttons[4];
-					btn.offset = (vis.director.playing() ? 7 : 4) * vis.imgMgr.images[1].height;
+					btn.offset = (vis.director.playing() ? 7 : 4) * vis.imgMgr.images[3].height;
 					if (btn === vis.btnMgr.nailed) {
 						vis.btnMgr.nailed = null;
 					}
@@ -613,7 +624,9 @@ Visualizer.prototype.tryStart = function() {
 			};
 			Visualizer.prototype.focused = this;
 			this.setFullscreen(this.config['fullscreen']);
-			this.director.play();
+			if (this.replay.duration > 0) {
+				this.director.play();
+			}
 			this.log.style.display = 'none';
 			this.loading = LoadingState.IDLE;
 		}
@@ -632,7 +645,7 @@ Visualizer.prototype.setReplaySpeed = function() {
 	var hintText = function(base) {
 		return 'set speed modifier to ' + ((base > 0) ? '+' + base : base);
 	}
-	if (this.options['interactive']) {
+	if (this.options['interactive'] && this.replay.duration > 0) {
 		var speedUpBtn = this.btnMgr.groups['toolbar'].getButton(6);
 		speedUpBtn.hint = hintText(this.config['speedFactor'] + 1);
 		var slowDownBtn = this.btnMgr.groups['toolbar'].getButton(7);
@@ -728,6 +741,7 @@ Visualizer.prototype.setAntLabels = function(enable) {
 	this.config['label'] = enable;
 };
 Visualizer.prototype.resize = function(forced) {
+	var y;
 	var olds = {
 		width: this.main.canvas.width,
 		height: this.main.canvas.height
@@ -743,37 +757,46 @@ Visualizer.prototype.resize = function(forced) {
 		var ctx = this.main.ctx;
 		ctx.fillStyle = '#fff';
 		ctx.fillRect(0, 0, canvas.width, canvas.height);
-		// 1. player buttons
-		var y = this.btnMgr.groups['players'].cascade(news.width) + 4;
-		// 2. scores bar & time line
-		this.loc.graph = new Location(4, y + 66, news.width - 8, 64);
-		this.loc.scorebar = new Location(95, y +  4, news.width - 4 - 95, 22);
-		this.loc.countbar = new Location(95, y + 38, news.width - 4 - 95, 22);
-		ctx.lineWidth = 2;
-		shapeRoundedRect(ctx, 0, y, canvas.width, 30, 1, 5);
-		ctx.stroke();
-		shapeRoundedRect(ctx, 0, y + 34, canvas.width, 100, 1, 5);
-		ctx.moveTo(0, y + 63);
-		ctx.lineTo(canvas.width, y + 63);
-		ctx.stroke();
-		ctx.lineWidth = 1;
-		ctx.fillStyle = '#888';
+		ctx.font = FONT;
 		ctx.textAlign = 'left';
 		ctx.textBaseline = 'middle';
-		ctx.font = FONT;
-		ctx.fillText('scores', 4, y + 14);
-		ctx.fillText('# of ants', 4, y + 48);
-		y += 134;
+		if (this.replay.duration > 0) {
+			// 1. player buttons
+			y = this.btnMgr.groups['players'].cascade(news.width) + 4;
+			// 2. scores bar & time line
+			this.loc.graph = new Location(4, y + 66, news.width - 8, 64);
+			this.loc.scorebar = new Location(95, y +  4, news.width - 4 - 95, 22);
+			this.loc.countbar = new Location(95, y + 38, news.width - 4 - 95, 22);
+			ctx.lineWidth = 2;
+			shapeRoundedRect(ctx, 0, y, canvas.width, 30, 1, 5);
+			ctx.stroke();
+			shapeRoundedRect(ctx, 0, y + 34, canvas.width, 100, 1, 5);
+			ctx.moveTo(0, y + 63);
+			ctx.lineTo(canvas.width, y + 63);
+			ctx.stroke();
+			ctx.lineWidth = 1;
+			ctx.fillStyle = '#888';
+			ctx.fillText('scores', 4, y + 14);
+			ctx.fillText('# of ants', 4, y + 48);
+			y += 134;
+		} else {
+			y = 0;
+		}
 		// 3. visualizer placement
 		if (this.options['interactive']) {
-			this.loc.vis = new Location(LEFT_PANEL_W, y,
-				news.width - LEFT_PANEL_W - RIGHT_PANEL_W,
-				news.height - y - BOTTOM_PANEL_H);
-			var bg = this.btnMgr.groups['playback'];
-			bg.x = ((news.width - 8 * 64) / 2) | 0;
-			bg.y = this.loc.vis.y + this.loc.vis.h;
-			bg = this.btnMgr.groups['fog'];
-			bg.y = this.loc.vis.y + 8;
+			if (this.replay.duration > 0) {
+				this.loc.vis = new Location(LEFT_PANEL_W, y,
+					news.width - LEFT_PANEL_W - RIGHT_PANEL_W,
+					news.height - y - BOTTOM_PANEL_H);
+				var bg = this.btnMgr.groups['playback'];
+				bg.x = ((news.width - 8 * 64) / 2) | 0;
+				bg.y = this.loc.vis.y + this.loc.vis.h;
+				bg = this.btnMgr.groups['fog'];
+				bg.y = this.loc.vis.y + 8;
+			} else {
+				this.loc.vis = new Location(0, y, news.width - RIGHT_PANEL_W,
+					news.height - y);
+			}
 			bg = this.btnMgr.groups['toolbar'];
 			bg.x = this.loc.vis.x + this.loc.vis.w;
 			bg.y = this.loc.vis.y + 8;
@@ -783,9 +806,11 @@ Visualizer.prototype.resize = function(forced) {
 		this.setZoom(this.config['zoom']);
 		this.border.canvas.width = Math.min(this.loc.vis.w, this.loc.map.w);
 		this.border.canvas.height = Math.min(this.loc.vis.h, this.loc.map.h);
-		this.scores.canvas.width = this.loc.graph.w;
-		this.scores.canvas.height = this.loc.graph.h;
-		this.renderCounts();
+		if (this.replay.duration > 0) {
+			this.scores.canvas.width = this.loc.graph.w;
+			this.scores.canvas.height = this.loc.graph.h;
+			this.renderCounts();
+		}
 		this.minimap.loc = new Location(
 				this.loc.vis.x + this.loc.vis.w - 2 - this.replay.cols,
 				this.loc.vis.y + 2, this.replay.cols, this.replay.rows);
@@ -800,22 +825,199 @@ Visualizer.prototype.resize = function(forced) {
  * @private
  */
 Visualizer.prototype.renderMap = function(ctx, scale) {
-	ctx.fillStyle = COLOR_SAND;
-	ctx.fillRect(0, 0, this.loc.map.w, this.loc.map.h);
-	ctx.fillStyle = ctx.createPattern(this.imgMgr.images[0], 'repeat');
-	for (var row = 0; row < this.replay.rows; row++) {
-		var start = undefined;
-		for (var col = 0; col < this.replay.cols; col++) {
-			var isWall = this.replay.walls[row][col];
-			if (start === undefined && isWall) {
-				start = col;
-			} else if (start !== undefined && !isWall) {
-				ctx.fillRect(scale * start, scale * row, scale * (col - start), scale);
-				start = undefined;
+	var v, h, row, col, start, rowMin, colMin, rowMax, colMax, dir, isWall;
+	var w, walls, shapes, shape, i, r, c, k, mud, mudTex, mudPixels, a, b;
+	var mapTex, mapPixels, water, diff;
+	if (scale === ZOOM_SCALE && this.config['graphics'] === true) {
+		ctx.fillStyle = '#fff';
+		ctx.fillRect(0, 0, this.loc.map.w, this.loc.map.h);
+		rowMin = 2 * this.replay.rows - 1;
+		colMin = 2 * this.replay.cols - 1;
+		rowMax = rowMin + this.replay.rows + 2;
+		colMax = colMin + this.replay.cols + 2;
+		walls = this.replay.walls;
+		w = [];
+		for (row = rowMin - 1; row <= rowMax; row++) {
+			w[row] = [];
+			for (col = colMin - 1; col <= colMax; col++) {
+				w[row][col] = row >= rowMin && col >= colMin 
+					&& row < rowMax && col < colMax 
+					&& walls[row % this.replay.rows][col % this.replay.cols];
 			}
 		}
-		if (start !== undefined) {
-			ctx.fillRect(scale * start, scale * row, scale * (col - start), scale);
+		v = [];
+		for (row = rowMin; row < rowMax; row++) {
+			v[row] = [];
+			for (col = colMin; col <= colMax; col++) {
+				v[row][col] = w[row][col - 1] !== w[row][col];
+			}
+		}
+		h = [];
+		for (row = rowMin; row <= rowMax; row++) {
+			h[row] = [];
+			for (col = colMin; col < colMax; col++) {
+				h[row][col] = w[row - 1][col] !== w[row][col];
+			}
+		}
+		shapes = [];
+		for (row = rowMin; row <= rowMax; row++) {
+			for (col = colMin; col < colMax; col++) {
+				if (h[row][col]) {
+					r = row;
+					shape = [];
+					if (w[row][col]) {
+						c = col;
+						dir = 0;
+						shape.push([c - colMin - 1, r - rowMin - 1]);
+					} else {
+						c = col;
+						dir = 2;
+						shape.push([c - colMin, r - rowMin - 1]);
+					}
+					i = 0;
+					do {
+						if (dir === 0 || dir === 2) {
+							h[r][c] = false;
+						} else {
+							v[r][c] = false;
+						}
+						switch (dir) {
+							case 0:
+								shape.push([shape[i][0] + 1, shape[i][1]]);
+								if (r > rowMin && v[r - 1][c + 1] === true) {
+									r--;
+									c++;
+									dir = 1;
+								} else if (c + 1 < colMax && h[r][c + 1] === true) {
+									c++;
+									dir = 0;
+								} else if (v[r][c + 1] === true) {
+									c++;
+									dir = 3;
+								} else {
+									dir = -1;
+								}
+								break;
+							case 1:
+								shape.push([shape[i][0], shape[i][1] - 1]);
+								if (c > colMin && h[r][c - 1] === true) {
+									c--;
+									dir = 2;
+								} else if (r > rowMin && v[r - 1][c] === true) {
+									r--;
+									dir = 1;
+								} else if (h[r][c] === true) {
+									dir = 0;
+								} else {
+									dir = -1;
+								}
+								break;
+							case 2:
+								shape.push([shape[i][0] - 1, shape[i][1]]);
+								if (r < rowMax && v[r][c] === true) {
+									dir = 3;
+								} else if (c > colMin && h[r][c - 1] === true) {
+									c--;
+									dir = 2;
+								} else if (v[r - 1][c] === true) {
+									r--;
+									dir = 1;
+								} else {
+									dir = -1;
+								}
+								break;
+							case 3:
+								shape.push([shape[i][0], shape[i][1] + 1]);
+								if (c < colMax && h[r + 1][c] === true) {
+									r++;
+									dir = 0;
+								} else if (r + 1 < rowMax && v[r + 1][c] === true) {
+									r++;
+									dir = 3;
+								} else if (h[r + 1][c - 1] === true) {
+									r++;
+									c--;
+									dir = 2;
+								} else {
+									dir = -1;
+								}
+								break;
+						}
+						i++;
+					} while (dir !== -1);
+					shapes.push(shape);
+				}
+			}			
+		}
+		ctx.shadowBlur = 15;
+		ctx.shadowColor = '#000';
+		ctx.shadowOffsetX = -this.replay.cols * scale * 2;
+		ctx.beginPath();
+		for (i = 0; i < shapes.length; i++) {
+			shape = shapes[i];
+			for (k = 0; k < shape.length; k++) {
+				c = Math.sin(3 * shape[k][1] ^ shape[k][1] ^ shape[k][0]) * scale * 0.2;
+				r = Math.sin(3 * shape[k][0] ^ shape[k][0] ^ shape[k][1]) * scale * 0.2;
+				shape[k][0] = (shape[k][0] * scale + this.replay.cols * scale * 2) + c;
+				shape[k][1] = (shape[k][1] * scale) + r;
+			}
+			ctx.moveTo(shape[shape.length - 1][0], shape[shape.length - 1][1]);
+			for (k = 0; k < shape.length; k++) {
+				ctx.lineTo(shape[k][0], shape[k][1]);
+			}
+		}
+		ctx.fill();
+		mud = {};
+		this.createCanvas(mud);
+		mud.canvas.width = ctx.canvas.width;
+		mud.canvas.height = ctx.canvas.height;
+		mud.ctx.fillStyle = mud.ctx.createPattern(this.imgMgr.images[1], 'repeat');
+		mud.ctx.fillRect(0, 0, mud.canvas.width, mud.canvas.height);
+		mudTex = mud.ctx.getImageData(0, 0, mud.canvas.width, mud.canvas.height);
+		mudPixels = mudTex.data;
+		mapTex = ctx.getImageData(0, 0, mud.canvas.width, mud.canvas.height);
+		mapPixels = mapTex.data;
+		for (i = 0; i < 4 * mud.canvas.height * mud.canvas.width; i++) {
+			mapPixels[i] *= 2;
+		}
+		water = [0, 0.8, 2];
+		for (row = 0; row < mud.canvas.height; row++) {
+			i = row * 4 * mud.canvas.width;
+			for (col = 0; col < mud.canvas.width; col++) {
+				k = i + 4 * col;
+				diff = mapPixels[(row + 12) * 4 * mud.canvas.width + (col + 12) * 4] 
+					 - mapPixels[(row - 12) * 4 * mud.canvas.width + (col - 12) * 4];
+				if (diff !== 0 || mapPixels[k] < 254) {
+					diff *= 0.1;
+					a = Math.sin((mapPixels[k] / 255 - 0.5) * Math.PI) * 0.5 + 0.5;
+					b = 1 - a;
+					for (c = 0; c < 3; c++) {
+						mudPixels[k + c] += diff;
+						mudPixels[k + c] = Math.pow(mudPixels[k + c] * (a * a * 0.7 + 0.3), Math.pow(b + 1, -0.3));
+						mudPixels[k + c] = Math.min(255, mudPixels[k + c] * (a + b * water[c]) + 20 * b * water[c]);
+					}
+				}
+			}
+		}
+		ctx.putImageData(mudTex, 0, 0);
+	} else {
+		ctx.fillStyle = COLOR_SAND;
+		ctx.fillRect(0, 0, this.loc.map.w, this.loc.map.h);
+		ctx.fillStyle = ctx.createPattern(this.imgMgr.images[0], 'repeat');
+		for (row = 0; row < this.replay.rows; row++) {
+			start = undefined;
+			for (col = 0; col < this.replay.cols; col++) {
+				isWall = this.replay.walls[row][col];
+				if (start === undefined && isWall) {
+					start = col;
+				} else if (start !== undefined && !isWall) {
+					ctx.fillRect(scale * start, scale * row, scale * (col - start), scale);
+					start = undefined;
+				}
+			}
+			if (start !== undefined) {
+				ctx.fillRect(scale * start, scale * row, scale * (col - start), scale);
+			}
 		}
 	}
 };
@@ -980,30 +1182,31 @@ Visualizer.prototype.interpolate = function(array1, array2, delta) {
  * @private
  */
 Visualizer.prototype.draw = function(time, tick) {
-	var x, y, w, h, dx, dy, d, hash, ants, ant;
+	var x, y, w, h, dx, dy, d, hash, ants, ant, i, img, offset;
 	var turn = (time | 0);
-	// draw scores
-	w = this.main.canvas.width;
-	if (tick !== undefined) {
-		if (this.fog !== undefined) this.renderFog(turn);
-		this.drawColorBar(this.loc.scorebar, this.replay.scores[turn]);
-		this.drawColorBar(this.loc.countbar, this.replay.counts[turn]);
+	if (this.replay.duration > 0) {
+		// draw scores
+		if (tick !== undefined) {
+			if (this.fog !== undefined) this.renderFog(turn);
+			this.drawColorBar(this.loc.scorebar, this.replay.scores[turn]);
+			this.drawColorBar(this.loc.countbar, this.replay.counts[turn]);
+		}
+		this.main.ctx.drawImage(this.scores.canvas, this.loc.graph.x, this.loc.graph.y);
+		// time indicator
+		var duration = this.replay.turns.length - 1;
+		x = this.loc.graph.x + 0.5 + (this.loc.graph.w - 1) * time / duration;
+		this.main.ctx.lineWidth = 1;
+		this.main.ctx.beginPath();
+		this.main.ctx.moveTo(x, this.loc.graph.y + 0.5);
+		this.main.ctx.lineTo(x, this.loc.graph.y + this.loc.graph.h - 0.5);
+		this.main.ctx.stroke();
+		// turn number
+		this.main.ctx.fillStyle = '#888';
+		this.main.ctx.textBaseline = 'middle';
+		this.main.ctx.fillText('# of ants | ' + (turn === duration ?
+				'end' : 'turn ' + (turn + 1) + '/' + duration),
+				this.loc.graph.x, this.loc.graph.y + 11);
 	}
-	this.main.ctx.drawImage(this.scores.canvas, this.loc.graph.x, this.loc.graph.y);
-	// time indicator
-	var duration = this.replay.turns.length - 1;
-	x = this.loc.graph.x + 0.5 + (this.loc.graph.w - 1) * time / duration;
-	this.main.ctx.lineWidth = 1;
-	this.main.ctx.beginPath();
-	this.main.ctx.moveTo(x, this.loc.graph.y + 0.5);
-	this.main.ctx.lineTo(x, this.loc.graph.y + this.loc.graph.h - 0.5);
-	this.main.ctx.stroke();
-	// turn number
-	this.main.ctx.fillStyle = '#888';
-	this.main.ctx.textBaseline = 'middle';
-	this.main.ctx.fillText('# of ants | ' + (turn === duration ?
-			'end' : 'turn ' + (turn + 1) + '/' + duration),
-			this.loc.graph.x, this.loc.graph.y + 11);
 	// ants...
 	var drawStates = {};
 	var loc = this.loc.vis;
@@ -1026,7 +1229,7 @@ Visualizer.prototype.draw = function(time, tick) {
 		this.renderMap(this.minimap.ctx, 1);
 	}
 	ants = this.replay.getTurn(turn);
-	for (var i = ants.length - 1; i >= 0; i--) {
+	for (i = ants.length - 1; i >= 0; i--) {
 		if ((ant = ants[i].interpolate(time, Quality.LOW))) {
 			hash = INT_TO_HEX[ant['r']] + INT_TO_HEX[ant['g']] + INT_TO_HEX[ant['b']];
 			if (drawMinimap) {
@@ -1060,23 +1263,20 @@ Visualizer.prototype.draw = function(time, tick) {
 		var drawList = drawStates[key];
 		for (var n = 0; n < drawList.length; n++) {
 			ant = drawList[n];
-			if (this.config['graphics']) {
-				this.main.ctx.save();
-				this.main.ctx.globalAlpha = ant.alpha;
-				x = ZOOM_SCALE * (ant.x + 0.5);
-				y = ZOOM_SCALE * (ant.y + 0.5);
-				this.main.ctx.translate(x, y);
-				this.main.ctx.rotate(ant.angle + Math.sin(20 * time) * ant.jitter);
-				this.main.ctx.drawImage(this.imgMgr.ants[ant.type], -10, -10);
-				this.main.ctx.restore();
-				x += 3 * Math.tan(2 * (Math.random() - 0.5));
-				y += 3 * Math.tan(2 * (Math.random() - 0.5));
-				if (ant.alpha == 1) {
-					var sin = -Math.sin(ant.angle);
-					var cos = +Math.cos(ant.angle);
-					this.ctxMap.moveTo(x - sin, y - cos);
-					this.ctxMap.lineTo(x + sin, y + cos);
+			if (this.config['graphics'] && this.scale === ZOOM_SCALE) {
+				ctx.save();
+				//this.main.ctx.globalAlpha = ant.alpha;
+				ctx.translate(ant['x'] + halfScale, ant['y'] + halfScale);
+				if (ant['owner'] === undefined) {
+					img = this.imgMgr.images[6];
+					offset = 20 * (ant['id'] % 5);
+				} else {
+					//ctx.rotate(ant['angle'] + Math.sin(20 * time) * ant['jitter']);
+					img = this.imgMgr.patterns[2];
+					offset = ZOOM_SCALE * (ant['owner'] + 1);
 				}
+				ctx.drawImage(img, offset, 0, ZOOM_SCALE, ZOOM_SCALE, -halfScale * ant['size'], -halfScale * ant['size'], this.scale * ant['size'], this.scale * ant['size']);
+				ctx.restore();
 			} else {
 				if (ant['owner'] === undefined) {
 					w = halfScale;
@@ -1274,12 +1474,12 @@ Visualizer.prototype.mouseMoved = function(mx, my) {
 		} else if (this.mouseDown === 2) {
 			this.shiftX += deltaX;
 			this.shiftY += deltaY;
-			var btn = this.btnMgr.groups['toolbar'].getButton(4);
-			btn.enabled = this.shiftX || this.shiftY;
-			btn.draw();
+			var centerBtn = this.btnMgr.groups['toolbar'].getButton(4);
+			centerBtn.enabled = this.shiftX || this.shiftY;
+			centerBtn.draw();
 			this.director.draw();
 		} else {
-			btn = this.btnMgr.mouseMove(mx, my);
+			var btn = this.btnMgr.mouseMove(mx, my);
 		}
 	} else {
 		btn = this.btnMgr.mouseMove(mx, my);
@@ -1293,7 +1493,7 @@ Visualizer.prototype.mouseMoved = function(mx, my) {
 };
 Visualizer.prototype.mousePressed = function() {
 	if (this.options['interactive']) {
-		if (this.loc.graph.contains(this.mouseX, this.mouseY)) {
+		if (this.replay.duration > 0 && this.loc.graph.contains(this.mouseX, this.mouseY)) {
 			this.mouseDown = 1;
 		} else {
 			var miniMap = new Location(this.loc.vis.x + this.loc.vis.w - this.replay.cols - 2, this.loc.vis.y + 2, this.replay.cols, this.replay.rows);

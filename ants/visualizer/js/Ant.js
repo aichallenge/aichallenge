@@ -31,8 +31,10 @@ function Ant(id, time) {
 	this.owner = undefined;
 	/** @private */
 	this.loInter = new LoFiData();
+	this.loInter.id = id;
 	/** @private */
 	this.hiInter = new HiFiData();
+	this.hiInter.id = id;
 	/** @private */
 	this.loLookup = [];
 	/** @private */
