@@ -9,9 +9,7 @@
     <?php if (logged_in_with_valid_credentials()) { ?>
     <h1>My Account</h1>
     <ul>
-      <li><a href="profile.php?user=<?php echo current_user_id(); ?>">
-        My Profile
-        </a></li>
+      <li><a href="profile.php?user=<?php echo current_user_id(); ?>">My Profile</a></li>
       <li><a href="submit.php">Upload Your Code</a></li>
       <li><a href="logout.php">Sign Out</a></li>
     </ul>
