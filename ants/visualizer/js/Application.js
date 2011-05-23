@@ -1256,6 +1256,21 @@ Visualizer.prototype.draw = function(time, tick) {
 			ctx.drawImage(this.map.canvas, dx, dy);
 		}
 	}
+	if (this.shiftX || this.shiftY) {
+		ctx.strokeStyle = '#000';
+		ctx.lineWidth = 2;
+		ctx.beginPath();
+		for (dy = y; dy <= this.loc.vis.h; dy += rowPixels) {
+			ctx.moveTo(0, dy);
+			ctx.lineTo(this.loc.vis.w, dy);
+		}
+		for (dx = x; dx <= this.loc.vis.w; dx += colPixels) {
+			ctx.moveTo(dx, 0);
+			ctx.lineTo(dx, this.loc.vis.h);
+		}
+		ctx.stroke();
+		ctx.lineWidth = 1;
+	}
 	// sorting by render state gives slight fps improvements
 	var halfScale = 0.5 * this.scale;
 	for (var key in drawStates) {
