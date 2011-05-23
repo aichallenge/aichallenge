@@ -33,7 +33,7 @@
 <h3>Special Thanks</h3>
 <ul>
 	<li><a href="https://github.com/aichallenge/aichallenge/tree/epsilon/ants/dist/starter_bots">Starter Package Makers</a></li>
-	<li><strong>Beta Server:</strong> demerzel</li>
+	<li><strong>Beta Server:</strong> demerzel (Jay Pearce)</li>
 </ul>
 
 <p><a href="https://github.com/aichallenge/aichallenge/contributors">Full list of commiters</a></p>
