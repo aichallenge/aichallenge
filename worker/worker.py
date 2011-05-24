@@ -222,36 +222,39 @@ class Worker:
                 return False
 
     def unpack(self, submission_id):
-        if submission_id in self.download_dirs:
-            download_dir = self.download_dir(submission_id)
-        else:
-            return False
-        log.info("Unpacking %s..." % download_dir)
-        with CD(download_dir):
-            if platform.system() == 'Windows':
-                zip_files = [
-                    ("entry.tar.gz", "7z x -obot -y entry.tar.gz > NUL"),
-                    ("entry.tgz", "7z x -obot -y entry.tgz > NUL"),
-                    ("entry.zip", "7z x -obot -y entry.zip > NUL")
-                ]
-            else:
-                zip_files = [
-                    ("entry.tar.gz", "mkdir bot; tar xfz -C bot entry.tar.gz > /dev/null 2> /dev/null"),
-                    ("entry.tgz", "mkdir bot; tar xfz -C bot entry.tgz > /dev/null 2> /dev/null"),
-                    ("entry.zip", "unzip -u -dbot entry.zip > /dev/null 2> /dev/null")
-                ]
-            for file_name, command in zip_files:
-                if os.path.exists(file_name):
-                    log.info("unnzip status: %s" % os.system(command))
-                    for dirpath, _, filenames in os.walk(".."):
-                        os.chmod(dirpath, 0755)
-                        for filename in filenames:
-                            filename = os.path.join(dirpath, filename)
-                            os.chmod(filename,stat.S_IMODE(os.stat(filename).st_mode) | stat.S_IRGRP | stat.S_IROTH)
-                    break
+        try:
+            if submission_id in self.download_dirs:
+                download_dir = self.download_dir(submission_id)
             else:
                 return False
-            return True
+            log.info("Unpacking %s..." % download_dir)
+            with CD(download_dir):
+                if platform.system() == 'Windows':
+                    zip_files = [
+                        ("entry.tar.gz", "7z x -obot -y entry.tar.gz > NUL"),
+                        ("entry.tgz", "7z x -obot -y entry.tgz > NUL"),
+                        ("entry.zip", "7z x -obot -y entry.zip > NUL")
+                    ]
+                else:
+                    zip_files = [
+                        ("entry.tar.gz", "mkdir bot; tar xfz -C bot entry.tar.gz > /dev/null 2> /dev/null"),
+                        ("entry.tgz", "mkdir bot; tar xfz -C bot entry.tgz > /dev/null 2> /dev/null"),
+                        ("entry.zip", "unzip -u -dbot entry.zip > /dev/null 2> /dev/null")
+                    ]
+                for file_name, command in zip_files:
+                    if os.path.exists(file_name):
+                        log.info("unnzip status: %s" % os.system(command))
+                        for dirpath, _, filenames in os.walk(".."):
+                            os.chmod(dirpath, 0755)
+                            for filename in filenames:
+                                filename = os.path.join(dirpath, filename)
+                                os.chmod(filename,stat.S_IMODE(os.stat(filename).st_mode) | stat.S_IRGRP | stat.S_IROTH)
+                        break
+                else:
+                    return False
+                return True
+        except:
+            return False
 
     def compile(self, submission_id=None, report_status=False, run_test=True):
         def report(status, language="Unknown", errors=None):
