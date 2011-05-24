@@ -3,11 +3,18 @@
 require_once('mysql_login.php');
 require_once('memcache.php');
 require_once('pagination.php');
+//require_once('api_functions.php');
 
 //require_once('session.php');
 // session is needed to highlight the current user
 // but is not included here so that json requests go faster
 // you must include it in your php if you wish to render html tables
+
+// used for looking at latest results only with view more link
+//  should be smaller than page size
+$top_results_size = 5;
+// used for looking at pages with pagination links
+$page_size = 10;
 
 // this function doesn't really belong here, but I can't think of a good place
 // it works like filter_input with an optional filter and default value
@@ -42,43 +49,70 @@ function cache_key($page=0, $user_id=NULL, $submission_id=NULL, $map_id=NULL, $f
     return $key. ":" . strval($page) . ":" . $format;
 }
 
+// page 0 is all results, page 1 is the top N results
 function produce_cache_results($page=0, $user_id=NULL, $submission_id=NULL, $map_id=NULL) {
     global $memcache;
+    global $page_size;
 
-    $page_size = 10;
-    $json = array("fields" => array(),
-                  "values" => array());
-    $json_pages = array();
+    $page_count_query = "select_game_list_page_count";
+    $list_query = "select_game_list";
     if ($user_id !== NULL) {
-        $list_results = contest_query("select_game_list_by_user", $user_id);
-        $list_type = "user";
+        $list_select_field = "user_id";
         $list_id = $user_id;
+        $list_type = "user";
         $list_id_field = "username";
     } elseif ($submission_id !== NULL) {
-        $list_results = contest_query("select_game_list_by_submission", $submission_id);
-        $list_type = "submission";
+        $list_select_field = "submission_id";
         $list_id = $submission_id;
+        $list_type = "submission";
         $list_id_field = "submission_id";
     } elseif ($map_id !== NULL) {
-        $list_results = contest_query("select_game_list_by_map", $map_id);
-        $list_type = "map";
+        $page_count_query = "select_game_list_page_count";
+        $list_query = "select_game_list";
+        $list_select_field = "map_id";
         $list_id = $map_id;
+        $list_type = "map";
         $list_id_field = "map_id";
     } else {
-        $list_results = contest_query("select_game_list");
+        // make the where clause always return true
+        $page_count_query = "select_map_game_list_page_count";
+        $list_query = "select_map_game_list";
+        $list_select_field = "1";
+        $list_id = 1;
         $list_type = NULL;
     }
+    $list_results = contest_query($page_count_query, $list_select_field, $list_id);
+    if ($list_results) {
+        while ($list_row = mysql_fetch_array($list_results, MYSQL_NUM)) {
+            $row_count = $list_row[0];
+            $page_count = ceil($row_count / $page_size);
+        }
+    }
+    $memcache->set(cache_key(-1, $user_id, $submission_id, $map_id), $page_count);
+    if ($page == 0) {
+        $offset = 0;
+        $limit = $row_count;
+    } else {
+        $offset = ($page - 1) * $page_size;
+        $limit = $page_size;
+    }
+    $json = array("fields" => array(),
+                  "values" => array());
+    if ($page > 0) {
+        $json["page"] = $page;
+        $json["page_count"] = $page_count;
+    }
+    $list_results = contest_query($list_query, $list_select_field, $list_id, $limit, $offset);
     $list_id_name = NULL;
     if ($list_results) {
         $field_count = mysql_num_fields($list_results);
         $row_count = mysql_num_rows($list_results);
-        $page_count = ceil($row_count / $page_size);
         $field_names = array();
         for ($i = 0; $i < $field_count; $i++) {
             $field_names[] = mysql_field_name($list_results, $i);
         }
         $json["fields"] = $field_names;
-        if ($user_id !== NULL) {
+        if ($user_id !== NULL or $submission_id !== NULL) {
             $json["fields"][] = 'user_mu';
             $json["fields"][] = 'user_rank';
         }
@@ -102,44 +136,16 @@ function produce_cache_results($page=0, $user_id=NULL, $submission_id=NULL, $map
                 $cur_row[6][] = $list_row[6];
                 $cur_row[7][] = $list_row[7];
                 $cur_row[8][] = $list_row[8];
-                if ($user_id !== NULL) {
-                    if ($list_row[2] == $user_id) {
-                        $cur_row[] = $list_row[5];
-                        $cur_row[] = $list_row[8];
-                    }
+                if ($list_row[2] == $user_id or $list_row[3] == $submission_id) {
+                    $cur_row[] = $list_row[5];
+                    $cur_row[] = $list_row[8];
                 }
             } else {
             // get new game info
                 // dump results of row
                 if ($cur_row !== NULL) {
                     $json["values"][] = $cur_row;
-                    $json_page["values"][] = $cur_row;
                     $game_row_num++;
-                }
-                if ($game_row_num % $page_size == 0) {
-                    // dump results of page
-                    if ($page_num > 0) {
-                        $json_pages[] = $json_page;
-                        // $memcache->set(cache_key($page_num, $user_id, $submission_id, $map_id), json_encode($json_page));
-                    }
-                    // setup next page
-                    if ($row_num < $row_count) {
-                        $page_num++;
-                        $json_page = array("fields" => array(),
-                                           "values" => array(),
-                                           "page" => $page_num,
-                                           "page_count" => $page_count);
-                        $json_page["fields"] = $field_names;
-                        if ($user_id !== NULL) {
-                            $json_page["fields"][] = 'user_mu';
-                            $json_page["fields"][] = 'user_rank';
-                        }
-                        if ($list_type) {
-                            $json_page["type"] = $list_type;
-                            $json_page["type_id"] = $list_id;
-                            $json_page["type_name"] = $list_id_name;
-                        }
-                    }
                 }
                 // setup new row
                 $row_num++;
@@ -151,11 +157,9 @@ function produce_cache_results($page=0, $user_id=NULL, $submission_id=NULL, $map
                 $cur_row[6] = array($cur_row[6]);
                 $cur_row[7] = array($cur_row[7]);
                 $cur_row[8] = array($cur_row[8]);
-                if ($user_id !== NULL) {
-                    if ($list_row[2] == $user_id) {
-                        $cur_row[] = $list_row[5];
-                        $cur_row[] = $list_row[8];
-                    }
+                if ($list_row[2] == $user_id or $list_row[3] == $submission_id) {
+                    $cur_row[] = $list_row[5];
+                    $cur_row[] = $list_row[8];
                 }
             }
             $last_game_id = $list_row[0];
@@ -168,25 +172,17 @@ function produce_cache_results($page=0, $user_id=NULL, $submission_id=NULL, $map
         } else {
             $json["type"] = "all";
         }
-        // set total page count on json pages
-        if (isset($json_page)) {
-            $json_pages[] = $json_page;
-        }
-        for ($i = 0; $i < $page_num; $i++) {
-            $json_pages[$i]['page_count'] = $page_num;
-            $memcache->set(cache_key($i+1, $user_id, $submission_id, $map_id),
-                           json_encode($json_pages[$i]));
-        }
-        $memcache->set(cache_key(-1, $user_id, $submission_id, $map_id),
-                       $page_num);
-        $memcache->set(cache_key(0, $user_id, $submission_id, $map_id),
-                       json_encode($json));
-        return $memcache->get(cache_key($page, $user_id, $submission_id, $map_id));
+        $json_result = json_encode($json);
+        $memcache->set(cache_key($page, $user_id, $submission_id, $map_id),
+                       $json_result);
+        return $json_result;
     }
     return NULL;
 }
 
 function create_game_list_table($json, $top=FALSE, $targetpage=NULL) {
+    global $top_results_size;
+
     if ($targetpage === NULL) {
 	$targetpage = $_SERVER['PHP_SELF'];
     }
@@ -270,7 +266,7 @@ function create_game_list_table($json, $top=FALSE, $targetpage=NULL) {
             $table .= "<td>$game</td>";
 
             $table .= "</tr>";
-            if ($top and $row_num == 5) {
+            if ($top and $row_num == $top_results_size) {
                 break;
             }
         }

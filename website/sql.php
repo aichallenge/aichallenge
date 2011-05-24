@@ -90,8 +90,7 @@ $sql = array(
                                         user_row.status,
                                         user_row.timestamp,
                                         user_row.language_id;",
-    "select_rankings" => "
-        select u.user_id, u.username,
+    "select_rankings" => "select u.user_id, u.username,
                c.country_id, c.name as country, c.country_code, c.flag_filename,
                l.language_id, l.name as programming_language,
                o.org_id, o.name as org_name,
@@ -112,8 +111,7 @@ $sql = array(
             from leaderboard
         )
         order by seq",
-    "select_rankings_by_org" => "
-        select u.user_id, u.username,
+    "select_rankings_by_org" => "select u.user_id, u.username,
                c.country_id, c.name as country, c.country_code, c.flag_filename,
                l.language_id, l.name as programming_language,
                o.org_id, o.name as org_name,
@@ -135,8 +133,7 @@ $sql = array(
         )
         and o.org_id = %s
         order by seq",
-    "select_rankings_by_language" => "
-        select u.user_id, u.username,
+    "select_rankings_by_language" => "select u.user_id, u.username,
                c.country_id, c.name as country, c.country_code, c.flag_filename,
                l.language_id, l.name as programming_language,
                o.org_id, o.name as org_name,
@@ -158,8 +155,7 @@ $sql = array(
         )
         and l.language_id = %s
         order by seq",
-    "select_rankings_by_country" => "
-        select u.user_id, u.username,
+    "select_rankings_by_country" => "select u.user_id, u.username,
                c.country_id, c.name as country, c.country_code, c.flag_filename,
                l.language_id, l.name as programming_language,
                o.org_id, o.name as org_name,
@@ -185,75 +181,54 @@ $sql = array(
     "select_languages" => "select * from language",
     "select_organizations" => "select * from organization",
     "select_users" => "select * from user",
-    // holy ant colony batman! all games?
-    "select_game_list" => "
-        select g.game_id, g.timestamp,
-               gp.user_id, gp.submission_id, u.username,
-               gp.sigma_after as sigma, gp.mu_after as mu, gp.player_id, gp.game_rank,
-               m.players, m.map_id, m.filename as map_name
+    "select_game_list_page_count" => "select count(*)
         from game g
-        inner join map m
-            on m.map_id = g.map_id
         inner join game_player gp
             on g.game_id = gp.game_id
-        inner join user u
-            on gp.user_id = u.user_id
-        order by game_id desc, gp.game_rank
-    ",
-    // yes robin. all games.
-    "select_game_list_by_user" => "
-        select g.game_id, g.timestamp,
-               gp.user_id, gp.submission_id, u.username,
-               gp.sigma_after as sigma, gp.mu_after as mu, gp.player_id, gp.game_rank,
-               m.players, m.map_id, m.filename as map_name
+        where %s = %s",
+    "select_game_list" => "select g.game_id, g.timestamp,
+           gp.user_id, gp.submission_id, u.username,
+           gp.sigma_after as sigma, gp.mu_after as mu, gp.player_id, gp.game_rank,
+           m.players, m.map_id, m.filename as map_name
+     from (
+         select *
+         from game g2
+         where g2.game_id in (
+             select game_id
+             from game_player gp2
+             where %s = %s
+         )
+         order by g2.game_id desc
+         limit %s offset %s
+     ) g
+     inner join map m
+         on m.map_id = g.map_id
+     inner join game_player gp
+         on g.game_id = gp.game_id
+     inner join user u
+         on gp.user_id = u.user_id
+     order by g.game_id desc, gp.game_rank",
+     "select_map_game_list_page_count" => "select count(*)
         from game g
-        inner join map m
-            on m.map_id = g.map_id
-        inner join game_player gp
-            on g.game_id = gp.game_id
-        inner join user u
-            on gp.user_id = u.user_id
-        where g.game_id in (
-            select gp2.game_id
-            from game_player gp2
-            where gp2.user_id = %s
-        )
-        order by game_id desc, gp.game_rank
-    ",
-    "select_game_list_by_submission" => "
-        select g.game_id, g.timestamp,
-               gp.user_id, gp.submission_id, u.username,
-               gp.sigma_after as sigma, gp.mu_after as mu, gp.player_id, gp.game_rank,
-               m.players, m.map_id, m.filename as map_name
-        from game g
-        inner join map m
-            on m.map_id = g.map_id
-        inner join game_player gp
-            on g.game_id = gp.game_id
-        inner join user u
-            on gp.user_id = u.user_id
-        where g.game_id in (
-            select gp2.game_id
-            from game_player gp2
-            where gp2.submission_id = %s
-        )
-        order by game_id desc, gp.game_rank
-    ",
-    "select_game_list_by_map" => "
-        select g.game_id, g.timestamp,
-               gp.user_id, gp.submission_id, u.username,
-               gp.sigma_after as sigma, gp.mu_after as mu, gp.player_id, gp.game_rank,
-               m.players, m.map_id, m.filename as map_name
-        from game g
-        inner join map m
-            on m.map_id = g.map_id
-        inner join game_player gp
-            on g.game_id = gp.game_id
-        inner join user u
-            on gp.user_id = u.user_id
-        where g.map_id = %s
-        order by game_id desc, gp.game_rank
-    "
+        where %s = %s",
+    "select_map_game_list" => "select g.game_id, g.timestamp,
+           gp.user_id, gp.submission_id, u.username,
+           gp.sigma_after as sigma, gp.mu_after as mu, gp.player_id, gp.game_rank,
+           m.players, m.map_id, m.filename as map_name
+     from (
+         select *
+         from game g2
+         where %s = %s
+         order by g2.game_id desc
+         limit %s offset %s
+     ) g
+     inner join map m
+         on m.map_id = g.map_id
+     inner join game_player gp
+         on g.game_id = gp.game_id
+     inner join user u
+         on gp.user_id = u.user_id
+     order by g.game_id desc, gp.game_rank"
 );
 
 ?>

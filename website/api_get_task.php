@@ -51,7 +51,7 @@ if (!$match_result or mysql_num_rows($match_result) == 0) {
 
     $match_result = contest_query("select_next_matchup",
                                   $worker["worker_id"]);
-    if (!match_result or mysql_num_rows($match_result) == 0) {
+    if (!$match_result or mysql_num_rows($match_result) == 0) {
         api_log('trying to reset mysql...');
         // mysql_query('ROLLBACK;');
     }
