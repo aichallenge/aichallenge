@@ -243,8 +243,8 @@ class Worker:
                     ]
                 for file_name, command in zip_files:
                     if os.path.exists(file_name):
-                        log.info("unnzip status: %s" % os.system(command))
-                        for dirpath, _, filenames in os.walk(".."):
+                        log.info("unzip %s, status: %s" % (file_name, os.system(command)))
+                        for dirpath, _, filenames in os.walk("."):
                             os.chmod(dirpath, 0755)
                             for filename in filenames:
                                 filename = os.path.join(dirpath, filename)
@@ -254,6 +254,7 @@ class Worker:
                     return False
                 return True
         except:
+            log.error(traceback.format_exc())
             return False
 
     def compile(self, submission_id=None, report_status=False, run_test=True):
