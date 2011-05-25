@@ -4,7 +4,7 @@ create procedure generate_matchup()
 begin
 
 select min(players) into @min_players from map;
-select count(*) into @max_players from submission where status = 40 and latest = 1;
+select count(distinct user_id) into @max_players from submission where status = 40 and latest = 1;
 if @min_players <= @max_players then
 
 set @init_mu = 25.0;
@@ -134,16 +134,15 @@ while @abort = 0 and @player_count < @players do
     into @last_user_id, @last_submission_id, @last_mu, @last_sigma, @c, @match_quality
     from matchup_player mp,
     (
-        select s.user_id, s.submission_id, s.mu, s.sigma
-        from matchup_player mp,
-            submission s
+        select s.user_id, s.submission_id, s.mu, s.sigma,
+        @mu_avg = (select avg(mu) from matchup_player where matchup_id = @matchup_id)
+        from submission s
 
-        where mp.matchup_id = @matchup_id
-            and s.latest = 1 and status = 40
+        where s.latest = 1 and status = 40
 
         -- this order by causes a filesort, but I don't see a way around it
         -- limiting to 100 saves us from doing extra trueskill calculations
-        order by abs(s.mu - mp.mu)
+        order by abs(s.mu - @mu_avg)
         limit 100
     ) s
     left outer join temp_unavailable tu
@@ -174,12 +173,7 @@ end while;
 if @abort = 1 then
 
     delete from matchup_player where matchup_id = @matchup_id;
-    -- this may be crazy, but sometimes the matchup generator gets stuck
-    -- I have a feeling it has to do with the seed player picked
-    -- since the error continues after an apache *and* mysql restart
-    -- so if we leave this record, they seed will get skipped
-    -- and things may continue to work
-    -- delete from matchup where matchup_id = @matchup_id;
+    delete from matchup where matchup_id = @matchup_id;
 
 else
 
@@ -237,6 +231,8 @@ end while;
 update matchup
 set worker_id = null
 where matchup_id = @matchup_id;
+
+-- select @max_players, @min_players;
 
 -- return new matchup id
 select @matchup_id as matchup_id;
