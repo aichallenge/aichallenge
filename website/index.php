@@ -27,10 +27,10 @@ if(file_exists('server_message.html')) {
 <p>Congratulations to this term's winner, <a href="http://quotenil.com/">
   Gábor Melis</a>! Whereas the Google AI Challenge has traditionally been
   dominated by entries written in languages like
-  <a href="http://ai-contest.com/language_profile.php?lang=C%2B%2B">C++</a>,
+  <a href="http://ai-contest.com/language_profile.php?language=C%2B%2B">C++</a>,
   Gábor has solidly taken the top spot with an innovative algorithm. His
   entry is one of just 33 submissions written in
-  <a href="http://ai-contest.com/language_profile.php?lang=Lisp">Lisp</a>,
+  <a href="http://ai-contest.com/language_profile.php?language=Lisp">Lisp</a>,
   and is entitled <a href="http://ai-contest.com/profile.php?user=8565">
   bocsimacko</a>. Congratulations Gábor!</p>
 <p>A big congratulations also goes out to the runners up,
