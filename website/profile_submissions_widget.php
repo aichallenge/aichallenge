@@ -80,19 +80,15 @@ EOT;
     for ($i = 1; $row = mysql_fetch_assoc($submission_results); $i += 1) {
         $status = $row["status"];
         $status_class = ($status == 40 ? "success": (($status == 30 || $status > 40)? "fail" : "inprogress"));
-        $status = ($status == 10 ? "entry created in db"
-            : ($status == 15 ? "temporary location, awaiting transfer"
-            : ($status == 20 ? "ready to be compiled"
-            : ($status == 24 ? "currently compiling"
-            : ($status == 27 ? "compiled successfully, awaiting testing"
-            : ($status == 30 ? "error receiving submission file"
-            : ($status == 39 ? "garbage collected (<a class=\"error_code\" href=\"submission_errors.php?error=$status\">more info</a>)"
-            : ($status == 40 ? "successfully entered into contest"
-            : ($status == 50 ? "error while unzipping submission"
-            : ($status == 60 ? "problem with submission file"
-            : ($status == 70 ? "error while compiling submission"
-            : ($status == 80 ? "compiled successfully but failed test cases"
-            : ($status >= 90 ? "submission suspended (<a class=\"error_code\" href=\"submission_errors.php?error=$status\">more info</a>)"
+        $status = ($status == 10 ? "Created: entry record created in database"
+            : ($status == 20 ? "Uploaded: ready to be unzipped and compiled"
+            : ($status == 30 ? "Compiling: compiling and running tests"
+            : ($status == 40 ? "Success: ready to play"
+            : ($status == 50 ? "Download Error: error receiving submission zip file"
+            : ($status == 60 ? "Unpack Error: error while unzipping submission file"
+            : ($status == 70 ? "Compile Error: error while compiling submission"
+            : ($status == 80 ? "Test Error: compiled, but failed test cases"
+            : ($status >= 90 ? "Upload Error: server failed to retrieve uploaded file correctly"
             : "Unknown Error")))))))))))));
 
         $timestamp = $row["timestamp"];
