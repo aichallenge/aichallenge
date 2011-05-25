@@ -1,6 +1,12 @@
 <?php
 include('header.php');
 require_once('memcache.php');
+
+if(file_exists('server_message.html')) {
+    //Used to convey a message on the front page
+    include('server_message.html');
+}
+
 ?>
 
 <!--<MarkdownReplacement with="competition.md">--><!--</MarkdownReplacement>-->
