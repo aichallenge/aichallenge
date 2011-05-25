@@ -174,7 +174,12 @@ end while;
 if @abort = 1 then
 
     delete from matchup_player where matchup_id = @matchup_id;
-    delete from matchup where matchup_id = @matchup_id;
+    -- this may be crazy, but sometimes the matchup generator gets stuck
+    -- I have a feeling it has to do with the seed player picked
+    -- since the error continues after an apache *and* mysql restart
+    -- so if we leave this record, they seed will get skipped
+    -- and things may continue to work
+    -- delete from matchup where matchup_id = @matchup_id;
 
 else
 
