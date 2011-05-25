@@ -9,7 +9,7 @@ if(file_exists('server_message.html')) {
 
 ?>
 
-<!--<MarkdownReplacement with="competition.md">--><!--</MarkdownReplacement>-->
+<!--<MarkdownReplacement with="competition.md">--><h1>Missing wiki content.</h1><p>Please run `./setup.py` in the website folder.</p><!--</MarkdownReplacement>-->
 
 <p>Computer Programs Duking it Out with Ants:</p>
 <?php
