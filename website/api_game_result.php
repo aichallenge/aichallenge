@@ -64,15 +64,15 @@ if ($gamedata == null) {
         }
         // update game data with meta data
         $gamedata->playernames = array();
-        $gamedata->user_ids = array();
         $gamedata->submission_ids = array();
+        $gamedata->user_ids = array();
         $result = contest_query("select_game_metadata",
                                 $game_id);
         if ($result) {
             while ($meta_row = mysql_fetch_assoc($result)) {
                 $gamedata->playernames[] = $meta_row["username"];
-                $gamadata->user_ids[] = $meta_row["user_id"];
                 $gamedata->submission_ids[] = $meta_row["submission_id"];
+                $gamedata->user_ids[] = $meta_row["user_id"];
             }
         }
         $gamedata->user_url = "http://" . $gamedata->location . "/profile.php?user=~";
