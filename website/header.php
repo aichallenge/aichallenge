@@ -1,4 +1,5 @@
 <?php require_once('session.php'); ?>
+<!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml"> 
     <head> 
         <title>Google AI Challenge</title> 
