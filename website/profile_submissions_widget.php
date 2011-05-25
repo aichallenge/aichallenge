@@ -89,7 +89,7 @@ EOT;
             : ($status == 70 ? "Compile Error: error while compiling submission"
             : ($status == 80 ? "Test Error: compiled, but failed test cases"
             : ($status >= 90 ? "Upload Error: server failed to retrieve uploaded file correctly"
-            : "Unknown Error")))))))))))));
+            : "Unknown Error")))))))));
 
         $timestamp = $row["timestamp"];
         $language = $row["language"];
