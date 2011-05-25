@@ -16,7 +16,7 @@ if ($gamedata == null) {
 } else {
     if (array_key_exists('error', $gamedata)) {
         // set to non-existant worker and email admin
-        if (contest_query('update_matchup_failed', $gamedata->matchup_id, $gamedata->error)) {
+        if (contest_query('update_matchup_failed', json_encode($gamedata->error), $gamedata->matchup_id)) {
             echo json_encode(array( "hash" => $json_hash ));
         } else {
             api_log(sprintf("Error updating failed matchup %s",
@@ -107,7 +107,7 @@ if ($gamedata == null) {
             api_log(json_encode($e));
             // mysql_query("ROLLBACK;");
         }
-    }        
+    }
 }
 
 ?>

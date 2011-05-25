@@ -58,7 +58,8 @@ $sql = array(
                        set worker_id = %s
                        where matchup_id = %s;",
     "update_matchup_failed" => "update matchup
-                                set error = error + '%s'
+                                set error = '%s',
+                                    worker_id = -2
                                 where matchup_id = %s",
     "select_languages" => "select *
                            from language;",

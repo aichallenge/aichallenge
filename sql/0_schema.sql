@@ -148,14 +148,15 @@ CREATE TABLE `ranking` (
   `submission_id` int(11) NOT NULL,
   `version` int(11) NOT NULL,
   `seq` int(11) NOT NULL,
-  `rank` int(11) NOT NULL,
+  `rank` int(11) NULL,
   `rank_change` int(11) NULL,
   `skill` float NOT NULL,
   `skill_change` float NULL,
   `latest` tinyint(1) NOT NULL,
   `age` time NOT NULL,
   KEY `submission_id` (`submission_id`),
-  KEY `leaderboard_id` (`leaderboard_id`,`submission_id`,`rank`)
+  KEY `leaderboard_id` (`leaderboard_id`,`submission_id`,`rank`),
+  KEY `leaderboard_user_id` (`leaderboard_id`,`user_id`)
 );
 
 DROP TABLE IF EXISTS `ranking_archive`;

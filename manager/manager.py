@@ -10,6 +10,7 @@ import time
 import logging
 import logging.handlers
 import os
+import traceback
 
 # Set up logging
 log = logging.getLogger('manager')
@@ -83,26 +84,18 @@ def update_leaderboard(wait_time):
             for s in range(wait_time):
                 # allow for a [Ctrl]+C during the sleep cycle
                 time.sleep(1)
-            # this must be run before the leaderboard record is generated
-            # otherwise no new submissions will be found to increase sigma
-            # because the query runs off of the leaderboard max(timestamp)
-            log.info("Adding to sigma values for all active bots")
-            cursor.execute(sql['update_sigma'])
-            conn.commit()
-
-            log.info("Updating leaderbaord")
-            cursor.execute(sql['insert_leaderboard'])
-            conn.commit()
-            cursor.execute(sql['insert_leaderboard_data'])
-            conn.commit()
+            log.info("Updating leaderboard and adding some sigma")
+            cursor.execute("call generate_leaderboard;")
             if wait_time == 0:
                 break
         except KeyboardInterrupt:
             break
         except:
             # log error
+            log.error(traceback.format_exc())
             break
     cursor.close()
+    conn.close()
 
 def reset_submissions(status):
     log.info("Resetting all latest submissions to status {0}".format(status))
