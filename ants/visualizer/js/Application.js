@@ -531,11 +531,17 @@ Visualizer.prototype.tryStart = function() {
 			if (this.replay.duration > 0) {
 				bg = this.btnMgr.addTextGroup('players', TextButtonGroup.FLOW,
 						ButtonGroup.MODE_NORMAL, 2);
-				var gameId = vis.replay.meta['game_id'] || vis.options['game_id'];
+				var gameId = this.replay.meta['game_id'] || vis.options['game_id'];
+				if (this.replay.meta['game_url'] && gameId !== undefined) {
+					var func = function() {
+						window.location.href =
+								vis.replay.meta['game_url'].replace('~', gameId);
+					};
+				}
 				if (gameId === undefined) {
-					bg.addButton('Players:', '#000');
+					bg.addButton('Players:', '#000', func);
 				} else {
-					bg.addButton('Game #' + gameId + ':', '#000');
+					bg.addButton('Game #' + gameId + ':', '#000', func);
 				}
 				var scores = this.replay.scores[this.replay.scores.length - 1];
 				var ranks = new Array(scores.length);
@@ -555,7 +561,7 @@ Visualizer.prototype.tryStart = function() {
 					var color = vis.replay.htmlPlayerColors[i];
 					var func = null;
 					if (vis.replay.meta['user_url'] && vis.replay.meta['user_ids']
-							&& vis.replay.meta['user_ids'][i]) {
+							&& vis.replay.meta['user_ids'][i] !== undefined) {
 						func = function() {
 							window.location.href =
 									vis.replay.meta['user_url'].replace('~',
