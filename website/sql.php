@@ -17,6 +17,14 @@ $sql = array(
                                           latest = 1
                                       where worker_id = %s
                                       and submission_id = %s;",
+    "update_submission_latest" => "update submission
+                                     set latest = 0
+                                     where user_id = (
+                                        select user_id
+                                        from (select * from submission) s
+                                        where submission_id = %s
+                                     )
+                                     and submission_id != %s;",
     "update_submission_failure" => "update submission
                                       set status = %s,
                                           language_id = %s,

@@ -28,6 +28,11 @@ if ($compiledata->status_id == 40) {
                       $worker["worker_id"],
                       $compiledata->submission_id)) {
             echo json_encode(array( "hash" => $json_hash ));
+            if (!contest_query("update_submission_latest",
+                              $compiledata->submission_id,
+                              $compiledata->submission_id)) {
+                api_log(sprintf("Error updating latest flag: %s", mysql_error()));
+            };
     } else {
             api_log(sprintf("Error updating successful compile: %s", mysql_error()));
     }
