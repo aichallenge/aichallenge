@@ -13,12 +13,14 @@ def generate(data, generated_path):
     content = template.read()
     template.close()
 
-    path1 = __file__
+    path1 = os.path.realpath(__file__)
     path2 = os.path.realpath(generated_path)
     common = os.path.commonprefix((path1, path2))
     path1 = path1[len(common):]
     path2 = path2[len(common):]
-    mod_path = '/'.join(['..'] * (path2.count(os.sep)) + [os.path.split(path1)[0]]) + '/'
+    mod_path = '/'.join(['..'] * (path2.count(os.sep)) + [os.path.split(path1)[0]])
+    if len(mod_path) > 0 and mod_path[-1] != '/':
+        mod_path += '/'
 
     quote_re = re.compile("'")
     newline_re = re.compile("\s", re.MULTILINE)
