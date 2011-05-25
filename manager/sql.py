@@ -89,5 +89,12 @@ sql = {
                 group by user_id
             )
         )
-        order by s.mu desc, s.sigma asc, s.timestamp asc"""    
+        order by s.mu desc, s.sigma asc, s.timestamp asc""",
+    "update_sigma", """update submission
+        set sigma = sigma + (0.1 * (
+            select count(*) from submission where timestamp > (
+                select max(timestamp) from leaderboard
+            )
+        ))
+        where latest = 1"""
 }

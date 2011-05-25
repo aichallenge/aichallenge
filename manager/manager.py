@@ -83,6 +83,13 @@ def update_leaderboard(wait_time):
             for s in range(wait_time):
                 # allow for a [Ctrl]+C during the sleep cycle
                 time.sleep(1)
+            # this must be run before the leaderboard record is generated
+            # otherwise no new submissions will be found to increase sigma
+            # because the query runs off of the leaderboard max(timestamp)
+            log.info("Adding to sigma values for all active bots")
+            cursor.execute(sql['update_sigma'])
+            conn.commit()
+
             log.info("Updating leaderbaord")
             cursor.execute(sql['insert_leaderboard'])
             conn.commit()
