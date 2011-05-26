@@ -95,9 +95,6 @@ a:hover {
 /* Monospaced elements */
 pre, code {
     font-family: monospace;
-	
-    border: 1px solid #7a0;
-    background: #ad6;
 }
 pre {
     padding: 10px;
@@ -105,9 +102,9 @@ pre {
     display: block;
     margin-bottom: 1em;
 }
-pre code {
-    border: none;
-    background: none;
+code {
+    border: 1px solid #7a0;
+    background: #ad6;
 }
 
 /*Tables*/
@@ -127,4 +124,21 @@ th {
 strong {
     font-weight: bold;
     text-shadow: #aaa 1px 1px 2px;
+}
+
+table {
+    width: 100%;
+    text-align: center;
+}
+
+.bigstats th{
+    padding-left: 10px;
+    padding-right: 10px;
+    text-align: center;
+}
+.bigstats td{
+    padding:  10px;
+    padding-bottom: 0px;
+    font-size: 40px;
+    text-align: center;
 }
