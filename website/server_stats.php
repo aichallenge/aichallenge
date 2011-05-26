@@ -1,7 +1,7 @@
 <?php
 
 include 'header.php'; 
-require_once('mysql_query.php');
+require_once('mysql_login.php');
 
 $query = "select count(*) from user where activated=1 and created > (now() - interval 24 hour)";
 $result = mysql_query($query);
@@ -67,6 +67,13 @@ if (is_readable($PAIRCUT_FILE)) {
   $pair_cutoff = "None";
 }
 
+?>
+
+<h1>Server Statistics</h1>
+<h2>GIT information</h2>
+<?php
+echo "<strong>Remote: </strong><code>".exec("git remote --v|grep origin|grep fetch")."</code>";
+echo "<strong>Branch/Version Information: </strong><code>".exec("git branch -vv|grep -e ^\\*")."</code>";
 ?>
 
 <h2>Last 24 hours</h2>

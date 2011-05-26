@@ -8,6 +8,7 @@
                 <div class="left">
                     <div id="footer">
                         <a href="rankings.php">Rankings</a> |
+                        <a href="server_stats.php">Server Statistics</a> |
                         <a href="credits.php">Credits</a> |
                         <a href="rules.php">Rules</a>
                     </div>
