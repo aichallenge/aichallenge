@@ -73,6 +73,10 @@ ol+h1, ol+h2, ol+h3, ol+h4 {
     margin-top: 1.5em;
 }
 
+table+h1, table+h2, table+h3, table+h4 {
+    margin-top: 1.5em;
+}
+
 /*Clearing*/
 h2:before, h3:before {
     content: ".";

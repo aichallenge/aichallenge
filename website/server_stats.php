@@ -3,6 +3,16 @@
 include 'header.php'; 
 require_once('mysql_login.php');
 
+$query = "select count(*) from user where activated=1";
+$result = mysql_query($query);
+$row = mysql_fetch_row($result);
+$num_users = $row[0];
+
+$uptime = shell_exec('uptime');
+$uptime = explode(' up ', $uptime);
+$uptime = explode(', ', $uptime[1]);
+$uptime = $uptime[0].', '.$uptime[1];
+
 $query = "select count(*) from user where activated=1 and created > (now() - interval 24 hour)";
 $result = mysql_query($query);
 $row = mysql_fetch_row($result);
@@ -51,6 +61,18 @@ if (is_readable($PAIRCUT_FILE)) {
 <p><strong>Source: </strong><code><?=exec("git remote --v|grep origin|grep fetch")?></code></p>
 <p><strong>Branch/Version Information: </strong><code><?=substr(exec("git branch -vv|grep -e ^\\*"),2);?></code></p>
 
+<h2>General</h2>
+<table class="bigstats">
+  <tr>
+    <td><?php echo $num_users?></td>
+    <td><?php echo $uptime?></td>
+  </tr>
+  <tr>
+    <th>Total users</th>
+    <th>Manager uptime</th>
+  </tr>
+</table>
+
 <h2>Last 24 hours</h2>
 
 <table class="bigstats">
@@ -74,7 +96,7 @@ if (is_readable($PAIRCUT_FILE)) {
   </tr>
 </table>
 
-<h2 style="margin-top: 1em">Games per minute</h2>
+<h2>Games per minute</h2>
 
 <table class="bigstats">
   <tr>
