@@ -70,11 +70,10 @@ if (is_readable($PAIRCUT_FILE)) {
 ?>
 
 <h1>Server Statistics</h1>
+
 <h2>GIT information</h2>
-<?php
-echo "<strong>Remote: </strong><code>".exec("git remote --v|grep origin|grep fetch")."</code>";
-echo "<strong>Branch/Version Information: </strong><code>".exec("git branch -vv|grep -e ^\\*")."</code>";
-?>
+<p><strong>Source: </strong><code><?=exec("git remote --v|grep origin|grep fetch")?></code></p>
+<p><strong>Branch/Version Information: </strong><code><?=substr(exec("git branch -vv|grep -e ^\\*"),2);?></code></p>
 
 <h2>Last 24 hours</h2>
 
