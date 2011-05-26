@@ -244,6 +244,13 @@ class Worker:
                 for file_name, command in zip_files:
                     if os.path.exists(file_name):
                         log.info("unzip %s, status: %s" % (file_name, os.system(command)))
+                        # check for single directory only and move everything down
+                        if len(os.listdir('bot')) == 1:
+                            one_path = os.listdir('bot')[0]
+                            if os.path.isdir(one_path):
+                                os.rename(os.path.join('bot',one_path), 'tmp')
+                                os.rmdir('bot')
+                                os.rename('tmp', 'bot')
                         for dirpath, _, filenames in os.walk("."):
                             os.chmod(dirpath, 0755)
                             for filename in filenames:
