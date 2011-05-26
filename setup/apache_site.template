@@ -29,7 +29,7 @@
         allow from all
     </Directory>
 
-    Alias /maps {map_dir}
+    Alias /map {map_dir}
     <Directory {map_dir}>
         Options Indexes FollowSymLinks
         AllowOverride None
