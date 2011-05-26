@@ -39,9 +39,17 @@
   starting point. You can even submit the zip file on the Upload Your Code
   page, since it is a valid working entry! (Our servers are running Mono 1.2.6.)</p>
 
+<h3><a href="starter_packages/d_starter_package.zip">D</a></h3>
+<p>Download the D starter package to get started writing your entry in
+  D. The starter package is a simple working entry that you can use as a
+  starting point. You can even submit the zip file on the Upload Your Code
+  page, since it is a valid working entry! (Our servers are running <b>&laquo;to be determined&raquo;</b>)</p>
 
-<h3>Go</h3>
-<p>The Go programming language is supported. We are using Go release 2010-10-20. Check the forums for user contributed starter packs. <a href="forum/viewtopic.php?f=18&t=883">This thread</a> is one place to start.</p>
+<h3><a href="starter_packages/go_starter_package.zip">Go</a></h3>
+<p>Download the Go starter package to get started writing your entry in
+  Go. The starter package is a simple working entry that you can use as a
+  starting point. You can even submit the zip file on the Upload Your Code
+  page, since it is a valid working entry! (Our servers are running <b>&laquo;to be determined&raquo;</b>)</p>
 
 <h3>Groovy</h3>
 <p>Groovy is supported. We are using Groovy version 1.7.5. Check the forums for user contributed starter packs. <a href="forum/viewtopic.php?f=18&t=767">This thread</a> is one place to start.</p>
@@ -49,26 +57,46 @@
 <h3>Haskell</h3>
 <p>Haskel is supported. We are using GHC version 6.8.2. Check the forums for user contributed starter packs. <a href="forum/viewtopic.php?f=18&t=428">This thread</a> is one place to start.</p>
 
-<h3>Javascript</h3>
-<p>Javascript is supported. We are using node v0.2.1. Check the forums for user contributed starter packs. <a href="forum/viewtopic.php?f=18&t=514">This thread</a> is one place to start.</p>
+<h3><a href="starter_packages/javascript_starter_package.zip">JavaScript</a></h3>
+<p>Download the JavaScript starter package to get started writing your entry in
+  JavaScript. The starter package is a simple working entry that you can use as a
+  starting point. You can even submit the zip file on the Upload Your Code
+  page, since it is a valid working entry! (Our servers are running Node 0.1.97)</p>
 
-<h3>Lisp</h3>
-<p>Lisp is supported. We are using SBCL 1.0.11. Check the forums for user contributed starter packs. <a href="forum/viewtopic.php?f=18&t=421">This thread</a> is one place to start.</p>
+<h3><a href="starter_packages/common_lisp_starter_package.zip">Lisp</a></h3>
+<p>Download the Common Lisp starter package to get started writing your entry in
+  Lisp. The starter package is a simple working entry that you can use as a
+  starting point. You can even submit the zip file on the Upload Your Code
+  page, since it is a valid working entry! (Our servers are running SBCL 1.0.40)</p>
 
-<h3>OCaml</h3>
-<p>OCaml is supported. We are using OCaml version 3.10.0. Check the forums for user contributed starter packs. <a href="forum/viewtopic.php?f=18&t=404">This thread</a> is one place to start.</p>
+<h3><a href="starter_packages/ocaml_starter_package.zip">OCaml</a></h3>
+<p>Download the OCaml starter package to get started writing your entry in
+  OCaml. The starter package is a simple working entry that you can use as a
+  starting point. You can even submit the zip file on the Upload Your Code
+  page, since it is a valid working entry! (Our servers are running OCaml 3.11.2)</p>
 
-<h3>Perl</h3>
-<p>Perl is supported. We are using perl 5.8.8. Check the forums for user contributed starter packs. <a href="forum/viewtopic.php?f=18&t=589">This thread</a> is one place to start.</p>
+<h3><a href="starter_packages/perl_starter_package.zip">Perl</a></h3>
+<p>Download the Perl starter package to get started writing your entry in
+  Perl. The starter package is a simple working entry that you can use as a
+  starting point. You can even submit the zip file on the Upload Your Code
+  page, since it is a valid working entry! (Our servers are running Perl 5.10.1)</p>
 
-<h3>PHP</h3>
-<p>PHP is supported. We are using PHP 5.2.4. Check the forums for user contributed starter packs. <a href="forum/viewtopic.php?f=18&t=434">This thread</a> is one place to start.</p>
+<h3><a href="starter_packages/php_starter_package.zip">PHP</a></h3>
+<p>Download the PHP starter package to get started writing your entry in
+  PHP. The starter package is a simple working entry that you can use as a
+  starting point. You can even submit the zip file on the Upload Your Code
+  page, since it is a valid working entry! (Our servers are running PHP <b>&laquo;to be determined&raquo;</b>)</p>
 
-<h3>Scala</h3>
-<p>Scala is supported. We are using Scala 1.8.0. Check the forums for user contributed starter packs. <a href="forum/viewtopic.php?f=18&t=488">This thread</a> is one place to start.</p>
+<h3><a href="starter_packages/ruby_starter_package.zip">Ruby</a></h3>
+<p>Download the Ruby starter package to get started writing your entry in
+  Ruby. The starter package is a simple working entry that you can use as a
+  starting point. You can even submit the zip file on the Upload Your Code
+  page, since it is a valid working entry! (Our servers are running Ruby 4.5)</p>
 
-<h3>Ruby</h3>
-<p>Ruby is supported. We are using Ruby 1.9.0. Check the forums for user contributed starter packs. <a href="forum/viewtopic.php?f=18&t=401">This thread</a> is one place to start.</p>
-
+<h3><a href="starter_packages/scala_starter_package.zip">Scala</a></h3>
+<p>Download the Scala starter package to get started writing your entry in
+  Scala. The starter package is a simple working entry that you can use as a
+  starting point. You can even submit the zip file on the Upload Your Code
+  page, since it is a valid working entry! (Our servers are running Scala 2.7.7)</p>
 
 <?php include 'footer.php'; ?>
