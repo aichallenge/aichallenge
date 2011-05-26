@@ -19,6 +19,9 @@ select
     r.rank - @rank as rank_change, s.mu as skill, s.mu - r.skill as skill_change, s.latest, timediff(now(),s.timestamp) as age
 from
     submission s
+    -- inner join to ensure both user and submission record exists
+    inner join user u
+        on s.user_id = u.user_id
     left outer join ranking r
         on s.submission_id = r.submission_id and r.leaderboard_id = @last_leader,
     (select @count1 := 0) c1,

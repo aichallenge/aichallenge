@@ -107,13 +107,13 @@ $sql = array(
         from ranking r
         inner join user u
             on r.user_id = u.user_id
-        inner join organization o
-            on u.org_id = o.org_id
         inner join submission s
             on r.submission_id = s.submission_id
-        inner join language l
+        left outer join organization o
+            on u.org_id = o.org_id
+        left outer join language l
             on l.language_id = s.language_id
-        inner join country c
+        left outer join country c
             on u.country_id = c.country_id
         where r.leaderboard_id = (
             select max(leaderboard_id)
@@ -128,13 +128,13 @@ $sql = array(
         from ranking r
         inner join user u
             on r.user_id = u.user_id
-        inner join organization o
-            on u.org_id = o.org_id
         inner join submission s
             on r.submission_id = s.submission_id
-        inner join language l
+        left outer join organization o
+            on u.org_id = o.org_id
+        left outer join language l
             on l.language_id = s.language_id
-        inner join country c
+        left outer join country c
             on u.country_id = c.country_id
         where r.leaderboard_id = (
             select max(leaderboard_id)
@@ -150,13 +150,13 @@ $sql = array(
         from ranking r
         inner join user u
             on r.user_id = u.user_id
-        inner join organization o
-            on u.org_id = o.org_id
         inner join submission s
             on r.submission_id = s.submission_id
-        inner join language l
+        left outer join organization o
+            on u.org_id = o.org_id
+        left outer join language l
             on l.language_id = s.language_id
-        inner join country c
+        left outer join country c
             on u.country_id = c.country_id
         where r.leaderboard_id = (
             select max(leaderboard_id)
@@ -172,13 +172,13 @@ $sql = array(
         from ranking r
         inner join user u
             on r.user_id = u.user_id
-        inner join organization o
-            on u.org_id = o.org_id
         inner join submission s
             on r.submission_id = s.submission_id
-        inner join language l
+        left outer join organization o
+            on u.org_id = o.org_id
+        left outer join language l
             on l.language_id = s.language_id
-        inner join country c
+        left outer join country c
             on u.country_id = c.country_id
         where r.leaderboard_id = (
             select max(leaderboard_id)
