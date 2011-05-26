@@ -129,7 +129,7 @@ EOT;
 }
 echo <<<EOT
     <p><strong>Country:</strong>&nbsp;
-    <a href="country_profile.php?country_id=$country_id">$flag_filename
+    <a href="country_profile.php?country=$country_id">$flag_filename
       $country_name</a>
 EOT;
 if ($logged_in) {
@@ -161,7 +161,7 @@ EOT;
 echo <<<EOT
     <p>
     <strong>Affiliation:</strong>&nbsp;
-    <a href="organization_profile.php?org_id=$org_id">$org_name</a>
+    <a href="organization_profile.php?org=$org_id">$org_name</a>
 EOT;
 if ($logged_in) {
 echo <<<EOT
