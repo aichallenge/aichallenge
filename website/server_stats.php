@@ -1,7 +1,7 @@
 <?php
 
 include 'header.php'; 
-require_once('mysql_query.php');
+require_once('mysql_login.php');
 
 $query = "select count(*) from user where activated=1 and created > (now() - interval 24 hour)";
 $result = mysql_query($query);
@@ -35,30 +35,6 @@ foreach(array(5,60,1444) as $minutes){
   $games_per_minute[$minutes] = $r[0];
 }
 
-$games_per_server = array();
-$sql = "select count(*)/5 as gpm, worker from game where timestamp > timestampadd(minute, -5, current_timestamp) group by worker;";
-$q = mysql_query($sql);
-while($r = mysql_fetch_assoc($q)){
-  $games_per_server[] = $r;
-}
-
-$errors_per_server = array();
-$sql = "select e.*, worker from error e inner join game g on g.game_id = e.game_id where e.timestamp > timestampadd(minute, -5, current_timestamp) group by game_id order by worker,e.timestamp desc ;";
-$q = mysql_query($sql);
-while($r = mysql_fetch_assoc($q)){
-  $errors_per_server[$r['worker']] +=1/5;
-}
-
-$error_percentage = array();
-foreach ($games_per_server as $server) {
-  $id = $server['worker'];
-  if ($server['gpm'] == 0) {
-    $error_percentage[$id] = 0;
-  } else {
-    $error_percentage[$id] = ($errors_per_server[$id] / $server['gpm']) * 100;
-  }
-}
-
 $PAIRCUT_FILE = "/home/contest/pairing_cutoff";
 if (is_readable($PAIRCUT_FILE)) {
   $pfc = file($PAIRCUT_FILE);
@@ -68,6 +44,12 @@ if (is_readable($PAIRCUT_FILE)) {
 }
 
 ?>
+
+<h1>Server Statistics</h1>
+
+<h2>GIT information</h2>
+<p><strong>Source: </strong><code><?=exec("git remote --v|grep origin|grep fetch")?></code></p>
+<p><strong>Branch/Version Information: </strong><code><?=substr(exec("git branch -vv|grep -e ^\\*"),2);?></code></p>
 
 <h2>Last 24 hours</h2>
 
@@ -106,31 +88,5 @@ if (is_readable($PAIRCUT_FILE)) {
     <th>Last 24 hours</th>
   </tr>
 </table>
-
-
-<h2 style="margin-top:1em">Games per minute per server</h2>
-
-<table class="bigstats">
-  <tr>
-  <?php foreach ($games_per_server as $server): ?>
-    <td><?php echo number_format($server['gpm'])?></td>
-  <?php endforeach ?>
-  </tr>
-  <tr>
-  <?php foreach ($games_per_server as $server): ?>
-    <th>Server #<?php echo htmlspecialchars($server['worker'])?></th>
-  <?php endforeach ?>
-  </tr>
-  <tr>
-  <?php foreach ($games_per_server as $server): ?>
-    <th style="color:#ccc">
-      <?php echo number_format($errors_per_server[$server['worker']],1)?> EPM <br />
-      <?php echo number_format($error_percentage[$server['worker']],1)?>%
-    </th>
-  <?php endforeach ?>
-  </tr>
-
-</table>
-
 
 <?php include 'footer.php'; ?>
