@@ -8,7 +8,7 @@
         
         <!-- Global Tags --> 
         <meta http-equiv="Content-Type" content="text/html; charset=utf-8" /> 
-        <link rel="shortcut icon" href="images/favicon.png" />
+        <link rel="shortcut icon" href="favicon.ico" />
  
         <!-- CSS --> 
         <link href="css/reset.css" rel="stylesheet" type="text/css" /> 
