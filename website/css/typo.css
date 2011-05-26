@@ -95,6 +95,9 @@ a:hover {
 /* Monospaced elements */
 pre, code {
     font-family: monospace;
+	
+    border: 1px solid #7a0;
+    background: #ad6;
 }
 pre {
     padding: 10px;
@@ -102,9 +105,9 @@ pre {
     display: block;
     margin-bottom: 1em;
 }
-code {
-    border: 1px solid #7a0;
-    background: #ad6;
+pre code {
+    border: none;
+    background: none;
 }
 
 /*Tables*/
