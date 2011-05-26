@@ -359,8 +359,9 @@ class Ants(Game):
         for update in updates:
             type, row, col = update[0:3]
 
-            # only include visible updates
-            if v[row][col]:
+            # only include updates to squares which are visible
+            # and the current players dead ants
+            if v[row][col] or (type == 'd' and update[-1] == player):
                 visible_updates.append(update)
 
                 # switch player perspective of player numbers
