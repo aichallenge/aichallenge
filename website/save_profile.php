@@ -4,7 +4,7 @@ require_once('mysql_login.php');
 require_once('bad_words.php');
 
 function check_valid_organization($id) {
-  if ($id == 999 || !is_int($id)) {
+  if ($id == 999 || !filter_var($id, FILTER_VALIDATE_INT)) {
     return False;
   }
   $query = "SELECT count(*) FROM organization where org_id=". $id;
@@ -16,7 +16,7 @@ function check_valid_organization($id) {
 }
 
 function check_valid_country($id) {
-  if ($id == 999 || !is_int($id)) {
+  if ($id == 999 || !filter_var($id, FILTER_VALIDATE_INT)) {
     return False;
   }
   $query = "SELECT count(*) from country where country_id=". $id;
@@ -76,7 +76,7 @@ if (array_key_exists('user_bio', $_POST)) {
   }
   mysql_query("UPDATE user SET bio='$bio' WHERE user_id = '$user_id'");
 }
-  
 
-header('Location: profile.php?user_id = '. $user_id);
+
+header('Location: profile.php?user='. $user_id);
 ?>
