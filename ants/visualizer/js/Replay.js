@@ -342,7 +342,7 @@ function Replay(replay) {
 	if (!(this.meta['playercolors'] instanceof Array)) {
 		this.meta['playercolors'] = new Array(this.players);
 	}
-	for (i = 0; i < this.meta['playernames'].length; i++) {
+	for (i = 0; i < this.players; i++) {
 		if (!this.meta['playernames'][i]) {
 			this.meta['playernames'][i] = 'player ' + (i + 1);
 		}
