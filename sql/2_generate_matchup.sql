@@ -4,7 +4,14 @@ create procedure generate_matchup()
 begin
 
 select min(players) into @min_players from map;
-select count(distinct user_id) into @max_players from submission where status = 40 and latest = 1;
+
+select count(distinct s.user_id)
+into @max_players
+from submission s
+inner join user u
+    on u.user_id = s.user_id
+where s.status = 40 and s.latest = 1;
+
 if @min_players <= @max_players then
 
 set @init_mu = 25.0;
@@ -137,6 +144,8 @@ while @abort = 0 and @player_count < @players do
         select s.user_id, s.submission_id, s.mu, s.sigma,
         @mu_avg = (select avg(mu) from matchup_player where matchup_id = @matchup_id)
         from submission s
+        inner join user u
+            on u.user_id = s.user_id
 
         where s.latest = 1 and status = 40
 
