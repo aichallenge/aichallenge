@@ -92,16 +92,17 @@ a:hover {
     text-decoration: underline;
 }
 
-/* Monochrome elements */
+/* Monospaced elements */
 pre, code {
     font-family: monospace;
 }
-code {
+pre {
     padding: 10px;
     
     display: block;
     margin-bottom: 1em;
-    
+}
+code {
     border: 1px solid #7a0;
     background: #ad6;
 }
