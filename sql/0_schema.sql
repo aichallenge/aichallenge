@@ -204,7 +204,7 @@ CREATE TABLE `submission` (
   `errors` varchar(4096) DEFAULT NULL,
   `language_id` int(11) NOT NULL,
   `last_game_timestamp` datetime DEFAULT NULL,
-  `latest` tinyint(1) NOT NULL DEFAULT '1',
+  `latest` tinyint(1) NOT NULL DEFAULT '0',
   `sigma` float NOT NULL DEFAULT '16.6667',
   `mu` float NOT NULL DEFAULT '50',
   `worker_id` int(11) DEFAULT NULL,
