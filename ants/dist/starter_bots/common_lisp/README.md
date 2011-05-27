@@ -58,16 +58,18 @@ starter package).  Nevertheless, patches and improvements are welcome.
 
 ## Usage
 
-Run `bin/run-ants-bot.sbcl` and paste the sample input from the [Bot Input](http://github.com/aichallenge/aichallenge/wiki/Ant-bot-input-output)
-wiki page.
+To compile the source files into a `MyBot` binary issue "`sbcl --script
+MyBot.lisp`".  To test your bot locally you'll need to get the AI
+Challenge source tree:
 
-You can also run either `make` or `make local-bot` to compile the bot
-into a `MyBot` binary.  The former is done on the official server and
-the latter (`make local-bot`) will create a binary that logs to a
-`MyBot.log` file.
+    git clone git://github.com/aichallenge/aichallenge.git
 
-There are also a few initial unit tests which can be run by issuing
-`bin/run-tests.sh`.
+Go to the `aichallenge/ants` directory and do:
+
+    ./playgame.py --end_wait=0.25 --verbose --log_dir game_logs --turns 100 --map_file maps/symmetric_maps/symmetric_10.map "python dist/sample_bots/python/HunterBot.py" "python dist/sample_bots/python/LeftyBot.py" "python dist/sample_bots/python/HunterBot.py" /path/to/your/MyBot
+
+To upload a submission you only need to zip all the lisp-files: "`zip
+submission.zip *.lisp`".  ("`make submission-zip`" will do the same).
 
 ### Windows / MSYS Note
 
@@ -77,20 +79,17 @@ pointing to wherever SBCL is installed on your system.
 
 ## Source
 
-`src/ants-bot.lisp` contains the game loop and `bot-think.lisp`
-contains the actual bot AI.  Currently it does nothing more than check
-whether it can go either north, east, south or west and if it can it
-issues an order to the server to go in that direction.  (As described
-in the [Ants Starter Pack Guide](https://github.com/aichallenge/aichallenge/wiki/Ants-Starter-Pack-Guide)).
+`MyBot.lisp` is needed for compilation on the official server.
 
-See the `state` class in `src/config.lisp` for the game variables.
+`main.lisp` contains the main loop and the DO-TURN function, this is
+were the starter bot's simple AI resides.
+
+`ants.lisp` contains all other helper functions.
 
 ### Internal Map Representation
 
-Also see `src/game-state.lisp`.
-
 The map is internally represented as a 2-dimensional array of [fixnums](file:///export/home/ekwis/emacs/HyperSpec/Body/t_fixnum.htm#fixnum)
-and is accessible as `(game-map *state*)`.  Do note that is reset and
+and is accessible as `(game-map *state*)`.  Do note that it is reset and
 modified when PARSE-GAME-STATE is called during the main loop, so work
 on a copy if you have to.
 
@@ -107,19 +106,11 @@ Your live ants are always represented as 100 and your dead ants as
 200.
 
 
-### 3rd Party Libraries
-
-There's already infrastructure to use 3rd party libraries, see the
-extensive starter bot mentioned earlier for examples of using them.
-
-
 ## Platforms
 
 The code has been tested on the following platforms:
 
 * x86: SBCL 1.0.45.debian
-* x86: [Experimental SBCL 1.0.45 with threads](https://sites.google.com/site/dmitryvksite/sbcl-distr) for Windows using [MSYS](http://www.mingw.org/node/18)
-* x86: SBCL 1.0.40 on an [Ubuntu 10.10 VirtualBox image](http://virtualboxes.org/images/ubuntu/)
 
 ### Windows Note
 

@@ -176,7 +176,7 @@ comp_args = {
     "Haskell" : [["ghc", "--make", BOT + ".hs", "-O", "-v0"]],
     "Java"        : [["javac"],
                              ["jar", "cfe", BOT + ".jar", BOT]],
-    "Lisp"      : [['sbcl', '--script', BOT + '.lisp']],
+    "Lisp"      : [['sbcl', '--dynamic-space-size', '64', '--script', BOT + '.lisp']],
     "OCaml"     : [["ocamlbuild", BOT + ".native"]],
     "Scala"     : [["scalac"]],
     }
