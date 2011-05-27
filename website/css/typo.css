@@ -183,6 +183,7 @@ td.list span {
     display: inline-block;
     width: 85px;
     overflow: hidden;
+    white-space: nowrap;
 }
 
 td.list {
@@ -198,6 +199,9 @@ div.pagination span {
 pre.error {
     border: dashed 1px DarkRed;
     font-family: Consolas, Inconsolata, monospace;
-    text-align: right;
+    text-align: left;
     padding: 5px;
+    width: 680px;
+    overflow: auto;
+    background-color: #e0e0e0;
 }

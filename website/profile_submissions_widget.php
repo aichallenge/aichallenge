@@ -114,11 +114,15 @@ EOT;
         $table .= "</tr>";
         // TODO: turn off for all users during competition
         if ($errors and $status_class == "fail" and (TRUE or $user_id == current_user_id())) {
-            $errors = json_decode($status_errors);
+            $errors = json_decode($errors);
             $error_msg = "<pre class=\"error\">";
             if (isset($errors->errors)) {
                 for ($i = 0; $i < count($errors->errors); $i++) {
                     $error_msg .= str_replace('\n', "\n", $errors->errors[$i])."\n";
+                }
+            } elseif (gettype($errors) == "array") {
+                foreach ($errors as $error) {
+                    $error_msg .= str_replace('\n', "\n", $error)."\n";
                 }
             }
             $error_msg .= "</pre>";

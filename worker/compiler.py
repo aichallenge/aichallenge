@@ -380,7 +380,7 @@ def detect_language(bot_dir):
             return None, ['Found multiple MyBot.* files: \n'+
                           '\n'.join([lang[1] for lang in detected_langs])]
         elif len(detected_langs) == 0:
-            return None, ['Did not find MyBot.* file.\nPlease add one of the following filename to your zip file:\n'
+            return None, ['Did not find a MyBot.* file with an allowed extension.\nPlease add one of the following filenames to your zip file:\n'
                           +'\n'.join(key + ": " + val[1] for key, val in languages.items())]
         else:
             return detected_langs[0], None
