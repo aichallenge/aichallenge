@@ -180,6 +180,40 @@ function produce_cache_results($page=0, $user_id=NULL, $submission_id=NULL, $map
     return NULL;
 }
 
+function nice_interval($interval) {
+    if ($interval->y > 0) {
+        return $interval->format('%yyrs %mm');
+    } elseif ($interval->m > 0) {
+        return $interval->format('%mm %ddays');
+    } elseif ($interval->d > 0) {
+        return $interval->format('%dd %hhrs');
+    } elseif ($interval->h > 0) {
+        return $interval->format('%hhrs %im');
+    } else {
+        return $interval->format('%im %ss');
+    }
+}
+
+function place($num) {
+    switch ($num % 10) {
+        case 1:
+            return strval($num)."st";
+            break;
+        case 2:
+            return strval($num)."nd";
+            break;
+        case 3:
+            return strval($num)."rd";
+            break;
+        default:
+            return strval($num)."th";
+    }
+}
+
+function no_wrap($data) {
+    return str_replace(" ", "&nbsp;", strval($data));
+}
+
 function create_game_list_table($json, $top=FALSE, $targetpage=NULL) {
     global $top_results_size;
 
@@ -223,6 +257,7 @@ function create_game_list_table($json, $top=FALSE, $targetpage=NULL) {
         $oddity = 'even';
         $fields = $json["fields"];
         $row_num = 0;
+        $now = new DateTime();
         foreach ($json["values"] as $values) {
             $row_num++;
             $row = array_combine($fields, $values);
@@ -234,12 +269,13 @@ function create_game_list_table($json, $top=FALSE, $targetpage=NULL) {
             $user_class = current_username() == $row["username"] ? ' user' : '';
             $table .= "<tr class=\"$oddity$user_class\">";
 
-            $time = $row["timestamp"];
+            $time = new DateTime($row["timestamp"]);
+            $time = no_wrap(nice_interval($now->diff($time)));
             $table .= "<td>$time</td>";
 
             if ($user_id) {
-                $skill = $row["user_mu"];
-                $table .= "<td>$skill</td>";
+                $skill = number_format($row["user_mu"], 2);
+                $table .= "<td class=\"number\">$skill</td>";
             }
 
             // TODO: consider linking the submission id instead
@@ -249,10 +285,10 @@ function create_game_list_table($json, $top=FALSE, $targetpage=NULL) {
                               .$row['user_id'][$i]."\">".
                               $row['username'][$i]."</a></span> ";
             }
-            $table .= "<td>$opponents</td>";
+            $table .= "<td class=\"list\">$opponents</td>";
 
             if ($user_id) {
-                $outcome = ($row['user_rank']+1)." of ".$row['players'];
+                $outcome = no_wrap(place($row['user_rank']+1)." of ".$row['players']);
                 $table .= "<td>$outcome</td>";
             }
             $map_name = explode('.', $row['map_name'], 1);
@@ -260,9 +296,9 @@ function create_game_list_table($json, $top=FALSE, $targetpage=NULL) {
             $pos2 = strrpos($row['map_name'],'.');
             $map_name = substr($row['map_name'], $pos1, $pos2-$pos1);
             $map = "<a href=\"map/".$row['map_name']."\">$map_name</a>";
-            $table .= "<td>$map</td>";
+            $table .= "<td class=\"list\"><span>$map</span></td>";
 
-            $game = "<a href=\"visualizer.php?game=" . $row['game_id'] . "\">View Game &raquo;</a>";
+            $game = "<a href=\"visualizer.php?game=" . $row['game_id'] . "\">Game&nbsp;&raquo;</a>";
             $table .= "<td>$game</td>";
 
             $table .= "</tr>";

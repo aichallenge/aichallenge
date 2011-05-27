@@ -84,6 +84,7 @@ CREATE TABLE `leaderboard` (
   `algorithm_name` varchar(64) DEFAULT NULL,
   `calculation_time` bigint(20) DEFAULT '0',
   `complete` tinyint(1) NOT NULL DEFAULT '0',
+  `last_game_id` int(11) NULL,
   PRIMARY KEY (`leaderboard_id`),
   KEY `timestamp` (`timestamp`)
 );

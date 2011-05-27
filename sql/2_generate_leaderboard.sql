@@ -5,8 +5,8 @@ begin
 
 set @last_leader = (select max(leaderboard_id) from leaderboard);
 
-insert into leaderboard (timestamp, algorithm_name, calculation_time, complete)
-values (now(), 'TrueSkill', 0, 1);
+insert into leaderboard (timestamp, algorithm_name, calculation_time, complete, last_game_id)
+values (now(), 'TrueSkill', 0, 1, (select max(game_id) from game));
 
 set @leader = last_insert_id();
 

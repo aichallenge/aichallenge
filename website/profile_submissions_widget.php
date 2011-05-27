@@ -113,7 +113,8 @@ EOT;
         $table .= "  <td><a href=\"language_profile.php?language=$language_link\">
             $language</a></td>";
         $table .= "</tr>";
-        if ($user_id == current_user_id()) {
+        // TODO: turn off for all users during competition
+        if (TRUE or $user_id == current_user_id()) {
             $errors = json_decode($status_errors);
             if ($errors->language_count == 0) {
                 $error_msg = "<pre>MyBot.* file with known extension not found.</pre>";

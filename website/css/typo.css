@@ -157,6 +157,10 @@ table.ranking a {
     color: #A0522D;
 }
 
+table.ranking td {
+    padding: 0px 5px;
+}
+
 tr.old {
     filter: alpha(opacity=30);
     filter: progid:DXImageTransform.Microsoft.Alpha(opacity=30);
@@ -173,6 +177,16 @@ tr.even {
 td.number {
     font-family: Consolas, Inconsolata, monospace;
     text-align: right;
+}
+
+td.list span {
+    display: inline-block;
+    width: 85px;
+    overflow: hidden;
+}
+
+td.list {
+    text-align: left;
 }
 
 div.pagination span {
