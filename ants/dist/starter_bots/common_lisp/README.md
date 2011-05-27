@@ -58,7 +58,18 @@ starter package).  Nevertheless, patches and improvements are welcome.
 
 ## Usage
 
-*needs to be rewritten*
+To compile the source files into a `MyBot` binary issue "`sbcl --script
+MyBot.lisp`".  To test your bot locally you'll need to get the AI
+Challenge source tree:
+
+    git clone git://github.com/aichallenge/aichallenge.git
+
+Go to the `aichallenge/ants` directory and do:
+
+    ./playgame.py --end_wait=0.25 --verbose --log_dir game_logs --turns 100 --map_file maps/symmetric_maps/symmetric_10.map "python dist/sample_bots/python/HunterBot.py" "python dist/sample_bots/python/LeftyBot.py" "python dist/sample_bots/python/HunterBot.py" /path/to/your/MyBot
+
+To upload a submission you only need to zip all the lisp-files: "`zip
+submission.zip *.lisp`".  ("`make submission-zip`" will do the same).
 
 ### Windows / MSYS Note
 
@@ -68,7 +79,12 @@ pointing to wherever SBCL is installed on your system.
 
 ## Source
 
-*needs to be rewritten*
+`MyBot.lisp` is needed for compilation on the official server.
+
+`main.lisp` contains the main loop and the DO-TURN function, this is
+were the starter bot's simple AI resides.
+
+`ants.lisp` contains all other helper functions.
 
 ### Internal Map Representation
 
