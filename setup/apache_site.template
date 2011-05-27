@@ -33,7 +33,7 @@
     <Directory {map_dir}>
         Options Indexes FollowSymLinks MultiViews
         AddEncoding x-gzip .mapgz
-        AddType text/plain .mapgz
+        AddType text/plain .mapgz .map
         AllowOverride None
         Order allow,deny
         Allow from all

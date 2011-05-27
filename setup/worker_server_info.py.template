@@ -18,7 +18,7 @@ server_info = {{
         "spawnradius2": 1,
         "location": "{api_url}",
         "serial": False,
-        "food_rate": 1,
-        "food_turn": 2
+        "food_rate": (1,5),
+        "food_turn": (1,5)
     }}
 }}
