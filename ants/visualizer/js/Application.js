@@ -212,6 +212,8 @@ Visualizer = function(container, dataDir, interactive, w, h, config) {
 	this.imgMgr.add('fog.png');
 	this.imgMgr.add('toolbar.png');
 	this.imgMgr.add('food.png');
+	this.imgMgr.add('rank.png');
+	this.imgMgr.add('graph_options.png');
 	/**
 	 * the highest player count in a previous replay to avoid button repaints
 	 * @private
@@ -531,7 +533,7 @@ Visualizer.prototype.tryStart = function() {
 			if (this.replay.duration > 0) {
 				bg = this.btnMgr.addTextGroup('players', TextButtonGroup.FLOW,
 						ButtonGroup.MODE_NORMAL, 2);
-				var gameId = this.replay.meta['game_id'] || vis.options['game_id'];
+				var gameId = this.replay.meta['game_id'] || vis.options['game'];
 				if (this.replay.meta['game_url'] && gameId !== undefined) {
 					var func = function() {
 						window.location.href =
@@ -569,12 +571,9 @@ Visualizer.prototype.tryStart = function() {
 						};
 					}
 					var caption = vis.replay.meta['playernames'][i];
-					if (ranks[i] === 1) {
-						caption = '★ ' + caption;
-					} else if (ranks[i] === 2) {
-						caption = '☆ ' + caption;
-					} else {
-						caption = ranks[i] + '. ' + caption;
+					caption = ranks[i] + '. ' + caption;
+					if (vis.replay.meta['status']) {
+						caption += ' (' + vis.statusToGlyph(i) + ')';
 					}
 					bg.addButton(caption, color, func);
 				}
@@ -1068,6 +1067,45 @@ Visualizer.prototype.renderCounts = function() {
 		}
 		ctx.stroke();
 	}
+	if (this.replay.meta['status']) {
+		ctx.font = '10px Arial';
+		for (i = this.replay.players - 1; i >= 0; i--) {
+			ctx.fillStyle = this.replay.htmlPlayerColors[i];
+			ctx.strokeStyle = this.replay.htmlPlayerColors[i];
+			var status = this.statusToGlyph(i);
+			k = this.replay.meta['replaydata']['scores'][i].length - 1;
+			ctx.beginPath();
+			var x = 0.5 + k * scaleX;
+			var y = 0.5 + scaleY * (max - this.replay.counts[k][i]);
+			ctx.moveTo(x, y);
+			var tw = ctx.measureText(status).width;
+			var tx = Math.min(x, w - tw);
+			if (y < 30) {
+				y = ((y + 12) | 0) + 0.5;
+				ctx.lineTo(x, y - 8);
+				ctx.moveTo(tx, y - 8);
+				ctx.lineTo(tx + tw, y - 8);
+				ctx.fillText(status, tx, y);
+			} else {
+				y = ((y - 7) | 0) + 0.5;
+				ctx.lineTo(x, y + 2);
+				ctx.moveTo(tx, y + 2);
+				ctx.lineTo(tx + tw, y + 2);
+				ctx.fillText(status, tx, y);
+			}
+			ctx.stroke();
+		}
+	}
+};
+Visualizer.prototype.statusToGlyph = function(i) {
+	var status = this.replay.meta['status'][i];
+	if (status === 'survived') {
+		return '✓';
+	} else if (status === 'eliminated') {
+		return '✗';
+	} else {
+		return this.replay.meta['status'][i];
+	}
 };
 /**
  * @private
@@ -1188,7 +1226,7 @@ Visualizer.prototype.interpolate = function(array1, array2, delta) {
  * @private
  */
 Visualizer.prototype.draw = function(time, tick) {
-	var x, y, w, h, dx, dy, d, hash, ants, ant, i, img, offset;
+	var x, y, w, h, dx, dy, d, hash, ants, ant, i, img, offset, visibleAnts;
 	var turn = (time | 0);
 	if (this.replay.duration > 0) {
 		// draw scores
@@ -1235,14 +1273,18 @@ Visualizer.prototype.draw = function(time, tick) {
 		this.renderMap(this.minimap.ctx, 1);
 	}
 	ants = this.replay.getTurn(turn);
+	visibleAnts = new Array(ants.length);
+	n = 0;
 	for (i = ants.length - 1; i >= 0; i--) {
 		if ((ant = ants[i].interpolate(time, Quality.LOW))) {
 			hash = INT_TO_HEX[ant['r']] + INT_TO_HEX[ant['g']] + INT_TO_HEX[ant['b']];
+			ant.baseX = Math.round(ant['x']);
+			ant.baseY = Math.round(ant['y']);
+			ant.baseX -= Math.floor(ant.baseX / this.replay.cols) * this.replay.cols;
+			ant.baseY -= Math.floor(ant.baseY / this.replay.rows) * this.replay.rows;
 			if (drawMinimap) {
 				this.minimap.ctx.fillStyle = '#' + hash;
-				dx = ant['x'] - Math.floor(ant['x'] / this.replay.cols) * this.replay.cols;
-				dy = ant['y'] - Math.floor(ant['y'] / this.replay.rows) * this.replay.rows;
-				this.minimap.ctx.fillRect(dx | 0, dy | 0, 1, 1);
+				this.minimap.ctx.fillRect(ant.baseX, ant.baseY, 1, 1);
 			}
 			ant['x'] = Math.round(this.scale * ant['x']) + x + this.scale - 1;
 			ant['y'] = Math.round(this.scale * ant['y']) + y + this.scale - 1;
@@ -1252,9 +1294,11 @@ Visualizer.prototype.draw = function(time, tick) {
 			if (ant['x'] < loc.w && ant['y'] < loc.h) {
 				if (!drawStates[hash]) drawStates[hash] = [];
 				drawStates[hash].push(ant);
+				visibleAnts[n++] = ant;
 			}
 		}
 	}
+	visibleAnts.length = n;
 	// draw the map background
 	var ctx = this.border.ctx;
 	for (dy = y; dy < this.loc.vis.h; dy += rowPixels) {
@@ -1365,17 +1409,45 @@ Visualizer.prototype.draw = function(time, tick) {
 		ctx.restore();
 	}
 	// calculate mouse position
-	var mx = Math.round(this.scale * this.mouseCol) + x + this.scale - 1;
-	mx = Math.wrapAround(mx, colPixels) - this.scale + 1;
-	var my = Math.round(this.scale * this.mouseRow) + y + this.scale - 1;
-	my = Math.wrapAround(my, rowPixels) - this.scale + 1;
+	if (this.mouseOverVis) {
+		var mx = Math.round(this.scale * this.mouseCol) + x + this.scale - 1;
+		mx = Math.wrapAround(mx, colPixels) - this.scale + 1;
+		var my = Math.round(this.scale * this.mouseRow) + y + this.scale - 1;
+		my = Math.wrapAround(my, rowPixels) - this.scale + 1;
+	}
 	// draw attack and spawn radii
-	if (this.scale === ZOOM_SCALE) {
-		var ar = ZOOM_SCALE * Math.sqrt(this.replay.meta['replaydata']['attackradius2']);
-		var sr = ZOOM_SCALE * Math.sqrt(this.replay.meta['replaydata']['spawnradius2']);
-		ctx.save();
-		ctx.translate(halfScale, halfScale);
-		ctx.lineWidth = 2;
+	var ar = this.scale * Math.sqrt(this.replay.meta['replaydata']['attackradius2']);
+	var sr = this.scale * Math.sqrt(this.replay.meta['replaydata']['spawnradius2']);
+	ctx.save();
+	ctx.translate(halfScale, halfScale);
+	ctx.lineWidth = 2 * this.scale / ZOOM_SCALE;
+	for (var a1 = 0; a1 < visibleAnts.length; a1++) {
+		var ant1 = visibleAnts[a1];
+		if (ant1['owner'] !== undefined) {
+			for (var a2 = a1 + 1; a2 < visibleAnts.length; a2++) {
+				var ant2 = visibleAnts[a2];
+				if (ant2['owner'] !== undefined && ant1['owner'] !== ant2['owner']) {
+					dx = ant1.baseX - ant2.baseX;
+					dy = ant1.baseY - ant2.baseY;
+					dx = (2 * dx > +this.replay.cols) ? dx - this.replay.cols : (2 * dx < -this.replay.cols) ? this.replay.cols - dx : dx;
+					dy = (2 * dy > +this.replay.rows) ? dy - this.replay.rows : (2 * dy < -this.replay.rows) ? this.replay.rows - dy : dy;
+					if (dx * dx + dy * dy <= this.replay.meta['replaydata']['attackradius2']) {
+						ctx.beginPath();
+						ctx.moveTo(ant1['x'], ant1['y']);
+						ctx.lineTo(ant1['x'] - dx * halfScale, ant1['y'] - dy * halfScale);
+						ctx.strokeStyle = this.replay.htmlPlayerColors[ant2['owner']];
+						ctx.stroke();
+						ctx.beginPath();
+						ctx.moveTo(ant2['x'], ant2['y']);
+						ctx.lineTo(ant2['x'] + dx * halfScale, ant2['y'] + dy * halfScale);
+						ctx.strokeStyle = this.replay.htmlPlayerColors[ant1['owner']];
+						ctx.stroke();
+					}
+				}
+			}
+		}
+	}
+	if (this.mouseOverVis) {
 		for (key in drawStates) {
 			ctx.strokeStyle = '#' + key;
 			drawList = drawStates[key];
@@ -1393,8 +1465,8 @@ Visualizer.prototype.draw = function(time, tick) {
 				}
 			}
 		}
-		ctx.restore();
 	}
+	ctx.restore();
 	// render fog onto map
 	if (this.fog) ctx.drawImage(this.overlay.canvas, 0, 0);
 	// draw mouse location

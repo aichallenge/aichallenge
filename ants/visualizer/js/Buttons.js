@@ -188,7 +188,10 @@ function TextButton(group, text, color, onclick) {
 }
 TextButton.prototype.draw = Button.prototype.draw;
 TextButton.prototype.drawInternal = function(ctx) {
-	ctx.shadowColor = 'rgba(255,255,255,1)';
+	ctx.shadowColor = COLOR_SAND;
+	ctx.shadowOffsetX = 0;
+	ctx.shadowOffsetY = 0;
+	ctx.shadowBlur = 2;
 	ctx.textAlign = 'left';
 	ctx.textBaseline = 'bottom';
 	ctx.font = FONT;
