@@ -134,9 +134,9 @@ function produce_cache_results($page=0, $org_id=NULL, $country_id=NULL, $languag
 
 function change_marker($value, $cushion, $reverse=FALSE) {
     if ($value > $cushion) {
-        return $reverse ? "&darr" : "&uarr;";
+        return $reverse ? "&darr;" : "&uarr;";
     } elseif ($value < -$cushion) {
-        return $reverse ? "&uarr" : "&darr;";
+        return $reverse ? "&uarr;" : "&darr;";
     } else {
         return "&ndash;";
     }
