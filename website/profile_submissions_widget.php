@@ -59,6 +59,7 @@ EOT;
 $submission_query = <<<EOT
 select
     s.status,
+    s.errors,
     date_format(s.timestamp,'%b %D %H:%i:%S') as timestamp,
     l.name as language
 from
@@ -89,7 +90,7 @@ EOT;
     if (!$viewmore) {
         $table .= getPaginationString($page, $rowcount, $viewresults, $viewlink);
     }
-    $table .= "<table class=\"submissions\"><thead><tr><th>Submission Time</th><th>Status</th><th>Language</th></tr></thead><tbody>";
+    $table .= "<table class=\"submissions\"><thead><tr><th>Submission Time</th><th>Status</th><th>Errors</th><th>Language</th></tr></thead><tbody>";
     for ($i = 1; $row = mysql_fetch_assoc($submission_results); $i += 1) {
         $status = $row["status"];
         $status_class = ($status == 40 ? "success": (($status == 30 || $status > 40)? "fail" : "inprogress"));
@@ -103,10 +104,12 @@ EOT;
         $language = $row["language"];
         $language_link = urlencode($language);
         $row_class = $i % 2 == 0 ? "even" : "odd";
+        $status_errors = $row["errors"];
 
         $table .= "<tr class=\"$row_class\">";
         $table .= "  <td>$timestamp</td>";
         $table .= "  <td class=\"$status_class\">$status</td>";
+        $table .= "  <td>$status_errors</td>";
         $table .= "  <td><a href=\"language_profile.php?language=$language_link\">
             $language</a></td>";
         $table .= "</tr>";
