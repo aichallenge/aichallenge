@@ -137,7 +137,7 @@ function produce_cache_results($page=0, $user_id=NULL, $submission_id=NULL, $map
                 $cur_row[7][] = $list_row[7];
                 $cur_row[8][] = $list_row[8];
                 if ($list_row[2] == $user_id or $list_row[3] == $submission_id) {
-                    $cur_row[] = $list_row[5];
+                    $cur_row[] = $list_row[6] - $list_row[5]*3;
                     $cur_row[] = $list_row[8];
                 }
             } else {
@@ -158,7 +158,7 @@ function produce_cache_results($page=0, $user_id=NULL, $submission_id=NULL, $map
                 $cur_row[7] = array($cur_row[7]);
                 $cur_row[8] = array($cur_row[8]);
                 if ($list_row[2] == $user_id or $list_row[3] == $submission_id) {
-                    $cur_row[] = $list_row[5];
+                    $cur_row[] = $list_row[6] - $list_row[5]*3;
                     $cur_row[] = $list_row[8];
                 }
             }
@@ -182,15 +182,15 @@ function produce_cache_results($page=0, $user_id=NULL, $submission_id=NULL, $map
 
 function nice_interval($interval) {
     if ($interval->y > 0) {
-        return $interval->format('%yyrs %mm');
+        return $interval->format('%y yrs %m months');
     } elseif ($interval->m > 0) {
-        return $interval->format('%mm %ddays');
+        return $interval->format('%m months %d days');
     } elseif ($interval->d > 0) {
-        return $interval->format('%dd %hhrs');
+        return $interval->format('%d days %h hrs');
     } elseif ($interval->h > 0) {
-        return $interval->format('%hhrs %im');
+        return $interval->format('%h hrs %i min');
     } else {
-        return $interval->format('%im %ss');
+        return $interval->format('%i min %s sec');
     }
 }
 
@@ -270,11 +270,11 @@ function create_game_list_table($json, $top=FALSE, $targetpage=NULL) {
             $table .= "<tr class=\"$oddity$user_class\">";
 
             $time = new DateTime($row["timestamp"]);
-            $time = no_wrap(nice_interval($now->diff($time)));
+            $time = "<span title=\"".no_wrap(nice_interval($now->diff($time))." ago")."\">".no_wrap($time->format('j M G:i'))."</span>";
             $table .= "<td>$time</td>";
 
             if ($user_id) {
-                $skill = number_format($row["user_mu"], 2);
+                $skill = number_format(max(0.0, $row["user_mu"]), 2);
                 $table .= "<td class=\"number\">$skill</td>";
             }
 

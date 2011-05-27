@@ -194,3 +194,10 @@ div.pagination span {
     padding: 2px 4px;
     border: solid 1px #f8f8f8;
 }
+
+pre.error {
+    border: dashed 1px DarkRed;
+    font-family: Consolas, Inconsolata, monospace;
+    text-align: right;
+    padding: 5px;
+}

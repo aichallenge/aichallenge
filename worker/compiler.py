@@ -377,14 +377,13 @@ def detect_language(bot_dir):
 
         # If no language was detected
         if len(detected_langs) > 1:
-            return None, {'errors': [],
-                          'language_count': len(detected_langs),
-                          'language_list': [lang[1] for lang in detected_langs]}
+            return None, ['Found multiple MyBot.* files: \n'+
+                          '\n'.join([lang[1] for lang in detected_langs])]
         elif len(detected_langs) == 0:
-            return None, {'errors': [],
-                          'language_count': 0}
+            return None, ['Did not find MyBot.* file.\nPlease add one of the following filename to your zip file:\n'
+                          +'\n'.join(key + ": " + val[1] for key, val in language.items())]
         else:
-            return detected_langs[0], {'errors': []}
+            return detected_langs[0], None
 
 def get_run_cmd(submission_dir):
     """Get the language of a submission"""
@@ -409,19 +408,20 @@ def compile_anything(bot_dir):
     with CD(bot_dir):
         detected_language, errors = detect_language(bot_dir)
         if detected_language:
-            # If we get this far, then we have successfully auto-detected 
+            # If we get this far, then we have successfully auto-detected
             # the language that this entry is using.
             main_code_file = detected_language[1]
             detected_lang = detected_language[-1]
             run_cmd = detected_language[2]
-            if compile_function(detected_lang, errors['errors']):
+            errors = []
+            if compile_function(detected_lang, errors):
                 with open('../run.sh', 'w') as f:
                     f.write('#%s\n%s\n' % (detected_lang, run_cmd))
-                return detected_lang, errors
+                return detected_lang, None
             else:
-                return None, errors
+                return detected_lang, errors
         else:
-            return None, errors
+            return "Unknown", errors
 
 def main(argv=sys.argv):
     parser = OptionParser(usage="Usage: %prog [options] [directory]")
@@ -440,10 +440,9 @@ def main(argv=sys.argv):
         print json.dumps([detected_lang, errors])
     else:
         print "Detected language:", detected_lang
-        if len(errors['errors']) != 0:
-            for error in errors['errors']:
+        if errors != None and len(errors) != 0:
+            for error in errors:
                 print(error)
 
 if __name__ == "__main__":
     main()
-

@@ -61,11 +61,10 @@ $submission_query = <<<EOT
 select
     s.status,
     s.errors,
-    date_format(s.timestamp,'%b %D %H:%i:%S') as timestamp,
+    s.timestamp,
     l.name as language
 from
-    submission r
-    inner join submission s on s.submission_id = r.submission_id
+    submission s
     inner join user u on u.user_id = s.user_id
     inner join language l on l.language_id = s.language_id
 where
@@ -105,7 +104,7 @@ EOT;
         $language = $row["language"];
         $language_link = urlencode($language);
         $row_class = $i % 2 == 0 ? "even" : "odd";
-        $status_errors = $row["errors"];
+        $errors = $row["errors"];
 
         $table .= "<tr class=\"$row_class\">";
         $table .= "  <td>$timestamp</td>";
@@ -114,17 +113,15 @@ EOT;
             $language</a></td>";
         $table .= "</tr>";
         // TODO: turn off for all users during competition
-        if (TRUE or $user_id == current_user_id()) {
+        if ($errors and $status_class == "fail" and (TRUE or $user_id == current_user_id())) {
             $errors = json_decode($status_errors);
-            if ($errors->language_count == 0) {
-                $error_msg = "<pre>MyBot.* file with known extension not found.</pre>";
-            } else {
-                $error_msg = "<pre>";
+            $error_msg = "<pre class=\"error\">";
+            if (isset($errors->errors)) {
                 for ($i = 0; $i < count($errors->errors); $i++) {
-                    $error_msg .= str_replace('\n', '<br />', $errors->errors[$i])."\n";
+                    $error_msg .= str_replace('\n', "\n", $errors->errors[$i])."\n";
                 }
-                $error_msg = "</pre>";
             }
+            $error_msg .= "</pre>";
             $table .= "<tr><td colspan=\"3\">$error_msg</td></tr>";
         }
     }

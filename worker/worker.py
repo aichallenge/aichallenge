@@ -313,13 +313,12 @@ class Worker:
             log.info("Compiling %s " % submission_id)
             bot_dir = os.path.join(download_dir, 'bot')
             detected_lang, errors = compiler.compile_anything(bot_dir)
-            if errors and errors['errors']:
+            if errors != None:
                 log.info(errors)
-            if not detected_lang:
                 if not self.debug:
                     shutil.rmtree(download_dir)
                 log.error(str(errors))
-                report(STATUS_COMPILE_ERROR, errors=errors);
+                report(STATUS_COMPILE_ERROR, detected_lang, errors=errors);
                 log.error("Compile Error")
                 return False
             else:
