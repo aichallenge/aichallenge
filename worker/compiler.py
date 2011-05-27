@@ -176,7 +176,7 @@ comp_args = {
     "Haskell" : [["ghc", "--make", BOT + ".hs", "-O", "-v0"]],
     "Java"        : [["javac"],
                              ["jar", "cfe", BOT + ".jar", BOT]],
-    "Lisp"      : [['sbcl', '--dynamic-space-size', '64', '--script', BOT + '.lisp']],
+    "Lisp"      : [['sbcl', '--dynamic-space-size', '256', '--script', BOT + '.lisp']],
     "OCaml"     : [["ocamlbuild", BOT + ".native"]],
     "Scala"     : [["scalac"]],
     }
@@ -284,7 +284,7 @@ languages = {
     "Lisp":
         ("",
          "MyBot.lisp",
-         "./MyBot",
+         "./MyBot --dynamic-space-size 256",
         [BOT],
         [([""], ExternalCompiler(comp_args["Lisp"][0]))]),
     "Lua":
