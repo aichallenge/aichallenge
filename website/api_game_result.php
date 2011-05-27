@@ -76,7 +76,7 @@ if ($gamedata == null) {
             }
         }
         $gamedata->user_url = "http://" . $gamedata->location . "/profile.php?user=~";
-        $gamedata->game_url = "http://" . $gamedata->location . "/visualizer.php?game_id=~";
+        $gamedata->game_url = "http://" . $gamedata->location . "/visualizer.php?game=~";
         $gamedata->date = date(DATE_ATOM);
         $gamedata->game_id = $game_id;
         // create pathname to replay file
