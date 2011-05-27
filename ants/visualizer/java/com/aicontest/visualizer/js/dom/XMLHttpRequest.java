@@ -85,7 +85,7 @@ public class XMLHttpRequest {
 		byte[] bytes = new byte[length];
 		int pos = 0;
 		int read;
-		while ((read = conn.getInputStream().read(bytes, pos, bytes.length - pos)) != -1) {
+		while ((read = conn.getInputStream().read(bytes, pos, bytes.length - pos)) > 0) {
 			pos += read;
 		}
 		responseText = new String(bytes);
