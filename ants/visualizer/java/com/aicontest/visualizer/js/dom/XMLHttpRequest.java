@@ -83,7 +83,11 @@ public class XMLHttpRequest {
 	public void send() throws Exception {
 		int length = conn.getContentLength();
 		byte[] bytes = new byte[length];
-		conn.getInputStream().read(bytes);
+		int pos = 0;
+		int read;
+		while ((read = conn.getInputStream().read(bytes, pos, bytes.length - pos)) != -1) {
+			pos += read;
+		}
 		responseText = new String(bytes);
 		readyState = 4;
 		WebWrapper.getInstance().addTask(new EventExecutionUnit(this, "onreadystatechange", new Object[0]));
