@@ -1,4 +1,4 @@
-;;;; ants-bot.lisp
+;;;; ants.lisp
 
 ;;; State Class
 
@@ -75,7 +75,6 @@
   returns NIL."
   (let ((nl (new-location row col direction)))
     (= 1 (aref (game-map *state*) (elt nl 0) (elt nl 1)))))
-
 
 (defun finish-turn ()
   "Prints the \"finish turn\" string to standard output."
