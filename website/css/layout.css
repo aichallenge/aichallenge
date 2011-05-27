@@ -4,11 +4,11 @@ html {
 }
 
 body {
-    background: #A0522D;
-    filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#A0522D', endColorstr='#8B4513', GradientType=0); /* for IE */
-    background: -webkit-gradient(linear, left top, 0% 100%, from(#A0522D), to(#8B4513));
-    background: -moz-linear-gradient(top,  #A0522D,  #8B4513);
-    background: -o-linear-gradient(#A0522D,#8B4513);
+    background: #603814;
+    filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#603814', endColorstr='#300400', GradientType=0); /* for IE */
+    background: -webkit-gradient(linear, left top, 0% 100%, from(#603814), to(#300400));
+    background: -moz-linear-gradient(top,  #603814,  #300400);
+    background: -o-linear-gradient(#603814,#300400);
     background-attachment: fixed;
 }
 
@@ -163,7 +163,7 @@ body {
     margin: 5px 10px;
 }
 #menu a {
-    color: #fff
+    color: #fff;
 }
 
 #footer {
