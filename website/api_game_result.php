@@ -85,12 +85,12 @@ if ($gamedata == null) {
             api_log("Replay dir: " . $replay_dir);
             mkdir($replay_dir, 0775, true);
         }
-        $replay_filename = $replay_dir . "/" . $game_id . ".replay";
+        $replay_filename = $replay_dir . "/" . $game_id . ".replaygz";
         api_log("Replay file: " . $replay_filename);
         try {
             api_log("Cwd: " . getcwd());
             $replay_file = fopen($replay_filename, 'w') or api_log(json_encode(error_get_last()));
-            fwrite($replay_file, json_encode($gamedata));
+            fwrite($replay_file, gzencode(json_encode($gamedata), 9));
             fclose($replay_file);
             chmod($replay_filename, 0664);
             echo json_encode(array( "hash" => $json_hash ));
