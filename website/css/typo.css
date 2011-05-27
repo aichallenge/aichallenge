@@ -1,5 +1,5 @@
 @charset "utf-8";
- 
+
 @import url("http://fonts.googleapis.com/css?family=Ubuntu");
 
 body {
@@ -19,15 +19,15 @@ h1 {
 }
 
 h2 {
-    font-size: 2.5em;   
+    font-size: 2.5em;
 }
 
 h3 {
-    font-size: 2em; 
+    font-size: 2em;
 }
 
 h4 {
-    font-size: 1.5em; 
+    font-size: 1.5em;
     font-weight: normal;
 }
 
@@ -88,7 +88,7 @@ h2:before, h3:before {
 
 /*Links*/
 a {
-    color: #a00;
+    color: #8B4513;
     text-decoration: none;
 }
 
@@ -102,7 +102,7 @@ pre, code {
 }
 pre {
     padding: 10px;
-    
+
     display: block;
     margin-bottom: 1em;
 }
@@ -113,7 +113,7 @@ code {
 
 /*Tables*/
 th {
-    color: #900;
+    color: #050;
 }
 
 /* Misc */
@@ -145,4 +145,38 @@ table {
     padding-bottom: 0px;
     font-size: 40px;
     text-align: center;
+}
+
+/* Ranking */
+
+table.ranking caption {
+    margin: 4px;
+}
+
+table.ranking a {
+    color: #A0522D;
+}
+
+tr.old {
+    filter: alpha(opacity=30);
+    filter: progid:DXImageTransform.Microsoft.Alpha(opacity=30);
+    -moz-opacity: 0.30;
+    opacity:0.3;
+}
+
+tr.odd {
+    border: solid 1px #f8f8f8;
+}
+tr.even {
+    background-color: #f8fff0;
+}
+td.number {
+    font-family: Consolas, Inconsolata, monospace;
+    text-align: right;
+}
+
+div.pagination span {
+    margin: 0px 2px;
+    padding: 2px 4px;
+    border: solid 1px #f8f8f8;
 }

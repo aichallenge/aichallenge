@@ -10,13 +10,19 @@ values (now(), 'TrueSkill', 0, 1);
 
 set @leader = last_insert_id();
 
-insert into ranking (leaderboard_id, user_id, submission_id, version, seq, rank, rank_change, skill, skill_change, latest, age)
+insert into ranking (leaderboard_id, user_id, submission_id, version, seq,
+                     rank, rank_change, mu, mu_change, sigma, sigma_change,
+                     skill, skill_change, latest, age)
 select
     @leader as leaderboard_id,
     s.user_id, s.submission_id, s.version,
     @count1 := @count1 + 1 as seq,
     @rank := if(s.latest > 0, @count2 := @count2 + 1 , null) as rank,
-    r.rank - @rank as rank_change, s.mu as skill, s.mu - r.skill as skill_change, s.latest, timediff(now(),s.timestamp) as age
+    r.rank - @rank as rank_change,
+    s.mu as mu, s.mu - r.mu as mu_change,
+    s.sigma as sigma, s.sigma - r.sigma as sigma_change,
+    @skill := if(3*s.sigma>s.mu, 0.0, s.mu - s.sigma * 3) as skill, @skill - r.skill as skill_change,
+    s.latest, timediff(now(),s.timestamp) as age
 from
     submission s
     -- inner join to ensure both user and submission record exists
@@ -38,7 +44,7 @@ or s.submission_id in (
         group by user_id
     )
 )
-order by s.mu desc, s.sigma asc, s.timestamp asc;
+order by s.mu - s.sigma * 3 desc, s.mu desc, s.sigma asc, s.submission_id asc;
 
 update submission
 set sigma = sigma + (0.1 * (

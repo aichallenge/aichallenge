@@ -4,6 +4,8 @@ require_once('mysql_login.php');
 require_once('memcache.php');
 require_once('pagination.php');
 
+$page_size = 10;
+
 //require_once('session.php');
 // session is needed to highlight the current user
 // but is not included here so that json requests go faster
@@ -44,8 +46,8 @@ function cache_key($page=0, $org_id=NULL, $country_id=NULL, $language_id=NULL, $
 
 function produce_cache_results($page=0, $org_id=NULL, $country_id=NULL, $language_id=NULL) {
     global $memcache;
+    global $page_size;
 
-    $page_size = 10;
     $json = array("fields" => array(),
                   "values" => array());
     if ($org_id !== NULL) {
@@ -130,7 +132,19 @@ function produce_cache_results($page=0, $org_id=NULL, $country_id=NULL, $languag
     return NULL;
 }
 
+function change_marker($value, $cushion, $reverse=FALSE) {
+    if ($value > $cushion) {
+        return $reverse ? "&darr" : "&uarr;";
+    } elseif ($value < -$cushion) {
+        return $reverse ? "&uarr" : "&darr;";
+    } else {
+        return "&ndash;";
+    }
+}
+
 function create_ranking_table($json) {
+    global $page_size;
+
     if ($json == NULL) {
         return '<h4>There are no rankings at this time.  Please check back later.</h4>';
     }
@@ -154,6 +168,7 @@ function create_ranking_table($json) {
   <th>Country</th>
   <th>Organization</th>
   <th>Language</th>
+  <th>Version</th>
   <th>Skill</th>
 </tr>
 </thead>';
@@ -164,15 +179,25 @@ function create_ranking_table($json) {
         foreach ($json["values"] as $values) {
             $row = array_combine($fields, $values);
 
-            // $rank = ($filter == null)? $rank : ($i + $offset) . " <span title='Global Rank'>($rank)</span>";
-            // $rank_percent = $row["rank_percent"];
-
             $oddity = $oddity == 'odd' ? 'even' : 'odd';  // quite odd?
             $user_class = current_username() == $row["username"] ? ' user' : '';
-            $table .= "<tr class=\"$oddity$user_class\">";
+            $rank_class = $row["rank"] ? '' : ' old';
+            $table .= "<tr class=\"$oddity$user_class$rank_class\">";
 
             $rank = $row["rank"];
-            $table .= "<td>$rank</td>";
+            if ($rank) {
+                $rank_change = change_marker($row["rank_change"], 0, TRUE);
+                if (in_array("filter_rank", $fields)) {
+                    $rank = str_pad("(".strval($rank).")", 6, " ", STR_PAD_LEFT);
+                    $filter_rank = str_pad(strval($row["filter_rank"]), 4, " ", STR_PAD_LEFT);
+                    $table .= "<td class=\"number\">$filter_rank <span title=\"Global Rank\">$rank $rank_change</span></td>";
+                } else {
+                    $rank = str_pad(strval($rank), 4, " ", STR_PAD_LEFT);
+                    $table .= "<td class=\"number\">$rank $rank_change</td>";
+                }
+            } else {
+                $table .= "<td class=\"number\"><span title=\"old submission's high water mark\">(>\")></span>";
+            }
 
             $user_id = $row["user_id"];
             $username = htmlentities($row["username"]);
@@ -192,8 +217,13 @@ function create_ranking_table($json) {
             $programming_language_link = urlencode($row["programming_language"]);
             $table .= "<td><a href=\"language_profile.php?language=$programming_language_link\">$programming_language</a></td>";
 
-            $skill = $row["skill"];
-            $table .= "<td>$skill</td>";
+            $version = $row["version"];
+            $table .= "<td class=\"number\">$version</td>";
+
+            $skill = number_format($row["skill"], 2);
+            $skill_change = change_marker($row["skill_change"], 0.1);
+            $skill_hint = sprintf("mu=%0.2f(%+0.2f) sigma=%0.2f(%+0.2f) skill=%0.2f(%+0.2f)", $row["mu"], $row["mu_change"], $row["sigma"], $row["sigma_change"], $row["skill"], $row["skill_change"]);
+            $table .= "<td class=\"number\"><span title=\"$skill_hint\">$skill $skill_change</span></td>";
 
             $table .= "</tr>";
         }

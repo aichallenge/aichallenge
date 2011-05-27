@@ -1,6 +1,17 @@
 <?php
 include_once "pagination.php";
 
+$status_msg = array(10 => "Created: entry record created in database",
+                    20 => "Uploaded: ready to be unzipped and compiled",
+                    30 => "Compiling: compiling and running tests",
+                    40 => "Success: ready to play",
+                    50 => "Download Error: error receiving submission zip file",
+                    60 => "Unpack Error: error while unzipping submission file",
+                    70 => "Compile Error: error while compiling submission",
+                    80 => "Test Error: compiled, but failed test cases",
+                    90 => "Upload Error: server failed to retrieve uploaded file correctly",
+                    0  => "Unknown Error");
+
 /*
  * getSubmissionTableString
  *
@@ -11,6 +22,8 @@ include_once "pagination.php";
  */
 function getSubmissionTableString($user_id, $viewmore = true, $viewresults = 10, $viewlink, $page=0)
 {
+    global $status_msg;
+
     // Avoid SQL injections
     if(!filter_var($user_id, FILTER_VALIDATE_INT)) {
         return "";
@@ -80,16 +93,11 @@ EOT;
     for ($i = 1; $row = mysql_fetch_assoc($submission_results); $i += 1) {
         $status = $row["status"];
         $status_class = ($status == 40 ? "success": (($status == 30 || $status > 40)? "fail" : "inprogress"));
-        $status = ($status == 10 ? "Created: entry record created in database"
-            : ($status == 20 ? "Uploaded: ready to be unzipped and compiled"
-            : ($status == 30 ? "Compiling: compiling and running tests"
-            : ($status == 40 ? "Success: ready to play"
-            : ($status == 50 ? "Download Error: error receiving submission zip file"
-            : ($status == 60 ? "Unpack Error: error while unzipping submission file"
-            : ($status == 70 ? "Compile Error: error while compiling submission"
-            : ($status == 80 ? "Test Error: compiled, but failed test cases"
-            : ($status >= 90 ? "Upload Error: server failed to retrieve uploaded file correctly"
-            : "Unknown Error")))))))));
+        if (isset($status_msg[$status])) {
+            $status = $status_msg[$status];
+        } else {
+            $status = $status_msg[0];
+        }
 
         $timestamp = $row["timestamp"];
         $language = $row["language"];

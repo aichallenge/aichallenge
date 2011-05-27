@@ -4,22 +4,22 @@ html {
 }
 
 body {
-    background: #68e;
-    filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#6688ee', endColorstr='#2233ff', GradientType=0); /* for IE */
-    background: -webkit-gradient(linear, left top, 0% 100%, from(#68e), to(#23f));
-    background: -moz-linear-gradient(top,  #68e,  #23f);
-    background: -o-linear-gradient(#68e,#23f);
+    background: #A0522D;
+    filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#A0522D', endColorstr='#8B4513', GradientType=0); /* for IE */
+    background: -webkit-gradient(linear, left top, 0% 100%, from(#A0522D), to(#8B4513));
+    background: -moz-linear-gradient(top,  #A0522D,  #8B4513);
+    background: -o-linear-gradient(#A0522D,#8B4513);
     background-attachment: fixed;
 }
 
 #wrapper {
     position: relative;
-    
+
     margin: 10px auto;
     width: 960px;
-    
+
     background: #fff;
-    
+
     -moz-box-shadow: 0px 0px 40px rgba(0, 0, 0, 0.5);
     -webkit-box-shadow: 0px 0px 40px rgba(0, 0, 0, 0.5);
     box-shadow: 0px 0px 40px rgba(0, 0, 0, 0.5);
@@ -81,7 +81,7 @@ body {
     position: absolute;
     right: 0px;
     z-index: 1;
-    
+
     text-align: left;
     text-shadow: #7a0 0px 0px 20px; /*Glow*/
 }
@@ -136,7 +136,7 @@ body {
 #content {
     background: #fff;
     padding: 15px;
-    
+
     min-height: 630px;
 }
 

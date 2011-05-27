@@ -122,7 +122,8 @@ $sql = array(
                c.country_id, c.name as country, c.country_code, c.flag_filename,
                l.language_id, l.name as programming_language,
                o.org_id, o.name as org_name,
-               r.*
+               r.*,
+               if(r.rank is not null, @count1 := @count1 + 1 , null) as filter_rank
         from ranking r
         inner join user u
             on r.user_id = u.user_id
@@ -133,7 +134,8 @@ $sql = array(
         left outer join language l
             on l.language_id = s.language_id
         left outer join country c
-            on u.country_id = c.country_id
+            on u.country_id = c.country_id,
+        (select @count1 := 0) c1
         where r.leaderboard_id = (
             select max(leaderboard_id)
             from leaderboard
@@ -144,7 +146,8 @@ $sql = array(
                c.country_id, c.name as country, c.country_code, c.flag_filename,
                l.language_id, l.name as programming_language,
                o.org_id, o.name as org_name,
-               r.*
+               r.*,
+               if(r.rank is not null, @count1 := @count1 + 1 , null) as filter_rank
         from ranking r
         inner join user u
             on r.user_id = u.user_id
@@ -155,7 +158,8 @@ $sql = array(
         left outer join language l
             on l.language_id = s.language_id
         left outer join country c
-            on u.country_id = c.country_id
+            on u.country_id = c.country_id,
+        (select @count1 := 0) c1
         where r.leaderboard_id = (
             select max(leaderboard_id)
             from leaderboard
@@ -166,7 +170,8 @@ $sql = array(
                c.country_id, c.name as country, c.country_code, c.flag_filename,
                l.language_id, l.name as programming_language,
                o.org_id, o.name as org_name,
-               r.*
+               r.*,
+               if(r.rank is not null, @count1 := @count1 + 1 , null) as filter_rank
         from ranking r
         inner join user u
             on r.user_id = u.user_id
@@ -177,7 +182,8 @@ $sql = array(
         left outer join language l
             on l.language_id = s.language_id
         left outer join country c
-            on u.country_id = c.country_id
+            on u.country_id = c.country_id,
+        (select @count1 := 0) c1
         where r.leaderboard_id = (
             select max(leaderboard_id)
             from leaderboard
