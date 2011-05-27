@@ -1,5 +1,6 @@
 <?php
 include_once "pagination.php";
+require_once("session.php");
 
 $status_msg = array(10 => "Created: entry record created in database",
                     20 => "Uploaded: ready to be unzipped and compiled",
@@ -90,7 +91,7 @@ EOT;
     if (!$viewmore) {
         $table .= getPaginationString($page, $rowcount, $viewresults, $viewlink);
     }
-    $table .= "<table class=\"submissions\"><thead><tr><th>Submission Time</th><th>Status</th><th>Errors</th><th>Language</th></tr></thead><tbody>";
+    $table .= "<table class=\"submissions\"><thead><tr><th>Submission Time</th><th>Status</th><th>Language</th></tr></thead><tbody>";
     for ($i = 1; $row = mysql_fetch_assoc($submission_results); $i += 1) {
         $status = $row["status"];
         $status_class = ($status == 40 ? "success": (($status == 30 || $status > 40)? "fail" : "inprogress"));
@@ -109,10 +110,22 @@ EOT;
         $table .= "<tr class=\"$row_class\">";
         $table .= "  <td>$timestamp</td>";
         $table .= "  <td class=\"$status_class\">$status</td>";
-        $table .= "  <td>$status_errors</td>";
         $table .= "  <td><a href=\"language_profile.php?language=$language_link\">
             $language</a></td>";
         $table .= "</tr>";
+        if ($user_id == current_user_id()) {
+            $errors = json_decode($status_errors);
+            if ($errors->language_count == 0) {
+                $error_msg = "<pre>MyBot.* file with known extension not found.</pre>";
+            } else {
+                $error_msg = "<pre>";
+                for ($i = 0; $i < count($errors->errors); $i++) {
+                    $error_msg .= str_replace('\n', '<br />', $errors->errors[$i])."\n";
+                }
+                $error_msg = "</pre>";
+            }
+            $table .= "<tr><td colspan=\"3\">$error_msg</td></tr>";
+        }
     }
     $table .= "</tbody></table>";
     if ($viewmore && $rowcount > $viewresults) {
