@@ -13,6 +13,11 @@ $uptime = explode(' up ', $uptime);
 $uptime = explode(', ', $uptime[1]);
 $uptime = $uptime[0].', '.$uptime[1];
 
+$query = "select count(*) from game;";
+$result = mysql_query($query);
+$row = mysql_fetch_row($result);
+$num_games = $row[0];
+
 $query = "select count(*) from user where activated=1 and created > (now() - interval 24 hour)";
 $result = mysql_query($query);
 $row = mysql_fetch_row($result);
@@ -65,10 +70,12 @@ if (is_readable($PAIRCUT_FILE)) {
 <table class="bigstats">
   <tr>
     <td><?php echo $num_users?></td>
+    <td><?php echo $num_games?></td>
     <td><?php echo $uptime?></td>
   </tr>
   <tr>
     <th>Total users</th>
+    <th>Total games played</th>
     <th>Manager uptime</th>
   </tr>
 </table>
