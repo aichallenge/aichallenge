@@ -24,7 +24,7 @@ select
     @skill := if(3*s.sigma>s.mu, 0.0, s.mu - s.sigma * 3) as skill, @skill - r.skill as skill_change,
     s.latest, timediff(now(),s.timestamp) as age
 from
-    submission s
+    (select * from submission order by mu - sigma * 3 desc, mu desc, sigma asc, submission_id asc) s
     -- inner join to ensure both user and submission record exists
     inner join user u
         on s.user_id = u.user_id
@@ -43,8 +43,7 @@ or s.submission_id in (
         where leaderboard_id = @last_leader
         group by user_id
     )
-)
-order by s.mu - s.sigma * 3 desc, s.mu desc, s.sigma asc, s.submission_id asc;
+);
 
 update submission
 set sigma = sigma + (0.1 * (
