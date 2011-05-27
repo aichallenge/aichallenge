@@ -1,0 +1,77 @@
+<!--
+To change this template, choose Tools | Templates
+and open the template in the editor.
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+  <head>
+    <title></title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+	<script type="text/javascript" src="js/Const.js"></script>
+	<script type="text/javascript" >
+var cur = 0;
+
+function prev() {
+	cur = (cur + 25) % 26;
+	redraw();
+}
+
+function next() {
+	cur = (cur + 1) % 26;
+	redraw();
+}
+
+function generate() {
+	PLAYER_COLORS[cur] = [(256 * Math.random())|0,(256 * Math.random())|0,(256 * Math.random())|0];
+	redraw();
+}
+
+function pad(num) {
+	var txt = '' + num;
+	while (txt.length < 3) txt = ' ' + txt;
+	return txt;
+}
+
+function redraw() {
+	var ctx = document.getElementById('canvas').getContext('2d');
+	ctx.fillStyle = '#073992';
+	ctx.fillRect(0,  0,1080,40);
+	ctx.fillStyle = COLOR_SAND;
+	ctx.fillRect(0, 40,1080,40);
+	ctx.fillStyle = 'rgb(' + FOOD_COLOR[0] + ',' + FOOD_COLOR[1] + ',' + FOOD_COLOR[2] + ')';
+	ctx.fillRect(0, 80,1080,40);
+	ctx.fillStyle = 'rgb(' + PLAYER_COLORS[cur][0] + ',' + PLAYER_COLORS[cur][1] + ',' + PLAYER_COLORS[cur][2] + ')';
+	ctx.fillRect(0,120,1080,40);
+	var out = document.getElementById('output');
+	out.innerHTML = 'var PLAYER_COLORS = [';
+	for (var i = 0; i < 26; i++) {
+		if (i) out.innerHTML += ',';
+		out.innerHTML += (i % 4 === 0) ? '\n\t' : ' ';
+		out.innerHTML += '[ ' + pad(PLAYER_COLORS[i][0]) + ', ' + pad(PLAYER_COLORS[i][1]) + ', ' + pad(PLAYER_COLORS[i][2]) + ' ]';
+		ctx.fillStyle = 'rgb(' + PLAYER_COLORS[i][0] + ',' + PLAYER_COLORS[i][1] + ',' + PLAYER_COLORS[i][2] + ')';
+		ctx.fillRect(20+i*40,20,40,40);
+		ctx.fillRect(20+i*40,100,40,40);
+	}
+	out.innerHTML += '\n];';
+}
+
+function left() {
+	if (cur) {
+		var tmp = PLAYER_COLORS[cur - 1];
+		PLAYER_COLORS[cur - 1] = PLAYER_COLORS[cur];
+		PLAYER_COLORS[cur] = tmp;
+		cur--;
+		redraw();
+	}
+}
+	</script>
+  </head>
+  <body onload="redraw()">
+    <canvas id="canvas" width="1080" height="160"></canvas><br>
+	<input type="button" value="prev" onclick="prev()"/>
+	<input type="button" value="generate" onclick="generate()"/>
+	<input type="button" value="next" onclick="next()"/>
+	<input type="button" value="move left" onclick="left()"/>
+	<pre id="output"></pre>
+  </body>
+</html>
