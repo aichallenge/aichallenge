@@ -645,8 +645,9 @@ Visualizer.prototype.tryStart = function() {
 			if (this.replay.duration > 0) {
 				if (this.options['turn']) {
 					this.director.gotoTick(this.options['turn'] - 1);
+				} else {
+					this.director.play();
 				}
-				this.director.play();
 			}
 			this.log.style.display = 'none';
 			this.loading = LoadingState.IDLE;
