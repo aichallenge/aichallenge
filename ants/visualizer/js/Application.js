@@ -124,11 +124,6 @@ Visualizer = function(container, dataDir, interactive, w, h, config) {
 	 */
 	this.director = new Director(this);
 	/**
-	 * presistable configuration values
-	 * @private
-	 */
-	this.config = new Config(config);
-	/**
 	 * Options from URL GET parameters or the constructor arguments
 	 * @private
 	 */
@@ -146,10 +141,23 @@ Visualizer = function(container, dataDir, interactive, w, h, config) {
 			value = parameters[i].substr(equalPos + 1);
 			if (key === 'debug' || key === 'profile' || key === 'interactive') {
 				value = value == 'true' || value == '1';
+			} else if (key === 'row' || key === 'col' || key === 'turn') {
+				value = parseInt(value);
+				if (!(value >= 0)) value = 0;
 			}
 			this.options[key] = value;
 		}
 	}
+	// set default zoom to max if we are going to zoom in on a square
+	if (this.options['row'] !== undefined && this.options['col'] !== undefined) {
+		if (!config) config = {};
+		config['zoom'] = ZOOM_SCALE;
+	}
+	/**
+	 * presistable configuration values
+	 * @private
+	 */
+	this.config = new Config(config);
 	/**
 	 * @private
 	 */
@@ -628,8 +636,16 @@ Visualizer.prototype.tryStart = function() {
 				vis.resize();
 			};
 			Visualizer.prototype.focused = this;
+			// move to a specific row and col
+			if (this.options['row'] !== undefined && this.options['col'] !== undefined) {
+				this.shiftY = (0.5 * this.replay.rows - 0.5) * ZOOM_SCALE - (this.options['row'] % this.replay.rows) * ZOOM_SCALE;
+				this.shiftX = (0.5 * this.replay.cols - 0.5) * ZOOM_SCALE - (this.options['col'] % this.replay.cols) * ZOOM_SCALE;
+			}
 			this.setFullscreen(this.config['fullscreen']);
 			if (this.replay.duration > 0) {
+				if (this.options['turn']) {
+					this.director.gotoTick(this.options['turn'] - 1);
+				}
 				this.director.play();
 			}
 			this.log.style.display = 'none';
@@ -1025,6 +1041,20 @@ Visualizer.prototype.renderMap = function(ctx, scale) {
 			}
 		}
 	}
+	if (this.options['row'] !== undefined && this.options['col'] !== undefined) {
+		for (i = 1; i <= 5; i++) {
+			ctx.strokeStyle = 'rgba(255,0,0,' + i / 5 + ')';
+			w = scale + 11 - 2 * i;
+			var x = (this.options['col'] % this.replay.cols) * scale - 5.5 + i;
+			var y = (this.options['row'] % this.replay.rows) * scale - 5.5 + i;
+			r = this.replay.rows * scale;
+			c = this.replay.cols * scale;
+			ctx.strokeRect(x + c, y + r, w, w);
+			ctx.strokeRect(x, y + r, w, w);
+			ctx.strokeRect(x + c, y, w, w);
+			ctx.strokeRect(x, y, w, w);
+		}
+	}
 };
 /**
  * @private
@@ -1068,7 +1098,7 @@ Visualizer.prototype.renderCounts = function() {
 		ctx.stroke();
 	}
 	if (this.replay.meta['status']) {
-		ctx.font = '10px Arial';
+		ctx.font = '10px Arial,Sans';
 		for (i = this.replay.players - 1; i >= 0; i--) {
 			ctx.fillStyle = this.replay.htmlPlayerColors[i];
 			ctx.strokeStyle = this.replay.htmlPlayerColors[i];

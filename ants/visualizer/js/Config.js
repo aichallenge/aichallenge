@@ -35,7 +35,7 @@ Config.prototype.hasLocalStorage = function() {
 Config.prototype.save = function() {
 	if (this.hasLocalStorage() === true) {
 		for (var key in this) {
-			if (this[key] === undefined) {
+			if (this[key] === undefined || this[key] === Config.prototype[key]) {
 				delete window.localStorage['visualizer.' + key];
 			} else if (this[key] === null) {
 				window.localStorage['visualizer.' + key] = "null";
