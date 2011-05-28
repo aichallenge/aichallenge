@@ -35,6 +35,7 @@
 #     gmcs -warn:0 -out:MyBot.exe *.cs
 # (though the *.cs is actually replaced with the list of files found)
 
+import collections
 import sys
 import os
 import re
@@ -111,6 +112,9 @@ class ChmodCompiler(Compiler):
     def __init__(self, language):
         self.language = language
 
+    def __str__(self):
+        return "ChmodCompiler: %s" % (self.language,)
+
     def compile(self, globs, errors):
         for f in safeglob_multi(globs):
             try:
@@ -124,8 +128,8 @@ class ExternalCompiler(Compiler):
         self.args = args
         self.separate = separate
 
-    def __repr__(self):
-        return 'ExternalCompiler: ' + ' '.join(self.args)
+    def __str__(self):
+        return "ExternalCompiler: %s" % (' '.join(self.args),)
 
     def compile(self, globs, errors):
         files = safeglob_multi(globs)
@@ -144,6 +148,9 @@ class TargetCompiler(Compiler):
         self.args = args
         self.replacements = replacements
         self.outflag = outflag
+
+    def __str__(self):
+        return "TargetCompiler: %s" % (' '.join(self.args),)
 
     def compile(self, globs, errors):
         sources = safeglob_multi(globs)
@@ -187,10 +194,14 @@ targets = {
     "C++" : { ".c" : ".o", ".cpp" : ".o", ".cc" : ".o" },
     }
 
-# TODO: turn these into objects or dicts
-languages = {
-    # lang :
-    #     (output extension,
+Language = collections.namedtuple("Language",
+        ['name', 'extension', 'main_code_file', 'command', 'nukeglobs',
+            'compilers']
+        )
+
+languages = (
+    # Language(name, output extension,
+    #      main_code_file
     #      command_line
     #      [nukeglobs],
     #      [(source glob, compiler), ...])
@@ -199,189 +210,153 @@ languages = {
     # If the extension is "" it means the output file is just BOT
     # If a source glob is "" it means the source is part of the compiler
     #   arguments.
-    "C":
-        ("",
-         "MyBot.c",
-         "./MyBot",
-         ["*.o", BOT],
-         [(["*.c"], TargetCompiler(comp_args["C"][0], targets["C"])),
-          (["*.o"], ExternalCompiler(comp_args["C"][1]))]
-        ),
-    "C#":
-        (".exe",
-         "MyBot.cs",
-         "mono MyBot.exe",
-         [BOT + ".exe"],
-         [(["*.cs"], ExternalCompiler(comp_args["C#"][0]))]
-        ),
-    "C++":
-        ("",
-         "MyBot.cc",
-         "./MyBot",
-         ["*.o", BOT],
-         [(["*.c", "*.cpp", "*.cc"], TargetCompiler(comp_args["C++"][0], targets["C++"])),
-          (["*.o"], ExternalCompiler(comp_args["C++"][1]))]
-         ),
-    "Clojure":
-        (".clj",
-         "?",
-         "?",
-         [],
-         [(["*.clj"], ChmodCompiler("Clojure"))]
-        ),
-    "CoffeeScript":
-        (".coffee",
-         "MyBot.coffee",
-         "coffee MyBot.coffee",
-         [],
-         [(["*.coffee"], ChmodCompiler("CoffeeScript"))]
-        ),
-    "D":
-        ("",
-         "MyBot.d",
-         "./MyBot",
-         ["*.o", BOT],
-         [(["*.d"], ExternalCompiler(comp_args["D"][0]))]
-        ),
-    "Go":
-        ("",
-         "MyBot.go",
-         "./MyBot",
-         ["*.8", BOT],
-         [(["*.go"], ExternalCompiler(comp_args["Go"][0])),
-          ([""], ExternalCompiler(comp_args["Go"][1]))]
-        ),
-    "Groovy":
-        (".jar",
-         "MyBot.groovy",
-         "java -cp MyBot.jar:/usr/share/groovy/embeddable/groovy-all-1.7.5.jar MyBot",
-         ["*.class, *.jar"],
-         [(["*.groovy"], ExternalCompiler(comp_args["Groovy"][0])),
-         (["*.class"], ExternalCompiler(comp_args["Groovy"][1]))]
-        ),
-    "Haskell":
-        ("",
-         "MyBot.hs",
-         "./MyBot",
-         [BOT],
-         [([""], ExternalCompiler(comp_args["Haskell"][0]))]
-        ),
-    "Java":
-        (".jar",
-         "MyBot.java",
-         "java -jar MyBot.jar",
-         ["*.class", "*.jar"],
-         [(["*.java"], ExternalCompiler(comp_args["Java"][0])),
-         (["*.class"], ExternalCompiler(comp_args["Java"][1]))]
-        ),
-    "Javascript":
-        (".js",
-         "MyBot.js",
-         "node MyBot.js",
-         [],
-         [(["*.js"], ChmodCompiler("Javascript"))]
-        ),
-    "Lisp":
-        ("",
-         "MyBot.lisp",
-         "./MyBot --dynamic-space-size 256",
+    Language("C", "", "MyBot.c",
+        "./MyBot",
+        ["*.o", BOT],
+        [(["*.c"], TargetCompiler(comp_args["C"][0], targets["C"])),
+            (["*.o"], ExternalCompiler(comp_args["C"][1]))]
+    ),
+    Language("C#", ".exe", "MyBot.cs",
+        "mono MyBot.exe",
+        [BOT + ".exe"],
+        [(["*.cs"], ExternalCompiler(comp_args["C#"][0]))]
+    ),
+    Language("C++", "", "MyBot.cc",
+        "./MyBot",
+        ["*.o", BOT],
+        [
+            (["*.c", "*.cpp", "*.cc"],
+                TargetCompiler(comp_args["C++"][0], targets["C++"])),
+            (["*.o"], ExternalCompiler(comp_args["C++"][1]))
+        ]
+    ),
+    Language("Clojure", ".clj", "?",
+        "?",
+        [],
+        [(["*.clj"], ChmodCompiler("Clojure"))]
+    ),
+    Language("CoffeeScript", ".coffee", "MyBot.coffee",
+        "coffee MyBot.coffee",
+        [],
+        [(["*.coffee"], ChmodCompiler("CoffeeScript"))]
+    ),
+    Language("D", "", "MyBot.d",
+        "./MyBot",
+        ["*.o", BOT],
+        [(["*.d"], ExternalCompiler(comp_args["D"][0]))]
+    ),
+    Language("Go", "", "MyBot.go",
+        "./MyBot",
+        ["*.8", BOT],
+        [(["*.go"], ExternalCompiler(comp_args["Go"][0])),
+            ([""], ExternalCompiler(comp_args["Go"][1]))]
+    ),
+    Language("Groovy", ".jar", "MyBot.groovy",
+        "java -cp MyBot.jar:/usr/share/groovy/embeddable/groovy-all-1.7.5.jar MyBot",
+        ["*.class, *.jar"],
+        [(["*.groovy"], ExternalCompiler(comp_args["Groovy"][0])),
+        (["*.class"], ExternalCompiler(comp_args["Groovy"][1]))]
+    ),
+    Language("Haskell", "", "MyBot.hs",
+        "./MyBot",
         [BOT],
-        [([""], ExternalCompiler(comp_args["Lisp"][0]))]),
-    "Lua":
-        (".lua",
-         "MyBot.lua",
-         "?",
-         [],
-         [(["*.lua"], ChmodCompiler("Lua"))]
-        ),
-    "OCaml":
-        (".native",
-         "MyBot.ml",
-         "./MyBot.native",
-         [BOT + ".native"],
-         [([""], ExternalCompiler(comp_args["OCaml"][0]))]
-        ),
-    "Perl":
-        (".pl",
-         "MyBot.pl",
-         "perl MyBot.pl",
-         [],
-         [(["*.pl"], ChmodCompiler("Perl"))]
-        ),
-    "PHP":
-        (".php",
-         "MyBot.php",
-         "php MyBot.php",
-         [],
-         [(["*.php"], ChmodCompiler("PHP"))]
-        ),
-    "Python":
-        (".py",
-         "MyBot.py",
-         "python MyBot.py",
+        [([""], ExternalCompiler(comp_args["Haskell"][0]))]
+    ),
+    Language("Java", ".jar", "MyBot.java",
+        "java -jar MyBot.jar",
+        ["*.class", "*.jar"],
+        [(["*.java"], ExternalCompiler(comp_args["Java"][0])),
+            (["*.class"], ExternalCompiler(comp_args["Java"][1]))]
+    ),
+    Language("Javascript", ".js", "MyBot.js",
+        "node MyBot.js",
+        [],
+        [(["*.js"], ChmodCompiler("Javascript"))]
+    ),
+    Language("Lisp", "", "MyBot.lisp",
+        "./MyBot --dynamic-space-size 256",
+        [BOT],
+        [([""], ExternalCompiler(comp_args["Lisp"][0]))]
+    ),
+    Language("Lua", ".lua", "MyBot.lua",
+        "?",
+        [],
+        [(["*.lua"], ChmodCompiler("Lua"))]
+    ),
+    Language("OCaml", ".native", "MyBot.ml",
+        "./MyBot.native",
+        [BOT + ".native"],
+        [([""], ExternalCompiler(comp_args["OCaml"][0]))]
+    ),
+    Language("Perl", ".pl", "MyBot.pl",
+        "perl MyBot.pl",
+        [],
+        [(["*.pl"], ChmodCompiler("Perl"))]
+    ),
+    Language("PHP", ".php", "MyBot.php",
+        "php MyBot.php",
+        [],
+        [(["*.php"], ChmodCompiler("PHP"))]
+    ),
+    Language("Python", ".py", "MyBot.py",
+        "python MyBot.py",
         ["*.pyc"],
-        [(["*.py"], ChmodCompiler("Python"))]),
-    "Ruby":
-        (".rb",
-         "MyBot.rb",
-         "ruby MyBot.rb",
-         [],
-         [(["*.rb"], ChmodCompiler("Ruby"))]
-        ),
-    "Scala":
-        (".scala",
-         "MyBot.scala",
-         "?",
-         ["*.scala, *.jar"],
-         [(["*.scala"], ExternalCompiler(comp_args["Scala"][0]))]
-        ),
-    "Scheme":
-        (".ss",
-         "MyBot.ss",
-         "./MyBot",
-         [],
-         [(["*.ss"], ChmodCompiler("Scheme"))]
-        ),
-    }
+        [(["*.py"], ChmodCompiler("Python"))]
+    ),
+    Language("Ruby", ".rb", "MyBot.rb",
+        "ruby MyBot.rb",
+        [],
+        [(["*.rb"], ChmodCompiler("Ruby"))]
+    ),
+    Language("Scala", ".scala", "MyBot.scala",
+        "?",
+        ["*.scala, *.jar"],
+        [(["*.scala"], ExternalCompiler(comp_args["Scala"][0]))]
+    ),
+    Language("Scheme", ".ss", "MyBot.ss",
+        "./MyBot",
+        [],
+        [(["*.ss"], ChmodCompiler("Scheme"))]
+    ),
+)
 
 
-def compile_function(language, errors):
+def compile_function(language):
     """Compile submission in the current directory with a specified language."""
-    extension, main_code_file, command, nukeglobs, compilers = languages[language]
-
-    for glob in nukeglobs:
+    for glob in language.nukeglobs:
         nukeglob(glob)
 
-    for globs, compiler in compilers:
+    errors = []
+    for globs, compiler in language.compilers:
         try:
             if not compiler.compile(globs, errors):
-                return False
-        except:
-            errors.append("Compiler failed: " + str(compiler))
-            return False
+                return False, errors
+        except StandardError, exc:
+            errors.append("Compiler %s failed with: %s"
+                    % (compiler, exc))
+            return False, errors
 
-    return check_path(BOT + extension, errors)
+    return check_path(BOT + language.extension, errors), errors
+
+_LANG_NOT_FOUND = """Did not find a recognized MyBot.* file.
+Please add one of the following filenames to your zip file:
+%s"""
 
 def detect_language(bot_dir):
     """Try and detect what language a submission is using"""
     with CD(bot_dir):
         # Autodetects the language of the entry in the current working directory
-        detected_lang = get_run_lang(bot_dir)
-        if detected_lang and detected_lang in languages:
-            detected_langs = [languages[detected_lang] + (detected_lang,)]
-        else:
-            detected_langs = [
-                lang_data + (lang_name,) for lang_name, lang_data
-                in languages.items() if os.path.exists(lang_data[1])
-            ]
+        detected_langs = [
+            lang for lang in languages if os.path.exists(lang.main_code_file)
+        ]
 
         # If no language was detected
         if len(detected_langs) > 1:
             return None, ['Found multiple MyBot.* files: \n'+
-                          '\n'.join([lang[1] for lang in detected_langs])]
+                          '\n'.join([l.main_code_file for l in detected_langs])]
         elif len(detected_langs) == 0:
-            return None, ['Did not find a MyBot.* file with an allowed extension.\nPlease add one of the following filenames to your zip file:\n'
-                          +'\n'.join(key + ": " + val[1] for key, val in languages.items())]
+            return None, [_LANG_NOT_FOUND % (
+                '\n'.join(l.name +": "+ l.main_code_file for l in languages),)]
         else:
             return detected_langs[0], None
 
@@ -410,14 +385,13 @@ def compile_anything(bot_dir):
         if detected_language:
             # If we get this far, then we have successfully auto-detected
             # the language that this entry is using.
-            main_code_file = detected_language[1]
-            detected_lang = detected_language[-1]
-            run_cmd = detected_language[2]
-            errors = []
-            if compile_function(detected_lang, errors):
+            compiled, errors = compile_function(detected_language)
+            if compiled:
+                name = detected_language.name
+                run_cmd = detected_language.command
                 with open('../run.sh', 'w') as f:
-                    f.write('#%s\n%s\n' % (detected_lang, run_cmd))
-                return detected_lang, None
+                    f.write('#%s\n%s\n' % (name, run_cmd))
+                return name, None
             else:
                 return detected_lang, errors
         else:
