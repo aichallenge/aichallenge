@@ -159,6 +159,8 @@ def setup_base_chroot(options):
         run_cmd("cp chroot_configs/sources.list %s/etc/apt/"
                 % (base_chroot_dir,))
         run_cmd("cp -r chroot_configs/ai-jail /etc/schroot/ai-jail")
+    deb_archives = "/var/cache/apt/archives/"
+    run_cmd("cp {0}*.deb {1}{0}".format(deb_archives, base_chroot_dir))
     run_cmd("schroot -c aic-base -- /bin/sh -c \"DEBIANFRONTEND=noninteractive;\
             apt-get update; apt-get upgrade -y\"")
     run_cmd("schroot -c aic-base -- apt-get install -y python")
