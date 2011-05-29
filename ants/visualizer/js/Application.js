@@ -144,6 +144,8 @@ Visualizer = function(container, dataDir, interactive, w, h, config) {
 			} else if (key === 'row' || key === 'col' || key === 'turn') {
 				value = parseInt(value);
 				if (!(value >= 0)) value = 0;
+			} else if (key === 'config') {
+				config = JSON.parse(unescape(value));
 			}
 			this.options[key] = value;
 		}
@@ -182,6 +184,14 @@ Visualizer = function(container, dataDir, interactive, w, h, config) {
 	 * @private
 	 */
 	this.shiftY = 0;
+	/**
+	 * @private
+	 */
+	this.mapCenterX = 0;
+	/**
+	 * @private
+	 */
+	this.mapCenterY = 0;
 	/**
 	 * buttons
 	 * @private
@@ -488,8 +498,8 @@ Visualizer.prototype.tryStart = function() {
 						vis.director.draw();
 					}, 'zoom out');
 					bg.addButton(4, function() {
-						vis.shiftX = 0;
-						vis.shiftY = 0;
+						vis.shiftX = vis.mapCenterX;
+						vis.shiftY = vis.mapCenterY;
 						var btn = vis.btnMgr.groups['toolbar'].getButton(4);
 						btn.enabled = false;
 						btn.draw();
@@ -638,8 +648,8 @@ Visualizer.prototype.tryStart = function() {
 			Visualizer.prototype.focused = this;
 			// move to a specific row and col
 			if (this.options['row'] !== undefined && this.options['col'] !== undefined) {
-				this.shiftY = (0.5 * this.replay.rows - 0.5) * ZOOM_SCALE - (this.options['row'] % this.replay.rows) * ZOOM_SCALE;
-				this.shiftX = (0.5 * this.replay.cols - 0.5) * ZOOM_SCALE - (this.options['col'] % this.replay.cols) * ZOOM_SCALE;
+				this.shiftX = this.mapCenterX = (0.5 * this.replay.cols - 0.5) * ZOOM_SCALE - (this.options['col'] % this.replay.cols) * ZOOM_SCALE;
+				this.shiftY = this.mapCenterY = (0.5 * this.replay.rows - 0.5) * ZOOM_SCALE - (this.options['row'] % this.replay.rows) * ZOOM_SCALE;
 			}
 			this.setFullscreen(this.config['fullscreen']);
 			if (this.replay.duration > 0) {
@@ -707,12 +717,12 @@ Visualizer.prototype.setFullscreen = function(enable) {
 		} else {
 			this.config['fullscreen'] = enable;
 			if (enable || this.savedBody) {
-				var html = document.getElementsByTagName("html")[0];
+				var html = document.getElementsByTagName('html')[0];
 				if (enable) {
 					this.container.removeChild(this.main.canvas);
-					var tempBody = document.createElement("body");
 					this.savedOverflow = html.style.overflow;
 					html.style.overflow = 'hidden';
+					var tempBody = document.createElement('body');
 					tempBody.appendChild(this.main.canvas);
 					this.savedBody = html.replaceChild(tempBody, document.body);
 				} else if (this.savedBody) {
@@ -1601,9 +1611,14 @@ Visualizer.prototype.mouseMoved = function(mx, my) {
 			mx = (this.mouseX - this.loc.graph.x) / (this.loc.graph.w - 1);
 			mx = Math.round(mx * (this.replay.turns.length - 1));
 			this.director.gotoTick(mx);
-		} else if (this.mouseDown === 2) {
-			this.shiftX += deltaX;
-			this.shiftY += deltaY;
+		} else if (this.mouseDown === 2 || (this.mouseDown === 3 && this.minimap.loc.contains(this.mouseX, this.mouseY))) {
+			if (this.mouseDown === 2) {
+				this.shiftX += deltaX;
+				this.shiftY += deltaY;
+			} else {
+				this.shiftX = (this.replay.cols / 2 - (this.mouseX - this.minimap.loc.x)) * this.scale;
+				this.shiftY = (this.replay.rows / 2 - (this.mouseY - this.minimap.loc.y)) * this.scale;
+			}
 			var centerBtn = this.btnMgr.groups['toolbar'].getButton(4);
 			centerBtn.enabled = this.shiftX || this.shiftY;
 			centerBtn.draw();
@@ -1626,14 +1641,8 @@ Visualizer.prototype.mousePressed = function() {
 		if (this.replay.duration > 0 && this.loc.graph.contains(this.mouseX, this.mouseY)) {
 			this.mouseDown = 1;
 		} else {
-			var miniMap = new Location(this.loc.vis.x + this.loc.vis.w - this.replay.cols - 2, this.loc.vis.y + 2, this.replay.cols, this.replay.rows);
-			if (this.config['zoom'] !== 1 && miniMap.contains(this.mouseX, this.mouseY)) {
-				this.shiftX = (this.replay.cols / 2 - (this.mouseX - miniMap.x)) * this.scale;
-				this.shiftY = (this.replay.rows / 2 - (this.mouseY - miniMap.y)) * this.scale;
-				var btn = this.btnMgr.groups['toolbar'].getButton(4);
-				btn.enabled = this.shiftX || this.shiftY;
-				btn.draw();
-				this.director.draw();
+			if (this.config['zoom'] !== 1 && this.minimap.loc.contains(this.mouseX, this.mouseY)) {
+				this.mouseDown = 3;
 			} else if (this.loc.vis.contains(this.mouseX, this.mouseY)) {
 				this.mouseDown = 2;
 			} else {
