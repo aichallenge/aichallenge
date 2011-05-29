@@ -12,15 +12,18 @@ Button.prototype.draw = function() {
 	var g = this.group;
 	var ctx = g.manager.vis.main.ctx;
 	var loc = this.getLocation();
+	var cw = (loc.w > g.x + g.w - loc.x) ? g.x + g.w - loc.x : loc.w;
+	var ch = (loc.h > g.y + g.h - loc.y) ? g.y + g.h - loc.y : loc.h;
+	if (cw <= 0 || ch <= 0) return;
 	ctx.save();
 	ctx.fillStyle = '#fff';
-	ctx.fillRect(loc.x, loc.y, loc.w, loc.h);
+	ctx.fillRect(loc.x, loc.y, cw, ch);
 	if (!this.enabled) ctx.globalAlpha = 0.5;
 	ctx.beginPath();
 	ctx.moveTo(loc.x, loc.y);
-	ctx.lineTo(loc.x + loc.w, loc.y);
-	ctx.lineTo(loc.x + loc.w, loc.y + loc.h);
-	ctx.lineTo(loc.x, loc.y + loc.h);
+	ctx.lineTo(loc.x + cw, loc.y);
+	ctx.lineTo(loc.x + cw, loc.y + ch);
+	ctx.lineTo(loc.x, loc.y + ch);
 	ctx.closePath();
 	ctx.clip();
 	var r = 0.2 * Math.min(loc.w, loc.h);
@@ -43,12 +46,12 @@ Button.prototype.draw = function() {
 	}
 	ctx.save();
 	ctx.translate(loc.x, (this.down) ? loc.y + 1 : loc.y - 1);
-	this.drawInternal(ctx, loc.w, loc.h);
+	this.drawInternal(ctx);
 	ctx.restore();
 	if (this.onclick && this.enabled && (this.hover || this.down)) {
 		ctx.shadowColor = 'rgba(0, 0, 0, 0)';
 		ctx.lineWidth = 2;
-		ctx.strokeStyle = 'rgba(0, 0, 0, 1)';
+		ctx.strokeStyle = '#444';
 		ctx.stroke();
 	}
 	ctx.restore();
@@ -112,6 +115,7 @@ ButtonGroup.prototype.mouseMove = function(mx, my) {
  * @constructor
  */
 function ImageButton(group, idx, offset, delta, onclick, hint) {
+	
 	Button.apply(this, [group, onclick]);
 	this.idx = idx;
 	this.offset = offset;
@@ -119,7 +123,7 @@ function ImageButton(group, idx, offset, delta, onclick, hint) {
 	this.hint = hint;
 }
 ImageButton.prototype.draw = Button.prototype.draw;
-ImageButton.prototype.drawInternal = function(ctx, w, h) {
+ImageButton.prototype.drawInternal = function(ctx) {
 	var b = this.group.border;
 	var bs = this.group.size - 2 * this.group.border;
 	ctx.drawImage(this.group.img, this.offset, 0, bs, bs, b, b, bs, bs);
@@ -137,7 +141,7 @@ ImageButton.prototype.mouseDown = Button.prototype.mouseDown;
 /**
  * @constructor
  */
-function ImageButtonGroup(manager, img, layout, mode, border) {
+function ImageButtonGroup(manager, img, layout, mode, border, extent) {
 	ButtonGroup.apply(this, [manager, border]);
 	this.img = img;
 	this.vertical = layout;
@@ -145,23 +149,35 @@ function ImageButtonGroup(manager, img, layout, mode, border) {
 	this.size = img.height + 2 * this.border;
 	this.x = 0;
 	this.y = 0;
-	this.w = (this.vertical) ? this.size : 0;
-	this.h = (this.vertical) ? 0 : this.size;
+	this.w = (this.vertical) ? this.size : extent;
+	this.h = (this.vertical) ? extent : this.size;
 }
 ImageButtonGroup.HORIZONTAL = false;
 ImageButtonGroup.VERTICAL = true;
+ImageButtonGroup.prototype = new ButtonGroup;
+ImageButtonGroup.prototype.draw = function() {
+	var more = Math.max(0, this.nextDelta() - (this.vertical ? this.h : this.w));
+	ButtonGroup.prototype.draw.apply(this, []);
+};
+ImageButtonGroup.prototype.nextDelta = function() {
+	if (this.buttons.length !== 0) {
+		var lastBtn = this.buttons[this.buttons.length - 1]
+		return lastBtn.delta + (lastBtn.size || this.size);
+	}
+	return 0;
+};
 ImageButtonGroup.prototype.addButton = function(idx, onclick, hint) {
-	var btn = new ImageButton(this, idx, (this.size - 2 * this.border) * idx, (this.vertical) ? this.h : this.w, onclick, hint);
+	var delta = this.nextDelta();
+	var btn = new ImageButton(this, idx, (this.size - 2 * this.border) * idx, delta, onclick, hint);
 	this.buttons.push(btn);
-	this.vertical ? this.h += this.size : this.w += this.size;
 	return btn;
 };
 ImageButtonGroup.prototype.addSpace = function(size) {
+	var delta = this.nextDelta();
 	this.buttons.push({
-		delta: (this.vertical) ? this.h : this.w,
+		delta: delta,
 		size: size
 	});
-	this.vertical ? this.h += size : this.w += size;
 };
 ImageButtonGroup.prototype.getButton = function(idx) {
 	for (var i = 0; i < this.buttons.length; i++) {
@@ -169,8 +185,6 @@ ImageButtonGroup.prototype.getButton = function(idx) {
 	}
 	return null;
 };
-ImageButtonGroup.prototype.draw = ButtonGroup.prototype.draw;
-ImageButtonGroup.prototype.mouseMove = ButtonGroup.prototype.mouseMove;
 
 /**
  * @constructor
@@ -259,8 +273,8 @@ function ButtonManager(vis) {
 /**
  * @returns {ImageButtonGroup} the created button group
  */
-ButtonManager.prototype.addImageGroup = function(name, img, layout, mode, border) {
-	return this.groups[name] = new ImageButtonGroup(this, img, layout, mode, border);
+ButtonManager.prototype.addImageGroup = function(name, img, layout, mode, border, extent) {
+	return this.groups[name] = new ImageButtonGroup(this, img, layout, mode, border, extent);
 };
 ButtonManager.prototype.addTextGroup = function(name, layout, mode, border) {
 	return this.groups[name] = new TextButtonGroup(this, layout, mode, border);

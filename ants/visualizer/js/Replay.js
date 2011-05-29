@@ -303,6 +303,9 @@ function Replay(replay, debug) {
 		for (i = 0; i < this.players; i++) {
 			setReplayDuration(scoreslist[i].length - 1, false);
 		}
+		if (replay['bonus']) {
+			keyIsArr(replay, 'bonus', this.players, this.players);
+		}
 		// prepare score and count lists
 		this.turns = new Array(this.duration + 1);
 		this.scores = new Array(this.duration + 1);

@@ -18,6 +18,7 @@ Config.prototype['duration'] = 100;
 Config.prototype['speedSlowest'] = 2;
 Config.prototype['speedFastest'] = 5;
 Config.prototype['speedFactor'] = 0;
+Config.prototype['cpu'] = 0.5;
 /**
  * checks if local storage is available
  */

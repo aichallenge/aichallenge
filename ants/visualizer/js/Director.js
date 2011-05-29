@@ -10,7 +10,7 @@ function Director(vis) {
 	this.duration = 0;
 	this.defaultSpeed = 1;
 	this.stopAt = undefined;
-	this.cpu = 0.5;
+	this.cpu = vis.config['cpu'];
 	this.onstate = undefined;
 	this.timeout = undefined;
 	this.frameCounter = undefined;
@@ -105,7 +105,7 @@ Director.prototype.loop = function(delay) {
 		goOn = false;
 		this.stop();
 	}
-	this.vis.draw(this.position, (this.tickFlag || oldTurn != (this.position | 0)) ? this.position | 0 : undefined);
+	this.vis.draw(this.position, this.tickFlag || oldTurn != (this.position | 0));
 	this.tickFlag = false;
 	if (goOn) {
 		if (this.vis.options['debug'] && cpuTime !== undefined) {
@@ -153,7 +153,7 @@ Director.prototype.draw = function() {
 	if (this.playing()) {
 		this.tickFlag = true;
 	} else {
-		this.vis.draw(this.position, this.position | 0);
+		this.vis.draw(this.position, true);
 	}
 };
 /**

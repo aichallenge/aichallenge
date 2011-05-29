@@ -9,10 +9,7 @@
  * @todo FEAT: zoom in to 20x20 squares with animated ants
  * @todo FEAT: menu items: toggle graph/score bars, cpu use
  * @todo FEAT: setting for cpu usage
- * @todo FEAT: show when a bot crashed
- * @todo FEAT: hyperlink button to original game if game_url is given
  * @todo NICE: better player rank display
- * @todo COSMETIC: keep a minimum size to allow the controls to render
  * @todo COSMETIC: switch to console.log for debug and load messages
  * @todo COSMETIC: fix duplicate 'parsing replay...' messages
  */
@@ -30,7 +27,9 @@ Key = {
 	PGUP: 33,
 	PGDOWN: 34,
 	HOME: 36,
-	END: 35
+	END: 35,
+	PLUS: 187,
+	MINUS: 189
 };
 
 /**
@@ -119,11 +118,6 @@ Visualizer = function(container, dataDir, interactive, w, h, config) {
 	 */
 	this.scale = undefined;
 	/**
-	 * manages playback commands and timing
-	 * @private
-	 */
-	this.director = new Director(this);
-	/**
 	 * Options from URL GET parameters or the constructor arguments
 	 * @private
 	 */
@@ -160,6 +154,11 @@ Visualizer = function(container, dataDir, interactive, w, h, config) {
 	 * @private
 	 */
 	this.config = new Config(config);
+	/**
+	 * manages playback commands and timing
+	 * @private
+	 */
+	this.director = new Director(this);
 	/**
 	 * @private
 	 */
@@ -440,25 +439,27 @@ Visualizer.prototype.completedImages = function(error) {
  * replay. If all components are loaded it starts playback.
  */
 Visualizer.prototype.tryStart = function() {
+	var bg, stop;
+	var vis = this;
 	if (this.replay === undefined) return;
 	// we need to parse the replay, unless it has been parsed by the
 	// XmlHttpRequest callback
 	if (this.replay instanceof Replay) {
 		if (this.main.ctx && !this.imgMgr.error && !this.imgMgr.pending) {
-			var vis = this;
+			vis = this;
 			if (this.options['interactive']) {
 				// add static buttons
 				if (!vis.btnMgr.groups['playback']) {
 					if (this.replay.duration > 0) {
-						var bg = vis.btnMgr.addImageGroup('playback',
+						bg = vis.btnMgr.addImageGroup('playback',
 								vis.imgMgr.images[3], ImageButtonGroup.HORIZONTAL,
-								ButtonGroup.MODE_NORMAL, 2);
+								ButtonGroup.MODE_NORMAL, 2, 0);
 						bg.addButton(3, function() {
 							vis.director.gotoTick(0)
 						}, 'jump to start of first turn');
 						bg.addSpace(32);
 						bg.addButton(5, function() {
-							var stop = (Math.ceil(vis.director.position * 2) - 1) / 2;
+							stop = (Math.ceil(vis.director.position * 2) - 1) / 2;
 							vis.director.slowmoTo(stop);
 						}, 'play one move/attack phase backwards');
 						//bg.addButton(0, function() {vis.director.playStop()});
@@ -478,7 +479,7 @@ Visualizer.prototype.tryStart = function() {
 						}, 'jump to end of last turn');
 					}
 					bg = vis.btnMgr.addImageGroup('toolbar', vis.imgMgr.images[5],
-							ImageButtonGroup.VERTICAL, ButtonGroup.MODE_NORMAL, 2);
+							ImageButtonGroup.VERTICAL, ButtonGroup.MODE_NORMAL, 2, 0);
 					if (this.config.hasLocalStorage()) {
 						bg.addButton(0, function() {
 							vis.config.save()
@@ -773,7 +774,7 @@ Visualizer.prototype.setAntLabels = function(mode) {
 	this.config['label'] = mode;
 };
 Visualizer.prototype.resize = function(forced) {
-	var y;
+	var y, w;
 	var olds = {
 		width: this.main.canvas.width,
 		height: this.main.canvas.height
@@ -799,6 +800,7 @@ Visualizer.prototype.resize = function(forced) {
 			this.loc.graph = new Location(4, y + 66, news.width - 8, 64);
 			this.loc.scorebar = new Location(95, y +  4, news.width - 4 - 95, 22);
 			this.loc.countbar = new Location(95, y + 38, news.width - 4 - 95, 22);
+			ctx.strokeStyle = '#444';
 			ctx.lineWidth = 2;
 			shapeRoundedRect(ctx, 0, y, canvas.width, 30, 1, 5);
 			ctx.stroke();
@@ -821,7 +823,12 @@ Visualizer.prototype.resize = function(forced) {
 					news.width - LEFT_PANEL_W - RIGHT_PANEL_W,
 					news.height - y - BOTTOM_PANEL_H);
 				var bg = this.btnMgr.groups['playback'];
-				bg.x = ((news.width - 8 * 64) / 2) | 0;
+				w = 8 * 64;
+				if (w <= news.width) {
+					bg.x = ((news.width - w) / 2) | 0;
+				} else {
+					bg.x = 0;
+				}
 				bg.y = this.loc.vis.y + this.loc.vis.h;
 				bg = this.btnMgr.groups['fog'];
 				bg.y = this.loc.vis.y + 8;
@@ -832,6 +839,13 @@ Visualizer.prototype.resize = function(forced) {
 			bg = this.btnMgr.groups['toolbar'];
 			bg.x = this.loc.vis.x + this.loc.vis.w;
 			bg.y = this.loc.vis.y + 8;
+			// set button group extents
+			bg = this.btnMgr.groups['fog'];
+			bg.h = this.loc.vis.h - 8;
+			bg = this.btnMgr.groups['toolbar'];
+			bg.h = this.loc.vis.h - 8;
+			bg = this.btnMgr.groups['playback'];
+			bg.w = news.width;
 		} else {
 			this.loc.vis = new Location(0, y, news.width, news.height - y);
 		}
@@ -1208,22 +1222,25 @@ Visualizer.prototype.showFog = function(fog) {
 /**
  * @private
  */
-Visualizer.prototype.drawColorBar = function(loc, values) {
+Visualizer.prototype.drawColorBar = function(loc, values, bonus) {
 	var sum = 0;
 	this.main.ctx.save();
 	this.main.ctx.beginPath();
 	this.main.ctx.rect(loc.x, loc.y, loc.w, loc.h);
 	this.main.ctx.clip();
 	for (var i = 0; i < values.length; i++) {
-		sum += values[i];
+		sum += bonus ? values[i] + bonus[i] : values[i];
 	}
-	var useValues = values;
+	var useValues = new Array(values.length);
 	if (sum == 0) {
-		useValues = new Array(values.length);
 		for (i = 0; i < values.length; i++) {
 			useValues[i] = 1;
 		}
 		sum = values.length;
+	} else {
+		for (i = 0; i < values.length; i++) {
+			useValues[i] = bonus ? values[i] + bonus[i] : values[i];
+		}
 	}
 	var scale = loc.w / sum;
 	var offsetX = loc.x;
@@ -1234,19 +1251,34 @@ Visualizer.prototype.drawColorBar = function(loc, values) {
 		offsetX += amount;
 	}
 	this.main.ctx.textAlign = 'left';
-	this.main.ctx.textBaseline = 'middle';
+	this.main.ctx.textBaseline = 'top';
 	this.main.ctx.font = 'bold 16px Monospace';
 	this.main.ctx.fillStyle = 'rgba(0,0,0,0.5)';
-	var offsetY = loc.y + 0.5 * loc.h;
+	var offsetY = loc.y + 3;
 	offsetX = loc.x + 2;
 	for (i = 0; i < useValues.length; i++) {
 		var text = Math.round(values[i]);
 		if (this.config['label'] === 1) {
 			text = String.fromCharCode(65 + i) + ':' + text;
 		}
-		var textWidth = this.main.ctx.measureText(text).width;
-		if (useValues[i] != 0 && scale * useValues[i] >= textWidth) {
+		var bonusText = (bonus && bonus[i]) ? '+' + Math.round(bonus[i]) : '';
+		var textWidth = this.main.ctx.measureText(text).width
+		if (bonusText) {
+			this.main.ctx.font = 'bold italic 12px Monospace';
+			var bonusTextWidth = this.main.ctx.measureText(bonusText).width;
+			this.main.ctx.font = 'bold 16px Monospace';
+		} else {
+			bonusTextWidth = 0;
+		}
+		if (scale * useValues[i] >= textWidth + bonusTextWidth) {
 			this.main.ctx.fillText(text, offsetX, offsetY);
+			if (bonusText) {
+				this.main.ctx.font = 'bold italic 12px Monospace';
+				this.main.ctx.fillStyle = 'rgba(0,0,0,0.8)';
+				this.main.ctx.fillText(bonusText, offsetX + textWidth, offsetY);
+				this.main.ctx.font = 'bold 16px Monospace';
+				this.main.ctx.fillStyle = 'rgba(0,0,0,0.5)';
+			}
 		}
 		offsetX += scale * useValues[i];
 	}
@@ -1271,14 +1303,14 @@ Visualizer.prototype.draw = function(time, tick) {
 	var turn = (time | 0);
 	if (this.replay.duration > 0) {
 		// draw scores
-		if (tick !== undefined) {
+		var duration = this.replay.turns.length - 1;
+		if (tick) {
 			if (this.fog !== undefined) this.renderFog(turn);
-			this.drawColorBar(this.loc.scorebar, this.replay.scores[turn]);
+			this.drawColorBar(this.loc.scorebar, this.replay.scores[turn], (turn === duration) ? this.replay.meta['replaydata']['bonus'] : undefined);
 			this.drawColorBar(this.loc.countbar, this.replay.counts[turn]);
 		}
 		this.main.ctx.drawImage(this.scores.canvas, this.loc.graph.x, this.loc.graph.y);
 		// time indicator
-		var duration = this.replay.turns.length - 1;
 		x = this.loc.graph.x + 0.5 + (this.loc.graph.w - 1) * time / duration;
 		this.main.ctx.lineWidth = 1;
 		this.main.ctx.beginPath();
@@ -1556,7 +1588,7 @@ Visualizer.prototype.draw = function(time, tick) {
 	w = loc.x + loc.w - this.loc.map.x - this.loc.map.w;
 	if (w > 0) ctx.fillRect(this.loc.map.x + this.loc.map.w, loc.y, w, loc.h);
 	// minimap
-	if (this.config['zoom'] !== 1) {
+	if (this.config['zoom'] !== 1 && this.minimap.loc.h + 4 <= this.loc.vis.h && this.minimap.loc.w + 4 <= this.loc.vis.w) {
 		ctx.save();
 		// border
 		ctx.strokeStyle = '#fff';
@@ -1586,9 +1618,19 @@ Visualizer.prototype.draw = function(time, tick) {
 		ctx.restore();
 	}
 	// draw hint text
-	ctx.fillRect(this.loc.vis.x, this.loc.vis.y, ctx.measureText(this.hint).width, 20);
-	ctx.fillStyle = '#fff';
-	ctx.fillText(this.hint, this.loc.vis.x, this.loc.vis.y + 10);
+	var hint = this.hint;
+	if (hint) {
+		if (ctx.measureText(hint).width > this.loc.vis.w) {
+			do {
+				hint = hint.substr(0, hint.length - 1);
+			} while (hint && ctx.measureText(hint + '...').width > this.loc.vis.w);
+			if (hint) hint += '...';
+		}
+		w = ctx.measureText(hint).width;
+		ctx.fillRect(this.loc.vis.x, this.loc.vis.y, w, 20);
+		ctx.fillStyle = '#fff';
+		ctx.fillText(hint, this.loc.vis.x, this.loc.vis.y + 10);
+	}
 };
 Visualizer.prototype.mouseMoved = function(mx, my) {
 	var deltaX = mx - this.mouseX;
@@ -1688,6 +1730,12 @@ Visualizer.prototype.keyPressed = function(key) {
 			break;
 		case Key.END:
 			d.gotoTick(d.duration);
+			break;
+		case Key.PLUS:
+			this.btnMgr.groups['toolbar'].getButton(6).onclick();
+			break;
+		case Key.MINUS:
+			this.btnMgr.groups['toolbar'].getButton(7).onclick();
 			break;
 		default:
 			switch (String.fromCharCode(key)) {
