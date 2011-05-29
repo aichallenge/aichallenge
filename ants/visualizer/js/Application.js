@@ -144,6 +144,8 @@ Visualizer = function(container, dataDir, interactive, w, h, config) {
 			} else if (key === 'row' || key === 'col' || key === 'turn') {
 				value = parseInt(value);
 				if (!(value >= 0)) value = 0;
+			} else if (key === 'config') {
+				config = JSON.parse(unescape(value));
 			}
 			this.options[key] = value;
 		}
