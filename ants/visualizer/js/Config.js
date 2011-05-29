@@ -11,7 +11,7 @@ function Config(preset) {
 	}
 }
 Config.prototype['fullscreen'] = false;
-Config.prototype['label'] = false;
+Config.prototype['label'] = 0;
 Config.prototype['graphics'] = false;
 Config.prototype['zoom'] = 1;
 Config.prototype['duration'] = 100;

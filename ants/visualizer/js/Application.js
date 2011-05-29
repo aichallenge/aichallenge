@@ -496,9 +496,9 @@ Visualizer.prototype.tryStart = function() {
 						vis.director.draw();
 					}, 'center the map').enabled = false;
 					bg.addButton(5, function() {
-						vis.setAntLabels(!vis.config['label']);
+						vis.setAntLabels((vis.config['label'] + 1) % 3);
 						vis.director.draw();
-					}, 'draw player letters on the ants');
+					}, 'toggles: 1. player letters on ants, 2. global ids on ants');
 					if (this.replay.duration > 0) {
 						bg.addButton(6, function() {
 							vis.config['speedFactor'] += 1;
@@ -759,8 +759,8 @@ Visualizer.prototype.setZoom = function(zoom) {
 		zoomOutBtn.draw();
 	}
 };
-Visualizer.prototype.setAntLabels = function(enable) {
-	this.config['label'] = enable;
+Visualizer.prototype.setAntLabels = function(mode) {
+	this.config['label'] = mode;
 };
 Visualizer.prototype.resize = function(forced) {
 	var y;
@@ -1231,7 +1231,7 @@ Visualizer.prototype.drawColorBar = function(loc, values) {
 	offsetX = loc.x + 2;
 	for (i = 0; i < useValues.length; i++) {
 		var text = Math.round(values[i]);
-		if (this.config['label']) {
+		if (this.config['label'] === 1) {
 			text = String.fromCharCode(65 + i) + ':' + text;
 		}
 		var textWidth = this.main.ctx.measureText(text).width;
@@ -1410,7 +1410,7 @@ Visualizer.prototype.draw = function(time, tick) {
 		var fontSize = Math.max(this.scale, 8);
 		ctx.textBaseline = 'middle';
 		ctx.textAlign = 'center';
-		ctx.font = 'bold ' + fontSize + 'px Arial';
+		ctx.font = 'bold ' + Math.ceil(fontSize / this.config['label']) + 'px Arial';
 		ctx.fillStyle = '#000';
 		ctx.strokeStyle = '#fff';
 		ctx.lineWidth = 0.2 * fontSize;
@@ -1418,8 +1418,14 @@ Visualizer.prototype.draw = function(time, tick) {
 			drawList = drawStates[key];
 			for (n = 0; n < drawList.length; n++) {
 				ant = drawList[n];
-				if (ant['owner'] !== undefined) {
+				if (this.config['label'] === 1 && ant['owner'] !== undefined) {
 					var letter = String.fromCharCode(65 + ant['owner']);
+				} else if (this.config['label'] === 2) {
+					letter = ant.id;
+				} else {
+					letter = undefined;
+				}
+				if (letter !== undefined) {
 					ctx.strokeText(letter, ant['x'], ant['y']);
 					ctx.fillText(letter, ant['x'], ant['y']);
 					if (ant['x'] < 0) {
