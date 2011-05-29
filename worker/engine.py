@@ -6,7 +6,35 @@ import traceback
 import os
 import sys
 import json
+import io
 
+class Head(object):
+    'Capture first part of file write and discard remainder'
+    def __init__(self, file, max_capture=1024):
+        self.file = file
+        self.max_capture = max_capture
+        self.capture = ''
+        self.capture_len = 0
+    def write(self, data):
+        if self.file:
+            self.file.write(data)
+        capture_left = self.max_capture - self.capture_len
+        if capture_left > 0:
+            if len(data) >= capture_left:
+                self.capture += data[:capture_left]
+                self.capture_len = self.max_capture
+            else:
+                self.capture += data
+                self.capture_len += len(data)
+    def flush(self):
+        if self.file:
+            self.file.flush()
+    def close(self):
+        if self.file:
+            self.file.close()
+    def head(self):
+        return self.capture
+            
 def run_game(game, botcmds, options):    
     # file descriptors for replay and streaming formats
     replay_log = options.get('replay_log', None)
@@ -32,8 +60,8 @@ def run_game(game, botcmds, options):
 
     bots = []
     bot_status = []
-    bot_errors = [[] for botcmd in botcmds]
-
+    if capture_errors:
+        error_logs = [Head(log) for log in error_logs]
     try:
         # create bot sandboxes
         for b, bot in enumerate(botcmds):
@@ -119,8 +147,6 @@ def run_game(game, botcmds, options):
                 # handle any logs that get_moves produced
                 for b, errors in enumerate(error_lines):
                     if errors:
-                        if capture_errors:
-                            bot_errors[b].extend(errors)
                         if error_logs and error_logs[b]:
                             error_logs[b].write('\n'.join(errors)+'\n')                            
                 # set status for timeouts and crashes
@@ -152,8 +178,6 @@ def run_game(game, botcmds, options):
                                 if strict:
                                     game.kill_player(b)
                                     bot_status[b] = 'invalid'
-                                if capture_errors:
-                                    bot_errors[b].extend(invalid)
                                 if error_logs and error_logs[b]:
                                     error_logs[b].write('turn %4d bot %s invalid actions:\n' % (turn, b))
                                     error_logs[b].write('\n'.join(invalid)+'\n')
@@ -263,7 +287,7 @@ def run_game(game, botcmds, options):
             'replaydata': game.get_replay(),
         }
         if capture_errors:
-            game_result['errors'] = bot_errors
+            game_result['errors'] = [head.head() for head in error_logs]
     
     if replay_log:
         json.dump(game_result, replay_log, sort_keys=True)

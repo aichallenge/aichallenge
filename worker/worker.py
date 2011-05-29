@@ -284,7 +284,11 @@ class Worker:
             submission_dir = self.submission_dir(submission_id)
             if os.path.exists(submission_dir):
                 log.info("Already compiled: %s" % submission_id)
-                if not run_test or self.functional_test(submission_id):
+                if not run_test:
+                    errors = self.functional_test(submission_id)
+                else:
+                    errors = None
+                if errors == None:
                     if report(STATUS_RUNABLE, compiler.get_run_lang(submission_dir)):
                         return True
                     else:
@@ -292,7 +296,7 @@ class Worker:
                         shutil.rmtree(submission_dir)
                         return False
                 else:
-                    report(STATUS_TEST_ERROR)
+                    report(STATUS_TEST_ERROR, compiler.get_run_lang(submission_dir), errors)
                     log.debug("Cleanup of compiled dir: {0}".format(submission_dir))
                     shutil.rmtree(submission_dir)
                     return False
@@ -325,7 +329,11 @@ class Worker:
                 log.info("Detected language: {0}".format(detected_lang))
                 if not os.path.exists(os.path.split(submission_dir)[0]):
                     os.makedirs(os.path.split(submission_dir)[0])
-                if not run_test or self.functional_test(submission_id):
+                if not run_test:
+                    errors = self.functional_test(submission_id)
+                else:
+                    errors = None
+                if errors == None:
                     os.rename(download_dir, submission_dir)
                     del self.download_dirs[submission_id]
                     if report(STATUS_RUNABLE, detected_lang):
@@ -337,7 +345,7 @@ class Worker:
                         return False
                 else:
                     log.info("Functional Test Failure")
-                    report(STATUS_TEST_ERROR, detected_lang)
+                    report(STATUS_TEST_ERROR, detected_lang, errors)
                     return False
 
     def get_map(self, map_filename):
@@ -404,8 +412,8 @@ class Worker:
         if result['status'][1] in ('crashed', 'timeout', 'invalid'):
             raise Exception('TestBot is not operational')
         if result['status'][0] in ('crashed', 'timeout', 'invalid'):
-            return False
-        return True
+            return result['errors'][0]
+        return None
 
     def game(self, task, report_status=False):
         self.post_id += 1

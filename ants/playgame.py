@@ -78,6 +78,9 @@ def main(argv):
     parser.add_option('--strict', dest='strict',
                       action='store_true', default=False,
                       help='Strict mode enforces valid moves for bots')
+    parser.add_option('--capture_errors', dest='capture_errors',
+                      action='store_true', default=False,
+                      help='Capture errors and stderr in game result')
     parser.add_option('--end_wait', dest='end_wait',
                       default=0, type="float",
                       help='Seconds to wait at end for bots to process end')
@@ -194,6 +197,7 @@ def run_rounds(opts,args):
         "log_error": opts.log_error,
         "serial": opts.serial,
         "strict": opts.strict,
+        "capture_errors": opts.capture_errors,
         "secure_jail": opts.secure_jail,
         "end_wait": opts.end_wait }
     random.seed(opts.seed)
