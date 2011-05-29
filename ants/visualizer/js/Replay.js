@@ -126,8 +126,12 @@ DataType = {
 /**
  * @constructor
  */
-function Replay(replay) {
+function Replay(replay, debug) {
 	var i, k, scores;
+	/**
+	 * @private
+	 */
+	this.debug = debug;
 	// check for a replay from the pre-json era and convert it.
 	if (replay.search(/^\s*{/) === -1) {
 		replay = this.txtToJson(replay);
@@ -168,12 +172,12 @@ function Replay(replay) {
 	if (replay) {
 		var stack = [];
 		var keyEq = function(obj, key, val) {
-			if (obj[key] !== val) {
+			if (obj[key] !== val && !that.debug) {
 				throw new Error(stack.join('.') + '.' + key + ' should be ' + val + ', but was found to be ' + obj[key] + '!');
 			}
 		};
 		var keyRange = function(obj, key, min, max) {
-			if (!(obj[key] >= min && (obj[key] <= max || max === undefined))) {
+			if (!(obj[key] >= min && (obj[key] <= max || max === undefined)) && !that.debug) {
 				throw new Error(stack.join('.') + '.' + key + ' should be within [' + min + ' .. ' + max + '], but was found to be ' + obj[key] + '!');
 			}
 		};
@@ -214,7 +218,7 @@ function Replay(replay) {
 		var durationSetter = null;
 		var setReplayDuration = function(duration, fixed) {
 			if (durationSetter) {
-				if (!fixed && that.duration < duration || fixed && that.duration !== duration) {
+				if (!fixed && that.duration < duration || fixed && that.duration !== duration && !that.debug) {
 					throw new Error('Replay duration was previously set to ' + that.duration + ' by "' + durationSetter + '" and is now redefined to be ' + duration);
 				}
 			} else {
@@ -243,7 +247,7 @@ function Replay(replay) {
 		for (var r = 0; r < mapdata.length; r++) {
 			keyIsStr(mapdata, r, map['cols'], map['cols']);
 			var maprow = new String(mapdata[r]);
-			if ((i = maprow.search(regex)) !== -1) {
+			if ((i = maprow.search(regex)) !== -1 && !this.debug) {
 				throw new Error('Invalid character "' + maprow.charAt(i) + '" in map. Zero based row/col: ' + r + '/' + i)
 			}
 			this.walls[r] = new Array(maprow.length);
@@ -284,7 +288,7 @@ function Replay(replay) {
 				var lifespan = obj[4] - obj[3];
 				keyIsStr(obj, 6, lifespan - 1, lifespan);
 				setReplayDuration(obj[4] - 1, obj[6].length !== lifespan);
-				if ((i = obj[6].search(regex)) !== -1) {
+				if ((i = obj[6].search(regex)) !== -1 && !this.debug) {
 					throw new Error('Invalid character "' + obj[6].charAt(i) + '" in move orders at index ' + i + ' in the string "' + obj[6] + '"');
 				}
 			} else {
@@ -405,7 +409,7 @@ Replay.prototype.txtToJson = function(replay) {
 			tl.as([DataType.STRING]);
 			if (cols === undefined) {
 				cols = tl.params[0].length;
-			} else if (tl.params[0].length !== cols) {
+			} else if (tl.params[0].length !== cols && !this.debug) {
 				throw new Error('Map lines have different lenghts');
 			}
 			result['map']['data'].push(tl.params[0]);

@@ -383,7 +383,7 @@ Visualizer.prototype.loadParseReplay = function() {
 		} else if (vis.replay instanceof Replay) { // has just been parsed
 			return;
 		} else if (typeof vis.replay == 'string') { // string only
-			vis.replay = new Replay(vis.replay);
+			vis.replay = new Replay(vis.replay, vis.options['debug']);
 		} else if (vis.replay instanceof XMLHttpRequest) { // wait for the reply
 			return;
 		} else {
