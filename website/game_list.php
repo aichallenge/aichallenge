@@ -268,7 +268,7 @@ function create_game_list_table($json, $top=FALSE, $targetpage=NULL) {
             $row_num++;
             $row = array_combine($fields, $values);
             
-            if ($user_id and $version !== $row["version"]) {
+            if ($user_id and $version !== $row["user_version"]) {
             	$version = $row["user_version"];
             	$table .= "<tr colspan=\"6\"><th>Version $version</th></tr>";
             }
