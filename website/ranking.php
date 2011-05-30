@@ -4,7 +4,7 @@ require_once('mysql_login.php');
 require_once('memcache.php');
 require_once('pagination.php');
 
-$page_size = 10;
+$page_size = 100;
 
 //require_once('session.php');
 // session is needed to highlight the current user
