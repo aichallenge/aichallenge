@@ -4,23 +4,26 @@
 # LICENCE: This code is freely released into the public domain
 # for use by maintainers and entrants of the AI Challenge.
 
+
 LAND_TYPES = {"WATER", "LAND", "ANT", "DEAD", "FOOD"}
 
-class exports.Game
+# a holder for game information - map size, etc.
+CONFIG = 
+  turntime : 0
+  rows : 0
+  cols : 0
+  
+# a list of constants of possible config commands provided
+CONFIG_COMMANDS = [
+   "loadtime", "turntime", "rows", "cols",
+   "turn", "turns", "viewradius2", 
+   "attackradius2", "spawnradius2"
+]
+
+class Game
   constructor: ->
     @MAP = new Map()
     
-  # a holder for game information - map size, etc.
-  CONFIG = 
-    turntime: 0
-
-  # a list of constants of possible config commands provided
-  CONFIG_COMMANDS = [
-     "loadtime", "turntime", "rows", "cols",
-     "turn", "turns", "viewradius2", 
-     "attackradius2", "spawnradius2"
-  ]
-
   class Map
     constructor: -> 
       # a holder for all water seen since the start
@@ -92,6 +95,7 @@ class exports.Game
           water = new Location data, type=LAND_TYPES.WATER
           @MAP[x][y] = water
           @MAP.seen_water.push water
+          console.warn @MAP[x][y]
         when "a"
           @MAP[x][y] = new Ant data
         when "d"
@@ -131,8 +135,6 @@ class exports.Game
   neighbor: (x, y, direction) ->
     switch direction
       when "N"
-        #for x in [35..55]
-        #  yes
         if x-1 < 0 then @MAP[CONFIG.rows][y] else @MAP[x-1][y]
       when "S"
         if x+1 > CONFIG.rows then @MAP[0][y] else @MAP[x+1][y]
@@ -143,7 +145,7 @@ class exports.Game
   
   # Time left since the last "go" command
   time_remaining: ->
-    @CONFIG.turntime - new Date().getTime() - @turn_start_time
+    CONFIG.turntime - new Date().getTime() - @turn_start_time
     
   # ------------------------------------------------------------------
   # Library functions for demonstrating the usage of the ants library:
@@ -155,3 +157,8 @@ class exports.Game
   # returns the nearby friendly ants sorted by distance
   nearby_friends: (ant) ->
     @my_ants().sort ((ant1, ant2) -> distance ant1, ant2)
+
+(exports ? this).Game = Game
+(exports ? this).LAND_TYPES = LAND_TYPES
+(exports ? this).CONFIG = CONFIG
+(exports ? this).CONFIG_COMMANDS = CONFIG_COMMANDS
