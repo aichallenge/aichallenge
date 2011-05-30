@@ -396,7 +396,7 @@ def compile_anything(bot_dir):
                     f.write('#%s\n%s\n' % (name, run_cmd))
                 return name, None
             else:
-                return detected_lang, errors
+                return detected_language.name, errors
         else:
             return "Unknown", errors
 
