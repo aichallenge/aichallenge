@@ -237,8 +237,8 @@ class Worker:
                     ]
                 else:
                     zip_files = [
-                        ("entry.tar.gz", "mkdir bot; tar xfz -C bot entry.tar.gz > /dev/null 2> /dev/null"),
-                        ("entry.tgz", "mkdir bot; tar xfz -C bot entry.tgz > /dev/null 2> /dev/null"),
+                        ("entry.tar.gz", "mkdir bot; tar xfz entry.tar.gz -C bot > /dev/null 2> /dev/null"),
+                        ("entry.tgz", "mkdir bot; tar xfz entry.tgz -C bot > /dev/null 2> /dev/null"),
                         ("entry.zip", "unzip -u -dbot entry.zip > /dev/null 2> /dev/null")
                     ]
                 for file_name, command in zip_files:
@@ -273,6 +273,8 @@ class Worker:
                           "status_id": status,
                           "language": language }
                 if status != 40:
+                    if type(errors) != list:
+                        errors = [errors] # for valid json according to php
                     result['errors'] = json.dumps(errors)
                 return self.cloud.post_result('api_compile_result', result)
             else:
@@ -284,7 +286,7 @@ class Worker:
             submission_dir = self.submission_dir(submission_id)
             if os.path.exists(submission_dir):
                 log.info("Already compiled: %s" % submission_id)
-                if not run_test:
+                if run_test:
                     errors = self.functional_test(submission_id)
                 else:
                     errors = None
@@ -329,7 +331,7 @@ class Worker:
                 log.info("Detected language: {0}".format(detected_lang))
                 if not os.path.exists(os.path.split(submission_dir)[0]):
                     os.makedirs(os.path.split(submission_dir)[0])
-                if not run_test:
+                if run_test:
                     errors = self.functional_test(submission_id)
                 else:
                     errors = None
@@ -406,8 +408,8 @@ class Worker:
         elif 'error' in result:
             log.info(result['error']);
             raise Exception('Engine failure')
-        for error in result['errors'][0]:
-            log.info(error)
+        if 'errors' in result:
+            log.info(result['errors'][0])
 
         if result['status'][1] in ('crashed', 'timeout', 'invalid'):
             raise Exception('TestBot is not operational')
@@ -449,6 +451,7 @@ class Worker:
                 options['error_logs'] = [sys.stderr for _ in range(len(bots))]
                 # options['output_logs'] = [sys.stdout, sys.stdout]
                 # options['input_logs'] = [sys.stdout, sys.stdout]
+            options['capture_errors'] = True
             result = run_game(game, bots, options)
             log.debug(result)
             del result['game_id']

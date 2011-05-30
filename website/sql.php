@@ -72,7 +72,7 @@ $sql = array(
                            where matchup_id = %s;",
     "insert_game_player" => "insert into game_player
                              select %s, p.user_id, p.submission_id, player_id,
-                             %s, %s, %s,
+                             '%s', '%s', %s, %s,
                              null, null, null, null, 1
                              from matchup_player p
                              where matchup_id = %s

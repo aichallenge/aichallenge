@@ -35,14 +35,10 @@ if ($gamedata == null) {
         }
         $game_id = mysql_insert_id();
         for ($i = 0, $size = sizeof($gamedata->rank); $i < $size; ++$i) {
-        	if (isset($gamedata->errors)) {
-        		$bot_errors = json_encode($gamedata->errors[$i]);
-        	} else {
-        		$bot_errors = NULL;
-        	}
         	if (!contest_query("insert_game_player",
                                $game_id,
-                               $bot_errors,
+                               $gamedata->errors[$i],
+                               $gamedata->status[$i],
                                $gamedata->rank[$i],
                                $gamedata->score[$i],
                                $gamedata->matchup_id,
