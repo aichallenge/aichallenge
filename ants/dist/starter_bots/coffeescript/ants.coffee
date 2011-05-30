@@ -95,7 +95,6 @@ class Game
           water = new Location data, type=LAND_TYPES.WATER
           @MAP[x][y] = water
           @MAP.seen_water.push water
-          console.warn @MAP[x][y]
         when "a"
           @MAP[x][y] = new Ant data
         when "d"
@@ -135,13 +134,13 @@ class Game
   neighbor: (x, y, direction) ->
     switch direction
       when "N"
-        if x-1 < 0 then @MAP[CONFIG.rows][y] else @MAP[x-1][y]
+        if x-1 < 0 then @MAP[CONFIG.rows-1][y] else @MAP[x-1][y]
       when "S"
-        if x+1 > CONFIG.rows then @MAP[0][y] else @MAP[x+1][y]
+        if x+1 > CONFIG.rows-1 then @MAP[0][y] else @MAP[x+1][y]
       when "E"
-        if y+1 > CONFIG.cols then @MAP[x][0] else @MAP[x][y+1]
+        if y+1 > CONFIG.cols-1 then @MAP[x][0] else @MAP[x][y+1]
       when "W"
-        if y-1 < 0 then @MAP[x][CONFIG.cols] else @MAP[x][y-1]  
+        if y-1 < 0 then @MAP[x][CONFIG.cols-1] else @MAP[x][y-1]  
   
   # Time left since the last "go" command
   time_remaining: ->
