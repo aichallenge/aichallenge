@@ -250,7 +250,7 @@ $sql = array(
         and (gp.status = 'timeout'
             or gp.status = 'crashed'
             or gp.status = 'invalid')
-    ";
+    "
 );
 
 ?>
