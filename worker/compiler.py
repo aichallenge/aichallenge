@@ -255,7 +255,7 @@ languages = (
             ([""], ExternalCompiler(comp_args["Go"][1]))]
     ),
     Language("Groovy", ".jar", "MyBot.groovy",
-        "java -Xmx" + MEMORY_LIMIT + "m -cp MyBot.jar:/usr/share/groovy/embeddable/groovy-all-1.7.5.jar MyBot",
+        "java -Xmx" + str(MEMORY_LIMIT) + "m -cp MyBot.jar:/usr/share/groovy/embeddable/groovy-all-1.7.5.jar MyBot",
         ["*.class, *.jar"],
         [(["*.groovy"], ExternalCompiler(comp_args["Groovy"][0])),
         (["*.class"], ExternalCompiler(comp_args["Groovy"][1]))]
@@ -266,7 +266,7 @@ languages = (
         [([""], ExternalCompiler(comp_args["Haskell"][0]))]
     ),
     Language("Java", ".jar", "MyBot.java",
-        "java -Xmx" + MEMORY_LIMIT + "m -jar MyBot.jar",
+        "java -Xmx" + str(MEMORY_LIMIT) + "m -jar MyBot.jar",
         ["*.class", "*.jar"],
         [(["*.java"], ExternalCompiler(comp_args["Java"][0])),
             (["*.class"], ExternalCompiler(comp_args["Java"][1]))]
@@ -277,7 +277,7 @@ languages = (
         [(["*.js"], ChmodCompiler("Javascript"))]
     ),
     Language("Lisp", "", "MyBot.lisp",
-        "./MyBot --dynamic-space-size " + MEMORY_LIMIT,
+        "./MyBot --dynamic-space-size " + str(MEMORY_LIMIT),
         [BOT],
         [([""], ExternalCompiler(comp_args["Lisp"][0]))]
     ),
