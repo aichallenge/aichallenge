@@ -4,7 +4,7 @@ require_once('mysql_login.php');
 require_once('bad_words.php');
 
 function check_valid_organization($id) {
-  if ($id == 999 || !filter_var($id, FILTER_VALIDATE_INT)) {
+  if ($id == 999 || filter_var($id, FILTER_VALIDATE_INT) === FALSE) {
     return False;
   }
   $query = "SELECT count(*) FROM organization where org_id=". $id;
@@ -23,7 +23,7 @@ function check_valid_country($id) {
   $result = mysql_query($query);
   $row = mysql_fetch_assoc($result);
   if ($row['count(*)'] > 0)
-    return True;
+  return True;
   return False;
 }
 
