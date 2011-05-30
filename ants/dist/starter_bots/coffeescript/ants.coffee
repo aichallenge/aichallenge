@@ -1,10 +1,3 @@
-# A library for the Ants game (Google AI Challenge 2011)
-# by Adrian Nackov (anackovm, gmail)
-#
-# LICENCE: This code is freely released into the public domain
-# for use by maintainers and entrants of the AI Challenge.
-
-
 LAND_TYPES = {"WATER", "LAND", "ANT", "DEAD", "FOOD"}
 
 # a holder for game information - map size, etc.
