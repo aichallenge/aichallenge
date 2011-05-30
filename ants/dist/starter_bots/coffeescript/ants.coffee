@@ -144,7 +144,7 @@ class Game
   
   # Time left since the last "go" command
   time_remaining: ->
-    CONFIG.turntime - new Date().getTime() - @turn_start_time
+    CONFIG.turntime - (new Date().getTime() - @turn_start_time)
     
   # ------------------------------------------------------------------
   # Library functions for demonstrating the usage of the ants library:
