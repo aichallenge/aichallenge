@@ -9,6 +9,7 @@ server_info = {{
     "api_base_url": "http://{api_url}/",
     "api_key": "{api_key}",
     "secure_jail": True,
+    "memory_limit": 100,
     "game_options": {{
         "turns": 1000,
         "loadtime": 3000,
@@ -19,6 +20,8 @@ server_info = {{
         "location": "{api_url}",
         "serial": False,
         "food_rate": (1,5),
-        "food_turn": (1,5)
+        "food_turn": (1,5),
+        "food": "sections",
+        "attack": "damage"
     }}
 }}

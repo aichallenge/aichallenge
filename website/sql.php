@@ -243,10 +243,10 @@ $sql = array(
          on gp.user_id = u.user_id
      order by g.game_id desc, gp.game_rank",
     "select_game_errors" => "select gp.user_id, gp.errors, gp.status, u.username
-        from game_player gp,
+        from game_player gp
         inner join user u
             on u.user_id = gp.user_id
-        where game_id = %s
+        where gp.game_id = %s
         and (gp.status = 'timeout'
             or gp.status = 'crashed'
             or gp.status = 'invalid')
