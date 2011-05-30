@@ -79,6 +79,11 @@ def install_nodejs():
         run_cmd("./configure")
         run_cmd("make")
         run_cmd("make install")
+        
+def install_coffeescript():
+    """ Install coffeescript """
+    run_cmd("curl http://npmjs.org/install.sh | sudo sh")
+    run_cmd("npm install -g coffee-script")
 
 def install_groovy():
     """ Install the Groovy language """
@@ -112,6 +117,7 @@ def install_all_languages():
     install_extra_packaged_languages()
     install_golang()
     install_nodejs()
+    install_coffeescript()
     install_groovy()
     install_scala()
     install_dmd()
