@@ -202,6 +202,7 @@ $sql = array(
     "select_game_list" => "select g.game_id, g.timestamp,
            gp.user_id, gp.submission_id, u.username,
            gp.sigma_after as sigma, gp.mu_after as mu, gp.player_id, gp.game_rank,
+           s.version,
            m.players, m.map_id, m.filename as map_name
      from (
          select *
@@ -220,6 +221,8 @@ $sql = array(
          on g.game_id = gp.game_id
      inner join user u
          on gp.user_id = u.user_id
+     inner join submission s
+        on gp.submission_id = s.submission_id
      order by g.game_id desc, gp.game_rank",
      "select_map_game_list_page_count" => "select count(*)
         from game g

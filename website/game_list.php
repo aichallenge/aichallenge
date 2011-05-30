@@ -12,9 +12,9 @@ require_once('pagination.php');
 
 // used for looking at latest results only with view more link
 //  should be smaller than page size
-$top_results_size = 5;
+$top_results_size = 10;
 // used for looking at pages with pagination links
-$page_size = 10;
+$page_size = 50;
 
 // this function doesn't really belong here, but I can't think of a good place
 // it works like filter_input with an optional filter and default value
@@ -115,6 +115,7 @@ function produce_cache_results($page=0, $user_id=NULL, $submission_id=NULL, $map
         if ($user_id !== NULL or $submission_id !== NULL) {
             $json["fields"][] = 'user_mu';
             $json["fields"][] = 'user_rank';
+            $json["fields"][] = 'user_version';
         }
         $row_num = 0;
         $game_row_num = 0;
@@ -136,9 +137,11 @@ function produce_cache_results($page=0, $user_id=NULL, $submission_id=NULL, $map
                 $cur_row[6][] = $list_row[6];
                 $cur_row[7][] = $list_row[7];
                 $cur_row[8][] = $list_row[8];
+                $cur_row[9][] = $list_row[9];
                 if ($list_row[2] == $user_id or $list_row[3] == $submission_id) {
                     $cur_row[] = $list_row[6] - $list_row[5]*3;
                     $cur_row[] = $list_row[8];
+                    $cur_row[] = $list_row[9];
                 }
             } else {
             // get new game info
@@ -157,9 +160,11 @@ function produce_cache_results($page=0, $user_id=NULL, $submission_id=NULL, $map
                 $cur_row[6] = array($cur_row[6]);
                 $cur_row[7] = array($cur_row[7]);
                 $cur_row[8] = array($cur_row[8]);
+                $cur_row[9] = array($cur_row[9]);
                 if ($list_row[2] == $user_id or $list_row[3] == $submission_id) {
                     $cur_row[] = $list_row[6] - $list_row[5]*3;
                     $cur_row[] = $list_row[8];
+                    $cur_row[] = $list_row[9];
                 }
             }
             $last_game_id = $list_row[0];
@@ -228,6 +233,7 @@ function create_game_list_table($json, $top=FALSE, $targetpage=NULL) {
     } else {
         $user_id = NULL;
     }
+    $version = 0;
     $table = '<table class="ranking">';
     if (array_key_exists('type', $json)) {
         // language by name, others by id
@@ -261,9 +267,11 @@ function create_game_list_table($json, $top=FALSE, $targetpage=NULL) {
         foreach ($json["values"] as $values) {
             $row_num++;
             $row = array_combine($fields, $values);
-
-            // $rank = ($filter == null)? $rank : ($i + $offset) . " <span title='Global Rank'>($rank)</span>";
-            // $rank_percent = $row["rank_percent"];
+            
+            if ($user_id and $version !== $row["version"]) {
+            	$version = $row["user_version"];
+            	$table .= "<tr colspan=\"6\"><th>Version $version</th></tr>";
+            }
 
             $oddity = $oddity == 'odd' ? 'even' : 'odd';  // quite odd?
             $user_class = current_username() == $row["username"] ? ' user' : '';
