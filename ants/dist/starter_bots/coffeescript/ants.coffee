@@ -30,7 +30,6 @@ class Game
       # each turn the game engine introduces only water
       # which hadn't been seen so far
       @seen_water = [] 
-      @reset() # creates an empty map
 
     reset: ->
       # set all the map to "is_land"
@@ -70,7 +69,8 @@ class Game
         state = @parse line.trim()
         switch state
           when "turn"
-            @MAP.reset()
+            if CONFIG? and CONFIG.turn > 0
+              @MAP.reset()
           when "ready"
             @MAP.reset()
             bot.ready()   
@@ -86,8 +86,8 @@ class Game
       CONFIG[command] = data[0]
     else
       if command in ["f", "w", "a", "d"]
-        [x,y] = [data[1], data[2]]
         data = (parseInt(x) for x in data[0..])
+        [x,y] = [data[0], data[1]]
       switch command
         when "f"
           @MAP[x][y] = new Location data, type=LAND_TYPES.FOOD
