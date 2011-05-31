@@ -45,7 +45,7 @@ def install_extra_packaged_languages():
         os.symlink("/usr/bin/ruby1.9.1", "/usr/bin/ruby")
 
 def install_golang():
-    """ Install golang from a mercurial release """
+    """ Install golang """
     run_cmd("add-apt-repository ppa:gophers/go")
     run_cmd("apt-get update")
     install_apt_packages(['golang'])
