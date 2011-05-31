@@ -130,7 +130,8 @@ def setup_website(opts):
             database_user=opts.database_user,
             database_password=opts.database_password,
             database_name=opts.database_name,
-            reply_email=reply_email
+            reply_email=reply_email,
+            api_url=opts.website_hostname
             )
     with CD(website_root):
         if not os.path.exists("server_info.php"):
@@ -297,4 +298,3 @@ if __name__ == "__main__":
         main(sys.argv)
     except KeyboardInterrupt:
         print('Setup Aborted')
-
