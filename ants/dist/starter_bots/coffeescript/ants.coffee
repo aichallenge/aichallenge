@@ -14,8 +14,7 @@ CONFIG_COMMANDS = [
 ]
 
 class Game
-  constructor: ->
-    @MAP = new Map()
+  constructor: -> @MAP = new Map()
     
   class Map
     constructor: -> 
@@ -76,14 +75,18 @@ class Game
   parse: (line) ->
     [command, data...] = line.split /\s/
     if command in CONFIG_COMMANDS
-      CONFIG[command] = data[0]
+      CONFIG[command] = parseInt(data[0])
     else
       if command in ["f", "w", "a", "d"]
-        data = (parseInt(x) for x in data[0..])
+        data = (parseInt(_) for _ in data)
         [x,y] = [data[0], data[1]]
       switch command
         when "f"
-          @MAP[x][y] = new Location data, type=LAND_TYPES.FOOD
+          try
+            @MAP[x][y] = new Location data, type=LAND_TYPES.FOOD
+          catch error
+            console.warn "Crashing at x:#{x}, y:#{y}"
+            console.warn error
         when "w"
           water = new Location data, type=LAND_TYPES.WATER
           @MAP[x][y] = water
@@ -99,11 +102,13 @@ class Game
   # gets array of Location objects for water for ALL turns since the start
   water: -> @MAP.search (_) -> _.type is LAND_TYPES.WATER
   # gets array of Location objects for the dead ants for this turn
-  dead: -> @MAP.search (_) -> _.type is LAND_TYPES.ANT and _.is_alive is no
+  dead: -> @MAP.search (_) -> _.type is LAND_TYPES.ANT and not _.is_alive
   # gets array of Ant objects for the player's ants for this turn
-  my_ants: -> @MAP.search (_) -> _.type is LAND_TYPES.ANT and _.owner is 0 
+  my_ants: -> 
+    @MAP.search (_) -> _.type is LAND_TYPES.ANT and _.owner is 0 and _.is_alive
   # gets array of Ant objects for the enemy's ants for this turn
-  enemy_ants: -> @MAP.search (_) -> _.type is LAND_TYPES.ANT and _.owner isnt 0
+  enemy_ants: ->
+    @MAP.search (_) -> _.type is LAND_TYPES.ANT and _.owner isnt 0 and _.is_alive
 
   # any location which is not water is passable
   passable: (x, y) -> @MAP[x][y].type isnt LAND_TYPES.WATER
@@ -112,7 +117,9 @@ class Game
   issue_order: (x, y, direction) ->
     console.log("o #{x} #{y} #{direction}")
   
-  finish_turn: -> console.log("go")
+  finish_turn: -> 
+    console.log("go")
+    process.stdout.flush()
   
   # returns the Euclidean distance between 2 Location objects
   distance: (loc1, loc2) ->
@@ -144,11 +151,9 @@ class Game
 
   # returns the nearby food locations sorted by distance
   nearby_food:  (location) -> 
-    @food().sort ((loc1, loc2) -> distance loc1 loc2)
-  
-  # returns the nearby friendly ants sorted by distance
-  nearby_friends: (ant) ->
-    @my_ants().sort ((ant1, ant2) -> distance ant1, ant2)
+    comparing_distances = (loc1, loc2) =>
+      @distance location, loc1 > @distance location, loc2
+    @food().sort comparing_distances
 
 (exports ? this).Game = Game
 (exports ? this).LAND_TYPES = LAND_TYPES
