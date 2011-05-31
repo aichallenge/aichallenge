@@ -14,8 +14,22 @@ $server_info = array(
     "maps_path" => "{map_dir}",
     "replay_path" => "{replay_dir}",
     "api_create_key" => "",
-    "api_log" => "{log_dir}/api_log.txt"
+    "api_log" => "{log_dir}/api_log.txt",
+    "game_options" => array (
+        "turns" => 2000,
+        "loadtime" => 3000,
+        "turntime" => 500,
+        "viewradius2" => 55,
+        "attackradius2" => 4,
+        "spawnradius2" => 1,
+        "location" => "{api_url}",
+        "serial" => False,
+        "food_rate" => array(1,6),
+        "food_turn" => array(2,10),
+        "food_start" => array(100,200),
+        "food" => "symmetric",
+        "attack" => "damage"
+    )
 );
 
 ?>
-

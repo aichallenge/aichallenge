@@ -423,9 +423,10 @@ class Worker:
         try:
             matchup_id = int(task["matchup_id"])
             log.info("Running game %s..." % matchup_id)
-            if 'options' in task:
-                options = task["options"]
-            else:
+            options = None
+            if 'game_options' in task:
+                options = task["game_options"]
+            if options == None:
                 options = copy(server_info["game_options"])
             options["map"] = self.get_map(task['map_filename'])
             options["output_json"] = True

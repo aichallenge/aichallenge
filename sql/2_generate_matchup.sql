@@ -66,6 +66,7 @@ left outer join (
 ) matchups
     on m.map_id = matchups.map_id
 where m.players <= @max_players
+    and m.priority >= 0
 order by game_count, priority, max_game_id,
          matchup_count, max_matchup_id,
          all_game_count, max_all_game_id,

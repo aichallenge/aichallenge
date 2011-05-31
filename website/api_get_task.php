@@ -59,10 +59,11 @@ if (!$match_result or mysql_num_rows($match_result) == 0) {
 
 if ($match_result) {
     while ($match_row = mysql_fetch_assoc($match_result)) {
-            $json = array( "task" => "game",
-                           "matchup_id" => $match_row["matchup_id"],
-                           "map_filename" => $match_row["filename"],
-                           "submissions" => array());
+        $json = array( "task" => "game",
+                       "matchup_id" => $match_row["matchup_id"],
+                       "map_filename" => $match_row["filename"],
+                       "submissions" => array(),
+                       "game_options" => $server_info["game_options"]);
         $lock_result = contest_query("lock_matchup",
                                      $worker["worker_id"],
                                      $json["matchup_id"]);
