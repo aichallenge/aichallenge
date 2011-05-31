@@ -30,7 +30,7 @@ def install_utility_packages():
 def install_basic_languages():
     """ Install base set of submission languages,
         currently C, C++, Java and Python """
-    pkg_list = ["gcc", "g++", "openjdk-6-jdk", "python-dev"]
+    pkg_list = ["gcc", "g++", "openjdk-6-jdk", "python-dev", "python3-dev"]
     install_apt_packages(pkg_list)
 
 def install_extra_packaged_languages():
@@ -79,7 +79,7 @@ def install_nodejs():
         run_cmd("./configure")
         run_cmd("make")
         run_cmd("make install")
-        
+
 def install_coffeescript():
     """ Install coffeescript """
     run_cmd("curl http://npmjs.org/install.sh | sudo sh")
@@ -398,4 +398,3 @@ def main(argv=["worker_setup.py"]):
 
 if __name__ == "__main__":
     main(sys.argv)
-

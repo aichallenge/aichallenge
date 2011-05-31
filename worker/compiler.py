@@ -346,6 +346,11 @@ languages = (
         ["*.pyc"],
         [(["*.py"], ChmodCompiler("Python"))]
     ),
+    Language("Python", ".py3", "MyBot.py3",
+        "python3 MyBot.py3",
+        ["*.pyc"],
+        [(["*.py3"], ChmodCompiler("Python3"))]
+    ),
     Language("Ruby", ".rb", "MyBot.rb",
         "ruby MyBot.rb",
         [],
