@@ -150,6 +150,7 @@ class Ants(Game):
             if not line or line[0] == '#':
                 continue
 
+            print(line)
             key, value = line.split(' ')
             if key == 'cols':
                 width = int(value)
@@ -1048,7 +1049,7 @@ class Ants(Game):
     def kill_player(self, player):
         """ Used by engine to signal that a player is out of the game """
         # give hold orders to all player ants by calling do_moves with no orders
-        self.do_moves(player, None)
+        self.do_moves(player, [])
         self.killed[player] = True
 
     def start_game(self):
