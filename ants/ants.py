@@ -150,7 +150,6 @@ class Ants(Game):
             if not line or line[0] == '#':
                 continue
 
-            print(line)
             key, value = line.split(' ')
             if key == 'cols':
                 width = int(value)
