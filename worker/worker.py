@@ -125,7 +125,7 @@ class GameAPIClient:
 
     def get_map(self, map_filename):
         try:
-            url = '%s/maps/%s' % (self.base_url, map_filename)
+            url = '%s/map/%s' % (self.base_url, map_filename)
             log.info("Downloading map %s" % url)
             data = urllib.urlopen(url).read()
             log.debug(data)
@@ -455,7 +455,8 @@ class Worker:
             options['capture_errors'] = True
             result = run_game(game, bots, options)
             log.debug(result)
-            del result['game_id']
+            if 'game_id' in result:
+                del result['game_id']
             result['matchup_id'] = matchup_id
             result['post_id'] = self.post_id
             if report_status:

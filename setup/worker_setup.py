@@ -117,7 +117,7 @@ def install_all_languages():
     install_extra_packaged_languages()
     install_golang()
     install_nodejs()
-    install_coffeescript()
+    #install_coffeescript()
     install_groovy()
     install_scala()
     install_dmd()

@@ -168,11 +168,14 @@ class Sandbox:
         else:
             working_directory = self.working_directory
         shell_command = shlex.split(shell_command.replace('\\','/'))
-        self.command_process = subprocess.Popen(shell_command,
-                                                stdin=subprocess.PIPE,
-                                                stdout=subprocess.PIPE,
-                                                stderr=subprocess.PIPE,
-                                                cwd=working_directory)
+        try:
+            self.command_process = subprocess.Popen(shell_command,
+                                                    stdin=subprocess.PIPE,
+                                                    stdout=subprocess.PIPE,
+                                                    stderr=subprocess.PIPE,
+                                                    cwd=working_directory)
+        except OSError as ex:
+            raise Exception('BotProcessError', 'Failed to start {0}'.format(shell_command))
         self._is_alive = True
         stdout_monitor = Thread(target=_monitor_file,
                                 args=(self.command_process.stdout, self.stdout_queue))
