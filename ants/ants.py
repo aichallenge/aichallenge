@@ -125,6 +125,8 @@ class Ants(Game):
         # used to track what a player can see
         self.init_vision()
 
+        # the engine may kill players before the game starts and this is needed to prevent errors
+        self.orders = [[] for i in range(self.num_players)]
 
     def distance(self, x, y):
         """ Returns distance between x and y squared """
@@ -1046,12 +1048,14 @@ class Ants(Game):
         return self.remaining_players() <= 1
 
     def kill_player(self, player):
+        print('kill_player')
         """ Used by engine to signal that a player is out of the game """
         # give hold orders to all player ants by calling do_moves with no orders
         self.do_moves(player, [])
         self.killed[player] = True
 
     def start_game(self):
+        self.game_started = True
         """ Called by engine at the start of the game """
         self.do_food((self.land_area // self.food_start) // self.num_players)
 
@@ -1080,6 +1084,7 @@ class Ants(Game):
         self.killed_ants = []
         self.revealed_water = [[] for i in range(self.num_players)]
         self.removed_food = [[] for i in range(self.num_players)]
+        print('start_turn')
         self.orders = [[] for i in range(self.num_players)]
 
     def finish_turn(self):

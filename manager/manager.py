@@ -34,7 +34,7 @@ except IOError:
     pass
 
 handler2 = logging.StreamHandler()
-handler2.setLevel(loging.INFO)
+handler2.setLevel(logging.INFO)
 handler2.setFormatter(formatter)
 log.addHandler(handler2)
 
