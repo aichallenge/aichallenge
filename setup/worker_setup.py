@@ -18,7 +18,7 @@ TEMPLATE_DIR = os.path.dirname(os.path.abspath(__file__))
 def install_required_packages():
     """ This installs the packages that are required to run the worker scripts
     """
-    pkg_list = ["curl", "unzip"]
+    pkg_list = ["curl", "unzip", "python-software-properties"]
     install_apt_packages(pkg_list)
 
 def install_utility_packages():
@@ -46,39 +46,15 @@ def install_extra_packaged_languages():
 
 def install_golang():
     """ Install golang from a mercurial release """
-    RELEASE_TAG = "release.r56"
-    if os.path.exists("/usr/local/bin/godoc"):
-        return
-    pkg_list = ["bison", "ed", "gawk", "libc6-dev", "make",
-            "python-setuptools", "build-essential", "mercurial"]
-    install_apt_packages(pkg_list)
-    try:
-        os.makedirs("/usr/local/src")
-    except OSError:
-        pass
-    with CD("/usr/local/src"):
-        run_cmd("hg clone -r %s https://go.googlecode.com/hg/ go"
-            % (RELEASE_TAG,))
-    append_line("/root/.bashrc", "export GOROOT=/usr/local/src/go")
-    append_line("/root/.bashrc", "export GOBIN=/usr/local/bin")
-    with CD("/usr/local/src/go/src"):
-        run_cmd("export GOBIN=/usr/local/bin; ./all.bash")
+    run_cmd("add-apt-repository ppa:gophers/go")
+    run_cmd("apt-get update")
+    install_apt_packages(['golang'])
 
 def install_nodejs():
     """ Install node.js """
-    if os.path.exists("/usr/local/bin/node"):
-        return
-    install_apt_packages("make")
-    try:
-        os.makedirs("/usr/local/src/nodejs")
-    except OSError:
-        pass
-    with CD("/usr/local/src/nodejs"):
-        run_cmd("curl 'http://nodejs.org/dist/node-v0.4.1.tar.gz' | tar -xz")
-    with CD("/usr/local/src/nodejs/node-v0.4.1"):
-        run_cmd("./configure")
-        run_cmd("make")
-        run_cmd("make install")
+    run_cmd("add-apt-repository ppa:jerome-etienne/neoip")
+    run_cmd("apt-get update")
+    install_apt_packages(['nodejs'])
 
 def install_coffeescript():
     """ Install coffeescript """
