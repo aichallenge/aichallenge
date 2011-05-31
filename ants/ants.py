@@ -1048,7 +1048,6 @@ class Ants(Game):
         return self.remaining_players() <= 1
 
     def kill_player(self, player):
-        print('kill_player')
         """ Used by engine to signal that a player is out of the game """
         # give hold orders to all player ants by calling do_moves with no orders
         self.do_moves(player, [])
@@ -1084,7 +1083,6 @@ class Ants(Game):
         self.killed_ants = []
         self.revealed_water = [[] for i in range(self.num_players)]
         self.removed_food = [[] for i in range(self.num_players)]
-        print('start_turn')
         self.orders = [[] for i in range(self.num_players)]
 
     def finish_turn(self):
