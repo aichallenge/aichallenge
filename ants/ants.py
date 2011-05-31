@@ -370,6 +370,11 @@ class Ants(Game):
 
                 # switch player perspective of player numbers
                 if type in ['a','d']:
+                    # an ant can appear in a bots vision and die the same turn
+                    # in this case the ant has not been assigned a number yet
+                    #   assign the enemy the next index
+                    if self.switch[player][update[-1]] == None:
+                        self.switch[player][update[-1]] = self.num_players - self.switch[player].count(None)
                     update[-1] = self.switch[player][update[-1]]
 
         # also tell the player about any food that has been removed
@@ -1039,6 +1044,8 @@ class Ants(Game):
 
     def kill_player(self, player):
         """ Used by engine to signal that a player is out of the game """
+        # give hold orders to all player ants by calling do_moves with no orders
+        self.do_moves(player, None)
         self.killed[player] = True
 
     def start_game(self):
