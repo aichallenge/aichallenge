@@ -65,12 +65,15 @@ class Game
               @MAP.reset()
           when "ready"
             @MAP.reset()
-            bot.ready()   
+            bot.ready()
+            @finish_turn()
           when "go"
             @turn_start_time = new Date().getTime()
             bot.do_turn()
+            @finish_turn()
           when "end"
-            bot.end()
+            # The game is over.
+            process.exit()
     
   parse: (line) ->
     [command, data...] = line.split /\s/
