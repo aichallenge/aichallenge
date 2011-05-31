@@ -840,12 +840,14 @@ Visualizer.prototype.resize = function(forced) {
 			bg.x = this.loc.vis.x + this.loc.vis.w;
 			bg.y = this.loc.vis.y + 8;
 			// set button group extents
-			bg = this.btnMgr.groups['fog'];
-			bg.h = this.loc.vis.h - 8;
+			if (this.replay.duration > 0) {
+				bg = this.btnMgr.groups['fog'];
+				bg.h = this.loc.vis.h - 8;
+				bg = this.btnMgr.groups['playback'];
+				bg.w = news.width;
+			}
 			bg = this.btnMgr.groups['toolbar'];
 			bg.h = this.loc.vis.h - 8;
-			bg = this.btnMgr.groups['playback'];
-			bg.w = news.width;
 		} else {
 			this.loc.vis = new Location(0, y, news.width, news.height - y);
 		}
