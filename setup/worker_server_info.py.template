@@ -21,7 +21,7 @@ server_info = {{
         "serial": False,
         "food_rate": (1,6),
         "food_turn": (2,10),
-        "food_start": (100,200),
+        "food_start": (200,300),
         "food": "symmetric",
         "attack": "damage"
     }}

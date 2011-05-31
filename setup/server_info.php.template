@@ -26,7 +26,7 @@ $server_info = array(
         "serial" => False,
         "food_rate" => array(1,6),
         "food_turn" => array(2,10),
-        "food_start" => array(100,200),
+        "food_start" => array(200,300),
         "food" => "symmetric",
         "attack" => "damage"
     )
