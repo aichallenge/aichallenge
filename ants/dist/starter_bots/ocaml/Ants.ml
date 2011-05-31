@@ -2,18 +2,11 @@
 PlanetWars starter package and adapted. If you find any bugs or make 
 any improvements, please post to the forum or upload a fix! *)
 
-(* Uncomment this and the next function to enable logging *)
-
-(*
-let out_chan = open_out "mybot_err.log";;
-*)
-
-
-(* uncomment the output_string line and comment out the () *)
+let out_chan = stderr (* open_out "mybot_err.log" *);;
 
 let ddebug s = 
-(* output_string out_chan s; flush out_chan *) 
-(* *)  ()  (* *)
+   output_string out_chan s; 
+   flush out_chan
 ;;
 
 type game_setup =
@@ -260,10 +253,14 @@ let add_line gstate line =
              | _ -> gstate
         )
         (fun (line : string) ->
+          gstate
+(* swap this for the above line if you want it to fail on bad input
           if line = "" then
             gstate
           else
-            failwith (Printf.sprintf "unable to parse '%s'" line))))
+            failwith (Printf.sprintf "unable to parse '%s'" line)
+*)
+        )))
     (uncomment line)
 
 let update gstate lines =
@@ -275,7 +272,14 @@ let update gstate lines =
    in
    let ugstate =
       List.fold_left add_line cgstate lines 
-   in if ugstate.turn = 0 then initialize_map ugstate
+   in if ugstate.turn = 0 then
+      if ugstate.setup.rows < 0
+      || ugstate.setup.cols < 0 then
+        (
+         ddebug "\nBad setup info! Expect crashes!\n\n";
+         ugstate
+        )
+      else initialize_map ugstate
    else ugstate
 ;;
 
@@ -486,12 +490,9 @@ class swrap state =
    method bounds = state.setup.rows, state.setup.cols
    method issue_order (o:order) = issue_order o
    method finish_turn () = finish_turn ()
-   method step_dir (row, col) (d:dir) =
-      step_dir d self#bounds (row, col)
-   method get_tile (row, col) = ((get_tile state.tmap (row, col)): tile)
    method direction p1 p2 = ((direction self#bounds p1 p2): (dir * dir))
-   method step_dir loc dir = step_dir dir self#bounds loc
-   method get_tile loc = get_tile state.tmap loc
+   method step_dir loc (d:dir) = step_dir d self#bounds loc
+   method get_tile loc = ((get_tile state.tmap loc): tile)
    method distance2 p1 p2 = distance2 self#bounds p1 p2
    method distance p1 p2 = distance self#bounds p1 p2
    method distance_and_direction p1 p2 =
@@ -573,7 +574,7 @@ let loop engine =
         with exc ->
          (
           ddebug (Printf.sprintf 
-             "Ants.loop: Engine raised an exception in turn %d.\n" i);
+             "Ants.loop: raised an exception in turn %d.\n" i);
 (* from Planetwars, I haven't written an equivalent
             output_game_state stderr state;
 *)
