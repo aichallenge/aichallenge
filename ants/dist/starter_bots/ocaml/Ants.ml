@@ -574,7 +574,7 @@ let loop engine =
         with exc ->
          (
           ddebug (Printf.sprintf 
-             "Ants.loop: Engine raised an exception in turn %d.\n" i);
+             "Ants.loop: raised an exception in turn %d.\n" i);
 (* from Planetwars, I haven't written an equivalent
             output_game_state stderr state;
 *)

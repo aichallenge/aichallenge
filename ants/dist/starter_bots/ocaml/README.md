@@ -38,8 +38,7 @@ package. For the impatient, here is a brief summary.
 ## Status
 
 This is an implementation of the core functionality and suggested helper 
-functions in the Ants Starter Pack guide. Not much testing has been done 
-for robustness.
+functions in the Ants Starter Pack guide.
 
 There is an optional update_vision function which does a Field of Vision 
 calculation for every ant passed in. This allows the visible function to 
@@ -56,6 +55,11 @@ Build with
 in the source directory.
 
 ## Where to go from here
+
+Implementing a breadth first search using Queue would probably be 
+useful.
+
+## Some note I wrote while getting this ready:
 
 Please note that most of these comments were written before I added the 
 OO interface. I've updated some things but may have missed some.
