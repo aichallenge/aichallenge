@@ -36,19 +36,27 @@
 # (though the *.cs is actually replaced with the list of files found)
 
 import collections
-import sys
+import errno
+import fnmatch
+import glob
+import json
 import os
 import re
-import glob
-import subprocess
-import fnmatch
-import errno
 import shutil
-import json
+import subprocess
+import sys
+import time
 from optparse import OptionParser
-from server_info import server_info
 
-MEMORY_LIMIT = server_info.get('memory_limit', 100)
+from sandbox import Sandbox
+
+try:
+    from server_info import server_info
+    MEMORY_LIMIT = server_info.get('memory_limit', 500)
+    COMPILE_TIME = server_info.get('compile_time', 10 * 60)
+except ImportError:
+    MEMORY_LIMIT = 500
+    COMPILE_TIME = 10 * 60
 
 BOT = "MyBot"
 SAFEPATH = re.compile('[a-zA-Z0-9_.$-]+$')
@@ -90,15 +98,22 @@ def nukeglob(pattern):
             if e.errno != errno.ENOENT:
                 raise
 
-def system(args, errors):
-    proc = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    (out, err) = proc.communicate()
-    if err:
-        errors.append(err)
-    if proc.returncode != 0:
-        errors.append("Command '%s' had error return code %d"
-                % (" ".join(args), proc.returncode))
-    return proc.returncode == 0
+def _run_cmd(sandbox, cmd, timelimit):
+    errors = []
+    sandbox.start(cmd)
+    try:
+        while (sandbox.is_alive and time.time() < timelimit):
+            sandbox.read_line((timelimit - time.time()) + 1)
+    finally:
+        sandbox.kill()
+    if time.time() > timelimit:
+        errors.append("Compilation timed out with file %s"
+                % (filename,))
+    err_line = sandbox.read_error()
+    while err_line is not None:
+        errors.append(err_line)
+        err_line = sandbox.read_error()
+    return errors
 
 def check_path(path, errors):
     if not os.path.exists(path):
@@ -118,12 +133,13 @@ class ChmodCompiler(Compiler):
     def __str__(self):
         return "ChmodCompiler: %s" % (self.language,)
 
-    def compile(self, globs, errors):
-        for f in safeglob_multi(globs):
-            try:
-                os.chmod(f, 0644)
-            except Exception, e:
-                errors.append("Error chmoding %s - %s\n" % (f, e))
+    def compile(self, bot_dir, globs, errors, timelimit):
+        with CD(bot_dir):
+            for f in safeglob_multi(globs):
+                try:
+                    os.chmod(f, 0644)
+                except Exception, e:
+                    errors.append("Error chmoding %s - %s\n" % (f, e))
         return True
 
 class ExternalCompiler(Compiler):
@@ -134,15 +150,29 @@ class ExternalCompiler(Compiler):
     def __str__(self):
         return "ExternalCompiler: %s" % (' '.join(self.args),)
 
-    def compile(self, globs, errors):
-        files = safeglob_multi(globs)
-        if self.separate:
-            for file in files:
-                if not system(self.args + [file], errors):
+    def compile(self, bot_dir, globs, errors, timelimit):
+        with CD(bot_dir):
+            files = safeglob_multi(globs)
+
+        errored = False
+        box = Sandbox(bot_dir)
+        try:
+            if self.separate:
+                for filename in files:
+                    cmdline = " ".join(self.args + [filename])
+                    cmd_errors = _run_cmd(box, cmdline, timelimit)
+                    if cmd_errors:
+                        errors += cmd_errors
+                        return False
+            else:
+                cmdline = " ".join(self.args + files)
+                cmd_errors = _run_cmd(box, cmdline, timelimit)
+                if cmd_errors:
+                    errors += cmd_errors
                     return False
-        else:
-            if not system(self.args + files, errors):
-                return False
+            box.retrieve()
+        finally:
+            box.release()
         return True
 
 # Compiles each file to its own output, based on the replacements dict.
@@ -155,17 +185,27 @@ class TargetCompiler(Compiler):
     def __str__(self):
         return "TargetCompiler: %s" % (' '.join(self.args),)
 
-    def compile(self, globs, errors):
-        sources = safeglob_multi(globs)
-        for source in sources:
-            head, ext = os.path.splitext(source)
-            if ext in self.replacements:
-                target = head + self.replacements[ext]
-            else:
-                errors.append("Could not determine target for source file %s." % source)
-                return False
-            if not system(self.args + [self.outflag, target, source], errors):
-                return False
+    def compile(self, bot_dir, globs, errors, timelimit):
+        with CD(bot_dir):
+            sources = safeglob_multi(globs)
+
+        box = Sandbox(bot_dir)
+        try:
+            for source in sources:
+                head, ext = os.path.splitext(source)
+                if ext in self.replacements:
+                    target = head + self.replacements[ext]
+                else:
+                    errors.append("Could not determine target for source file %s." % source)
+                    return False
+                cmdline = " ".join(self.args + [self.outflag, target, source])
+                cmd_errors = _run_cmd(box, cmdline, timelimit)
+                if cmd_errors:
+                    errors += cmd_errors
+                    return False
+            box.retrieve()
+        finally:
+            box.release()
         return True
 
 comp_args = {
@@ -324,22 +364,26 @@ languages = (
 )
 
 
-def compile_function(language):
+def compile_function(language, bot_dir):
     """Compile submission in the current directory with a specified language."""
-    for glob in language.nukeglobs:
-        nukeglob(glob)
+    with CD(bot_dir):
+        for glob in language.nukeglobs:
+            nukeglob(glob)
 
     errors = []
+    timelimit = time.time() + COMPILE_TIME
     for globs, compiler in language.compilers:
         try:
-            if not compiler.compile(globs, errors):
+            if not compiler.compile(bot_dir, globs, errors, timelimit):
                 return False, errors
         except StandardError, exc:
+            raise
             errors.append("Compiler %s failed with: %s"
                     % (compiler, exc))
             return False, errors
 
-    return check_path(BOT + language.extension, errors), errors
+    compiled_bot_file = os.path.join(bot_dir, BOT + language.extension)
+    return check_path(compiled_bot_file, errors), errors
 
 _LANG_NOT_FOUND = """Did not find a recognized MyBot.* file.
 Please add one of the following filenames to your zip file:
@@ -383,22 +427,22 @@ def get_run_lang(submission_dir):
 
 def compile_anything(bot_dir):
     """Autodetect the language of an entry and compile it."""
-    with CD(bot_dir):
-        detected_language, errors = detect_language(bot_dir)
-        if detected_language:
-            # If we get this far, then we have successfully auto-detected
-            # the language that this entry is using.
-            compiled, errors = compile_function(detected_language)
-            if compiled:
-                name = detected_language.name
-                run_cmd = detected_language.command
-                with open('../run.sh', 'w') as f:
-                    f.write('#%s\n%s\n' % (name, run_cmd))
-                return name, None
-            else:
-                return detected_language.name, errors
+    detected_language, errors = detect_language(bot_dir)
+    if detected_language:
+        # If we get this far, then we have successfully auto-detected
+        # the language that this entry is using.
+        compiled, errors = compile_function(detected_language, bot_dir)
+        if compiled:
+            name = detected_language.name
+            run_cmd = detected_language.command
+            run_filename = os.path.join(bot_dir, '../run.sh')
+            with open(run_filename, 'w') as f:
+                f.write('#%s\n%s\n' % (name, run_cmd))
+            return name, None
         else:
-            return "Unknown", errors
+            return detected_language.name, errors
+    else:
+        return "Unknown", errors
 
 def main(argv=sys.argv):
     parser = OptionParser(usage="Usage: %prog [options] [directory]")

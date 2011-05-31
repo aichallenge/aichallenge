@@ -16,7 +16,7 @@ try:
 except ImportError:
     _SECURE_DEFAULT = False
 
-class JailError(StandardError):
+class SandboxError(StandardError):
     pass
 
 class _Jail(object):
@@ -39,21 +39,21 @@ class _Jail(object):
             self.name = jail
             break
         else:
-            raise JailError("Could not find an unlocked jail")
+            raise SandboxError("Could not find an unlocked jail")
         self.jchown = os.path.join(server_info["repo_path"], "worker/jail_own")
         self.base_dir = os.path.join(jail_base, jail)
         self.number = int(jail[len("jailuser"):])
-        self.chroot_cmd = "sudo -u {0} schroot -u {0} -c {0} -d {1} ".format(
+        self.chroot_cmd = "sudo -u {0} schroot -u {0} -c {0} -d {1} -- ".format(
                 self.name, "/home/jailuser")
 
     def __del__(self):
         if self.locked:
-            raise JailError("Jail object for %s freed without being released"
+            raise SandboxError("Jail object for %s freed without being released"
                     % (self.name))
 
     def release(self):
         if not self.locked:
-            raise JailError("Attempt to release jail that is already unlocked")
+            raise SandboxError("Attempt to release jail that is already unlocked")
         lock_dir = os.path.join(self.base_dir, "locked")
         pid_filename = os.path.join(lock_dir, "lock.pid")
         with open(pid_filename, 'r') as pid_file:
@@ -61,7 +61,7 @@ class _Jail(object):
             if lock_pid != os.getpid():
                 # if we ever get here something has gone seriously wrong
                 # most likely the jail locking mechanism has failed
-                raise JailError("Jail released by different pid, name %s, lock_pid %d, release_pid %d"
+                raise SandboxError("Jail released by different pid, name %s, lock_pid %d, release_pid %d"
                         % (self.name, lock_pid, os.getpid()))
         os.unlink(pid_filename)
         os.rmdir(lock_dir)
@@ -69,29 +69,37 @@ class _Jail(object):
 
     def prepare_with(self, command_dir):
         if os.system("%s c %d" % (self.jchown, self.number)) != 0:
-            raise JailError("Error returned from jail_own c %d in prepare"
+            raise SandboxError("Error returned from jail_own c %d in prepare"
                     % (self.number,))
         scratch_dir = os.path.join(self.base_dir, "scratch")
         if os.system("rm -rf %s" % (scratch_dir,)) != 0:
-            raise JailError("Could not remove old scratch area from jail %d"
+            raise SandboxError("Could not remove old scratch area from jail %d"
                     % (self.number,))
         home_dir = os.path.join(scratch_dir, "home/jailuser")
         os.makedirs(os.path.join(scratch_dir, "home"))
         if os.system("cp -r %s %s" % (command_dir, home_dir)) != 0:
-            raise JailError("Error copying working directory '%s' to jail %d"
+            raise SandboxError("Error copying working directory '%s' to jail %d"
                     % (command_dir, self.number))
         if os.system("%s j %d" % (self.jchown, self.number)) != 0:
-            raise JailError("Error returned from jail_own j %d in prepare"
+            raise SandboxError("Error returned from jail_own j %d in prepare"
                     % (self.number,))
         self.home_dir = home_dir
+        self.command_dir = command_dir
+
+    def retrieve(self):
+        os.system("rm -rf %s" % (self.command_dir,))
+        if os.system("%s c %d" % (self.jchown, self.number)) != 0:
+            raise SandboxError("Error returned from jail_own c %d in prepare"
+                    % (self.number,))
+        os.system("cp -r %s %s" % (self.home_dir, self.command_dir))
 
     def signal(self, signal):
         if not self.locked:
-            raise JailError("Attempt to send %s to unlocked jail" % (signal,))
+            raise SandboxError("Attempt to send %s to unlocked jail" % (signal,))
         result = subprocess.call("sudo -u {0} kill -{1} -1".format(
             self.name, signal), shell=True)
         if result != 0:
-            raise JailError("Error returned from jail %s sending signal %s"
+            raise SandboxError("Error returned from jail %s sending signal %s"
                     % (self.name, signal))
 
     def kill(self):
@@ -161,7 +169,7 @@ class Sandbox:
     def start(self, shell_command):
         """Start a command running in the sandbox"""
         if self.is_alive:
-            raise JailError("Tried to run command with one in progress.")
+            raise SandboxError("Tried to run command with one in progress.")
         if self.jail:
             shell_command = self.jail.chroot_cmd + shell_command
             working_directory = None
@@ -174,8 +182,8 @@ class Sandbox:
                                                     stdout=subprocess.PIPE,
                                                     stderr=subprocess.PIPE,
                                                     cwd=working_directory)
-        except OSError as ex:
-            raise Exception('BotProcessError', 'Failed to start {0}'.format(shell_command))
+        except OSError:
+            raise SandboxError('Failed to start {0}'.format(shell_command))
         self._is_alive = True
         stdout_monitor = Thread(target=_monitor_file,
                                 args=(self.command_process.stdout, self.stdout_queue))
@@ -204,6 +212,13 @@ class Sandbox:
                     pass
             self.command_process.wait()
 
+    def retrieve(self):
+        """Copy the working directory back out of the sandbox."""
+        if self.is_alive:
+            raise SandboxError("Tried to retrieve sandbox while still alive")
+        if self.jail:
+            self.jail.retrieve()
+
     def release(self):
         """Release the sandbox for further use
 
@@ -212,7 +227,7 @@ class Sandbox:
 
         """
         if self.is_alive:
-            raise JailError("Jail released while still alive")
+            raise SandboxError("Sandbox released while still alive")
         if self.jail:
             self.jail.release()
 
