@@ -39,13 +39,13 @@ class Ants(Game):
         self.spawnradius = int(options["spawnradius2"])
         self.seed = options.get('seed')
         self.food_rate = options.get('food_rate', (1,6)) # total food
-        if type(self.food_rate == tuple):
+        if type(self.food_rate) in (list, tuple):
             self.food_rate = randrange(*self.food_rate)
         self.food_turn = options.get('food_turn', (2,10)) # per turn
-        if type(self.food_turn == tuple):
+        if type(self.food_turn) in (list, tuple):
             self.food_turn = randrange(*self.food_turn)
         self.food_start = options.get('food_start', (200,300)) # per turn
-        if type(self.food_start == tuple):
+        if type(self.food_start) in (list, tuple):
             self.food_start = randrange(*self.food_start)
         self.food_extra = Fraction(0,1)
 
