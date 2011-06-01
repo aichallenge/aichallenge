@@ -1,7 +1,6 @@
 <?php
 include 'header.php';
 include_once 'profile_submissions_widget.php';
-require_once('mysql_query.php');
 
 $user_id = $_GET["user_id"];
 if(!filter_var($user_id, FILTER_VALIDATE_INT)) {
