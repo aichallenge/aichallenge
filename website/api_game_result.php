@@ -8,7 +8,7 @@ header("Content-type: application/json");
 
 $json_string = file_get_contents('php://input');
 $json_hash = md5($json_string);
-api_log($json_string);
+// api_log($json_string);
 $gamedata = json_decode($json_string);
 
 if ($gamedata == null) {
