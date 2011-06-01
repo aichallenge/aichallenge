@@ -38,15 +38,18 @@ class Ants(Game):
         self.attackradius = int(options["attackradius2"])
         self.spawnradius = int(options["spawnradius2"])
         self.seed = options.get('seed')
-        self.food_rate = options.get('food_rate', (1,6)) # total food
+        self.food_rate = options.get('food_rate', (2,8)) # total food
         if type(self.food_rate) in (list, tuple):
             self.food_rate = randrange(*self.food_rate)
-        self.food_turn = options.get('food_turn', (2,10)) # per turn
+        self.food_turn = options.get('food_turn', (12,30)) # per turn
         if type(self.food_turn) in (list, tuple):
             self.food_turn = randrange(*self.food_turn)
-        self.food_start = options.get('food_start', (200,300)) # per turn
+        self.food_start = options.get('food_start', (75,175)) # per land area
         if type(self.food_start) in (list, tuple):
             self.food_start = randrange(*self.food_start)
+        self.food_visible = options.get('food_visible', (1,3)) # in starting loc
+        if type(self.food_visible) in (list, tuple):
+            self.food_visible = randrange(*self.food_visible)
         self.food_extra = Fraction(0,1)
 
         self.do_attack = {
@@ -949,12 +952,47 @@ class Ants(Game):
                         self.add_food((row, col))
                         break
 
+    def do_food_visible(self, amount=1):
+        """ Place food in vison of starting spots """
+        # if this is the first time calling this function then
+        #   create the food sets
+        if not hasattr(self, 'food_sets_visible'):
+            self.food_sets_visible = deque(self.get_symmetric_food_sets(True))
+            # add a sentinal so we know when to shuffle
+            self.food_sets_visible.append(None)
+
+            # counter for food locations
+            if not hasattr(self, 'pending_food'):
+                self.pending_food = defaultdict(int)
+        # increment food counter for food spawning locations
+        for f in range(amount):
+            s = self.food_sets_visible.pop()
+            # if we finished one rotation, shuffle for the next
+            if s == None:
+                shuffle(self.food_sets_visible)
+                self.food_sets_visible.appendleft(None)
+                s = self.food_sets_visible.pop()
+            self.food_sets_visible.appendleft(s)
+
+            for loc in s:
+                self.pending_food[loc] += 1
+
+        # place food in scheduled locations if they are free
+        for loc in self.pending_food.keys():
+            if self.map[loc[0]][loc[1]] == LAND:
+                self.add_food(loc)
+                self.pending_food[loc] -= 1
+
+                # remove from queue if the count reaches 0
+                if not self.pending_food[loc]:
+                    del self.pending_food[loc]
+
     def do_food_symmetric(self, amount=1):
         """ Place food in the same relation player start positions.
 
-            Food that can't be placed is put into a queue and is places
+            Food that can't be placed is put into a queue and is placed
               as soon as the location becomes available.
-            Positions are randomly orders and cycled to evenly
+            Positions are randomly ordered and cycled to evenly
               distribute food.
         """
         # if this is the first time calling this function then
@@ -965,7 +1003,8 @@ class Ants(Game):
             self.food_sets.append(None)
 
             # counter for food locations
-            self.pending_food = defaultdict(int)
+            if not hasattr(self, 'pending_food'):
+                self.pending_food = defaultdict(int)
 
         # increment food counter for food spawning locations
         for f in range(amount):
@@ -990,7 +1029,7 @@ class Ants(Game):
                 if not self.pending_food[loc]:
                     del self.pending_food[loc]
 
-    def get_symmetric_food_sets(self):
+    def get_symmetric_food_sets(self, starting=False):
         """ Split map into sets of squares
 
             Each set contains self.num_players points where each point
@@ -1011,6 +1050,14 @@ class Ants(Game):
                 if square:
                     continue
 
+                if starting:
+                    # skip locations outside of initial ants' view radius
+                    for ant in self.initial_ant_list:
+                        if self.distance(ant.loc, (row, col)) <= self.viewradius:
+                            break
+                    else:
+                        continue
+
                 # possible food locations
                 locations = [
                     self.destination((row, col), (n*row_t, n*col_t))
@@ -1022,13 +1069,16 @@ class Ants(Game):
                     # we should not have visited these locations yet
                     # this also catches duplicates in the current list
                     if visited[loc[0]][loc[1]]:
-                        raise Exception("Invalid map",
-                                        "This map does not support symmetric food placement")
+                        if starting:
+                            break # prevent starting food from breaking on asymmetric maps
+                        else:
+                            raise Exception("Invalid map",
+                                            "This map does not support symmetric food placement")
                     visited[loc[0]][loc[1]] = True
-
-                # we only care about sets where none of the locations hit water
-                if all(self.map[loc[0]][loc[1]] != WATER for loc in locations):
-                    food_sets.append(locations)
+                else:
+                    # we only care about sets where none of the locations hit water
+                    if all(self.map[loc[0]][loc[1]] != WATER for loc in locations):
+                        food_sets.append(locations)
 
         return food_sets
 
@@ -1055,8 +1105,12 @@ class Ants(Game):
 
     def start_game(self):
         """ Called by engine at the start of the game """
-        self.game_started = True
-        self.do_food((self.land_area // self.food_start) // self.num_players)
+        if self.do_food != self.do_food_none:
+            self.game_started = True
+            starting_food = ((self.land_area // self.food_start) // self.num_players
+                             - self.food_visible)
+            self.do_food_visible(self.food_visible)
+            self.do_food(starting_food)
 
     def finish_game(self):
         """ Called by engine at the end of the game """
@@ -1068,7 +1122,7 @@ class Ants(Game):
             # currently 1 food is spawned per turn per player
             food_bonus = (
                 (self.turns - self.turn) * # food that will spawn
-                (self.food_rate / self.food_turn)
+                (self.food_rate * self.num_players / self.food_turn)
                 + self.food_extra
                 + len(self.current_food) # food that hasn't been collected
                 + len(self.current_ants) # player AND enemy ants
@@ -1095,7 +1149,7 @@ class Ants(Game):
         self.do_orders()
         self.do_attack()
         self.do_spawn()
-        self.food_extra += Fraction(self.food_rate, self.food_turn)
+        self.food_extra += Fraction(self.food_rate * self.num_players, self.food_turn)
         food_now = self.food_extra // self.num_players
         self.food_extra %= self.num_players
         self.do_food(food_now)
