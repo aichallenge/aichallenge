@@ -85,11 +85,7 @@ class Game
         [x,y] = [data[0], data[1]]
       switch command
         when "f"
-          try
-            @MAP[x][y] = new Location data, type=LAND_TYPES.FOOD
-          catch error
-            console.warn "Crashing at x:#{x}, y:#{y}"
-            console.warn error
+          @MAP[x][y] = new Location data, type=LAND_TYPES.FOOD
         when "w"
           water = new Location data, type=LAND_TYPES.WATER
           @MAP[x][y] = water
