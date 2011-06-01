@@ -1,6 +1,6 @@
 <?php
 
-$sql = array(
+$contest_sql = array(
     "select_next_compile" => "select submission_id
                               from submission
                               where status = 20
@@ -253,7 +253,12 @@ $sql = array(
         and (gp.status = 'timeout'
             or gp.status = 'crashed'
             or gp.status = 'invalid')
-    "
+    ",
+    "select_worker_stats" => "select count(*)/5 as gpm, g.worker_id,
+        (select count(*) from matchup where worker_id = -g.worker_id)/5 as epm
+        from game g
+        where timestamp > timestampadd(minute, -5, current_timestamp)
+        group by g.worker_id, epm;"
 );
 
 ?>

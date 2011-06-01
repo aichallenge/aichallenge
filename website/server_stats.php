@@ -1,6 +1,6 @@
 <?php
 
-include 'header.php'; 
+include 'header.php';
 require_once('mysql_login.php');
 
 $query = "select count(*) from user where activated=1";
@@ -45,17 +45,26 @@ $games_played = $row[0];
 
 $games_per_minute = array();
 foreach(array(5,60,1444) as $minutes){
-  $sql = "select count(*)/$minutes from game where timestamp > timestampadd(minute, -$minutes, current_timestamp);";
-  $r = mysql_fetch_row(mysql_query($sql));
-  $games_per_minute[$minutes] = $r[0];
+    $sql = "select count(*)/$minutes from game where timestamp > timestampadd(minute, -$minutes, current_timestamp);";
+    $r = mysql_fetch_row(mysql_query($sql));
+    $games_per_minute[$minutes] = $r[0];
+}
+
+$games_per_server = array();
+
+$q = contest_query("select_worker_stats");
+if ($q) {
+    while ($r = mysql_fetch_assoc($q)) {
+        $games_per_server[] = $r;
+    }
 }
 
 $PAIRCUT_FILE = "/home/contest/pairing_cutoff";
 if (is_readable($PAIRCUT_FILE)) {
-  $pfc = file($PAIRCUT_FILE);
-  $pair_cutoff = $pfc[0];
+    $pfc = file($PAIRCUT_FILE);
+    $pair_cutoff = $pfc[0];
 } else {
-  $pair_cutoff = "None";
+    $pair_cutoff = "None";
 }
 
 ?>
@@ -115,6 +124,29 @@ if (is_readable($PAIRCUT_FILE)) {
     <th>Last 5 minutes</th>
     <th>Last hour</th>
     <th>Last 24 hours</th>
+  </tr>
+</table>
+
+<h2 style="margin-top:1em">Games per minute per server</h2>
+
+<table class="bigstats">
+  <tr>
+  <?php foreach ($games_per_server as $server): ?>
+    <td><?php echo number_format($server['gpm'])?></td>
+  <?php endforeach ?>
+  </tr>
+  <tr>
+  <?php foreach ($games_per_server as $server): ?>
+    <th>Server #<?php echo htmlspecialchars($server['worker_id'])?></th>
+  <?php endforeach ?>
+  </tr>
+  <tr>
+  <?php foreach ($games_per_server as $server): ?>
+    <th style="color:#ccc">
+      <?php echo number_format($server['epm'],1)?> EPM <br />
+      <?php echo number_format($server['epm'] / $server['gpm'] * 100,1)?>%
+    </th>
+  <?php endforeach ?>
   </tr>
 </table>
 
