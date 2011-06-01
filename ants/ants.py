@@ -1054,8 +1054,8 @@ class Ants(Game):
         self.killed[player] = True
 
     def start_game(self):
-        self.game_started = True
         """ Called by engine at the start of the game """
+        self.game_started = True
         self.do_food((self.land_area // self.food_start) // self.num_players)
 
     def finish_game(self):

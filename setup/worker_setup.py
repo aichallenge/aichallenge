@@ -85,8 +85,8 @@ def install_dmd():
         return
     install_apt_packages("gcc-multilib")
     with CD("/root"):
-        run_cmd("curl 'http://ftp.digitalmars.com/dmd_2.053-0_amd64.deb' > dmd_2.053-0_amd64.deb")
-        run_cmd("dpkg -i dmd_2.053-0_amd64.deb")
+        run_cmd("curl 'http://ftp.digitalmars.com/dmd_2.053-0_%s.deb' > dmd_2.053-0.deb" % (opts.arch))
+        run_cmd("dpkg -i dmd_2.053-0.deb")
 
 def install_all_languages():
     install_basic_languages()
