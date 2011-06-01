@@ -145,10 +145,41 @@ class Game
       when "W"
         if y-1 < 0 then @MAP[x][CONFIG.cols-1] else @MAP[x][y-1]  
   
+  # A naive algorithm which does not take water on map into account.
+  # It will return a direction ('N', 'E', 'W', 'S') for heading from
+  # source towards destination (both being Location objects)
+  # Shamelessly copied the function from the Python starter bot.
+  direction: (source, destination) ->
+    [x1, y1, x2, y2] = [source.x, source.y, destination.x, destination.y]
+    half_height = parseInt(CONFIG.rows / 2)
+    half_width  = parseInt(CONFIG.cols / 2)
+    d = []
+    if x1 < x2
+      if x2 - x1 >= half_height
+        d.push("N")
+      if x2 - x1 <= half_height
+        d.push("S")
+    if x2 < x1
+      if x1 - x2 >= half_height
+        d.push "S"
+      if x1 - x2 <= half_height
+        d.push "N"
+    if y1 < y2
+      if y2 - y1 >= half_width
+        d.push "W"
+      if y2 - y1 <= half_width
+        d.push "E"
+    if y2 < y1
+      if y1 - y2 >= half_width
+        d.push "E"
+      if y1 - y2 <= half_width
+        d.push "W"
+    return d
+
   # Time left since the last "go" command
   time_remaining: ->
     CONFIG.turntime - (new Date().getTime() - @turn_start_time)
-    
+   
   # ------------------------------------------------------------------
   # Library functions for demonstrating the usage of the ants library:
 
