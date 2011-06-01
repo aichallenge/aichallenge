@@ -76,7 +76,7 @@ class Game
             process.exit()
     
   parse: (line) ->
-    [command, data...] = line.split /\s/
+    [command, data...] = line.split /\W+/
     if command in CONFIG_COMMANDS
       CONFIG[command] = parseInt(data[0])
     else
@@ -144,7 +144,7 @@ class Game
   # A naive algorithm which does not take water on map into account.
   # It will return a direction ('N', 'E', 'W', 'S') for heading from
   # source towards destination (both being Location objects)
-  # Shamelessly copied the function from the Python starter bot.
+  # I have just ported the function from the Python starter bot.
   direction: (source, destination) ->
     [x1, y1, x2, y2] = [source.x, source.y, destination.x, destination.y]
     half_height = parseInt(CONFIG.rows / 2)
