@@ -26,6 +26,9 @@ clean:
 	#temp folders
 	-rm -Rf *_starter_package/
 
+	#installed website folders
+	-rm -Rf ../../../website/starter_packages/*.zip
+
 install:
 	#Copy to website
 	mv *.zip ../../../website/starter_packages/

@@ -6,12 +6,18 @@ tools.zip: tools/
 	zip -r tools.zip tools/
 
 tools/: ../../../ants
-	rsync -r ../../../ants/* tools/
+	#clean visualizer
+	cd ../../visualizer; ant deepclean; cd -
 	
-	rm -Rf tools/dist/starter_bots/
-	rm -Rf tools/dist/tools/
+	#copy ants folder
+	rsync -r ../../* tools/
+	
+	#clean dist stuff
 	rm -Rf tools/website_source/
+	mv tools/dist/sample_bots tools/
+	rm -Rf tools/dist
 	
+	#copy engine tools
 	cp ../../../worker/sandbox.py tools/
 	cp ../../../worker/engine.py tools/
 
@@ -21,6 +27,6 @@ clean:
 
 install:
 	#Copy to website
-	mv *.zip ../../../website/starter_packages/
+	mv tools.zip ../../../website/tools.zip
 
 .PHONY: tools all clean
