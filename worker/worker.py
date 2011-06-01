@@ -405,17 +405,18 @@ class Worker:
             # options['input_logs'] = [sys.stdout, sys.stdout]
         result = run_game(game, bots, options)
         if 'status' in result:
+            if result['status'][1] in ('crashed', 'timeout', 'invalid'):
+                msg = 'TestBot is not operational\n' + str(result['errors'][1])
+                log.error(msg)
+                return msg
             log.info(result['status'][0]) # player 0 is the bot we are testing
+            if result['status'][0] in ('crashed', 'timeout', 'invalid'):
+                log.info(str(result['errors'][0]))
+                return result['errors'][0]
         elif 'error' in result:
-            log.info(result['error']);
-            raise Exception('Engine failure')
-        if 'errors' in result:
-            log.info(result['errors'][0])
-
-        if result['status'][1] in ('crashed', 'timeout', 'invalid'):
-            raise Exception('TestBot is not operational')
-        if result['status'][0] in ('crashed', 'timeout', 'invalid'):
-            return result['errors'][0]
+            msg = 'Function Test failure: ' + str(result['error'])
+            log.error(msg)
+            return msg
         return None
 
     def game(self, task, report_status=False):
