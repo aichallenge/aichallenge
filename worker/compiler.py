@@ -273,8 +273,8 @@ languages = (
             (["*.o"], ExternalCompiler(comp_args["C++"][1]))
         ]
     ),
-    Language("Clojure", ".clj", "?",
-        "?",
+    Language("Clojure", ".clj", "MyBot.clj",
+        "java -Xmx%sm -cp /usr/share/java/clojure.jar clojure.main MyBot.clj" % (MEMORY_LIMIT,),
         [],
         [(["*.clj"], ChmodCompiler("Clojure"))]
     ),
@@ -346,7 +346,7 @@ languages = (
         ["*.pyc"],
         [(["*.py"], ChmodCompiler("Python"))]
     ),
-    Language("Python", ".py3", "MyBot.py3",
+    Language("Python3", ".py3", "MyBot.py3",
         "python3 MyBot.py3",
         ["*.pyc"],
         [(["*.py3"], ChmodCompiler("Python3"))]
