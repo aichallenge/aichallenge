@@ -366,11 +366,12 @@ def main(argv=["worker_setup.py"]):
     start_script = os.path.join(opts.root_dir, opts.local_repo,
             "worker/start_worker.sh")
     if opts.install_cronjob:
-        cron_file = "/etc/cron.d/" + opts.api_url
+        cron_file = "/etc/cron.d/ai-contest"
         if not file_contains(cron_file, start_script):
-            append_line(cron_file, "@reboot root %s" % (start_script,))
+            append_line(cron_file, "@reboot %s %s"
+                    % (opts.username, start_script,))
     if opts.run_worker:
-        run_cmd(start_script)
+        run_cmd("sudo -u %s %s" % (opts.username, start_script))
 
 if __name__ == "__main__":
     main(sys.argv)

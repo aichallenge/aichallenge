@@ -172,8 +172,9 @@ def setup_website(opts):
         if os.path.exists(enabled_link):
             os.remove(enabled_link)
         os.symlink(site_config, enabled_link)
-        run_cmd("a2enmod rewrite") # FIXME: ubuntu specific
+        run_cmd("a2enmod rewrite")
         run_cmd("/etc/init.d/apache2 restart")
+    run_cmd("chown -R {0}:{0} {1}".format(opts.username, website_root))
 
 def interactive_options(options):
     print "Warning: This script is meant to be run as root and will make changes to the configuration of the machine it is run on."
