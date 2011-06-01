@@ -59,7 +59,7 @@ in the source directory.
 Implementing a breadth first search using Queue would probably be 
 useful.
 
-## Some note I wrote while getting this ready:
+## Some notes I wrote while getting this ready:
 
 Please note that most of these comments were written before I added the 
 OO interface. I've updated some things but may have missed some.
@@ -87,16 +87,14 @@ and helper functions. Users are encouraged to look at Ants.ml,
 particularly at the comments near the end, relating to the loop 
 function.
 
-Currently the bot doesn't generate any debugging output. There is a 
-"ddebug" function which does nothing, but a slight adjustment to some 
-comment marks will activate it. I like it to direct the output to a 
-file, but you could direct it to stderr or some other place.
+The bot directs its debugging info to stderr. Under normal conditions, 
+the starter pack should say nothing, but if things go wrong it will 
+generate some output. If you change the ddebug function in Ants.ml to a 
+unit () then the program will not generate any debugging output at all.
 
 The pack provides issue_order and finish_turn functions just as 
 specified in the starter pack guide; the functions write directly to 
-stdout. I recommend changing this so that issue_order builds up a list 
-of orders, checking for errors, and finish_turn does the final 
-outputting.
+stdout. 
 
 This is my first attempt at making something like this for other people 
 to use. If anyone would like to make improvements, that would be great. 
