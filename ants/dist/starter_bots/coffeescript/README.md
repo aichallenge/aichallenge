@@ -37,7 +37,8 @@ package. For the impatient, here is a brief summary.
 
 This rest of this file contains specific information about the CoffeeScript starter package for the [Ant Wars Google AI Challenge](http://ai-contest.com/).
 
-It is assumed you are using CoffeeScript 1.1.1 [CoffeeScript](http://jashkenas.github.com/coffee-script/), since that
+It is assumed you are using
+[CoffeeScript](http://jashkenas.github.com/coffee-script/) 1.1.1, since that
 is what the challenge server will be using as well.
 
 ## Status
