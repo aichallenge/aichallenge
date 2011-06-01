@@ -44,7 +44,7 @@ There is an optional update_vision function which does a Field of Vision
 calculation for every ant passed in. This allows the visible function to 
 work. You don't have to call it, though, and you could implement a 
 per-tile visible function which might be more efficient if you're not 
-checking many tiles.
+checking many tiles. 
 
 ## Usage
 
@@ -56,8 +56,51 @@ in the source directory.
 
 ## Where to go from here
 
-Implementing a breadth first search using Queue would probably be 
-useful.
+Here are some incremental improvements:
+
+ * prevent ant collisions
+
+   Updating the state of the game map is one obvious way to do this.
+This will also allow other ants to see that it's okay to move into the
+space which is going to be vacated.
+
+   Many other possibilities exist, such as maintaining a list of
+destinations, and they may have benefits.
+
+ * move toward food and enemies
+
+   Even without pathfinding, a bot which tries to walk straight toward
+food or enemies will usually outperform the starter.
+
+ * explore the unknown
+
+   A bot which sits still when it can't see anything interesting is
+missing an opportunity to expand. Even if you just make it try random
+steps for every ant who doesn't know what to do, this will generally
+outperform the do-nothing approach.
+
+ * search for the shortest path
+
+   Implementing a breadth first search and searching outward from all
+food tiles simultaneously can tell every ant which direction to step in
+to find the nearest food. No more getting stuck against water.
+
+ * efficient food collection
+
+   Sending ten ants to collect one piece of food isn't very efficient.
+Finding ways to minimize the number of ants devoted to food collection
+allows more ants to be used for exploration and combat.
+
+ * consider battles
+
+   Battles are complex, and the approaches will be varied, but adding
+some sort of combat awareness makes a bot far more effective.
+
+ * broader strategy
+
+   After playing around with some of the above and watching some games, 
+it's worth thinking about what seems effective, what you can process in 
+one second, and what you can implement in the time available.
 
 ## Some notes I wrote while getting this ready:
 
