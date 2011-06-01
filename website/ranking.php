@@ -186,7 +186,7 @@ function create_ranking_table($json) {
 
             $rank = $row["rank"];
             if ($rank) {
-                $rank_change = change_marker($row["rank_change"], 0, TRUE);
+                $rank_change = change_marker($row["rank_change"], 0, FALSE);
                 if (in_array("filter_rank", $fields)) {
                     $rank = str_pad("(".strval($rank).")", 6, " ", STR_PAD_LEFT);
                     $filter_rank = str_pad(strval($row["filter_rank"]), 4, " ", STR_PAD_LEFT);
