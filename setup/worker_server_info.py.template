@@ -6,7 +6,7 @@ server_info = {{
     "maps_path": "{map_dir}",
     "compiled_path": "{compiled_dir}",
     "logs_path": "{log_dir}",
-    "api_base_url": "http://{api_url}/",
+    "api_base_url": "{api_url}",
     "api_key": "{api_key}",
     "secure_jail": True,
     "memory_limit": 100,

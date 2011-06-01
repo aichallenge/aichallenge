@@ -110,6 +110,9 @@ def setup_contest_files(options):
     if not os.path.exists(map_dir):
         os.mkdir(map_dir)
         run_cmd("chown {0}: {1}".format(options.username, map_dir))
+    if not os.path.exists(options.log_dir):
+        os.mkdir(options.log_dir)
+        run_cmd("chown {0}: {1}".format(options.username, options.log_dir))
     worker_dir = os.path.join(contest_root, local_repo, "worker")
     si_filename = os.path.join(TEMPLATE_DIR, "worker_server_info.py.template")
     with open(si_filename, 'r') as si_file:
@@ -293,7 +296,7 @@ def get_options(argv):
         "log_dir": log_dir,
         "local_repo": top_level,
         "create_jails": True,
-        "api_url":  '.'.join(getfqdn().split('.')[1:]),
+        "api_url":  "http://"+ '.'.join(getfqdn().split('.')[1:]) +"/",
         "api_key": "",
         "install_cronjob": False,
         "run_worker": False,
