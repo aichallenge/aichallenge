@@ -80,6 +80,7 @@ MAP[x][y].type is one of {"WATER", "LAND", "DEAD", "FOOD", "ANT"}
 Additionally squares on the map representing ants have the following properties:
 
 MAP[x][y].is_alive - being set to either "yes" or "no
+
 MAP[x][y].owner - Owner of 0 representing my_ants, and any other owner - enemy_ants.
 
 ## Platforms

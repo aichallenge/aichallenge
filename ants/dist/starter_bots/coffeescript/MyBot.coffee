@@ -1,3 +1,4 @@
+CONFIG = require('./ants').CONFIG
 game = require('./ants').Game
 ants = new game()
 
