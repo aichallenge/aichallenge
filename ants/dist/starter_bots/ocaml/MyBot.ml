@@ -50,8 +50,6 @@ let mybot_engine state =
     (
       state#update_vision;
       step_ants state state#my_ants;
-      ddebug (Printf.sprintf "Time remaining: %f\n"
-         (state#time_remaining));
       state#finish_turn ()
     )
 ;;

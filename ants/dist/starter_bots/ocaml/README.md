@@ -44,7 +44,7 @@ There is an optional update_vision function which does a Field of Vision
 calculation for every ant passed in. This allows the visible function to 
 work. You don't have to call it, though, and you could implement a 
 per-tile visible function which might be more efficient if you're not 
-checking many tiles.
+checking many tiles. 
 
 ## Usage
 
@@ -56,10 +56,53 @@ in the source directory.
 
 ## Where to go from here
 
-Implementing a breadth first search using Queue would probably be 
-useful.
+Here are some incremental improvements:
 
-## Some note I wrote while getting this ready:
+ * prevent ant collisions
+
+   Updating the state of the game map is one obvious way to do this.
+This will also allow other ants to see that it's okay to move into the
+space which is going to be vacated.
+
+   Many other possibilities exist, such as maintaining a list of
+destinations, and they may have benefits.
+
+ * move toward food and enemies
+
+   Even without pathfinding, a bot which tries to walk straight toward
+food or enemies will usually outperform the starter.
+
+ * explore the unknown
+
+   A bot which sits still when it can't see anything interesting is
+missing an opportunity to expand. Even if you just make it try random
+steps for every ant who doesn't know what to do, this will generally
+outperform the do-nothing approach.
+
+ * search for the shortest path
+
+   Implementing a breadth first search and searching outward from all
+food tiles simultaneously can tell every ant which direction to step in
+to find the nearest food. No more getting stuck against water.
+
+ * efficient food collection
+
+   Sending ten ants to collect one piece of food isn't very efficient.
+Finding ways to minimize the number of ants devoted to food collection
+allows more ants to be used for exploration and combat.
+
+ * consider battles
+
+   Battles are complex, and the approaches will be varied, but adding
+some sort of combat awareness makes a bot far more effective.
+
+ * broader strategy
+
+   After playing around with some of the above and watching some games, 
+it's worth thinking about what seems effective, what you can process in 
+one second, and what you can implement in the time available.
+
+## Some notes I wrote while getting this ready:
 
 Please note that most of these comments were written before I added the 
 OO interface. I've updated some things but may have missed some.
@@ -87,16 +130,14 @@ and helper functions. Users are encouraged to look at Ants.ml,
 particularly at the comments near the end, relating to the loop 
 function.
 
-Currently the bot doesn't generate any debugging output. There is a 
-"ddebug" function which does nothing, but a slight adjustment to some 
-comment marks will activate it. I like it to direct the output to a 
-file, but you could direct it to stderr or some other place.
+The bot directs its debugging info to stderr. Under normal conditions, 
+the starter pack should say nothing, but if things go wrong it will 
+generate some output. If you change the ddebug function in Ants.ml to a 
+unit () then the program will not generate any debugging output at all.
 
 The pack provides issue_order and finish_turn functions just as 
 specified in the starter pack guide; the functions write directly to 
-stdout. I recommend changing this so that issue_order builds up a list 
-of orders, checking for errors, and finish_turn does the final 
-outputting.
+stdout. 
 
 This is my first attempt at making something like this for other people 
 to use. If anyone would like to make improvements, that would be great. 
