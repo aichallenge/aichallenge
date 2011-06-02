@@ -13,7 +13,7 @@ support = { 'python': ['ants.py',
                        'logutils.py'],
             'java': ['Ants.java',
                      'Aim.java',
-                     'Bot.java'
+                     'Bot.java',
                      'Ilk.java',
                      'Tile.java'] }
 
