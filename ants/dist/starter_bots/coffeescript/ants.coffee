@@ -14,8 +14,7 @@ CONFIG_COMMANDS = [
 ]
 
 class Game
-  constructor: ->
-    @MAP = new Map()
+  constructor: -> @MAP = new Map()
     
   class Map
     constructor: -> 
@@ -66,20 +65,23 @@ class Game
               @MAP.reset()
           when "ready"
             @MAP.reset()
-            bot.ready()   
+            bot.ready()
+            @finish_turn()
           when "go"
             @turn_start_time = new Date().getTime()
             bot.do_turn()
+            @finish_turn()
           when "end"
-            bot.end()
+            # The game is over.
+            process.exit()
     
   parse: (line) ->
-    [command, data...] = line.split /\s/
+    [command, data...] = line.split /\W+/
     if command in CONFIG_COMMANDS
-      CONFIG[command] = data[0]
+      CONFIG[command] = parseInt(data[0])
     else
       if command in ["f", "w", "a", "d"]
-        data = (parseInt(x) for x in data[0..])
+        data = (parseInt(_) for _ in data)
         [x,y] = [data[0], data[1]]
       switch command
         when "f"
@@ -99,11 +101,13 @@ class Game
   # gets array of Location objects for water for ALL turns since the start
   water: -> @MAP.search (_) -> _.type is LAND_TYPES.WATER
   # gets array of Location objects for the dead ants for this turn
-  dead: -> @MAP.search (_) -> _.type is LAND_TYPES.ANT and _.is_alive is no
+  dead: -> @MAP.search (_) -> _.type is LAND_TYPES.ANT and not _.is_alive
   # gets array of Ant objects for the player's ants for this turn
-  my_ants: -> @MAP.search (_) -> _.type is LAND_TYPES.ANT and _.owner is 0 
+  my_ants: -> 
+    @MAP.search (_) -> _.type is LAND_TYPES.ANT and _.owner is 0 and _.is_alive
   # gets array of Ant objects for the enemy's ants for this turn
-  enemy_ants: -> @MAP.search (_) -> _.type is LAND_TYPES.ANT and _.owner isnt 0
+  enemy_ants: ->
+    @MAP.search (_) -> _.type is LAND_TYPES.ANT and _.owner isnt 0 and _.is_alive
 
   # any location which is not water is passable
   passable: (x, y) -> @MAP[x][y].type isnt LAND_TYPES.WATER
@@ -112,7 +116,9 @@ class Game
   issue_order: (x, y, direction) ->
     console.log("o #{x} #{y} #{direction}")
   
-  finish_turn: -> console.log("go")
+  finish_turn: -> 
+    console.log("go")
+    process.stdout.flush()
   
   # returns the Euclidean distance between 2 Location objects
   distance: (loc1, loc2) ->
@@ -135,20 +141,49 @@ class Game
       when "W"
         if y-1 < 0 then @MAP[x][CONFIG.cols-1] else @MAP[x][y-1]  
   
+  # A naive algorithm which does not take water on map into account.
+  # It will return a direction ('N', 'E', 'W', 'S') for heading from
+  # source towards destination (both being Location objects)
+  # I have just ported the function from the Python starter bot.
+  direction: (source, destination) ->
+    [x1, y1, x2, y2] = [source.x, source.y, destination.x, destination.y]
+    half_height = parseInt(CONFIG.rows / 2)
+    half_width  = parseInt(CONFIG.cols / 2)
+    d = []
+    if x1 < x2
+      if x2 - x1 >= half_height
+        d.push("N")
+      if x2 - x1 <= half_height
+        d.push("S")
+    if x2 < x1
+      if x1 - x2 >= half_height
+        d.push "S"
+      if x1 - x2 <= half_height
+        d.push "N"
+    if y1 < y2
+      if y2 - y1 >= half_width
+        d.push "W"
+      if y2 - y1 <= half_width
+        d.push "E"
+    if y2 < y1
+      if y1 - y2 >= half_width
+        d.push "E"
+      if y1 - y2 <= half_width
+        d.push "W"
+    return d
+
   # Time left since the last "go" command
   time_remaining: ->
     CONFIG.turntime - (new Date().getTime() - @turn_start_time)
-    
+   
   # ------------------------------------------------------------------
   # Library functions for demonstrating the usage of the ants library:
 
   # returns the nearby food locations sorted by distance
   nearby_food:  (location) -> 
-    @food().sort ((loc1, loc2) -> distance loc1 loc2)
-  
-  # returns the nearby friendly ants sorted by distance
-  nearby_friends: (ant) ->
-    @my_ants().sort ((ant1, ant2) -> distance ant1, ant2)
+    comparing_distances = (loc1, loc2) =>
+      @distance location, loc1 > @distance location, loc2
+    @food().sort comparing_distances
 
 (exports ? this).Game = Game
 (exports ? this).LAND_TYPES = LAND_TYPES
