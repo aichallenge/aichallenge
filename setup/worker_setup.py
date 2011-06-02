@@ -58,8 +58,19 @@ def install_nodejs():
 
 def install_coffeescript():
     """ Install coffeescript """
+    if os.path.exists("/usr/local/bin/coffee"):
+        return
     run_cmd("curl http://npmjs.org/install.sh | clean=no sh")
     run_cmd("npm install -g coffee-script")
+
+def install_clojure():
+    """ Install the Clojure language """
+    if os.path.exists("/usr/share/java/clojure.jar"):
+        return
+    with CD("/root"):
+        run_cmd("curl 'http://cloud.github.com/downloads/clojure/clojure/clojure-1.2.0.zip' > clojure-1.2.0.zip")
+        run_cmd("unzip clojure-1.2.0.zip")
+        run_cmd("cp clojure-1.2.0/clojure.jar /usr/share/java")
 
 def install_groovy():
     """ Install the Groovy language """
@@ -94,6 +105,7 @@ def install_all_languages():
     install_golang()
     install_nodejs()
     install_coffeescript()
+    install_clojure()
     install_groovy()
     install_scala()
     install_dmd()

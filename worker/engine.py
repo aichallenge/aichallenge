@@ -4,6 +4,7 @@ from sandbox import Sandbox
 import time
 import traceback
 import os
+import random
 import sys
 import json
 import io
@@ -34,8 +35,8 @@ class Head(object):
             self.file.close()
     def head(self):
         return self.capture
-            
-def run_game(game, botcmds, options):    
+
+def run_game(game, botcmds, options):
     # file descriptors for replay and streaming formats
     replay_log = options.get('replay_log', None)
     stream_log = options.get('stream_log', None)
@@ -44,15 +45,15 @@ def run_game(game, botcmds, options):
     input_logs = options.get('input_logs', [None]*len(botcmds))
     output_logs = options.get('output_logs', [None]*len(botcmds))
     error_logs = options.get('error_logs', [None]*len(botcmds))
-    
+
     capture_errors = options.get('capture_errors', False)
-    
+
     turns = int(options['turns'])
     loadtime = float(options['loadtime']) / 1000
     turntime = float(options['turntime']) / 1000
     strict = options.get('strict', False)
     end_wait = options.get('end_wait', 0.0)
-    
+
     location = options.get('location', 'localhost')
     game_id = options.get('game_id', 0)
 
@@ -131,29 +132,33 @@ def run_game(game, botcmds, options):
                 else:
                     time_limit = turntime
                 if options.get('serial', False):
-                    # TODO: suffle bot order
-                    # TODO: two at a time
+                    simul_num = int(options['serial']) # int(True) is 1
                     bot_moves = [[] for b in bots]
                     error_lines = [[] for b in bots]
                     statuses = [None for b in bots]
-                    for b, bot in enumerate(bots):
-                        moves, errors, status = get_moves(game, [bot], [b], time_limit, turn, bool(error_logs and error_logs[b]))
-                        bot_moves[b] = moves[0]
-                        error_lines[b] = errors[0]
-                        statuses[b] = status[0]
+                    bot_list = list(enumerate(bots))
+                    random.shuffle(bot_list)
+                    for group_num in range(0, len(bot_list), simul_num):
+                        pnums, pbots = zip(*bot_list[group_num:group_num + simul_num])
+                        moves, errors, status = get_moves(game, pbots, pnums,
+                                time_limit, turn)
+                        for p, b in enumerate(pnums):
+                            bot_moves[b] = moves[p]
+                            error_lines[b] = errors[p]
+                            statuses[b] = status[p]
                 else:
-                    bot_moves, error_lines, statuses = get_moves(game, bots, range(len(bots)), time_limit, turn, bool(error_logs))
+                    bot_moves, error_lines, statuses = get_moves(game, bots, range(len(bots)), time_limit, turn)
 
                 # handle any logs that get_moves produced
                 for b, errors in enumerate(error_lines):
                     if errors:
                         if error_logs and error_logs[b]:
-                            error_logs[b].write('\n'.join(errors)+'\n')                            
+                            error_logs[b].write('\n'.join(errors)+'\n')
                 # set status for timeouts and crashes
                 for b, status in enumerate(statuses):
                     if status != None:
                         bot_status[b] = status
-                        
+
                 # process all moves
                 bot_alive = [game.is_alive(b) for b in range(len(bots))]
                 if turn > 0 and not game.game_over():
@@ -288,13 +293,13 @@ def run_game(game, botcmds, options):
         }
         if capture_errors:
             game_result['errors'] = [head.head() for head in error_logs]
-    
+
     if replay_log:
         json.dump(game_result, replay_log, sort_keys=True)
-        
+
     return game_result
 
-def get_moves(game, bots, bot_nums, time_limit, turn=0, stream_stderr=False):
+def get_moves(game, bots, bot_nums, time_limit, turn):
     bot_finished = [not game.is_alive(bot_nums[b]) for b in range(len(bots))]
     bot_moves = [[] for b in bots]
     error_lines = [[] for b in bots]
@@ -337,12 +342,12 @@ def get_moves(game, bots, bot_nums, time_limit, turn=0, stream_stderr=False):
                     # bot finished sending data for this turn
                     break
                 bot_moves[b].append(line)
-            if stream_stderr:
-                while True:
-                    line = bot.read_error()
-                    if line is None:
-                        break
-                    error_lines[b].append(line)
+
+            for x in range(100):
+                line = bot.read_error()
+                if line is None:
+                    break
+                error_lines[b].append(line)
     # pause all bots again
     for bot in bots:
         if bot.is_alive:
