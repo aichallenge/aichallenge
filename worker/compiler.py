@@ -290,7 +290,7 @@ languages = (
     ),
     Language("Go", "", "MyBot.go",
         "./MyBot",
-        ["*.8", BOT],
+        ["*.8", "*.6", BOT],
         [(["*.go"], ExternalCompiler(comp_args["Go"][0])),
             ([""], ExternalCompiler(comp_args["Go"][1]))]
     ),
