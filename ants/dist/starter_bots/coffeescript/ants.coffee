@@ -81,6 +81,7 @@ class Game
       CONFIG[command] = parseInt(data[0])
     else if command in ["f", "w", "a", "d"]
       data = (parseInt(_) for _ in data)
+      if (not data? or isNaN data) then return command
       [x,y] = [data[0], data[1]]
       switch command
         when "f"
