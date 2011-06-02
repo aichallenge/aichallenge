@@ -79,10 +79,9 @@ class Game
     [command, data...] = line.split /\W+/
     if command in CONFIG_COMMANDS
       CONFIG[command] = parseInt(data[0])
-    else
-      if command in ["f", "w", "a", "d"]
-        data = (parseInt(_) for _ in data)
-        [x,y] = [data[0], data[1]]
+    else if command in ["f", "w", "a", "d"]
+      data = (parseInt(_) for _ in data)
+      [x,y] = [data[0], data[1]]
       switch command
         when "f"
           @MAP[x][y] = new Location data, type=LAND_TYPES.FOOD
@@ -94,7 +93,7 @@ class Game
           @MAP[x][y] = new Ant data
         when "d"
           @MAP[x][y] = new Ant data, is_alive=no
-    command  
+    return command  
   
   # gets array of Location objects for the food for this turn
   food: -> @MAP.search (_) -> _.type is LAND_TYPES.FOOD
