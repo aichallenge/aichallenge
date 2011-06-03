@@ -1,11 +1,14 @@
+CONFIG = require('./ants').CONFIG
 game = require('./ants').Game
 ants = new game()
 
 directions = ['N', 'E', 'S', 'W']
 
 class Bot
-  ready: -> ants.finish_turn()
+  # You can setup stuff here, before the first turn starts:
+  ready: ->
 
+  # Here are the orders to the ants, executed each turn:
   do_turn: -> 
     my_ants = ants.my_ants()
     for ant in my_ants
@@ -14,8 +17,5 @@ class Bot
         if ants.passable(near_square.x, near_square.y)
           ants.issue_order(ant.x, ant.y, dir)
           break
-    ants.finish_turn()
-
-  end: -> 
 
 ants.run new Bot()
