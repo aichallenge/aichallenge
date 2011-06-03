@@ -155,7 +155,7 @@
   <!-- deployment -->
   
   <target name="check-deploy" depends="load-properties" unless="deploy.path">
-    <fail message="Please define 'deploy.path' in local.build as the web root." />
+    <fail message="Please define 'deploy.path' in local.properties as the web root." />
   </target>
   
   <target name="deploy" depends="check-deploy,jar,minify-or-copy-js,html-visualizer" description="compile and deploy to the path that is set in 'deploy.path'">
