@@ -133,7 +133,7 @@ EOT;
                 }
             }
             $error_msg .= "</pre>";
-            $table .= "<tr><td colspan=\"3\">$error_msg</td></tr>";
+            $table .= "<tr><td colspan=\"5\">$error_msg</td></tr>";
         }
     }
     $table .= "</tbody></table>";
