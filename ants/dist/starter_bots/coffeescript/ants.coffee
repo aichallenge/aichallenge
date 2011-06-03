@@ -5,6 +5,7 @@ CONFIG =
   turntime : 0
   rows : 0
   cols : 0
+  turn : 0
   
 # a list of constants of possible config commands provided
 CONFIG_COMMANDS = [
@@ -61,8 +62,7 @@ class Game
         state = @parse line.trim()
         switch state
           when "turn"
-            if CONFIG? and CONFIG.turn > 0
-              @MAP.reset()
+            if CONFIG.turn > 0 then @MAP.reset()
           when "ready"
             @MAP.reset()
             bot.ready()
@@ -80,6 +80,7 @@ class Game
     if command in CONFIG_COMMANDS
       CONFIG[command] = parseInt(data[0])
     else if command in ["f", "w", "a", "d"]
+      if data.length < 2 then return command # bad data 
       data = (parseInt(_) for _ in data)
       [x,y] = [data[0], data[1]]
       switch command
