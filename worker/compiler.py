@@ -215,7 +215,7 @@ comp_args = {
     #                and use the TargetCompiler in the languages dict.
     "C"             : [["gcc", "-O3", "-funroll-loops", "-c"],
                              ["gcc", "-O2", "-lm", "-o", BOT]],
-    "C#"            : [["gmcs", "-warn:0", "-out:%s.exe" % BOT]],
+    "C#"            : [["gmcs", "-unsafe", "-warn:0", "-out:%s.exe" % BOT]],
     "C++"         : [["g++", "-O3", "-funroll-loops", "-c"],
                              ["g++", "-O2", "-lm", "-o", BOT]],
     "D"             : [["dmd", "-O", "-inline", "-release", "-of" + BOT]],
