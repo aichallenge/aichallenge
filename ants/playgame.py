@@ -87,6 +87,12 @@ def main(argv):
     parser.add_option('--secure_jail', dest='secure_jail',
                       action='store_true', default=False,
                       help='Use the secure jail for each bot (*nix only)')
+    parser.add_option('--fill', dest='fill',
+                      action='store_true', default=False,
+                      help='Fill up extra player starts with last bot specified')
+    parser.add_option('-p', '--position', dest='position',
+                      default=0, type='int',
+                      help='Player position for first bot specified')
 
     # ants specific game options
     parser.add_option("--attack", dest="attack",
@@ -112,6 +118,8 @@ def main(argv):
     # the log directory will contain
     #    the replay or stream file used by the visualizer, if requested
     #    the bot input/output/error logs, if requested    
+    parser.add_option("-g", "--game", dest="game_id", default=0, type='int',
+                      help="game id to start at when numbering log files")
     parser.add_option("-l", "--log_dir", dest="log_dir", default=None,
                       help="Directory to dump replay files to.")
     parser.add_option('-R', '--log_replay', dest='log_replay',
@@ -156,7 +164,7 @@ def main(argv):
             if opts.log_dir:
                 prof_file = os.path.join(opts.log_dir, prof_file)
             # cProfile needs to be explitly told about out local and global context
-            print("Running profile and outputting to %s" % (prof_file,), file=sys.stderr)
+            print("Running profile and outputting to {0}".format(prof_file,), file=sys.stderr)
             cProfile.runctx("run_rounds(opts,args)", globals(), locals(), prof_file)
         else:
             # only use psyco if we are not profiling
@@ -203,6 +211,7 @@ def run_rounds(opts,args):
     random.seed(opts.seed)
     for round in range(opts.rounds):
         # initialize game
+        game_id = round + opts.game_id
         with open(opts.map, 'r') as map_file:
             game_options['map'] = map_file.read()
             #opts['map'] = map_file.read()
@@ -223,25 +232,37 @@ def run_rounds(opts,args):
             return wd, ' '.join(new_cmd)
         bots = [get_cmd_wd(arg) for arg in args]
         bot_count = len(bots)
+        # insure correct number of bots, or fill in remaining positions
         if game.num_players != len(bots):
-            print("Incorrect number of bots for map.  Need %s, got %s" %
-                  (game.num_players, len(bots)), file=sys.stderr)
-            for arg in args:
-                print("Bot Cmd: %s" % arg, file=sys.stderr)
-            break
+            if game.num_players > len(bots) and opts.fill:
+                extra = game.num_players - len(bots)
+                for _ in range(extra):
+                    bots.append(bots[-1])
+            else:
+                print("Incorrect number of bots for map.  Need {0}, got {1}"
+                      .format(game.num_players, len(bots)), file=sys.stderr)
+                for arg in args:
+                    print("Bot Cmd: {0}".format(arg), file=sys.stderr)
+                break
+        # move position of first bot specified
+        if opts.position > 0 and opts.position <= len(bots):
+            first_bot = bots[0]
+            bots = bots[1:]
+            bots.insert(opts.position, first_bot)
+
         # initialize file descriptors
         if opts.log_dir and not os.path.exists(opts.log_dir):
             os.mkdir(opts.log_dir)
-        if not opts.log_replay and not opts.log_stream:
+        if not opts.log_replay and not opts.log_stream and (opts.log_dir or opts.log_stdout):
             opts.log_replay = True
         replay_path = None # used for visualizer launch
         
         if opts.log_replay:
             if opts.log_dir:
-                replay_path = os.path.join(opts.log_dir, '%s.replay' % round)
+                replay_path = os.path.join(opts.log_dir, '{0}.replay'.format(game_id))
                 engine_options['replay_log'] = open(replay_path, 'w')
             if opts.log_stdout:
-                if engine_options['replay_log']:
+                if 'replay_log' in engine_options and engine_options['replay_log']:
                     engine_options['replay_log'] = Tee(sys.stdout, engine_options['replay_log'])
                 else:
                     engine_options['replay_log'] = sys.stdout
@@ -250,7 +271,7 @@ def run_rounds(opts,args):
 
         if opts.log_stream:
             if opts.log_dir:
-                engine_options['stream_log'] = open(os.path.join(opts.log_dir, '%s.stream' % round), 'w')
+                engine_options['stream_log'] = open(os.path.join(opts.log_dir, '{0}.stream'.format(game_id)), 'w')
             if opts.log_stdout:
                 if engine_options['stream_log']:
                     engine_options['stream_log'] = Tee(sys.stdout, engine_options['stream_log'])
@@ -260,25 +281,25 @@ def run_rounds(opts,args):
             engine_options['stream_log'] = None
         
         if opts.log_input and opts.log_dir:
-            engine_options['input_logs'] = [open(os.path.join(opts.log_dir, '%s.bot%s.input' % (round, i)), 'w')
+            engine_options['input_logs'] = [open(os.path.join(opts.log_dir, '{0}.bot{1}.input'.format(game_id, i)), 'w')
                              for i in range(bot_count)]
         else:
             engine_options['input_logs'] = None
         if opts.log_output and opts.log_dir:
-            engine_options['output_logs'] = [open(os.path.join(opts.log_dir, '%s.bot%s.output' % (round, i)), 'w')
+            engine_options['output_logs'] = [open(os.path.join(opts.log_dir, '{0}.bot{1}.output'.format(game_id, i)), 'w')
                               for i in range(bot_count)]
         else:
             engine_options['output_logs'] = None
         if opts.log_error and opts.log_dir:
             if opts.log_stderr:
                 if opts.log_stdout:
-                    engine_options['error_logs'] = [Tee(Comment(sys.stderr), open(os.path.join(opts.log_dir, '%s.bot%s.error' % (round, i)), 'w'))
+                    engine_options['error_logs'] = [Tee(Comment(sys.stderr), open(os.path.join(opts.log_dir, '{0}.bot{1}.error'.format(game_id, i)), 'w'))
                                       for i in range(bot_count)]
                 else:
-                    engine_options['error_logs'] = [Tee(sys.stderr, open(os.path.join(opts.log_dir, '%s.bot%s.error' % (round, i)), 'w'))
+                    engine_options['error_logs'] = [Tee(sys.stderr, open(os.path.join(opts.log_dir, '{0}.bot{1}.error'.format(game_id, i)), 'w'))
                                       for i in range(bot_count)]
             else:
-                engine_options['error_logs'] = [open(os.path.join(opts.log_dir, '%s.bot%s.error' % (round, i)), 'w')
+                engine_options['error_logs'] = [open(os.path.join(opts.log_dir, '{0}.bot{1}.error'.format(game_id, i)), 'w')
                                   for i in range(bot_count)]
         elif opts.log_stderr:
             if opts.log_stdout:
@@ -294,9 +315,11 @@ def run_rounds(opts,args):
             else:
                 engine_options['verbose_log'] = sys.stdout
             
-        engine_options['gameid'] = round
+        engine_options['game_id'] = game_id 
         if opts.rounds > 1:
-            print('# playgame round %s' % round)
+            print('# playgame round {0}, game id {1}'.format(round, game_id))
+
+        # intercept replay log so we can add player names
         result = run_game(game, bots, engine_options)
         # close file descriptors
         if engine_options['stream_log']:

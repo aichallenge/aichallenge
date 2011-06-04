@@ -18,7 +18,7 @@ def generate(data, generated_path):
     common = os.path.commonprefix((path1, path2))
     path1 = path1[len(common):]
     path2 = path2[len(common):]
-    mod_path = '/'.join(['..'] * (path2.count(os.sep)) + [os.path.split(path1)[0]])
+    mod_path = '/'.join(['..'] * (path2.count(os.sep)) + [os.path.split(path1)[0].replace('\\', '/')])
     if len(mod_path) > 0 and mod_path[-1] != '/':
         mod_path += '/'
 
