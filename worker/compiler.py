@@ -331,7 +331,7 @@ languages = {
     "Scala":
         (".scala",
          "MyBot.scala",
-         "?",
+         "scala MyBot",
          ["*.scala, *.jar"],
          [(["*.scala"], ExternalCompiler(comp_args["Scala"][0]))]
         ),
