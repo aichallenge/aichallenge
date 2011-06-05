@@ -65,7 +65,7 @@
 <p>PHP is supported. We are using PHP 5.2.4. Check the forums for user contributed starter packs. <a href="forum/viewtopic.php?f=18&t=434">This thread</a> is one place to start.</p>
 
 <h3>Scala</h3>
-<p>Scala is supported. We are using Scala 1.8.0. Check the forums for user contributed starter packs. <a href="forum/viewtopic.php?f=18&t=488">This thread</a> is one place to start.</p>
+<p>Scala is supported. We are using Scala 2.9.0.1. Check the forums for user contributed starter packs. <a href="forum/viewtopic.php?f=18&t=488">This thread</a> is one place to start.</p>
 
 <h3>Ruby</h3>
 <p>Ruby is supported. We are using Ruby 1.9.0. Check the forums for user contributed starter packs. <a href="forum/viewtopic.php?f=18&t=401">This thread</a> is one place to start.</p>

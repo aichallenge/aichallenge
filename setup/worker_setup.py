@@ -93,8 +93,8 @@ def install_scala():
     if os.path.exists("/usr/bin/scala"):
         return
     with CD("/root"):
-        run_cmd("curl 'http://www.scala-lang.org/downloads/distrib/files/scala-2.8.1.final.tgz' | tar xz")
-        os.rename("scala-2.8.1.final", "/usr/share/scala")
+        run_cmd("curl 'http://www.scala-lang.org/downloads/distrib/files/scala-2.9.0.1.tgz' | tar xz")
+        os.rename("scala-2.9.0.1", "/usr/share/scala")
         os.symlink("/usr/share/scala/bin/scala", "/usr/bin/scala")
         os.symlink("/usr/share/scala/bin/scalac", "/usr/bin/scalac")
 
