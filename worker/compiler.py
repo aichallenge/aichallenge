@@ -322,7 +322,7 @@ languages = (
         [([""], ExternalCompiler(comp_args["Lisp"][0]))]
     ),
     Language("Lua", ".lua", "MyBot.lua",
-        "?",
+        "luajit-2.0.0-beta5 MyBot.lua",
         [],
         [(["*.lua"], ChmodCompiler("Lua"))]
     ),
@@ -357,7 +357,7 @@ languages = (
         [(["*.rb"], ChmodCompiler("Ruby"))]
     ),
     Language("Scala", ".scala", "MyBot.scala",
-        "?",
+        'JAVA_OPTS="-Xmx'+ str(MEMORY_LIMIT) +'m";scala -howtorun:object MyBot',
         ["*.scala, *.jar"],
         [(["*.scala"], ExternalCompiler(comp_args["Scala"][0]))]
     ),

@@ -36,7 +36,7 @@ def install_basic_languages():
 def install_extra_packaged_languages():
     """ Install all extra languages that are part of the Ubuntu distribution
         and don't require any special installation steps """
-    pkg_list = ["ruby1.9.1", "php5-cli", "perl", "ocaml",
+    pkg_list = ["ruby1.9.1", "php5-cli", "perl", "ocaml", "luajit",
             "common-lisp-controller", "sbcl", "mono-2.0-devel"]
     # "haskell-platform" should be added for the haskell language, but the
     # package is currently broken in ubuntu natty
