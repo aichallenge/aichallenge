@@ -45,8 +45,8 @@ class Player(object):
         self.skill = skill
         self.rank = rank
     def __str__(self):
-        return ('id=%5d rank=%1d\n\t   mu=%8.5f->%8.5f,\n\tsigma=%8.5f->%8.5f' %
-                (self.name, self.rank, self.skill[0], self.skill[0], self.old_skill[1], self.skill[1]))
+        return ('id=%5d rank=%1d, mu=%8.5f->%8.5f, sigma=%8.5f->%8.5f' %
+                (self.name, self.rank, self.old_skill[0], self.skill[0], self.old_skill[1], self.skill[1]))
 
 connection = None
 def get_connection():
