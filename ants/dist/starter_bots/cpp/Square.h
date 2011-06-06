@@ -22,8 +22,7 @@ struct Square
     void reset()
     {
         isVisible = 0;
-        //uncomment this if you don't want to track food that isn't visible
-        //isFood = 0;
+        isFood = 0;
         ant = -1;
         deadAnts.clear();
     };

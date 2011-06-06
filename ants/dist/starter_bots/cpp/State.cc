@@ -22,10 +22,12 @@ void State::setup()
     grid = vector<vector<Square> >(rows, vector<Square>(cols, Square()));
 };
 
-//resets all non-wall squares to land and clears the bots ant vector
+//resets all non-water squares to land and clears the bots ant vector
 void State::reset()
 {
-    ants.clear();
+    myAnts.clear();
+    enemyAnts.clear();
+    food.clear();
     for(int row=0; row<rows; row++)
         for(int col=0; col<cols; col++)
             if(!grid[row][col].isWater)
@@ -73,9 +75,9 @@ void State::updateVisionInformation()
     std::queue<Location> locQueue;
     Location sLoc, cLoc, nLoc;
 
-    for(int a=0; a<(int) ants.size(); a++)
+    for(int a=0; a<(int) myAnts.size(); a++)
     {
-        sLoc = ants[a];
+        sLoc = myAnts[a];
         locQueue.push(sLoc);
 
         std::vector<std::vector<bool> > visited(rows, std::vector<bool>(cols, 0));
@@ -207,18 +209,16 @@ istream& operator>>(istream &is, State &state)
             {
                 is >> row >> col;
                 state.grid[row][col].isFood = 1;
-            }
-            else if(inputType == "r") //removal of food square
-            {
-                is >> row >> col;
-                state.grid[row][col].isFood = 0;
+                state.food.push_back(Location(row, col));
             }
             else if(inputType == "a") //live ant square
             {
                 is >> row >> col >> player;
                 state.grid[row][col].ant = player;
                 if(player == 0)
-                    state.ants.push_back(Location(row, col));
+                    state.myAnts.push_back(Location(row, col));
+                else
+                    state.enemyAnts.push_back(Location(row, col));
             }
             else if(inputType == "d") //dead ant square
             {
