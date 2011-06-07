@@ -152,6 +152,9 @@ def main(argv):
     parser.add_option("--nolaunch", dest="nolaunch",
                       action='store_true', default=False,
                       help="Prevent visualizer from launching")
+    parser.add_option("--html", dest="html_file",
+                      default=None,
+                      help="Output file name for an html replay")
 
     (opts, args) = parser.parse_args(argv)
     if opts.map is None or not os.path.exists(opts.map):
@@ -335,7 +338,17 @@ def run_rounds(opts,args):
         if engine_options['error_logs']:
             for error_log in engine_options['error_logs']:
                 error_log.close()
-        if not opts.nolaunch and replay_path:
-            visualizer.visualize_locally.launch(replay_path)
+        if replay_path:
+            print(opts.html_file)
+            if opts.nolaunch:
+                if opts.html_file:
+                    visualizer.visualize_locally.launch(replay_path, False, opts.html_file)
+            else:
+                if opts.html_file == None:
+                    visualizer.visualize_locally.launch(replay_path,
+                            generated_path="replay.{0}.html".format(round))
+                else:
+                    visualizer.visualize_locally.launch(replay_path,
+                            generated_path=opts.html_file)
 if __name__ == "__main__":
     sys.exit(main(sys.argv[1:]))

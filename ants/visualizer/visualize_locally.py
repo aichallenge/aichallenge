@@ -35,15 +35,17 @@ def generate(data, generated_path):
     output.write(content)
     output.close()
 
-def launch(filename=None, nolaunch=False):
+def launch(filename=None, nolaunch=False, generated_path=None):
+    if generated_path == None:
+        generated_path = 'replay.html'
     if filename == None:
         data = sys.stdin.read()
         generated_path = os.path.realpath(os.path.join(os.path.dirname(__file__)
-                                                       , 'replay.html'))
+                                                       , generated_path))
     else:
         with open(filename, 'r') as f:
             data = f.read()
-        generated_path = os.path.join(os.path.split(filename)[0], 'replay.html')
+        generated_path = os.path.join(os.path.split(filename)[0], generated_path)
 
     generate(data, generated_path)
 
