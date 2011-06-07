@@ -30,7 +30,7 @@ include 'header.php';
     is java, cc, or whatever the standard extension for code files in your
     language is. Remember to include all the code files that your entry
     needs.</li>
-  <li>Your zip file may not exceed 2 MB in size. If you need to submit a bigger
+  <li>Your zip file may not exceed <?php echo ini_get('upload_max_filesize'); ?> in size. If you need to submit a bigger
     file for some reason, that's fine. Post on the forums and we'll work
     something out.</li>
   <li>Make sure that your code compiles okay on your own machine before

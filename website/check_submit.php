@@ -24,7 +24,6 @@ function upload_errors($errors) {
       || $_FILES['uploadedfile']['error'] == UPLOAD_ERR_NO_FILE) {
     $errors[] = "Somehow you forgot to upload a file!";
   } elseif ($_FILES['uploadedfile']['error'] > 0) {
-    $errors[] = "General upload error: " . $_FILES['uploadedfile']['error'];
     if ($_FILES['uploadedfile']['error'] == UPLOAD_ERR_FORM_SIZE or
         $_FILES['uploadedfile']['error'] == UPLOAD_ERR_INI_SIZE) {
       $errors[] = "Your zip file may be larger than the maximum allowed " .
@@ -32,6 +31,8 @@ function upload_errors($errors) {
         "You probably have some executables or other larger " .
         "files in your zip file. Re-zip your submission, being sure to " .
         "include only the source code.";
+    } else {
+      $errors[] = "General upload error: " . $_FILES['uploadedfile']['error'];
     }
   } else {
     $filename = basename($_FILES['uploadedfile']['name']);
