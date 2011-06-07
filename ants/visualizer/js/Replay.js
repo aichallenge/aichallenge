@@ -219,7 +219,7 @@ function Replay(replay, debug) {
 		var setReplayDuration = function(duration, fixed) {
 			if (durationSetter) {
 				if (!fixed && that.duration < duration || fixed && that.duration !== duration && !that.debug) {
-					throw new Error('Replay duration was previously set to ' + that.duration + ' by "' + durationSetter + '" and is now redefined to be ' + duration);
+					throw new Error('Replay duration was previously set to ' + that.duration + ' by "' + durationSetter + '" and is now redefined to be ' + duration + ' by "' + obj + '"');
 				}
 			} else {
 				that.duration = duration;
