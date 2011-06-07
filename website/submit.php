@@ -58,7 +58,7 @@ if($server_info["submissions_open"]) {
         $submit_key = sha1($sid . $row['activation_code'] . $row['email']);
         ?>
         <form enctype="multipart/form-data" action="check_submit.php" method="POST">
-            <input type="hidden" name="MAX_FILE_SIZE" value="2000000" />
+            <input type="hidden" name="MAX_FILE_SIZE" value="2097152" />
             <input type="hidden" name="submit_key" value="<?php echo $submit_key?>" />
             <b>Choose Your Zip File:</b> <input name="uploadedfile" type="file" /><br />
             <input type="submit" value="Upload!" />

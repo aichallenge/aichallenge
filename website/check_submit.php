@@ -11,7 +11,15 @@ function ends_with($str, $sub) {
 }
 
 function upload_errors($errors) {
-  if (count($_FILES) == 0 || count($_FILES['uploadedfile']) == 0
+  $post_max_size = intval(str_replace('M', '', ini_get('post_max_size'))) * 1024 * 1024;
+  $content_length = intval($_SERVER['CONTENT_LENGTH']);
+  if ($content_length > $post_max_size) {
+    $errors[] = "Your zip file may be larger than the maximum allowed " .
+      "size, ".ini_get('upload_max_filesize').". " .
+      "You probably have some executables or other larger " .
+      "files in your zip file. Re-zip your submission, being sure to " .
+      "include only the source code.";
+  } elseif (count($_FILES) == 0 || count($_FILES['uploadedfile']) == 0
       || strlen($_FILES['uploadedfile']['name']) == 0
       || $_FILES['uploadedfile']['error'] == UPLOAD_ERR_NO_FILE) {
     $errors[] = "Somehow you forgot to upload a file!";
@@ -19,22 +27,17 @@ function upload_errors($errors) {
     $errors[] = "General upload error: " . $_FILES['uploadedfile']['error'];
     if ($_FILES['uploadedfile']['error'] == UPLOAD_ERR_FORM_SIZE) {
       $errors[] = "Your zip file may be larger than the maximum allowed " .
-        "size, 1 MB. You probably have some executables or other larger " .
+        "size, ".ini_get('upload_max_filesize').". " .
+        "You probably have some executables or other larger " .
         "files in your zip file. Re-zip your submission, being sure to " .
         "include only the source code.";
     }
   } else {
-    $file_size = $_FILES['uploadedfile']['size'];
-    if ($file_size > 2000000) {
-      $errors[] = "File is too big. Maximum size is 1 KB. Make sure that " .
-                  "your zip file contains only your code files.";
-    } else {
-      $filename = basename($_FILES['uploadedfile']['name']);
-      if (!ends_with($filename, ".zip") &&
-          !ends_with($filename, ".tgz") &&
-          !ends_with($filename, ".tar.gz")) {
-        $errors[] = "Invalid file type. Must be zip, tgz, or tar.gz";
-      }
+    $filename = basename($_FILES['uploadedfile']['name']);
+    if (!ends_with($filename, ".zip") &&
+        !ends_with($filename, ".tgz") &&
+        !ends_with($filename, ".tar.gz")) {
+      $errors[] = "Invalid file type. Must be zip, tgz, or tar.gz";
     }
   }
   return $errors;
