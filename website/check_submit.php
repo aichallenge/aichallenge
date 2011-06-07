@@ -25,7 +25,8 @@ function upload_errors($errors) {
     $errors[] = "Somehow you forgot to upload a file!";
   } elseif ($_FILES['uploadedfile']['error'] > 0) {
     $errors[] = "General upload error: " . $_FILES['uploadedfile']['error'];
-    if ($_FILES['uploadedfile']['error'] == UPLOAD_ERR_FORM_SIZE) {
+    if ($_FILES['uploadedfile']['error'] == UPLOAD_ERR_FORM_SIZE or
+        $_FILES['uploadedfile']['error'] == UPLOAD_ERR_INI_SIZE) {
       $errors[] = "Your zip file may be larger than the maximum allowed " .
         "size, ".ini_get('upload_max_filesize').". " .
         "You probably have some executables or other larger " .
