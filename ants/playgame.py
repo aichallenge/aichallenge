@@ -339,10 +339,9 @@ def run_rounds(opts,args):
             for error_log in engine_options['error_logs']:
                 error_log.close()
         if replay_path:
-            print(opts.html_file)
             if opts.nolaunch:
                 if opts.html_file:
-                    visualizer.visualize_locally.launch(replay_path, False, opts.html_file)
+                    visualizer.visualize_locally.launch(replay_path, True, opts.html_file)
             else:
                 if opts.html_file == None:
                     visualizer.visualize_locally.launch(replay_path,
