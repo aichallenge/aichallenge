@@ -1,16 +1,19 @@
 #!/usr/bin/env python
 from __future__ import print_function
-import MySQLdb
-from server_info import server_info
-from sql import sql
-from trueskill import trueskill
+
 import argparse
-import sys
-import time
 import logging
 import logging.handlers
 import os
+import os.path
+import sys
+import time
 import traceback
+from subprocess import Popen, PIPE
+
+import MySQLdb
+from server_info import server_info
+from sql import sql
 
 use_log = True
 
@@ -64,7 +67,6 @@ def update_trueskill(game_id):
     cursor = conn.cursor(MySQLdb.cursors.DictCursor)
 
     # get list of players and their mu/sigma values from the database
-
     players = []
     cursor.execute(sql['select_game_players'], game_id)
     results = cursor.fetchall()
@@ -73,12 +75,42 @@ def update_trueskill(game_id):
         players.append(player)
         # check to ensure all rows have null _after values
         if row['mu_after'] != None:
-            print("game already has values!")
+            log.error("Game already has values!")
             return False
-    trueskill.AdjustPlayers(players)
+    if len(players) == 0:
+        log.error("No players found for game %s" % (game_id,))
+        return False
+
+    classpath = "{0}/JSkills_0.9.0.jar:{0}".format(
+            os.path.join(os.path.dirname(os.path.realpath(__file__)),
+                "jskills"))
+    tsupdater = Popen(["java", "-cp", classpath, "TSUpdate"],
+            stdin=PIPE, stdout=PIPE)
+    for player in players:
+        tsupdater.stdin.write("P %s %d %f %f\n" % (player.name, player.rank,
+            player.skill[0], player.skill[1]))
+    tsupdater.stdin.write("C\n")
+    tsupdater.stdin.flush()
+    tsupdater.wait()
+    for player in players:
+        # this might seem like a fragile way to handle the output of TSUpdate
+        # but it is meant as a double check that we are getting good and
+        # complete data back
+        result = tsupdater.stdout.readline().split()
+        if str(player.name) != result[0]:
+            log.error("Unexpected player name in TSUpdate result. %s != %s"
+                    % (player.name, result[0]))
+            return False
+        player.skill = (float(result[1]), float(result[2]))
+    if tsupdater.stdout.read() != "":
+        log.error("Received extra data back from TSUpdate")
+        return False
+
     for player in players:
         log.debug(player)
-        cursor.execute(sql['update_game_player_trueskill'], (player.old_skill[0], player.old_skill[1], player.skill[0], player.skill[1], game_id, player.name))
+        cursor.execute(sql['update_game_player_trueskill'],
+                (player.old_skill[0], player.old_skill[1],
+                    player.skill[0], player.skill[1], game_id, player.name))
     conn.commit()
     cursor.execute(sql['update_submission_trueskill'], game_id)
     conn.commit()
