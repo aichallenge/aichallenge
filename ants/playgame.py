@@ -404,7 +404,7 @@ def run_rounds(opts,args):
             else:
                 if opts.html_file == None:
                     visualizer.visualize_locally.launch(replay_path,
-                            generated_path="replay.{0}.html".format(round))
+                            generated_path="replay.{0}.html".format(game_id))
                 else:
                     visualizer.visualize_locally.launch(replay_path,
                             generated_path=opts.html_file)
