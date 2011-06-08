@@ -46,11 +46,18 @@ $contest_sql = array(
                                  from matchup_player
                                  where matchup_id = %s
                                  order by player_id;",
-    "select_game_metadata" => "select gp.user_id, u.username, gp.submission_id
+    "select_game_metadata" => "select gp.user_id, u.username, gp.submission_id,
+                               r.rank, r.skill
                                from game_player gp
                                left outer join user u
                                    on u.user_id = gp.user_id
+                               left outer join ranking r
+                                   on r.submission_id = gp.submission_id
                                where gp.game_id = %s
+                               and r.leaderboard_id = (
+                                   select max(leaderboard_id)
+                                   from leaderboard
+                               )
                                order by gp.player_id;",
     "lock_matchup" => "update matchup
                        set worker_id = %s

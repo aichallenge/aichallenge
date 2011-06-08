@@ -68,6 +68,8 @@ if ($gamedata == null) {
         $gamedata->playernames = array();
         $gamedata->submission_ids = array();
         $gamedata->user_ids = array();
+        $gamedata->challenge_rank = array();
+        $gamedata->challenge_skill = array();
         $result = contest_query("select_game_metadata",
                                 $game_id);
         if ($result) {
@@ -75,12 +77,15 @@ if ($gamedata == null) {
                 $gamedata->playernames[] = $meta_row["username"];
                 $gamedata->submission_ids[] = $meta_row["submission_id"];
                 $gamedata->user_ids[] = $meta_row["user_id"];
+                $gamedata->challenge_rank[] = $meta_row["rank"];
+                $gamedata->challenge_skill[] = $meta_row["skill"];
             }
         }
         $gamedata->user_url = "http://" . $gamedata->location . "/profile.php?user=~";
         $gamedata->game_url = "http://" . $gamedata->location . "/visualizer.php?game=~";
         $gamedata->date = date(DATE_ATOM);
         $gamedata->game_id = $game_id;
+        $gamedata->worker_id = $worker['worker_id'];
         // errors may contain sensitive info, such as code tracebacks
         unset($gamedata->errors);
         // create pathname to replay file
