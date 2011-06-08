@@ -8,6 +8,8 @@ from optparse import OptionParser
 import random
 import cProfile
 import visualizer.visualize_locally
+import StringIO
+import json
 
 from ants import Ants
 
@@ -187,7 +189,26 @@ def main(argv):
         return -1
 
 def run_rounds(opts,args):
-    # this split of options is not needed, but left for documentation
+    def get_cmd_wd(cmd):
+        ''' get the proper working directory from a command line '''
+        new_cmd = []
+        wd = None
+        for i, part in enumerate(cmd.split()):
+            if wd == None and os.path.exists(part):
+                wd = os.path.split(os.path.realpath(part))[0]
+                if i == 0:
+                    new_cmd.append(os.path.join(".", os.path.basename(part)))
+                else:
+                    new_cmd.append(os.path.basename(part))
+            else:
+                new_cmd.append(part)
+        return wd, ' '.join(new_cmd)
+    def get_cmd_name(cmd):
+        ''' get the name of a bot from the command line '''
+        for i, part in enumerate(reversed(cmd.split())):
+            if os.path.exists(part):
+                return os.path.basename(part)
+# this split of options is not needed, but left for documentation
     game_options = {
         "map": opts.map,
         "attack": opts.attack,
@@ -224,19 +245,6 @@ def run_rounds(opts,args):
             game_options['engine_seed'] = opts.engine_seed + round
         game = Ants(game_options)
         # initialize bots
-        def get_cmd_wd(cmd):
-            new_cmd = []
-            wd = None
-            for i, part in enumerate(cmd.split()):
-                if wd == None and os.path.exists(part):
-                    wd = os.path.split(os.path.realpath(part))[0]
-                    if i == 0:
-                        new_cmd.append(os.path.join(".", os.path.basename(part)))
-                    else:
-                        new_cmd.append(os.path.basename(part))
-                else:
-                    new_cmd.append(part)
-            return wd, ' '.join(new_cmd)
         bots = [get_cmd_wd(arg) for arg in args]
         bot_count = len(bots)
         # insure correct number of bots, or fill in remaining positions
@@ -327,7 +335,21 @@ def run_rounds(opts,args):
             print('# playgame round {0}, game id {1}'.format(round, game_id))
 
         # intercept replay log so we can add player names
+        if opts.log_replay:
+            intcpt_replay_io = StringIO.StringIO()
+            real_replay_io = engine_options['replay_log']
+            engine_options['replay_log'] = intcpt_replay_io
+
         result = run_game(game, bots, engine_options)
+
+        # add player names, write to proper io, reset back to normal
+        if opts.log_replay:
+            replay_json = json.loads(intcpt_replay_io.getvalue())
+            replay_json['playernames'] = [get_cmd_name(arg) for arg in args]
+            real_replay_io.write(json.dumps(replay_json))
+            intcpt_replay_io.close()
+            engine_options['replay_log'] = real_replay_io
+
         # close file descriptors
         if engine_options['stream_log']:
             engine_options['stream_log'].close()
