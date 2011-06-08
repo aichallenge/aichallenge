@@ -17,6 +17,39 @@ from ants import Ants
 sys.path.append("../worker")
 from engine import run_game
 
+# make stderr red text
+try:
+    import colorama
+    colorama.init()
+    colorize = True
+    color_default = (colorama.Fore.RED)
+    color_reset = (colorama.Style.RESET_ALL)
+except:
+    colorize = False
+    color_default = None
+    color_reset = None
+
+class Colorize(object):
+    def __init__(self, file, color=color_default):
+        self.file = file
+        self.color = color
+        self.reset = color_reset
+    def write(self, data):
+        if self.color:
+            self.file.write(''.join(self.color))
+        self.file.write(data)
+        if self.reset:
+            self.file.write(''.join(self.reset))
+    def flush(self):
+        self.file.flush()
+    def close(self):
+        self.file.close()
+
+if colorize:
+    stderr = Colorize(sys.stderr)
+else:
+    stderr = sys.stderr
+
 class Comment(object):
     def __init__(self, file):
         self.file = file
@@ -172,7 +205,7 @@ def main(argv):
             if opts.log_dir:
                 prof_file = os.path.join(opts.log_dir, prof_file)
             # cProfile needs to be explitly told about out local and global context
-            print("Running profile and outputting to {0}".format(prof_file,), file=sys.stderr)
+            print("Running profile and outputting to {0}".format(prof_file,), file=stderr)
             cProfile.runctx("run_rounds(opts,args)", globals(), locals(), prof_file)
         else:
             # only use psyco if we are not profiling
@@ -255,9 +288,9 @@ def run_rounds(opts,args):
                     bots.append(bots[-1])
             else:
                 print("Incorrect number of bots for map.  Need {0}, got {1}"
-                      .format(game.num_players, len(bots)), file=sys.stderr)
+                      .format(game.num_players, len(bots)), file=stderr)
                 for arg in args:
-                    print("Bot Cmd: {0}".format(arg), file=sys.stderr)
+                    print("Bot Cmd: {0}".format(arg), file=stderr)
                 break
         # move position of first bot specified
         if opts.position > 0 and opts.position <= len(bots):
@@ -308,19 +341,19 @@ def run_rounds(opts,args):
         if opts.log_error and opts.log_dir:
             if opts.log_stderr:
                 if opts.log_stdout:
-                    engine_options['error_logs'] = [Tee(Comment(sys.stderr), open(os.path.join(opts.log_dir, '{0}.bot{1}.error'.format(game_id, i)), 'w'))
+                    engine_options['error_logs'] = [Tee(Comment(stderr), open(os.path.join(opts.log_dir, '{0}.bot{1}.error'.format(game_id, i)), 'w'))
                                       for i in range(bot_count)]
                 else:
-                    engine_options['error_logs'] = [Tee(sys.stderr, open(os.path.join(opts.log_dir, '{0}.bot{1}.error'.format(game_id, i)), 'w'))
+                    engine_options['error_logs'] = [Tee(stderr, open(os.path.join(opts.log_dir, '{0}.bot{1}.error'.format(game_id, i)), 'w'))
                                       for i in range(bot_count)]
             else:
                 engine_options['error_logs'] = [open(os.path.join(opts.log_dir, '{0}.bot{1}.error'.format(game_id, i)), 'w')
                                   for i in range(bot_count)]
         elif opts.log_stderr:
             if opts.log_stdout:
-                engine_options['error_logs'] = [Comment(sys.stderr)] * bot_count
+                engine_options['error_logs'] = [Comment(stderr)] * bot_count
             else:
-                engine_options['error_logs'] = [sys.stderr] * bot_count
+                engine_options['error_logs'] = [stderr] * bot_count
         else:
             engine_options['error_logs'] = None
         
