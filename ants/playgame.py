@@ -104,7 +104,7 @@ def main(argv):
                       default="damage",
                       help="Attack method to use for engine. (closest, power, support, damage)")
     parser.add_option("--food", dest="food",
-                      default="sections",
+                      default="symmetric",
                       help="Food spawning method. (none, random, sections, symmetric)")
     parser.add_option("--viewradius2", dest="viewradius2",
                       default=55, type="int",

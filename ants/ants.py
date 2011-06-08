@@ -39,8 +39,8 @@ class Ants(Game):
         self.attackradius = int(options["attackradius2"])
         self.spawnradius = int(options["spawnradius2"])
         self.engine_seed = options.get('engine_seed', randint(-maxint-1, maxint))
-        seed(self.engine_seed)
         self.player_seed = options.get('player_seed', randint(-maxint-1, maxint))
+        seed(self.engine_seed)
         self.food_rate = options.get('food_rate', (2,8)) # total food
         if type(self.food_rate) in (list, tuple):
             self.food_rate = randrange(*self.food_rate)
@@ -84,6 +84,7 @@ class Ants(Game):
         # initalise scores
         self.score = [Fraction(0,1)]*self.num_players
         self.score_history = [[s] for s in self.score]
+        self.bonus = [0 for s in self.score]
 
         # initialise size
         self.height, self.width = map_data['size']
@@ -1122,17 +1123,22 @@ class Ants(Game):
         # if there is exactly one player remaining they get food bonus
         if len(players) == 1:
             player = players[0]
-            # currently 1 food is spawned per turn per player
+            # the food bonus represents the maximum points a bot can get with perfect play
+            # remaining food and food to be spawned would be 1 point
+            #   either from collecting the food and spawning an ant
+            #   or killing an enemy ant that the food spawned into
+            # plus 1 point for killing all enemy ants (losses don't matter for points)
             food_bonus = (
                 (self.turns - self.turn) * # food that will spawn
-                (self.food_rate * self.num_players / self.food_turn)
+                Fraction(self.food_rate * self.num_players, self.food_turn)
                 + self.food_extra
                 + len(self.current_food) # food that hasn't been collected
-                + len(self.current_ants) # player AND enemy ants
+                # enemy ants (player ants already received point when spawned)
+                + len([ant for ant in self.current_ants.values() if ant.owner != player])
             )
             self.score[player] += food_bonus
-            # amend the score history instead of extending it
-            self.score_history[player][-1] += food_bonus
+            # separate bonus from score history
+            self.bonus[player] = food_bonus
 
     def start_turn(self):
         """ Called by engine at the start of the turn """
@@ -1196,7 +1202,11 @@ class Ants(Game):
         result.append(['attackradius2', self.attackradius])
         result.append(['spawnradius2', self.spawnradius])
         result.append(['player_seed', self.player_seed])
+        # information hidden from players
         if player == None:
+            result.append(['food_rate', self.food_rate])
+            result.append(['food_turn', self.food_turn])
+            result.append(['food_start', self.food_start])
             for line in self.get_map_output():
                 result.append(['m',line])
         result.append([]) # newline
@@ -1283,6 +1293,9 @@ class Ants(Game):
         replay['spawnradius2'] = self.spawnradius
         replay['engine_seed'] = self.engine_seed
         replay['player_seed'] = self.player_seed
+        replay['food_rate'] = self.food_rate
+        replay['food_turn'] = self.food_turn
+        replay['food_start'] = self.food_start
 
         # map
         replay['map'] = {}
@@ -1314,7 +1327,9 @@ class Ants(Game):
             replay['ants'].append(ant_data)
 
         # scores
+        # score_history contains Fraction objects, so round down with int function
         replay['scores'] = [map(int, s) for s in self.score_history]
+        replay['bonus'] = map(int, self.bonus)
 
         return replay
 
