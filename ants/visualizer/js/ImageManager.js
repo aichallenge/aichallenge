@@ -131,7 +131,6 @@ ImageManager.prototype.colorize = function(idx, colors) {
 			var c = colors[i];
 			if (c) {
 				if (typeof c == 'string') {
-					console.log('color is text');
 					c = [
 						15 * parseInt(c.charAt(1), 16),
 						15 * parseInt(c.charAt(2), 16),

@@ -534,7 +534,7 @@ Replay.prototype.getTurn = function(n) {
 			}
 			if (ant[6] !== undefined && n >= ant[3] && n < ant[3] + ant[6].length) {
 				// move
-				aniAnt.frameAt(n, Quality.LOW, true)['owner'] = ant[5];
+				aniAnt.frameAt(n, Quality.LOW)['owner'] = ant[5];
 				var dir = undefined;
 				switch (ant[6].charAt(n - ant[3])) {
 					case 'n':
@@ -611,20 +611,20 @@ Replay.prototype.getTurn = function(n) {
 Replay.prototype.spawnAnt = function(id, row, col, spawn, owner) {
 	var aniAnt = this.aniAnts[id] = new Ant(id, spawn - 0.25);
 	aniAnt.owner = owner;
-	var f = aniAnt.frameAt(spawn - 0.25, Quality.LOW, false);
+	var f = aniAnt.frameAt(spawn - 0.25, Quality.LOW);
 	f['x'] = col;
 	f['y'] = row;
 	f['r'] = FOOD_COLOR[0];
 	f['g'] = FOOD_COLOR[1];
 	f['b'] = FOOD_COLOR[2];
 	if (spawn !== 0) {
-		f = aniAnt.frameAt(spawn, Quality.LOW, true);
+		f = aniAnt.frameAt(spawn, Quality.LOW);
 		f['size'] = 1.0;
-		f = aniAnt.frameAt(spawn + 0.125, Quality.LOW, true);
+		f = aniAnt.frameAt(spawn + 0.125, Quality.LOW);
 		f['size'] = 1.5;
-		f = aniAnt.frameAt(spawn + 0.25, Quality.LOW, true);
+		f = aniAnt.frameAt(spawn + 0.25, Quality.LOW);
 		f['size'] = 0.7;
-		f = aniAnt.frameAt(spawn + 0.5, Quality.LOW, true);
+		f = aniAnt.frameAt(spawn + 0.5, Quality.LOW);
 	}
 	f['size'] = 1;
 	return aniAnt;
@@ -636,16 +636,25 @@ Replay.prototype.convertAnt = function(aniAnt, instantly, turn, owner) {
 		aniAnt.fade(Quality.LOW, 'g', 255, turn - 0.5, turn - 0.25);
 		aniAnt.fade(Quality.LOW, 'b', 255, turn - 0.5, turn - 0.25);
 	}
-	aniAnt.frameAt(turn - 0.25, Quality.LOW, false)['owner'] = owner;
+	aniAnt.frameAt(turn - 0.25, Quality.LOW)['owner'] = owner;
 	aniAnt.fade(Quality.LOW, 'r', color[0], turn - 0.25, turn);
 	aniAnt.fade(Quality.LOW, 'g', color[1], turn - 0.25, turn);
 	aniAnt.fade(Quality.LOW, 'b', color[2], turn - 0.25, turn);
 };
 Replay.prototype.killAnt = function(aniAnt, dead) {
-	aniAnt.fade(Quality.LOW, 'size', 0.0, dead - 0.25, dead);
-	aniAnt.fade(Quality.LOW, 'r'   , 0.0, dead - 0.25, dead);
-	aniAnt.fade(Quality.LOW, 'g'   , 0.0, dead - 0.25, dead);
-	aniAnt.fade(Quality.LOW, 'b'   , 0.0, dead - 0.25, dead);
+	var owner = aniAnt.frameAt(dead, Quality.LOW)['owner'];
+	var color = this.meta['playercolors'][owner];
+	aniAnt.fade(Quality.LOW, 'r'   , 255, dead - 0.80, dead - 0.60);
+	aniAnt.fade(Quality.LOW, 'g'   , 255, dead - 0.80, dead - 0.60);
+	aniAnt.fade(Quality.LOW, 'b'   , 255, dead - 0.80, dead - 0.60);
+	aniAnt.fade(Quality.LOW, 'r', color[0], dead - 0.60, dead - 0.40);
+	aniAnt.fade(Quality.LOW, 'g', color[1], dead - 0.60, dead - 0.40);
+	aniAnt.fade(Quality.LOW, 'b', color[2], dead - 0.60, dead - 0.40);
+	aniAnt.fade(Quality.LOW, 'r'   , 0.0, dead - 0.40, dead);
+	aniAnt.fade(Quality.LOW, 'g'   , 0.0, dead - 0.40, dead);
+	aniAnt.fade(Quality.LOW, 'b'   , 0.0, dead - 0.40, dead);
+	aniAnt.fade(Quality.LOW, 'size', 0.7, dead - 0.80, dead - 0.60);
+	aniAnt.fade(Quality.LOW, 'size', 0.0, dead - 0.40, dead);
 };
 Replay.prototype.getFog = function(player, turn) {
 	var i, fogs, fog, row, col, radius, radius2, row_wrap, col_wrap;
