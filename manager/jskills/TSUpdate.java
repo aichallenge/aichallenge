@@ -42,7 +42,12 @@ class TSUpdate {
                     ranks.add(rank);
                 }
                 else if (words[0].equals("C")) {
-                    GameInfo gameinfo = GameInfo.getDefaultGameInfo();
+                    //GameInfo gameinfo = GameInfo.getDefaultGameInfo();
+                    GameInfo gameinfo = new GameInfo(50.0, // mu
+                                                     50.0/3.0, // sigma
+                                                     50.0/6.0, // beta
+                                                     50.0/300.0, // tau
+                                                     0.01); // draw probability
                     Map<IPlayer, Rating> results;
                     results = TrueSkillCalculator.calculateNewRatings(gameinfo,
                             teams, listToArray(ranks));
