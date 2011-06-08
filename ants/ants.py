@@ -1103,8 +1103,6 @@ class Ants(Game):
 
     def kill_player(self, player):
         """ Used by engine to signal that a player is out of the game """
-        # give hold orders to all player ants by calling do_moves with no orders
-        self.do_moves(player, [])
         self.killed[player] = True
 
     def start_game(self):

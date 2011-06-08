@@ -202,6 +202,7 @@ def run_game(game, botcmds, options):
                                     output_logs[b].write('\n'.join(invalid)+'\n')
                                     output_logs[b].flush()
 
+                if turn > 0:
                     game.finish_turn()
 
                 # send ending info to eliminated bots
