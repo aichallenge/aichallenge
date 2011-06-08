@@ -71,9 +71,12 @@ def main(argv):
     parser.add_option("-r", "--rounds", dest="rounds",
                       default=1, type="int",
                       help="Number of rounds to play")
-    parser.add_option("--seed", dest="seed",
+    parser.add_option("--player_seed", dest="player_seed",
                       default=None, type="int",
-                      help="Seed for the random number generator")
+                      help="Player seed for the random number generator")
+    parser.add_option("--engine_seed", dest="engine_seed",
+                      default=None, type="int",
+                      help="Engine seed for the random number generator")
     
     parser.add_option('--strict', dest='strict',
                       action='store_true', default=False,
@@ -195,7 +198,8 @@ def run_rounds(opts,args):
         "loadtime": opts.loadtime,
         "turntime": opts.turntime,
         "turns": opts.turns,
-        "seed": opts.seed }
+        "player_seed": opts.player_seed,
+        "engine_seed": opts.engine_seed }
     engine_options = {
         "loadtime": opts.loadtime,
         "turntime": opts.turntime,
@@ -211,13 +215,13 @@ def run_rounds(opts,args):
         "capture_errors": opts.capture_errors,
         "secure_jail": opts.secure_jail,
         "end_wait": opts.end_wait }
-    random.seed(opts.seed)
     for round in range(opts.rounds):
         # initialize game
         game_id = round + opts.game_id
         with open(opts.map, 'r') as map_file:
             game_options['map'] = map_file.read()
-            #opts['map'] = map_file.read()
+        if opts.engine_seed:
+            game_options['engine_seed'] = opts.engine_seed + round
         game = Ants(game_options)
         # initialize bots
         def get_cmd_wd(cmd):

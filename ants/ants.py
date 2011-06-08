@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-from random import randrange, choice, shuffle
+from random import randrange, choice, shuffle, randint, seed
 from math import sqrt
 import os
 from collections import deque, defaultdict
@@ -7,6 +7,7 @@ from fractions import Fraction
 import operator
 import string
 from game import Game
+from sys import maxint
 
 ANTS = 0
 LAND = -1
@@ -37,7 +38,9 @@ class Ants(Game):
         self.viewradius = int(options["viewradius2"])
         self.attackradius = int(options["attackradius2"])
         self.spawnradius = int(options["spawnradius2"])
-        self.seed = options.get('seed')
+        self.engine_seed = options.get('engine_seed', randint(-maxint-1, maxint))
+        seed(self.engine_seed)
+        self.player_seed = options.get('player_seed', randint(-maxint-1, maxint))
         self.food_rate = options.get('food_rate', (2,8)) # total food
         if type(self.food_rate) in (list, tuple):
             self.food_rate = randrange(*self.food_rate)
@@ -387,8 +390,8 @@ class Ants(Game):
 
         # also tell the player about any food that has been removed
         #   (only for food they have already seen)
-        for row, col in sorted(self.removed_food[player]):
-            visible_updates.append(['r',row,col])
+        #for row, col in sorted(self.removed_food[player]):
+        #    visible_updates.append(['r',row,col])
 
         visible_updates.append([]) # newline
         return '\n'.join(' '.join(map(str,s)) for s in visible_updates)
@@ -1192,8 +1195,7 @@ class Ants(Game):
         result.append(['viewradius2', self.viewradius])
         result.append(['attackradius2', self.attackradius])
         result.append(['spawnradius2', self.spawnradius])
-        if self.seed is not None:
-            result.append(['seed', self.seed])
+        result.append(['player_seed', self.player_seed])
         if player == None:
             for line in self.get_map_output():
                 result.append(['m',line])
@@ -1279,8 +1281,8 @@ class Ants(Game):
         replay['viewradius2'] = self.viewradius
         replay['attackradius2'] = self.attackradius
         replay['spawnradius2'] = self.spawnradius
-        if self.seed is not None:
-            replay['seed'] = self.seed
+        replay['engine_seed'] = self.engine_seed
+        replay['player_seed'] = self.player_seed
 
         # map
         replay['map'] = {}
