@@ -9,24 +9,31 @@ import sys
 import json
 import io
 
-class Head(object):
+class HeadTail(object):
     'Capture first part of file write and discard remainder'
-    def __init__(self, file, max_capture=1024):
+    def __init__(self, file, max_capture=512):
         self.file = file
         self.max_capture = max_capture
-        self.capture = ''
-        self.capture_len = 0
+        self.capture_head = ''
+        self.capture_head_len = 0
+        self.capture_tail = ''
     def write(self, data):
         if self.file:
             self.file.write(data)
-        capture_left = self.max_capture - self.capture_len
-        if capture_left > 0:
-            if len(data) >= capture_left:
-                self.capture += data[:capture_left]
-                self.capture_len = self.max_capture
+        capture_head_left = self.max_capture - self.capture_head_len
+        if capture_head_left > 0:
+            data_len = len(data)
+            if data_len <= capture_head_left:
+                self.capture_head += data
+                self.capture_head_len += data_len
             else:
-                self.capture += data
-                self.capture_len += len(data)
+                self.capture_head += data[:capture_left]
+                self.capture_head_len = self.max_capture
+                self.capture_tail += data[capture_left:]
+                self.capture_tail = self.capture_tail[-self.max_capture:]
+        else:
+            self.capture_tail += data[capture_left:]
+            self.capture_tail = self.capture_tail[-self.max_capture:]
     def flush(self):
         if self.file:
             self.file.flush()
@@ -34,7 +41,11 @@ class Head(object):
         if self.file:
             self.file.close()
     def head(self):
-        return self.capture
+        return self.capture_head
+    def tail(self):
+        return self.capture_tail
+    def headtail(self):
+        return self.capture_head + self.capture_tail
 
 def run_game(game, botcmds, options):
     # file descriptors for replay and streaming formats
@@ -62,7 +73,7 @@ def run_game(game, botcmds, options):
     bots = []
     bot_status = []
     if capture_errors:
-        error_logs = [Head(log) for log in error_logs]
+        error_logs = [HeadTail(log) for log in error_logs]
     try:
         # create bot sandboxes
         for b, bot in enumerate(botcmds):
@@ -292,7 +303,7 @@ def run_game(game, botcmds, options):
             'replaydata': game.get_replay(),
         }
         if capture_errors:
-            game_result['errors'] = [head.head() for head in error_logs]
+            game_result['errors'] = [head.headtail() for head in error_logs]
 
     if replay_log:
         json.dump(game_result, replay_log, sort_keys=True)
