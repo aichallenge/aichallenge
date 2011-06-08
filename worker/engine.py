@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 from __future__ import print_function
-from sandbox import Sandbox
 import time
 import traceback
 import os
@@ -8,6 +7,8 @@ import random
 import sys
 import json
 import io
+
+from sandbox import get_sandbox
 
 class HeadTail(object):
     'Capture first part of file write and discard remainder'
@@ -78,7 +79,8 @@ def run_game(game, botcmds, options):
         # create bot sandboxes
         for b, bot in enumerate(botcmds):
             bot_cwd, bot_cmd = bot
-            sandbox = Sandbox(bot_cwd, secure=options.get('secure_jail', None))
+            sandbox = get_sandbox(bot_cwd,
+                    secure=options.get('secure_jail', None))
             sandbox.start(bot_cmd)
             bots.append(sandbox)
             bot_status.append('survived')
