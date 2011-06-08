@@ -555,7 +555,7 @@ Visualizer.prototype.tryStart = function() {
 					}
 				}
 				// generate fog images
-				var colors = [null];
+				var colors = [COLOR_SAND];
 				for (i = 0; i < this.replay.players; i++) {
 					colors.push(this.replay.meta['playercolors'][i]);
 				}
@@ -884,12 +884,12 @@ Visualizer.prototype.resize = function(forced) {
 			// set button group extents
 			if (this.replay.hasDuration) {
 				bg = this.btnMgr.groups['fog'];
-				bg.h = this.loc.vis.h - 8;
+				bg.h = news.height - this.loc.vis.y - 8;
 				bg = this.btnMgr.groups['playback'];
-				bg.w = news.width;
+				bg.w = news.width - 2 * 48;
 			}
 			bg = this.btnMgr.groups['toolbar'];
-			bg.h = this.loc.vis.h - 8;
+			bg.h = news.height - this.loc.vis.y - 8;
 		} else {
 			this.loc.vis = new Location(0, y, news.width, news.height - y);
 		}

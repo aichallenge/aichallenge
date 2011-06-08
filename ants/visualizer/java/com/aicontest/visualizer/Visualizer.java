@@ -45,10 +45,10 @@ public class Visualizer extends WebWrapper implements MouseInputListener,
 		super(app.getJavaScriptPath());
 		this.app = app;
 		domWindow = new DOMWindow("Visualizer", this);
-		Object window = Context.javaToJS(domWindow, getGlobal());
-		ScriptableObject.putProperty(getGlobal(), "window", window);
-		Object document = Context.javaToJS(domWindow.getDocument(), getGlobal());
-		ScriptableObject.putProperty(getGlobal(), "document", document);
+		Object window = Context.javaToJS(domWindow, global);
+		ScriptableObject.putProperty(global, "window", window);
+		Object document = Context.javaToJS(domWindow.getDocument(), global);
+		ScriptableObject.putProperty(global, "document", document);
 		loadProgram(app.getProgram());
 		for (WebWrapper.Script script : scripts) {
 			script.run();
@@ -111,7 +111,7 @@ public class Visualizer extends WebWrapper implements MouseInputListener,
 	protected EventExecutionUnit createEventObject(InputEvent e, String type) {
 		EventExecutionUnit task = null;
 		if (canvas != null) {
-			Scriptable event = cx.newObject(getGlobal());
+			Scriptable event = cx.newObject(global);
 			event.put("type", event, type);
 			event.put("altKey", event, Boolean.valueOf(e.isAltDown()));
 			event.put("ctrlKey", event, Boolean.valueOf(e.isControlDown()));

@@ -57,7 +57,7 @@ public class WebWrapper {
 	private volatile boolean running = true;
 	protected ArrayList<WebWrapper.Script> scripts = new ArrayList<WebWrapper.Script>();
 	protected Context cx;
-	private ScriptableObject global;
+	protected ScriptableObject global;
 	protected final ConcurrentLinkedQueue<IExecutionUnit> immediateQueue = new ConcurrentLinkedQueue<IExecutionUnit>();
 	protected HTMLCanvasElement canvas;
 
@@ -279,7 +279,7 @@ public class WebWrapper {
 		}
 
 		public void run() {
-			script.exec(cx, getGlobal());
+			script.exec(cx, global);
 		}
 	}
 
