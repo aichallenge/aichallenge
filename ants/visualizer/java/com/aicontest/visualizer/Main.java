@@ -8,7 +8,6 @@ import java.awt.Panel;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.net.URI;
 import java.net.URISyntaxException;
 
@@ -40,15 +39,14 @@ public class Main implements IVisualizerUser, WindowListener {
 	private ScriptableObject init() throws InstantiationException, IllegalAccessException, IOException {
 		visualizer = new Visualizer(this, 640, 640);
 		HTMLDocument document = visualizer.getDomWindow().getDocument();
-		return visualizer.construct("Visualizer", new Object[] { document, "/" , true });
+		return visualizer.construct("Visualizer", new Object[] { document, "/", true });
 	}
 
 	public Main(String replay) throws InstantiationException, IllegalAccessException, IOException, URISyntaxException {
 		URI uri = null;
 		try {
 			uri = new URI(replay);
-		} catch (URISyntaxException e) {
-		}
+		} catch (URISyntaxException e) {}
 		if (uri == null || uri.getScheme() == null) {
 			uri = new URI("file", replay, null);
 		}
@@ -58,15 +56,7 @@ public class Main implements IVisualizerUser, WindowListener {
 	}
 
 	public Main() throws IOException, InstantiationException, IllegalAccessException {
-		InputStreamReader isr = new InputStreamReader(System.in);
-		char[] cbuf = new char[4096];
-		int read;
-		StringBuffer sb = new StringBuffer();
-		while ((read = isr.read(cbuf)) != -1) {
-			sb.append(cbuf, 0, read);
-		}
-		ScriptableObject vis = init();
-		visualizer.invoke(vis, "loadReplayData", new Object[] { sb.toString() });
+		new Stream(init(), visualizer, visualizer.getGlobal(), "stream");
 		visualizer.loop();
 	}
 
@@ -121,8 +111,7 @@ public class Main implements IVisualizerUser, WindowListener {
 	}
 
 	@Override
-	public void windowOpened(WindowEvent e) {
-	}
+	public void windowOpened(WindowEvent e) {}
 
 	@Override
 	public void windowClosing(WindowEvent e) {
@@ -131,23 +120,17 @@ public class Main implements IVisualizerUser, WindowListener {
 	}
 
 	@Override
-	public void windowClosed(WindowEvent e) {
-	}
+	public void windowClosed(WindowEvent e) {}
 
 	@Override
-	public void windowIconified(WindowEvent e) {
-	}
+	public void windowIconified(WindowEvent e) {}
 
 	@Override
-	public void windowDeiconified(WindowEvent e) {
-	}
+	public void windowDeiconified(WindowEvent e) {}
 
 	@Override
-	public void windowActivated(WindowEvent e) {
-	}
+	public void windowActivated(WindowEvent e) {}
 
 	@Override
-	public void windowDeactivated(WindowEvent e) {
-	}
-
+	public void windowDeactivated(WindowEvent e) {}
 }

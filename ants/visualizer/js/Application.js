@@ -6,7 +6,6 @@
 /*
  * @todo FEAT: keyboard +/- speed setting
  * @todo FEAT: info button showing a message box with game meta data
- * @todo FEAT: zoom in to 20x20 squares with animated ants
  * @todo FEAT: menu items: toggle graph/score bars, cpu use
  * @todo FEAT: setting for cpu usage
  * @todo NICE: better player rank display
@@ -260,6 +259,10 @@ Visualizer = function(container, dataDir, interactive, w, h, config) {
 	 * @private
 	 */
 	this.fog = undefined;
+	/**
+	 * @private
+	 */
+	this.isStreaming = false;
 	this.loading = LoadingState.IDLE;
 	this.imgMgr.startRequests();
 }
@@ -327,6 +330,7 @@ Visualizer.prototype.cleanUp = function() {
 		}
 	}
 	this.fog = undefined;
+	this.isStreaming = false;
 	document.onkeydown = null;
 	document.onkeyup = null;
 	document.onkeypress = null;
@@ -378,6 +382,35 @@ Visualizer.prototype.loadReplayData = function(data) {
 	if (this.preload()) return;
 	this.replay = data;
 	this.loadCanvas(true);
+};
+Visualizer.prototype.streamingInit = function() {
+	if (this.preload()) return;
+	this.isStreaming = true;
+	return this.replay = new Replay();
+};
+Visualizer.prototype.streamingStart = function() {
+	this.isStreaming = stream.visualizerReady();
+	if (this.loading === LoadingState.LOADING) {
+		if (this.replay.duration > 0) {
+			// set cpu to 100%, we need it
+			this.director.cpu = 1;
+			this.loadCanvas(true);
+		}
+	} else {
+		// order player names
+		this.updatePlayerButtons();
+		// call resize to update the gui
+		this.resize(true);
+		// resume playback if we are at the end
+		resume = !this.director.playing() && (this.director.position === this.director.duration);
+		if (this.director.stopAt === this.director.duration) {
+			this.director.stopAt = this.replay.duration;
+		}		
+		this.director.duration = this.replay.duration;
+		if (resume) {
+			this.director.play();
+		}
+	}
 };
 /**
  * @private
@@ -450,7 +483,7 @@ Visualizer.prototype.tryStart = function() {
 			if (this.options['interactive']) {
 				// add static buttons
 				if (!vis.btnMgr.groups['playback']) {
-					if (this.replay.duration > 0) {
+					if (this.replay.hasDuration) {
 						bg = vis.btnMgr.addImageGroup('playback',
 								vis.imgMgr.images[3], ImageButtonGroup.HORIZONTAL,
 								ButtonGroup.MODE_NORMAL, 2, 0);
@@ -510,7 +543,7 @@ Visualizer.prototype.tryStart = function() {
 						vis.setAntLabels((vis.config['label'] + 1) % 3);
 						vis.director.draw();
 					}, 'toggles: 1. player letters on ants, 2. global ids on ants');
-					if (this.replay.duration > 0) {
+					if (this.replay.hasDuration) {
 						bg.addButton(6, function() {
 							vis.config['speedFactor'] += 1;
 							vis.setReplaySpeed();
@@ -521,17 +554,17 @@ Visualizer.prototype.tryStart = function() {
 						});
 					}
 				}
-				if (this.replay.duration > 0) {
-					// generate fog images
-					var colors = [null];
-					for (i = 0; i < this.replay.players; i++) {
-						colors.push(this.replay.meta['playercolors'][i]);
-					}
-					if (this.colorizedPlayerCount < this.replay.players) {
-						this.colorizedPlayerCount = this.replay.players;
-						this.imgMgr.colorize(4, colors);
-						this.imgMgr.colorize(2, colors);
-					}
+				// generate fog images
+				var colors = [null];
+				for (i = 0; i < this.replay.players; i++) {
+					colors.push(this.replay.meta['playercolors'][i]);
+				}
+				if (this.colorizedPlayerCount < this.replay.players) {
+					this.colorizedPlayerCount = this.replay.players;
+					this.imgMgr.colorize(4, colors);
+					this.imgMgr.colorize(2, colors);
+				}
+				if (this.replay.hasDuration) {
 					bg = this.btnMgr.addImageGroup('fog', this.imgMgr.patterns[4],
 						ImageButtonGroup.VERTICAL, ButtonGroup.MODE_RADIO, 2);
 					var buttonAdder = function(fog) {
@@ -549,59 +582,11 @@ Visualizer.prototype.tryStart = function() {
 				}
 			}
 			// add player buttons
-			if (this.replay.duration > 0) {
-				bg = this.btnMgr.addTextGroup('players', TextButtonGroup.FLOW,
-						ButtonGroup.MODE_NORMAL, 2);
-				var gameId = this.replay.meta['game_id'] || vis.options['game'];
-				if (this.replay.meta['game_url'] && gameId !== undefined) {
-					var func = function() {
-						window.location.href =
-								vis.replay.meta['game_url'].replace('~', gameId);
-					};
-				}
-				if (gameId === undefined) {
-					bg.addButton('Players:', '#000', func);
-				} else {
-					bg.addButton('Game #' + gameId + ':', '#000', func);
-				}
-				var scores = this.replay.scores[this.replay.scores.length - 1];
-				var ranks = new Array(scores.length);
-				var order = new Array(scores.length);
-				for (i = 0; i < scores.length; i++) {
-					ranks[i] = 1;
-					for (var k = 0; k < scores.length; k++) {
-						if (scores[i] < scores[k]) {
-							ranks[i]++;
-						}
-					}
-					k = ranks[i] - 1;
-					while(order[k] !== undefined) k++;
-					order[k] = i;
-				}
-				buttonAdder = function(i) {
-					var color = vis.replay.htmlPlayerColors[i];
-					var func = null;
-					if (vis.replay.meta['user_url'] && vis.replay.meta['user_ids']
-							&& vis.replay.meta['user_ids'][i] !== undefined) {
-						func = function() {
-							window.location.href =
-									vis.replay.meta['user_url'].replace('~',
-											vis.replay.meta['user_ids'][i]);
-						};
-					}
-					var caption = vis.replay.meta['playernames'][i];
-					caption = ranks[i] + '. ' + caption;
-					if (vis.replay.meta['status']) {
-						caption += ' (' + vis.statusToGlyph(i) + ')';
-					}
-					bg.addButton(caption, color, func);
-				}
-				for (i = 0; i < this.replay.players; i++) {
-					buttonAdder(order[i]);
-				}
+			if (this.replay.hasDuration) {
+				this.updatePlayerButtons();
 			}
 			// calculate speed from duration and config settings
-			this.director.duration = this.replay.turns.length - 1;
+			this.director.duration = this.replay.duration;
 			this.setReplaySpeed();
 			if (this.options['interactive']) {
 				this.director.onstate = function() {
@@ -652,19 +637,71 @@ Visualizer.prototype.tryStart = function() {
 				this.shiftX = this.mapCenterX = (0.5 * this.replay.cols - 0.5) * ZOOM_SCALE - (this.options['col'] % this.replay.cols) * ZOOM_SCALE;
 				this.shiftY = this.mapCenterY = (0.5 * this.replay.rows - 0.5) * ZOOM_SCALE - (this.options['row'] % this.replay.rows) * ZOOM_SCALE;
 			}
+			this.log.style.display = 'none';
+			this.loading = LoadingState.IDLE;
 			this.setFullscreen(this.config['fullscreen']);
-			if (this.replay.duration > 0) {
+			if (this.replay.hasDuration) {
 				if (this.options['turn']) {
 					this.director.gotoTick(this.options['turn'] - 1);
 				} else {
 					this.director.play();
 				}
 			}
-			this.log.style.display = 'none';
-			this.loading = LoadingState.IDLE;
 		}
 	} else if (!(this.replay instanceof XMLHttpRequest)) {
 		this.loadParseReplay();
+	}
+};
+Visualizer.prototype.updatePlayerButtons = function() {
+	var bg = this.btnMgr.addTextGroup('players', TextButtonGroup.FLOW,
+			ButtonGroup.MODE_NORMAL, 2);
+	var gameId = this.replay.meta['game_id'] || this.options['game'];
+	var vis = this;
+	if (this.replay.meta['game_url'] && gameId !== undefined) {
+		var func = function() {
+			window.location.href =
+					vis.replay.meta['game_url'].replace('~', gameId);
+		};
+	}
+	if (gameId === undefined) {
+		bg.addButton('Players:', '#000', func);
+	} else {
+		bg.addButton('Game #' + gameId + ':', '#000', func);
+	}
+	var scores = this.replay.scores[this.replay.duration];
+	var ranks = new Array(scores.length);
+	var order = new Array(scores.length);
+	for (var i = 0; i < scores.length; i++) {
+		ranks[i] = 1;
+		for (var k = 0; k < scores.length; k++) {
+			if (scores[i] < scores[k]) {
+				ranks[i]++;
+			}
+		}
+		k = ranks[i] - 1;
+		while(order[k] !== undefined) k++;
+		order[k] = i;
+	}
+	var buttonAdder = function(i) {
+		var color = vis.replay.htmlPlayerColors[i];
+		var func = null;
+		if (vis.replay.meta['user_url'] && vis.replay.meta['user_ids']
+				&& vis.replay.meta['user_ids'][i] !== undefined) {
+			func = function() {
+				window.location.href =
+						vis.replay.meta['user_url'].replace('~',
+								vis.replay.meta['user_ids'][i]);
+			};
+		}
+		var caption = vis.replay.meta['playernames'][i];
+		caption = ranks[i] + '. ' + caption;
+		if (vis.replay.meta['status']) {
+			caption += ' (' + vis.statusToGlyph(i) + ')';
+		}
+		bg.addButton(caption, color, func);
+	}
+	for (i = 0; i < this.replay.players; i++) {
+		buttonAdder(order[i]);
 	}
 };
 Visualizer.prototype.setReplaySpeed = function() {
@@ -678,7 +715,7 @@ Visualizer.prototype.setReplaySpeed = function() {
 	var hintText = function(base) {
 		return 'set speed modifier to ' + ((base > 0) ? '+' + base : base);
 	}
-	if (this.options['interactive'] && this.replay.duration > 0) {
+	if (this.options['interactive'] && this.replay.hasDuration) {
 		var speedUpBtn = this.btnMgr.groups['toolbar'].getButton(6);
 		speedUpBtn.hint = hintText(this.config['speedFactor'] + 1);
 		var slowDownBtn = this.btnMgr.groups['toolbar'].getButton(7);
@@ -774,7 +811,7 @@ Visualizer.prototype.setAntLabels = function(mode) {
 	this.config['label'] = mode;
 };
 Visualizer.prototype.resize = function(forced) {
-	var y, w;
+	var y, w, h;
 	var olds = {
 		width: this.main.canvas.width,
 		height: this.main.canvas.height
@@ -782,43 +819,48 @@ Visualizer.prototype.resize = function(forced) {
 	var news = this.calculateCanvasSize();
 	var resizing = news.width != olds.width || news.height != olds.height;
 	if (resizing || forced) {
-		if (resizing) {
-			this.main.canvas.width = news.width;
-			this.main.canvas.height = news.height;
-		}
 		var canvas = this.main.canvas;
 		var ctx = this.main.ctx;
-		ctx.fillStyle = '#fff';
-		ctx.fillRect(0, 0, canvas.width, canvas.height);
+		if (resizing) {
+			canvas.width = news.width;
+			canvas.height = news.height;
+			ctx.fillStyle = '#fff';
+			ctx.fillRect(0, 0, canvas.width, canvas.height);
+		}
 		ctx.font = FONT;
 		ctx.textAlign = 'left';
 		ctx.textBaseline = 'middle';
-		if (this.replay.duration > 0) {
+		if (this.replay.hasDuration) {
 			// 1. player buttons
 			y = this.btnMgr.groups['players'].cascade(news.width) + 4;
 			// 2. scores bar & time line
 			this.loc.graph = new Location(4, y + 66, news.width - 8, 64);
 			this.loc.scorebar = new Location(95, y +  4, news.width - 4 - 95, 22);
 			this.loc.countbar = new Location(95, y + 38, news.width - 4 - 95, 22);
-			ctx.strokeStyle = '#444';
-			ctx.lineWidth = 2;
-			shapeRoundedRect(ctx, 0, y, canvas.width, 30, 1, 5);
-			ctx.stroke();
-			shapeRoundedRect(ctx, 0, y + 34, canvas.width, 100, 1, 5);
-			ctx.moveTo(0, y + 63);
-			ctx.lineTo(canvas.width, y + 63);
-			ctx.stroke();
-			ctx.lineWidth = 1;
-			ctx.fillStyle = '#888';
-			ctx.fillText('scores', 4, y + 14);
-			ctx.fillText('# of ants', 4, y + 48);
+			if (resizing) {
+				ctx.strokeStyle = '#444';
+				ctx.lineWidth = 2;
+				shapeRoundedRect(ctx, 0, y, canvas.width, 30, 1, 5);
+				ctx.stroke();
+				shapeRoundedRect(ctx, 0, y + 34, canvas.width, 100, 1, 5);
+				ctx.moveTo(0, y + 63);
+				ctx.lineTo(canvas.width, y + 63);
+				ctx.stroke();
+				ctx.lineWidth = 1;
+				ctx.fillStyle = '#888';
+				ctx.fillText('scores', 4, y + 14);
+				ctx.fillText('# of ants', 4, y + 48);
+			} else {
+				ctx.fillStyle = '#fff';
+				ctx.fillRect(0, 0, canvas.width, y);
+			}
 			y += 134;
 		} else {
 			y = 0;
 		}
 		// 3. visualizer placement
 		if (this.options['interactive']) {
-			if (this.replay.duration > 0) {
+			if (this.replay.hasDuration) {
 				this.loc.vis = new Location(LEFT_PANEL_W, y,
 					news.width - LEFT_PANEL_W - RIGHT_PANEL_W,
 					news.height - y - BOTTOM_PANEL_H);
@@ -840,7 +882,7 @@ Visualizer.prototype.resize = function(forced) {
 			bg.x = this.loc.vis.x + this.loc.vis.w;
 			bg.y = this.loc.vis.y + 8;
 			// set button group extents
-			if (this.replay.duration > 0) {
+			if (this.replay.hasDuration) {
 				bg = this.btnMgr.groups['fog'];
 				bg.h = this.loc.vis.h - 8;
 				bg = this.btnMgr.groups['playback'];
@@ -852,9 +894,13 @@ Visualizer.prototype.resize = function(forced) {
 			this.loc.vis = new Location(0, y, news.width, news.height - y);
 		}
 		this.setZoom(this.config['zoom']);
-		this.border.canvas.width = Math.min(this.loc.vis.w, this.loc.map.w);
-		this.border.canvas.height = Math.min(this.loc.vis.h, this.loc.map.h);
-		if (this.replay.duration > 0) {
+		w = Math.min(this.loc.vis.w, this.loc.map.w);
+		h = Math.min(this.loc.vis.h, this.loc.map.h);
+		if (this.border.canvas.width !== w || this.border.canvas.height !== h) {
+			this.border.canvas.width = w;
+			this.border.canvas.height = h;
+		}
+		if (this.replay.hasDuration) {
 			this.scores.canvas.width = this.loc.graph.w;
 			this.scores.canvas.height = this.loc.graph.h;
 			this.renderCounts();
@@ -866,7 +912,7 @@ Visualizer.prototype.resize = function(forced) {
 		this.minimap.canvas.height = this.replay.rows;
 		// redraw everything
 		this.btnMgr.draw();
-		this.director.draw();
+		this.director.draw(true);
 	}
 };
 /**
@@ -1103,16 +1149,16 @@ Visualizer.prototype.renderCounts = function() {
 		}
 	}
 	// draw lines
-	var scaleX = w / (this.replay.turns.length - 1);
+	var scaleX = w / this.replay.duration;
 	ctx.strokeStyle = 'rgba(0,0,0,0.5)';
 	ctx.beginPath();
-	for (i = 0; i <= this.replay.turns.length; i++) {
+	for (i = 0; i <= this.replay.duration + 1; i++) {
 		var t = i + 1;
 		ctx.moveTo(0.5 + scaleX * i, h - (t % 100 ? t % 10 ? 3 : 7 : 17));
 		ctx.lineTo(0.5 + scaleX * i, h + 1);
 	}
 	ctx.moveTo(0.5 + 0, h + 0.5);
-	ctx.lineTo(0.5 + scaleX * this.replay.turns.length, h + 0.5);
+	ctx.lineTo(0.5 + scaleX * (this.replay.duration + 1), h + 0.5);
 	ctx.stroke();
 	var scaleY = h / (max - min);
 	for (i = this.replay.players - 1; i >= 0; i--) {
@@ -1124,7 +1170,7 @@ Visualizer.prototype.renderCounts = function() {
 		}
 		ctx.stroke();
 	}
-	if (this.replay.meta['status']) {
+	if (!this.isStreaming && this.replay.meta['status']) {
 		ctx.font = '10px Arial,Sans';
 		for (i = this.replay.players - 1; i >= 0; i--) {
 			ctx.fillStyle = this.replay.htmlPlayerColors[i];
@@ -1303,9 +1349,9 @@ Visualizer.prototype.interpolate = function(array1, array2, delta) {
 Visualizer.prototype.draw = function(time, tick) {
 	var x, y, w, h, dx, dy, d, hash, ants, ant, i, img, offset, visibleAnts;
 	var turn = (time | 0);
-	if (this.replay.duration > 0) {
+	if (this.replay.hasDuration) {
 		// draw scores
-		var duration = this.replay.turns.length - 1;
+		var duration = this.replay.duration;
 		if (tick) {
 			if (this.fog !== undefined) this.renderFog(turn);
 			this.drawColorBar(this.loc.scorebar, this.replay.scores[turn], (turn === duration) ? this.replay.meta['replaydata']['bonus'] : undefined);
@@ -1322,7 +1368,7 @@ Visualizer.prototype.draw = function(time, tick) {
 		// turn number
 		this.main.ctx.fillStyle = '#888';
 		this.main.ctx.textBaseline = 'middle';
-		this.main.ctx.fillText('# of ants | ' + (turn === duration ?
+		this.main.ctx.fillText('# of ants | ' + (turn === duration && !this.isStreaming ?
 				'end' : 'turn ' + (turn + 1) + '/' + duration),
 				this.loc.graph.x, this.loc.graph.y + 11);
 	}
@@ -1633,6 +1679,13 @@ Visualizer.prototype.draw = function(time, tick) {
 		ctx.fillStyle = '#fff';
 		ctx.fillText(hint, this.loc.vis.x, this.loc.vis.y + 10);
 	}
+	// we were able to draw a frame, the engine may send us the next turn
+	if (this.isStreaming) {
+		var vis = this;
+		window.setTimeout(function() {
+			if (vis.isStreaming) vis.streamingStart();
+		}, 0);
+	}
 };
 Visualizer.prototype.mouseMoved = function(mx, my) {
 	var deltaX = mx - this.mouseX;
@@ -1682,7 +1735,7 @@ Visualizer.prototype.mouseMoved = function(mx, my) {
 };
 Visualizer.prototype.mousePressed = function() {
 	if (this.options['interactive']) {
-		if (this.replay.duration > 0 && this.loc.graph.contains(this.mouseX, this.mouseY)) {
+		if (this.replay.hasDuration && this.loc.graph.contains(this.mouseX, this.mouseY)) {
 			this.mouseDown = 1;
 		} else {
 			if (this.config['zoom'] !== 1 && this.minimap.loc.contains(this.mouseX, this.mouseY)) {

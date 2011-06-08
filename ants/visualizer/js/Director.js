@@ -31,7 +31,7 @@ Director.prototype.playStop = function() {
 };
 Director.prototype.play = function() {
 	if (!this.playing()) {
-		if (this.position == this.duration) {
+		if (this.position === this.duration) {
 			this.position = 0;
 		}
 		this.speed = this.defaultSpeed;
@@ -149,17 +149,18 @@ Director.prototype.cleanUp = function() {
 /**
  * Causes the visualizer to draw the current game state.
  */
-Director.prototype.draw = function() {
+Director.prototype.draw = function(urgent) {
 	if (this.playing()) {
-		this.tickFlag = true;
+		if (urgent) {
+			this.freeze();
+			this.loop(0);
+		} else {
+			this.tickFlag = true;
+		}
 	} else {
 		this.vis.draw(this.position, true);
 	}
 };
-/**
- * When an applet goes fullscreen it is detached and reinitialized. We need to
- * stop the animation until it is available again.
- */
 Director.prototype.freeze = function() {
 	window.clearTimeout(this.timeout);
 };
