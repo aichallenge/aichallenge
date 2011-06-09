@@ -180,8 +180,8 @@ function LoFiData(other) {
 LoFiData.prototype.interpolate = function(a, b, useb) {
 	var usea = 1.0 - useb;
 	this.time = usea * a.time + useb * b.time;
-	this['x'] = usea * a['x'] + useb * b['x'];
-	this['y'] = usea * a['y'] + useb * b['y'];
+	this['x'] = (a['x'] === b['x']) ? a['x'] : usea * a['x'] + useb * b['x'];
+	this['y'] = (a['y'] === b['y']) ? a['y'] : usea * a['y'] + useb * b['y'];
 	this['r'] = (usea * a['r'] + useb * b['r']) | 0;
 	this['g'] = (usea * a['g'] + useb * b['g']) | 0;
 	this['b'] = (usea * a['b'] + useb * b['b']) | 0;
