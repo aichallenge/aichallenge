@@ -48,7 +48,7 @@ import sys
 import time
 from optparse import OptionParser
 
-from sandbox import Sandbox
+from sandbox import get_sandbox
 
 try:
     from server_info import server_info
@@ -155,7 +155,7 @@ class ExternalCompiler(Compiler):
             files = safeglob_multi(globs)
 
         errored = False
-        box = Sandbox(bot_dir)
+        box = get_sandbox(bot_dir)
         try:
             if self.separate:
                 for filename in files:
@@ -189,7 +189,7 @@ class TargetCompiler(Compiler):
         with CD(bot_dir):
             sources = safeglob_multi(globs)
 
-        box = Sandbox(bot_dir)
+        box = get_sandbox(bot_dir)
         try:
             for source in sources:
                 head, ext = os.path.splitext(source)
