@@ -71,6 +71,16 @@ Go to the `aichallenge/ants` directory and do:
 To upload a submission you only need to zip all the lisp-files: "`zip
 submission.zip *.lisp`".  ("`make submission-zip`" will do the same).
 
+### Submission Errors
+
+If SBCL does any output on standard error (stderr / \*error-output*)
+it will count as a compilation error to the server.  So even innocuous
+compiler notes or warnings will cause a compilation error.
+
+If you're running into this, redirect \*error-output* to
+\*standard-output* like so: `(setf *error-output* *standard-output*)`
+at the top of MyBot.lisp.
+
 ### Windows / MSYS Note
 
 You're probably best of putting a symbolic link `sbcl` in /usr/bin
