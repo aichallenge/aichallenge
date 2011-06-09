@@ -3,6 +3,8 @@
 require_once('mysql_login.php');
 require_once('memcache.php');
 require_once('pagination.php');
+require_once('nice.php');
+
 //require_once('api_functions.php');
 
 //require_once('session.php');
@@ -185,40 +187,6 @@ function produce_cache_results($page=0, $user_id=NULL, $submission_id=NULL, $map
     return NULL;
 }
 
-function nice_interval($interval) {
-    if ($interval->y > 0) {
-        return $interval->format('%y yrs %m months');
-    } elseif ($interval->m > 0) {
-        return $interval->format('%m months %d days');
-    } elseif ($interval->d > 0) {
-        return $interval->format('%d days %h hrs');
-    } elseif ($interval->h > 0) {
-        return $interval->format('%h hrs %i min');
-    } else {
-        return $interval->format('%i min %s sec');
-    }
-}
-
-function place($num) {
-    switch ($num % 10) {
-        case 1:
-            return strval($num)."st";
-            break;
-        case 2:
-            return strval($num)."nd";
-            break;
-        case 3:
-            return strval($num)."rd";
-            break;
-        default:
-            return strval($num)."th";
-    }
-}
-
-function no_wrap($data) {
-    return str_replace(" ", "&nbsp;", strval($data));
-}
-
 function create_game_list_table($json, $top=FALSE, $targetpage=NULL) {
     global $top_results_size;
 
@@ -267,7 +235,7 @@ function create_game_list_table($json, $top=FALSE, $targetpage=NULL) {
         foreach ($json["values"] as $values) {
             $row_num++;
             $row = array_combine($fields, $values);
-            
+
             if ($user_id and $version !== $row["user_version"]) {
             	$version = $row["user_version"];
             	$table .= "<tr colspan=\"6\"><th>Version $version</th></tr>";
@@ -289,24 +257,19 @@ function create_game_list_table($json, $top=FALSE, $targetpage=NULL) {
             // TODO: consider linking the submission id instead
             $opponents = "";
             for ($i = 0; $i < $row['players']; $i++) {
-                $opponents .= "<span>(".($row['game_rank'][$i]+1).")<a href=\"profile.php?user="
-                              .$row['user_id'][$i]."\">".
-                              $row['username'][$i]."</a></span> ";
+                $opponents .= nice_opponent($row["user_id"], $row["username"], $row["game_rank"] + 1);
             }
             $table .= "<td class=\"list\">$opponents</td>";
 
             if ($user_id) {
-                $outcome = no_wrap(place($row['user_rank']+1)." of ".$row['players']);
+                $outcome = nice_outcome($row['user_rank']+1, $row['players']);
                 $table .= "<td>$outcome</td>";
             }
-            $map_name = explode('.', $row['map_name'], 1);
-            $pos1 = strrpos($row['map_name'],'/') + 1;
-            $pos2 = strrpos($row['map_name'],'.');
-            $map_name = substr($row['map_name'], $pos1, $pos2-$pos1);
-            $map = "<a href=\"map/".$row['map_name']."\">$map_name</a>";
+
+            $map = nice_map($row['map_name']);
             $table .= "<td class=\"list\"><span>$map</span></td>";
 
-            $game = "<a href=\"visualizer.php?game=" . $row['game_id'] . "\">Game&nbsp;&raquo;</a>";
+            $game = nice_game($row['game_id']);
             $table .= "<td>$game</td>";
 
             $table .= "</tr>";

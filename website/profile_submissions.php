@@ -2,7 +2,7 @@
 include 'header.php';
 include_once 'profile_submissions_widget.php';
 
-$user_id = $_GET["user_id"];
+$user_id = $_GET["user"];
 if(!filter_var($user_id, FILTER_VALIDATE_INT)) {
     $user_id = NULL;
 }
