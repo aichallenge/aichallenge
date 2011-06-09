@@ -110,6 +110,10 @@ def install_all_languages():
     install_scala()
     install_dmd()
 
+def install_jailguard(options):
+    worker_dir = os.path.join(options.local_repo, "worker")
+    run_cmd("cp %s/jailguard.py /usr/local/bin/" % (worker_dir,))
+
 def setup_contest_files(options):
     """ Setup all the contest specific files and directories """
     contest_root = options.root_dir
@@ -298,6 +302,7 @@ def get_options(argv):
         "install_required": True,
         "install_utilities": True,
         "install_languages": False,
+        "install_jailguard": False,
         "packages_only": False,
         "username": current_username,
         "root_dir": root_dir,
@@ -318,6 +323,7 @@ def get_options(argv):
     chroot_setup = {
         "install_utilities": False,
         "install_languages": True,
+        "install_jailguard": True,
         "packages_only": True,
         "interactive": False,
         }
@@ -373,6 +379,8 @@ def main(argv=["worker_setup.py"]):
             install_utility_packages()
         if opts.install_languages:
             install_all_languages()
+    if opts.install_jailguard:
+        install_jailguard(opts)
     if opts.packages_only:
         return
     setup_contest_files(opts)

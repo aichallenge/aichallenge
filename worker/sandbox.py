@@ -19,13 +19,25 @@ except ImportError:
 class SandboxError(StandardError):
     pass
 
-def _monitor_file(fd, q):
+def _guard_monitor(jail):
+    guard_out = jail.command_process.stdout
     while True:
-        line = fd.readline()
+        line = guard_out.readline()
         if not line:
-            q.put(None)
+            end_item = (time.time(), None)
+            jail.resp_queue.put(end_item)
+            jail.stdout_queue.put(end_item)
+            jail.stderr_queue.put(end_item)
             break
-        q.put(line.rstrip('\r\n'))
+        line = line.rstrip("\r\n")
+        msg, ts, data = line.split(None, 2)
+        ts = float(ts)
+        if msg == "STDOUT":
+            jail.stdout_queue.put((time, data))
+        elif msg == "STDERR":
+            jail.stderr_queue.put((time, data))
+        elif msg == "SIGNALED":
+            jail.resp_queue.put((time, data))
 
 class Jail(object):
     """ Provide a secure sandbox to run arbitrary commands in.
@@ -63,11 +75,12 @@ class Jail(object):
         self.jchown = os.path.join(server_info["repo_path"], "worker/jail_own")
         self.base_dir = os.path.join(jail_base, jail)
         self.number = int(jail[len("jailuser"):])
-        self.chroot_cmd = "sudo -u {0} schroot -u {0} -c {0} -d {1} -- ".format(
+        self.chroot_cmd = "sudo -u {0} schroot -u {0} -c {0} -d {1} -- jailguard.py ".format(
                 self.name, "/home/jailuser")
 
         self._is_alive = False
         self.command_process = None
+        self.resp_queue = Queue()
         self.stdout_queue = Queue()
         self.stderr_queue = Queue()
         self._prepare_with(working_directory)
@@ -149,19 +162,13 @@ class Jail(object):
         try:
             self.command_process = subprocess.Popen(shell_command,
                                                     stdin=subprocess.PIPE,
-                                                    stdout=subprocess.PIPE,
-                                                    stderr=subprocess.PIPE,)
+                                                    stdout=subprocess.PIPE)
         except OSError:
             raise SandboxError('Failed to start {0}'.format(shell_command))
         self._is_alive = True
-        stdout_monitor = Thread(target=_monitor_file,
-                                args=(self.command_process.stdout, self.stdout_queue))
-        stdout_monitor.daemon = True
-        stdout_monitor.start()
-        stderr_monitor = Thread(target=_monitor_file,
-                                args=(self.command_process.stderr, self.stderr_queue))
-        stderr_monitor.daemon = True
-        stderr_monitor.start()
+        monitor = Thread(target=_guard_monitor, args=(self,))
+        monitor.daemon = True
+        monitor.start()
 
     def _signal(self, signal):
         if not self.locked:
@@ -185,22 +192,29 @@ class Jail(object):
 
     def pause(self):
         """Pause the process by sending a SIGSTOP to the child"""
-        self._signal("STOP")
+        #self._signal("STOP")
+        self.command_process.stdin.write("STOP\n")
+        self.command_process.stdin.flush()
+        item = self.resp_queue.get()
+        if item is None or item[1] != "STOP":
+            raise SandboxError("Bad response from jailguard after pause, %s"
+                    % (item,))
 
     def resume(self):
         """Resume the process by sending a SIGCONT to the child"""
-        self._signal("CONT")
+        #self._signal("CONT")
+        self.command_process.stdin.write("CONT\n")
+        self.command_process.stdin.flush()
+        item = self.resp_queue.get()
+        if item is None or item[1] != "CONT":
+            raise SandboxError("Bad response from jailguard after resume, %s"
+                    % (item,))
 
-    def write(self, str):
+    def write(self, data):
         """Write str to stdin of the process being run"""
-        if not self.is_alive:
-            return False
-        try:
-            self.command_process.stdin.write(str)
-            self.command_process.stdin.flush()
-        except (OSError, IOError):
-            self.kill()
-            return False
+        for line in data.splitlines():
+            if not self.write_line(line):
+                return False
         return True
 
     def write_line(self, line):
@@ -212,7 +226,7 @@ class Jail(object):
         if not self.is_alive:
             return False
         try:
-            self.command_process.stdin.write(line + "\n")
+            self.command_process.stdin.write("SEND %s\n" % (line,))
             self.command_process.stdin.flush()
         except (OSError, IOError):
             self.kill()
@@ -230,7 +244,8 @@ class Jail(object):
         if not self.is_alive:
             timeout=0
         try:
-            return self.stdout_queue.get(block=True, timeout=timeout)
+            time, line = self.stdout_queue.get(block=True, timeout=timeout)
+            return line
         except Empty:
             return None
 
@@ -245,10 +260,19 @@ class Jail(object):
         if not self.is_alive:
             timeout=0
         try:
-            return self.stderr_queue.get(block=True, timeout=timeout)
+            time, line = self.stderr_queue.get(block=True, timeout=timeout)
+            return line
         except Empty:
             return None
 
+
+def _monitor_file(fd, q):
+    while True:
+        line = fd.readline()
+        if not line:
+            q.put(None)
+            break
+        q.put(line.rstrip('\r\n'))
 
 class House:
     """Provide an insecure sandbox to run arbitrary commands in.
@@ -452,7 +476,7 @@ def main():
 
     print("Using secure sandbox: %s" % (options.secure))
     print("Sandbox working directory: %s" % (options.working_dir))
-    sandbox = Sandbox(options.working_dir, secure=options.secure)
+    sandbox = get_sandbox(options.working_dir, secure=options.secure)
     try:
         print()
         sandbox.start(" ".join(args))
