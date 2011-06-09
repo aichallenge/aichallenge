@@ -642,8 +642,13 @@ Replay.prototype.convertAnt = function(aniAnt, instantly, turn, owner) {
 	aniAnt.fade(Quality.LOW, 'b', color[2], turn - 0.25, turn);
 };
 Replay.prototype.killAnt = function(aniAnt, dead) {
+	var color;
 	var owner = aniAnt.frameAt(dead, Quality.LOW)['owner'];
-	var color = this.meta['playercolors'][owner];
+	if (owner === undefined) {
+		color = FOOD_COLOR;
+	} else {
+		color = this.meta['playercolors'][owner];
+	}
 	aniAnt.fade(Quality.LOW, 'r'   , 255, dead - 0.80, dead - 0.60);
 	aniAnt.fade(Quality.LOW, 'g'   , 255, dead - 0.80, dead - 0.60);
 	aniAnt.fade(Quality.LOW, 'b'   , 255, dead - 0.80, dead - 0.60);
