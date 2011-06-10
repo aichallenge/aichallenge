@@ -28,12 +28,12 @@ class HeadTail(object):
                 self.capture_head += data
                 self.capture_head_len += data_len
             else:
-                self.capture_head += data[:capture_left]
+                self.capture_head += data[:capture_head_left]
                 self.capture_head_len = self.max_capture
-                self.capture_tail += data[capture_left:]
+                self.capture_tail += data[capture_head_left:]
                 self.capture_tail = self.capture_tail[-self.max_capture:]
         else:
-            self.capture_tail += data[capture_left:]
+            self.capture_tail += data
             self.capture_tail = self.capture_tail[-self.max_capture:]
     def flush(self):
         if self.file:
