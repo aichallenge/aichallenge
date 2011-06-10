@@ -68,7 +68,7 @@ function nice_opponent($user_id, $username, $rank) {
 }
 
 function nice_game($game_id) {
-    return "<a href=\"visualizer.php?game=$game_id\">Game&nbsp;&raquo;</a>"
+    return "<a href=\"visualizer.php?game=$game_id\">Game&nbsp;&raquo;</a>";
 }
 
 function nice_skill($skill, $mu, $sigma, $old_skill=NULL, $old_mu=NULL, $old_sigma=NULL) {
