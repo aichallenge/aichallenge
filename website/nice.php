@@ -16,7 +16,7 @@ function nice_interval($interval) {
 
 function nice_ago($date) {
     $datetime = new DateTime($date);
-    return nice_interval($now->diff($datetime))." ago"
+    return nice_interval($now->diff($datetime))." ago";
 }
 
 function nice_datetime_span($date) {
