@@ -12,7 +12,7 @@ from sandbox import get_sandbox
 
 class HeadTail(object):
     'Capture first part of file write and discard remainder'
-    def __init__(self, file, max_capture=512):
+    def __init__(self, file, max_capture=510):
         self.file = file
         self.max_capture = max_capture
         self.capture_head = ''
@@ -46,7 +46,7 @@ class HeadTail(object):
     def tail(self):
         return self.capture_tail
     def headtail(self):
-        return self.capture_head + self.capture_tail
+        return self.capture_head + '\n..\n' + self.capture_tail
 
 def run_game(game, botcmds, options):
     # file descriptors for replay and streaming formats
