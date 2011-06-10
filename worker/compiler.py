@@ -107,8 +107,8 @@ def _run_cmd(sandbox, cmd, timelimit):
     finally:
         sandbox.kill()
     if time.time() > timelimit:
-        errors.append("Compilation timed out with file %s"
-                % (filename,))
+        errors.append("Compilation timed out with command %s"
+                % (cmd,))
     err_line = sandbox.read_error()
     while err_line is not None:
         errors.append(err_line)
