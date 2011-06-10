@@ -84,7 +84,7 @@ def update_trueskill(game_id):
     classpath = "{0}/JSkills_0.9.0.jar:{0}".format(
             os.path.join(os.path.dirname(os.path.realpath(__file__)),
                 "jskills"))
-    tsupdater = Popen(["java", "-cp", classpath, "TSUpdate"],
+    tsupdater = Popen(["java", "-Xmx100m", "-cp", classpath, "TSUpdate"],
             stdin=PIPE, stdout=PIPE)
     for player in players:
         tsupdater.stdin.write("P %s %d %f %f\n" % (player.name, player.rank,
