@@ -257,7 +257,7 @@ function create_game_list_table($json, $top=FALSE, $targetpage=NULL) {
             // TODO: consider linking the submission id instead
             $opponents = "";
             for ($i = 0; $i < $row['players']; $i++) {
-                $opponents .= nice_opponent($row["user_id"], $row["username"], $row["game_rank"] + 1);
+                $opponents .= nice_opponent($row["user_id"][$i], $row["username"][$i], $row["game_rank"][$i] + 1);
             }
             $table .= "<td class=\"list\">$opponents</td>";
 

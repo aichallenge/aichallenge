@@ -107,8 +107,8 @@ def _run_cmd(sandbox, cmd, timelimit):
     finally:
         sandbox.kill()
     if time.time() > timelimit:
-        errors.append("Compilation timed out with file %s"
-                % (filename,))
+        errors.append("Compilation timed out with command %s"
+                % (cmd,))
     err_line = sandbox.read_error()
     while err_line is not None:
         errors.append(err_line)
@@ -224,7 +224,7 @@ comp_args = {
     "Groovy"    : [["groovyc"],
                              ["jar", "cfe", BOT + ".jar", BOT]],
     "Haskell" : [["ghc", "--make", BOT + ".hs", "-O", "-v0"]],
-    "Java"        : [["javac"],
+    "Java"        : [["javac", "-J-Xmx%sm" % (MEMORY_LIMIT)],
                              ["jar", "cfe", BOT + ".jar", BOT]],
     "Lisp"      : [['sbcl', '--dynamic-space-size', str(MEMORY_LIMIT), '--script', BOT + '.lisp']],
     "OCaml"     : [["ocamlbuild", BOT + ".native"]],

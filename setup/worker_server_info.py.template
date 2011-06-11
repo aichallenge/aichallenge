@@ -9,7 +9,7 @@ server_info = {{
     "api_base_url": "{api_url}",
     "api_key": "{api_key}",
     "secure_jail": True,
-    "memory_limit": 100,
+    "memory_limit": 500,
     "game_options": {{
         "turns": 2000,
         "loadtime": 3000,
