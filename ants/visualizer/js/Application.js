@@ -653,6 +653,7 @@ Visualizer.prototype.tryStart = function() {
 	}
 };
 Visualizer.prototype.updatePlayerButtons = function() {
+	var scores, i;
 	var bg = this.btnMgr.addTextGroup('players', TextButtonGroup.FLOW,
 			ButtonGroup.MODE_NORMAL, 2);
 	var gameId = this.replay.meta['game_id'] || this.options['game'];
@@ -668,10 +669,18 @@ Visualizer.prototype.updatePlayerButtons = function() {
 	} else {
 		bg.addButton('Game #' + gameId + ':', '#000', func);
 	}
-	var scores = this.replay.scores[this.replay.duration];
+	if (this.replay.meta['replaydata']['bonus']) {
+		scores = new Array(this.replay.players);
+		for (i = 0; i < this.replay.players; i++) {
+			scores[i] = this.replay.scores[this.replay.duration][i];
+			scores[i] += this.replay.meta['replaydata']['bonus'][i];
+		}
+	} else {
+		scores = this.replay.scores[this.replay.duration];
+	}
 	var ranks = new Array(scores.length);
 	var order = new Array(scores.length);
-	for (var i = 0; i < scores.length; i++) {
+	for (i = 0; i < scores.length; i++) {
 		ranks[i] = 1;
 		for (var k = 0; k < scores.length; k++) {
 			if (scores[i] < scores[k]) {
