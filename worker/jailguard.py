@@ -20,7 +20,6 @@ class Guard(object):
     def __init__(self, args):
         self.checked_pids = set(_get_active_pids())
         self.child_pids = set()
-        self.uid = os.getuid()
         self.running = True
 
         self.out_queue = Queue()
@@ -31,28 +30,9 @@ class Guard(object):
         Thread(target=self.reader, args=("STDOUT", self.child.stdout)).start()
         Thread(target=self.reader, args=("STDERR", self.child.stderr)).start()
         Thread(target=self.writer).start()
-        Thread(target=self.pid_monitor).start()
         cmd_thread = Thread(target=self.cmd_loop, args=(sys.stdin,))
         cmd_thread.daemon = True
         cmd_thread.start()
-
-    def pid_monitor(self):
-        checked = self.checked_pids
-        child_pids = self.child_pids
-        uid = self.uid
-        while self.running:
-            pids = [pid for pid in _get_active_pids() if pid not in checked]
-            checked.update(pids)
-            cpids = []
-            for pid in pids:
-                try:
-                    if os.stat("/proc/%d" % (pid,)).st_uid == uid:
-                        cpids.append(pid)
-                except OSError as exc:
-                    if exc.errno != 2:
-                        raise
-            child_pids.update(cpids)
-            time.sleep(_UPDATE_INTERVAL)
 
     def writer(self):
         queue = self.out_queue
@@ -119,7 +99,21 @@ class Guard(object):
         self.running = False
 
     def run(self):
-        self.child.wait()
+        checked = self.checked_pids
+        uid = os.getuid()
+        while self.child.poll() is None:
+            pids = [pid for pid in _get_active_pids() if pid not in checked]
+            checked.update(pids)
+            cpids = []
+            for pid in pids:
+                try:
+                    if os.stat("/proc/%d" % (pid,)).st_uid == uid:
+                        cpids.append(pid)
+                except OSError as exc:
+                    if exc.errno != 2:
+                        raise
+            self.child_pids.update(cpids)
+            time.sleep(_UPDATE_INTERVAL)
         self.running = False
         self.out_queue.put(None)
 
