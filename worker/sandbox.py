@@ -30,7 +30,12 @@ def _guard_monitor(jail):
             jail.stderr_queue.put(end_item)
             break
         line = line.rstrip("\r\n")
-        msg, ts, data = line.split(None, 2)
+        words = line.split(None, 2)
+        if len(words) < 3:
+            msg, ts = words
+            data = ""
+        else:
+            msg, ts, data = words
         ts = float(ts)
         if msg == "STDOUT":
             jail.stdout_queue.put((time, data))
@@ -192,21 +197,30 @@ class Jail(object):
 
     def pause(self):
         """Pause the process by sending a SIGSTOP to the child"""
-        #self._signal("STOP")
-        self.command_process.stdin.write("STOP\n")
-        self.command_process.stdin.flush()
+        try:
+            self.command_process.stdin.write("STOP\n")
+            self.command_process.stdin.flush()
+        except IOError as exc:
+            if exc.errno == 32: # Broken pipe, guard exited
+                return
+            raise
         item = self.resp_queue.get()
-        if item is None or item[1] != "STOP":
+        if item[1] != "STOP" and item[1] is not None:
             raise SandboxError("Bad response from jailguard after pause, %s"
                     % (item,))
 
+
     def resume(self):
         """Resume the process by sending a SIGCONT to the child"""
-        #self._signal("CONT")
-        self.command_process.stdin.write("CONT\n")
-        self.command_process.stdin.flush()
+        try:
+            self.command_process.stdin.write("CONT\n")
+            self.command_process.stdin.flush()
+        except IOError as exc:
+            if exc.errno == 32: # Broken pipe, guard exited
+                return
+            raise
         item = self.resp_queue.get()
-        if item is None or item[1] != "CONT":
+        if item[1] != "CONT" and item[1] is not None:
             raise SandboxError("Bad response from jailguard after resume, %s"
                     % (item,))
 

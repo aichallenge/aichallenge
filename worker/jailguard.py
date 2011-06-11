@@ -27,6 +27,7 @@ class Guard(object):
         self.child = Popen(args, stdin=PIPE, stdout=PIPE, stderr=PIPE)
         self.checked_pids.add(self.child.pid)
         self.child_pids.add(self.child.pid)
+        self.child_streams = 2
         Thread(target=self.reader, args=("STDOUT", self.child.stdout)).start()
         Thread(target=self.reader, args=("STDERR", self.child.stderr)).start()
         Thread(target=self.writer).start()
@@ -55,22 +56,23 @@ class Guard(object):
 
     def writer(self):
         queue = self.out_queue
-        while self.running or not queue.empty():
-            try:
-                item = queue.get(timeout=1)
-            except Empty:
-                item = None
+        while self.running or self.child_streams or not queue.empty():
+            item = queue.get()
             if item:
-                print "%s %f %s" % item
+                sys.stdout.write("%s %f %s\n" % item)
                 sys.stdout.flush()
 
     def reader(self, name, pipe):
         queue = self.out_queue
-        while self.running:
-            ln = pipe.readline()
-            if not ln:
-                break
-            queue.put((name, time.time(), ln[:-1]))
+        try:
+            while True:
+                ln = pipe.readline()
+                if not ln:
+                    break
+                queue.put((name, time.time(), ln[:-1]))
+        finally:
+            self.child_streams -= 1
+            queue.put(None)
 
     def cmd_loop(self, pipe):
         while True:
@@ -79,7 +81,8 @@ class Guard(object):
                 self.kill()
                 break
             elif cmd == "STOP\n":
-                for pid in self.child_pids:
+                cpids = frozenset(self.child_pids)
+                for pid in cpids:
                     try:
                         os.kill(pid, SIGSTOP)
                     except OSError as exc:
@@ -117,7 +120,7 @@ class Guard(object):
 
     def run(self):
         self.child.wait()
-        self.kill()
+        self.running = False
         self.out_queue.put(None)
 
 if __name__ == "__main__":
