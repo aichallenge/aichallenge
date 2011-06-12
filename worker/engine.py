@@ -100,109 +100,108 @@ def run_game(game, botcmds, options):
         if verbose_log:
             verbose_log.write('running for %s turns\n' % turns)
         for turn in range(turns+1):
-            try:
-                if turn == 0:
-                    game.start_game()
+            if turn == 0:
+                game.start_game()
 
-                # resume all bots
-                for bot in bots:
-                    if bot.is_alive:
-                        bot.resume()
+            # resume all bots
+            for bot in bots:
+                if bot.is_alive:
+                    bot.resume()
 
-                # send game state to each player
-                for b, bot in enumerate(bots):
+            # send game state to each player
+            for b, bot in enumerate(bots):
+                if game.is_alive(b):
+                    if turn == 0:
+                        start = game.get_player_start(b) + 'ready\n'
+                        bot.write(start)
+                        if input_logs and input_logs[b]:
+                            input_logs[b].write(start)
+                            input_logs[b].flush()
+                    else:
+                        state = 'turn ' + str(turn) + '\n' + game.get_player_state(b) + 'go\n'
+                        bot.write(state)
+                        if input_logs and input_logs[b]:
+                            input_logs[b].write(state)
+                            input_logs[b].flush()
+
+            # pause all bots again
+            for bot in bots:
+                if bot.is_alive:
+                    bot.pause()
+
+            if turn > 0:
+                if stream_log:
+                    stream_log.write('turn %s\n' % turn)
+                    stream_log.write('score %s\n' % ' '.join([str(s) for s in game.get_scores()]))
+                    stream_log.write(game.get_state())
+                    stream_log.flush()
+                game.start_turn()
+
+
+            # get moves from each player
+            if turn == 0:
+                time_limit = loadtime
+            else:
+                time_limit = turntime
+            if options.get('serial', False):
+                simul_num = int(options['serial']) # int(True) is 1
+                bot_moves = [[] for b in bots]
+                error_lines = [[] for b in bots]
+                statuses = [None for b in bots]
+                bot_list = list(enumerate(bots))
+                random.shuffle(bot_list)
+                for group_num in range(0, len(bot_list), simul_num):
+                    pnums, pbots = zip(*bot_list[group_num:group_num + simul_num])
+                    moves, errors, status = get_moves(game, pbots, pnums,
+                            time_limit, turn)
+                    for p, b in enumerate(pnums):
+                        bot_moves[b] = moves[p]
+                        error_lines[b] = errors[p]
+                        statuses[b] = status[p]
+            else:
+                bot_moves, error_lines, statuses = get_moves(game, bots, range(len(bots)), time_limit, turn)
+
+            # handle any logs that get_moves produced
+            for b, errors in enumerate(error_lines):
+                if errors:
+                    if error_logs and error_logs[b]:
+                        error_logs[b].write('\n'.join(errors)+'\n')
+            # set status for timeouts and crashes
+            for b, status in enumerate(statuses):
+                if status != None:
+                    bot_status[b] = status
+
+            # process all moves
+            bot_alive = [game.is_alive(b) for b in range(len(bots))]
+            if turn > 0 and not game.game_over():
+                for b, moves in enumerate(bot_moves):
                     if game.is_alive(b):
-                        if turn == 0:
-                            start = game.get_player_start(b) + 'ready\n'
-                            bot.write(start)
-                            if input_logs and input_logs[b]:
-                                input_logs[b].write(start)
-                                input_logs[b].flush()
-                        else:
-                            state = 'turn ' + str(turn) + '\n' + game.get_player_state(b) + 'go\n'
-                            bot.write(state)
-                            if input_logs and input_logs[b]:
-                                input_logs[b].write(state)
-                                input_logs[b].flush()
-
-                # pause all bots again
-                for bot in bots:
-                    if bot.is_alive:
-                        bot.pause()
-
-                if turn > 0:
-                    if stream_log:
-                        stream_log.write('turn %s\n' % turn)
-                        stream_log.write('score %s\n' % ' '.join([str(s) for s in game.get_scores()]))
-                        stream_log.write(game.get_state())
-                        stream_log.flush()
-                    game.start_turn()
-
-
-                # get moves from each player
-                if turn == 0:
-                    time_limit = loadtime
-                else:
-                    time_limit = turntime
-                if options.get('serial', False):
-                    simul_num = int(options['serial']) # int(True) is 1
-                    bot_moves = [[] for b in bots]
-                    error_lines = [[] for b in bots]
-                    statuses = [None for b in bots]
-                    bot_list = list(enumerate(bots))
-                    random.shuffle(bot_list)
-                    for group_num in range(0, len(bot_list), simul_num):
-                        pnums, pbots = zip(*bot_list[group_num:group_num + simul_num])
-                        moves, errors, status = get_moves(game, pbots, pnums,
-                                time_limit, turn)
-                        for p, b in enumerate(pnums):
-                            bot_moves[b] = moves[p]
-                            error_lines[b] = errors[p]
-                            statuses[b] = status[p]
-                else:
-                    bot_moves, error_lines, statuses = get_moves(game, bots, range(len(bots)), time_limit, turn)
-
-                # handle any logs that get_moves produced
-                for b, errors in enumerate(error_lines):
-                    if errors:
-                        if error_logs and error_logs[b]:
-                            error_logs[b].write('\n'.join(errors)+'\n')
-                # set status for timeouts and crashes
-                for b, status in enumerate(statuses):
-                    if status != None:
-                        bot_status[b] = status
-
-                # process all moves
-                bot_alive = [game.is_alive(b) for b in range(len(bots))]
-                if turn > 0 and not game.game_over():
-                    for b, moves in enumerate(bot_moves):
-                        if game.is_alive(b):
-                            valid, ignored, invalid = game.do_moves(b, moves)
+                        valid, ignored, invalid = game.do_moves(b, moves)
+                        if output_logs and output_logs[b]:
+                            output_logs[b].write('# turn %s\n' % turn)
+                            if valid:
+                                if output_logs and output_logs[b]:
+                                    output_logs[b].write('\n'.join(valid)+'\n')
+                                    output_logs[b].flush()
+                        if ignored:
+                            if error_logs and error_logs[b]:
+                                error_logs[b].write('turn %4d bot %s ignored actions:\n' % (turn, b))
+                                error_logs[b].write('\n'.join(ignored)+'\n')
+                                error_logs[b].flush()
                             if output_logs and output_logs[b]:
-                                output_logs[b].write('# turn %s\n' % turn)
-                                if valid:
-                                    if output_logs and output_logs[b]:
-                                        output_logs[b].write('\n'.join(valid)+'\n')
-                                        output_logs[b].flush()
-                            if ignored:
-                                if error_logs and error_logs[b]:
-                                    error_logs[b].write('turn %4d bot %s ignored actions:\n' % (turn, b))
-                                    error_logs[b].write('\n'.join(ignored)+'\n')
-                                    error_logs[b].flush()
-                                if output_logs and output_logs[b]:
-                                    output_logs[b].write('\n'.join(ignored)+'\n')
-                                    output_logs[b].flush()
-                            if invalid:
-                                if strict:
-                                    game.kill_player(b)
-                                    bot_status[b] = 'invalid'
-                                if error_logs and error_logs[b]:
-                                    error_logs[b].write('turn %4d bot %s invalid actions:\n' % (turn, b))
-                                    error_logs[b].write('\n'.join(invalid)+'\n')
-                                    error_logs[b].flush()
-                                if output_logs and output_logs[b]:
-                                    output_logs[b].write('\n'.join(invalid)+'\n')
-                                    output_logs[b].flush()
+                                output_logs[b].write('\n'.join(ignored)+'\n')
+                                output_logs[b].flush()
+                        if invalid:
+                            if strict:
+                                game.kill_player(b)
+                                bot_status[b] = 'invalid'
+                            if error_logs and error_logs[b]:
+                                error_logs[b].write('turn %4d bot %s invalid actions:\n' % (turn, b))
+                                error_logs[b].write('\n'.join(invalid)+'\n')
+                                error_logs[b].flush()
+                            if output_logs and output_logs[b]:
+                                output_logs[b].write('\n'.join(invalid)+'\n')
+                                output_logs[b].flush()
 
                 if turn > 0:
                     game.finish_turn()
@@ -233,9 +232,6 @@ def run_game(game, botcmds, options):
                     time.sleep(end_wait)
                     for b in bots_eliminated:
                         bots[b].pause()
-
-            except:
-                raise
 
             if verbose_log:
                 stats = game.get_stats()
