@@ -384,7 +384,7 @@ Visualizer.prototype.loadReplayData = function(data) {
 	this.loadCanvas(true);
 };
 Visualizer.prototype.streamingInit = function() {
-	if (this.preload()) return;
+	this.preload();
 	this.isStreaming = true;
 	return this.replay = new Replay();
 };
@@ -425,7 +425,7 @@ Visualizer.prototype.loadParseReplay = function() {
 		} else if (vis.replay instanceof Replay) { // has just been parsed
 			return;
 		} else if (typeof vis.replay == 'string') { // string only
-			vis.replay = new Replay(vis.replay, vis.options['debug']);
+			vis.replay = new Replay(vis.replay, vis.options['debug'], vis.options['user']);
 		} else if (vis.replay instanceof XMLHttpRequest) { // wait for the reply
 			return;
 		} else {

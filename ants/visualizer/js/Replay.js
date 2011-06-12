@@ -126,8 +126,8 @@ DataType = {
 /**
  * @constructor
  */
-function Replay(replay, debug) {
-	var i, k, scores;
+function Replay(replay, debug, swapUser) {
+	var i, k, scores, swapIndex;
 	var format = 'json';
 	/**
 	 * @private
@@ -348,12 +348,24 @@ function Replay(replay, debug) {
 			}
 			this.aniAnts = new Array(ants.length);
 		}
-		this.hasDuration = this.duration > 0 || this['meta']['replaydata']['turns'] > 0;
+		this.hasDuration = this.duration > 0 || this.meta['replaydata']['turns'] > 0;
 		// add missing meta data
-		this.addMissingMetaData();
+		if (this.meta['user_ids']) {
+			swapIndex = this.meta['user_ids'].indexOf(swapUser, 0);
+			if (swapIndex === -1) swapIndex = undefined;
+		}
+		this.addMissingMetaData(swapIndex);
 	}
 }
-Replay.prototype.addMissingMetaData = function() {
+/**
+ * Adds optional meta data to the replay as required. This includes default
+ * player names and colors.
+ * @param {Number} swapIndex The index of a player who's default color should be
+ *		exchanged with the first player's color. This is useful to identify a
+ *		selected player by its color (the first one in the PĹAYER_COLORS array).
+ */
+Replay.prototype.addMissingMetaData = function(swapIndex) {
+	var i;
 	if (!(this.meta['playernames'] instanceof Array)) {
 		if (this.meta['players'] instanceof Array) {
 			// move players to playernames in old replays
@@ -371,7 +383,13 @@ Replay.prototype.addMissingMetaData = function() {
 			this.meta['playernames'][i] = 'player ' + (i + 1);
 		}
 		if (!(this.meta['playercolors'][i] instanceof Array)) {
-			this.meta['playercolors'][i] = PLAYER_COLORS[i];
+			if (swapIndex !== undefined && i == 0) {
+				this.meta['playercolors'][i] = PLAYER_COLORS[swapIndex];
+			} else if (swapIndex !== undefined && i == swapIndex) {
+				this.meta['playercolors'][i] = PLAYER_COLORS[0];
+			} else {
+				this.meta['playercolors'][i] = PLAYER_COLORS[i];
+			}
 		}
 	}
 	this.htmlPlayerColors = new Array(this.players);
@@ -453,7 +471,43 @@ Replay.prototype.txtToJson = function(replay) {
 		} while (tl.keyword === 'm');
 		// food / ant
 		if (isReplay) {
-			this.txtToJsonAnts(result, lit, tl);
+			while (tl.keyword === 'a') {
+				//     row            col            start          conversion
+				tl.as([DataType.UINT, DataType.UINT, DataType.UINT, DataType.UINT,
+						DataType.UINT, DataType.UINT, DataType.STRING], 3);
+				//		end            owner          orders            # optional
+				row = tl.params[0];
+				if (row >= this.rows) throw new Error('Row exceeds map width.');
+				col = tl.params[1];
+				if (col >= this.cols) throw new Error('Col exceeds map height.');
+				conv = tl.params[3];
+				end = tl.params[4];
+				if (end === undefined) end = conv;
+				owner = tl.params[5];
+				isAnt = owner !== undefined;
+				if (isAnt && owner >= this.players) {
+					throw new Error('Player index out of range.');
+				}
+				if (tl.params.length === 6) {
+					tl.params.push('');
+				}
+				orders = tl.params[6];
+				if (isAnt) {
+					fixed = orders.length !== end - conv;
+					if (fixed && orders.length + 1 !== end - conv) {
+						throw new Error('Number of orders does not match life span.');
+					}
+				}
+				result['ants'].push(tl.params);
+				tl = lit.gimmeNext();
+			}
+			// score
+			var players = this.players || result['players'];
+			for (i = 0; i < players; i++) {
+				scores = tl.kw('s').as([DataType.SCORES]).params[0];
+				result['scores'].push(scores);
+				if (i != players - 1) tl = lit.gimmeNext();
+			}
 		} else {
 			for (i = 0; i < result['players']; i++) {
 				result['scores'].push([0]);
@@ -468,45 +522,6 @@ Replay.prototype.txtToJson = function(replay) {
 		throw error;
 	}
 	return result;
-};
-Replay.prototype.txtToJsonAnts = function(result, lit, tl) {
-	while (tl.keyword === 'a') {
-		//     row            col            start          conversion
-		tl.as([DataType.UINT, DataType.UINT, DataType.UINT, DataType.UINT,
-				DataType.UINT, DataType.UINT, DataType.STRING], 3);
-		//		end            owner          orders            # optional
-		row = tl.params[0];
-		if (row >= this.rows) throw new Error('Row exceeds map width.');
-		col = tl.params[1];
-		if (col >= this.cols) throw new Error('Col exceeds map height.');
-		conv = tl.params[3];
-		end = tl.params[4];
-		if (end === undefined) end = conv;
-		owner = tl.params[5];
-		isAnt = owner !== undefined;
-		if (isAnt && owner >= this.players) {
-			throw new Error('Player index out of range.');
-		}
-		if (tl.params.length === 6) {
-			tl.params.push('');
-		}
-		orders = tl.params[6];
-		if (isAnt) {
-			fixed = orders.length !== end - conv;
-			if (fixed && orders.length + 1 !== end - conv) {
-				throw new Error('Number of orders does not match life span.');
-			}
-		}
-		result['ants'].push(tl.params);
-		tl = lit.gimmeNext();
-	}
-	// score
-	var players = this.players || result['players'];
-	for (i = 0; i < players; i++) {
-		scores = tl.kw('s').as([DataType.SCORES]).params[0];
-		result['scores'].push(scores);
-		if (i != players - 1) tl = lit.gimmeNext();
-	}
 };
 Replay.prototype.getTurn = function(n) {
 	var i, turn, ants, ant, aniAnt, lastFrame, dead;
