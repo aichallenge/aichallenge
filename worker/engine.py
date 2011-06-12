@@ -230,8 +230,8 @@ def run_game(game, botcmds, options):
                     if verbose_log:
                         verbose_log.write('waiting {0} seconds for bots to process end turn\n'.format(end_wait))
                     time.sleep(end_wait)
-                    for b in bots_eliminated:
-                        bots[b].pause()
+                for b in bots_eliminated:
+                    bots[b].kill()
 
             if verbose_log:
                 stats = game.get_stats()
