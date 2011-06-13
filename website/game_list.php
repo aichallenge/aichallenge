@@ -269,7 +269,7 @@ function create_game_list_table($json, $top=FALSE, $targetpage=NULL) {
             $map = nice_map($row['map_name']);
             $table .= "<td class=\"list\"><span>$map</span></td>";
 
-            $game = nice_game($row['game_id']);
+            $game = nice_game($row['game_id'], $user_id);
             $table .= "<td>$game</td>";
 
             $table .= "</tr>";
