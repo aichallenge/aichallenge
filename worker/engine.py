@@ -137,29 +137,30 @@ def run_game(game, botcmds, options):
                     stream_log.flush()
                 game.start_turn()
 
-
             # get moves from each player
             if turn == 0:
                 time_limit = loadtime
             else:
                 time_limit = turntime
+
             if options.get('serial', False):
                 simul_num = int(options['serial']) # int(True) is 1
-                bot_moves = [[] for b in bots]
-                error_lines = [[] for b in bots]
-                statuses = [None for b in bots]
-                bot_list = list(enumerate(bots))
-                random.shuffle(bot_list)
-                for group_num in range(0, len(bot_list), simul_num):
-                    pnums, pbots = zip(*bot_list[group_num:group_num + simul_num])
-                    moves, errors, status = get_moves(game, pbots, pnums,
-                            time_limit, turn)
-                    for p, b in enumerate(pnums):
-                        bot_moves[b] = moves[p]
-                        error_lines[b] = errors[p]
-                        statuses[b] = status[p]
             else:
-                bot_moves, error_lines, statuses = get_moves(game, bots, range(len(bots)), time_limit, turn)
+                simul_num = len(bots)
+
+            bot_moves = [[] for b in bots]
+            error_lines = [[] for b in bots]
+            statuses = [None for b in bots]
+            bot_list = list(enumerate(bots))
+            random.shuffle(bot_list)
+            for group_num in range(0, len(bot_list), simul_num):
+                pnums, pbots = zip(*bot_list[group_num:group_num + simul_num])
+                moves, errors, status = get_moves(game, pbots, pnums,
+                        time_limit, turn)
+                for p, b in enumerate(pnums):
+                    bot_moves[b] = moves[p]
+                    error_lines[b] = errors[p]
+                    statuses[b] = status[p]
 
             # handle any logs that get_moves produced
             for b, errors in enumerate(error_lines):
