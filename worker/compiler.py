@@ -227,7 +227,7 @@ comp_args = {
     "Java"        : [["javac", "-J-Xmx%sm" % (MEMORY_LIMIT)],
                              ["jar", "cfe", BOT + ".jar", BOT]],
     "Lisp"      : [['sbcl', '--dynamic-space-size', str(MEMORY_LIMIT), '--script', BOT + '.lisp']],
-    "OCaml"     : [["ocamlbuild", BOT + ".native"]],
+    "OCaml"     : [["ocamlbuild -lib unix", BOT + ".native"]],
     "Scala"     : [["scalac"]],
     }
 
