@@ -14,10 +14,6 @@ public abstract class Bot extends AbstractSystemInputParser {
             spawnRadius2));
     }
     
-    protected void setAnts(Ants ants) {
-        this.ants = ants;
-    }
-    
     /**
      * Returns game state information.
      * 
@@ -26,8 +22,17 @@ public abstract class Bot extends AbstractSystemInputParser {
     public Ants getAnts() {
         return ants;
     }
-
-    /** 
+    
+    /**
+     * Sets game state information.
+     * 
+     * @param ants game state information to be set
+     */
+    protected void setAnts(Ants ants) {
+        this.ants = ants;
+    }
+    
+    /**
      * {@inheritDoc}
      */
     @Override
@@ -35,50 +40,43 @@ public abstract class Bot extends AbstractSystemInputParser {
         ants.setTurnStartTime(System.currentTimeMillis());
         ants.clearMyAnts();
         ants.clearEnemyAnts();
+        ants.getFoodTiles().clear();
         ants.getOrders().clear();
     }
-
-    /** 
+    
+    /**
      * {@inheritDoc}
      */
     @Override
     public void addWater(int row, int col) {
         ants.update(Ilk.WATER, new Tile(row, col));
     }
-
-    /** 
+    
+    /**
      * {@inheritDoc}
      */
     @Override
     public void addAnt(int row, int col, int owner) {
         ants.update(owner > 0 ? Ilk.ENEMY_ANT : Ilk.MY_ANT, new Tile(row, col));
     }
-
-    /** 
+    
+    /**
      * {@inheritDoc}
      */
     @Override
     public void addFood(int row, int col) {
         ants.update(Ilk.FOOD, new Tile(row, col));
     }
-
-    /** 
+    
+    /**
      * {@inheritDoc}
      */
     @Override
     public void removeAnt(int row, int col, int owner) {
         ants.update(Ilk.DEAD, new Tile(row, col));
     }
-
-    /** 
-     * {@inheritDoc}
-     */
-    @Override
-    public void removeFood(int row, int col) {
-        ants.removeFood(new Tile(row, col));
-    }
-
-    /** 
+    
+    /**
      * {@inheritDoc}
      */
     @Override
