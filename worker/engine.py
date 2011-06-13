@@ -151,7 +151,8 @@ def run_game(game, botcmds, options):
             bot_moves = [[] for b in bots]
             error_lines = [[] for b in bots]
             statuses = [None for b in bots]
-            bot_list = list(enumerate(bots))
+            bot_list = [(b, bot) for b, bot in enumerate(bots)
+                        if game.is_alive(b)]
             random.shuffle(bot_list)
             for group_num in range(0, len(bot_list), simul_num):
                 pnums, pbots = zip(*bot_list[group_num:group_num + simul_num])
