@@ -203,35 +203,35 @@ def run_game(game, botcmds, options):
                                 output_logs[b].write('\n'.join(invalid)+'\n')
                                 output_logs[b].flush()
 
-                if turn > 0:
-                    game.finish_turn()
+            if turn > 0:
+                game.finish_turn()
 
-                # send ending info to eliminated bots
-                bots_eliminated = []
-                for b, alive in enumerate(bot_alive):
-                    if alive and not game.is_alive(b):
-                        bots_eliminated.append(b)
-                for b in bots_eliminated:
-                    if verbose_log:
-                        verbose_log.write('turn %4d bot %s eliminated\n' % (turn, b))
-                    if bot_status[b] == 'survived': # could be invalid move
-                        bot_status[b] = 'eliminated'
-                    score_line ='score %s\n' % ' '.join([str(s) for s in game.get_scores(b)])
-                    status_line = 'status %s\n' % ' '.join(map(str, game.order_for_player(b, bot_status)))
-                    end_line = 'end\nplayers %s\n' % len(bots) + score_line + status_line
-                    state = end_line + game.get_player_state(b) + 'go\n'
-                    bots[b].write(state)
-                    if input_logs and input_logs[b]:
-                        input_logs[b].write(state)
-                        input_logs[b].flush()
-                    if end_wait:
-                        bots[b].resume()
-                if bots_eliminated and end_wait:
-                    if verbose_log:
-                        verbose_log.write('waiting {0} seconds for bots to process end turn\n'.format(end_wait))
-                    time.sleep(end_wait)
-                for b in bots_eliminated:
-                    bots[b].kill()
+            # send ending info to eliminated bots
+            bots_eliminated = []
+            for b, alive in enumerate(bot_alive):
+                if alive and not game.is_alive(b):
+                    bots_eliminated.append(b)
+            for b in bots_eliminated:
+                if verbose_log:
+                    verbose_log.write('turn %4d bot %s eliminated\n' % (turn, b))
+                if bot_status[b] == 'survived': # could be invalid move
+                    bot_status[b] = 'eliminated'
+                score_line ='score %s\n' % ' '.join([str(s) for s in game.get_scores(b)])
+                status_line = 'status %s\n' % ' '.join(map(str, game.order_for_player(b, bot_status)))
+                end_line = 'end\nplayers %s\n' % len(bots) + score_line + status_line
+                state = end_line + game.get_player_state(b) + 'go\n'
+                bots[b].write(state)
+                if input_logs and input_logs[b]:
+                    input_logs[b].write(state)
+                    input_logs[b].flush()
+                if end_wait:
+                    bots[b].resume()
+            if bots_eliminated and end_wait:
+                if verbose_log:
+                    verbose_log.write('waiting {0} seconds for bots to process end turn\n'.format(end_wait))
+                time.sleep(end_wait)
+            for b in bots_eliminated:
+                bots[b].kill()
 
             if verbose_log:
                 stats = game.get_stats()
