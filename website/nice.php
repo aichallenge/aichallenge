@@ -69,9 +69,9 @@ function nice_opponent($user_id, $username, $rank) {
 
 function nice_game($game_id, $user_id=NULL) {
     if ($user_id) {
-        return "<a href=\"visualizer.php?game=$game_id\">Game&nbsp;&raquo;</a>";
-    } else {
         return "<a href=\"visualizer.php?game=$game_id&user=$user_id\">Game&nbsp;&raquo;</a>";
+    } else {
+        return "<a href=\"visualizer.php?game=$game_id\">Game&nbsp;&raquo;</a>";
     }
 }
 
