@@ -211,7 +211,7 @@ comp_args = {
                                 '--no-userinit', '--disable-debugger', '--load',
                                 BOT + '.lisp', '--eval', "(save-lisp-and-die \"" + BOT
                                 + "\" :executable t :toplevel #'pwbot::main)"]],
-    "OCaml"     : [["ocamlbuild -lib unix", BOT + ".native"]],
+    "OCaml"     : [["ocamlbuild", BOT + ".native"]],
     "Scala"     : [["scalac"]],
     }
 
