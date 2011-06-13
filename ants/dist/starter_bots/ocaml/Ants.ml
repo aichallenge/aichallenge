@@ -4,6 +4,10 @@ any improvements, please post to the forum or upload a fix! *)
 
 let out_chan = stderr (* open_out "mybot_err.log" *);;
 
+(* this previously used Sys.time, but it's wrong in this context
+ *)
+let get_time () = Unix.gettimeofday ();;
+
 let ddebug s = 
    output_string out_chan s; 
    flush out_chan
@@ -300,7 +304,7 @@ let read_lines () =
 
 let read gstate =
   let ll = read_lines () in
-  let go_time = Sys.time () in
+  let go_time = get_time () in
   match ll with
   | Some lines -> Some {(update gstate lines) with go_time = go_time}
   | None -> None
@@ -476,7 +480,7 @@ let time_remaining state =
    let turn_time = if state.turn = 0 then (float_of_int state.setup.loadtime)
    else (float_of_int state.setup.turntime) in
       1000. *. 
-      ((turn_time /. 1000.) -. ((Sys.time ()) -. state.go_time))
+      ((turn_time /. 1000.) -. ((get_time ()) -. state.go_time))
 ;;
 
 (* End helper functions *)
