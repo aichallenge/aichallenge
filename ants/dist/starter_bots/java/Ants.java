@@ -167,7 +167,7 @@ public class Ants {
     public Ilk getIlk(Tile tile) {
         return map[tile.getRow()][tile.getCol()];
     }
-
+    
     /**
      * Sets ilk at the specified location.
      * 
@@ -177,7 +177,7 @@ public class Ants {
     public void setIlk(Tile tile, Ilk ilk) {
         map[tile.getRow()][tile.getCol()] = ilk;
     }
-
+    
     /**
      * Returns ilk at the location in the specified direction from the specified location.
      * 
@@ -190,7 +190,7 @@ public class Ants {
         Tile newTile = getTile(tile, direction);
         return map[newTile.getRow()][newTile.getCol()];
     }
-
+    
     /**
      * Returns location in the specified direction from the specified location.
      * 
@@ -200,17 +200,17 @@ public class Ants {
      * @return location in <code>direction</code> from <cod>tile</code>
      */
     public Tile getTile(Tile tile, Aim direction) {
-        int nRow = (tile.getRow() + direction.getRowDelta()) % rows;
-        if (nRow < 0) {
-            nRow += rows;
+        int row = (tile.getRow() + direction.getRowDelta()) % rows;
+        if (row < 0) {
+            row += rows;
         }
-        int nCol = (tile.getCol() + direction.getColDelta()) % cols;
-        if (nCol < 0) {
-            nCol += cols;
+        int col = (tile.getCol() + direction.getColDelta()) % cols;
+        if (col < 0) {
+            col += cols;
         }
-        return new Tile(nRow, nCol);
+        return new Tile(row, col);
     }
-
+    
     /**
      * Returns a set containing all my ants locations.
      * 
@@ -262,7 +262,7 @@ public class Ants {
         colDelta = Math.min(colDelta, cols - colDelta);
         return rowDelta * rowDelta + colDelta * colDelta;
     }
-
+    
     /**
      * Returns one or two orthogonal directions from one location to the another.
      * 
@@ -332,37 +332,15 @@ public class Ants {
         map[tile.getRow()][tile.getCol()] = ilk;
         switch (ilk) {
             case FOOD:
-                if (!foodTiles.contains(tile)) {
-                    foodTiles.add(tile);
-                }
+                foodTiles.add(tile);
             break;
             case MY_ANT:
                 myAnts.add(tile);
-                if (foodTiles.contains(tile)) {
-                    foodTiles.remove(tile);
-                }
             break;
             case ENEMY_ANT:
                 enemyAnts.add(tile);
-                if (foodTiles.contains(tile)) {
-                    foodTiles.remove(tile);
-                }
             break;
         }
-    }
-    
-    /**
-     * Removes food from the game map.
-     * 
-     * @param tile location of the food to be removed
-     */
-    public void removeFood(Tile tile) {
-        int row = tile.getRow();
-        int col = tile.getCol();
-        if (map[row][col] == Ilk.FOOD) {
-            map[row][col] = Ilk.LAND;
-        }
-        foodTiles.remove(tile);
     }
     
     /**

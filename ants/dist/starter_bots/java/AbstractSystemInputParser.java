@@ -22,7 +22,7 @@ public abstract class AbstractSystemInputParser extends AbstractSystemInputReade
     }
     
     private enum UpdateToken {
-        W, A, F, D, R;
+        W, A, F, D;
         
         private static final Pattern PATTERN = compilePattern(UpdateToken.class);
     }
@@ -115,10 +115,9 @@ public abstract class AbstractSystemInputParser extends AbstractSystemInputReade
                 break;
             }
         }
-        setup(loadTime, turnTime, rows, cols, turns, viewRadius2, attackRadius2,
-                spawnRadius2);
+        setup(loadTime, turnTime, rows, cols, turns, viewRadius2, attackRadius2, spawnRadius2);
     }
-
+    
     /**
      * Parses the update information from system input stream.
      * 
@@ -147,25 +146,23 @@ public abstract class AbstractSystemInputParser extends AbstractSystemInputReade
                     addWater(row, col);
                 break;
                 case A:
-                    addAnt(row, col, scanner.nextInt());
+                    if (scanner.hasNextInt()) {
+                        addAnt(row, col, scanner.nextInt());
+                    }
                 break;
                 case F:
                     addFood(row, col);
                 break;
                 case D:
-                    // avoid crashing if the engine sends None as player ID
                     if (scanner.hasNextInt()) {
                         removeAnt(row, col, scanner.nextInt());
                     }
-                break;
-                case R:
-                    removeFood(row, col);
                 break;
             }
         }
         afterUpdate();
     }
-
+    
     /**
      * Sets up the game state.
      * 
@@ -180,7 +177,7 @@ public abstract class AbstractSystemInputParser extends AbstractSystemInputReade
      */
     public abstract void setup(int loadTime, int turnTime, int rows, int cols, int turns,
             int viewRadius2, int attackRadius2, int spawnRadius2);
-
+    
     /**
      * Enables performing actions which should take place prior to updating the game state, like
      * clearing old game data.
@@ -220,14 +217,6 @@ public abstract class AbstractSystemInputParser extends AbstractSystemInputReade
      * @param owner player id
      */
     public abstract void removeAnt(int row, int col, int owner);
-    
-    /**
-     * Removes food tile.
-     * 
-     * @param row row index
-     * @param col column index
-     */
-    public abstract void removeFood(int row, int col);
     
     /**
      * Enables performing actions which should take place just after the game state has been
