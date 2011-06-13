@@ -1,5 +1,5 @@
 <?php 
-$user_id = $_GET["user_id"];
+$user_id = $_GET["user"];
 if(!filter_var($user_id, FILTER_VALIDATE_INT)) {
     header("Location: blank.gif");
     exit;
@@ -16,7 +16,7 @@ $cacheID="pchart_$user_id";
 
 if (!($cache->start($cacheID))) {
 
-include('mysql_login.php');
+require_once('mysql_login.php');
 include("pChart/pData.class");
 include("pChart/pChart.class");
 include("pChart/pCache.class");

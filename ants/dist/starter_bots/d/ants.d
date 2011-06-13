@@ -6,7 +6,7 @@ import std.conv;
 import std.algorithm;
 import std.array;
 import std.math;
-import std.date;
+import core.time;
 
 enum SqVal : byte {
 	WATER = -4, FOOD, LAND, DEAD,
@@ -46,7 +46,7 @@ class Ants {
 		uint _viewradius2;
 		uint _attackradius2;
 		uint _spawnradius2;
-		d_time _endtime;
+		TickDuration _endtime;
 		Loc[] _myAnts;
 		Loc[] _enemyAnts;
 		Loc[] _food;
@@ -231,9 +231,9 @@ class Ants {
 		}
 
 		/// time remaining for the turn in milliseconds
-		d_time timeRemaining() {
-			d_time now = getUTCtime();
-			return (now > _endtime) ? 0 : _endtime - now;
+		long timeRemaining() {
+			TickDuration now = TickDuration.currSystemTick();
+			return (now > _endtime) ? 0L : (_endtime - now).msecs;
 		}
 
 		/// adds a directional offset to a location and returns the result
@@ -286,7 +286,7 @@ class Ants {
 						mapData = appender!(string)();
 						break;
 					case "go":
-						ants._endtime = getUTCtime();
+						ants._endtime = TickDuration.currSystemTick();
 						ants.update(mapData.data);
 						bot.doTurn(ants);
 						ants.finishTurn();

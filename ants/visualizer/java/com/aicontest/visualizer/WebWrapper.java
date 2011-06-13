@@ -35,6 +35,7 @@ import org.mozilla.javascript.ast.AstRoot;
 import org.mozilla.javascript.ast.ScriptNode;
 import org.mozilla.javascript.optimizer.Codegen;
 
+import com.aicontest.visualizer.js.dom.Console;
 import com.aicontest.visualizer.js.dom.HTMLCanvasElement;
 import com.aicontest.visualizer.js.dom.HTMLImageElement;
 import com.aicontest.visualizer.js.dom.XMLHttpRequest;
@@ -42,6 +43,7 @@ import com.aicontest.visualizer.js.tasks.DelayedExecutionUnit;
 import com.aicontest.visualizer.js.tasks.IExecutionUnit;
 
 public class WebWrapper {
+
 	private File baseDir;
 	private final ReentrantLock lock = new ReentrantLock();
 	private final DelayQueue<DelayedExecutionUnit> delayedQueue = new DelayQueue<DelayedExecutionUnit>();
@@ -79,18 +81,15 @@ public class WebWrapper {
 			} finally {
 				br.close();
 			}
-		} catch (Exception e) {
-		}
+		} catch (Exception e) {}
 		global = cx.initStandardObjects();
 		cx.putThreadLocal(WebWrapper.class, this);
 		Object image = new NativeJavaClass(global, HTMLImageElement.class);
 		global.put("Image", global, image);
-		Object xmlHttpRequest = new NativeJavaClass(global,
-				XMLHttpRequest.class);
+		Object xmlHttpRequest = new NativeJavaClass(global, XMLHttpRequest.class);
 		global.put("XMLHttpRequest", global, xmlHttpRequest);
-		cx.evaluateString(global,
-				"alert = function(x) { java.lang.System.out.println(x) }",
-				"<web-wrapper>", 1, null);
+		new Console(global, "console");
+		cx.evaluateString(global, "alert = function(x) { java.lang.System.out.println(x) }", "<web-wrapper>", 1, null);
 	}
 
 	private Class<?> recompile(String file) throws IOException {
@@ -112,16 +111,13 @@ public class WebWrapper {
 			AstRoot ast = p.parse(in, file.toString(), 1);
 			IRFactory irf = new IRFactory(compilerEnv, compilationErrorReporter);
 			ScriptNode tree = irf.transformTree(ast);
-			Object[] nameBytesPair = (Object[]) (Object[]) compiler.compile(
-					compilerEnv, tree, tree.getEncodedSource(), false);
+			Object[] nameBytesPair = (Object[]) (Object[]) compiler.compile(compilerEnv, tree, tree.getEncodedSource(), false);
 			String className = (String) nameBytesPair[0];
 			byte[] classBytes = (byte[]) (byte[]) nameBytesPair[1];
-			File outFile = new File(className.replace('.', File.separatorChar)
-					+ ".class");
+			File outFile = new File(className.replace('.', File.separatorChar) + ".class");
 			String oldClassName = (String) precompiled.get(file);
 			if (oldClassName != null) {
-				new File(oldClassName.replace('.', File.separatorChar)
-						+ ".class").delete();
+				new File(oldClassName.replace('.', File.separatorChar) + ".class").delete();
 			}
 			System.out.println("Compiling " + file + " -> " + outFile);
 			outFile.getParentFile().mkdirs();
@@ -132,8 +128,7 @@ public class WebWrapper {
 				fos.close();
 			}
 			if (loader == null) {
-				loader = SecurityController.createLoader(getClass()
-						.getClassLoader(), null);
+				loader = SecurityController.createLoader(getClass().getClassLoader(), null);
 			}
 			Class<?> clazz = loader.defineClass(className, classBytes);
 			loader.linkClass(clazz);
@@ -143,31 +138,26 @@ public class WebWrapper {
 		}
 	}
 
-	public Script loadJs(String file) throws InstantiationException,
-			IllegalAccessException, IOException {
+	public Script loadJs(String file) throws InstantiationException, IllegalAccessException, IOException {
 		Class<?> clazz = null;
 		String objClassName = (String) precompiled.get(file);
 		if (objClassName == null) {
 			clazz = recompile(file);
 			objClassName = clazz.getCanonicalName();
 		} else {
-			File objFile = new File(objClassName.replace('.',
-					File.separatorChar) + ".class");
+			File objFile = new File(objClassName.replace('.', File.separatorChar) + ".class");
 			boolean useExisting = baseDir == null;
 			if (!useExisting) {
 				File jsFile = new File(baseDir, file);
 				try {
-					useExisting = !jsFile.canRead()
-							|| (jsFile.lastModified() <= objFile.lastModified());
-				} catch (AccessControlException e) {
-				}
+					useExisting = !jsFile.canRead() || (jsFile.lastModified() <= objFile.lastModified());
+				} catch (AccessControlException e) {}
 			}
 			if (useExisting) {
 				try {
 					clazz = getClass().getClassLoader().loadClass(objClassName);
 				} catch (ClassFormatError e) {
-					System.err.println("bundled class " + objClassName
-							+ " has invalid format");
+					System.err.println("bundled class " + objClassName + " has invalid format");
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
@@ -207,17 +197,15 @@ public class WebWrapper {
 		return cx.evaluateString(global, script, "<anonymous>", 1, null);
 	}
 
-	public void invoke(Scriptable thiz, String functionName, Object[] args) {
-		Function f = (Function) ScriptableObject
-				.getProperty(thiz, functionName);
-		f.call(cx, global, thiz, args);
+	public Object invoke(Scriptable thiz, String functionName, Object[] args) {
+		Function f = (Function) ScriptableObject.getProperty(thiz, functionName);
+		return f.call(cx, global, thiz, args);
 	}
 
 	public static WebWrapper getInstance() {
 		Context cx = Context.enter();
 		try {
-			WebWrapper localWebWrapper = (WebWrapper) cx
-					.getThreadLocal(WebWrapper.class);
+			WebWrapper localWebWrapper = (WebWrapper) cx.getThreadLocal(WebWrapper.class);
 			return localWebWrapper;
 		} finally {
 			Context.exit();
@@ -235,8 +223,7 @@ public class WebWrapper {
 		}
 	}
 
-	protected void postExecute() {
-	}
+	protected void postExecute() {}
 
 	public void addTask(IExecutionUnit task) {
 		immediateQueue.add(task);
@@ -269,8 +256,7 @@ public class WebWrapper {
 
 	public void savePrecompiledList() throws Throwable {
 		if (!precompiled.equals(inUse)) {
-			BufferedWriter fw = new BufferedWriter(
-					new FileWriter("precompiled"));
+			BufferedWriter fw = new BufferedWriter(new FileWriter("precompiled"));
 			try {
 				for (Entry<String, String> entry : inUse.entrySet()) {
 					fw.write((String) entry.getKey());
@@ -285,6 +271,7 @@ public class WebWrapper {
 	}
 
 	public class Script {
+
 		private org.mozilla.javascript.Script script;
 
 		private Script(org.mozilla.javascript.Script script) {
@@ -296,8 +283,7 @@ public class WebWrapper {
 		}
 	}
 
-	public void loadProgram(IProgram program) throws InstantiationException,
-			IllegalAccessException, IOException {
+	public void loadProgram(IProgram program) throws InstantiationException, IllegalAccessException, IOException {
 		String[] files = program.getFiles();
 		for (String file : files) {
 			scripts.add(loadJs(file));
@@ -317,4 +303,7 @@ public class WebWrapper {
 		}
 	}
 
+	public ScriptableObject getGlobal() {
+		return global;
+	}
 }

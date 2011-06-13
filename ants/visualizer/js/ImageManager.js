@@ -130,6 +130,13 @@ ImageManager.prototype.colorize = function(idx, colors) {
 		for (var i = 0; i < colors.length; i++) {
 			var c = colors[i];
 			if (c) {
+				if (typeof c == 'string') {
+					c = [
+						15 * parseInt(c.charAt(1), 16),
+						15 * parseInt(c.charAt(2), 16),
+						15 * parseInt(c.charAt(3), 16)
+					];
+				}
 				for (var y = 0; y < 4 * data.width * data.height; y += 4 * data.width) {
 					for (var p = y + ox; p < y + ox + dx; p += 4) {
 						if (d[p] === d[p+1] && d[p] === d[p+2]) {

@@ -1,0 +1,11 @@
+# This is a simple test file showing the format that TSUpdate expects
+# See readme.txt for an explanation of the data format below
+# To run this through TSUpdate use the command:
+# java -cp JSkills_0.9.0.jar:. TSUpdate < TStest.txt
+
+P 0 1 41.0538 1.6888
+P 1 2 31.6869 1.70811
+P 2 2 28.0252 1.74717
+P 3 2 27.0053 1.83862
+C
+

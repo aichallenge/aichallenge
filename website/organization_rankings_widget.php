@@ -1,5 +1,8 @@
 <?php
 
+require_once('mysql_login.php');
+require_once('session.php');
+
 /*
  * getOrganizationRankingsTableString
  *
@@ -13,7 +16,7 @@
 function getOrganizationRankingsTableString($top)
 {
 
-    $username = $_SESSION['username'];
+    $username = current_username();
 
     if ($username != null) {
     // Fetch Org ID for logged in user

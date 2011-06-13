@@ -1,6 +1,7 @@
 <?php
 require_once('api_functions.php');
 require_once('server_info.php');
+require_once('submission.php');
 
 /*
   Sends a bot's upload to a game server.
@@ -14,8 +15,9 @@ if(!filter_var($submission_id, FILTER_VALIDATE_INT) || $submission_id == '') {
 /*
  * switch to the submission's directory making sure it's actually there
  */
-if (!chdir($server_info["submissions_path"].$submission_id)) {
-  die();
+if (!chdir(submission_directory($submission_id))) {
+    api_log(submission_directory($submission_id));
+    die(submission_directory($submission_id));
 }
 
 // set correct content headers based on compression type

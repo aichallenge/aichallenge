@@ -6,8 +6,9 @@ import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
 
 public class EventExecutionUnit implements IExecutionUnit {
-	private Object thiz;
-	private String property;
+
+	protected Object thiz;
+	protected String property;
 	private Object[] args;
 
 	public EventExecutionUnit(Object thiz, String function, Object[] args) {
@@ -19,19 +20,44 @@ public class EventExecutionUnit implements IExecutionUnit {
 		this.args = args;
 	}
 
-	public void execute(Context cx, ScriptableObject global) {
-		Scriptable scriptable;
-		if ((thiz instanceof Scriptable))
-			scriptable = (Scriptable) thiz;
-		else {
-			scriptable = (Scriptable) cx.getWrapFactory().wrap(cx, global, thiz, null);
+	protected Scriptable getThiz(Context cx, ScriptableObject global) {
+		if (thiz instanceof Scriptable) {
+			return (Scriptable) thiz;
 		}
-		Object obj = scriptable.get(property, scriptable);
-		if ((obj instanceof Function))
-			((Function) obj).call(cx, global, scriptable, args);
+		return (Scriptable) cx.getWrapFactory().wrap(cx, global, thiz, null);
+	}
+
+	protected Function getFunction(Scriptable scriptable) {
+		Object obj = ScriptableObject.getProperty(scriptable, property);
+		if (obj instanceof Function) {
+			return (Function) obj;
+		}
+		return null;
+	}
+
+	public void execute(Context cx, ScriptableObject global) {
+		Scriptable scriptable = getThiz(cx, global);
+		Function func = getFunction(scriptable);
+		if (func != null) {
+			func.call(cx, global, scriptable, args == null ? Context.emptyArgs : args);
+		}
 	}
 
 	public boolean matches(Object thiz, String function) {
 		return (this.thiz == thiz) && (property.equals(function));
+	}
+
+	@Override
+	public String toString() {
+		String result = thiz + "." + property + "(";
+		if (args != null) {
+			for (int i = 0; i < args.length; i++) {
+				if (i > 0) {
+					result += ", ";
+				}
+				result += args[i];
+			}
+		}
+		return result + ")";
 	}
 }

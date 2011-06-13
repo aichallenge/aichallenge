@@ -1,52 +1,38 @@
 <?php
+
 include "header.php";
 
-$match = preg_match('/MSIE ([0-9]\.[0-9])/', $_SERVER['HTTP_USER_AGENT'], $reg);
-if ($match != 0 && floatval($reg[1]) < 9 || isset ($_GET["java"]) && $_GET["java"] == true) {
-	// we have IE < 9 or explicitly want to use Java
-	if (file_exists(dirname(__FILE__)."/visualizer/java")) {
-		$java = 'codebase="visualizer/java/"';
-	} else {
-		$java = 'archive="visualizer/visualizer.jar"';
-	}
+include "visualizer_widget.php";
+$game_id = filter_input(INPUT_GET, 'game', FILTER_VALIDATE_INT);
+if ($game_id !== FALSE and $game_id !== NULL) {
+    visualizer_widget($game_id);
+    require_once('session.php');
+    if (TRUE or logged_in_with_valid_credentials()) {
+        require_once('mysql_login.php');
+        $game_errors = contest_query('select_game_errors',
+                                     $game_id);
+        if ($game_errors) {
+        	$error_msg = "<ul>";
+        	while ($row = mysql_fetch_assoc($game_errors)) {
+        		// TODO: turn off for all users for contest
+        		// also make the query user specific
+        		if (TRUE or $row["user_id"] == current_user_id()) {
+        			$username = $row["username"];
+        			$status = $row["status"];
+        			$error_msg .= "<li><p>$username - $status</p><pre class=\"error\">";
+                    $error_msg .= str_replace('\n', "\n", $row["errors"])."\n";
+        			$error_msg .= "</pre></li>";
+        		}
+        	}
+        	$error_msg .= "</ul>";
+        	echo $error_msg;
+        }	
+    }
+    
+} else {
+    echo '<p>Incorrect Game Number</p>';
 }
-?>
-    <div id="visualizerDiv">
-<?php
-$replay = "games/" . (int)($_GET["game_id"] / 10000) . "/" . $_GET["game_id"] . ".replay";
-// Write applet tag if we use Java
-if (isset ($java)) {
-?>
-      <applet <?php echo $java; ?> code="com.aicontest.visualizer.VisualizerApplet" width="655" height="655">
-        <param name="replay" value="<?php echo $replay; ?>">
-<?php
-	if ($_GET["debug"] == "true") {
-?>
-        <param name="debug" value="true">
-        <param name="separate_jvm" value="true">
-        <param name="classloader_cache" value="false">
-<?php
-	}
-?>
-      </applet>
-<?php
-}
-?>
-    </div>
-<?php
+
 include "footer.php";
 
-// Write script tags if we use the canvas visualizer
-if (!isset ($java)) { 
-	if (file_exists(dirname(__FILE__)."/visualizer/js/visualizer.js")) {
-		$js = "visualizer/js/visualizer.js";
-	} else {
-		$js = "visualizer/js/visualizer-min.js";
-	} ?>
-<script type="text/javascript" src="<?php echo $js; ?>"></script>
-<script type="text/javascript">
-	visualizer = new Visualizer(document.getElementById('visualizerDiv'), 'visualizer/', 655, undefined);
-	visualizer.loadReplayDataFromURI('<?php echo $replay; ?>');
-</script>
-<?php
-} ?>
+?>

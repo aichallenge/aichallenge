@@ -25,13 +25,10 @@ if ($check_result && mysql_num_rows($check_result) != 0){
   }
 }
 
+$api_url = "http://".$_SERVER['SERVER_NAME'] . dirname($_SERVER['SCRIPT_NAME']);
+
 ?>
 
-export api_base_url='http://ai-contest.com'
-export api_key='<?php echo $new_key?>'
-
-echo '<?php echo $new_key?>' > /root/.api_key
-
-curl 'http://ai-contest.googlecode.com/svn/branches/20100929-games-in-the-cloud/planet_wars/backend/game_server_build.sh' > /root/game_server_build.sh
-sh /root/game_server_build.sh
+curl '<?php echo $api_url?>worker_init.py' > /root/worker_init.py
+python /root/worker_init.py <?php echo $api_url.' '.$new_key ?>
 

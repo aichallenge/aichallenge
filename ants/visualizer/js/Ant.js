@@ -31,8 +31,10 @@ function Ant(id, time) {
 	this.owner = undefined;
 	/** @private */
 	this.loInter = new LoFiData();
+	this.loInter.id = id;
 	/** @private */
 	this.hiInter = new HiFiData();
+	this.hiInter.id = id;
 	/** @private */
 	this.loLookup = [];
 	/** @private */
@@ -45,20 +47,23 @@ function Ant(id, time) {
  * the last keyframe. It is an error to specify a time before the first
  * keyframe.
  */
-Ant.prototype.frameAt = function(time, quality, create) {
+Ant.prototype.frameAt = function(time, quality) {
 	var set = quality ? this.hi : this.lo;
-	var frame;
+	var frame, delta;
 	for (var i = set.length - 1; i >= 0; i--) {
 		if (set[i].time == time) {
 			return set[i];
 		} else if (set[i].time < time) {
-			if (create) {
+			if (i === set.length - 1) {
 				frame = quality ? new HiFiData(set[i]) : new LoFiData(set[i]);
-				frame.time = time;
-				set.splice(i + 1, 0, frame);
-				return frame;
+			} else {
+				frame = quality ? new HiFiData() : new LoFiData();
+				delta = (time - set[i].time) / (set[i + 1].time - set[i].time);
+				frame.interpolate(set[i], set[i + 1], delta);
 			}
-			break;
+			frame.time = time;
+			set.splice(i + 1, 0, frame);
+			return frame;
 		}
 	}
 	return null;
@@ -115,8 +120,8 @@ Ant.prototype.fade = function(quality, key, valueb, timea, timeb) {
 	var i, valuea, mix, f0, f1;
 	var set = quality ? this.hi : this.lo;
 	// create and adjust the start and end frames
-	f0 = this.frameAt(timea, quality, true);
-	f1 = this.frameAt(timeb, quality, true);
+	f0 = this.frameAt(timea, quality);
+	f1 = this.frameAt(timeb, quality);
 	// update frames inbetween
 	for (i = set.length - 1; i >= 0; i--) {
 		if (set[i].time === timea) {
@@ -175,8 +180,8 @@ function LoFiData(other) {
 LoFiData.prototype.interpolate = function(a, b, useb) {
 	var usea = 1.0 - useb;
 	this.time = usea * a.time + useb * b.time;
-	this['x'] = usea * a['x'] + useb * b['x'];
-	this['y'] = usea * a['y'] + useb * b['y'];
+	this['x'] = (a['x'] === b['x']) ? a['x'] : usea * a['x'] + useb * b['x'];
+	this['y'] = (a['y'] === b['y']) ? a['y'] : usea * a['y'] + useb * b['y'];
 	this['r'] = (usea * a['r'] + useb * b['r']) | 0;
 	this['g'] = (usea * a['g'] + useb * b['g']) | 0;
 	this['b'] = (usea * a['b'] + useb * b['b']) | 0;

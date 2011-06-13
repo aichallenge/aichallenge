@@ -233,7 +233,7 @@ public class Visualizer extends WebWrapper implements MouseInputListener,
 
 	@Override
 	public void componentResized(ComponentEvent e) {
-		addTask(new EventExecutionUnit(domWindow.getDocument(), "onresize",
+		addTask(new EventExecutionUnit(domWindow, "onresize",
 				ScriptRuntime.emptyArgs));
 	}
 

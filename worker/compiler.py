@@ -1,3 +1,4 @@
+#!/usr/bin/python
 # compiler.py
 # Author: Jeff Cameron (jeff@jpcameron.com)
 #
@@ -34,14 +35,28 @@
 #     gmcs -warn:0 -out:MyBot.exe *.cs
 # (though the *.cs is actually replaced with the list of files found)
 
-import sys
+import collections
+import errno
+import fnmatch
+import glob
+import json
 import os
 import re
-import glob
-import subprocess
-import fnmatch
-import errno
 import shutil
+import subprocess
+import sys
+import time
+from optparse import OptionParser
+
+from sandbox import get_sandbox
+
+try:
+    from server_info import server_info
+    MEMORY_LIMIT = server_info.get('memory_limit', 500)
+    COMPILE_TIME = server_info.get('compile_time', 10 * 60)
+except ImportError:
+    MEMORY_LIMIT = 500
+    COMPILE_TIME = 10 * 60
 
 BOT = "MyBot"
 SAFEPATH = re.compile('[a-zA-Z0-9_.$-]+$')
@@ -57,13 +72,14 @@ class CD(object):
 
     def __exit__(self, type, value, traceback):
         os.chdir(self.org_dir)
-        
+
 def safeglob(pattern):
     safepaths = []
-    paths = glob.glob(pattern)
-    for path in paths:
-        if SAFEPATH.match(path):
-            safepaths.append(path)
+    for root, dirs, files in os.walk("."):
+        files = fnmatch.filter(files, pattern)
+        for fname in files:
+            if SAFEPATH.match(fname):
+                safepaths.append(os.path.join(root, fname))
     return safepaths
 
 def safeglob_multi(patterns):
@@ -73,22 +89,31 @@ def safeglob_multi(patterns):
     return safepaths
 
 def nukeglob(pattern):
-    paths = glob.glob(pattern)
+    paths = safeglob(pattern)
     for path in paths:
+        # Ought to be all files, not folders
         try:
-            if os.path.isdir(path):
-                shutil.rmtree(path)
-            else:
-                os.unlink(path)
+            os.unlink(path)
         except OSError, e:
             if e.errno != errno.ENOENT:
                 raise
 
-def system(args, errors):
-    proc = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    (out, err) = proc.communicate()
-    errors.append(err)
-    return proc.returncode == 0
+def _run_cmd(sandbox, cmd, timelimit):
+    errors = []
+    sandbox.start(cmd)
+    try:
+        while (sandbox.is_alive and time.time() < timelimit):
+            sandbox.read_line((timelimit - time.time()) + 1)
+    finally:
+        sandbox.kill()
+    if time.time() > timelimit:
+        errors.append("Compilation timed out with command %s"
+                % (cmd,))
+    err_line = sandbox.read_error()
+    while err_line is not None:
+        errors.append(err_line)
+        err_line = sandbox.read_error()
+    return errors
 
 def check_path(path, errors):
     if not os.path.exists(path):
@@ -105,12 +130,16 @@ class ChmodCompiler(Compiler):
     def __init__(self, language):
         self.language = language
 
-    def compile(self, globs, errors):
-        for f in safeglob_multi(globs):
-            try:
-                os.chmod(f, 0644)
-            except Exception, e:
-                errors.append("Error chmoding %s - %s\n" % (f, e))
+    def __str__(self):
+        return "ChmodCompiler: %s" % (self.language,)
+
+    def compile(self, bot_dir, globs, errors, timelimit):
+        with CD(bot_dir):
+            for f in safeglob_multi(globs):
+                try:
+                    os.chmod(f, 0644)
+                except Exception, e:
+                    errors.append("Error chmoding %s - %s\n" % (f, e))
         return True
 
 class ExternalCompiler(Compiler):
@@ -118,55 +147,32 @@ class ExternalCompiler(Compiler):
         self.args = args
         self.separate = separate
 
-    def compile(self, globs, errors):
-        files = safeglob_multi(globs)
-        if self.separate:
-            for file in files:
-                if not system(self.args + [file], log):
+    def __str__(self):
+        return "ExternalCompiler: %s" % (' '.join(self.args),)
+
+    def compile(self, bot_dir, globs, errors, timelimit):
+        with CD(bot_dir):
+            files = safeglob_multi(globs)
+
+        errored = False
+        box = get_sandbox(bot_dir)
+        try:
+            if self.separate:
+                for filename in files:
+                    cmdline = " ".join(self.args + [filename])
+                    cmd_errors = _run_cmd(box, cmdline, timelimit)
+                    if cmd_errors:
+                        errors += cmd_errors
+                        return False
+            else:
+                cmdline = " ".join(self.args + files)
+                cmd_errors = _run_cmd(box, cmdline, timelimit)
+                if cmd_errors:
+                    errors += cmd_errors
                     return False
-        else:
-            if not system(self.args + files, log):
-                return False
-        return True
-
-class JavaCompiler(ExternalCompiler):
-    @staticmethod
-    def safeglob(pattern):
-        safepaths = []
-        for root, dirs, files in os.walk("."):
-            files = fnmatch.filter(files, pattern)
-            for fname in files:
-                if SAFEPATH.match(fname):
-                    safepaths.append(os.path.join(root, fname))
-        return safepaths
-
-    @staticmethod
-    def safeglob_multi(patterns):
-        safepaths = []
-        for pattern in patterns:
-            safepaths.extend(JavaCompiler.safeglob(pattern))
-        return safepaths
-
-    @staticmethod
-    def nukeglob(pattern):
-        paths = JavaCompiler.safeglob(pattern)
-        for path in paths:
-            # Ought to be all files, not folders
-            try:
-                os.unlink(path)
-            except OSError, e:
-                if e.errno != errno.ENOENT:
-                    raise
-
-    def compile(self, globs, errors):
-        files = JavaCompiler.safeglob_multi(globs)
-        if self.separate:
-            for file in files:
-                if not system(self.args + [file], errors):
-                    return False
-        else:
-            if not system(self.args + files, errors):
-                return False
+            box.retrieve()
+        finally:
+            box.release()
         return True
 
 # Compiles each file to its own output, based on the replacements dict.
@@ -176,17 +182,30 @@ class TargetCompiler(Compiler):
         self.replacements = replacements
         self.outflag = outflag
 
-    def compile(self, globs, errors):
-        sources = safeglob_multi(globs)
-        for source in sources:
-            head, ext = os.path.splitext(source)
-            if ext in self.replacements:
-                target = head + self.replacements[ext]
-            else:
-                errors.append("Could not determine target for source file %s." % source)
-                return False
-            if not system(self.args + [self.outflag, target, source], errors):
-                return False
+    def __str__(self):
+        return "TargetCompiler: %s" % (' '.join(self.args),)
+
+    def compile(self, bot_dir, globs, errors, timelimit):
+        with CD(bot_dir):
+            sources = safeglob_multi(globs)
+
+        box = get_sandbox(bot_dir)
+        try:
+            for source in sources:
+                head, ext = os.path.splitext(source)
+                if ext in self.replacements:
+                    target = head + self.replacements[ext]
+                else:
+                    errors.append("Could not determine target for source file %s." % source)
+                    return False
+                cmdline = " ".join(self.args + [self.outflag, target, source])
+                cmd_errors = _run_cmd(box, cmdline, timelimit)
+                if cmd_errors:
+                    errors += cmd_errors
+                    return False
+            box.retrieve()
+        finally:
+            box.release()
         return True
 
 comp_args = {
@@ -200,17 +219,14 @@ comp_args = {
     "C++"         : [["g++", "-O3", "-funroll-loops", "-c"],
                              ["g++", "-O2", "-lm", "-o", BOT]],
     "D"             : [["dmd", "-O", "-inline", "-release", "-of" + BOT]],
-    "Go"            : [["/usr/local/bin/8g", "-o", "_go_.8"],
-                             ["/usr/local/bin/8l", "-o", BOT, "_go_.8"]],
+    "Go"            : [["6g", "-o", "_go_.6"],
+                             ["6l", "-o", BOT, "_go_.6"]],
     "Groovy"    : [["groovyc"],
                              ["jar", "cfe", BOT + ".jar", BOT]],
     "Haskell" : [["ghc", "--make", BOT + ".hs", "-O", "-v0"]],
-    "Java"        : [["javac"],
+    "Java"        : [["javac", "-J-Xmx%sm" % (MEMORY_LIMIT)],
                              ["jar", "cfe", BOT + ".jar", BOT]],
-    "Lisp"        : [['sbcl', '--end-runtime-options', '--no-sysinit',
-                                '--no-userinit', '--disable-debugger', '--load',
-                                BOT + '.lisp', '--eval', "(save-lisp-and-die \"" + BOT
-                                + "\" :executable t :toplevel #'pwbot::main)"]],
+    "Lisp"      : [['sbcl', '--dynamic-space-size', str(MEMORY_LIMIT), '--script', BOT + '.lisp']],
     "OCaml"     : [["ocamlbuild", BOT + ".native"]],
     "Scala"     : [["scalac"]],
     }
@@ -220,11 +236,15 @@ targets = {
     "C"     : { ".c" : ".o" },
     "C++" : { ".c" : ".o", ".cpp" : ".o", ".cc" : ".o" },
     }
-   
-# TODO: turn these into objects or dicts
-languages = {
-    # lang :
-    #     (output extension,
+
+Language = collections.namedtuple("Language",
+        ['name', 'extension', 'main_code_file', 'command', 'nukeglobs',
+            'compilers']
+        )
+
+languages = (
+    # Language(name, output extension,
+    #      main_code_file
     #      command_line
     #      [nukeglobs],
     #      [(source glob, compiler), ...])
@@ -233,246 +253,222 @@ languages = {
     # If the extension is "" it means the output file is just BOT
     # If a source glob is "" it means the source is part of the compiler
     #   arguments.
-    "C":
-        ("",
-         "MyBot.c",
-         "./MyBot",
-         ["*.o", BOT],
-         [(["*.c"], TargetCompiler(comp_args["C"][0], targets["C"])),
-          (["*.o"], ExternalCompiler(comp_args["C"][1]))]
-        ),
-    "C#":
-        (".exe",
-         "MyBot.cs",
-         "mono MyBot.exe",
-         [BOT + ".exe"],
-         [(["*.cs"], ExternalCompiler(comp_args["C#"][0]))]
-        ),
-    "C++": 
-        ("",
-         "MyBot.cc",
-         "./MyBot",
-         ["*.o", BOT],
-         [(["*.c", "*.cpp", "*.cc"], TargetCompiler(comp_args["C++"][0], targets["C++"])),
-          (["*.o"], ExternalCompiler(comp_args["C++"][1]))]
-         ),
-    "Clojure":
-        (".clj",
-         "?",
-         "?",
-         [],
-         [(["*.clj"], ChmodCompiler("Clojure"))]
-        ),
-    "CoffeeScript":
-        (".coffee",
-         "MyBot.coffee",
-         "coffee MyBot.coffee",
-         [],
-         [(["*.coffee"], ChmodCompiler("CoffeeScript"))]
-        ),
-    "D": 
-        ("",
-         "MyBot.d",
-         "./MyBot",
-         ["*.o", BOT],
-         [(["*.d"], JavaCompiler(comp_args["D"][0]))]
-        ),
-    "Go":
-        ("",
-         "MyBot.go",
-         "./MyBot",
-         ["*.8", BOT],
-         [(["*.go"], ExternalCompiler(comp_args["Go"][0])),
-          ([""], ExternalCompiler(comp_args["Go"][1]))]
-        ),
-    "Groovy":
-        (".jar",
-         "MyBot.groovy",
-         "java -cp MyBot.jar:/usr/share/groovy/embeddable/groovy-all-1.7.5.jar MyBot",
-         ["*.class, *.jar"],
-         [(["*.groovy"], ExternalCompiler(comp_args["Groovy"][0])),
-         (["*.class"], ExternalCompiler(comp_args["Groovy"][1]))]
-        ),
-    "Haskell":
-        ("",
-         "MyBot.hs",
-         "./MyBot",
-         [BOT],
-         [([""], ExternalCompiler(comp_args["Haskell"][0]))]
-        ),
-    "Java": 
-        (".jar",
-         "MyBot.java",
-         "java -jar MyBot.jar",
-         ["*.class", "*.jar"],
-         [(["*.java"], JavaCompiler(comp_args["Java"][0])),
-         (["*.class"], JavaCompiler(comp_args["Java"][1]))]
-        ),
-    "Javascript":
-        (".js",
-         "MyBot.js",
-         "node MyBot.js",
-         [],
-         [(["*.js"], ChmodCompiler("Javascript"))]
-        ),
-    "Lisp": 
-        ("",
-         "MyBot.lisp",
-         "./MyBot",
+    Language("C", "", "MyBot.c",
+        "./MyBot",
+        ["*.o", BOT],
+        [(["*.c"], TargetCompiler(comp_args["C"][0], targets["C"])),
+            (["*.o"], ExternalCompiler(comp_args["C"][1]))]
+    ),
+    Language("C#", ".exe", "MyBot.cs",
+        "mono MyBot.exe",
+        [BOT + ".exe"],
+        [(["*.cs"], ExternalCompiler(comp_args["C#"][0]))]
+    ),
+    Language("C++", "", "MyBot.cc",
+        "./MyBot",
+        ["*.o", BOT],
+        [
+            (["*.c", "*.cpp", "*.cc"],
+                TargetCompiler(comp_args["C++"][0], targets["C++"])),
+            (["*.o"], ExternalCompiler(comp_args["C++"][1]))
+        ]
+    ),
+    Language("Clojure", ".clj", "MyBot.clj",
+        "java -Xmx%sm -cp /usr/share/java/clojure.jar clojure.main MyBot.clj" % (MEMORY_LIMIT,),
+        [],
+        [(["*.clj"], ChmodCompiler("Clojure"))]
+    ),
+    Language("CoffeeScript", ".coffee", "MyBot.coffee",
+        "coffee MyBot.coffee",
+        [],
+        [(["*.coffee"], ChmodCompiler("CoffeeScript"))]
+    ),
+    Language("D", "", "MyBot.d",
+        "./MyBot",
+        ["*.o", BOT],
+        [(["*.d"], ExternalCompiler(comp_args["D"][0]))]
+    ),
+    Language("Go", "", "MyBot.go",
+        "./MyBot",
+        ["*.8", "*.6", BOT],
+        [(["*.go"], ExternalCompiler(comp_args["Go"][0])),
+            ([""], ExternalCompiler(comp_args["Go"][1]))]
+    ),
+    Language("Groovy", ".jar", "MyBot.groovy",
+        "java -Xmx" + str(MEMORY_LIMIT) + "m -cp MyBot.jar:/usr/share/groovy/embeddable/groovy-all-1.7.5.jar MyBot",
+        ["*.class, *.jar"],
+        [(["*.groovy"], ExternalCompiler(comp_args["Groovy"][0])),
+        (["*.class"], ExternalCompiler(comp_args["Groovy"][1]))]
+    ),
+    Language("Haskell", "", "MyBot.hs",
+        "./MyBot",
         [BOT],
-        [([""], ExternalCompiler(comp_args["Lisp"][0]))]),
-    "Lua":
-        (".lua",
-         "MyBot.lua",
-         "?",
-         [],
-         [(["*.lua"], ChmodCompiler("Lua"))]
-        ),
-    "OCaml":
-        (".native",
-         "MyBot.ml",
-         "./MyBot.native",
-         [BOT + ".native"],
-         [([""], ExternalCompiler(comp_args["OCaml"][0]))]
-        ),
-    "Perl":
-        (".pl",
-         "MyBot.pl",
-         "perl MyBot.pl",
-         [],
-         [(["*.pl"], ChmodCompiler("Perl"))]
-        ),
-    "PHP":
-        (".php",
-         "MyBot.php",
-         "php MyBot.php",
-         [],
-         [(["*.php"], ChmodCompiler("PHP"))]
-        ),
-    "Python":
-        (".py",
-         "MyBot.py",
-         "python MyBot.py",
+        [([""], ExternalCompiler(comp_args["Haskell"][0]))]
+    ),
+    Language("Java", ".jar", "MyBot.java",
+        "java -Xmx" + str(MEMORY_LIMIT) + "m -jar MyBot.jar",
+        ["*.class", "*.jar"],
+        [(["*.java"], ExternalCompiler(comp_args["Java"][0])),
+            (["*.class"], ExternalCompiler(comp_args["Java"][1]))]
+    ),
+    Language("Javascript", ".js", "MyBot.js",
+        "node MyBot.js",
+        [],
+        [(["*.js"], ChmodCompiler("Javascript"))]
+    ),
+    Language("Lisp", "", "MyBot.lisp",
+        "./MyBot --dynamic-space-size " + str(MEMORY_LIMIT),
+        [BOT],
+        [([""], ExternalCompiler(comp_args["Lisp"][0]))]
+    ),
+    Language("Lua", ".lua", "MyBot.lua",
+        "luajit-2.0.0-beta5 MyBot.lua",
+        [],
+        [(["*.lua"], ChmodCompiler("Lua"))]
+    ),
+    Language("OCaml", ".native", "MyBot.ml",
+        "./MyBot.native",
+        [BOT + ".native"],
+        [([""], ExternalCompiler(comp_args["OCaml"][0]))]
+    ),
+    Language("Perl", ".pl", "MyBot.pl",
+        "perl MyBot.pl",
+        [],
+        [(["*.pl"], ChmodCompiler("Perl"))]
+    ),
+    Language("PHP", ".php", "MyBot.php",
+        "php MyBot.php",
+        [],
+        [(["*.php"], ChmodCompiler("PHP"))]
+    ),
+    Language("Python", ".py", "MyBot.py",
+        "python MyBot.py",
         ["*.pyc"],
-        [(["*.py"], ChmodCompiler("Python"))]),
-    "Ruby": 
-        (".rb",
-         "MyBot.rb",
-         "ruby MyBot.rb",
-         [],
-         [(["*.rb"], ChmodCompiler("Ruby"))]
-        ),
-    "Scala": 
-        (".class",
-         "MyBot.class",
-         "?",
-         ["*.class, *.jar"],
-         [(["*.scala"], ExternalCompiler(comp_args["Scala"][0]))]
-        ),
-    "Scheme":
-        (".ss",
-         "MyBot.ss",
-         "./MyBot",
-         [],
-         [(["*.ss"], ChmodCompiler("Scheme"))]
-        ),
-    }
+        [(["*.py"], ChmodCompiler("Python"))]
+    ),
+    Language("Python3", ".py3", "MyBot.py3",
+        "python3 MyBot.py3",
+        ["*.pyc"],
+        [(["*.py3"], ChmodCompiler("Python3"))]
+    ),
+    Language("Ruby", ".rb", "MyBot.rb",
+        "ruby MyBot.rb",
+        [],
+        [(["*.rb"], ChmodCompiler("Ruby"))]
+    ),
+    Language("Scala", ".scala", "MyBot.scala",
+        'JAVA_OPTS="-Xmx'+ str(MEMORY_LIMIT) +'m";scala -howtorun:object MyBot',
+        ["*.scala, *.jar"],
+        [(["*.scala"], ExternalCompiler(comp_args["Scala"][0]))]
+    ),
+    Language("Scheme", ".ss", "MyBot.ss",
+        "./MyBot",
+        [],
+        [(["*.ss"], ChmodCompiler("Scheme"))]
+    ),
+)
 
 
-def compile_function(language, log):
-    extension, main_code_file, command, nukeglobs, compilers = languages[language]
-
-    if language == "Java":
-        for glob in nukeglobs:
-            JavaCompiler.nukeglob(glob)
-    else:
-        for glob in nukeglobs:
+def compile_function(language, bot_dir):
+    """Compile submission in the current directory with a specified language."""
+    with CD(bot_dir):
+        for glob in language.nukeglobs:
             nukeglob(glob)
 
-    for globs, compiler in compilers:
-        if not compiler.compile(globs, log):
-            return False
+    errors = []
+    timelimit = time.time() + COMPILE_TIME
+    for globs, compiler in language.compilers:
+        try:
+            if not compiler.compile(bot_dir, globs, errors, timelimit):
+                return False, errors
+        except StandardError, exc:
+            raise
+            errors.append("Compiler %s failed with: %s"
+                    % (compiler, exc))
+            return False, errors
 
-    return check_path(BOT + extension, log)
+    compiled_bot_file = os.path.join(bot_dir, BOT + language.extension)
+    return check_path(compiled_bot_file, errors), errors
 
-def detect_language(submission_dir=None):
-    if submission_dir == None:
-        submission_dir = os.getcwd()
-    with CD(submission_dir):
+_LANG_NOT_FOUND = """Did not find a recognized MyBot.* file.
+Please add one of the following filenames to your zip file:
+%s"""
+
+def detect_language(bot_dir):
+    """Try and detect what language a submission is using"""
+    with CD(bot_dir):
         # Autodetects the language of the entry in the current working directory
-        detected_lang = get_run_lang(submission_dir)
-        if detected_lang and detected_lang in languages:
-            detected_langs = [languages[detected_lang] + (detected_lang,)]
-        else:
-            detected_langs = [
-                lang_data + (lang_name,) for lang_name, lang_data
-                in languages.items() if os.path.exists(lang_data[1])
-            ]
-        
+        detected_langs = [
+            lang for lang in languages if os.path.exists(lang.main_code_file)
+        ]
+
         # If no language was detected
         if len(detected_langs) > 1:
-            return None, {'errors': [],
-                          'language_count': len(detected_langs),
-                          'language_list': [lang[1] for lang in detected_langs]}
+            return None, ['Found multiple MyBot.* files: \n'+
+                          '\n'.join([l.main_code_file for l in detected_langs])]
         elif len(detected_langs) == 0:
-            return None, {'errors': [],
-                          'language_count': 0}
+            return None, [_LANG_NOT_FOUND % (
+                '\n'.join(l.name +": "+ l.main_code_file for l in languages),)]
         else:
-            return detected_langs[0], {'errors': []}
+            return detected_langs[0], None
 
-# detect language looks for MyBot.* files
-# in the case of java, a MyBot.class file is created after compile
-# if detect is called again, it will think this could be a scala bot
-# a work around is to write a run.sh file in the compile dir so that
-# we don't have to detect the language more than once
 def get_run_cmd(submission_dir):
+    """Get the language of a submission"""
     with CD(submission_dir):
         if os.path.exists('run.sh'):
             with open('run.sh') as f:
                 for line in f:
                     if line[0] != '#':
-                        return line
+                        return line.rstrip('\r\n')
 
 def get_run_lang(submission_dir):
+    """Get the command to run a submission"""
     with CD(submission_dir):
         if os.path.exists('run.sh'):
             with open('run.sh') as f:
                 for line in f:
                     if line[0] == '#':
                         return line[1:-1]
-            
-                                
-# Autodetects the language of the entry in the current working directory and
-# compiles it.
-def compile_anything(submission_dir=None):
-    if submission_dir == None:
-        submission_dir = os.getcwd()
-    with CD(submission_dir):
-        # If we get this far, then we have successfully auto-detected the language
-        # that this contestant is using.
-        detected_language, errors = detect_language()
-        if detected_language:
-            main_code_file = detected_language[1]
-            detected_lang = detected_language[-1]
-            run_cmd = detected_language[2]
-            if compile_function(detected_lang, errors['errors']):
-                with open('run.sh', 'w') as f:
-                    f.write('#%s\n%s' % (detected_lang, run_cmd))
-                return detected_lang, errors
-            else:
-                return None, errors
-        else:
-            return None, errors
 
-if __name__ == '__main__':
-    if len(sys.argv) == 2:
-        detected_lang, errors = compile_anything(sys.argv[1])
+def compile_anything(bot_dir):
+    """Autodetect the language of an entry and compile it."""
+    detected_language, errors = detect_language(bot_dir)
+    if detected_language:
+        # If we get this far, then we have successfully auto-detected
+        # the language that this entry is using.
+        compiled, errors = compile_function(detected_language, bot_dir)
+        if compiled:
+            name = detected_language.name
+            run_cmd = detected_language.command
+            run_filename = os.path.join(bot_dir, '../run.sh')
+            with open(run_filename, 'w') as f:
+                f.write('#%s\n%s\n' % (name, run_cmd))
+            return name, None
+        else:
+            return detected_language.name, errors
     else:
-        detected_lang, errors = compile_anything()
-    import json
-    if detected_lang:
-        print(json.dumps({'language': detected_lang}))
+        return "Unknown", errors
+
+def main(argv=sys.argv):
+    parser = OptionParser(usage="Usage: %prog [options] [directory]")
+    parser.add_option("-j", "--json", action="store_true", dest="json",
+            default=False,
+            help="Give compilation results in json format")
+    options, args = parser.parse_args(argv)
+    if len(args) == 1:
+        detected_lang, errors = compile_anything(os.getcwd())
+    elif len(args) == 2:
+        detected_lang, errors = compile_anything(args[1])
     else:
-        print(json.dumps(errors))
-        for error in errors['errors']:
-            print(error)
+        parser.error("Extra arguments found, use --help for usage")
+    if options.json:
+        import json
+        print json.dumps([detected_lang, errors])
+    else:
+        print "Detected language:", detected_lang
+        if errors != None and len(errors) != 0:
+            for error in errors:
+                print(error)
+
+if __name__ == "__main__":
+    main()

@@ -1,15 +1,17 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
 <html>
 <head>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 	<title>Ant Canvas</title>
-	<script type="text/javascript" src="js/visualizer.js"></script>
+	<script type="text/javascript" src="## PATH PLACEHOLDER ##js/visualizer.js"></script>
 	<script type="text/javascript">
 		window.isFullscreenSupported = function() {
 			return false;
 		};
 
 		function init() {
-			var visualizer = new Visualizer(document.body, 'data/');
+			var visualizer = new Visualizer(document.body, 
+'## PATH PLACEHOLDER ##data/');
 			visualizer.loadReplayData('## REPLAY PLACEHOLDER ##');
 		}
 	</script>

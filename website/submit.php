@@ -1,13 +1,16 @@
 <?php
+ini_set('error_reporting', E_ALL);
+ini_set('display_errors', true);
 
-include 'session.php';
-include 'server_info.php';
+require_once('session.php');
+require_once('server_info.php');
 
 if (!logged_in_with_valid_credentials()) {
   header('location:login.php');
 }
 
-include 'submission.php';
+require_once('mysql_login.php');
+require_once('submission.php');
 include 'header.php';
 ?>
 
@@ -27,7 +30,7 @@ include 'header.php';
     is java, cc, or whatever the standard extension for code files in your
     language is. Remember to include all the code files that your entry
     needs.</li>
-  <li>Your zip file may not exceed 2 MB in size. If you need to submit a bigger
+  <li>Your zip file may not exceed <?php echo ini_get('upload_max_filesize'); ?> in size. If you need to submit a bigger
     file for some reason, that's fine. Post on the forums and we'll work
     something out.</li>
   <li>Make sure that your code compiles okay on your own machine before
@@ -47,7 +50,7 @@ if($server_info["submissions_open"]) {
     if (has_recent_submission()) {
         echo "<p>Sorry, you have to wait at least 10 minutes between submissions. This wait is waived if your current submission fails to successfully enter the contest.</p>";
     } else {
-        $result = mysql_query("SELECT * FROM user WHERE user_id=".current_user_id());
+        $result = mysql_query("SELECT * FROM user WHERE user_id = ".current_user_id());
         if (!$row = mysql_fetch_assoc($result)) {
             die("Could not get user data from database.");
         }
@@ -55,7 +58,7 @@ if($server_info["submissions_open"]) {
         $submit_key = sha1($sid . $row['activation_code'] . $row['email']);
         ?>
         <form enctype="multipart/form-data" action="check_submit.php" method="POST">
-            <input type="hidden" name="MAX_FILE_SIZE" value="2000000" />
+            <input type="hidden" name="MAX_FILE_SIZE" value="2097152" />
             <input type="hidden" name="submit_key" value="<?php echo $submit_key?>" />
             <b>Choose Your Zip File:</b> <input name="uploadedfile" type="file" /><br />
             <input type="submit" value="Upload!" />

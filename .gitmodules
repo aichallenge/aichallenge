@@ -4,3 +4,6 @@
 [submodule "ants/dist/starter_bots/c"]
 	path = ants/dist/starter_bots/c
 	url = https://github.com/flagcapper/GoogleAI-Ants-Starter-Pack.git
+[submodule "ants/dist/starter_bots/haskell"]
+	path = ants/dist/starter_bots/haskell
+	url = https://github.com/qacek/ants-haskell.git

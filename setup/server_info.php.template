@@ -5,12 +5,32 @@ $server_info = array(
     "db_username" => "{database_user}",
     "db_password" => "{database_password}",
     "db_name" => "{database_name}",
-    "mailer_address" => "donotreply@ai-contest.com",
+    "mailer_address" => "{reply_email}",
     "mailer_name" => "AI Contest",
     "mailer_password" => "",
     "submissions_open" => True,
-    "submissions_path" => "{sub_dir}",
+    "repo_path" => "{repo_dir}",
+    "uploads_path" => "{upload_dir}",
+    "maps_path" => "{map_dir}",
+    "replay_path" => "{replay_dir}",
+    "api_create_key" => "",
+    "api_log" => "{log_dir}/api_log.txt",
+    "game_options" => array (
+        "turns" => 2000,
+        "loadtime" => 3000,
+        "turntime" => 500,
+        "viewradius2" => 55,
+        "attackradius2" => 4,
+        "spawnradius2" => 1,
+        "location" => "{api_url}",
+        "serial" => False,
+        "food_rate" => array(2,8),
+        "food_turn" => array(12,30),
+        "food_start" => array(75,175),
+        "food_visible" => array(1,3),
+        "food" => "symmetric",
+        "attack" => "damage"
+    )
 );
 
 ?>
-

@@ -1,11 +1,14 @@
 package com.aicontest.visualizer.js.dom;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.ProtocolException;
 import java.net.URL;
 import java.net.URLConnection;
+import java.util.zip.GZIPInputStream;
 
 import org.w3c.dom.DOMException;
 
@@ -13,6 +16,7 @@ import com.aicontest.visualizer.WebWrapper;
 import com.aicontest.visualizer.js.tasks.EventExecutionUnit;
 
 public class XMLHttpRequest {
+
 	public Object onreadystatechange;
 	static final short UNSENT = 0;
 	static final short OPENED = 1;
@@ -24,7 +28,7 @@ public class XMLHttpRequest {
 	private String statusText;
 	String responseText;
 	private Document responseXML;
-	
+
 	public short getReadyState() {
 		return readyState;
 	}
@@ -61,7 +65,6 @@ public class XMLHttpRequest {
 		} catch (Exception e) {
 			throw new DOMException(DOMException.INVALID_STATE_ERR, "internal error: " + e.getMessage());
 		}
-
 		abortSend();
 		try {
 			if ((conn instanceof HttpURLConnection))
@@ -69,22 +72,30 @@ public class XMLHttpRequest {
 		} catch (ProtocolException e) {
 			throw new DOMException(DOMException.SYNTAX_ERR, e.getMessage());
 		}
-
 		readyState = 1;
 	}
 
-	private void abortSend() {
-	}
+	private void abortSend() {}
 
 	public void setRequestHeader(String header, String value) {
 		conn.addRequestProperty(header, value);
 	}
 
 	public void send() throws Exception {
-		int length = conn.getContentLength();
-		byte[] bytes = new byte[length];
-		conn.getInputStream().read(bytes);
-		responseText = new String(bytes);
+		InputStream is = conn.getInputStream();
+		if ("x-gzip".equals(conn.getContentEncoding())) {
+			is = new GZIPInputStream(is);
+		}
+		ByteArrayOutputStream bos = new ByteArrayOutputStream();
+		int read;
+		byte[] bytes = new byte[256 * 256];
+		do {
+			read = is.read(bytes);
+			if (read > 0) {
+				bos.write(bytes, 0, read);
+			}
+		} while (read > 0);
+		responseText = bos.toString();
 		readyState = 4;
 		WebWrapper.getInstance().addTask(new EventExecutionUnit(this, "onreadystatechange", new Object[0]));
 	}

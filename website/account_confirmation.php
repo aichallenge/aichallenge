@@ -1,33 +1,38 @@
 <?php
-include 'session.php';
-include 'mysql_login.php';
-include 'header.php';
+require_once('session.php');
+require_once('mysql_login.php');
+require_once('header.php');
 
-function get_username_from_confirmation_code($confirmation_code) {
-  $query = "SELECT username FROM user WHERE " .
-    "activation_code = '$confirmation_code'";
-  $result = mysql_query($query);
-  if ($row = mysql_fetch_assoc($result)) {
-    $username = $row['username'];
-    return $username;
-  } else {
-    return NULL;
-  }
+function get_userid_from_confirmation_code($confirmation_code) {
+    $confirmation_code = mysql_real_escape_string( stripslashes( $confirmation_code ) );
+    $query = "
+        SELECT user_id
+        FROM user
+        WHERE activation_code = '$confirmation_code'";
+    $result = mysql_query($query);
+    if (mysql_num_rows($result) > 0 ) {
+        return mysql_result($result,0, 0);
+    } else {
+        return false;
+    }
 }
+
+$errors = array();
 
 $confirmation_code = $_GET['confirmation_code'];
 if ($confirmation_code == NULL || strlen($confirmation_code) <= 0) {
-  $errors[] = "Failed to activate the account. (101)";
+    $errors[] = "Failed to activate the account. (101)";
 } else {
-  $username = get_username_from_confirmation_code($confirmation_code);
-  if ($username == NULL || strlen($username) <= 0) {
-    $errors[] = "Failed to activate the account. (102)";
-  } else {
-    $result = activate_user($username);
-    if (!$result) {
-      $errors[] = "Failed to activate the account. (103)";
+    $user_id = get_userid_from_confirmation_code($confirmation_code);
+    if (!$user_id) {
+        $errors[] = "Failed to activate the account. (102)";
+    } else {
+        $result = activate_user($user_id);
+        if (!$result) {
+            echo mysql_error();
+          $errors[] = "Failed to activate the account. (103)";
+        }
     }
-  }
 }
 if (count($errors) > 0) {
 ?>
@@ -39,7 +44,7 @@ if (count($errors) > 0) {
 
 <?php
 foreach ($errors as $key => $error) {
-  print "<li>$error</li>";
+    print "<li>$error</li>";
 }
 ?>
 
@@ -60,5 +65,4 @@ foreach ($errors as $key => $error) {
 <?php
 }
 
-include 'footer.php'
-?>
+require 'footer.php';

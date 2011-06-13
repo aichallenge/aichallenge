@@ -22,11 +22,11 @@ void State::setup()
     grid = vector<vector<Square> >(rows, vector<Square>(cols, Square()));
 };
 
-//resets all non-wall squares to land and clears the bots ant vector
+//resets all non-water squares to land and clears the bots ant vector
 void State::reset()
 {
-    ants.clear();
-    enemies.clear();
+    myAnts.clear();
+    enemyAnts.clear();
     food.clear();
     for(int row=0; row<rows; row++)
         for(int col=0; col<cols; col++)
@@ -75,12 +75,14 @@ void State::updateVisionInformation()
     std::queue<Location> locQueue;
     Location sLoc, cLoc, nLoc;
 
-    for(int a=0; a<(int) ants.size(); a++)
+    for(int a=0; a<(int) myAnts.size(); a++)
     {
-        sLoc = ants[a];
+        sLoc = myAnts[a];
         locQueue.push(sLoc);
 
         std::vector<std::vector<bool> > visited(rows, std::vector<bool>(cols, 0));
+        grid[sLoc.row][sLoc.col].isVisible = 1;
+        visited[sLoc.row][sLoc.col] = 1;
 
         while(!locQueue.empty())
         {
@@ -93,7 +95,7 @@ void State::updateVisionInformation()
 
                 if(!visited[nLoc.row][nLoc.col] && distance(sLoc, nLoc) <= viewradius)
                 {
-                    grid[nLoc.row][nLoc.col].lastSeen = turn;
+                    grid[nLoc.row][nLoc.col].isVisible = 1;
                     locQueue.push(nLoc);
                 }
                 visited[nLoc.row][nLoc.col] = 1;
@@ -120,12 +122,10 @@ ostream& operator<<(ostream &os, const State &state)
                 os << '*';
             else if(state.grid[row][col].ant >= 0)
                 os << (char)('a' + state.grid[row][col].ant);
-            else if(state.grid[row][col].lastSeen == 0)
-                os << '?';
-            else if(state.grid[row][col].lastSeen < state.turn)
-                os << '~';
-            else
+            else if(state.grid[row][col].isVisible)
                 os << '.';
+            else
+                os << '?';
         }
         os << endl;
     }
@@ -216,9 +216,9 @@ istream& operator>>(istream &is, State &state)
                 is >> row >> col >> player;
                 state.grid[row][col].ant = player;
                 if(player == 0)
-                    state.ants.push_back(Location(row, col));
+                    state.myAnts.push_back(Location(row, col));
                 else
-                    state.enemies.push_back(Location(row, col));
+                    state.enemyAnts.push_back(Location(row, col));
             }
             else if(inputType == "d") //dead ant square
             {

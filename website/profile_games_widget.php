@@ -167,7 +167,7 @@ EOT;
         $row_class = $i % 2 == 0 ? "even" : "odd";
         $table .= "  <tr class=\"$row_class\">";
         $table .= "    <td>$datetime</td>";
-        $table .= "    <td><a href=\"profile.php?user_id=$opp_id\">$opp_name</a></td>";
+        $table .= "    <td><a href=\"profile.php?user=$opp_id\">$opp_name</a></td>";
         $table .= "    <td class=\"$outcome_class\">$outcome</td>";
 	$table .= "    <td><a href=\"visualizer.php?game_id=$game_id\">View Game &gt;&gt;</a></td>";
         $table .= "  </tr>";

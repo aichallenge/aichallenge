@@ -1,9 +1,0 @@
-body {
-	margin: 0;
-	padding: 0;
-}
-
-span:hover {
-    color: DarkGreen;
-    cursor: pointer;
-}
