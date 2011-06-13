@@ -23,6 +23,7 @@ type game_setup =
    viewradius2 : int;
    attackradius2 : int;
    spawnradius2 : int;
+   player_seed : int;
  }
 ;;
 
@@ -137,6 +138,10 @@ let set_attackradius2 gstate v =
 
 let set_spawnradius2 gstate v = 
    {gstate with setup = {gstate.setup with spawnradius2 = v}}
+;;
+
+let set_player_seed gstate v = 
+   {gstate with setup = {gstate.setup with player_seed = v}}
 ;;
 
 let uncomment s =
@@ -254,6 +259,7 @@ let add_line gstate line =
              | "viewradius2" -> set_viewradius2 gstate v
              | "attackradius2" -> set_attackradius2 gstate v
              | "spawnradius2" -> set_spawnradius2 gstate v
+             | "player_seed" -> set_player_seed gstate v
              | _ -> gstate
         )
         (fun (line : string) ->
@@ -510,6 +516,7 @@ class swrap state =
    method turn = state.turn
    method my_ants = state.my_ants
    method get_map = state.tmap
+   method get_player_seed = state.setup.player_seed
 (*
    More getters to be added as needed
 *)
@@ -535,6 +542,7 @@ let loop engine =
       viewradius2 = -1;
       attackradius2 = -1;
       spawnradius2 = -1;
+      player_seed = 932463947;
      }
   in
   let proto_gstate =

@@ -8,6 +8,7 @@ type game_setup = {
   viewradius2 : int;
   attackradius2 : int;
   spawnradius2 : int;
+  player_seed : int;
 }
 type mapb = { content : int; seen : int; }
 class ant :
@@ -58,6 +59,7 @@ class swrap :
     method turn : int
     method update_vision : unit
     method visible : int * int -> bool
+    method get_player_seed : int
   end
 
 val loop : (swrap -> 'a) -> unit
