@@ -146,7 +146,7 @@ def main(argv):
                       default=1, type="int",
                       help="Spawn radius of ants squared")
     parser.add_option("--attackradius2", dest="attackradius2",
-                      default=9, type="int",
+                      default=4, type="int",
                       help="Attack radius of ants squared")
 
     # the log directory must be specified for any logging to occur, except:
