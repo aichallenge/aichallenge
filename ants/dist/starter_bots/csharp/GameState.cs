@@ -93,7 +93,11 @@ namespace Ants {
 		}
 		
 		public void removeFood (int row, int col) {
-			map[row, col] = Tile.Land;
+			// an ant could move into a spot where a food just was
+			// don't overwrite the space unless it is food
+			if (map[row, col] == Tile.Food) {
+				map[row, col] = Tile.Land;
+			}
 			FoodTiles.Remove(new Location(row, col));
 		}
 		
@@ -127,8 +131,13 @@ namespace Ants {
 		public Location destination (Location loc, char direction) {
 			// calculate a new location given the direction and wrap correctly
 			Location delta = Ants.Aim[direction];
+			
 			int row = (loc.row + delta.row) % Height;
+			if (row < 0) row += Height; // because the modulo of a negative number is negative
+			
 			int col = (loc.col + delta.col) % Width;
+			if (col < 0) col += Width;
+			
 			return new Location(row, col);
 		}
 		

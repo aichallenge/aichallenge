@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using System.Collections.Generic;
 
 namespace Ants {
@@ -19,6 +20,7 @@ namespace Ants {
 		
 		private const string READY = "ready";
 		private const string GO = "go";
+		private const string END = "end";
 		
 		private GameState state;
 		
@@ -27,23 +29,36 @@ namespace Ants {
 			
 			List<string> input = new List<string>();
 			
-			while (true) {
-				string line = System.Console.In.ReadLine().Trim().ToLower();
-				
-				if (line.Equals(READY)) {
-					parseSetup(input);
-					finishTurn();
-					input.Clear();
-				} else if (line.Equals(GO)) {
-					state.startNewTurn();
-					parseUpdate(input);
-					bot.doTurn(state);
-					finishTurn();
-					input.Clear();
-				} else {
-					input.Add(line);
+			try {
+				while (true) {
+					string line = System.Console.In.ReadLine().Trim().ToLower();
+					
+					if (line.Equals(READY)) {
+						parseSetup(input);
+						finishTurn();
+						input.Clear();
+					} else if (line.Equals(GO)) {
+						state.startNewTurn();
+						parseUpdate(input);
+						bot.doTurn(state);
+						finishTurn();
+						input.Clear();
+					} else if (line.Equals(END)) {
+						break;	
+					} else {
+						input.Add(line);
+					}
 				}
+			} catch (Exception e) {
+				#if DEBUG
+					FileStream fs = new FileStream("debug.log", System.IO.FileMode.Create, System.IO.FileAccess.Write);
+					StreamWriter sw = new StreamWriter(fs);
+					sw.WriteLine(e);
+					sw.Close();
+					fs.Close();
+				#endif
 			}
+			
 		}
 		
 		// parse initial input and setup starting game state
@@ -88,12 +103,12 @@ namespace Ants {
 			
 			foreach (string line in input) {
 				if (line.Length <= 0) continue;
-				
+								
 				string[] tokens = line.Split();
 				
 				if (tokens.Length >=3) {
-					int row = Convert.ToInt32(tokens[1]);
-					int col = Convert.ToInt32(tokens[2]);
+					int row = int.Parse(tokens[1]);
+					int col = int.Parse(tokens[2]);
 					
 					if (tokens[0].Equals("a")) {
 						state.addAnt(row, col, int.Parse(tokens[3]));
