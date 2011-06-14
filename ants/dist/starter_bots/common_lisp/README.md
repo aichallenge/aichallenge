@@ -77,17 +77,15 @@ If SBCL does any output on standard error (stderr / \*error-output*)
 it will count as a compilation error to the server.  So even innocuous
 compiler notes or warnings will cause a compilation error.
 
-If you're running into this, redirect \*error-output* to
-\*standard-output* like so: `(setf *error-output* *standard-output*)`
-at the top of MyBot.lisp.
+I've added two statements to MyBot.lisp that should muffle most of the
+warnings, but I'm not sure they will catch them all.  If really
+necessary redirect \*error-output* to \*standard-output* like so:
+`(setf *error-output* *standard-output*)` at the top of MyBot.lisp.
 
 **However**, this will also hide genuine compilation errors that would
 otherwise be shown on your profile page!  So if your bot still fails
 compiling on the server, your best best is resubmitting with the
 redirection disabled.
-
-In the near future the proper incantation to disable warnings and
-notes on stderr will hopefully be added.
 
 
 ### Windows / MSYS Note
