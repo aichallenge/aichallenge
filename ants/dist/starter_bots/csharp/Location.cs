@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 namespace Ants {
 	
@@ -22,5 +23,14 @@ namespace Ants {
 		}
 	}
 	
+	public class LocationComparer : IEqualityComparer<Location> {
+		public bool Equals(Location loc1, Location loc2) {
+			return (loc1.row == loc2.row && loc1.col == loc2.col);
+		}
+	
+		public int GetHashCode(Location loc) {
+			return loc.row * int.MaxValue + loc.col;
+		}
+	}
 }
 
