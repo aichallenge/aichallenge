@@ -1158,7 +1158,7 @@ Visualizer.prototype.renderCounts = function() {
 		}
 	}
 	// draw lines
-	var scaleX = w / this.replay.duration;
+	var scaleX = (this.replay.duration === 0) ? 0 : w / this.replay.duration;
 	ctx.strokeStyle = 'rgba(0,0,0,0.5)';
 	ctx.beginPath();
 	for (i = 0; i <= this.replay.duration + 1; i++) {

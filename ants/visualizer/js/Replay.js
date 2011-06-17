@@ -530,7 +530,6 @@ Replay.prototype.getTurn = function(n) {
 		turn = this.turns[n] = [];
 		// generate ants & keyframes
 		ants = this.meta['replaydata']['ants'];
-//		console.log(n + ' / ' + this.duration + ' / ' + ants.length);
 		for (i = 0; i < ants.length; i++) {
 			ant = ants[i];
 			if (ant[2] === n + 1 || n === 0 && ant[2] === 0) {
