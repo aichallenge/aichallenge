@@ -23,6 +23,7 @@ class Guard(object):
         self.running = True
 
         self.out_queue = Queue()
+        self.child_queue = Queue()
         self.child = Popen(args, stdin=PIPE, stdout=PIPE, stderr=PIPE)
         self.checked_pids.add(self.child.pid)
         self.child_pids.add(self.child.pid)
@@ -30,6 +31,7 @@ class Guard(object):
         Thread(target=self.reader, args=("STDOUT", self.child.stdout)).start()
         Thread(target=self.reader, args=("STDERR", self.child.stderr)).start()
         Thread(target=self.writer).start()
+        Thread(target=self.child_writer).start()
         cmd_thread = Thread(target=self.cmd_loop, args=(sys.stdin,))
         cmd_thread.daemon = True
         cmd_thread.start()
@@ -53,6 +55,16 @@ class Guard(object):
         finally:
             self.child_streams -= 1
             queue.put(None)
+
+    def child_writer(self):
+        queue = self.child_queue
+        stdin = self.child.stdin
+        while True:
+            ln = queue.get()
+            if ln is None:
+                break
+            stdin.write(ln)
+            stdin.flush()
 
     def cmd_loop(self, pipe):
         while True:
@@ -84,8 +96,7 @@ class Guard(object):
                             raise
                 self.out_queue.put(("SIGNALED", time.time(), "CONT"))
             elif cmd.startswith("SEND"):
-                self.child.stdin.write(cmd[5:])
-                self.child.stdin.flush()
+                self.child_queue.put(cmd[5:])
             else:
                 self.kill()
                 raise ValueError("Unrecognized input found '%s'" % (cmd,))
@@ -116,6 +127,7 @@ class Guard(object):
             time.sleep(_UPDATE_INTERVAL)
         self.running = False
         self.out_queue.put(None)
+        self.child_queue.put(None)
 
 if __name__ == "__main__":
     g = Guard(sys.argv[1:])
