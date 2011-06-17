@@ -51,7 +51,7 @@ class Ants():
                     self.width = int(tokens[1])
                 elif key == 'rows':
                     self.height = int(tokens[1])
-                elif key == 'seed':
+                elif key == 'player_seed':
                     random.seed(int(tokens[1]))
                 elif key == 'turntime':
                     self.turntime = int(tokens[1])
