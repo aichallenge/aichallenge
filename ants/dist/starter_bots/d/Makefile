@@ -4,14 +4,15 @@ DMD_ARGS=-release -inline -O
 
 SOURCES=$(wildcard *.d)
 
-.PHONY: all clean
+.PHONY: all unittest clean
 
 all:
-	$(DMD) $(DMD_ARGS) -of$(OUTFILE) $(SOURCES)
+	$(DMD) $(DMD_ARGS) -odbin -ofbin/$(OUTFILE) $(SOURCES)
 	
 unittest:
-	$(DMD) $(DMD_ARGS) -of$(OUTFILE).unittest -unittest $(SOURCES)
-	$(OUTFILE).unittest
+	$(DMD) $(DMD_ARGS) -odbin -ofbin/$(OUTFILE).unittest -unittest $(SOURCES)
+	bin/$(OUTFILE).unittest
 
 clean:
-	-rm -Rf *.o $(OUTFILE) $(OUTFILE).unittest
+	-rm -Rf bin/*.o bin/$(OUTFILE) bin/$(OUTFILE).unittest
+

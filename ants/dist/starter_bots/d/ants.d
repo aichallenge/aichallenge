@@ -38,14 +38,15 @@ interface IBot {
 class Ants {
 
 	private:
-		uint _loadtime;
-		uint _turntime;
 		uint _cols;
 		uint _rows;
-		uint _turns;
-		uint _viewradius2;
-		uint _attackradius2;
-		uint _spawnradius2;
+		long _loadtime;
+		long _turntime;
+		long _turns;
+		long _viewradius2;
+		long _attackradius2;
+		long _spawnradius2;
+		long _player_seed;
 		TickDuration _endtime;
 		Loc[] _myAnts;
 		Loc[] _enemyAnts;
@@ -58,16 +59,17 @@ class Ants {
 				if (line.length > 0) {
 					auto tokens = line.split();
 					auto key = tokens[0];
-					auto value = to!uint(tokens[1]);
+					auto value = to!long(tokens[1]);
 					switch(key) {
+						case "rows"         : _rows          = cast(uint)value; break;
+						case "cols"         : _cols          = cast(uint)value; break;
+						case "turns"        : _turns         = value; break;
 						case "loadtime"     : _loadtime      = value; break;
 						case "turntime"     : _turntime      = value; break;
-						case "cols"         : _cols          = value; break;
-						case "rows"         : _rows          = value; break;
-						case "turns"        : _turns         = value; break;
 						case "viewradius2"  : _viewradius2   = value; break;
 						case "attackradius2": _attackradius2 = value; break;
 						case "spawnradius2" : _spawnradius2  = value; break; 
+						case "player_seed"  : _player_seed   = value; break; 
 						default:
 					}
 				}
@@ -130,43 +132,48 @@ class Ants {
 
 	public:
 		/// load time granted to a bot in milliseconds
-		uint loadtime() {
-		return _loadtime;
+		long loadtime() {
+			return _loadtime;
 		}
 
 		/// time per turn in milliseconds
-		uint turntime() {
-		return _turntime;
+		long turntime() {
+			return _turntime;
 		}
 
 		/// height of the map
-		uint rows() {
+		long rows() {
 			return _rows;
 		}
 
 		/// width of the map
-		uint cols() {
+		long cols() {
 			return _cols;
 		}
 
 		/// maximum number of turns in the game
-		uint turns() {
+		long turns() {
 			return _turns;
 		}
 
 		/// view radius squared
-		uint viewradius2() {
+		long viewradius2() {
 			return _viewradius2;
 		}
 
 		/// battle radius squared
-		uint attackradius2() {
+		long attackradius2() {
 			return _attackradius2;
 		}
 
 		/// spawn radius squared
-		uint spawnradius2() {
+		long spawnradius2() {
 			return _spawnradius2;
+		}
+
+		/// random number generator seed for the player
+		long player_seed() {
+			return _player_seed;
 		}
 
 		const(Loc)[] myAnts() {
