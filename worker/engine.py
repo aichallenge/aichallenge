@@ -103,11 +103,6 @@ def run_game(game, botcmds, options):
             if turn == 0:
                 game.start_game()
 
-            # resume all bots
-            for bot in bots:
-                if bot.is_alive:
-                    bot.resume()
-
             # send game state to each player
             for b, bot in enumerate(bots):
                 if game.is_alive(b):
@@ -123,11 +118,6 @@ def run_game(game, botcmds, options):
                         if input_logs and input_logs[b]:
                             input_logs[b].write(state)
                             input_logs[b].flush()
-
-            # pause all bots again
-            for bot in bots:
-                if bot.is_alive:
-                    bot.pause()
 
             if turn > 0:
                 if stream_log:

@@ -227,9 +227,7 @@ class Jail(object):
     def write(self, data):
         """Write str to stdin of the process being run"""
         for line in data.splitlines():
-            if not self.write_line(line):
-                return False
-        return True
+            self.write_line(line)
 
     def write_line(self, line):
         """Write line to stdin of the process being run
@@ -244,8 +242,6 @@ class Jail(object):
             self.command_process.stdin.flush()
         except (OSError, IOError):
             self.kill()
-            return False
-        return True
 
     def read_line(self, timeout=0):
         """Read line from child process
@@ -316,6 +312,7 @@ class House:
             sub_result = self.command_process.poll()
             if sub_result is None:
                 return True
+            self.child_queue.put(None)
             self._is_alive = False
         return False
 
@@ -324,6 +321,7 @@ class House:
         if self.is_alive:
             raise SandboxError("Tried to run command with one in progress.")
         working_directory = self.working_directory
+        self.child_queue = Queue()
         shell_command = shlex.split(shell_command.replace('\\','/'))
         try:
             self.command_process = subprocess.Popen(shell_command,
@@ -342,11 +340,12 @@ class House:
                                 args=(self.command_process.stderr, self.stderr_queue))
         stderr_monitor.daemon = True
         stderr_monitor.start()
+        Thread(target=self._child_writer).start()
 
     def kill(self):
         """Stops the sandbox.
 
-        Stops down the sandbox, cleaning up any spawned processes, threads, and
+        Shuts down the sandbox, cleaning up any spawned processes, threads, and
         other resources. The shell command running inside the sandbox may be
         suddenly terminated.
 
@@ -357,6 +356,7 @@ class House:
             except OSError:
                 pass
             self.command_process.wait()
+            self.child_queue.put(None)
 
     def retrieve(self):
         """Copy the working directory back out of the sandbox."""
@@ -399,17 +399,25 @@ class House:
         except (ValueError, AttributeError, OSError):
             pass
 
+    def _child_writer(self):
+        queue = self.child_queue
+        stdin = self.command_process.stdin
+        while True:
+            ln = queue.get()
+            if ln is None:
+                break
+            try:
+                stdin.write(ln)
+                stdin.flush()
+            except (OSError, IOError):
+                self.kill()
+                break
+
     def write(self, str):
         """Write str to stdin of the process being run"""
         if not self.is_alive:
             return False
-        try:
-            self.command_process.stdin.write(str)
-            self.command_process.stdin.flush()
-        except (OSError, IOError):
-            self.kill()
-            return False
-        return True
+        self.child_queue.put(str)
 
     def write_line(self, line):
         """Write line to stdin of the process being run
@@ -419,13 +427,7 @@ class House:
         """
         if not self.is_alive:
             return False
-        try:
-            self.command_process.stdin.write(line + "\n")
-            self.command_process.stdin.flush()
-        except (OSError, IOError):
-            self.kill()
-            return False
-        return True
+        self.child_queue.put(line + "\n")
 
     def read_line(self, timeout=0):
         """Read line from child process
@@ -495,10 +497,7 @@ def main():
         print()
         sandbox.start(" ".join(args))
         for line in options.send_lines:
-            if not sandbox.write_line(line):
-                print("Could not send line '%s'" % (line,), file=sys.stderr)
-                sandbox.kill()
-                sys.exit(1)
+            sandbox.write_line(line)
             print("sent: " + line)
             time.sleep(options.send_delay)
         while True:
