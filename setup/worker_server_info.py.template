@@ -15,7 +15,7 @@ server_info = {{
         "loadtime": 3000,
         "turntime": 500,
         "viewradius2": 55,
-        "attackradius2": 4,
+        "attackradius2": 5,
         "spawnradius2": 1,
         "location": "{api_url}",
         "serial": False,
@@ -24,6 +24,6 @@ server_info = {{
         "food_start": (75,175),
         "food_visible": (1,3),
         "food": "symmetric",
-        "attack": "damage"
+        "attack": "power"
     }}
 }}
