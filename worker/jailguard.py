@@ -63,8 +63,13 @@ class Guard(object):
             ln = queue.get()
             if ln is None:
                 break
-            stdin.write(ln)
-            stdin.flush()
+            try:
+                stdin.write(ln)
+                stdin.flush()
+            except IOError as exc:
+                if exc.errno == 32:
+                    break
+                raise
 
     def cmd_loop(self, pipe):
         while True:
