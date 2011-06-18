@@ -159,7 +159,7 @@ class Ants(Game):
             if not line or line[0] == '#':
                 continue
 
-            key, value = line.split(' ')
+            key, value = line.split(' ', 1)
             if key == 'cols':
                 width = int(value)
             elif key == 'rows':
@@ -710,7 +710,12 @@ class Ants(Game):
             enemies = self.nearby_ants(ant.loc, self.attackradius, ant.owner)
             if enemies:
                 nearby_enemies[ant] = enemies
-                damage_per_enemy = Fraction(1, len(enemies))
+                strenth = 10 # dot dot dot
+                if ant.orders[-1] == '-':
+                    strenth = 10
+                else:
+                    strenth = 10
+                damage_per_enemy = Fraction(strenth, len(enemies)*10)
                 for enemy in enemies:
                     damage[enemy] += damage_per_enemy
 
