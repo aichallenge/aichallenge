@@ -243,8 +243,12 @@ class Worker:
                     ]
                 for file_name, command in zip_files:
                     if os.path.exists(file_name):
-                        log.info("unzip %s, status: %s" % (file_name, os.system(command)))
-                        # check for single directory only and move everything down
+                        exit_status = os.system(command)
+                        log.info("unzip %s, status: %s"
+                                % (file_name, exit_status))
+                        if exit_status != 0:
+                            return False
+                        # check for single directory only and move everything up
                         if len(os.listdir('bot')) == 1:
                             one_path = os.listdir('bot')[0]
                             if os.path.isdir(one_path):
