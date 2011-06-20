@@ -2,7 +2,10 @@
 sql = {
     # used in add_maps_to_database.py
     "select_map_filenames": "select filename from map",
-    "update_map_priorities": "update map set priority = priority + 1",
+    "update_map_priorities": """
+        update map set priority = priority + 1
+            where priority >= 0
+        """,
     "insert_map_filenames": "insert into map (filename, players) values (%s, %s)",
 
     # used in delete_some_old_submissions.py
