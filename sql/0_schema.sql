@@ -49,7 +49,7 @@ CREATE TABLE `game_player` (
   `valid` tinyint(1) NOT NULL DEFAULT '1',
   PRIMARY KEY (`game_id`,`user_id`),
   UNIQUE KEY `game_player_idx` (`game_id`,`submission_id`),
-  KEY `game_user_id_idx` (`user_id`),
+  KEY `game_user_id_idx` (`user_id`, `game_id`),
   KEY `game_player_game_id_idx` (`game_id`)
 );
 
