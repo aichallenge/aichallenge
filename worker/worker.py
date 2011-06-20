@@ -280,7 +280,11 @@ class Worker:
                     if type(errors) != list:
                         errors = [errors] # for valid json according to php
                     # get rid of any binary garbage by decoding to UTF-8
-                    errors = [e.decode("UTF-8", "replace") for e in errors]
+                    for i in range(len(errors)):
+                        try:
+                            errors[i] = errors[i].decode("UTF-8", "replace")
+                        except AttributeError:
+                            pass
                     result['errors'] = json.dumps(errors)
                 return self.cloud.post_result('api_compile_result', result)
             else:
