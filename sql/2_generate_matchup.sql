@@ -31,8 +31,8 @@ order by ( select max(matchup_id)
            where m.seed_id = s.user_id
            and worker_id > 0 or worker_id is null) asc,
          ( select max(game_id)
-           from game g
-           where g.seed_id = s.user_id ) asc,
+           from game_player gp
+           where gp.user_id = s.user_id ) asc,
          s.user_id asc
 limit 1;
 

@@ -60,7 +60,8 @@ $contest_sql = array(
                                ) or r.leaderboard_id is null)
                                order by gp.player_id;",
     "lock_matchup" => "update matchup
-                       set worker_id = %s
+                       set worker_id = %s,
+                       matchup_timestamp = current_timestamp
                        where matchup_id = %s;",
     "update_matchup_failed" => "update matchup
                                 set error = '%s',

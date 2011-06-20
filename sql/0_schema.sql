@@ -115,6 +115,7 @@ CREATE TABLE `matchup` (
   `map_id` int(11) NOT NULL,
   `worker_id` int(11) DEFAULT NULL,
   `error` varchar(4000) NULL,
+  `matchup_timestamp` datetime NOT NULL,
   PRIMARY KEY (`matchup_id`),
   KEY `matchup_seed_id_idx` (`seed_id`),
   KEY `matchup_seed_map_idx` (`seed_id`,`map_id`),
