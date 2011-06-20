@@ -134,8 +134,8 @@ def main(argv):
 
     # ants specific game options
     parser.add_option("--attack", dest="attack",
-                      default="power",
-                      help="Attack method to use for engine. (closest, power, support, damage)")
+                      default="occupied",
+                      help="Attack method to use for engine. (closest, occupied, support, damage)")
     parser.add_option("--food", dest="food",
                       default="symmetric",
                       help="Food spawning method. (none, random, sections, symmetric)")

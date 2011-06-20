@@ -56,11 +56,12 @@ class Ants(Game):
         self.food_extra = Fraction(0,1)
 
         self.do_attack = {
+            'occupied': self.do_attack_power,
             'power':   self.do_attack_power,
             'closest': self.do_attack_closest,
             'support': self.do_attack_support,
             'damage':  self.do_attack_damage
-        }.get(options.get('attack'), self.do_attack_damage)
+        }.get(options.get('attack'), self.do_attack_power)
 
         self.do_food = {
             'none':      self.do_food_none,
