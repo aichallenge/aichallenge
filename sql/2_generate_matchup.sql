@@ -28,7 +28,8 @@ where s.latest = 1 and s.status = 40
 -- from both the game and matchup tables
 order by ( select max(matchup_id)
            from matchup m
-           where m.seed_id = s.user_id ) asc,
+           where m.seed_id = s.user_id
+           and worker_id > 0 or worker_id is null) asc,
          ( select max(game_id)
            from game g
            where g.seed_id = s.user_id ) asc,
