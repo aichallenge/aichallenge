@@ -14,9 +14,29 @@ $gamedata = json_decode($json_string);
 if ($gamedata == null) {
     api_log("Did not recieve post data for game result as proper json.");
 } else {
+    // confirm matchup_id
+    $confirm_result = contest_query("select_matchup_confirm",
+                                    $gamedata->matchup_id);
+    $confirm_worker_id = NULL;
+    if ($confirm_result) {
+        while ($confirm_row = mysql_fetch_assoc($confirm_result)) {
+            $confirm_worker_id = $confirm_row["worker_id"];
+        }
+    } else {
+        api_log("No results from select_matchup_confirm for " . strval($gamedata->matchup_id));
+    }
+    if ($confirm_worker_id == NULL or $confirm_worker_id != $worker['worker_id']) {
+        api_log(sprintf("Game result posted does not belong to worker: %s belongs to %s, not %s",
+                        $gamedata->matchup_id,
+                        $confirm_worker_id,
+                        $worker['worker_id']));
+        die();
+    }
     if (array_key_exists('error', $gamedata)) {
         // set to non-existant worker and email admin
-        if (contest_query('update_matchup_failed', json_encode($gamedata->error), $gamedata->matchup_id)) {
+        if (contest_query('update_matchup_failed',
+                          json_encode($gamedata->error),
+                          $gamedata->matchup_id)) {
             echo json_encode(array( "hash" => $json_hash ));
         } else {
             api_log(sprintf("Error updating failed matchup %s",

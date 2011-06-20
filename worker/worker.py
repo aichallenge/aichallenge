@@ -25,7 +25,7 @@ from engine import run_game
 # Set up logging
 log = logging.getLogger('worker')
 log.setLevel(logging.INFO)
-log_file = os.path.join(server_info['logs_path'], 'worker.log')
+log_file = os.path.join(server_info.get('logs_path', '.'), 'worker.log')
 handler = logging.handlers.RotatingFileHandler(log_file,
                                                maxBytes=10000000,
                                                backupCount=5)
@@ -52,7 +52,7 @@ STATUS_COMPILE_ERROR = 70
 STATUS_TEST_ERROR = 80
 
 # get game from ants dir
-sys.path.append(os.path.join(server_info['repo_path'], 'ants'))
+sys.path.append(os.path.join(server_info.get('repo_path', '..'), 'ants'))
 from ants import Ants
 
 class CD(object):

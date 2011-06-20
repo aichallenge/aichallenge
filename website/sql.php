@@ -40,8 +40,12 @@ $contest_sql = array(
                               left join map on matchup.map_id = map.map_id
                               where worker_id is null
                               or worker_id = %s
+                              or (worker_id > 0
+                                  and matchup_timestamp < (NOW() - INTERVAL 20 MINUTE))
                               order by matchup_id asc
                               limit 1;",
+    "select_matchup_confirm" => "select worker_id from matchup
+                                 where matchup_id = %s",
     "select_matchup_players" => "select *
                                  from matchup_player
                                  where matchup_id = %s
@@ -65,7 +69,7 @@ $contest_sql = array(
                        where matchup_id = %s;",
     "update_matchup_failed" => "update matchup
                                 set error = '%s',
-                                    worker_id = -2
+                                    worker_id = -worker_id
                                 where matchup_id = %s",
     "select_languages" => "select *
                            from language;",
