@@ -24,8 +24,7 @@ if ($compile_result) {
 }
 
 // look for match
-$match_result = contest_query("select_next_matchup",
-                              $worker["worker_id"]);
+$match_result = contest_query("select_next_matchup");
 if (!$match_result or mysql_num_rows($match_result) == 0) {
     /*
      * php is a god awful inconsistant language written by idiots

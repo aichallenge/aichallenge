@@ -40,7 +40,6 @@ $contest_sql = array(
                               left join map on matchup.map_id = map.map_id
                               where deleted = 0
                               and (worker_id is null
-                              or worker_id = %s
                               or (worker_id > 0
                                   and matchup_timestamp < (NOW() - INTERVAL 20 MINUTE)))
                               order by matchup_id asc
