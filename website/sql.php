@@ -38,10 +38,11 @@ $contest_sql = array(
     "select_next_matchup" => "select matchup.*, map.filename
                               from matchup
                               left join map on matchup.map_id = map.map_id
-                              where worker_id is null
+                              where deleted = 0
+                              and (worker_id is null
                               or worker_id = %s
                               or (worker_id > 0
-                                  and matchup_timestamp < (NOW() - INTERVAL 20 MINUTE))
+                                  and matchup_timestamp < (NOW() - INTERVAL 20 MINUTE)))
                               order by matchup_id asc
                               limit 1;",
     "select_matchup_confirm" => "select worker_id from matchup
