@@ -293,6 +293,7 @@ def run_game(game, botcmds, options):
             'rank': [sorted(set(scores), reverse=True).index(x) for x in scores],
             'replayformat': 'json',
             'replaydata': game.get_replay(),
+            'game_length': turn
         }
         if capture_errors:
             game_result['errors'] = [head.headtail() for head in error_logs]
