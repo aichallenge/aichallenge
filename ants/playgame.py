@@ -292,6 +292,7 @@ def run_rounds(opts,args):
                 for arg in args:
                     print("Bot Cmd: {0}".format(arg), file=stderr)
                 break
+        bot_count = len(bots)
         # move position of first bot specified
         if opts.position > 0 and opts.position <= len(bots):
             first_bot = bots[0]
