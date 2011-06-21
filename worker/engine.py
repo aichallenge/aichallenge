@@ -229,11 +229,12 @@ def run_game(game, botcmds, options):
                 stats = game.get_stats()
                 s = 'turn %4d stats: ' % turn
                 for key, values in stats.items():
-                    s += '%s: %s' % (key, values)
+                    s += ' %s: %s' % (key, values)
                 verbose_log.write('%-50s\n' % s)
 
-            alive = [game.is_alive(b) for b in range(len(bots))]
-            if sum(alive) <= 1:
+            #alive = [game.is_alive(b) for b in range(len(bots))]
+            #if sum(alive) <= 1:
+            if game.game_over():
                 break
 
         # send bots final state and score, output to replay file

@@ -86,6 +86,12 @@ class Ants(Game):
         self.score = [Fraction(0,1)]*self.num_players
         self.score_history = [[s] for s in self.score]
         self.bonus = [0 for s in self.score]
+        self.pop_count = {i: 0 for i in range(self.num_players)}
+        self.pop_count[FOOD] = 0
+        self.winning_ant = LAND # Can be ant owner, FOOD or LAND
+        self.winning_turns = 0
+        self.cutoff_percent = 0.90
+        self.cutoff_turns = 100
 
         # initialise size
         self.height, self.width = map_data['size']
@@ -1105,7 +1111,11 @@ class Ants(Game):
             A game is over when there are no players remaining, or a single
               winner remaining.
         """
-        return self.remaining_players() <= 1
+        if self.remaining_players() <= 1:
+            return True
+        if self.winning_turns >= self.cutoff_turns:
+            return True
+        return False
 
     def kill_player(self, player):
         """ Used by engine to signal that a player is out of the game """
@@ -1124,9 +1134,11 @@ class Ants(Game):
         """ Called by engine at the end of the game """
         players = [p for p in range(self.num_players) if self.is_alive(p)]
 
-        # if there is exactly one player remaining they get food bonus
-        if len(players) == 1:
-            player = players[0]
+        # food bonus is split between the surviving players
+        # if there is more than one player, then the game either
+        #   went the full length and there is no bonus
+        #   or the game was cut off
+        if self.turn < self.turns:
             # the food bonus represents the maximum points a bot can get with perfect play
             # remaining food and food to be spawned would be 1 point
             #   either from collecting the food and spawning an ant
@@ -1138,11 +1150,12 @@ class Ants(Game):
                 + self.food_extra
                 + len(self.current_food) # food that hasn't been collected
                 # enemy ants (player ants already received point when spawned)
-                + len([ant for ant in self.current_ants.values() if ant.owner != player])
+                + len([ant for ant in self.current_ants.values() if not ant.owner in players])
             )
-            self.score[player] += food_bonus
-            # separate bonus from score history
-            self.bonus[player] = food_bonus
+            for player in players:
+                self.score[player] += food_bonus // len(players)
+                # separate bonus from score history
+                self.bonus[player] = food_bonus // len(players)
 
     def start_turn(self):
         """ Called by engine at the start of the turn """
@@ -1179,6 +1192,26 @@ class Ants(Game):
         # now that all the ants have moved we can update the vision
         self.update_vision()
         self.update_revealed()
+
+        # calculate population counts for stopping games early
+        # FOOD can end the game as well, since no one is gathering it
+        pop_count = defaultdict(int)
+        for ant in self.current_ants.values():
+            pop_count[ant.owner] += 1
+        pop_count[FOOD] = len(self.current_food)
+        pop_total = sum(pop_count.values())
+        for owner, count in pop_count.items():
+            if count >= pop_total * self.cutoff_percent:
+                if self.winning_ant == owner:
+                    self.winning_turns += 1
+                else:
+                    self.winning_ant = owner
+                    self.winning_turns = 1
+                break
+        else:
+            self.winning_ant = LAND
+            self.winning_turns = 0
+        self.pop_count = pop_count
 
     def get_state(self):
         """ Get all state changes
@@ -1272,10 +1305,11 @@ class Ants(Game):
 
             Used by engine to report stats
         """
-        ant_count = [0 for i in range(self.num_players)]
+        ant_count = [0 for i in range(self.num_players+1)]
         for loc, ant in self.current_ants.items():
             ant_count[ant.owner] += 1
-        return {'ant_count': ant_count}
+        ant_count[-1] = len(self.current_food)
+        return {'ant_count': ant_count, 'winning_ant': self.winning_ant, 'winning_turns': self.winning_turns}
 
     def get_replay(self):
         """ Return a summary of the entire game
