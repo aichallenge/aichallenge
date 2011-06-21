@@ -89,8 +89,10 @@ $contest_sql = array(
                              from matchup_player p
                              where matchup_id = %s
                              and player_id = %s;",
-    "delete_matchup" => "delete from matchup where matchup_id = %s;",
-    "delete_matchup_player" => "delete from matchup_player where matchup_id = %s;",
+    //"delete_matchup" => "delete from matchup where matchup_id = %s;",
+    "delete_matchup" => "update matchup set deleted = 1 where matchup_id = %s;",
+    //"delete_matchup_player" => "delete from matchup_player where matchup_id = %s;",
+    "delete_matchup_player" => "update matchup_player set deleted = 1 where matchup_id = %s;",
     "get_user_from_activation_code" => "select username from user where activation_code = '%s'",
     "activate_user" => "update user set activated = 1 where activation_code =  '%s';",
     "insert_new_submission" => "insert into submission (user_id, version, status, timestamp, language_id)

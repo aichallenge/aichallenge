@@ -17,8 +17,8 @@ CREATE TABLE `game` (
   `replay_path` varchar(255) NULL,
   PRIMARY KEY (`game_id`),
   KEY `game_seed_id_idx` (`seed_id`),
-  KEY `game_map_id_idx` (`map_id`),
-  KEY `game_seed_map_idx` (`seed_id`,`map_id`)
+  KEY `game_map_id_idx` (`map_id`,`game_id`),
+  KEY `game_seed_map_idx` (`seed_id`,`map_id`,`game_id`)
 );
 
 DROP TABLE IF EXISTS `game_archive`;
@@ -49,8 +49,7 @@ CREATE TABLE `game_player` (
   `valid` tinyint(1) NOT NULL DEFAULT '1',
   PRIMARY KEY (`game_id`,`user_id`),
   UNIQUE KEY `game_player_idx` (`game_id`,`submission_id`),
-  KEY `game_user_id_idx` (`user_id`, `game_id`),
-  KEY `game_player_game_id_idx` (`game_id`)
+  KEY `game_player_user_id_idx` (`user_id`, `game_id`)
 );
 
 DROP TABLE IF EXISTS `game_player_archive`;
@@ -116,10 +115,11 @@ CREATE TABLE `matchup` (
   `worker_id` int(11) DEFAULT NULL,
   `error` varchar(4000) NULL,
   `matchup_timestamp` datetime NULL,
+  `deleted` tinyint(1) DEFAULT 0,
   PRIMARY KEY (`matchup_id`),
-  KEY `matchup_seed_id_idx` (`seed_id`),
   KEY `matchup_seed_map_idx` (`seed_id`,`map_id`),
-  KEY `matchup_map_id_idx` (`map_id`)
+  KEY `matchup_map_id_idx` (`map_id`),
+  KEY `matchup_deleted_idx` (`deleted`, `worker_id`)
 );
 
 DROP TABLE IF EXISTS `matchup_player`;
@@ -130,9 +130,11 @@ CREATE TABLE `matchup_player` (
   `player_id` int(11) NOT NULL,
   `mu` float DEFAULT NULL,
   `sigma` float DEFAULT NULL,
+  `deleted` tinyint(1) DEFAULT 0,
   PRIMARY KEY (`matchup_id`,`user_id`),
   UNIQUE KEY `matchup_player_idx` (`matchup_id`,`submission_id`),
-  KEY `matchup_player_user_id_idx` (`user_id`)
+  KEY `matchup_player_user_id_idx` (`user_id`),
+  KEY `matchup_player_player_id_idx` (`matchup_id`, `player_id`)
 );
 
 DROP TABLE IF EXISTS `organization`;
