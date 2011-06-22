@@ -1,5 +1,7 @@
-<?php require_once('session.php'); ?>
 <!DOCTYPE html>
+<?php
+$page_render_start_time = microtime(true);
+?>
 <html xmlns="http://www.w3.org/1999/xhtml"> 
     <head> 
         <title>Google AI Challenge</title> 
@@ -15,7 +17,10 @@
         <link href="css/layout.css" rel="stylesheet" type="text/css" />
         <link href="css/typo.css" rel="stylesheet" type="text/css" />
     </head> 
-    
+<?php
+flush();
+require_once('session.php');
+?>    
     <body> 
         <div id="wrapper">
             <div id="header" class="columns">
@@ -39,7 +44,7 @@
                             <a href="logout.php">Sign Out</a>
                         <?php } else { ?>
                             <a href="login.php">Sign In</a> |
-                            <span class="large"><a href="register.php">Sign Up</a></span>
+                            <span><a href="register.php">Sign Up</a></span>
                         <?php } ?>
                     </div>
                     <div id="content">

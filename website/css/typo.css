@@ -125,6 +125,13 @@ th {
     font-size: 130%;
 }
 
+.fade {
+    filter: alpha(opacity=30);
+    filter: progid:DXImageTransform.Microsoft.Alpha(opacity=30);
+    -moz-opacity: 0.30;
+    opacity:0.3;
+}
+
 strong {
     font-weight: bold;
     text-shadow: #aaa 1px 1px 2px;
