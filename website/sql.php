@@ -213,19 +213,17 @@ $contest_sql = array(
             inner join game_player gp
                 on g.game_id = gp.game_id
             where %s = %s",
-        "select_game_list" => "select g.game_id, g.timestamp,
+    "select_game_list" => "select g.game_id, g.timestamp,
                gp.user_id, gp.submission_id, u.username,
                gp.sigma_after as sigma, gp.mu_after as mu, gp.player_id, gp.game_rank,
                s.version,
                m.players, m.map_id, m.filename as map_name
          from (
-             select *
+             select g2.*
              from game g2
-             where g2.game_id in (
-                 select game_id
-                 from game_player gp2
-                 where %s = %s
-             )
+             inner join game_player gp2
+                on g2.game_id = gp2.game_id
+             where %s = %s
              order by g2.game_id desc
              limit %s offset %s
          ) g
@@ -259,14 +257,14 @@ $contest_sql = array(
          inner join user u
              on gp.user_id = u.user_id
          order by g.game_id desc, gp.game_rank",
-        "select_game_errors" => "select gp.user_id, gp.errors, gp.status, u.username
-            from game_player gp
-            inner join user u
-                on u.user_id = gp.user_id
-            where gp.game_id = %s
-            and (gp.status = 'timeout'
-                or gp.status = 'crashed'
-                or gp.status = 'invalid')
+    "select_game_errors" => "select gp.user_id, gp.errors, gp.status, u.username
+        from game_player gp
+        inner join user u
+            on u.user_id = gp.user_id
+        where gp.game_id = %s
+        and (gp.status = 'timeout'
+            or gp.status = 'crashed'
+            or gp.status = 'invalid')
     ",
     "select_worker_stats" => "select count(*)/5 as gpm, g.worker_id,
         (select count(*) from matchup where worker_id = -g.worker_id)/5 as epm

@@ -26,6 +26,16 @@ function salt($len=16) {
     return $tmp;
 }
 
+if (!function_exists("api_log")) {
+    function api_log($message) {
+        global $server_info;
+        $message = str_replace("\n", "", $message);
+        $message = str_replace("\r", "", $message);
+        $message = sprintf("%s - %s", date(DATE_ATOM), $message) . "\n";
+        error_log($message, 3, $server_info["api_log"]);
+    }
+}
+
 function contest_query() {
     global $contest_sql;
     $args = func_get_args();
