@@ -13,9 +13,7 @@ $page_render_start_time = microtime(true);
         <link rel="shortcut icon" href="favicon.ico" />
  
         <!-- CSS --> 
-        <link href="css/reset.css" rel="stylesheet" type="text/css" /> 
-        <link href="css/layout.css" rel="stylesheet" type="text/css" />
-        <link href="css/typo.css" rel="stylesheet" type="text/css" />
+        <link href="ai-contest.css" rel="stylesheet" type="text/css" /> 
     </head> 
 <?php
 flush();
