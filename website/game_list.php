@@ -171,6 +171,8 @@ function produce_cache_results($page=0, $user_id=NULL, $submission_id=NULL, $map
             }
             $last_game_id = $list_row[0];
         }
+        // dump last row
+        $json["values"][] = $cur_row;
         // dump results
         if ($list_type) {
             $json["type"] = $list_type;
