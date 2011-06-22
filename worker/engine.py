@@ -46,7 +46,11 @@ class HeadTail(object):
     def tail(self):
         return self.capture_tail
     def headtail(self):
-        return self.capture_head + '\n..\n' + self.capture_tail
+        if self.capture_head != '' and self.capture_tail != '':
+            sep = '\n..\n'
+        else:
+            sep = ''
+        return self.capture_head + sep + self.capture_tail
 
 def run_game(game, botcmds, options):
     # file descriptors for replay and streaming formats
