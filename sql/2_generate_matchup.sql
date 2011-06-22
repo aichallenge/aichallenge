@@ -32,7 +32,7 @@ left outer join (
 left outer join (
     select seed_id, max(matchup_id) as max_matchup_id
     from matchup
-    where worker_id > 0 or worker_id is null
+    where worker_id >= 0 or worker_id is null
     and deleted = 0
     group by seed_id
 ) m
@@ -44,6 +44,10 @@ order by m.max_matchup_id asc,
          g.max_game_id asc,
          s.user_id asc
 limit 1;
+
+insert into matchup (seed_id, worker_id)
+values (@seed_id, 0);
+set @matchup_id = last_insert_id();
 
 -- debug statement
 -- select 'step 1';
@@ -92,10 +96,9 @@ limit 1;
 
 -- Step 2.5: setup matchup and player info for following queries
 
-insert into matchup (seed_id, map_id, worker_id)
-values (@seed_id, @map_id, -1);
-
-set @matchup_id = last_insert_id();
+update matchup
+set map_id = @map_id
+where matchup_id = @matchup_id;
 
 insert into matchup_player (matchup_id, user_id, submission_id, player_id, mu, sigma)
 values (@matchup_id, @seed_id, @submission_id, -1, @mu, @sigma);
@@ -113,14 +116,12 @@ create temporary table temp_unavailable (
 );
 
 -- exclude players currently in a matchup
-insert into temp_unavailable (user_id) values (@seed_id);
-
 insert into temp_unavailable
 select mp.user_id
 from matchup_player mp
 inner join matchup m
 	on mp.matchup_id = m.matchup_id
-where (m.worker_id > 0 or m.worker_id is null)
+where (m.worker_id >= 0 or m.worker_id is null)
 and m.deleted = 0;
 
 set @last_user_id = -1;
@@ -157,6 +158,26 @@ while @abort = 0 and @player_count < @players do
         -- select @exclude_sql;
         prepare stmt from @exclude_sql;
         execute stmt;
+
+        -- exclude players that played in the last game with the
+        -- current combination of players
+        insert into temp_unavailable
+        select gp1.user_id
+        from game_player gp1
+        inner join game_player gp2
+            on gp1.game_id = gp2.game_id
+        where gp2.user_id = @last_user_id
+        and gp1.game_id in (
+            select game_id from (
+                -- mysql does not allow limits in subqueries
+                -- wrapping in it a dummy select is a work around
+                select game_id
+                from game_player
+                where user_id = @last_user_id
+                order by game_id desc
+                limit 1
+            ) latest_games
+        );
         
         -- debug statement
 		-- select 'step 3: add excluded';
