@@ -226,15 +226,15 @@ def run_rounds(opts,args):
         ''' get the proper working directory from a command line '''
         new_cmd = []
         wd = None
-        for i, part in enumerate(cmd.split()):
+        for i, part in enumerate(reversed(cmd.split())):
             if wd == None and os.path.exists(part):
                 wd = os.path.split(os.path.realpath(part))[0]
                 if i == 0:
-                    new_cmd.append(os.path.join(".", os.path.basename(part)))
+                    new_cmd.insert(0, os.path.join(".", os.path.basename(part)))
                 else:
-                    new_cmd.append(os.path.basename(part))
+                    new_cmd.insert(0, os.path.basename(part))
             else:
-                new_cmd.append(part)
+                new_cmd.insert(0, part)
         return wd, ' '.join(new_cmd)
     def get_cmd_name(cmd):
         ''' get the name of a bot from the command line '''
