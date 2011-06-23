@@ -57,11 +57,11 @@ $contest_sql = array(
                                    on u.user_id = gp.user_id
                                left outer join ranking r
                                    on r.submission_id = gp.submission_id
-                               where gp.game_id = %s
                                and (r.leaderboard_id = (
                                    select max(leaderboard_id)
                                    from leaderboard
                                ) or r.leaderboard_id is null)
+                               where gp.game_id = %s
                                order by gp.player_id;",
     "lock_matchup" => "update matchup
                        set worker_id = %s,
