@@ -460,12 +460,16 @@ class Worker:
             # set worker debug logging
             if self.debug:
                 options['verbose_log'] = sys.stdout
+                replay_log = open('replay.json', 'w')
+                options['replay_log'] = replay_log
                 #options['stream_log'] = sys.stdout
                 options['error_logs'] = [sys.stderr for _ in range(len(bots))]
                 # options['output_logs'] = [sys.stdout, sys.stdout]
                 # options['input_logs'] = [sys.stdout, sys.stdout]
             options['capture_errors'] = True
             result = run_game(game, bots, options)
+            if self.debug:
+                replay_log.close()
             log.debug(result)
             if 'game_id' in result:
                 del result['game_id']

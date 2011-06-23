@@ -48,8 +48,8 @@ if ($gamedata == null) {
         // mysql_query("START TRANSACTION;");
         if (!contest_query("insert_game_data",
                            $gamedata->game_length,
-                           $gamedata->winning_turn,
-                           $gamedata->ranking_turn,
+                           $gamedata->replaydata->winning_turn,
+                           $gamedata->replaydata->ranking_turn,
                            $gamedata->matchup_id)) {
             api_log(sprintf("Error updating game table for matchup %s",
                             $gamedata->matchup_id));
