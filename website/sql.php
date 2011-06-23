@@ -214,10 +214,14 @@ $contest_sql = array(
                 on g.game_id = gp.game_id
             where %s = %s",
     "select_game_list" => "select g.game_id, g.timestamp,
-               gp.user_id, gp.submission_id, u.username,
-               gp.sigma_after as sigma, gp.mu_after as mu, gp.player_id, gp.game_rank,
-               s.version,
-               m.players, m.map_id, m.filename as map_name
+               m.players, m.map_id, m.filename as map_name,
+               g.turns, g.winning_turn, g.ranking_turn,
+    		   gp.user_id, gp.submission_id, u.username, s.version,
+    		   gp.player_id, gp.game_rank,
+               gp.mu_after - 3 * gp.sigma_after as skill,
+               gp.mu_after as mu, gp.sigma_after as sigma,
+               (gp.mu_after - 3 * gp.sigma_after) - (gp.mu_before - 3 * gp.sigma_before) as skill_change,
+               gp.mu_after - gp.mu_before as mu_change, gp.sigma_after - gp.sigma_before as sigma_change
          from (
              select g2.*
              from game g2
@@ -240,9 +244,14 @@ $contest_sql = array(
         from game g
         where %s = %s",
     "select_map_game_list" => "select g.game_id, g.timestamp,
-               gp.user_id, gp.submission_id, u.username,
-               gp.sigma_after as sigma, gp.mu_after as mu, gp.player_id, gp.game_rank,
-               m.players, m.map_id, m.filename as map_name
+               m.players, m.map_id, m.filename as map_name,
+               g.turns, g.winning_turn, g.ranking_turn,
+    		   gp.user_id, gp.submission_id, u.username, s.version,
+    		   gp.player_id, gp.game_rank,
+               gp.mu_after - 3 * gp.sigma_after as skill,
+               gp.mu_after as mu, gp.sigma_after as sigma,
+               (gp.mu_after - 3 * gp.sigma_after) - (gp.mu_before - 3 * gp.sigma_before) as skill_change,
+               gp.mu_after - gp.mu_before as mu_change, gp.sigma_after - gp.sigma_before as sigma_change
          from (
              select *
              from game g2

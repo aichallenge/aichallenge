@@ -51,6 +51,17 @@ function nice_ordinal($num) {
     }
 }
 
+
+function nice_change_marker($value, $cushion, $reverse=FALSE) {
+    if ($value > $cushion) {
+        return $reverse ? "&darr;" : "&uarr;";
+    } elseif ($value < -$cushion) {
+        return $reverse ? "&uarr;" : "&darr;";
+    } else {
+        return "&ndash;";
+    }
+}
+
 function no_wrap($data) {
     return str_replace(" ", "&nbsp;", strval($data));
 }
@@ -63,20 +74,33 @@ function nice_user($user_id, $username) {
     return "<a href=\"profile.php?user=".$user_id."\">".$username."</a>";
 }
 
-function nice_opponent($user_id, $username, $rank) {
-    return "<span>($rank)".nice_user($user_id, $username)."</span>";
-}
-
-function nice_game($game_id, $user_id=NULL) {
-    if ($user_id) {
-        return "<a href=\"visualizer.php?game=$game_id&user=$user_id\">Game&nbsp;&raquo;</a>";
+function nice_opponent($user_id, $username, $rank, $user=False) {
+    if ($user) {
+        return "<span><strong>".nice_ordinal($rank)."</strong>-".nice_user($user_id, $username)."</span>";
     } else {
-        return "<a href=\"visualizer.php?game=$game_id\">Game&nbsp;&raquo;</a>";
+        return "<span>".nice_ordinal($rank)."-".nice_user($user_id, $username)."</span>";
     }
 }
 
-function nice_skill($skill, $mu, $sigma, $old_skill=NULL, $old_mu=NULL, $old_sigma=NULL) {
+function nice_game($game_id, $turns, $winning_turn, $ranking_turn, $user_id=NULL) {
+    $query_string = "";
+    if ($user_id) {
+        $query_string .= "&user=$user_id";
+    }
+    return "<a href=\"visualizer.php?game=$game_id$query_string\">Turns&nbsp;$turns&nbsp;&raquo;</a>
+    <span title=\"Turn the winner last took the lead\">
+    	<a href=\"visualizer.php?game=$game_id$query_string&turn=$winning_turn\">Winning&nbsp;$winning_turn&nbsp;&raquo;</a>
+    </span>
+    <span title=\"Turn the player ranks stopped changing\">
+    	<a href=\"visualizer.php?game=$game_id$query_string&turn=$ranking_turn\">Ranking&nbsp;$ranking_turn&nbsp;&raquo;</a>
+    </span>";
+}
 
+function nice_skill($skill, $mu, $sigma, $skill_change=NULL, $mu_change=NULL, $sigma_change=NULL) {
+    $skill = number_format($skill, 2);
+    $skill_change = nice_change_marker($skill_change, 0.1);
+    $skill_hint = sprintf("mu=%0.2f(%+0.2f) sigma=%0.2f(%+0.2f) skill=%0.2f(%+0.2f)", $mu, $mu_change, $sigma, $sigma_change, $skill, $skill_change);
+    return "<td class=\"number\"><span title=\"$skill_hint\">$skill&nbsp;$skill_change</span></td>";
 }
 
 ?>
