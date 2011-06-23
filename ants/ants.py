@@ -1396,7 +1396,7 @@ class Ants(Game):
         replay['bonus'] = map(int, self.bonus)
         replay['winning_turn'] = self.winning_turn
         replay['ranking_turn'] = self.ranking_turn
-        replay['cutoff'] = bool(self.remaining_players() <= 1 and self.turns > self.turn)
+        replay['cutoff'] = bool(self.remaining_players() > 1 and self.turns > self.turn)
 
         return replay
 
