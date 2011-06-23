@@ -266,10 +266,10 @@ $contest_sql = array(
             or gp.status = 'crashed'
             or gp.status = 'invalid')
     ",
-    "select_worker_stats" => "select count(*)/5 as gpm, g.worker_id,
-        (select count(*) from matchup where worker_id = -g.worker_id)/5 as epm
+    "select_worker_stats" => "select count(*)/15 as gpm, g.worker_id,
+        (select count(*) from matchup where worker_id = -g.worker_id)/15 as epm
         from game g
-        where timestamp > timestampadd(minute, -5, current_timestamp)
+        where timestamp > timestampadd(minute, -15, current_timestamp)
         group by g.worker_id, epm;"
 );
 
