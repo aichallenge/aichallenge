@@ -45,13 +45,14 @@ or s.submission_id in (
     )
 );
 
-update submission
-set sigma = sigma + (0.1 * (
-    select count(*) from (select * from submission) s where timestamp > (
-        select timestamp from leaderboard where leaderboard_id = @last_leader
-    )
-))
-where latest = 1;
+-- sigma will be updated on a per game basis
+-- update submission
+-- set sigma = sigma + (0.1 * (
+--     select count(*) from (select * from submission) s where timestamp > (
+--         select timestamp from leaderboard where leaderboard_id = @last_leader
+--     )
+-- ))
+-- where latest = 1;
 
 end$$
 delimiter ;

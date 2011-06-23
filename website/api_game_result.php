@@ -46,7 +46,11 @@ if ($gamedata == null) {
         // move matchup data to game table
         // mysql_query("SET AUTOCOMMIT=0;");
         // mysql_query("START TRANSACTION;");
-        if (!contest_query("insert_game_data", $gamedata->game_length, $gamedata->matchup_id)) {
+        if (!contest_query("insert_game_data",
+                           $gamedata->game_length,
+                           $gamedata->winning_turn,
+                           $gamedata->ranking_turn,
+                           $gamedata->matchup_id)) {
             api_log(sprintf("Error updating game table for matchup %s",
                             $gamedata->matchup_id));
             api_log(mysql_error());

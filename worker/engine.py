@@ -232,9 +232,15 @@ def run_game(game, botcmds, options):
             if verbose_log:
                 stats = game.get_stats()
                 s = 'turn %4d stats: ' % turn
+                if turn % 50 == 0:
+                    verbose_log.write(' '*len(s))
+                    for key, values in stats.items():
+                        verbose_log.write(' {0:^{1}}'.format(key, max(len(key), len(str(values)))))
+                    verbose_log.write('\n')
+                verbose_log.write(s)
                 for key, values in stats.items():
-                    s += ' %s: %s' % (key, values)
-                verbose_log.write('%-50s\n' % s)
+                    verbose_log.write(' {0:^{1}}'.format(values, max(len(key), len(str(values)))))
+                verbose_log.write('\n')
 
             #alive = [game.is_alive(b) for b in range(len(bots))]
             #if sum(alive) <= 1:

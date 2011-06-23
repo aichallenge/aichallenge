@@ -13,6 +13,8 @@ CREATE TABLE `game` (
   `seed_id` int(11) NOT NULL,
   `map_id` int(11) NOT NULL,
   `turns` int(11) NOT NULL,
+  `winning_turn` int(11) NOT NULL,
+  `ranking_turn` int(11) NOT NULL,
   `timestamp` datetime NOT NULL,
   `worker_id` int(11) unsigned NOT NULL,
   `replay_path` varchar(255) NULL,
