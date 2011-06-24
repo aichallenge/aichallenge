@@ -21,49 +21,27 @@ require_once('profile_submissions_widget.php');
 require_once('profile_games_widget.php');
 require_once('game_list.php');
 
-// Fetch Rank Data
-$rankquery = <<<EOT
-select
-    r.rank
-from
-    ranking r
-    inner join submission s on s.submission_id = r.submission_id
-    where
-        s.user_id = '$user_id' and
-        leaderboard_id = (select max(leaderboard_id) from leaderboard
-            where complete=1)
-EOT;
-$rankresult = mysql_query($rankquery);
-
- // Fetch User Data
-$userquery = <<<EOT
-select
-  u.username,
-  date_format(u.created,'%b %D %Y') as created,
-  u.bio,
-  c.flag_filename,
-  o.org_id,
-  o.name as org_name,
-  c.country_id,
-  c.name as country_name,
-  u.email,
-  u.activation_code
-from
-  user u
-  left outer join organization o on o.org_id = u.org_id
-  left outer join country c on c.country_id = u.country_id
-where
-  u.user_id = $user_id;
-EOT;
-$userresult = mysql_query($userquery);
-$userdata = mysql_fetch_assoc($userresult);
-if ($rankresult) {
-  $rankdata = mysql_fetch_assoc($rankresult);
-  $rank = $rankdata["rank"];
+$rank = NULL;
+$skill = NULL;
+$userresult = contest_query("select_profile_user", $user_id);
+if ($userresult) {
+    $userdata = mysql_fetch_assoc($userresult);
+    if ($userdata['rank']) {
+        $rank = nice_rank($userdata["rank"],
+                          $userdata["rank_change"]);
+        $skill = nice_skill($userdata['skill'],
+                             $userdata['mu'],
+                             $userdata['sigma'],
+                             $userdata['skill_change'],
+                             $userdata['mu_change'],
+                             $userdata['sigma_change']);
+    }
 }
-$rank = ($rank == NULL)?"N/A. No ranking available":$rank;
+$rank = ($rank == NULL)?"Not Ranked":$rank;
+$skill = ($skill == NULL)?"No Skillz":$skill;
+
 $username = htmlentities($userdata["username"]);
-$created = $userdata["created"];
+$created = nice_date($userdata["created"]); // date("M jS Y",$userdata["created"]);
 $country_id = htmlentities($userdata["country_id"]);
 $country_name = htmlentities($userdata["country_name"]);
 $country_name = $country_name == NULL ?
@@ -223,7 +201,7 @@ echo <<<EOT
     </form>
 EOT;
 }
-    echo "<p><strong>Current Rank:</strong>&nbsp;$rank</p>";
+    echo "<p><strong>Rank:</strong> <span class=\"stats\">$rank</span> <strong>Skill:</strong> <span class=\"stats\">$skill</span></p>";
 
     $in_game_result = contest_query("select_in_game", $user_id);
     if ($in_game_result and mysql_num_rows($in_game_result) > 0) {
@@ -241,13 +219,12 @@ EOT;
         }
     }
 
-
     echo "<h3><span>Latest Games</span><div class=\"divider\" /></h3>";
     echo get_game_list_table(1, $user_id, NULL, NULL, TRUE, 'profile_games.php');
     //echo getGamesTableString($user_id, true, 15, "profile_games.php?user=$user_id");
     echo "<p></p>";
     echo "<h3><span>Recent Submissions</span><div class=\"divider\" /></h3>";
-    echo getSubmissionTableString($user_id, true, 10, "profile_submissions.php?user=$user_id");
+    echo getSubmissionTableString($user_id, true, 10, "profile_submissions.php?user=$user_id&page=1");
 
 }
 //$cache->end();

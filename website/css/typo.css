@@ -150,6 +150,13 @@ table {
     text-align: center;
 }
 
+.stats {
+	color: #050;
+	font-size: 20px;
+	padding: 10px;
+	padding-bottom: 0px;
+}
+
 /* Ranking */
 
 table.ranking caption {

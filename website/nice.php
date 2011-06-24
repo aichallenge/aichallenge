@@ -23,6 +23,10 @@ function nice_datetime_span($date) {
     return "<span title=\"".no_wrap(nice_ago($date))."\">".no_wrap($time->format('j M g:ia'))."</span>";
 }
 
+function nice_date($date) {
+    return date("M jS Y", strtotime($date));
+}
+
 function nice_version($version, $date) {
     return "<span title=\"".nice_ago($date)."\">$version</span>";
 }
@@ -53,13 +57,16 @@ function nice_ordinal($num) {
 
 
 function nice_change_marker($value, $cushion, $reverse=FALSE) {
-    if ($value > $cushion) {
-        return $reverse ? "&darr;" : "&uarr;";
+    if ($value == NULL) {
+        $arrow = "";
+    } elseif ($value > $cushion) {
+        $arrow = $reverse ? "&darr;" : "&uarr;";
     } elseif ($value < -$cushion) {
-        return $reverse ? "&uarr;" : "&darr;";
+        $arrow = $reverse ? "&uarr;" : "&darr;";
     } else {
-        return "&ndash;";
+        $arrow = "&ndash;";
     }
+    return "<span title=\"$value\">$arrow</span>";
 }
 
 function no_wrap($data) {
@@ -101,8 +108,24 @@ function nice_game($game_id, $turns, $winning_turn, $ranking_turn, $user_id=NULL
 function nice_skill($skill, $mu, $sigma, $skill_change=NULL, $mu_change=NULL, $sigma_change=NULL) {
     $skill = number_format($skill, 2);
     $skill_change = nice_change_marker($skill_change, 0.1);
-    $skill_hint = sprintf("mu=%0.2f(%+0.2f) sigma=%0.2f(%+0.2f) skill=%0.2f(%+0.2f)", $mu, $mu_change, $sigma, $sigma_change, $skill, $skill_change);
-    return "<td class=\"number\"><span title=\"$skill_hint\">$skill&nbsp;$skill_change</span></td>";
+    if ($skill_change == NULL) {
+        $skill_hint = sprintf("mu=%0.2f sigma=%0.2f", $mu, $sigma);
+    } else {
+        $skill_hint = sprintf("mu=%0.2f(%+0.2f) sigma=%0.2f(%+0.2f) skill=%0.2f(%+0.2f)", $mu, $mu_change, $sigma, $sigma_change, $skill, $skill_change);
+    }
+    return "<span title=\"$skill_hint\">$skill&nbsp;$skill_change</span>";
+}
+
+function nice_rank($rank, $rank_change, $filter_rank=NULL) {
+    $rank_arrow = nice_change_marker($rank_change, 0, FALSE);
+    if ($filter_rank) {
+        $rank = str_pad("(".strval($rank).")", 6, " ", STR_PAD_LEFT);
+        $filter_rank = str_pad(strval($filter_rank), 4, " ", STR_PAD_LEFT);
+        return $filter_rank." <span title=\"Global Rank\">$rank $rank_arrow</span>";
+    } else {
+        $rank = str_pad(strval($rank), 4, " ", STR_PAD_LEFT);
+        return "$rank $rank_arrow";
+    }
 }
 
 ?>

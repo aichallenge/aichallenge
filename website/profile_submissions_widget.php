@@ -1,6 +1,7 @@
 <?php
-include_once "pagination.php";
+require_once( "pagination.php");
 require_once("session.php");
+require_once("nice.php");
 
 $status_msg = array(10 => "Created: entry record created in database",
                     20 => "Uploaded: ready to be unzipped and compiled",
@@ -40,13 +41,10 @@ function getSubmissionTableString($user_id, $viewmore = true, $viewresults = 10,
     // Fetch row count
 $rowcount_query = <<<EOT
 select
-    count(1)
+    count(*)
 from
-    submission r
-    inner join submission s on s.submission_id = r.submission_id
-    inner join user u on u.user_id = s.user_id
-where
-    u.user_id = $user_id
+    submission
+    where user_id = $user_id
 EOT;
 
     $rowcount_data = mysql_query($rowcount_query);
@@ -63,13 +61,26 @@ select
     s.errors,
     s.timestamp,
     s.version,
+    s.mu - 3 * s.sigma as skill,
     s.mu,
     s.sigma,
-    l.name as language
+    l.name as language,
+    gt.game_count,
+    timestampdiff(second, gmin.timestamp, gmax.timestamp)/60/gt.game_count as game_rate
 from
     submission s
+    inner join (
+        select submission_id, min(game_id) min_game, max(game_id) max_game, count(*) as game_count
+        from game_player
+        group by submission_id
+    ) gt
+    	on gt.submission_id = s.submission_id
+    inner join game gmin
+        on gmin.game_id = gt.min_game
+    inner join game gmax
+        on gmax.game_id = gt.max_game
     inner join user u on u.user_id = s.user_id
-    inner join language l on l.language_id = s.language_id
+    left outer join language l on l.language_id = s.language_id
 where
     u.user_id = $user_id
     order by s.timestamp desc
@@ -91,9 +102,9 @@ EOT;
     // Build table
     $table = "";
     if (!$viewmore) {
-        $table .= getPaginationString($page, $rowcount, $viewresults, $viewlink);
+        $table .= getPaginationString($page, ceil($rowcount/$viewresults), $viewresults, $viewlink);
     }
-    $table .= "<table class=\"submissions\"><thead><tr><th>Version</th><th>Submission Time</th><th>Status</th><th>Skill</th><th>Language</th></tr></thead><tbody>";
+    $table .= "<table class=\"submissions\"><thead><tr><th>Version</th><th>Submission Time</th><th>Status</th><th>Skill</th><th>Games</th><th>Game Rate</th><th>Language</th></tr></thead><tbody>";
     for ($i = 1; $row = mysql_fetch_assoc($submission_results); $i += 1) {
         $status = $row["status"];
         $status_class = ($status == 40 ? "success": (($status == 30 || $status > 40)? "fail" : "inprogress"));
@@ -109,13 +120,17 @@ EOT;
         $language_link = urlencode($language);
         $row_class = $i % 2 == 0 ? "even" : "odd";
         $errors = $row["errors"];
-        $skill = $status_class == "success" ? number_format(max(0.0, $row["mu"] - 3 * $row["sigma"]), 2) : "-"; // trueskill formula
-
+        $skill = $status_class == "success" ? nice_skill($row['skill'], $row['mu'], $row['sigma']) : "-"; // trueskill formula
+        $games = $row["game_count"];
+        $game_rate = "<span title=\"average minutes between games\">".round($row["game_rate"],0)."</span>";
+        
         $table .= "<tr class=\"$row_class\">";
         $table .= "  <td>$version</td>";
         $table .= "  <td>$timestamp</td>";
         $table .= "  <td class=\"$status_class\">$status</td>";
         $table .= "  <td>$skill</td>";
+        $table .= "  <td>$games</td>";
+        $table .= "  <td>$game_rate</td>";
         $table .= "  <td><a href=\"language_profile.php?language=$language_link\">
             $language</a></td>";
         $table .= "</tr>";
