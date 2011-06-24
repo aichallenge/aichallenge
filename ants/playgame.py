@@ -268,14 +268,16 @@ def run_rounds(opts,args):
         "loadtime": opts.loadtime,
         "turntime": opts.turntime,
         "turns": opts.turns,
-        "player_seed": opts.player_seed,
-        "engine_seed": opts.engine_seed,
         "food_rate": opts.food_rate,
         "food_turn": opts.food_turn,
         "food_start": opts.food_start,
         "food_visible": opts.food_visible,
         "cutoff_turn": opts.cutoff_turn,
         "cutoff_percent": opts.cutoff_percent }
+    if opts.player_seed != None:
+        game_options['player_seed'] = opts.player_seed
+    if opts.engine_seed != None:
+        game_options['engine_seed'] = opts.engine_seed
     engine_options = {
         "loadtime": opts.loadtime,
         "turntime": opts.turntime,
