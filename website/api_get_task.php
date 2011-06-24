@@ -13,6 +13,7 @@ if ($compile_result) {
                           $worker["worker_id"],
                           $row["submission_id"])) {
             echo json_encode(array( "task" => "compile",
+                                    "timestamp" => date(DATE_ATOM),
                                     "submission_id" => $row["submission_id"]));
             die();
         } else {
@@ -59,6 +60,7 @@ if (!$match_result or mysql_num_rows($match_result) == 0) {
 if ($match_result) {
     while ($match_row = mysql_fetch_assoc($match_result)) {
         $json = array( "task" => "game",
+                       "timestamp" => date(DATE_ATOM),
                        "matchup_id" => $match_row["matchup_id"],
                        "map_filename" => $match_row["filename"],
                        "submissions" => array(),
@@ -87,5 +89,5 @@ if ($match_result) {
 }
 
 // nothing to do
-echo json_encode(array( "task" => mysql_error() ));
+echo json_encode(array( "task" => mysql_error(), "timestamp" => date(DATE_ATOM) ));
 ?>

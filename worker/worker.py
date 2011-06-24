@@ -13,7 +13,7 @@ import stat
 import platform
 import traceback
 import tempfile
-from copy import copy
+from copy import copy, deepcopy
 
 from optparse import OptionParser
 
@@ -135,33 +135,57 @@ class GameAPIClient:
             return None
 
     def post_result(self, method, result):
+        # save result in case of failure
+        with open('last_game.json', 'w') as f:
+            f.write(json.dumps(result))
         # retry 10 times or until post is successful
-        retry = 1
+        retry = 100
+        wait_time = 2
         for i in range(retry):
-            url = self.get_url(method)
-            log.info(url)
-            json_data = json.dumps(result)
-            hash = md5(json_data).hexdigest()
-            log.debug("Posting result %s: %s" % (method, json_data))
-            log.info("Posting hash: %s" % hash)
-            response = urllib.urlopen(url, json.dumps(result))
-            if response.getcode() == 200:
-                data = response.read()
-                try:
-                    log.debug(data.strip())
-                    data = json.loads(data)["hash"]
-                    log.info("Server returned hash: %s" % data)
-                    if hash == data:
-                        break
-                    elif i < retry-1:
-                        time.sleep(5)
-                except ValueError:
-                    log.info("Bad json from server during post result: %s" % data)
-                    if i < retry-1:
-                        time.sleep(5)
-            else:
-                log.warning("Server did not receive post: %s, %s" % (response.getcode(), response.read()))
-                time.sleep(5)
+            wait_time = min(wait_time * 2, 300)
+            try:
+                url = self.get_url(method)
+                log.info(url)
+                if i == 0:
+                    json_log = deepcopy(result)
+                    if 'replaydata' in json_log:
+                        del json_log['replaydata']
+                    json_log = json.dumps(json_log)
+                    log.debug("Posting result %s: %s" % (method, json_log))
+                else:
+                    log.warning("Posting attempt %s" % (i+1))
+                json_data = json.dumps(result)
+                hash = md5(json_data).hexdigest()
+                if i == 0:
+                    log.info("Posting hash: %s" % hash)
+                response = urllib.urlopen(url, json.dumps(result))
+                if response.getcode() == 200:
+                    data = response.read()
+                    try:
+                        log.debug(data.strip())
+                        data = json.loads(data)["hash"]
+                        log.info("Server returned hash: %s" % data)
+                        if hash == data:
+                            os.remove('last_game.json')
+                            break
+                        elif i < retry-1:
+                            log.warning('Waiting %s seconds...' % wait_time)
+                            for _ in range(wait_time):
+                                time.sleep(1)
+                    except ValueError:
+                        log.warning("Bad json from server during post result: %s" % data)
+                        if i < retry-1:
+                            log.warning('Waiting %s seconds...' % wait_time)
+                            for _ in range(wait_time):
+                                time.sleep(1)
+                else:
+                    log.warning("Server did not receive post: %s, %s" % (response.getcode(), response.read()))
+                    time.sleep(wait_time)
+            except Exception as e:
+                log.error(traceback.format_exc())
+                log.warning('Waiting %s seconds...' % wait_time)
+                for _ in range(wait_time):
+                    time.sleep(1)
         else:
             return False
         return True
@@ -476,15 +500,16 @@ class Worker:
             result['matchup_id'] = matchup_id
             result['post_id'] = self.post_id
             if report_status:
-                self.cloud.post_result('api_game_result', result)
+                return self.cloud.post_result('api_game_result', result)
         except Exception as ex:
             log.debug(traceback.format_exc())
             result = {"post_id": self.post_id,
                       "matchup_id": matchup_id,
                       "error": str(ex) }
-            self.cloud.post_result('api_game_result', result)
+            success = self.cloud.post_result('api_game_result', result)
             # cleanup download dirs
             map(self.clean_download, map(int, task['submissions']))
+            return success
 
     def task(self, last=False):
         task = self.cloud.get_task()
@@ -496,14 +521,19 @@ class Worker:
                     try:
                         if not self.compile(submission_id, True):
                             self.clean_download(submission_id)
+                            return False
+                        else:
+                            return True
                     except Exception:
                         log.error(traceback.format_exc())
                         self.clean_download(submission_id)
+                        return False
                 elif task['task'] == 'game':
-                    self.game(task, True)
+                    return self.game(task, True)
                 else:
                     if not last:
-                        time.sleep(20)
+                        for _ in range(20):
+                            time.sleep(1)
             except:
                 log.error('Task Failure')
                 log.error(traceback.format_exc())
@@ -572,11 +602,28 @@ def main(argv):
 
     # get tasks
     if opts.task:
+        if os.path.exists('last_game.json'):
+            log.warning("Last game result was not send successfully, resending....")
+            result = None
+            with open('last_game.json') as f:
+                try:
+                    result = json.loads(f.read())
+                except:
+                    log.warning("Last game result file can't be read")
+            if result != None:
+                if worker.cloud.post_result('api_game_result', result):
+                    os.remove('last_game.json')
+                else:
+                    return False
+            else:
+                os.remove('last_game.json')
         if opts.num_tasks <= 0:
             try:
                 while True:
                     log.info("Getting task infinity + 1")
-                    worker.task()
+                    if not worker.task():
+                        log.warning("Task failed, stopping worker")
+                        break
                     print()
             except KeyboardInterrupt:
                 log.info("[Ctrl] + C, Stopping worker")
