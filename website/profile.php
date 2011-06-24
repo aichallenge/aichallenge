@@ -234,7 +234,7 @@ EOT;
             while ($next_game_row = mysql_fetch_assoc($next_game_result)) {
                 echo "<p><strong>Next Game:</strong> ".$next_game_row["players_ahead"]." players are ahead of you.<br />";
                 echo "The current game rate is about ".$next_game_row["players_per_minute"]." players per minute.<br />";
-                echo "Your next game should be in about ".$next_game_row["next_game_in_adjusted"]." minutes.</p>";
+                echo "Your next game should be within ".$next_game_row["next_game_in_adjusted"]." minutes.</p>";
             }
         } else {
             echo "<p><strong>Next Game:</strong> The current game rate is unavailable. :'(</p>";
