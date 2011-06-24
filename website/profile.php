@@ -225,15 +225,20 @@ EOT;
 }
     echo "<p><strong>Current Rank:</strong>&nbsp;$rank</p>";
 
-    $next_game_result = contest_query("select_next_game_in", $user_id);
-    if ($next_game_result) {
-        while ($next_game_row = mysql_fetch_assoc($next_game_result)) {
-            echo "<p>".$next_game_row["players_ahead"]." players are ahead of you.<br />";
-            echo "The current game rate is about ".$next_game_row["players_per_minute"]." players per minute.<br />";
-            echo "Your next game should be in about ".$next_game_row["next_game_in_adjusted"]." minutes.</p>";
+    $in_game_result = contest_query("select_in_game", $user_id);
+    if ($in_game_result and mysql_num_rows($in_game_result) > 0) {
+        echo "<p><strong>In Game:</strong> You are playing in a game right now.</p>";
+    } else {    
+        $next_game_result = contest_query("select_next_game_in", $user_id);
+        if ($next_game_result) {
+            while ($next_game_row = mysql_fetch_assoc($next_game_result)) {
+                echo "<p><strong>Next Game:</strong> ".$next_game_row["players_ahead"]." players are ahead of you.<br />";
+                echo "The current game rate is about ".$next_game_row["players_per_minute"]." players per minute.<br />";
+                echo "Your next game should be in about ".$next_game_row["next_game_in_adjusted"]." minutes.</p>";
+            }
+        } else {
+            echo "<p><strong>Next Game:</strong> The current game rate is unavailable. :'(</p>";
         }
-    } else {
-        echo "<p>The current game rate is unavailable. :'(</p>";
     }
 
 

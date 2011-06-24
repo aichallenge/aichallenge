@@ -300,7 +300,11 @@ $contest_sql = array(
         (select @time_used := ifnull((select avg(timestampdiff(second, matchup_timestamp, current_timestamp)/60)
                                from matchup
                                where deleted = 0
-                               and worker_id > 0),0)) c3;"
+                               and worker_id > 0),0)) c3;",
+	"select_in_game" => "select *
+        from matchup_player
+        where user_id = %s
+        and deleted = 0;"
 );
 
 ?>
