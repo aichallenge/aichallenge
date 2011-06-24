@@ -281,10 +281,10 @@ $contest_sql = array(
         where timestamp > timestampadd(minute, -15, current_timestamp)
         group by g.worker_id, epm;",
     "select_next_game_in" => "select @players_ahead as players_ahead,
-               @players_per_minute as players_per_minute,
+               Round(@players_per_minute, 1) as players_per_minute,
                @time_used as time_used,
                @players_ahead / @players_per_minute as next_game_in,
-               @players_ahead / @players_per_minute - @time_used as next_game_in_adjusted
+               Round(@players_ahead / @players_per_minute - @time_used, 1) as next_game_in_adjusted
         from
         (select @players_ahead := ((select count(*) from submission where latest = 1 and status = 40) -
                (select count(distinct user_id) from game_player

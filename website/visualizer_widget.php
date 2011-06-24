@@ -1,5 +1,14 @@
 <?php
-function visualizer_widget($game_id, $interactive=true, $width=690, $height=700) 
+
+function visualize_game($game_id, $interactive=true, $width=690, $height=700) {
+    visualizer_widget("game/" . $game_id, $interactive, $width, $height);
+}
+
+function visualize_map($map, $width=690, $height=700) {
+    visualizer_widget("map/" . $map, true, $width, $height);
+}
+
+function visualizer_widget($replay, $interactive=true, $width=690, $height=700) 
 {
 	$match = preg_match('/MSIE ([0-9]\.[0-9])/', $_SERVER['HTTP_USER_AGENT'], $reg);
 	if ($match != 0 && floatval($reg[1]) < 9 || isset ($_GET["java"]) && $_GET["java"] == "true") {
@@ -12,7 +21,6 @@ function visualizer_widget($game_id, $interactive=true, $width=690, $height=700)
 	}
     echo '<div id="visualizerDiv">';
 
-    $replay = "game/" . $game_id;
     // Write applet tag if we use Java
     if (isset ($java)) {
         ?>

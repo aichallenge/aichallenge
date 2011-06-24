@@ -32,7 +32,7 @@ function nice_map($map) {
     $pos1 = strrpos($map,'/') + 1;
     $pos2 = strrpos($map,'.');
     $map_name = substr($map, $pos1, $pos2-$pos1);
-    return "<span><a href=\"map/".$map."\">$map_name</a></span>";
+    return "<span><a href=\"map.php?map=".$map."\">$map_name</a></span>";
 }
 
 function nice_ordinal($num) {
