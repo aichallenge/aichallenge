@@ -179,7 +179,7 @@ class GameAPIClient:
                 else:
                     log.warning("Server did not receive post: %s, %s" % (response.getcode(), response.read()))
                     time.sleep(wait_time)
-            except Exception as e:
+            except IOError as e:
                 log.error(traceback.format_exc())
                 log.warning('Waiting %s seconds...' % wait_time)
                 time.sleep(wait_time)
