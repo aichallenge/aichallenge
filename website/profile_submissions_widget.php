@@ -69,15 +69,15 @@ select
     timestampdiff(second, gmin.timestamp, gmax.timestamp)/60/gt.game_count as game_rate
 from
     submission s
-    inner join (
+    left outer join (
         select submission_id, min(game_id) min_game, max(game_id) max_game, count(*) as game_count
         from game_player
         group by submission_id
     ) gt
     	on gt.submission_id = s.submission_id
-    inner join game gmin
+    left outer join game gmin
         on gmin.game_id = gt.min_game
-    inner join game gmax
+    left outer join game gmax
         on gmax.game_id = gt.max_game
     inner join user u on u.user_id = s.user_id
     left outer join language l on l.language_id = s.language_id
@@ -122,7 +122,7 @@ EOT;
         $errors = $row["errors"];
         $skill = $status_class == "success" ? nice_skill($row['skill'], $row['mu'], $row['sigma']) : "-"; // trueskill formula
         $games = $row["game_count"];
-        $game_rate = "<span title=\"average minutes between games\">".round($row["game_rate"],0)."</span>";
+        $game_rate = "<span title=\"average minutes between games\">".($row['game_rate'] == NULL ? "" : round($row["game_rate"],0))."</span>";
         
         $table .= "<tr class=\"$row_class\">";
         $table .= "  <td>$version</td>";
