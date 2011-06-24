@@ -279,7 +279,28 @@ $contest_sql = array(
         (select count(*) from matchup where worker_id = -g.worker_id)/15 as epm
         from game g
         where timestamp > timestampadd(minute, -15, current_timestamp)
-        group by g.worker_id, epm;"
+        group by g.worker_id, epm;",
+    "select_next_game_in" => "select @players_ahead as players_ahead,
+               @players_per_minute as players_per_minute,
+               @time_used as time_used,
+               @players_ahead / @players_per_minute as next_game_in,
+               @players_ahead / @players_per_minute - @time_used as next_game_in_adjusted
+        from
+        (select @players_ahead := ((select count(*) from submission where latest = 1 and status = 40) -
+               (select count(distinct user_id) from game_player
+                where game_id >
+                    (select max(game_id) from game_player where user_id = %s)
+               ))) c1,
+        (select @players_per_minute := (select count(*)/30
+                from game
+                inner join game_player
+                    on game.game_id = game_player.game_id
+                where timestamp > timestampadd(minute, -30, current_timestamp)
+               )) c2,
+        (select @time_used := ifnull((select avg(timestampdiff(second, matchup_timestamp, current_timestamp)/60)
+                               from matchup
+                               where deleted = 0
+                               and worker_id > 0),0)) c3;"
 );
 
 ?>

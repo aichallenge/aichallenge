@@ -1,8 +1,6 @@
 <?php
-ini_set('error_reporting', E_ALL);
-ini_set('display_errors', true);
-include('header.php');
-include('mysql_login.php');
+require_once('header.php');
+require_once('mysql_login.php');
 
 $user_id = $_GET["user"];
 if(!filter_var($user_id, FILTER_VALIDATE_INT)) {
@@ -19,8 +17,8 @@ if(!filter_var($user_id, FILTER_VALIDATE_INT)) {
 //$cacheID="profile_$user_id";
 
 //if (!($cache->start($cacheID))) {
-include_once 'profile_submissions_widget.php';
-include_once 'profile_games_widget.php';
+require_once('profile_submissions_widget.php');
+require_once('profile_games_widget.php');
 require_once('game_list.php');
 
 // Fetch Rank Data
@@ -227,25 +225,17 @@ EOT;
 }
     echo "<p><strong>Current Rank:</strong>&nbsp;$rank</p>";
 
-    $query = "SELECT * FROM submission
-        WHERE user_id = '$user_id' AND status = 40 and latest = 1";
-    $result = mysql_query($query);
-    if ($row = mysql_fetch_assoc($result)) {
-        $sub_id = $row['submission_id'];
-        $query = "SELECT count(1) FROM submission
-            WHERE last_game_timestamp < (SELECT last_game_timestamp
-                FROM submission WHERE submission_id = '$sub_id')
-            AND status = 40 AND latest = 1";
-        $result = mysql_query($query);
-        $row = mysql_fetch_assoc($result);
-        $queue_size = $row['count(1)'];
-        if ($queue_size > 50) {
-            echo "<p>Most likely to play next game within the
-                next $queue_size games.</p>";
-        } else {
-            echo "<p>Next game should be played soon.</p>";
+    $next_game_result = contest_query("select_next_game_in", $user_id);
+    if ($next_game_result) {
+        while ($next_game_row = mysql_fetch_assoc($next_game_result)) {
+            echo "<p>".$next_game_row["players_ahead"]." players are ahead of you.<br />";
+            echo "The current game rate is about ".$next_game_row["players_per_minute"]." players per minute.<br />";
+            echo "Your next game should be in about ".$next_game_row["next_game_in_adjusted"]." minutes.</p>";
         }
+    } else {
+        echo "<p>The current game rate is unavailable. :'(</p>";
     }
+
 
     echo "<h3><span>Latest Games</span><div class=\"divider\" /></h3>";
     echo get_game_list_table(1, $user_id, NULL, NULL, TRUE, 'profile_games.php');

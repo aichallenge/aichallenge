@@ -119,8 +119,7 @@ EOT;
         $table .= "  <td><a href=\"language_profile.php?language=$language_link\">
             $language</a></td>";
         $table .= "</tr>";
-        // TODO: turn off for all users during competition
-        if ($errors and $status_class == "fail" and (TRUE or $user_id == current_user_id())) {
+        if ($errors and $status_class == "fail" and $user_id == current_user_id()) {
             $errors = json_decode($errors);
             $error_msg = "<pre class=\"error\">";
             if (isset($errors->errors)) {

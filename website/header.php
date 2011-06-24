@@ -16,8 +16,8 @@ $page_render_start_time = microtime(true);
         <link href="ai-contest.css" rel="stylesheet" type="text/css" /> 
     </head> 
 <?php
-flush();
 require_once('session.php');
+flush();
 ?>    
     <body> 
         <div id="wrapper">

@@ -87,13 +87,15 @@ function nice_game($game_id, $turns, $winning_turn, $ranking_turn, $user_id=NULL
     if ($user_id) {
         $query_string .= "&user=$user_id";
     }
-    return "<a href=\"visualizer.php?game=$game_id$query_string\">Turns&nbsp;$turns&nbsp;&raquo;</a>
+    return "<a href=\"visualizer.php?game=$game_id$query_string\">$turns&nbsp;turns&nbsp;&raquo;</a>
     <span title=\"Turn the winner last took the lead\">
-    	<a href=\"visualizer.php?game=$game_id$query_string&turn=$winning_turn\">Winning&nbsp;$winning_turn&nbsp;&raquo;</a>
-    </span>
-    <span title=\"Turn the player ranks stopped changing\">
-    	<a href=\"visualizer.php?game=$game_id$query_string&turn=$ranking_turn\">Ranking&nbsp;$ranking_turn&nbsp;&raquo;</a>
+    	<a href=\"visualizer.php?game=$game_id$query_string&turn=$winning_turn\">Won&nbsp;at&nbsp;$winning_turn&nbsp;&raquo;</a>
     </span>";
+    /*
+    <span title=\"Turn the player ranks stopped changing\">
+    	<a href=\"visualizer.php?game=$game_id$query_string&turn=$ranking_turn\">Rank&nbsp;$ranking_turn&nbsp;&raquo;</a>
+    </span>";
+    */
 }
 
 function nice_skill($skill, $mu, $sigma, $skill_change=NULL, $mu_change=NULL, $sigma_change=NULL) {
