@@ -170,22 +170,19 @@ class GameAPIClient:
                             break
                         elif i < retry-1:
                             log.warning('Waiting %s seconds...' % wait_time)
-                            for _ in range(wait_time):
-                                time.sleep(1)
+                            time.sleep(wait_time)
                     except ValueError:
                         log.warning("Bad json from server during post result: %s" % data)
                         if i < retry-1:
                             log.warning('Waiting %s seconds...' % wait_time)
-                            for _ in range(wait_time):
-                                time.sleep(1)
+                            time.sleep(wait_time)
                 else:
                     log.warning("Server did not receive post: %s, %s" % (response.getcode(), response.read()))
                     time.sleep(wait_time)
             except Exception as e:
                 log.error(traceback.format_exc())
                 log.warning('Waiting %s seconds...' % wait_time)
-                for _ in range(wait_time):
-                    time.sleep(1)
+                time.sleep(wait_time)
         else:
             return False
         return True
@@ -532,8 +529,7 @@ class Worker:
                     return self.game(task, True)
                 else:
                     if not last:
-                        for _ in range(20):
-                            time.sleep(1)
+                        time.sleep(20)
             except:
                 log.error('Task Failure')
                 log.error(traceback.format_exc())
