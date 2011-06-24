@@ -20,7 +20,7 @@ if(file_exists('server_message.html')) {
         $last_game_id = 0;
     }
     include 'visualizer_widget.php';
-    visualizer_widget($game_id=strval($last_game_id),false,550,550);
+    visualize_game($game_id=strval($last_game_id),false,550,550);
 ?>
 
 <h2>Planet Wars Final Rankings</h2>

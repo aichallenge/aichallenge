@@ -5,7 +5,7 @@ include "header.php";
 include "visualizer_widget.php";
 $game_id = filter_input(INPUT_GET, 'game', FILTER_VALIDATE_INT);
 if ($game_id !== FALSE and $game_id !== NULL) {
-    visualizer_widget($game_id);
+    visualize_game($game_id);
     require_once('session.php');
     if (TRUE or logged_in_with_valid_credentials()) {
         require_once('mysql_login.php');
