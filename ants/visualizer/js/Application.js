@@ -1592,16 +1592,19 @@ Visualizer.prototype.draw = function(time, tick) {
 					dx = (2 * dx > +this.replay.cols) ? dx - this.replay.cols : (2 * dx < -this.replay.cols) ? this.replay.cols - dx : dx;
 					dy = (2 * dy > +this.replay.rows) ? dy - this.replay.rows : (2 * dy < -this.replay.rows) ? this.replay.rows - dy : dy;
 					if (dx * dx + dy * dy <= this.replay.meta['replaydata']['attackradius2']) {
-						ctx.beginPath();
-						ctx.moveTo(ant1['x'], ant1['y']);
-						ctx.lineTo(ant1['x'] - dx * halfScale, ant1['y'] - dy * halfScale);
-						ctx.strokeStyle = this.replay.htmlPlayerColors[ant2['owner']];
-						ctx.stroke();
-						ctx.beginPath();
-						ctx.moveTo(ant2['x'], ant2['y']);
-						ctx.lineTo(ant2['x'] + dx * halfScale, ant2['y'] + dy * halfScale);
-						ctx.strokeStyle = this.replay.htmlPlayerColors[ant1['owner']];
-						ctx.stroke();
+						var allAnts = this.replay.meta['replaydata']['ants'];
+						if (allAnts[ant1['id']][3] + 0.5 <= time && allAnts[ant2['id']][3] + 0.5 <= time) {
+							ctx.beginPath();
+							ctx.moveTo(ant1['x'], ant1['y']);
+							ctx.lineTo(ant1['x'] - dx * halfScale, ant1['y'] - dy * halfScale);
+							ctx.strokeStyle = this.replay.htmlPlayerColors[ant2['owner']];
+							ctx.stroke();
+							ctx.beginPath();
+							ctx.moveTo(ant2['x'], ant2['y']);
+							ctx.lineTo(ant2['x'] + dx * halfScale, ant2['y'] + dy * halfScale);
+							ctx.strokeStyle = this.replay.htmlPlayerColors[ant1['owner']];
+							ctx.stroke();
+						}
 					}
 				}
 			}
