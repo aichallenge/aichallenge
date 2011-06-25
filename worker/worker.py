@@ -518,9 +518,7 @@ class Worker:
                     try:
                         if not self.compile(submission_id, True):
                             self.clean_download(submission_id)
-                            return False
-                        else:
-                            return True
+                        return True
                     except Exception:
                         log.error(traceback.format_exc())
                         self.clean_download(submission_id)
