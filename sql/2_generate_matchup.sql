@@ -32,8 +32,8 @@ left outer join (
 left outer join (
     select seed_id, max(matchup_id) as max_matchup_id
     from matchup
-    where worker_id >= 0 or worker_id is null
-    and deleted = 0
+    where (worker_id >= 0 or worker_id is null)
+        and deleted = 0
     group by seed_id
 ) m
     on s.user_id = m.seed_id
