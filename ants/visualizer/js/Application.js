@@ -1589,8 +1589,8 @@ Visualizer.prototype.draw = function(time, tick) {
 				if (ant2['owner'] !== undefined && ant1['owner'] !== ant2['owner']) {
 					dx = ant1.baseX - ant2.baseX;
 					dy = ant1.baseY - ant2.baseY;
-					dx = (2 * dx > +this.replay.cols) ? dx - this.replay.cols : (2 * dx < -this.replay.cols) ? this.replay.cols - dx : dx;
-					dy = (2 * dy > +this.replay.rows) ? dy - this.replay.rows : (2 * dy < -this.replay.rows) ? this.replay.rows - dy : dy;
+					dx -= (Math.floor(dx / this.replay.cols - 0.5) + 1) * this.replay.cols;
+					dy -= (Math.floor(dy / this.replay.rows - 0.5) + 1) * this.replay.rows;
 					if (dx * dx + dy * dy <= this.replay.meta['replaydata']['attackradius2']) {
 						var allAnts = this.replay.meta['replaydata']['ants'];
 						if (allAnts[ant1['id']][3] + 0.5 <= time && allAnts[ant2['id']][3] + 0.5 <= time) {
