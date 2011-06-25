@@ -269,7 +269,7 @@ function create_game_list_table($json, $top=FALSE, $targetpage=NULL) {
             $table .= "<td>$time</td>";
 
             if ($user_id) {
-                $table .= nice_skill($user_skill, $user_mu, $user_sigma, $user_skill_change, $user_mu_change, $user_sigma_change);
+                $table .= "<td class\"number\">".nice_skill($user_skill, $user_mu, $user_sigma, $user_skill_change, $user_mu_change, $user_sigma_change)."</td>";
             }
 
             // TODO: consider linking the submission id instead

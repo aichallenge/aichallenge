@@ -115,8 +115,20 @@ $contest_sql = array(
                c.country_id, c.name as country, c.country_code, c.flag_filename,
                l.language_id, l.name as programming_language,
                o.org_id, o.name as org_name,
-               r.*
+               r.*,
+               gt.game_count,
+               timestampdiff(second, gmin.timestamp, gmax.timestamp)/60/gt.game_count as game_rate
         from ranking r
+        inner join (
+            select submission_id, min(game_id) min_game, max(game_id) max_game, count(*) as game_count
+            from game_player
+            group by submission_id
+        ) gt
+        	on gt.submission_id = r.submission_id
+        inner join game gmin
+            on gmin.game_id = gt.min_game
+        inner join game gmax
+            on gmax.game_id = gt.max_game
         inner join user u
             on r.user_id = u.user_id
         inner join submission s
@@ -137,8 +149,20 @@ $contest_sql = array(
                l.language_id, l.name as programming_language,
                o.org_id, o.name as org_name,
                r.*,
-               if(r.rank is not null, @count1 := @count1 + 1 , null) as filter_rank
+               if(r.rank is not null, @count1 := @count1 + 1 , null) as filter_rank,
+               gt.game_count,
+               timestampdiff(second, gmin.timestamp, gmax.timestamp)/60/gt.game_count as game_rate
         from ranking r
+        inner join (
+            select submission_id, min(game_id) min_game, max(game_id) max_game, count(*) as game_count
+            from game_player
+            group by submission_id
+        ) gt
+        	on gt.submission_id = r.submission_id
+        inner join game gmin
+            on gmin.game_id = gt.min_game
+        inner join game gmax
+            on gmax.game_id = gt.max_game
         inner join user u
             on r.user_id = u.user_id
         inner join submission s
@@ -161,8 +185,20 @@ $contest_sql = array(
                l.language_id, l.name as programming_language,
                o.org_id, o.name as org_name,
                r.*,
-               if(r.rank is not null, @count1 := @count1 + 1 , null) as filter_rank
+               if(r.rank is not null, @count1 := @count1 + 1 , null) as filter_rank,
+               gt.game_count,
+               timestampdiff(second, gmin.timestamp, gmax.timestamp)/60/gt.game_count as game_rate
         from ranking r
+        inner join (
+            select submission_id, min(game_id) min_game, max(game_id) max_game, count(*) as game_count
+            from game_player
+            group by submission_id
+        ) gt
+        	on gt.submission_id = r.submission_id
+        inner join game gmin
+            on gmin.game_id = gt.min_game
+        inner join game gmax
+            on gmax.game_id = gt.max_game
         inner join user u
             on r.user_id = u.user_id
         inner join submission s
@@ -185,8 +221,20 @@ $contest_sql = array(
                l.language_id, l.name as programming_language,
                o.org_id, o.name as org_name,
                r.*,
-               if(r.rank is not null, @count1 := @count1 + 1 , null) as filter_rank
+               if(r.rank is not null, @count1 := @count1 + 1 , null) as filter_rank,
+               gt.game_count,
+               timestampdiff(second, gmin.timestamp, gmax.timestamp)/60/gt.game_count as game_rate
         from ranking r
+        inner join (
+            select submission_id, min(game_id) min_game, max(game_id) max_game, count(*) as game_count
+            from game_player
+            group by submission_id
+        ) gt
+        	on gt.submission_id = r.submission_id
+        inner join game gmin
+            on gmin.game_id = gt.min_game
+        inner join game gmax
+            on gmax.game_id = gt.max_game
         inner join user u
             on r.user_id = u.user_id
         inner join submission s
@@ -304,7 +352,30 @@ $contest_sql = array(
 	"select_in_game" => "select *
         from matchup_player
         where user_id = %s
-        and deleted = 0;"
+        and deleted = 0;",
+    "select_profile_user" => "select
+          u.username,
+          u.created,
+          u.bio,
+          c.flag_filename,
+          o.org_id,
+          o.name as org_name,
+          c.country_id,
+          c.name as country_name,
+          u.email,
+          u.activation_code,
+          r.rank, r.rank_change,
+          r.skill, r.skill_change,
+          r.mu, r.mu_change,
+          r.sigma, r.sigma_change
+        from
+          user u
+          left outer join ranking r
+          	on u.user_id = r.user_id and r.latest = 1
+          left outer join organization o on o.org_id = u.org_id
+          left outer join country c on c.country_id = u.country_id
+        where
+          u.user_id = %s"
 );
 
 ?>

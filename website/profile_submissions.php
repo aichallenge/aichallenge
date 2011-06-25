@@ -1,6 +1,7 @@
 <?php
 include 'header.php';
-include_once 'profile_submissions_widget.php';
+require_once('profile_submissions_widget.php');
+require_once('mysql_login.php');
 
 $user_id = $_GET["user"];
 if(!filter_var($user_id, FILTER_VALIDATE_INT)) {
@@ -12,7 +13,7 @@ if(!filter_var($page, FILTER_VALIDATE_INT)) {
     $page = 1;
 }
 
-$query = "select u.username from user u where u.user_id = '$user_id' limit 1";
+$query = "select u.username from user u where u.user_id = $user_id limit 1";
 $username = mysql_fetch_object(mysql_query($query))->username;
 
 $username = htmlspecialchars($username);
