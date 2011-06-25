@@ -1429,6 +1429,30 @@ Visualizer.prototype.draw = function(time, tick) {
 		}
 	}
 	visibleAnts.length = n;
+	// helper function to draw items wrapped around the map borders
+	var drawWrapped = function(x, y, w, h, ctx, func, args) {
+		var delta_x, delta_y, tx, ty, sum;
+		if (x < 0 || y < 0 || x + w > colPixels || y + h > rowPixels) {
+			ctx.save();
+			delta_x = -Math.floor((x + w) / colPixels) * colPixels;
+			delta_y = -Math.floor((y + h) / rowPixels) * rowPixels;
+			ctx.translate(delta_x, delta_y);
+			for (ty = y + delta_y; ty < rowPixels; ty += rowPixels)
+			{
+				sum = 0; 
+				for (tx = x + delta_x; tx < colPixels; tx += colPixels)
+				{
+					func.apply(this, args);
+					ctx.translate(colPixels, 0);
+					sum -= colPixels;
+				}
+				ctx.translate(sum, rowPixels);
+			}
+			ctx.restore();
+		} else {
+			func.apply(this, args);
+		}
+	}
 	// draw the map background
 	var ctx = this.border.ctx;
 	for (dy = y; dy < this.loc.vis.h; dy += rowPixels) {
@@ -1584,6 +1608,13 @@ Visualizer.prototype.draw = function(time, tick) {
 		}
 	}
 	if (this.mouseOverVis) {
+		var drawEffectCircle = function(x, y, mx, my) {
+			ctx.beginPath();
+			ctx.arc(x, y, radius, 0, 2 * Math.PI, false);
+			ctx.moveTo(x, y);
+			ctx.lineTo(mx, my);
+			ctx.stroke();
+		}
 		for (key in drawStates) {
 			ctx.strokeStyle = '#' + key;
 			drawList = drawStates[key];
@@ -1593,11 +1624,9 @@ Visualizer.prototype.draw = function(time, tick) {
 				dx = ant['x'] - mx;
 				dy = ant['y'] - my;
 				if (radius * radius >= dx * dx + dy * dy) {
-					ctx.beginPath();
-					ctx.arc(ant['x'], ant['y'], radius, 0, 2 * Math.PI, false);
-					ctx.moveTo(ant['x'], ant['y']);
-					ctx.lineTo(mx, my);
-					ctx.stroke();
+					drawWrapped(ant['x'] - radius, ant['y'] - radius,
+						2 * radius, 2 * radius,
+						ctx, drawEffectCircle, [ant['x'], ant['y'], mx, my]);
 				}
 			}
 		}
