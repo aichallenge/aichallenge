@@ -605,9 +605,7 @@ def main(argv):
                 except:
                     log.warning("Last game result file can't be read")
             if result != None:
-                if worker.cloud.post_result('api_game_result', result):
-                    os.remove('last_game.json')
-                else:
+                if not worker.cloud.post_result('api_game_result', result):
                     return False
             else:
                 os.remove('last_game.json')
