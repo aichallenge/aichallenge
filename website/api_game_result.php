@@ -14,6 +14,8 @@ $gamedata = json_decode($json_string);
 if ($gamedata == null) {
     api_log("Did not recieve post data for game result as proper json.");
 } else {
+    // always return received hash so worker can move on to next task
+    echo json_encode(array( "hash" => $json_hash ));
     // confirm matchup_id
     $confirm_result = contest_query("select_matchup_confirm",
                                     $gamedata->matchup_id);
@@ -126,7 +128,6 @@ if ($gamedata == null) {
             fwrite($replay_file, gzencode(json_encode($gamedata), 9));
             fclose($replay_file);
             chmod($replay_filename, 0664);
-            echo json_encode(array( "hash" => $json_hash ));
             // mysql_query("COMMIT;");
             // update trueskill
             $cmd = "python " . $server_info["repo_path"] . "/manager/manager.py -g " . $game_id;
