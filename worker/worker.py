@@ -518,9 +518,7 @@ class Worker:
                     try:
                         if not self.compile(submission_id, True):
                             self.clean_download(submission_id)
-                            return False
-                        else:
-                            return True
+                        return True
                     except Exception:
                         log.error(traceback.format_exc())
                         self.clean_download(submission_id)
@@ -607,9 +605,7 @@ def main(argv):
                 except:
                     log.warning("Last game result file can't be read")
             if result != None:
-                if worker.cloud.post_result('api_game_result', result):
-                    os.remove('last_game.json')
-                else:
+                if not worker.cloud.post_result('api_game_result', result):
                     return False
             else:
                 os.remove('last_game.json')

@@ -1429,6 +1429,30 @@ Visualizer.prototype.draw = function(time, tick) {
 		}
 	}
 	visibleAnts.length = n;
+	// helper function to draw items wrapped around the map borders
+	var drawWrapped = function(x, y, w, h, ctx, func, args) {
+		var delta_x, delta_y, tx, ty, sum;
+		if (x < 0 || y < 0 || x + w > colPixels || y + h > rowPixels) {
+			ctx.save();
+			delta_x = -Math.floor((x + w) / colPixels) * colPixels;
+			delta_y = -Math.floor((y + h) / rowPixels) * rowPixels;
+			ctx.translate(delta_x, delta_y);
+			for (ty = y + delta_y; ty < rowPixels; ty += rowPixels)
+			{
+				sum = 0; 
+				for (tx = x + delta_x; tx < colPixels; tx += colPixels)
+				{
+					func.apply(this, args);
+					ctx.translate(colPixels, 0);
+					sum -= colPixels;
+				}
+				ctx.translate(sum, rowPixels);
+			}
+			ctx.restore();
+		} else {
+			func.apply(this, args);
+		}
+	}
 	// draw the map background
 	var ctx = this.border.ctx;
 	for (dy = y; dy < this.loc.vis.h; dy += rowPixels) {
@@ -1565,25 +1589,35 @@ Visualizer.prototype.draw = function(time, tick) {
 				if (ant2['owner'] !== undefined && ant1['owner'] !== ant2['owner']) {
 					dx = ant1.baseX - ant2.baseX;
 					dy = ant1.baseY - ant2.baseY;
-					dx = (2 * dx > +this.replay.cols) ? dx - this.replay.cols : (2 * dx < -this.replay.cols) ? this.replay.cols - dx : dx;
-					dy = (2 * dy > +this.replay.rows) ? dy - this.replay.rows : (2 * dy < -this.replay.rows) ? this.replay.rows - dy : dy;
+					dx -= (Math.floor(dx / this.replay.cols - 0.5) + 1) * this.replay.cols;
+					dy -= (Math.floor(dy / this.replay.rows - 0.5) + 1) * this.replay.rows;
 					if (dx * dx + dy * dy <= this.replay.meta['replaydata']['attackradius2']) {
-						ctx.beginPath();
-						ctx.moveTo(ant1['x'], ant1['y']);
-						ctx.lineTo(ant1['x'] - dx * halfScale, ant1['y'] - dy * halfScale);
-						ctx.strokeStyle = this.replay.htmlPlayerColors[ant2['owner']];
-						ctx.stroke();
-						ctx.beginPath();
-						ctx.moveTo(ant2['x'], ant2['y']);
-						ctx.lineTo(ant2['x'] + dx * halfScale, ant2['y'] + dy * halfScale);
-						ctx.strokeStyle = this.replay.htmlPlayerColors[ant1['owner']];
-						ctx.stroke();
+						var allAnts = this.replay.meta['replaydata']['ants'];
+						if (allAnts[ant1['id']][3] + 0.5 <= time && allAnts[ant2['id']][3] + 0.5 <= time) {
+							ctx.beginPath();
+							ctx.moveTo(ant1['x'], ant1['y']);
+							ctx.lineTo(ant1['x'] - dx * halfScale, ant1['y'] - dy * halfScale);
+							ctx.strokeStyle = this.replay.htmlPlayerColors[ant2['owner']];
+							ctx.stroke();
+							ctx.beginPath();
+							ctx.moveTo(ant2['x'], ant2['y']);
+							ctx.lineTo(ant2['x'] + dx * halfScale, ant2['y'] + dy * halfScale);
+							ctx.strokeStyle = this.replay.htmlPlayerColors[ant1['owner']];
+							ctx.stroke();
+						}
 					}
 				}
 			}
 		}
 	}
 	if (this.mouseOverVis) {
+		var drawEffectCircle = function(x, y, mx, my) {
+			ctx.beginPath();
+			ctx.arc(x, y, radius, 0, 2 * Math.PI, false);
+			ctx.moveTo(x, y);
+			ctx.lineTo(mx, my);
+			ctx.stroke();
+		}
 		for (key in drawStates) {
 			ctx.strokeStyle = '#' + key;
 			drawList = drawStates[key];
@@ -1593,11 +1627,9 @@ Visualizer.prototype.draw = function(time, tick) {
 				dx = ant['x'] - mx;
 				dy = ant['y'] - my;
 				if (radius * radius >= dx * dx + dy * dy) {
-					ctx.beginPath();
-					ctx.arc(ant['x'], ant['y'], radius, 0, 2 * Math.PI, false);
-					ctx.moveTo(ant['x'], ant['y']);
-					ctx.lineTo(mx, my);
-					ctx.stroke();
+					drawWrapped(ant['x'] - radius, ant['y'] - radius,
+						2 * radius, 2 * radius,
+						ctx, drawEffectCircle, [ant['x'], ant['y'], mx, my]);
 				}
 			}
 		}
