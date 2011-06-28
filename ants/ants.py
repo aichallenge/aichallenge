@@ -1,13 +1,13 @@
 #!/usr/bin/env python
 from random import randrange, choice, shuffle, randint, seed
 from math import sqrt
-import os
 from collections import deque, defaultdict, OrderedDict
 from fractions import Fraction
 import operator
 import string
 from game import Game
 from sys import maxint
+from copy import deepcopy
 
 ANTS = 0
 LAND = -1
@@ -104,7 +104,7 @@ class Ants(Game):
         self.land_area = self.height*self.width - len(map_data['water'])
 
         # initialise map
-        self.map = [[LAND]*self.width for i in range(self.height)]
+        self.map = [[LAND]*self.width for _ in range(self.height)]
 
         # initialise water
         for row, col in map_data['water']:
@@ -120,7 +120,7 @@ class Ants(Game):
             self.add_food(loc)
 
         # track which food has been seen by each player
-        self.seen_food = [set() for i in range(self.num_players)]
+        self.seen_food = [set() for _ in range(self.num_players)]
 
         # used to remember where the ants started
         self.initial_ant_list = sorted(self.current_ants.values(), key=operator.attrgetter('owner'))
@@ -130,7 +130,7 @@ class Ants(Game):
         self.offsets_cache = {}
 
         # used to track dead players, ants may still exist, but order are not processed
-        self.killed = [False for i in range(self.num_players)]
+        self.killed = [False for _ in range(self.num_players)]
 
         # used to give a different ordering of players to each player
         #   initialised to ensure that each player thinks they are player 0
@@ -141,7 +141,7 @@ class Ants(Game):
         # ants and food will reset spots so a second land entry will be sent
         self.revealed = [[[False for col in range(self.width)]
                           for row in range(self.height)]
-                         for p in range(self.num_players)]
+                         for _ in range(self.num_players)]
         # used to track what a player can see
         self.init_vision()
 
@@ -260,8 +260,8 @@ class Ants(Game):
 
         # create vision arrays
         self.vision = []
-        for p in range(self.num_players):
-            self.vision.append([[0]*self.width for row in range(self.height)])
+        for _ in range(self.num_players):
+            self.vision.append([[0]*self.width for __ in range(self.height)])
 
         # initialise the data based on the initial ants
         self.update_vision()
@@ -556,7 +556,7 @@ class Ants(Game):
         # determine the direction that each ant moves
         #  (holding any ants that don't have orders)
         move_direction = {}
-        for player, orders in enumerate(self.orders):
+        for orders in self.orders:
             for loc, direction in orders:
                 move_direction[self.current_ants[loc]] = direction
         for ant in self.current_ants.values():
@@ -931,8 +931,8 @@ class Ants(Game):
 
     def do_food_random(self, amount=1):
         """ Place food randomly on the map """
-        for f in range(amount*self.num_players):
-            for t in range(10):
+        for _ in range(amount*self.num_players):
+            for __ in range(10):
                 row = randrange(self.height)
                 col = randrange(self.width)
                 if self.map[row][col] == LAND:
@@ -948,7 +948,7 @@ class Ants(Game):
             If the spot is not land, find the closest land to that spot and
               place the food there.
         """
-        for f in range(amount):
+        for _ in range(amount):
             dr = -self.height//4 + randrange(self.height//2)
             dc = -self.width//4  + randrange(self.width//2)
             for ant in self.initial_ant_list: # assumes one ant per player
@@ -965,10 +965,10 @@ class Ants(Game):
               the start of the game.
             Place food evenly into each space.
         """
-        for f in range(amount):
+        for _ in range(amount):
             for p in range(self.num_players):
                 squares = self.initial_access_map[p]
-                for t in range(10):
+                for __ in range(10):
                     row, col = choice(squares)
                     if self.map[row][col] == LAND:
                         self.add_food((row, col))
@@ -987,7 +987,7 @@ class Ants(Game):
             if not hasattr(self, 'pending_food'):
                 self.pending_food = defaultdict(int)
         # increment food counter for food spawning locations
-        for f in range(amount):
+        for _ in range(amount):
             s = self.food_sets_visible.pop()
             # if we finished one rotation, shuffle for the next
             if s == None:
@@ -1029,7 +1029,7 @@ class Ants(Game):
                 self.pending_food = defaultdict(int)
 
         # increment food counter for food spawning locations
-        for f in range(amount):
+        for _ in range(amount):
             s = self.food_sets.pop()
             # if we finished one rotation, shuffle for the next
             if s == None:
@@ -1051,6 +1051,119 @@ class Ants(Game):
                 if not self.pending_food[loc]:
                     del self.pending_food[loc]
 
+    def offset_aim(self, offset, aim):
+        """ Return proper offset given an orientation
+        """        
+        # eight possible orientations
+        row, col = offset
+        if aim == 0:
+            return offset
+        elif aim == 1:
+            return -row, col
+        elif aim == 2:
+            return row, -col
+        elif aim == 3:
+            return -row, -col
+        elif aim == 4:
+            return col, row
+        elif aim == 5:
+            return -col, row
+        elif aim == 6:
+            return col, -row
+        elif aim == 7:
+            return -col, -row
+
+    def offset_dest(self, loc, offset):
+        'calculate a new location given the direction and wrap correctly'
+        row, col = loc
+        d_row, d_col = offset
+        return ((row + d_row) % self.height, (col + d_col) % self.width)        
+        
+    
+    def get_map_symmetry(self):
+        """ Get orientation for each starting ant
+        """        
+
+        def map_similar(loc1, loc2, aim, player):
+            """ find if map is similar given loc1 aim of 0 and loc2 ant of player
+            """
+            similar = True
+            #map0 = ''
+            #map1 = ''
+            #map = ''
+            enemy_map = {}
+            for row in range(self.height):
+                #map += map0 + ' ' + map1 + '\n'
+                #map0 = ''
+                #map1 = ''
+                for col in range(self.width):
+                    # player 0
+                    row0, col0 = self.offset_dest(loc1, (row, col))
+                    # next player
+                    row1, col1 = self.offset_dest(loc2, self.offset_aim((row, col), aim))
+                    # compare locations
+                    ilk0 = self.map[row0][col0]
+                    ilk1 = self.map[row1][col1]
+                    #map0 += MAP_RENDER[ilk0]
+                    #map1 += MAP_RENDER[ilk1]
+                    if ilk0 == 0 and ilk1 != player:
+                        # friendly ant not in same location
+                        similar = False
+                    elif ilk0 > 0 and (ilk1 < 0 or ilk1 == player):
+                        # enemy ant not in same location
+                        similar = False
+                    elif ilk0 < 0 and ilk1 != ilk0:
+                        # land or water not in same location
+                        similar = False
+                    if ilk0 >= 0:
+                        enemy_map[ilk0] = ilk1
+            #map += map0 + ' ' + map1 + '\n'
+            #if similar:
+            #    print 'orientation {0}\n{1}'.format(aim, map)
+            return similar, enemy_map
+                           
+        # get list of player 0 ants
+        ants = [ant for ant in self.initial_ant_list if ant.owner == 0]
+        # list of
+        #     list of tuples containing
+        #         location, aim, and enemy map dict
+        orientations = [[(ants[0].loc, 0, {i: i for i in range(self.num_players)})]]
+        for player in range(1, self.num_players):
+            player_ants = [ant for ant in self.initial_ant_list if ant.owner == player]
+            if len(player_ants) != len(ants):
+                raise Exception("Invalid map",
+                                "This map is not symmetric.  Player 0 has {0} ants while player {1} has {2} ants."
+                                .format(len(ants), player, len(player_ants)))
+            new_orientations = []
+            for player_ant in player_ants:
+                for aim in range(8):
+            #for player_ant, aim in product(player_ants, range(8)):
+                # check if map looks similar given the orientation
+                    similar, enemy_map = map_similar(ants[0].loc, player_ant.loc, aim, player)
+                    if similar:
+                        # produce valid combinations of orientation sets
+                        for ant_aims in orientations:
+                            new_ant_aims = deepcopy(ant_aims)
+                            new_ant_aims.append((player_ant.loc, aim, enemy_map))
+                            # orientation sets are valid if the enemy_maps values for each player are unique
+                            # if a dup occurs, the set length will be 1 less
+                            if not len(ant_aims) in [len(set(t))
+                                                     for t in zip(*[enemy_map.values()
+                                                                    for _, aim, enemy_map in new_ant_aims])]:
+                                new_orientations.append(new_ant_aims)
+                orientations = new_orientations
+#                print('='*20)
+#                for o in orientations:
+#                    print o
+#                    for p in o[1]:                        
+#                        print p
+            if len(orientations) == 0:
+                raise Exception("Invalid map",
+                                "This map is not symmetric. Player {0} does not have an orientation that matches player 0"
+                                .format(player))
+        # ensure types of ant aims in orientations are symmetric
+        return [orientation for orientation in orientations if len(set([len([aim for _, aim, enemy_map in orientation if aim == i]) for i in [aim for __, aim, enemy_map in orientation]])) == 1]
+    
     def get_symmetric_food_sets(self, starting=False):
         """ Split map into sets of squares
 
@@ -1059,6 +1172,9 @@ class Ants(Game):
               position.
             Assumes map is symmetric.
         """
+        if not hasattr(self, 'map_symmetry'):
+            self.map_symmetry = self.get_map_symmetry()
+
         ant1, ant2 = self.initial_ant_list[0:2] # assumed one ant per player
         row_t = ant1.loc[0] - ant2.loc[0]
         col_t = ant1.loc[1] - ant2.loc[1]
@@ -1168,9 +1284,9 @@ class Ants(Game):
         """ Called by engine at the start of the turn """
         self.turn += 1
         self.killed_ants = []
-        self.revealed_water = [[] for i in range(self.num_players)]
-        self.removed_food = [[] for i in range(self.num_players)]
-        self.orders = [[] for i in range(self.num_players)]
+        self.revealed_water = [[] for _ in range(self.num_players)]
+        self.removed_food = [[] for _ in range(self.num_players)]
+        self.orders = [[] for _ in range(self.num_players)]
 
     def finish_turn(self):
         """ Called by engine at the end of the turn """
@@ -1322,8 +1438,8 @@ class Ants(Game):
 
             Used by engine to report stats
         """
-        ant_count = [0 for i in range(self.num_players+1)]
-        for loc, ant in self.current_ants.items():
+        ant_count = [0 for _ in range(self.num_players+1)]
+        for ant in self.current_ants.values():
             ant_count[ant.owner] += 1
         stats = OrderedDict()
         stats['ant_count'] = ant_count
@@ -1423,3 +1539,36 @@ class Food:
 
     def __str__(self):
         return '(%s, %s, %s)' % (self.loc, self.start_turn, self.end_turn)
+
+def test_symmetry():
+    import sys
+    if len(sys.argv) < 2:
+        map_file_name = 'maps/test_maps/sym_test_2.map'
+    else:
+        map_file_name = sys.argv[1]
+    with open(map_file_name, 'r') as f:
+        options = {'map': f.read(),
+                   'turns': 1,
+                   'loadtime': 1000,
+                   'turntime': 1000,
+                   'viewradius2': 77,
+                   'attackradius2': 5,
+                   'spawnradius2': 1 }
+    a = Ants(options)
+    ors = a.get_map_symmetry()
+    for ant_aims in ors:
+        fix = []
+        for loc, aim, enemy_map in ant_aims:
+            row, col = a.offset_dest(loc, a.offset_aim((1,2), aim))
+            fix.append(((row, col), a.map[row][col]))
+            a.map[row][col] = FOOD
+            print aim, enemy_map, loc
+        
+        for line in a.get_map_output():
+            print line
+        print
+        for (row, col), ilk in reversed(fix):
+            a.map[row][col] = ilk
+    
+if __name__ == '__main__':
+    test_symmetry()
