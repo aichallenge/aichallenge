@@ -83,6 +83,7 @@ class Ants(Game):
 
         self.all_food = []     # all food created
         self.current_food = {} # food currently in game
+        self.pending_food = defaultdict(int)
 
         # initalise scores
         self.score = [Fraction(0,1)]*self.num_players
@@ -927,17 +928,19 @@ class Ants(Game):
 
     def do_food_none(self, amount=0):
         """ Place no food """
-        pass
+        return amount
 
     def do_food_random(self, amount=1):
         """ Place food randomly on the map """
-        for _ in range(amount*self.num_players):
-            for __ in range(10):
+        for _ in range(amount):
+            while True:
                 row = randrange(self.height)
                 col = randrange(self.width)
                 if self.map[row][col] == LAND:
-                    self.add_food((row, col))
+                    self.pending_food[(row, col)] += 1
                     break
+        self.place_food()
+        return 0
 
     def do_food_offset(self, amount=1):
         """ Place food at the same offset from each player's start position
@@ -948,7 +951,8 @@ class Ants(Game):
             If the spot is not land, find the closest land to that spot and
               place the food there.
         """
-        for _ in range(amount):
+        left_over = amount % len(self.initial_ant_list)
+        for _ in range(amount//len(self.initial_ant_list)):
             dr = -self.height//4 + randrange(self.height//2)
             dc = -self.width//4  + randrange(self.width//2)
             for ant in self.initial_ant_list: # assumes one ant per player
@@ -956,7 +960,9 @@ class Ants(Game):
                 col = (ant.loc[1]+dc)%self.width
                 coord = self.find_closest_land((row, col))
                 if coord:
-                    self.add_food(coord)
+                    self.pending_food[coord] += 1
+        self.place_food()
+        return left_over
 
     def do_food_sections(self, amount=1):
         """ Place food randomly in each player's start section
@@ -965,15 +971,16 @@ class Ants(Game):
               the start of the game.
             Place food evenly into each space.
         """
-        for _ in range(amount):
+        left_over = amount % self.num_players
+        for _ in range(amount//self.num_players):
             for p in range(self.num_players):
                 squares = self.initial_access_map[p]
-                for __ in range(10):
-                    row, col = choice(squares)
-                    if self.map[row][col] == LAND:
-                        self.add_food((row, col))
-                        break
-
+                row, col = choice(squares)
+                if self.map[row][col] == LAND:
+                    self.pending_food[(row, col)] += 1
+        self.place_food()
+        return left_over
+    
     def do_food_visible(self, amount=1):
         """ Place food in vison of starting spots """
         # if this is the first time calling this function then
@@ -982,32 +989,27 @@ class Ants(Game):
             self.food_sets_visible = deque(self.get_symmetric_food_sets(True))
             # add a sentinal so we know when to shuffle
             self.food_sets_visible.append(None)
-
-            # counter for food locations
-            if not hasattr(self, 'pending_food'):
-                self.pending_food = defaultdict(int)
-        # increment food counter for food spawning locations
-        for _ in range(amount):
+    
+        # place food while next food set is <= left over amount
+        while True:
             s = self.food_sets_visible.pop()
             # if we finished one rotation, shuffle for the next
             if s == None:
                 shuffle(self.food_sets_visible)
                 self.food_sets_visible.appendleft(None)
                 s = self.food_sets_visible.pop()
-            self.food_sets_visible.appendleft(s)
 
-            for loc in s:
-                self.pending_food[loc] += 1
+            if len(s) > amount:
+                # reached food limit, save set, place food and return left over
+                self.food_sets_visible.append(s)
+                self.place_food()
+                return amount
+            else:
+                amount -= len(s)                
+                self.food_sets_visible.appendleft(s)
+                for loc in s:
+                    self.pending_food[loc] += 1
 
-        # place food in scheduled locations if they are free
-        for loc in self.pending_food.keys():
-            if self.map[loc[0]][loc[1]] == LAND:
-                self.add_food(loc)
-                self.pending_food[loc] -= 1
-
-                # remove from queue if the count reaches 0
-                if not self.pending_food[loc]:
-                    del self.pending_food[loc]
 
     def do_food_symmetric(self, amount=1):
         """ Place food in the same relation player start positions.
@@ -1024,24 +1026,28 @@ class Ants(Game):
             # add a sentinal so we know when to shuffle
             self.food_sets.append(None)
 
-            # counter for food locations
-            if not hasattr(self, 'pending_food'):
-                self.pending_food = defaultdict(int)
-
-        # increment food counter for food spawning locations
-        for _ in range(amount):
+        # place food while next food set is <= left over amount
+        while True:
             s = self.food_sets.pop()
             # if we finished one rotation, shuffle for the next
             if s == None:
                 shuffle(self.food_sets)
                 self.food_sets.appendleft(None)
                 s = self.food_sets.pop()
-            self.food_sets.appendleft(s)
-
-            for loc in s:
-                self.pending_food[loc] += 1
-
-        # place food in scheduled locations if they are free
+                
+            if len(s) > amount:
+                self.food_sets.append(s)
+                self.place_food()
+                return amount
+            else:
+                amount -= len(s)
+                self.food_sets.appendleft(s)    
+                for loc in s:
+                    self.pending_food[loc] += 1
+        
+    def place_food(self):
+        """ Place food in scheduled locations if they are free
+        """
         for loc in self.pending_food.keys():
             if self.map[loc[0]][loc[1]] == LAND:
                 self.add_food(loc)
@@ -1071,56 +1077,36 @@ class Ants(Game):
         elif aim == 6:
             return col, -row
         elif aim == 7:
-            return -col, -row
+            return -col, -row    
 
-    def offset_dest(self, loc, offset):
-        'calculate a new location given the direction and wrap correctly'
-        row, col = loc
-        d_row, d_col = offset
-        return ((row + d_row) % self.height, (col + d_col) % self.width)        
+    def map_similar(self, loc1, loc2, aim, player):
+        """ find if map is similar given loc1 aim of 0 and loc2 ant of player
+            return a map of translated enemy locations
+        """
+        enemy_map = {}
+        for row in range(self.height):
+            for col in range(self.width):
+                row0, col0 = self.destination(loc1, (row, col))
+                row1, col1 = self.destination(loc2, self.offset_aim((row, col), aim))
+                # compare locations
+                ilk0 = self.map[row0][col0]
+                ilk1 = self.map[row1][col1]
+                if ilk0 == 0 and ilk1 != player:
+                    # friendly ant not in same location
+                    return None
+                elif ilk0 > 0 and (ilk1 < 0 or ilk1 == player):
+                    # enemy ant not in same location
+                    return None
+                elif ilk0 < 0 and ilk1 != ilk0:
+                    # land or water not in same location
+                    return None
+                if ilk0 >= 0 and enemy_map != None:
+                    enemy_map[ilk0] = ilk1
+        return enemy_map
         
-    
     def get_map_symmetry(self):
         """ Get orientation for each starting ant
-        """        
-
-        def map_similar(loc1, loc2, aim, player):
-            """ find if map is similar given loc1 aim of 0 and loc2 ant of player
-            """
-            similar = True
-            #map0 = ''
-            #map1 = ''
-            #map = ''
-            enemy_map = {}
-            for row in range(self.height):
-                #map += map0 + ' ' + map1 + '\n'
-                #map0 = ''
-                #map1 = ''
-                for col in range(self.width):
-                    # player 0
-                    row0, col0 = self.offset_dest(loc1, (row, col))
-                    # next player
-                    row1, col1 = self.offset_dest(loc2, self.offset_aim((row, col), aim))
-                    # compare locations
-                    ilk0 = self.map[row0][col0]
-                    ilk1 = self.map[row1][col1]
-                    #map0 += MAP_RENDER[ilk0]
-                    #map1 += MAP_RENDER[ilk1]
-                    if ilk0 == 0 and ilk1 != player:
-                        # friendly ant not in same location
-                        similar = False
-                    elif ilk0 > 0 and (ilk1 < 0 or ilk1 == player):
-                        # enemy ant not in same location
-                        similar = False
-                    elif ilk0 < 0 and ilk1 != ilk0:
-                        # land or water not in same location
-                        similar = False
-                    if ilk0 >= 0:
-                        enemy_map[ilk0] = ilk1
-            #map += map0 + ' ' + map1 + '\n'
-            #if similar:
-            #    print 'orientation {0}\n{1}'.format(aim, map)
-            return similar, enemy_map
+        """
                            
         # get list of player 0 ants
         ants = [ant for ant in self.initial_ant_list if ant.owner == 0]
@@ -1137,32 +1123,39 @@ class Ants(Game):
             new_orientations = []
             for player_ant in player_ants:
                 for aim in range(8):
-            #for player_ant, aim in product(player_ants, range(8)):
                 # check if map looks similar given the orientation
-                    similar, enemy_map = map_similar(ants[0].loc, player_ant.loc, aim, player)
-                    if similar:
-                        # produce valid combinations of orientation sets
+                    enemy_map = self.map_similar(ants[0].loc, player_ant.loc, aim, player)
+                    if enemy_map != None:
+                        # produce combinations of orientation sets
                         for ant_aims in orientations:
                             new_ant_aims = deepcopy(ant_aims)
                             new_ant_aims.append((player_ant.loc, aim, enemy_map))
-                            # orientation sets are valid if the enemy_maps values for each player are unique
-                            # if a dup occurs, the set length will be 1 less
-                            if not len(ant_aims) in [len(set(t))
-                                                     for t in zip(*[enemy_map.values()
-                                                                    for _, aim, enemy_map in new_ant_aims])]:
-                                new_orientations.append(new_ant_aims)
-                orientations = new_orientations
-#                print('='*20)
-#                for o in orientations:
-#                    print o
-#                    for p in o[1]:                        
-#                        print p
+                            new_orientations.append(new_ant_aims)
+            orientations = new_orientations
             if len(orientations) == 0:
                 raise Exception("Invalid map",
                                 "This map is not symmetric. Player {0} does not have an orientation that matches player 0"
                                 .format(player))
         # ensure types of ant aims in orientations are symmetric
-        return [orientation for orientation in orientations if len(set([len([aim for _, aim, enemy_map in orientation if aim == i]) for i in [aim for __, aim, enemy_map in orientation]])) == 1]
+        # place food set and double check symmetry
+        valid_orientations = []
+        for ant_aims in orientations:
+            fix = []
+            for loc, aim, enemy_map in ant_aims:
+                row, col = self.destination(loc, self.offset_aim((1,2), aim))
+                fix.append(((row, col), self.map[row][col]))
+                self.map[row][col] = FOOD
+            for loc, aim, enemy_map in ant_aims:
+                if self.map_similar(ant_aims[0][0], loc, aim, enemy_map[0]) == None:
+                    break
+            else:
+                valid_orientations.append(ant_aims)
+            for (row, col), ilk in reversed(fix):
+                self.map[row][col] = ilk
+        if len(valid_orientations) == 0:
+            raise Exception("Invalid map",
+                            "There are no valid orientation sets")
+        return valid_orientations
     
     def get_symmetric_food_sets(self, starting=False):
         """ Split map into sets of squares
@@ -1170,18 +1163,24 @@ class Ants(Game):
             Each set contains self.num_players points where each point
               is at a consistent offset from each player's starting
               position.
+            A square may be the same distance to more than one player
+                which will cause the set to be smaller than the number of players
             Assumes map is symmetric.
         """
         if not hasattr(self, 'map_symmetry'):
-            self.map_symmetry = self.get_map_symmetry()
+            # randomly choose one symmetry
+            # get_map_symmetry will raise an exception for non-symmetric maps
+            self.map_symmetry = choice(self.get_map_symmetry())
 
-        ant1, ant2 = self.initial_ant_list[0:2] # assumed one ant per player
-        row_t = ant1.loc[0] - ant2.loc[0]
-        col_t = ant1.loc[1] - ant2.loc[1]
+        
         food_sets = []
+        # start with only land squares
         visited = [[False for col in range(self.width)]
-                          for row in range(self.height)]
-
+                          for row in range(self.height)]                    
+        
+        # aim for ant 0 will always be 0
+        ant0 = self.map_symmetry[0][0]
+        
         for row, squares in enumerate(visited):
             for col, square in enumerate(squares):
                 # if this square has been visited then we don't need to process
@@ -1194,29 +1193,25 @@ class Ants(Game):
                         if self.distance(ant.loc, (row, col)) <= self.viewradius:
                             break
                     else:
+                        # square not close enough to any starting ant
                         continue
 
-                # possible food locations
-                locations = [
-                    self.destination((row, col), (n*row_t, n*col_t))
-                    for n in range(self.num_players)
-                ]
-
-                # set locations to visited
-                for loc in locations:
-                    # we should not have visited these locations yet
-                    # this also catches duplicates in the current list
-                    if visited[loc[0]][loc[1]]:
-                        if starting:
-                            break # prevent starting food from breaking on asymmetric maps
-                        else:
-                            raise Exception("Invalid map",
-                                            "This map does not support symmetric food placement")
-                    visited[loc[0]][loc[1]] = True
-                else:
-                    # we only care about sets where none of the locations hit water
-                    if all(self.map[loc[0]][loc[1]] != WATER for loc in locations):
-                        food_sets.append(locations)
+                # offset to ant 0
+                o_row, o_col = row - ant0[0], col - ant0[1]
+                # set of unique food locations based on offsets from each starting ant
+                locations = set([
+                    self.destination(loc, self.offset_aim((o_row, o_col), aim))
+                    for loc, aim, _ in self.map_symmetry
+                ])
+                
+                # duplicates can happen if 2 ants are the same distance from 1 square
+                # the food set will be smaller and food spawning takes this into account
+                # prevent starting food from being equidistant to ants
+                if not starting or len(locations) == self.num_players:
+                    # set locations to visited
+                    for loc in locations:
+                        visited[loc[0]][loc[1]] = True
+                    food_sets.append(locations)
 
         return food_sets
 
@@ -1247,9 +1242,9 @@ class Ants(Game):
         """ Called by engine at the start of the game """
         if self.do_food != self.do_food_none:
             self.game_started = True
-            starting_food = ((self.land_area // self.food_start) // self.num_players
-                             - self.food_visible)
-            self.do_food_visible(self.food_visible)
+            starting_food = ((self.land_area // self.food_start)
+                             - self.food_visible * self.num_players)
+            self.do_food_visible(self.food_visible * self.num_players)
             self.do_food(starting_food)
 
     def finish_game(self):
@@ -1299,9 +1294,9 @@ class Ants(Game):
         self.do_attack()
         self.do_spawn()
         self.food_extra += Fraction(self.food_rate * self.num_players, self.food_turn)
-        food_now = self.food_extra // self.num_players
-        self.food_extra %= self.num_players
-        self.do_food(food_now)
+        food_now = int(self.food_extra)
+        left_over = self.do_food(food_now)
+        self.food_extra -= (food_now - left_over)
 
         for i, s in enumerate(self.score):
             if i in was_alive:
@@ -1542,6 +1537,7 @@ class Food:
 
 def test_symmetry():
     import sys
+    import visualizer.visualize_locally
     if len(sys.argv) < 2:
         map_file_name = 'maps/test_maps/sym_test_2.map'
     else:
@@ -1556,19 +1552,38 @@ def test_symmetry():
                    'spawnradius2': 1 }
     a = Ants(options)
     ors = a.get_map_symmetry()
-    for ant_aims in ors:
+    for o_count, ant_aims in enumerate(ors):
+        print '=== orientation {0} '.format(o_count) + '=' * 30
         fix = []
+        lines = ['' for _ in range(a.height)]
         for loc, aim, enemy_map in ant_aims:
-            row, col = a.offset_dest(loc, a.offset_aim((1,2), aim))
+            row, col = a.destination(loc, a.offset_aim((1,2), aim))
             fix.append(((row, col), a.map[row][col]))
             a.map[row][col] = FOOD
+        for loc, aim, enemy_map in ant_aims:
             print aim, enemy_map, loc
-        
-        for line in a.get_map_output():
-            print line
-        print
-        for (row, col), ilk in reversed(fix):
-            a.map[row][col] = ilk
-    
+            for row in range(a.height):
+                lines[row] += ' '
+                for col in range(a.width):
+                    row1, col1 = a.destination(loc, a.offset_aim((row, col), aim))
+                    lines[row] += MAP_RENDER[a.map[row1][col1]]
+        #for line in lines:
+        #    print line
+        #print
+        # write test file
+        if len(sys.argv) > 2:
+            test_map_name = map_file_name + ''.join([str(aim) for _, aim, __ in ant_aims]) + '.replay'
+            with open(test_map_name, 'w') as f:
+                f.write("players {0}\n".format(a.num_players))
+                f.write("rows {0}\n".format(a.height))
+                f.write("cols {0}\n".format(a.width))
+                for row in range(a.height):
+                    f.write("m ")
+                    for col in range(a.width):
+                        f.write(MAP_RENDER[a.map[row][col]])
+                    f.write("\n")
+            visualizer.visualize_locally.launch(test_map_name)    
+            for (row, col), ilk in reversed(fix):
+                a.map[row][col] = ilk
 if __name__ == '__main__':
     test_symmetry()

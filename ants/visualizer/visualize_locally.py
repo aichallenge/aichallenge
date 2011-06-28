@@ -26,8 +26,14 @@ def generate(data, generated_path):
     newline_re = re.compile("\s", re.MULTILINE)
     insert_re = re.compile(r"## REPLAY PLACEHOLDER ##")
     path_re = re.compile(r"## PATH PLACEHOLDER ##")
-    data = quote_re.sub(r"\\\\'", data)
-    data = newline_re.sub("", data)
+    
+    try:
+        json.loads(data)
+        data = quote_re.sub(r"\\\\'", data)
+        data = newline_re.sub("", data)
+    except ValueError:
+        data = data.replace('\n', '\\\\n')
+
     content = path_re.sub(mod_path, content)
     content = insert_re.sub(data, content)   
        

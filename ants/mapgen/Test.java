@@ -5,7 +5,7 @@ public class Test {
 
         MapGenerator map = new MapGenerator();
         int[][] res = map.generateMap();
-	print(res);
+        map.printMap(res);
     }
 
     public static void print(int[][] map) {

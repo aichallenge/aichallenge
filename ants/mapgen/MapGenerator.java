@@ -62,21 +62,62 @@ public class MapGenerator {
      * Translate a map into a string
      */
     public String map2String(int[][] map) {
-        char ant = 'a';
+        int ant = 0;
+        
+        // This is totaly the wrong place to put this, but it's a quick ahck
+        char[][] antss = {
+        		// 8 player
+        		{ 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h' },
+        		{ 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h' },
+        		{ 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h' },
+        		// 4 player
+        		{ 'a', 'a', 'b', 'c', 'b', 'c', 'd', 'd' },
+        		{ 'a', 'b', 'c', 'c', 'd', 'd', 'a', 'b' },
+        		{ 'a', 'b', 'a', 'b', 'c', 'd', 'c', 'd' },
+        		// 2 player
+        		{ 'a', 'a', 'a', 'a', 'b', 'b', 'b', 'b' },
+        		{ 'a', 'b', 'a', 'b', 'b', 'a', 'b', 'a' },
+        		{ 'a', 'b', 'b', 'a', 'a', 'b', 'b', 'a' }
+        };
+        int player_count = 0;
+        int sym = rnd.nextInt(9);
+        char[] ants = antss[sym];
+        switch (sym) {
+        // 8 players
+        case 0:
+        case 1:
+        case 2:
+        	player_count = 8;
+        	break;
+        // 4 players
+        case 3:
+        case 4:
+        case 5:
+        	player_count = 4;
+        	break;
+        // 2 players
+        case 6:
+        case 7:
+        case 8:
+        	player_count = 2;
+        	break;        	
+        }
         StringBuilder sb = new StringBuilder();
-
+        sb.append("players " + Integer.toString(nbrOfPlayers) + "\n");
+        sb.append("rows " + Integer.toString(map.length) + "\n");
+        sb.append("cols " + Integer.toString(map.length) + "\n");
         for (int r = 0; r < map.length; r++) {
             sb.append(ROW_PREFIX);
             for (int c = 0; c < map[0].length; c++) {
                 switch (map[r][c]) {
                     case WATER_TILE:
-                        sb.append(TILE_PREFIX + ".");
-                        break;
-                    case LAND_TILE:
                         sb.append(TILE_PREFIX + "%");
                         break;
+                    case LAND_TILE:
+                        sb.append(TILE_PREFIX + ".");
+                        break;
                     case ANT_START_POS_TILE:
-                        sb.append(TILE_PREFIX + ant++);
+                        sb.append(TILE_PREFIX + ants[ant++]);
                         break;
                     case INVALID_TILE:
                         sb.append(TILE_PREFIX + " ");
