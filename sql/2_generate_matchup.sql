@@ -79,7 +79,7 @@ left outer join (
     from matchup m
     inner join matchup_player mp
         on m.matchup_id = mp.matchup_id
-    where m.deleted = 0
+    where m.deleted = 0 and (worker_id is null or worker_id > 0)
     group by m.map_id
 ) matchups
     on m.map_id = matchups.map_id

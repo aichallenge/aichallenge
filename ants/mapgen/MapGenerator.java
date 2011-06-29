@@ -103,7 +103,7 @@ public class MapGenerator {
         	break;        	
         }
         StringBuilder sb = new StringBuilder();
-        sb.append("players " + Integer.toString(nbrOfPlayers) + "\n");
+        sb.append("players " + Integer.toString(player_count) + "\n");
         sb.append("rows " + Integer.toString(map.length) + "\n");
         sb.append("cols " + Integer.toString(map.length) + "\n");
         for (int r = 0; r < map.length; r++) {
