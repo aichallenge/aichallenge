@@ -29,21 +29,23 @@ from
     -- inner join to ensure both user and submission record exists
     inner join user u
         on s.user_id = u.user_id
-    -- these 2 joins bring in the last game_player for a submission
+    -- these 3 joins bring in the last game_player and game for a submission
     left outer join (select submission_id, max(game_id) as game_id
                      from game_player
                      group by submission_id) gpmax
         on gpmax.submission_id = s.submission_id
     left outer join game_player gp
         on gp.submission_id = gpmax.submission_id
-        and gp.game_id = gpmax.game_id,    
+        and gp.game_id = gpmax.game_id
+    left outer join game g
+        on g.game_id = gpmax.game_ID,
     (select @count1 := 0) c1,
     (select @count2 := 0) c2
 where s.latest = 1
 -- ghost requirements
 or (
     -- can only be 48 hours old
-    s.timestamp > timestampadd(hour, -400, current_timestamp)
+    g.timestamp > timestampadd(hour, -48, current_timestamp)
     -- must have smaller sigma (more confident than current)
     and s.sigma = (select min(sigma)
                    from submission s2
