@@ -352,7 +352,7 @@ $contest_sql = array(
 	"select_in_game" => "select *
         from matchup_player
         where user_id = %s
-        and deleted = 0;",
+        and deleted = 0 and (worker_id > 0 or worker_id is null);",
     "select_profile_user" => "select
           u.username,
           u.created,
