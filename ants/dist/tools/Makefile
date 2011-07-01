@@ -20,6 +20,9 @@ tools/: ../../../ants
 	#copy engine tools
 	cp ../../../worker/sandbox.py tools/
 	cp ../../../worker/engine.py tools/
+	
+	#remove "dist/" or "dist\" from paths
+	sed -i 's/dist[/\]//g' tools/util/block_test.cmd tools/util/block_test.sh tools/play_one_game.cmd tools/play_one_game.sh
 
 clean:
 	-rm -Rf tools/
