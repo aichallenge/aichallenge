@@ -196,12 +196,71 @@ class Map(object):
                     map[col][row] = self.map[row][col]
             self.map = map
     
+    def tile(self, grid):
+        rows = len(self.map)
+        cols = len(self.map[0])
+        row_sym, col_sym = grid
+        
+        # select random mirroring
+        row_mirror = 0
+        if row_sym % 2 == 0:
+            #if row_sym % 4 == 0:
+            #    row_mirror = choice((0,4))
+            row_mirror = choice((row_mirror, 2))
+            row_mirror = 2
+            
+        col_mirror = 0
+        if col_sym % 2 == 0:
+            #if col_sym % 4 == 0:
+            #    col_mirror = choice((0,4))
+            col_mirror = choice((col_mirror, 2))
+            col_mirror = 2
+
+        # perform tiling
+        t_rows = rows * row_sym
+        t_cols = cols * col_sym
+        ant = 0
+        map = [[LAND]*t_cols for _ in range(t_rows)]
+        for t_row in range(t_rows):
+            for t_col in range(t_cols):
+                # detect grid location
+                g_row = t_row // rows
+                g_col = t_col // cols
+                if row_mirror == 2 and g_row % 2 == 1:
+                    row = rows - 1 - (t_row % rows)
+                else:
+                    row = t_row % rows
+                if col_mirror == 2 and g_col % 2 == 1:
+                    col = cols - 1 - (t_col % cols)
+                else:
+                    col = t_col % cols
+                try:
+                    map[t_row][t_col] = self.map[row][col]
+                except:
+                    print("issue")
+                if self.map[row][col] == ANTS:
+                    map[t_row][t_col] = ant
+                    ant += 1
+        self.map = map        
+    
+    def translate(self, offset):
+        d_row, d_col = offset
+        rows = len(self.map)
+        cols = len(self.map[0])
+        map = [[LAND] * cols for _ in range(rows)]
+        for row in range(rows):
+            for col in range(cols):
+                o_row = (d_row + row) % rows
+                o_col = (d_col + col) % cols
+                map[o_row][o_col] = self.map[row][col]
+        self.map = map
+    
     def allowable(self):
-        # all squares must be accessable from all other squares
+        # all squares must be accessible from all other squares
         # fill small areas can fix this
         areas = self.section(0)
         if len(areas) > 1:
-            return "Map not 100% accessable"
+            return "Map not 100% accessible"
         land_area = len(areas[0][0])
         
         # 66% of the map must not be blockable
