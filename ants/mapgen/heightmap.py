@@ -127,7 +127,6 @@ def main():
     
     # check that all land area is accessable
     while new_map.allowable() != None:
-        print(new_map.allowable())
         new_map.generate()
         
     new_map.toText()
