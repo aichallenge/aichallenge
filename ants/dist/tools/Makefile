@@ -1,5 +1,7 @@
 # Archive the starter packs
 
+export ANT_OPTS := -Xmx100m
+
 all: tools.zip
 
 tools.zip: ants/
