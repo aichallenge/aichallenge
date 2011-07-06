@@ -89,7 +89,7 @@
   
   <target name="html-visualizer" depends="load-properties" description="create a zip archive of the offline html visualizer files">
     <zip destfile="${html.zip}">
-      <fileset dir="." includes="copy_paste.html,replay.html.template,visualize_locally.py,${src.js}/**,${src.data}/**"/>
+      <fileset dir="." includes="copy_paste.html,replay.html.template,__init__.py,visualize_locally.py,${src.js}/**,${src.data}/**"/>
     </zip>
   </target>
   
