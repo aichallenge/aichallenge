@@ -64,7 +64,7 @@
     (if (message? :ready cur)
       info
       (let [[k v] (string/split cur #" ")
-            neue (assoc info (keyword k) (Integer. v))]
+            neue (assoc info (keyword k) (BigInteger. v))]
         (recur (read-line) neue)))))
 
 (defn- get-turn [msg]
