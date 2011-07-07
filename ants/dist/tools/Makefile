@@ -6,7 +6,7 @@ all: tools.zip
 
 tools.zip: ants/
 	zip -r tools.zip ants/ -x '*.sh'
-	tar -caf tools.tar.xz ants --exclude '*.cmd'
+	tar -caf tools.tar.bz2 ants --exclude '*.cmd'
 
 ants/: ../../../ants
 	# copy clean source tree of 'ants' over here
