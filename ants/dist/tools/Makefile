@@ -43,7 +43,7 @@ ants/: ../../../ants
 
 clean:
 	-rm -Rf ants/
-	-rm tools.zip
+	-rm -f tools.*
 
 install:
 	#Copy to website
