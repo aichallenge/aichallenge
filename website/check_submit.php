@@ -37,9 +37,11 @@ function upload_errors($errors) {
   } else {
     $filename = basename($_FILES['uploadedfile']['name']);
     if (!ends_with($filename, ".zip") &&
+        !ends_with($filename, ".tar.xz") &&
+        !ends_with($filename, ".tar.bz2") &&
         !ends_with($filename, ".tgz") &&
         !ends_with($filename, ".tar.gz")) {
-      $errors[] = "Invalid file type. Must be zip, tgz, or tar.gz";
+      $errors[] = "Invalid file type. Must be zip, tgz, tar.gz, tar.bz2, or tar.xz";
     }
   }
   return $errors;
