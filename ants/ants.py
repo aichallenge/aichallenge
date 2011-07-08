@@ -64,6 +64,7 @@ class Ants(Game):
             'support': self.do_attack_support,
             'damage':  self.do_attack_damage
         }.get(options.get('attack'), self.do_attack_focus)
+        self.kill_points = options.get('kill_points', 2)
 
         self.do_food = {
             'none':      self.do_food_none,
@@ -737,7 +738,7 @@ class Ants(Game):
         for ant in damage:
             if damage[ant] >= 1:
                 self.kill_ant(ant)
-                score = Fraction(1, len(nearby_enemies[ant]))
+                score = Fraction(self.kill_points, len(nearby_enemies[ant]))
                 for enemy in nearby_enemies[ant]:
                     self.score[enemy.owner] += score
 
@@ -771,7 +772,7 @@ class Ants(Game):
             self.kill_ant(ant)
             score_share = len(enemies)
             for enemy in enemies:
-                self.score[enemy.owner] += Fraction(1, score_share)
+                self.score[enemy.owner] += Fraction(self.kill_points, score_share)
 
     def do_attack_focus(self):
         """ Kill ants which are the most surrounded by enemies
@@ -806,7 +807,7 @@ class Ants(Game):
             self.kill_ant(ant)
             score_share = len(nearby_enemies[ant])
             for enemy in nearby_enemies[ant]:
-                self.score[enemy.owner] += Fraction(1, score_share)
+                self.score[enemy.owner] += Fraction(self.kill_points, score_share)
 
     def do_attack_closest(self):
         """ Iteratively kill neighboring groups of ants """
@@ -847,7 +848,7 @@ class Ants(Game):
                 if len(ant_group) > 1:
                     score_share = len(ant_group)
                     for ant in ant_group:
-                        self.score[ant.owner] += Fraction(1, score_share)
+                        self.score[ant.owner] += Fraction(self.kill_points, score_share)
                         self.kill_ant(ant)
 
     def destination(self, loc, d):
@@ -1264,13 +1265,15 @@ class Ants(Game):
             #   or killing an enemy ant that the food spawned into
             # plus 1 point for killing all enemy ants (losses don't matter for points)
             food_bonus = (
-                (self.turns - self.turn) * # food that will spawn
+                # food that will spawn
+                (self.turns - self.turn) *
                 Fraction(self.food_rate * self.num_players, self.food_turn)
                 + self.food_extra
-                + len(self.current_food) # food that hasn't been collected
+                # food that hasn't been collected
+                + len(self.current_food)
                 # enemy ants (player ants already received point when spawned)
                 + len([ant for ant in self.current_ants.values() if ant.owner != player])
-            )
+            ) * self.kill_points
             self.score[player] += food_bonus
             # separate bonus from score history
             self.bonus[player] = food_bonus
