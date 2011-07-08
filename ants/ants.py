@@ -1200,10 +1200,10 @@ class Ants(Game):
                 # offset to ant 0
                 o_row, o_col = row - ant0[0], col - ant0[1]
                 # set of unique food locations based on offsets from each starting ant
-                locations = set([
+                locations = list(set([
                     self.destination(loc, self.offset_aim((o_row, o_col), aim))
                     for loc, aim, _ in self.map_symmetry
-                ])
+                ]))
                 # duplicates can happen if 2 ants are the same distance from 1 square
                 # the food set will be smaller and food spawning takes this into account
                 
