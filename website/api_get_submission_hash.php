@@ -24,6 +24,10 @@ if (file_exists("entry.zip")) {
 	$file = getcwd() . "/entry.tgz";
 } else if (file_exists("entry.tar.gz")) {
 	$file = getcwd() . "/entry.tar.gz";
+} else if (file_exists("entry.tar.xz")) {
+	$file = getcwd() . "/entry.tar.xz";
+} else if (file_exists("entry.tar.bz2")) {
+	$file = getcwd() . "/entry.tar.bz2";
 } else {
 	header("HTTP/1.0 404 Not Found");
 	die();

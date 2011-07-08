@@ -29,7 +29,7 @@
   </tr>
   <tr>
     <td><a href="starter_packages/csharp_starter_package.zip">C&#35;</a></td>
-    <td>Mono 1.2.6</td>
+    <td>Mono 2.6.7</td>
     <td>&nbsp;</td>
     <td>&nbsp;</td>
   </tr>

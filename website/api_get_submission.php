@@ -33,6 +33,14 @@ if (file_exists("entry.zip")) {
 	header("Content-disposition: attachment; filename=entry.tgz");
 	header("Content-type: application/x-compressed");
 	$file = getcwd() . "/entry.tar.gz";
+} else if (file_exists("entry.tar.xz")) {
+	header("Content-disposition: attachment; filename=entry.tar.xz");
+	header("Content-type: application/x-compressed");
+	$file = getcwd() . "/entry.tar.xz";
+} else if (file_exists("entry.tar.bz2")) {
+	header("Content-disposition: attachment; filename=entry.tar.bz2");
+	header("Content-type: application/x-compressed");
+	$file = getcwd() . "/entry.tar.bz2";
 } else {
 	header("HTTP/1.0 404 Not Found");
 	die();
