@@ -1209,11 +1209,15 @@ class Ants(Game):
                 
                 # check for spawn location next to each other
                 # create food dead zone along symmetric lines
+                too_close = False
                 loc1 = locations[0]
                 for loc2 in locations[1:]:
                     if self.distance(loc1, loc2) == 1:
                         # spawn locations too close
-                        continue
+                        too_close = True
+                        break
+                if too_close:
+                    continue
                 
                 # prevent starting food from being equidistant to ants
                 if not starting or len(locations) == self.num_players:
