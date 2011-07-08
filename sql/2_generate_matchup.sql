@@ -85,9 +85,10 @@ left outer join (
     on m.map_id = matchups.map_id
 where m.players <= @max_players
     and m.priority >= 0
-order by game_count, priority, max_game_id,
+-- log is used to allow for a little leniency keeping the game count even across maps
+order by floor(log2(game_count)), priority, max_game_id,
          matchup_count, max_matchup_id,
-         all_game_count, max_all_game_id,
+         floor(log2(all_game_count)), max_all_game_id,
          map_id
 limit 1;
 
@@ -175,7 +176,7 @@ while @abort = 0 and @player_count < @players do
                 from game_player
                 where user_id = @last_user_id
                 order by game_id desc
-                limit 1
+                limit 2
             ) latest_games
         );
         
