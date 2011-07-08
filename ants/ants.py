@@ -1204,9 +1204,17 @@ class Ants(Game):
                     self.destination(loc, self.offset_aim((o_row, o_col), aim))
                     for loc, aim, _ in self.map_symmetry
                 ])
-                
                 # duplicates can happen if 2 ants are the same distance from 1 square
                 # the food set will be smaller and food spawning takes this into account
+                
+                # check for spawn location next to each other
+                # create food dead zone along symmetric lines
+                loc1 = locations[0]
+                for loc2 in locations[1:]:
+                    if self.distance(loc1, loc2) == 1:
+                        # spawn locations too close
+                        continue
+                
                 # prevent starting food from being equidistant to ants
                 if not starting or len(locations) == self.num_players:
                     # set locations to visited
