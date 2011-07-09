@@ -137,6 +137,9 @@ def main(argv):
     game_group.add_option("--attack", dest="attack",
                           default="focus",
                           help="Attack method to use for engine. (closest, focus, support, damage)")
+    game_group.add_option("--kill_points", dest="kill_points",
+                          default=2, type="int",
+                          help="Points awarded for killing an ant shared by all ants involved")
     game_group.add_option("--food", dest="food",
                           default="symmetric",
                           help="Food spawning method. (none, random, sections, symmetric)")
@@ -261,6 +264,7 @@ def run_rounds(opts,args):
     game_options = {
         "map": opts.map,
         "attack": opts.attack,
+        "kill_points": opts.kill_points,
         "food": opts.food,
         "viewradius2": opts.viewradius2,
         "attackradius2": opts.attackradius2,

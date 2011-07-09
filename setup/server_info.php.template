@@ -30,6 +30,7 @@ $server_info = array(
         "food_visible" => array(1,3),
         "food" => "symmetric",
         "attack" => "focus",
+        "kill_points" => 2,
         "cutoff_turn" => 100,
         "cutoff_percent" => 0.90
     )
