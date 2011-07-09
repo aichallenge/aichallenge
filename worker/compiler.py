@@ -276,7 +276,7 @@ languages = (
         ]
     ),
     Language("Clojure", ".clj", "MyBot.clj",
-        "java -Xmx%sm -cp /usr/share/java/clojure.jar clojure.main MyBot.clj" % (MEMORY_LIMIT,),
+		"java -Xmx%sm -cp /usr/share/java/clojure.jar:. clojure.main MyBot.clj" % (MEMORY_LIMIT,),
         [],
         [(["*.clj"], ChmodCompiler("Clojure"))]
     ),
