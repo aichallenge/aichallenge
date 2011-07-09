@@ -39,9 +39,11 @@ function upload_errors($errors) {
     if (!ends_with($filename, ".zip") &&
         !ends_with($filename, ".tar.xz") &&
         !ends_with($filename, ".tar.bz2") &&
+        !ends_with($filename, ".txz") &&
+        !ends_with($filename, ".tbz") &&
         !ends_with($filename, ".tgz") &&
         !ends_with($filename, ".tar.gz")) {
-      $errors[] = "Invalid file type. Must be zip, tgz, tar.gz, tar.bz2, or tar.xz";
+      $errors[] = "Invalid file type. Must be zip, tgz, tar.gz, tbz, tar.bz2, txz, or tar.xz";
     }
   }
   return $errors;
@@ -84,6 +86,10 @@ if (count($errors) == 0) {
   if (ends_with($filename, ".zip")) { $filename = "entry.zip"; }
   if (ends_with($filename, ".tar.gz")) { $filename = "entry.tar.gz"; }
   if (ends_with($filename, ".tgz")) { $filename = "entry.tgz"; }
+  if (ends_with($filename, ".tar.xz")) { $filename = "entry.tar.xz"; }
+  if (ends_with($filename, ".txz")) { $filename = "entry.txz"; }
+  if (ends_with($filename, ".tar.bz2")) { $filename = "entry.tar.bz2"; }
+  if (ends_with($filename, ".tbz")) { $filename = "entry.tbz"; }
   $target_path = $destination_folder . '/' . $filename;
   delete_directory($destination_folder);
   if (!mkdir($destination_folder, 0775, true)) {

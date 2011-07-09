@@ -261,6 +261,8 @@ class Worker:
                         ("entry.tar.gz", "mkdir bot; tar xfz entry.tar.gz -C bot > /dev/null 2> /dev/null"),
                         ("entry.tar.xz", "mkdir bot; tar xfJ entry.tar.xz -C bot > /dev/null 2> /dev/null"),
                         ("entry.tar.bz2", "mkdir bot; tar xfj entry.tar.bz2 -C bot > /dev/null 2> /dev/null"),
+                        ("entry.txz", "mkdir bot; tar xfJ entry.txz -C bot > /dev/null 2> /dev/null"),
+                        ("entry.tbz", "mkdir bot; tar xfj entry.tbz -C bot > /dev/null 2> /dev/null"),
                         ("entry.tgz", "mkdir bot; tar xfz entry.tgz -C bot > /dev/null 2> /dev/null"),
                         ("entry.zip", "unzip -u -dbot entry.zip > /dev/null 2> /dev/null")
                     ]
