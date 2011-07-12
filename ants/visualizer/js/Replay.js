@@ -458,7 +458,7 @@ Replay.prototype.txtToJson = function(replay) {
 					if (c >= 'a' && c <= 'z') {
 						result['ants'].push([rows, i, 0, 0, 1, c.toUpperCase().charCodeAt(0) - 65, '-']);
 					} else if (c === '*') {
-						result['ants'].push([rows, i, 0, 0]);
+						result['ants'].push([rows, i, 0, 1]);
 					}
 				}
 			}
