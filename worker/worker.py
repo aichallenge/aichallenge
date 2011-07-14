@@ -353,7 +353,16 @@ class Worker:
                         return False
             log.info("Compiling %s " % submission_id)
             bot_dir = os.path.join(download_dir, 'bot')
-            detected_lang, errors = compiler.compile_anything(bot_dir)
+            timelimit = 10 * 60 # 10 minute limit to compile submission
+            if not run_test:
+                # give it 50% more time if this isn't the initial compilation
+                # this is to try and prevent the situation where the initial
+                # compilation just makes it in the time limit and then a
+                # subsequent compilation fails when another worker goes to
+                # play a game with it
+                timelimit += timelimit * 0.5
+            detected_lang, errors = compiler.compile_anything(bot_dir,
+                    timelimit)
             if errors != None:
                 log.info(errors)
                 if not self.debug:
