@@ -461,7 +461,7 @@ class House:
 
 def get_sandbox(working_dir, secure=None):
     if secure is None:
-        secure = server_info["secure_jail"]
+        secure = _SECURE_DEFAULT
     if secure:
         return Jail(working_dir)
     else:
