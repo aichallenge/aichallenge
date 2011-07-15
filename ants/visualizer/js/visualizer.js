@@ -8,6 +8,7 @@ $import('Director');
 $import('ImageManager');
 $import('Util');
 $import('Replay');
+$import('CanvasElement');
 
 var $import_base;
 
