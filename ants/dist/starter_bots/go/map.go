@@ -206,9 +206,9 @@ func (m *Map) DoInRad(center Location, rad2 int, Action func(row, col int)) {
 	row1, col1 := m.FromLocation(center)
 	for row := row1 - m.Rows/2; row < row1+m.Rows/2; row++ {
 		for col := col1 - m.Cols/2; col < col1+m.Cols/2; col++ {
-			rowΔ := row - row1
-			colΔ := col - col1
-			if rowΔ*rowΔ+colΔ*colΔ < rad2 {
+			row_delta := row - row1
+			col_delta := col - col1
+			if row_delta*row_delta+col_delta*col_delta < rad2 {
 				Action(row, col)
 			}
 		}
