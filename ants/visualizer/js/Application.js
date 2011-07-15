@@ -1585,7 +1585,7 @@ Visualizer.prototype.mouseMoved = function(mx, my) {
 		}
 		if (this.mouseDown === 1) {
 			mx = (this.mouseX - this.loc.graph.x) / (this.loc.graph.w - 1);
-			mx = Math.round(mx * (this.replay.turns.length - 1));
+			mx = Math.round(mx * this.replay.duration);
 			this.director.gotoTick(mx);
 		} else if (this.mouseDown === 2 || (this.mouseDown === 3 && this.minimap.loc.contains(this.mouseX, this.mouseY))) {
 			if (this.mouseDown === 2) {
