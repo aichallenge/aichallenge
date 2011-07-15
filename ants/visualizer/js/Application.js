@@ -397,7 +397,7 @@ Visualizer.prototype.streamingStart = function() {
 		}
 	} else {
 		// order player names
-		this.updatePlayerButtons();
+		//this.updatePlayerButtons();
 		// call resize to update the gui
 		this.resize(true);
 		// resume playback if we are at the end
