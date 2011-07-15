@@ -22,4 +22,9 @@ public class ApplicationLocalStorage extends LocalStorage {
 	public Object get(String name, Scriptable start) {
 		return storage.get(name, null);
 	}
+	
+	@Override
+	public void delete(String name) {
+		storage.remove(name);
+	}
 }
