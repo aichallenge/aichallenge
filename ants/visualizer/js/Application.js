@@ -396,8 +396,6 @@ Visualizer.prototype.streamingStart = function() {
 			this.loadCanvas(true);
 		}
 	} else {
-		// order player names
-		//this.updatePlayerButtons();
 		// call resize to update the gui
 		this.resize(true);
 		// resume playback if we are at the end
@@ -585,7 +583,7 @@ Visualizer.prototype.tryStart = function() {
 			}
 			// add player buttons
 			if (this.replay.hasDuration) {
-				this.updatePlayerButtons();
+				this.addPlayerButtons();
 			}
 			// calculate speed from duration and config settings
 			this.director.duration = this.replay.duration;
@@ -654,7 +652,7 @@ Visualizer.prototype.tryStart = function() {
 		this.loadParseReplay();
 	}
 };
-Visualizer.prototype.updatePlayerButtons = function() {
+Visualizer.prototype.addPlayerButtons = function() {
 	var scores, i;
 	var bg = this.btnMgr.addTextGroup('players', TextButtonGroup.FLOW,
 			ButtonGroup.MODE_NORMAL, 2);
