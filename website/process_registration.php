@@ -112,8 +112,8 @@ if ($password1 != $password2) {
 }
 
 // Check that the desired password is long enough.
-if (strlen($password1) < 8) {
-  $errors[] = "Your password must be at least 8 characters long.";
+if (strlen($password1) < 5) {
+  $errors[] = "Your password must be at least 5 characters long.";
 }
 
 // Check that the email address is not blank.

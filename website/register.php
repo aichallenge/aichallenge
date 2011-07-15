@@ -47,7 +47,7 @@ if($server_info["submissions_open"]) { ?>
     <td>Password</td>
     <td>&nbsp;</td>
     <td><input name="password1" type="password" id="password1" /></td>
-    <td>Must be at least 8 characters long. Must contain at least one number
+    <td>Should be at least 8 characters long and contain at least one number
         and one letter.</td>
   </tr>
   <!-- Confirm Password -->
