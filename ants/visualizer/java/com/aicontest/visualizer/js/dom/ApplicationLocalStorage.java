@@ -1,6 +1,7 @@
 package com.aicontest.visualizer.js.dom;
 
 import java.util.prefs.Preferences;
+
 import org.mozilla.javascript.Scriptable;
 
 import com.aicontest.visualizer.Visualizer;

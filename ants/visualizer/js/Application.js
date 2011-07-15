@@ -557,7 +557,7 @@ Visualizer.prototype.tryStart = function() {
 					}
 				}
 				// generate fog images
-				var colors = [COLOR_SAND];
+				var colors = [SAND_COLOR];
 				for (i = 0; i < this.replay.players; i++) {
 					colors.push(this.replay.meta['playercolors'][i]);
 				}
@@ -940,7 +940,7 @@ Visualizer.prototype.redFocusRectFun = function(ctx, scale, xs, ys) {
  */
 Visualizer.prototype.renderMapScaled = function(ctx, scale) {
 	var row, col, start, isWall, xs, ys;
-	ctx.fillStyle = COLOR_SAND;
+	ctx.fillStyle = SAND_COLOR;
 	ctx.fillRect(0, 0, this.map.w, this.map.h);
 	ctx.fillStyle = ctx.createPattern(this.imgMgr.images[0], 'repeat');
 	for (row = 0; row < this.replay.rows; row++) {
