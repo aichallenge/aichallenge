@@ -10,7 +10,6 @@ class AntsGame(in: InputStream = System.in, out: OutputStream = System.out) {
   def run(bot: Bot) = {
     try {
 
-      @tailrec
       def playNextTurn(game: Game): Unit = {
         val newGameState = Parser.parse(source, game.parameters, game.board.water)
         if (newGameState.gameOver) Unit
@@ -28,5 +27,5 @@ class AntsGame(in: InputStream = System.in, out: OutputStream = System.out) {
       case t => t.printStackTrace
     }
   }
-  
+
 }
