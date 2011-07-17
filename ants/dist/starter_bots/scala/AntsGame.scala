@@ -4,7 +4,7 @@ import java.io._
 
 class AntsGame(in: InputStream = System.in, out: OutputStream = System.out) {
 
-  val source = Source.fromInputStream(in)
+  val source = new BufferedSource(in, Source.DefaultBufSize)
   val writer = new BufferedWriter(new OutputStreamWriter(out))
 
   def run(bot: Bot) = {
