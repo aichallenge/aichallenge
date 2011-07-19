@@ -1,4 +1,4 @@
-object MyBot extends Application {
+object MyBot extends App {
   new AntsGame().run(new MyBot)
 }
 

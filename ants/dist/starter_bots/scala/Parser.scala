@@ -7,7 +7,6 @@ object Parser {
   def parse(source: Source, params: GameParameters = GameParameters(), knownWater: Map[Tile, Water] = Map.empty) = {
     val lines = source.getLines
 
-    @tailrec
     def parseInternal(state: GameInProgress): Game = {
       val line = lines.next.trim
       line match {
