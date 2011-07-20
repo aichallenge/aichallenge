@@ -192,6 +192,19 @@ class Jail(object):
         suddenly terminated.
 
         """
+        try:
+            self.command_process.stdin.write("KILL\n")
+            self.command_process.stdin.flush()
+        except IOError as exc:
+            if exc.errno != 32:
+                raise
+        try:
+            item = self.resp_queue.get(timeout=5)
+            if item[1] != "KILL" and item[1] is not None:
+                raise SandboxError("Bad response from jailguard after kill, %s"
+                        % (item,))
+        except Empty:
+            pass
         self._signal("KILL")
         self._signal("CONT")
 

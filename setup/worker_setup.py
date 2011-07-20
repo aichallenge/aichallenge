@@ -182,7 +182,7 @@ def create_jail_group(options):
     if not file_contains(limits_conf, "@jailusers"):
         # limit jailuser processes to:
         # 10 processes or system threads
-        append_line(limits_conf, "@jailusers hard nproc 20 # ai-contest")
+        append_line(limits_conf, "@jailusers hard nproc 25 # ai-contest")
         # 20 minutes of cpu time
         append_line(limits_conf, "@jailusers hard cpu 35 # ai-contest")
         # slightly more than 1GB of ram
