@@ -1,8 +1,7 @@
 package main
 
 import (
-	"image"
-	"fmt"
+	"log"
 )
 
 //Item represents all the various items that may be on the map
@@ -58,7 +57,7 @@ func (o Item) Symbol() byte {
 	}
 
 	if o < MY_ANT || o > PLAYER25 {
-		Panicf("invalid item: %v", o)
+		log.Panicf("invalid item: %v", o)
 	}
 
 	return byte(o) + 'a'
@@ -79,46 +78,11 @@ func FromSymbol(ch byte) Item {
 		return DEAD
 	}
 	if ch < 'a' || ch > 'z' {
-		Panicf("invalid item symbol: %v", ch)
+		log.Panicf("invalid item symbol: %v", ch)
 	}
 	return Item(ch) + 'a'
 }
 
-func (o Item) Color() image.NRGBAColor {
-	switch o {
-	case UNKNOWN:
-		return image.NRGBAColor{0xb0, 0xb0, 0xb0, 0xff}
-	case WATER:
-		return image.NRGBAColor{0x10, 0x10, 0x50, 0xff}
-	case FOOD:
-		return image.NRGBAColor{0xe0, 0xe0, 0xc0, 0xff}
-	case LAND:
-		return image.NRGBAColor{0x8b, 0x45, 0x13, 0xff}
-	case DEAD:
-		return image.NRGBAColor{0x69, 0x33, 0x05, 0xff}
-	case MY_ANT:
-		return image.NRGBAColor{0xf0, 0x00, 0x00, 0xff}
-	case PLAYER1:
-		return image.NRGBAColor{0xf0, 0xf0, 0x00, 0xff}
-	case PLAYER2:
-		return image.NRGBAColor{0x00, 0xf0, 0x00, 0xff}
-	case PLAYER3:
-		return image.NRGBAColor{0x00, 0x00, 0xf0, 0xff}
-	case PLAYER4:
-		return image.NRGBAColor{0xf0, 0x00, 0xf0, 0xff}
-	case PLAYER5:
-		return image.NRGBAColor{0xf0, 0xf0, 0xf0, 0xff}
-	case PLAYER6:
-		return image.NRGBAColor{0x80, 0x80, 0x00, 0xff}
-	case PLAYER7:
-		return image.NRGBAColor{0x00, 0x80, 0x80, 0xff}
-	case PLAYER8:
-		return image.NRGBAColor{0x80, 0x00, 0x80, 0xff}
-	case PLAYER9:
-		return image.NRGBAColor{0x80, 0x00, 0xf0, 0xff}
-	}
-	return image.NRGBAColor{0x00, 0x00, 0x00, 0xff}
-}
 
 //Location combines (Row, Col) coordinate pairs for use as keys in maps (and in a 1d array)
 type Location int
@@ -227,7 +191,7 @@ func (m *Map) AddFood(loc Location) {
 
 func (m *Map) AddDestination(loc Location) {
 	if m.Destinations[loc] {
-		Panicf("Already have something at that destination!")
+		log.Panicf("Already have something at that destination!")
 	}
 	m.Destinations[loc] = true
 }
@@ -274,18 +238,6 @@ func (m *Map) FromLocation(loc Location) (Row, Col int) {
 	return
 }
 
-//implement Image for fancy image debugging
-func (m *Map) ColorModel() image.ColorModel {
-	return image.NRGBAColorModel
-}
-func (m *Map) Bounds() image.Rectangle {
-	return image.Rect(0, 0, m.Cols*4, m.Rows*4)
-}
-func (m *Map) At(x, y int) image.Color {
-	loc := m.FromRowCol(y/4, x/4)
-	return m.itemGrid[loc].Color()
-}
-
 
 //Direction represents the direction concept for issuing orders.
 type Direction int
@@ -312,7 +264,7 @@ func (d Direction) String() string {
 	case NoMovement:
 		return "-"
 	}
-	Panicf("%v is not a valid direction", d)
+	log.Panicf("%v is not a valid direction", d)
 	return ""
 }
 
@@ -330,67 +282,7 @@ func (m *Map) Move(loc Location, d Direction) Location {
 		Col += 1
 	case NoMovement: //do nothing
 	default:
-		Panicf("%v is not a valid direction", d)
+		log.Panicf("%v is not a valid direction", d)
 	}
 	return m.FromRowCol(Row, Col) //this will handle wrapping out-of-bounds numbers
-}
-
-
-//a few test functions
-func TestMap() {
-	m := NewMap(4, 3)
-
-	m.Reset()
-
-	if m.String() != `. . . 
-. . . 
-. . . 
-. . . 
-` {
-		Panicf("map is wrong size, got `%s`", m)
-	}
-
-	loc := m.FromRowCol(3, 2)
-	row, col := m.FromLocation(loc)
-
-	if row != 3 || col != 2 {
-		Panicf("conversion broken, got (%v, %v), wanted (3, 2)", row, col)
-	}
-
-	loc2 := m.FromRowCol(3, -1)
-
-	if loc2 != loc {
-		Panicf("from xy broken, got (%v), wanted (%v)", loc2, loc)
-	}
-
-	n := m.FromRowCol(2, 2)
-	s := m.FromRowCol(4, 2)
-	e := m.FromRowCol(3, 3)
-	w := m.FromRowCol(3, 1)
-
-	if n != m.Move(loc, North) {
-		Panicf("Move north is broken")
-	}
-	if s != m.Move(loc, South) {
-		Panicf("Move south is broken")
-	}
-	if e != m.Move(loc, East) {
-		Panicf("Move east is broken")
-	}
-	if w != m.Move(loc, West) {
-		Panicf("Move west is broken")
-	}
-
-	m.AddAnt(n, MY_ANT)
-	m.AddAnt(s, MY_ANT)
-
-	if m.String() != `. . a 
-. . . 
-. . a 
-. . . 
-` {
-		Panicf("map put ants in wrong place, got `%s`", m)
-	}
-
-	fmt.Println("TestMap PASS")
 }
