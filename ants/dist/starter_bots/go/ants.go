@@ -26,7 +26,7 @@ type State struct {
 	ViewRadius2   int //view radius squared
 	AttackRadius2 int //battle radius squared
 	SpawnRadius2  int //spawn radius squared
-	PlayerSeed    int //random player seed
+	PlayerSeed    int64 //random player seed
 	Turn          int //current turn number
 
 	Map *Map
@@ -92,7 +92,7 @@ func (s *State) Start() os.Error {
 
 //Loop handles the majority of communication between your bot and the server.
 //b's DoWork function gets called each turn after the map has been setup
-//BetweenTurnWork gets called after a turn but before the map is reset. It is 
+//BetweenTurnWork gets called after a turn but before the map is reset. It is
 //meant to do debugging work.
 func (s *State) Loop(b Bot, BetweenTurnWork func()) os.Error {
 
