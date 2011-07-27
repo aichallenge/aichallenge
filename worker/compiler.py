@@ -216,7 +216,7 @@ comp_args = {
     "C#"            : [["gmcs", "-warn:0", "-out:%s.exe" % BOT]],
     "C++"         : [["g++", "-O3", "-funroll-loops", "-c"],
                              ["g++", "-O2", "-lm", "-o", BOT]],
-    "D"             : [["dmd", "-O", "-inline", "-release", "-of" + BOT]],
+    "D"             : [["dmd", "-O", "-inline", "-release", "-noboundscheck", "-of" + BOT]],
     "Go"            : [["6g", "-o", "_go_.6"],
                              ["6l", "-o", BOT, "_go_.6"]],
     "Groovy"    : [["groovyc"],
