@@ -121,14 +121,14 @@ def update_leaderboard(wait_time):
     cursor = conn.cursor(MySQLdb.cursors.DictCursor)
     while True:
         try:
-            for s in range(wait_time):
-                # allow for a [Ctrl]+C during the sleep cycle
-                time.sleep(1)
             if use_log:
                 log.info("Updating leaderboard and adding some sigma")
             cursor.execute("call generate_leaderboard;")
             if wait_time == 0:
                 break
+            for s in range(wait_time):
+                # allow for a [Ctrl]+C during the sleep cycle
+                time.sleep(1)
         except KeyboardInterrupt:
             break
         except:
