@@ -116,6 +116,9 @@ class Jail(object):
             raise SandboxError("Sandbox released while still alive")
         if not self.locked:
             raise SandboxError("Attempt to release jail that is already unlocked")
+        if os.system("sudo umount %s" % (os.path.join(self.base_dir, "root"),)):
+            raise SandboxError("Error returned from umount of jail %d"
+                    % (self.number,))
         lock_dir = os.path.join(self.base_dir, "locked")
         pid_filename = os.path.join(lock_dir, "lock.pid")
         with open(pid_filename, 'r') as pid_file:
@@ -142,6 +145,9 @@ class Jail(object):
         if os.system("cp -r %s %s" % (command_dir, home_dir)) != 0:
             raise SandboxError("Error copying working directory '%s' to jail %d"
                     % (command_dir, self.number))
+        if os.system("sudo mount %s" % (os.path.join(self.base_dir, "root"),)):
+            raise SandboxError("Error returned from mount of %d in prepare"
+                    % (self.number,))
         if os.system("%s j %d" % (self.jchown, self.number)) != 0:
             raise SandboxError("Error returned from jail_own j %d in prepare"
                     % (self.number,))

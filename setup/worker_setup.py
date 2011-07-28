@@ -193,6 +193,9 @@ def create_jail_group(options):
         os.chmod("/etc/sudoers", 0640)
         append_line("/etc/sudoers",
                 "%s ALL = (%%jailusers) NOPASSWD: ALL" % (options.username,))
+        append_line("/etc/sudoers",
+                "%s ALL = (ALL) NOPASSWD: /bin/mount, /bin/umount" % (
+                    options.username,))
         os.chmod("/etc/sudoers", org_mode)
 
 def create_jail_user(username):
@@ -210,14 +213,13 @@ def create_jail_user(username):
     run_cmd("chown %s:jailusers %s" % (username, home_dir))
     run_cmd("chown :jailkeeper %s" % (jail_dir,))
     run_cmd("chmod g=rwx %s" % (jail_dir,))
-    fs_line = "unionfs-fuse#%s=rw:%s=ro:%s=ro %s fuse cow,allow_other 0 0" % (
+    fs_line = "unionfs-fuse#%s=rw:%s=ro:%s=ro %s fuse cow,allow_other,noauto 0 0" % (
             os.path.join(jail_dir, "scratch"),
             os.path.join(jail_dir, "home"),
             os.path.join(chroot_dir, "aic-base"),
             os.path.join(jail_dir, "root")
             )
     append_line("/etc/fstab", fs_line)
-    run_cmd("mount %s" % (os.path.join(jail_dir, "root"),))
     cfg_filename = os.path.join(TEMPLATE_DIR,
         "chroot_configs/chroot.d/jailuser.template")
     with open(cfg_filename, 'r') as cfg_file:
