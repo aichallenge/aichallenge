@@ -211,8 +211,12 @@ class Jail(object):
                         % (item,))
         except Empty:
             pass
-        self._signal("KILL")
         self._signal("CONT")
+        for i in range(20):
+            if self.command_process.poll() != None:
+                break
+            time.sleep(0.1)
+        self._signal("KILL")
 
     def pause(self):
         """Pause the process by sending a SIGSTOP to the child"""
