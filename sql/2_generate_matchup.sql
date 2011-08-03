@@ -125,6 +125,12 @@ inner join matchup m
 where (m.worker_id >= 0 or m.worker_id is null)
 and m.deleted = 0;
 
+-- floor(max_game_id/delta) is used as first order criteria for player selection,
+-- match_quality is second order criteria.
+-- To get the old behavior choice a delta greater than the max. game_id (p.e. @delta = 1000000)
+-- so that floor(max_game_id/delta) is always zero.
+set @delta = 1;
+
 set @last_user_id = -1;
 set @cur_user_id = @seed_id;
 set @use_limits = 1;
@@ -154,6 +160,7 @@ while @abort = 0 and @player_count < @players do
         'inner join game_player gp2 ',
         '    on gp1.game_id = gp2.game_id ',
         'where gp2.user_id = @last_user_id ',
+        'order by gp1.game_id desc ',
         'limit ', @exclude_size);
         -- debug statement
         -- select @exclude_sql;
@@ -179,42 +186,47 @@ while @abort = 0 and @player_count < @players do
                 limit 2
             ) latest_games
         );
-        
+
         -- debug statement
 		-- select 'step 3: add excluded';
-		
+
     end if;
-    
+
     -- debug statement
     -- select 'step 3: exclude count', count(*) from temp_unavailable;
-	
+
     -- debug statement
 	-- select * from temp_unavailable;
 
     set @last_user_id = -1; -- used to ensure an opponent was selected
 
     -- pick the closest 100 available submissions (limited for speed)
-    -- and then rank by a match_quality approximation
+    -- and then rank by the last matchup_id and a match_quality approximation
     --   the approximation is not the true trueskill match_quality,
     --   but will be in the same order as if we calculated it
     select s.user_id, s.submission_id, s.mu, s.sigma ,
     @c := (@twiceBetaSq + pow(mp.sigma,2) + pow(s.sigma,2)) as c,
     exp(sum(ln(
         SQRT(@twiceBetaSq / @c) * EXP(-(pow(mp.mu - s.mu, 2) / (2 * @c)))
-    ))) as match_quality
-    into @last_user_id, @last_submission_id, @last_mu, @last_sigma, @c, @match_quality
+    ))) as match_quality,
+    s.max_game_value
+    into @last_user_id, @last_submission_id, @last_mu, @last_sigma, @c, @match_quality, @max_game_value
     from matchup_player mp,
     (
         select s.user_id, s.submission_id, s.mu, s.sigma,
-        @mu_avg = (select avg(mu) from matchup_player where matchup_id = @matchup_id)
+        @mu_avg = (select avg(mu) from matchup_player where matchup_id = @matchup_id),
+        FLOOR(MAX(gp.game_id)/@delta) as max_game_value
         from submission s
+        left outer join game_player gp
+          on gp.user_id = s.user_id
         inner join user u
             on u.user_id = s.user_id
 
-        where s.latest = 1 and status = 40
+        where s.latest = 1 and s.status = 40
 
         -- this order by causes a filesort, but I don't see a way around it
         -- limiting to 100 saves us from doing extra trueskill calculations
+        group by s.user_id, s.submission_id, s.mu, s.sigma
         order by abs(s.mu - @mu_avg)
         limit 100
     ) s
@@ -223,14 +235,14 @@ while @abort = 0 and @player_count < @players do
     where mp.matchup_id = @matchup_id
     and tu.user_id is null
     group by s.user_id, s.submission_id, s.mu, s.sigma
-    order by match_quality desc
+    order by s.max_game_value asc, match_quality desc
     limit 1;
 
     if @last_user_id = -1 then
-    
+
 		-- debug statement
 		-- select 'step 3: dropping limits';
-		
+
         if @use_limits = 0 then
             set @abort = 1;
         end if;
@@ -243,20 +255,20 @@ while @abort = 0 and @player_count < @players do
         where matchup_id = @matchup_id;
         set @use_limits = 0;
     else
-    
+
 		-- debug statement
 		-- select @last_user_id, user_id from matchup_player where matchup_id = @matchup_id;
-		
+
 		-- add new player to matchup and exclude list
-        insert into matchup_player (matchup_id, user_id, submission_id, player_id, mu, sigma)
-        values (@matchup_id, @last_user_id, @last_submission_id, -1, @last_mu, @last_sigma);
+        insert into matchup_player (matchup_id, user_id, submission_id, player_id, mu, sigma,quality)
+        values (@matchup_id, @last_user_id, @last_submission_id, -1, @last_mu, @last_sigma,@match_quality);
         insert into temp_unavailable (user_id) values (@last_user_id);
         set @player_count = @player_count + 1;
         set @cur_user_id = @last_user_id;
-        
+
         -- debug statement
         -- select * from temp_unavailable;
-        
+
     end if;
 
 end while;
