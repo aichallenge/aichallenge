@@ -154,6 +154,7 @@ while @abort = 0 and @player_count < @players do
         'inner join game_player gp2 ',
         '    on gp1.game_id = gp2.game_id ',
         'where gp2.user_id = @last_user_id ',
+        'order by gp1.game_id desc ',
         'limit ', @exclude_size);
         -- debug statement
         -- select @exclude_sql;
