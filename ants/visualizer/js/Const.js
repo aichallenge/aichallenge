@@ -32,7 +32,7 @@ var PLAYER_COLORS = [
 /**
  * @const
  */
-var COLOR_SAND = '#532';
+var SAND_COLOR = '#532';
 /**
  * @const
  */

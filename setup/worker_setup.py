@@ -83,8 +83,8 @@ def install_scala():
     if os.path.exists("/usr/bin/scala"):
         return
     with CD("/root"):
-        run_cmd("curl 'http://www.scala-lang.org/downloads/distrib/files/scala-2.8.1.final.tgz' | tar xz")
-        os.rename("scala-2.8.1.final", "/usr/share/scala")
+        run_cmd("curl 'http://www.scala-lang.org/downloads/distrib/files/scala-2.9.0.1.tgz' | tar xz")
+        os.rename("scala-2.9.0.1", "/usr/share/scala")
         os.symlink("/usr/share/scala/bin/scala", "/usr/bin/scala")
         os.symlink("/usr/share/scala/bin/scalac", "/usr/bin/scalac")
 
@@ -182,7 +182,7 @@ def create_jail_group(options):
     if not file_contains(limits_conf, "@jailusers"):
         # limit jailuser processes to:
         # 10 processes or system threads
-        append_line(limits_conf, "@jailusers hard nproc 20 # ai-contest")
+        append_line(limits_conf, "@jailusers hard nproc 25 # ai-contest")
         # 20 minutes of cpu time
         append_line(limits_conf, "@jailusers hard cpu 35 # ai-contest")
         # slightly more than 1GB of ram
@@ -193,6 +193,9 @@ def create_jail_group(options):
         os.chmod("/etc/sudoers", 0640)
         append_line("/etc/sudoers",
                 "%s ALL = (%%jailusers) NOPASSWD: ALL" % (options.username,))
+        append_line("/etc/sudoers",
+                "%s ALL = (ALL) NOPASSWD: /bin/mount, /bin/umount" % (
+                    options.username,))
         os.chmod("/etc/sudoers", org_mode)
 
 def create_jail_user(username):
@@ -210,14 +213,13 @@ def create_jail_user(username):
     run_cmd("chown %s:jailusers %s" % (username, home_dir))
     run_cmd("chown :jailkeeper %s" % (jail_dir,))
     run_cmd("chmod g=rwx %s" % (jail_dir,))
-    fs_line = "unionfs-fuse#%s=rw:%s=ro:%s=ro %s fuse cow,allow_other 0 0" % (
+    fs_line = "unionfs-fuse#%s=rw:%s=ro:%s=ro %s fuse cow,allow_other,noauto 0 0" % (
             os.path.join(jail_dir, "scratch"),
             os.path.join(jail_dir, "home"),
             os.path.join(chroot_dir, "aic-base"),
             os.path.join(jail_dir, "root")
             )
     append_line("/etc/fstab", fs_line)
-    run_cmd("mount %s" % (os.path.join(jail_dir, "root"),))
     cfg_filename = os.path.join(TEMPLATE_DIR,
         "chroot_configs/chroot.d/jailuser.template")
     with open(cfg_filename, 'r') as cfg_file:

@@ -138,7 +138,8 @@ function Replay(replay, debug, swapUser) {
 			'challenge': 'ants',
 			'replayformat': format,
 			'replaydata': {
-				'map': {}
+				'map': {},
+				'ants': []
 			}
 		};
 		this.duration = -1;
@@ -458,7 +459,7 @@ Replay.prototype.txtToJson = function(replay) {
 					if (c >= 'a' && c <= 'z') {
 						result['ants'].push([rows, i, 0, 0, 1, c.toUpperCase().charCodeAt(0) - 65, '-']);
 					} else if (c === '*') {
-						result['ants'].push([rows, i, 0, 0]);
+						result['ants'].push([rows, i, 0, 1]);
 					}
 				}
 			}
@@ -674,6 +675,21 @@ Replay.prototype.killAnt = function(aniAnt, dead) {
 	aniAnt.fade(Quality.LOW, 'b'   , 0.0, dead - 0.40, dead);
 	aniAnt.fade(Quality.LOW, 'size', 0.7, dead - 0.80, dead - 0.60);
 	aniAnt.fade(Quality.LOW, 'size', 0.0, dead - 0.40, dead);
+};
+/**
+ * used by the Java live visualizer
+ */
+Replay.prototype.deadAnt = function(aniAnt, dead) {
+	var f = aniAnt.frameAt(dead, Quality.LOW);
+	var owner = f['owner'];
+	var color = this.meta['playercolors'][owner];
+	var hr = color[0] >> 1;
+	var hg = color[1] >> 1;
+	var hb = color[2] >> 1;
+	f['r'] = hr;
+	f['g'] = hg;
+	f['b'] = hb;
+	f['size'] = 0.7;
 };
 Replay.prototype.getFog = function(player, turn) {
 	var i, fogs, fog, row, col, radius, radius2, row_wrap, col_wrap;

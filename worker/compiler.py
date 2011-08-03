@@ -53,10 +53,8 @@ from sandbox import get_sandbox
 try:
     from server_info import server_info
     MEMORY_LIMIT = server_info.get('memory_limit', 500)
-    COMPILE_TIME = server_info.get('compile_time', 10 * 60)
 except ImportError:
     MEMORY_LIMIT = 500
-    COMPILE_TIME = 10 * 60
 
 BOT = "MyBot"
 SAFEPATH = re.compile('[a-zA-Z0-9_.$-]+$')
@@ -218,11 +216,13 @@ comp_args = {
     "C#"            : [["gmcs", "-warn:0", "-out:%s.exe" % BOT]],
     "C++"         : [["g++", "-O3", "-funroll-loops", "-c"],
                              ["g++", "-O2", "-lm", "-o", BOT]],
-    "D"             : [["dmd", "-O", "-inline", "-release", "-of" + BOT]],
+    "D"             : [["dmd", "-O", "-inline", "-release", "-noboundscheck", "-of" + BOT]],
     "Go"            : [["6g", "-o", "_go_.6"],
                              ["6l", "-o", BOT, "_go_.6"]],
     "Groovy"    : [["groovyc"],
                              ["jar", "cfe", BOT + ".jar", BOT]],
+    # If we ever upgrade to GHC 7, we will need to add -rtsopts to this command
+    # in order for the maximum heap size RTS flag to work on the executable.
     "Haskell" : [["ghc", "--make", BOT + ".hs", "-O", "-v0"]],
     "Java"        : [["javac", "-J-Xmx%sm" % (MEMORY_LIMIT)],
                              ["jar", "cfe", BOT + ".jar", BOT]],
@@ -274,7 +274,7 @@ languages = (
         ]
     ),
     Language("Clojure", ".clj", "MyBot.clj",
-        "java -Xmx%sm -cp /usr/share/java/clojure.jar clojure.main MyBot.clj" % (MEMORY_LIMIT,),
+		"java -Xmx%sm -cp /usr/share/java/clojure.jar:. clojure.main MyBot.clj" % (MEMORY_LIMIT,),
         [],
         [(["*.clj"], ChmodCompiler("Clojure"))]
     ),
@@ -301,7 +301,7 @@ languages = (
         (["*.class"], ExternalCompiler(comp_args["Groovy"][1]))]
     ),
     Language("Haskell", "", "MyBot.hs",
-        "./MyBot",
+        "./MyBot +RTS -M" + str(MEMORY_LIMIT) + "m",
         [BOT],
         [([""], ExternalCompiler(comp_args["Haskell"][0]))]
     ),
@@ -357,7 +357,7 @@ languages = (
         [(["*.rb"], ChmodCompiler("Ruby"))]
     ),
     Language("Scala", ".scala", "MyBot.scala",
-        'JAVA_OPTS="-Xmx'+ str(MEMORY_LIMIT) +'m";scala -howtorun:object MyBot',
+        'scala -J-Xmx'+ str(MEMORY_LIMIT) +'m -howtorun:object MyBot',
         ["*.scala, *.jar"],
         [(["*.scala"], ExternalCompiler(comp_args["Scala"][0]))]
     ),
@@ -369,17 +369,17 @@ languages = (
 )
 
 
-def compile_function(language, bot_dir):
+def compile_function(language, bot_dir, timelimit):
     """Compile submission in the current directory with a specified language."""
     with CD(bot_dir):
         for glob in language.nukeglobs:
             nukeglob(glob)
 
     errors = []
-    timelimit = time.time() + COMPILE_TIME
+    stop_time = time.time() + timelimit
     for globs, compiler in language.compilers:
         try:
-            if not compiler.compile(bot_dir, globs, errors, timelimit):
+            if not compiler.compile(bot_dir, globs, errors, stop_time):
                 return False, errors
         except StandardError, exc:
             raise
@@ -430,13 +430,14 @@ def get_run_lang(submission_dir):
                     if line[0] == '#':
                         return line[1:-1]
 
-def compile_anything(bot_dir):
+def compile_anything(bot_dir, timelimit=600):
     """Autodetect the language of an entry and compile it."""
     detected_language, errors = detect_language(bot_dir)
     if detected_language:
         # If we get this far, then we have successfully auto-detected
         # the language that this entry is using.
-        compiled, errors = compile_function(detected_language, bot_dir)
+        compiled, errors = compile_function(detected_language, bot_dir,
+                timelimit)
         if compiled:
             name = detected_language.name
             run_cmd = detected_language.command

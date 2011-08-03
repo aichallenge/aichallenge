@@ -24,6 +24,7 @@ public class Stream extends IdScriptableObject {
 	private NativeObject meta;
 	private NativeObject replaydata;
 	private NativeObject map;
+	private NativeArray ants;
 	private NativeArray antLists;
 	private NativeArray antList;
 	private NativeArray antListOld;
@@ -38,18 +39,23 @@ public class Stream extends IdScriptableObject {
 	private int id;
 	private boolean initialized;
 
-	public Stream(ScriptableObject vis, Visualizer visualizer, Scriptable scope, String name) {
+	public Stream(ScriptableObject vis, Visualizer visualizer,
+			Scriptable scope, String name) {
 		activatePrototypeMap(MAX_ID);
 		setPrototype(getObjectPrototype(scope));
 		setParentScope(scope);
-		ScriptableObject.defineProperty(scope, name, this, ScriptableObject.DONTENUM);
-		replay = (ScriptableObject) visualizer.invoke(vis, "streamingInit", null);
+		ScriptableObject.defineProperty(scope, name, this,
+				ScriptableObject.DONTENUM);
+		replay = (ScriptableObject) visualizer.invoke(vis, "streamingInit",
+				null);
 		meta = (NativeObject) replay.get("meta", replay);
 		replaydata = (NativeObject) meta.get("replaydata", meta);
+		ants = (NativeArray) replaydata.get("ants", replaydata);
 		map = (NativeObject) replaydata.get("map", replaydata);
 		br = new BufferedReader(new InputStreamReader(System.in));
 		turn = -2;
-		visualizer.addTask(new FunctionExecutionUnit(vis, "streamingStart", null));
+		visualizer.addTask(new FunctionExecutionUnit(vis, "streamingStart",
+				null));
 	}
 
 	@Override
@@ -81,7 +87,8 @@ public class Stream extends IdScriptableObject {
 				}
 			}
 			// filter by keyword
-			if (line == null || "turn".equals(tokens[0]) || "end".equals(tokens[0])) {
+			if (line == null || "turn".equals(tokens[0])
+					|| "end".equals(tokens[0])) {
 				turn++;
 				if (turn == -1) {
 					// 'header' turn 0
@@ -93,7 +100,8 @@ public class Stream extends IdScriptableObject {
 					for (int i = 0; i < players; i++) {
 						countSet.put(i, countSet, 0);
 					}
-					NativeArray counts = (NativeArray) replay.get("counts", replay);
+					NativeArray counts = (NativeArray) replay.get("counts",
+							replay);
 					counts.put(turn, counts, countSet);
 					int duration = (line == null) ? turn - 1 : turn - 2;
 					replay.put("duration", replay, duration);
@@ -101,7 +109,8 @@ public class Stream extends IdScriptableObject {
 						// initialization turn 1
 						replay.put("players", replay, players);
 						replaydata.put("players", replaydata, players);
-						ScriptableObject.callMethod(replay, "addMissingMetaData", Context.emptyArgs);
+						ScriptableObject.callMethod(replay,
+								"addMissingMetaData", Context.emptyArgs);
 						antMap = new Ant[rows][cols];
 						NativeArray scoreSet = new NativeArray(players);
 						for (int i = 0; i < players; i++) {
@@ -138,16 +147,22 @@ public class Stream extends IdScriptableObject {
 				// a food item or an ant belonging to a player
 				int r = Integer.parseInt(tokens[1]);
 				int c = Integer.parseInt(tokens[2]);
-				Object owner = "f".equals(tokens[0]) ? Undefined.instance : Integer.parseInt(tokens[3]);
+				Object owner = "f".equals(tokens[0]) ? Undefined.instance
+						: Integer.parseInt(tokens[3]);
 				if (owner != Undefined.instance) {
-					NativeArray counts = (NativeArray) replay.get("counts", replay);
-					NativeArray countSet = (NativeArray) counts.get(turn, counts);
-					countSet.put((Integer) owner, countSet, ((Number) countSet.get((Integer) owner, countSet)).intValue() + 1);
+					NativeArray counts = (NativeArray) replay.get("counts",
+							replay);
+					NativeArray countSet = (NativeArray) counts.get(turn,
+							counts);
+					countSet.put((Integer) owner, countSet, ((Number) countSet
+							.get((Integer) owner, countSet)).intValue() + 1);
 				}
 				Ant ant = antMap[r][c];
 				if (ant == null || ant.toTurn < turn) {
 					// spawn new food / ant
-					ant = antMap[r][c] = new Ant(replay, id++, r, c, turn, owner);
+					ant = antMap[r][c] = new Ant(replay, id++, r, c, turn,
+							owner);
+					ants.put(ant.id, ants, ant.js);
 					antList.put(antList.size(), antList, ant.js);
 					if (antListOld != null && owner == Undefined.instance) {
 						antListOld.put(antListOld.size(), antListOld, ant.js);
@@ -156,7 +171,8 @@ public class Stream extends IdScriptableObject {
 					// keep the food another turn / convert to ant
 					if (owner != Undefined.instance && ant.owner == -1) {
 						ant.owner = (Integer) owner;
-						ScriptableObject.callMethod(replay, "convertAnt", new Object[] { ant.js, false, turn, owner });
+						ScriptableObject.callMethod(replay, "convertAnt",
+								new Object[] { ant.js, false, turn, owner });
 					}
 					ant.toTurn++;
 					antList.put(antList.size(), antList, ant.js);
@@ -171,8 +187,15 @@ public class Stream extends IdScriptableObject {
 				int owner = Integer.parseInt(tokens[3]);
 				Ant ant = antMap[r][c];
 				if (ant != null && ant.owner == owner && ant.toTurn == turn) {
-					ScriptableObject.callMethod(replay, "killAnt", new Object[] { ant.js, turn });
+					ScriptableObject.callMethod(replay, "killAnt",
+							new Object[] { ant.js, turn });
 				}
+				ant = new Ant(replay, id++, r, c, turn, owner);
+				ScriptableObject.callMethod(replay, "deadAnt", new Object[] {
+						ant.js, turn });
+				ants.put(ant.id, ants, ant.js);
+				antList.put(antList.size(), antList, ant.js);
+				antMap[r][c] = null;
 			} else if ("score".equals(tokens[0])) {
 				// the scores line for the start of the turn
 				NativeArray scoreSet = new NativeArray(players);
@@ -188,8 +211,7 @@ public class Stream extends IdScriptableObject {
 				}
 			} else if ("players".equals(tokens[0])) {
 				// bogus keyword revealing player count to the end of the
-				// game
-				// we read the player count from the map instead
+				// game we read the player count from the map instead
 			} else if ("status".equals(tokens[0])) {
 				NativeArray statusArray = new NativeArray(tokens.length - 1);
 				for (int i = 1; i < tokens.length; i++) {
@@ -251,7 +273,8 @@ public class Stream extends IdScriptableObject {
 	}
 
 	@Override
-	public Object execIdCall(IdFunctionObject f, Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
+	public Object execIdCall(IdFunctionObject f, Context cx, Scriptable scope,
+			Scriptable thisObj, Object[] args) {
 		int methodId = f.methodId();
 		switch (methodId) {
 		case Id_visualizerReady:
@@ -264,19 +287,25 @@ public class Stream extends IdScriptableObject {
 
 class Ant {
 
+	int id;
 	int owner;
 	int toTurn;
 	NativeObject js;
 
-	public Ant(ScriptableObject replay, int id, int row, int col, int turn, Object owner) {
+	public Ant(ScriptableObject replay, int id, int row, int col, int turn,
+			Object owner) {
+		this.id = id;
 		this.owner = owner == Undefined.instance ? -1 : (Integer) owner;
 		this.toTurn = turn + 1;
 		if (this.owner == -1) {
-			js = (NativeObject) ScriptableObject.callMethod(replay, "spawnAnt", new Object[] { id, row, col, turn, owner });
+			js = (NativeObject) ScriptableObject.callMethod(replay, "spawnAnt",
+					new Object[] { id, row, col, turn, owner });
 		} else {
-			js = (NativeObject) ScriptableObject.callMethod(replay, "spawnAnt", new Object[] { id, row, col, 0, owner });
+			js = (NativeObject) ScriptableObject.callMethod(replay, "spawnAnt",
+					new Object[] { id, row, col, 0, owner });
 			if (owner != Undefined.instance) {
-				ScriptableObject.callMethod(replay, "convertAnt", new Object[] { js, true, 0, owner });
+				ScriptableObject.callMethod(replay, "convertAnt", new Object[] {
+						js, true, 0, owner });
 			}
 		}
 	}

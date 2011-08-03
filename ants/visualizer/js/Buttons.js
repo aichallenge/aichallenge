@@ -42,7 +42,12 @@ Button.prototype.draw = function() {
 			ctx.shadowOffsetX = -2;
 			ctx.shadowOffsetY = +2;
 		}
-		ctx.shadowColor = 'rgba(0, 0, 0, 0.7)';
+		if (Quirks.fullImageShadowSupport()) {
+			ctx.shadowColor = 'rgba(0, 0, 0, 0.7)';
+		} else {
+			// Firefox 5 with shadow bug or other bad support
+			ctx.shadowColor = 'rgba(0, 0, 0, 0)';
+		}
 	}
 	ctx.save();
 	ctx.translate(loc.x, (this.down) ? loc.y + 1 : loc.y - 1);
@@ -115,7 +120,7 @@ ButtonGroup.prototype.mouseMove = function(mx, my) {
  * @constructor
  */
 function ImageButton(group, idx, offset, delta, onclick, hint) {
-	
+
 	Button.apply(this, [group, onclick]);
 	this.idx = idx;
 	this.offset = offset;
@@ -156,7 +161,6 @@ ImageButtonGroup.HORIZONTAL = false;
 ImageButtonGroup.VERTICAL = true;
 ImageButtonGroup.prototype = new ButtonGroup;
 ImageButtonGroup.prototype.draw = function() {
-	var more = Math.max(0, this.nextDelta() - (this.vertical ? this.h : this.w));
 	ButtonGroup.prototype.draw.apply(this, []);
 };
 ImageButtonGroup.prototype.nextDelta = function() {
@@ -202,7 +206,7 @@ function TextButton(group, text, color, onclick) {
 }
 TextButton.prototype.draw = Button.prototype.draw;
 TextButton.prototype.drawInternal = function(ctx) {
-	ctx.shadowColor = COLOR_SAND;
+	ctx.shadowColor = SAND_COLOR;
 	ctx.shadowOffsetX = 0;
 	ctx.shadowOffsetY = 0;
 	ctx.shadowBlur = 2;

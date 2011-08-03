@@ -1,7 +1,10 @@
 package com.aicontest.visualizer.js.dom;
 
 import java.util.prefs.Preferences;
+
 import org.mozilla.javascript.Scriptable;
+
+import com.aicontest.visualizer.Visualizer;
 
 public class ApplicationLocalStorage extends LocalStorage {
 
@@ -9,7 +12,7 @@ public class ApplicationLocalStorage extends LocalStorage {
 	private Preferences storage;
 
 	public ApplicationLocalStorage() {
-		storage = Preferences.userRoot();
+		storage = Preferences.userNodeForPackage(Visualizer.class);
 	}
 
 	public void put(String name, Scriptable start, Object value) {
@@ -18,5 +21,10 @@ public class ApplicationLocalStorage extends LocalStorage {
 
 	public Object get(String name, Scriptable start) {
 		return storage.get(name, null);
+	}
+	
+	@Override
+	public void delete(String name) {
+		storage.remove(name);
 	}
 }

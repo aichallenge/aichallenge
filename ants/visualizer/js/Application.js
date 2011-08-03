@@ -58,7 +58,7 @@ Location.prototype.contains = function(x, y) {
  * @param {Node} container the html element, that the visualizer will embed into
  * @param {String} dataDir This relative path to the visualizer data files. You
  *     will get an error message if you forget the tailing '/'.
- * @param {Boolean} interactive optional, if true or omitted, then the 
+ * @param {Boolean} interactive optional, if true or omitted, then the
  *     visualizer is interactive
  * @param {Number} w an optional maximum width or undefined
  * @param {Number} h an optional maximum height or undefined
@@ -146,7 +146,7 @@ Visualizer = function(container, dataDir, interactive, w, h, config) {
 	// set default zoom to max if we are going to zoom in on a square
 	if (this.options['row'] !== undefined && this.options['col'] !== undefined) {
 		if (!config) config = {};
-		config['zoom'] = ZOOM_SCALE;
+		config['zoom'] = 1 << Math.ceil(Math.log(ZOOM_SCALE) / Math.LN2);
 	}
 	/**
 	 * presistable configuration values
@@ -344,7 +344,6 @@ Visualizer.prototype.preload = function() {
 	this.loading = LoadingState.LOADING;
 	return false;
 };
-
 /**
  * Loads a replay file located on the same server using a XMLHttpRequest.
  * @param {string} file the relative file name
@@ -397,15 +396,13 @@ Visualizer.prototype.streamingStart = function() {
 			this.loadCanvas(true);
 		}
 	} else {
-		// order player names
-		this.updatePlayerButtons();
 		// call resize to update the gui
 		this.resize(true);
 		// resume playback if we are at the end
 		resume = !this.director.playing() && (this.director.position === this.director.duration);
 		if (this.director.stopAt === this.director.duration) {
 			this.director.stopAt = this.replay.duration;
-		}		
+		}
 		this.director.duration = this.replay.duration;
 		if (resume) {
 			this.director.play();
@@ -449,7 +446,7 @@ Visualizer.prototype.loadCanvas = function(prompt) {
 		if (vis.container.firstChild !== c) {
 			vis.container.insertBefore(c, vis.log);
 		}
-		vis.createCanvas(vis.map);
+		vis.map = new CanvasElement(vis, vis.renderMap);
 		vis.createCanvas(vis.border);
 		vis.createCanvas(vis.overlay);
 		vis.createCanvas(vis.scores);
@@ -528,7 +525,10 @@ Visualizer.prototype.tryStart = function() {
 						vis.director.draw();
 					}, 'zoom in');
 					bg.addButton(3, function() {
-						vis.setZoom(0.5 * vis.config['zoom']);
+						var oldScale = vis.scale;
+						do {
+							vis.setZoom(0.5 * vis.config['zoom']);
+						} while (vis.scale == oldScale && vis.config['zoom'] > 1);
 						vis.director.draw();
 					}, 'zoom out');
 					bg.addButton(4, function() {
@@ -555,7 +555,7 @@ Visualizer.prototype.tryStart = function() {
 					}
 				}
 				// generate fog images
-				var colors = [COLOR_SAND];
+				var colors = [SAND_COLOR];
 				for (i = 0; i < this.replay.players; i++) {
 					colors.push(this.replay.meta['playercolors'][i]);
 				}
@@ -583,7 +583,7 @@ Visualizer.prototype.tryStart = function() {
 			}
 			// add player buttons
 			if (this.replay.hasDuration) {
-				this.updatePlayerButtons();
+				this.addPlayerButtons();
 			}
 			// calculate speed from duration and config settings
 			this.director.duration = this.replay.duration;
@@ -652,7 +652,7 @@ Visualizer.prototype.tryStart = function() {
 		this.loadParseReplay();
 	}
 };
-Visualizer.prototype.updatePlayerButtons = function() {
+Visualizer.prototype.addPlayerButtons = function() {
 	var scores, i;
 	var bg = this.btnMgr.addTextGroup('players', TextButtonGroup.FLOW,
 			ButtonGroup.MODE_NORMAL, 2);
@@ -796,17 +796,13 @@ Visualizer.prototype.setZoom = function(zoom) {
 		this.shiftX = (this.shiftX * this.scale / oldScale) | 0;
 		this.shiftY = (this.shiftY * this.scale / oldScale) | 0;
 	}
-	this.loc.map = new Location(0, 0, this.scale * this.replay.cols,
-		this.scale * this.replay.rows);
-	this.loc.map.x = ((this.loc.vis.w - this.loc.map.w) / 2 + this.loc.vis.x) | 0;
-	this.loc.map.y = ((this.loc.vis.h - this.loc.map.h) / 2 + this.loc.vis.y) | 0;
-	this.map.canvas.width = this.loc.map.w;
-	this.map.canvas.height = this.loc.map.h;
-	this.renderMap(this.map.ctx, this.scale);
-	this.overlay.canvas.width = Math.min(this.loc.map.w, this.loc.vis.w);
-	this.overlay.canvas.height = Math.min(this.loc.map.h, this.loc.vis.h);
-	this.border.canvas.width = Math.min(this.loc.vis.w, this.loc.map.w);
-	this.border.canvas.height = Math.min(this.loc.vis.h, this.loc.map.h);
+	this.map.setSize(this.scale * this.replay.cols, this.scale * this.replay.rows);
+	this.map.x = ((this.loc.vis.w - this.map.w) / 2 + this.loc.vis.x) | 0;
+	this.map.y = ((this.loc.vis.h - this.map.h) / 2 + this.loc.vis.y) | 0;
+	this.overlay.canvas.width  = Math.min(this.map.w, this.loc.vis.w);
+	this.overlay.canvas.height = Math.min(this.map.h, this.loc.vis.h);
+	this.border.canvas.width  = Math.min(this.loc.vis.w, this.map.w);
+	this.border.canvas.height = Math.min(this.loc.vis.h, this.map.h);
 	if (this.options['interactive']) {
 		var zoomInBtn = this.btnMgr.groups['toolbar'].getButton(2);
 		zoomInBtn.enabled = !(this.scale === ZOOM_SCALE);
@@ -903,8 +899,8 @@ Visualizer.prototype.resize = function(forced) {
 			this.loc.vis = new Location(0, y, news.width, news.height - y);
 		}
 		this.setZoom(this.config['zoom']);
-		w = Math.min(this.loc.vis.w, this.loc.map.w);
-		h = Math.min(this.loc.vis.h, this.loc.map.h);
+		w = Math.min(this.loc.vis.w, this.map.w);
+		h = Math.min(this.loc.vis.h, this.map.h);
 		if (this.border.canvas.width !== w || this.border.canvas.height !== h) {
 			this.border.canvas.width = w;
 			this.border.canvas.height = h;
@@ -927,216 +923,50 @@ Visualizer.prototype.resize = function(forced) {
 /**
  * @private
  */
-Visualizer.prototype.renderMap = function(ctx, scale) {
-	var v, h, row, col, start, rowMin, colMin, rowMax, colMax, dir, isWall;
-	var w, walls, shapes, shape, i, r, c, k, mud, mudTex, mudPixels, a, b;
-	var mapTex, mapPixels, water, diff;
-	if (scale === ZOOM_SCALE && this.config['graphics'] === true) {
-		ctx.fillStyle = '#fff';
-		ctx.fillRect(0, 0, this.loc.map.w, this.loc.map.h);
-		rowMin = 2 * this.replay.rows - 1;
-		colMin = 2 * this.replay.cols - 1;
-		rowMax = rowMin + this.replay.rows + 2;
-		colMax = colMin + this.replay.cols + 2;
-		walls = this.replay.walls;
-		w = [];
-		for (row = rowMin - 1; row <= rowMax; row++) {
-			w[row] = [];
-			for (col = colMin - 1; col <= colMax; col++) {
-				w[row][col] = row >= rowMin && col >= colMin 
-					&& row < rowMax && col < colMax 
-					&& walls[row % this.replay.rows][col % this.replay.cols];
-			}
-		}
-		v = [];
-		for (row = rowMin; row < rowMax; row++) {
-			v[row] = [];
-			for (col = colMin; col <= colMax; col++) {
-				v[row][col] = w[row][col - 1] !== w[row][col];
-			}
-		}
-		h = [];
-		for (row = rowMin; row <= rowMax; row++) {
-			h[row] = [];
-			for (col = colMin; col < colMax; col++) {
-				h[row][col] = w[row - 1][col] !== w[row][col];
-			}
-		}
-		shapes = [];
-		for (row = rowMin; row <= rowMax; row++) {
-			for (col = colMin; col < colMax; col++) {
-				if (h[row][col]) {
-					r = row;
-					shape = [];
-					if (w[row][col]) {
-						c = col;
-						dir = 0;
-						shape.push([c - colMin - 1, r - rowMin - 1]);
-					} else {
-						c = col;
-						dir = 2;
-						shape.push([c - colMin, r - rowMin - 1]);
-					}
-					i = 0;
-					do {
-						if (dir === 0 || dir === 2) {
-							h[r][c] = false;
-						} else {
-							v[r][c] = false;
-						}
-						switch (dir) {
-							case 0:
-								shape.push([shape[i][0] + 1, shape[i][1]]);
-								if (r > rowMin && v[r - 1][c + 1] === true) {
-									r--;
-									c++;
-									dir = 1;
-								} else if (c + 1 < colMax && h[r][c + 1] === true) {
-									c++;
-									dir = 0;
-								} else if (v[r][c + 1] === true) {
-									c++;
-									dir = 3;
-								} else {
-									dir = -1;
-								}
-								break;
-							case 1:
-								shape.push([shape[i][0], shape[i][1] - 1]);
-								if (c > colMin && h[r][c - 1] === true) {
-									c--;
-									dir = 2;
-								} else if (r > rowMin && v[r - 1][c] === true) {
-									r--;
-									dir = 1;
-								} else if (h[r][c] === true) {
-									dir = 0;
-								} else {
-									dir = -1;
-								}
-								break;
-							case 2:
-								shape.push([shape[i][0] - 1, shape[i][1]]);
-								if (r < rowMax && v[r][c] === true) {
-									dir = 3;
-								} else if (c > colMin && h[r][c - 1] === true) {
-									c--;
-									dir = 2;
-								} else if (v[r - 1][c] === true) {
-									r--;
-									dir = 1;
-								} else {
-									dir = -1;
-								}
-								break;
-							case 3:
-								shape.push([shape[i][0], shape[i][1] + 1]);
-								if (c < colMax && h[r + 1][c] === true) {
-									r++;
-									dir = 0;
-								} else if (r + 1 < rowMax && v[r + 1][c] === true) {
-									r++;
-									dir = 3;
-								} else if (h[r + 1][c - 1] === true) {
-									r++;
-									c--;
-									dir = 2;
-								} else {
-									dir = -1;
-								}
-								break;
-						}
-						i++;
-					} while (dir !== -1);
-					shapes.push(shape);
-				}
-			}			
-		}
-		ctx.shadowBlur = 15;
-		ctx.shadowColor = '#000';
-		ctx.shadowOffsetX = -this.replay.cols * scale * 2;
-		ctx.beginPath();
-		for (i = 0; i < shapes.length; i++) {
-			shape = shapes[i];
-			for (k = 0; k < shape.length; k++) {
-				c = Math.sin(3 * shape[k][1] ^ shape[k][1] ^ shape[k][0]) * scale * 0.2;
-				r = Math.sin(3 * shape[k][0] ^ shape[k][0] ^ shape[k][1]) * scale * 0.2;
-				shape[k][0] = (shape[k][0] * scale + this.replay.cols * scale * 2) + c;
-				shape[k][1] = (shape[k][1] * scale) + r;
-			}
-			ctx.moveTo(shape[shape.length - 1][0], shape[shape.length - 1][1]);
-			for (k = 0; k < shape.length; k++) {
-				ctx.lineTo(shape[k][0], shape[k][1]);
-			}
-		}
-		ctx.fill();
-		mud = {};
-		this.createCanvas(mud);
-		mud.canvas.width = ctx.canvas.width;
-		mud.canvas.height = ctx.canvas.height;
-		mud.ctx.fillStyle = mud.ctx.createPattern(this.imgMgr.images[1], 'repeat');
-		mud.ctx.fillRect(0, 0, mud.canvas.width, mud.canvas.height);
-		mudTex = mud.ctx.getImageData(0, 0, mud.canvas.width, mud.canvas.height);
-		mudPixels = mudTex.data;
-		mapTex = ctx.getImageData(0, 0, mud.canvas.width, mud.canvas.height);
-		mapPixels = mapTex.data;
-		for (i = 0; i < 4 * mud.canvas.height * mud.canvas.width; i++) {
-			mapPixels[i] *= 2;
-		}
-		water = [0, 0.8, 2];
-		for (row = 0; row < mud.canvas.height; row++) {
-			i = row * 4 * mud.canvas.width;
-			for (col = 0; col < mud.canvas.width; col++) {
-				k = i + 4 * col;
-				diff = mapPixels[(row + 12) * 4 * mud.canvas.width + (col + 12) * 4] 
-					 - mapPixels[(row - 12) * 4 * mud.canvas.width + (col - 12) * 4];
-				if (diff !== 0 || mapPixels[k] < 254) {
-					diff *= 0.1;
-					a = Math.sin((mapPixels[k] / 255 - 0.5) * Math.PI) * 0.5 + 0.5;
-					b = 1 - a;
-					for (c = 0; c < 3; c++) {
-						mudPixels[k + c] += diff;
-						mudPixels[k + c] = Math.pow(mudPixels[k + c] * (a * a * 0.7 + 0.3), Math.pow(b + 1, -0.3));
-						mudPixels[k + c] = Math.min(255, mudPixels[k + c] * (a + b * water[c]) + 20 * b * water[c]);
-					}
-				}
-			}
-		}
-		ctx.putImageData(mudTex, 0, 0);
-	} else {
-		ctx.fillStyle = COLOR_SAND;
-		ctx.fillRect(0, 0, this.loc.map.w, this.loc.map.h);
-		ctx.fillStyle = ctx.createPattern(this.imgMgr.images[0], 'repeat');
-		for (row = 0; row < this.replay.rows; row++) {
-			start = undefined;
-			for (col = 0; col < this.replay.cols; col++) {
-				isWall = this.replay.walls[row][col];
-				if (start === undefined && isWall) {
-					start = col;
-				} else if (start !== undefined && !isWall) {
-					ctx.fillRect(scale * start, scale * row, scale * (col - start), scale);
-					start = undefined;
-				}
-			}
-			if (start !== undefined) {
+Visualizer.prototype.redFocusRectFun = function(ctx, scale, xs, ys) {
+	var x, y, w, i;
+	for (i = 0; i < 5; i++) {
+		ctx.strokeStyle = 'rgba(255,0,0,' + (i + 1) / 5 + ')';
+		w = scale + 9 - 2 * i;
+		x = xs + i;
+		y = ys + i;
+		ctx.strokeRect(x, y, w, w);
+	}
+};
+/**
+ * @private
+ */
+Visualizer.prototype.renderMapScaled = function(ctx, scale) {
+	var row, col, start, isWall, xs, ys;
+	ctx.fillStyle = SAND_COLOR;
+	ctx.fillRect(0, 0, this.map.w, this.map.h);
+	ctx.fillStyle = ctx.createPattern(this.imgMgr.images[0], 'repeat');
+	for (row = 0; row < this.replay.rows; row++) {
+		start = undefined;
+		for (col = 0; col < this.replay.cols; col++) {
+			isWall = this.replay.walls[row][col];
+			if (start === undefined && isWall) {
+				start = col;
+			} else if (start !== undefined && !isWall) {
 				ctx.fillRect(scale * start, scale * row, scale * (col - start), scale);
+				start = undefined;
 			}
+		}
+		if (start !== undefined) {
+			ctx.fillRect(scale * start, scale * row, scale * (col - start), scale);
 		}
 	}
 	if (this.options['row'] !== undefined && this.options['col'] !== undefined) {
-		for (i = 1; i <= 5; i++) {
-			ctx.strokeStyle = 'rgba(255,0,0,' + i / 5 + ')';
-			w = scale + 11 - 2 * i;
-			var x = (this.options['col'] % this.replay.cols) * scale - 5.5 + i;
-			var y = (this.options['row'] % this.replay.rows) * scale - 5.5 + i;
-			r = this.replay.rows * scale;
-			c = this.replay.cols * scale;
-			ctx.strokeRect(x + c, y + r, w, w);
-			ctx.strokeRect(x, y + r, w, w);
-			ctx.strokeRect(x + c, y, w, w);
-			ctx.strokeRect(x, y, w, w);
-		}
+		xs = (this.options['col'] % this.replay.cols) * scale - 4.5;
+		ys = (this.options['row'] % this.replay.rows) * scale - 4.5;
+		this.drawWrapped(
+				xs, ys, scale + 9, scale + 9, this.map.w, this.map.h,
+				ctx, this.redFocusRectFun, [ctx, scale, xs, ys]
+			);
 	}
+};
+Visualizer.prototype.renderMap = function(ctx) {
+	this.renderMapScaled(ctx, this.scale)
 };
 /**
  * @private
@@ -1354,6 +1184,33 @@ Visualizer.prototype.interpolate = function(array1, array2, delta) {
 };
 /**
  * @private
+ * helper function to draw items wrapped around the map borders
+ */
+Visualizer.prototype.drawWrapped = function(x, y, w, h, colPixels, rowPixels, ctx, func, args) {
+	var delta_x, delta_y, tx, ty, sum;
+	if (x < 0 || y < 0 || x + w > colPixels || y + h > rowPixels) {
+		ctx.save();
+		delta_x = -Math.floor((x + w) / colPixels) * colPixels;
+		delta_y = -Math.floor((y + h) / rowPixels) * rowPixels;
+		ctx.translate(delta_x, delta_y);
+		for (ty = y + delta_y; ty < rowPixels; ty += rowPixels)
+		{
+			sum = 0;
+			for (tx = x + delta_x; tx < colPixels; tx += colPixels)
+			{
+				func.apply(this, args);
+				ctx.translate(colPixels, 0);
+				sum -= colPixels;
+			}
+			ctx.translate(sum, rowPixels);
+		}
+		ctx.restore();
+	} else {
+		func.apply(this, args);
+	}
+}
+/**
+ * @private
  */
 Visualizer.prototype.draw = function(time, tick) {
 	var x, y, w, h, dx, dy, d, hash, ants, ant, i, img, offset, visibleAnts;
@@ -1400,7 +1257,7 @@ Visualizer.prototype.draw = function(time, tick) {
 	}
 	var drawMinimap = tick !== undefined && this.config['zoom'] !== 1;
 	if (drawMinimap) {
-		this.renderMap(this.minimap.ctx, 1);
+		this.renderMapScaled(this.minimap.ctx, 1);
 	}
 	ants = this.replay.getTurn(turn);
 	visibleAnts = new Array(ants.length);
@@ -1429,31 +1286,8 @@ Visualizer.prototype.draw = function(time, tick) {
 		}
 	}
 	visibleAnts.length = n;
-	// helper function to draw items wrapped around the map borders
-	var drawWrapped = function(x, y, w, h, ctx, func, args) {
-		var delta_x, delta_y, tx, ty, sum;
-		if (x < 0 || y < 0 || x + w > colPixels || y + h > rowPixels) {
-			ctx.save();
-			delta_x = -Math.floor((x + w) / colPixels) * colPixels;
-			delta_y = -Math.floor((y + h) / rowPixels) * rowPixels;
-			ctx.translate(delta_x, delta_y);
-			for (ty = y + delta_y; ty < rowPixels; ty += rowPixels)
-			{
-				sum = 0; 
-				for (tx = x + delta_x; tx < colPixels; tx += colPixels)
-				{
-					func.apply(this, args);
-					ctx.translate(colPixels, 0);
-					sum -= colPixels;
-				}
-				ctx.translate(sum, rowPixels);
-			}
-			ctx.restore();
-		} else {
-			func.apply(this, args);
-		}
-	}
 	// draw the map background
+	this.map.validate();
 	var ctx = this.border.ctx;
 	for (dy = y; dy < this.loc.vis.h; dy += rowPixels) {
 		for (dx = x; dx < this.loc.vis.w; dx += colPixels) {
@@ -1552,16 +1386,16 @@ Visualizer.prototype.draw = function(time, tick) {
 					ctx.strokeText(letter, ant['x'], ant['y']);
 					ctx.fillText(letter, ant['x'], ant['y']);
 					if (ant['x'] < 0) {
-						ctx.strokeText(letter, ant['x'] + this.loc.map.w, ant['y']);
-						ctx.fillText(letter, ant['x'] + this.loc.map.w, ant['y']);
+						ctx.strokeText(letter, ant['x'] + this.map.w, ant['y']);
+						ctx.fillText(letter, ant['x'] + this.map.w, ant['y']);
 						if (ant['y'] < 0) {
-							ctx.strokeText(letter, ant['x'] + this.loc.map.w, ant['y'] + this.loc.map.h);
-							ctx.fillText(letter, ant['x'] + this.loc.map.w, ant['y'] + this.loc.map.h);
+							ctx.strokeText(letter, ant['x'] + this.map.w, ant['y'] + this.map.h);
+							ctx.fillText(letter, ant['x'] + this.map.w, ant['y'] + this.map.h);
 						}
 					}
 					if (ant['y'] < 0) {
-						ctx.strokeText(letter, ant['x'], ant['y'] + this.loc.map.h);
-						ctx.fillText(letter, ant['x'], ant['y'] + this.loc.map.h);
+						ctx.strokeText(letter, ant['x'], ant['y'] + this.map.h);
+						ctx.fillText(letter, ant['x'], ant['y'] + this.map.h);
 					}
 				}
 			}
@@ -1627,9 +1461,11 @@ Visualizer.prototype.draw = function(time, tick) {
 				dx = ant['x'] - mx;
 				dy = ant['y'] - my;
 				if (radius * radius >= dx * dx + dy * dy) {
-					drawWrapped(ant['x'] - radius, ant['y'] - radius,
-						2 * radius, 2 * radius,
-						ctx, drawEffectCircle, [ant['x'], ant['y'], mx, my]);
+					this.drawWrapped(
+							ant['x'] - radius, ant['y'] - radius,
+							2 * radius, 2 * radius, colPixels, rowPixels,
+							ctx, drawEffectCircle, [ant['x'], ant['y'], mx, my]
+						);
 				}
 			}
 		}
@@ -1649,33 +1485,33 @@ Visualizer.prototype.draw = function(time, tick) {
 	ctx.rect(loc.x, loc.y, loc.w, loc.h);
 	ctx.clip();
 	if (this.border.canvas.width < loc.w) {
-		var sx = this.loc.map.x - loc.x + this.shiftX;
-		sx += loc.x - Math.ceil(sx / this.loc.map.w) * this.loc.map.w;
+		var sx = this.map.x - loc.x + this.shiftX;
+		sx += loc.x - Math.ceil(sx / this.map.w) * this.map.w;
 	} else {
 		sx = loc.x;
 	}
 	if (this.border.canvas.height < loc.h) {
-		var sy = this.loc.map.y - loc.y + this.shiftY;
-		sy += loc.y - Math.ceil(sy / this.loc.map.h) * this.loc.map.h;
+		var sy = this.map.y - loc.y + this.shiftY;
+		sy += loc.y - Math.ceil(sy / this.map.h) * this.map.h;
 	} else {
 		sy = loc.y;
 	}
-	for (dy = sy; dy < loc.y + loc.h; dy += this.loc.map.h) {
-		for (dx = sx; dx < loc.x + loc.w; dx += this.loc.map.w) {
+	for (dy = sy; dy < loc.y + loc.h; dy += this.map.h) {
+		for (dx = sx; dx < loc.x + loc.w; dx += this.map.w) {
 			ctx.drawImage(this.border.canvas, dx, dy);
 		}
 	}
 	ctx.restore();
 	// shade repeated parts
 	ctx.fillStyle = 'rgba(0,0,0,0.3)';
-	w = this.loc.map.y - loc.y;
+	w = this.map.y - loc.y;
 	if (w > 0) ctx.fillRect(loc.x, loc.y, loc.w, w);
-	w = loc.y + loc.h - this.loc.map.y - this.loc.map.h;
-	if (w > 0) ctx.fillRect(loc.x, this.loc.map.y + this.loc.map.h, loc.w, w);
-	w = this.loc.map.x - loc.x;
+	w = loc.y + loc.h - this.map.y - this.map.h;
+	if (w > 0) ctx.fillRect(loc.x, this.map.y + this.map.h, loc.w, w);
+	w = this.map.x - loc.x;
 	if (w > 0) ctx.fillRect(loc.x, loc.y, w, loc.h);
-	w = loc.x + loc.w - this.loc.map.x - this.loc.map.w;
-	if (w > 0) ctx.fillRect(this.loc.map.x + this.loc.map.w, loc.y, w, loc.h);
+	w = loc.x + loc.w - this.map.x - this.map.w;
+	if (w > 0) ctx.fillRect(this.map.x + this.map.w, loc.y, w, loc.h);
 	// minimap
 	if (this.config['zoom'] !== 1 && this.minimap.loc.h + 4 <= this.loc.vis.h && this.minimap.loc.w + 4 <= this.loc.vis.w) {
 		ctx.save();
@@ -1733,21 +1569,21 @@ Visualizer.prototype.mouseMoved = function(mx, my) {
 	var deltaY = my - this.mouseY;
 	this.mouseX = mx;
 	this.mouseY = my;
-	this.mouseCol = (Math.wrapAround(mx - this.loc.map.x - this.shiftX, 
+	this.mouseCol = (Math.wrapAround(mx - this.map.x - this.shiftX,
 			this.scale * this.replay.cols) / this.scale) | 0;
-	this.mouseRow = (Math.wrapAround(my - this.loc.map.y - this.shiftY, 
+	this.mouseRow = (Math.wrapAround(my - this.map.y - this.shiftY,
 			this.scale * this.replay.rows) / this.scale) | 0;
 	var oldHint = this.hint;
 	this.hint = '';
 	if (this.options['interactive']) {
-		this.mouseOverVis = this.loc.map.contains(this.mouseX, this.mouseY) 
+		this.mouseOverVis = this.map.contains(this.mouseX, this.mouseY)
 				&& this.loc.vis.contains(this.mouseX, this.mouseY);
 		if (this.mouseOverVis) {
 			this.hint = 'row ' + this.mouseRow + ' | col ' +  this.mouseCol;
 		}
 		if (this.mouseDown === 1) {
 			mx = (this.mouseX - this.loc.graph.x) / (this.loc.graph.w - 1);
-			mx = Math.round(mx * (this.replay.turns.length - 1));
+			mx = Math.round(mx * this.replay.duration);
 			this.director.gotoTick(mx);
 		} else if (this.mouseDown === 2 || (this.mouseDown === 3 && this.minimap.loc.contains(this.mouseX, this.mouseY))) {
 			if (this.mouseDown === 2) {

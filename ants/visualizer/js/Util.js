@@ -19,6 +19,15 @@ Random = {
 	}
 };
 
-Math.wrapAround = function (x, range) {
+Math.wrapAround = function(x, range) {
 	return x - Math.floor(x / range) * range;
-}
+};
+
+Quirks = {
+	fullImageShadowSupport: function() {
+		return (
+				navigator.userAgent.indexOf('Firefox/5.0') === -1 &&
+				navigator.userAgent.indexOf('Chrome/12.') === -1
+			);
+	}
+};
