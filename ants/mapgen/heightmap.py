@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 from map import *
-from random import randint
+from random import randint, choice
 from collections import defaultdict
 
 class HeightMapMap(Map):
@@ -11,6 +11,87 @@ class HeightMapMap(Map):
         self.cols = options.get('cols', (40,120))
         self.players = options.get('players', (2,4))
         self.land = options.get('land', (85, 90))
+    
+    def generate_heights(self, size):
+        rows, cols = size
+        
+        # initialize height map
+        height_map = [[0]*cols for _ in range(rows)]
+    
+        # cut and lift
+        iterations = 1000
+        for _ in range(iterations):
+            row = randint(0, rows-1)
+            col = randint(0, cols-1)
+            radius = randint(5, (rows+cols)/4)
+            radius2 = radius**2
+            for d_row in range(-radius, radius+1):
+                for d_col in range(-radius, radius+1):
+                    h_row = (row + d_row) % rows
+                    h_col = (col + d_col) % cols
+                    if self.euclidean_distance2((row, col), (h_row, h_col), (rows, cols)) <= radius2:
+                        height_map[h_row][h_col] += 1
+        return height_map
+
+    def normalize(self, hmap):
+        rows = len(hmap)
+        cols = len(hmap[0])
+        min_height = min([min(hrow) for hrow in hmap])
+        for row in range(rows):
+            for col in range(cols):
+                hmap[row][col] -= min_height                
+    
+    def local_min(self, hmap):
+        rows = len(hmap)
+        cols = len(hmap[0])
+        min_list = []
+        for row in range(rows):
+            for col in range(cols):
+                for d_row, d_col in ((1,0), (0,1), (-1,0), (0,-1)):
+                    h_row = (row + d_row) % rows
+                    h_col = (col + d_col) % cols
+                    if hmap[h_row][h_col] < hmap[row][col]:
+                        break
+                else:
+                    min_list.append((row, col))
+        return min_list        
+    
+    def generate_rivers(self, hmap):
+        rows = len(hmap)
+        cols = len(hmap[0])
+        
+        # new height map
+        min_list = self.local_min(hmap)
+        self.normalize(hmap)
+        water_map = [[0] * cols for _ in range(rows)]
+        
+        # place drop of water, follow to lowest point
+        for w_row in range(rows):
+            for w_col in range(cols):
+                water_path = []
+                c_row, c_col = w_row, w_col
+                while True:
+                    water_path.append((c_row, c_col))
+                    water_map[c_row][c_col] += 1
+                    h = defaultdict(list) # used to find lowest point around square
+                    for d_row, d_col in ((1,0), (0,1), (-1,0), (0,-1)):
+                        h_row = (c_row + d_row) % rows
+                        h_col = (c_col + d_col) % cols
+                        if not (h_row, h_col) in water_path: 
+                            h[hmap[h_row][h_col]] += [(h_row, h_col)]
+                    # select randomly if there are 2 squares at the same height
+                    if len(h) == 0:
+                        # no space left
+                        break
+                    else:
+                        min_height = min(h.keys())
+                        if min_height >= hmap[c_row][c_col]:
+                            # point lower, move
+                            c_row, c_col = choice(h[min_height])                                
+                        else:
+                            # no point lower
+                            break
+        return water_map
     
     def generate(self):
         # pick random full size for map
@@ -51,22 +132,8 @@ class HeightMapMap(Map):
         # get percent of map that should be land
         land = self.get_random_option(self.land)        
 
-        # initialize height map
-        height_map = [[0]*cols for _ in range(rows)]
-    
-        # cut and lift
-        iterations = 500
-        for _ in range(iterations):
-            row = randint(0, rows-1)
-            col = randint(0, cols-1)
-            radius = randint(5, (rows+cols)/4)
-            radius2 = radius**2
-            for d_row in range(-radius, radius+1):
-                for d_col in range(-radius, radius+1):
-                    h_row = (row + d_row) % rows
-                    h_col = (col + d_col) % cols
-                    if self.euclidean_distance2((row, col), (h_row, h_col), (rows, cols)) <= radius2:
-                        height_map[h_row][h_col] += 1
+        height_map = self.generate_heights((rows, cols))
+        height_map = self.generate_rivers(height_map)
         
         # create histogram
         histo = defaultdict(int)
@@ -118,7 +185,7 @@ class HeightMapMap(Map):
         self.translate((d_row, d_col))
 
         # finish map        
-        self.tile((row_sym, col_sym))
+        #self.tile((row_sym, col_sym))
         self.make_wider()
         
 def main():
@@ -126,8 +193,8 @@ def main():
     new_map.generate()
     
     # check that all land area is accessable
-    while new_map.allowable() != None:
-        new_map.generate()
+    #while new_map.allowable() != None:
+        #new_map.generate()
         
     new_map.toText()
     
