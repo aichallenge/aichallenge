@@ -5,6 +5,7 @@ require_once('pagination.php');
 require_once('nice.php');
 
 $page_size = 100;
+$no_cache_results = false; // Set to true to ignore memcache results for debugging
 
 //require_once('session.php');
 // session is needed to highlight the current user
@@ -241,7 +242,9 @@ function get_ranking_json($page=0, $org_id=NULL, $country_id=NULL, $language_id=
     if ($memcache) {
         $results = $memcache->get($cache_key);
     }
-    $results = NULL; // use to force data refresh when debugging
+    if ($no_cache_results) {
+        $results = NULL; // use to force data refresh when debugging
+    }
     if (!$results) {
         $results = produce_cache_results($page, $org_id, $country_id, $language_id);
     }
@@ -255,7 +258,9 @@ function get_ranking_table($page=0, $org_id=NULL, $country_id=NULL, $language_id
     if ($memcache) {
         $results = $memcache->get($cache_key);
     }
-    $results = NULL; // use to force data refresh when debugging
+    if ($no_cache_results) {
+        $results = NULL; // use to force data refresh when debugging
+    }
     if (!$results) {
         $results = create_ranking_table(json_decode(get_ranking_json($page, $org_id, $country_id, $language_id), true));
         if ($memcache) {
