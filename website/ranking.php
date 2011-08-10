@@ -5,6 +5,7 @@ require_once('pagination.php');
 require_once('nice.php');
 
 $page_size = 100;
+$expiration_time = 300; // Maximum time in seconds to use memcache results
 $no_cache_results = false; // Set to true to ignore memcache results for debugging
 
 //require_once('session.php');
@@ -42,12 +43,16 @@ function cache_key($page=0, $org_id=NULL, $country_id=NULL, $language_id=NULL, $
     } else {
         $key = "ranking:all::";
     }
-    return $key. ":" . strval($page) . ":" . $format;
+    global $expiration_time;
+    $expts = intval(time() / $expiration_time);
+    $key = $key . ":" . strval($page) . ":" . $format . ":" . $expts;
+    return $key;
 }
 
 function produce_cache_results($page=0, $org_id=NULL, $country_id=NULL, $language_id=NULL) {
     global $memcache;
     global $page_size;
+    global $expiration_time;
 
     $json = array("fields" => array(),
                   "values" => array());
@@ -91,7 +96,8 @@ function produce_cache_results($page=0, $org_id=NULL, $country_id=NULL, $languag
                 // dump results of page
                 if ($page_num > 0) {
                     $memcache->set(cache_key($page_num, $org_id, $country_id, $language_id),
-                                   json_encode($json_page));
+                        json_encode($json_page), 0,
+                        $expiration_time + 1);
                 }
                 // setup next page
                 if ($row_num < $row_count) {
@@ -122,12 +128,12 @@ function produce_cache_results($page=0, $org_id=NULL, $country_id=NULL, $languag
         }
         if (isset($json_page)) {
             $memcache->set(cache_key($page_num, $org_id, $country_id, $language_id),
-                           json_encode($json_page));
+                           json_encode($json_page), 0, $expiration_time + 1);
         }
         $memcache->set(cache_key(-1, $org_id, $country_id, $language_id),
-                       $page_num);
+                       $page_num, 0, $expiration_time + 1);
         $memcache->set(cache_key(0, $org_id, $country_id, $language_id),
-                       json_encode($json));
+                       json_encode($json), 0, $expiration_time + 1);
         return $memcache->get(cache_key($page, $org_id, $country_id, $language_id));
     }
     return NULL;
@@ -237,6 +243,7 @@ function create_ranking_table($json) {
 
 function get_ranking_json($page=0, $org_id=NULL, $country_id=NULL, $language_id=NULL) {
     global $memcache;
+    global $no_cache_results;
 
     $cache_key = cache_key($page, $org_id, $country_id, $language_id);
     if ($memcache) {
@@ -253,6 +260,8 @@ function get_ranking_json($page=0, $org_id=NULL, $country_id=NULL, $language_id=
 
 function get_ranking_table($page=0, $org_id=NULL, $country_id=NULL, $language_id=NULL) {
     global $memcache;
+    global $no_cache_results;
+    global $expiration_time;
 
     $cache_key = cache_key($page, $org_id, $country_id, $language_id, 'table');
     if ($memcache) {
@@ -264,7 +273,7 @@ function get_ranking_table($page=0, $org_id=NULL, $country_id=NULL, $language_id
     if (!$results) {
         $results = create_ranking_table(json_decode(get_ranking_json($page, $org_id, $country_id, $language_id), true));
         if ($memcache) {
-            $memcache->set($cache_key, $results);
+            $memcache->set($cache_key, $results, 0, $expiration_time + 1);
         }
     }
     return $results;
