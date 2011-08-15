@@ -88,10 +88,10 @@ if (mysql_num_rows($result) > 0) {
 
 // Check if the email is already in use (except by an admin account or a donotsend account).
 if (strcmp($user_email, "donotsend") != 0) {
-  $sql="select u.email from user where u.email = '$user_email' and admin = 0";
+  $sql="select email from user where email = '$user_email' and admin = 0";
   $result = mysql_query($sql);
   if ($result && mysql_num_rows($result) > 0) {
-    $errors[] = "The email $user_email is already in use. You are only allowed to have one account! It is easy for us to tell if you have two accounts, and you will be disqualified if you have two accounts! If there is some problem with your existing account, get in touch with the contest organizers by dropping by the Computer Science Club office and we will help you get up-and-running again!  :-)";
+    $errors[] = "<p>The email $user_email is already in use. You are only allowed to have one account! It is easy for us to tell if you have two accounts, and you will be disqualified if you have two accounts! If there is some problem with your existing account, get in touch with the contest organizers on irc.freenode.com channel #aichallenge and we will help you get up-and-running again!</p>";
   }
 }
 
