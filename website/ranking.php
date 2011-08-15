@@ -84,6 +84,12 @@ function produce_cache_results($page=0, $org_id=NULL, $country_id=NULL, $languag
         for ($i = 0; $i < $field_count; $i++) {
             $field_names[] = mysql_field_name($rank_results, $i);
         }
+        if ($rank_type !== NULL) {
+            $field_names[] = "filter_rank";
+            $filter_rank_ix = array_search("filter_rank", $field_names);
+            $rank_ix = array_search("rank", $field_names);
+            $filter_rank = 0;
+        }
         $json["fields"] = $field_names;
         $row_num = 0;
         $page_num = 0;
@@ -115,6 +121,14 @@ function produce_cache_results($page=0, $org_id=NULL, $country_id=NULL, $languag
                 }
             }
             $row_num++;
+            if ($rank_type !== NULL) {
+                if ($rank_row[$rank_ix] !== NULL) {
+                    $filter_rank++;
+                    $rank_row[$filter_rank_ix] = $filter_rank;
+                } else {
+                    $rank_row[$filter_rank_ix] = NULL;
+                }
+            }
             $json["values"][] = $rank_row;
             $json_page["values"][] = $rank_row;
         }

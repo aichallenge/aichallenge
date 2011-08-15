@@ -150,7 +150,6 @@ $contest_sql = array(
                l.language_id, l.name as programming_language,
                o.org_id, o.name as org_name,
                r.*,
-               if(r.rank is not null, @count1 := @count1 + 1 , null) as filter_rank,
                gt.game_count,
                timestampdiff(second, gmin.timestamp, gmax.timestamp)/60/gt.game_count as game_rate
         from ranking r
@@ -173,8 +172,7 @@ $contest_sql = array(
         left outer join language l
             on l.language_id = s.language_id
         left outer join country c
-            on u.country_id = c.country_id,
-        (select @count1 := 0) c1
+            on u.country_id = c.country_id
         where r.leaderboard_id = (
             select max(leaderboard_id)
             from leaderboard
@@ -186,7 +184,6 @@ $contest_sql = array(
                l.language_id, l.name as programming_language,
                o.org_id, o.name as org_name,
                r.*,
-               if(r.rank is not null, @count1 := @count1 + 1 , null) as filter_rank,
                gt.game_count,
                timestampdiff(second, gmin.timestamp, gmax.timestamp)/60/gt.game_count as game_rate
         from ranking r
@@ -209,8 +206,7 @@ $contest_sql = array(
         left outer join language l
             on l.language_id = s.language_id
         left outer join country c
-            on u.country_id = c.country_id,
-        (select @count1 := 0) c1
+            on u.country_id = c.country_id
         where r.leaderboard_id = (
             select max(leaderboard_id)
             from leaderboard
@@ -222,7 +218,6 @@ $contest_sql = array(
                l.language_id, l.name as programming_language,
                o.org_id, o.name as org_name,
                r.*,
-               if(r.rank is not null, @count1 := @count1 + 1 , null) as filter_rank,
                gt.game_count,
                timestampdiff(second, gmin.timestamp, gmax.timestamp)/60/gt.game_count as game_rate
         from ranking r
@@ -245,8 +240,7 @@ $contest_sql = array(
         left outer join language l
             on l.language_id = s.language_id
         left outer join country c
-            on u.country_id = c.country_id,
-        (select @count1 := 0) c1
+            on u.country_id = c.country_id
         where r.leaderboard_id = (
             select max(leaderboard_id)
             from leaderboard
