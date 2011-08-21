@@ -1,5 +1,6 @@
 package com.aicontest.visualizer.js.dom;
 
+import java.awt.AlphaComposite;
 import java.awt.Color;
 import java.awt.Paint;
 import java.awt.geom.AffineTransform;
@@ -24,7 +25,8 @@ class RenderingContext2dState {
 	protected double shadowBlur = 0.0D;
 	protected Object shadowColor = new Color(0, 0, 0, 0);
 	protected double globalAlpha = 1.0;
-
+	protected int globalCompositeOperation = AlphaComposite.SRC_OVER;
+	
 	public RenderingContext2dState() {
 		transform = new AffineTransform();
 	}
@@ -60,5 +62,6 @@ class RenderingContext2dState {
 		shadowOffsetX = state.shadowOffsetX;
 		shadowOffsetY = state.shadowOffsetY;
 		globalAlpha = state.globalAlpha;
+		globalCompositeOperation = state.globalCompositeOperation;
 	}
 }

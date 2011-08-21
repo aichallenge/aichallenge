@@ -83,7 +83,7 @@ public class Visualizer extends WebWrapper implements MouseInputListener,
 	}
 
 	public synchronized void canvasResized() {
-		if ((canvas.getWidth() > 0) && (canvas.getHeight() > 0)) {
+		if (canvas != null && canvas.getWidth() > 0 && canvas.getHeight() > 0 && (offscreen == null || offscreen.getWidth(drawPanel) != canvas.getWidth() ||offscreen.getHeight(drawPanel) != canvas.getHeight())) {
 			offscreen = drawPanel.createImage(canvas.getWidth(),
 					canvas.getHeight());
 			if (offscreen != null) {

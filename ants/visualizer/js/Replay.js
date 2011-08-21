@@ -261,7 +261,7 @@ function Replay(replay, debug, swapUser) {
 				keyIsStr(mapdata, r, map['cols'], map['cols']);
 				var maprow = new String(mapdata[r]);
 				if ((i = maprow.search(regex)) !== -1 && !this.debug) {
-					throw new Error('Invalid character "' + maprow.charAt(i) + '" in map. Zero based row/col: ' + r + '/' + i)
+					throw new Error('Invalid character "' + maprow.charAt(i) + '" in map. Zero based row/col: ' + r + '/' + i);
 				}
 				this.walls[r] = new Array(maprow.length);
 				for (var c = 0; c < maprow.length; c++) {
@@ -321,21 +321,21 @@ function Replay(replay, debug, swapUser) {
 			}
 			// prepare score and count lists
 			this.turns = new Array(this.duration + 1);
-			this.scores = new Array(this.duration + 1);
-			this.counts = new Array(this.duration + 1);
+			this['scores'] = new Array(this.duration + 1);
+			this['counts'] = new Array(this.duration + 1);
 			this.fogs = new Array(this.players);
 			for (n = 0; n <= this.duration; n++) {
-				this.scores[n] = new Array(this.players);
-				this.counts[n] = new Array(this.players);
-				for (i = 0; i < this.players; i++) this.counts[n][i] = 0;
+				this['scores'][n] = new Array(this.players);
+				this['counts'][n] = new Array(this.players);
+				for (i = 0; i < this.players; i++) this['counts'][n][i] = 0;
 			}
 			for (i = 0; i < this.players; i++) {
 				scores = scoreslist[i];
 				for (k = 0; k < scores.length; k++) {
-					this.scores[k][i] = scores[k];
+					this['scores'][k][i] = scores[k];
 				}
 				for (; k <= this.duration; k++) {
-					this.scores[k][i] = scores[scores.length - 1];
+					this['scores'][k][i] = scores[scores.length - 1];
 				}
 				this.fogs[i] = new Array(this.duration + 1);
 			}
@@ -343,7 +343,7 @@ function Replay(replay, debug, swapUser) {
 				if (ants[i][5] !== undefined) {
 					// account ant to the owner
 					for (n = ants[i][3]; n < ants[i][4]; n++) {
-						this.counts[n][ants[i][5]]++;
+						this['counts'][n][ants[i][5]]++;
 					}
 				}
 			}
@@ -656,25 +656,26 @@ Replay.prototype.convertAnt = function(aniAnt, instantly, turn, owner) {
 	aniAnt.fade(Quality.LOW, 'g', color[1], turn - 0.25, turn);
 	aniAnt.fade(Quality.LOW, 'b', color[2], turn - 0.25, turn);
 };
-Replay.prototype.killAnt = function(aniAnt, dead) {
+Replay.prototype.killAnt = function(aniAnt, death) {
 	var color;
-	var owner = aniAnt.frameAt(dead, Quality.LOW)['owner'];
+	var owner = aniAnt.frameAt(death, Quality.LOW)['owner'];
 	if (owner === undefined) {
 		color = FOOD_COLOR;
 	} else {
 		color = this.meta['playercolors'][owner];
 	}
-	aniAnt.fade(Quality.LOW, 'r'   , 255, dead - 0.80, dead - 0.60);
-	aniAnt.fade(Quality.LOW, 'g'   , 255, dead - 0.80, dead - 0.60);
-	aniAnt.fade(Quality.LOW, 'b'   , 255, dead - 0.80, dead - 0.60);
-	aniAnt.fade(Quality.LOW, 'r', color[0], dead - 0.60, dead - 0.40);
-	aniAnt.fade(Quality.LOW, 'g', color[1], dead - 0.60, dead - 0.40);
-	aniAnt.fade(Quality.LOW, 'b', color[2], dead - 0.60, dead - 0.40);
-	aniAnt.fade(Quality.LOW, 'r'   , 0.0, dead - 0.40, dead);
-	aniAnt.fade(Quality.LOW, 'g'   , 0.0, dead - 0.40, dead);
-	aniAnt.fade(Quality.LOW, 'b'   , 0.0, dead - 0.40, dead);
-	aniAnt.fade(Quality.LOW, 'size', 0.7, dead - 0.80, dead - 0.60);
-	aniAnt.fade(Quality.LOW, 'size', 0.0, dead - 0.40, dead);
+	aniAnt.fade(Quality.LOW, 'r'   , 255, death - 0.80, death - 0.60);
+	aniAnt.fade(Quality.LOW, 'g'   , 255, death - 0.80, death - 0.60);
+	aniAnt.fade(Quality.LOW, 'b'   , 255, death - 0.80, death - 0.60);
+	aniAnt.fade(Quality.LOW, 'r', color[0], death - 0.60, death - 0.40);
+	aniAnt.fade(Quality.LOW, 'g', color[1], death - 0.60, death - 0.40);
+	aniAnt.fade(Quality.LOW, 'b', color[2], death - 0.60, death - 0.40);
+	aniAnt.fade(Quality.LOW, 'r'   , 0.0, death - 0.40, death);
+	aniAnt.fade(Quality.LOW, 'g'   , 0.0, death - 0.40, death);
+	aniAnt.fade(Quality.LOW, 'b'   , 0.0, death - 0.40, death);
+	aniAnt.fade(Quality.LOW, 'size', 0.7, death - 0.80, death - 0.60);
+	aniAnt.fade(Quality.LOW, 'size', 0.0, death - 0.40, death);
+	aniAnt.death = death;
 };
 /**
  * used by the Java live visualizer
@@ -705,19 +706,17 @@ Replay.prototype.getFog = function(player, turn) {
 		}
 		radius2 = this.meta['replaydata']['viewradius2'];
 		radius = Math.sqrt(radius2) | 0;
+		row_wrap = new Array(2 * radius + 1);
+		col_wrap = new Array(2 * radius + 1);
 		aniAnts = this.getTurn(turn);
 		for (i = 0; i < aniAnts.length; i++) {
 			aniAnt = aniAnts[i].interpolate(turn, Quality.LOW);
 			if (aniAnt && aniAnt['owner'] === player) {
-				row_wrap = new Array(2 * radius + 1);
 				for (row = 2 * radius; row >= 0; row--) {
-					row_wrap[row] = aniAnt['y'] - radius + row;
-					row_wrap[row] -= Math.floor(row_wrap[row] / this.rows) * this.rows;
+					row_wrap[row] = Math.wrapAround(aniAnt['y'] - radius + row, this.rows);
 				}
-				col_wrap = new Array(2 * radius + 1);
 				for (col = 2 * radius; col >= 0; col--) {
-					col_wrap[col] = aniAnt['x'] - radius + col;
-					col_wrap[col] -= Math.floor(col_wrap[col] / this.cols) * this.cols;
+					col_wrap[col] = Math.wrapAround(aniAnt['x'] - radius + col, this.cols);
 				}
 				col = col_wrap[radius];
 				for (row = 1; row <= radius; row++) {

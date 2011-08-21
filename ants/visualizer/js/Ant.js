@@ -1,32 +1,32 @@
-
-
 /**
  * The enum for standard graphics is referred to by the imgA and imgB fields of
  * HiFiData and read in the drawing routine of the visualizer.
  */
 Img = {
-	EMPTY: 26,
-	FOOD: 27
+	EMPTY : 26,
+	FOOD : 27
 };
 
 Quality = {
-	LOW: false,
-	HIGH: true
+	LOW : false,
+	HIGH : true
 };
-
-
 
 /**
  * The constructor for on-screen ant objects initializes it with one key frame.
- * @param {number} id This is the unique object id of the new ant.
- * @param {number} time Sets the time in which the object appears in turn units.
+ * 
+ * @param {number}
+ *            id This is the unique object id of the new ant.
+ * @param {number}
+ *            time Sets the time in which the object appears in turn units.
  * @constructor
  */
 function Ant(id, time) {
 	this.id = id;
-	this.lo = [new LoFiData()];
+	this.death = undefined;
+	this.lo = [ new LoFiData() ];
 	this.lo[0].time = time;
-	this.hi = [new HiFiData()];
+	this.hi = [ new HiFiData() ];
 	this.hi[0].time = time;
 	this.owner = undefined;
 	/** @private */
@@ -50,7 +50,7 @@ function Ant(id, time) {
 Ant.prototype.frameAt = function(time, quality) {
 	var set = quality ? this.hi : this.lo;
 	var frame, delta;
-	for (var i = set.length - 1; i >= 0; i--) {
+	for ( var i = set.length - 1; i >= 0; i--) {
 		if (set[i].time == time) {
 			return set[i];
 		} else if (set[i].time < time) {
@@ -71,10 +71,13 @@ Ant.prototype.frameAt = function(time, quality) {
 /**
  * Interpolates the key frames around the given time and returns the result. If
  * the time exceeds the time stamp of the last key frame, that key frame is
- * returned instead.
- * @param {number} time the time in question
- * @param {Quality} quality selects between the low and high quality set of key
- *     frames
+ * returned instead. If the ant doesn't exist yet at that time, null is
+ * returned.
+ * 
+ * @param {number}
+ *            time the time in question
+ * @param {Quality}
+ *            quality selects between the low and high quality set of key frames
  */
 Ant.prototype.interpolate = function(time, quality) {
 	var i, min, max, delta, set, result, lookup, lastFrame, timeIdx, goFrom;
@@ -87,9 +90,11 @@ Ant.prototype.interpolate = function(time, quality) {
 		result = this.loInter;
 		lookup = this.loLookup;
 	}
-	if (time < set[0].time) return null;
+	if (time < set[0].time)
+		return null;
 	lastFrame = set[set.length - 1];
-	if (time >= lastFrame.time) return result.assign(lastFrame);
+	if (time >= lastFrame.time)
+		return result.assign(lastFrame);
 	timeIdx = time | 0;
 	goFrom = lookup[timeIdx];
 	if (goFrom === undefined) {
@@ -112,8 +117,10 @@ Ant.prototype.interpolate = function(time, quality) {
 		}
 		lookup[timeIdx] = goFrom;
 	}
-	while (time > set[goFrom + 1].time) goFrom++;
-	delta = (time - set[goFrom].time) / (set[goFrom + 1].time - set[goFrom].time);
+	while (time > set[goFrom + 1].time)
+		goFrom++;
+	delta = (time - set[goFrom].time)
+			/ (set[goFrom + 1].time - set[goFrom].time);
 	return result.interpolate(set[goFrom], set[goFrom + 1], delta);
 };
 Ant.prototype.fade = function(quality, key, valueb, timea, timeb) {
@@ -133,15 +140,18 @@ Ant.prototype.fade = function(quality, key, valueb, timea, timeb) {
 		mix = (set[i].time - timea) / (timeb - timea);
 		set[i][key] = (1 - mix) * valuea + mix * valueb;
 	}
-	for (; i < set.length; i++) set[i][key] = valueb;
+	for (; i < set.length; i++)
+		set[i][key] = valueb;
 };
-// animates the ant ([{<time between 0 and 1>, {<attribute to set absolute>, ...}, {<attribute to set relative>, ...}}, ...])
+// animates the ant ([{<time between 0 and 1>, {<attribute to set absolute>,
+// ...}, {<attribute to set relative>, ...}}, ...])
 // currently unused
 Ant.prototype.animate = function(list) {
-	var key, a, i;
+	var a, i;
 	var interpol = new Array(list.length);
+	var time = 0;
 	for (i = 0; i < list.length; i++) {
-		var time = this.keyFrames[0].time + list[i].time;
+		time = this.keyFrames[0].time + list[i].time;
 		interpol[i] = this.interpolate(time);
 	}
 	for (i = 0; i < list.length; i++) {
@@ -161,6 +171,8 @@ Ant.prototype.animate = function(list) {
 };
 
 /**
+ * @param {LoFiData}
+ *            other a given LoFiData to be copied
  * @constructor
  */
 function LoFiData(other) {
