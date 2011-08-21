@@ -24,10 +24,6 @@ Math.wrapAround = function(x, range) {
 };
 
 Quirks = {
-	fullImageShadowSupport: function() {
-		return (
-				navigator.userAgent.indexOf('Firefox/5.0') === -1 &&
-				navigator.userAgent.indexOf('Chrome/12.') === -1
-			);
-	}
+	fullImageShadowSupport : !navigator.userAgent
+			.match(/\b(Firefox\/5\.|Chrome\/1[23]\.).*/)
 };

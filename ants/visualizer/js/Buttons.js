@@ -42,7 +42,7 @@ Button.prototype.draw = function() {
 			ctx.shadowOffsetX = -2;
 			ctx.shadowOffsetY = +2;
 		}
-		if (Quirks.fullImageShadowSupport()) {
+		if (Quirks.fullImageShadowSupport) {
 			ctx.shadowColor = 'rgba(0, 0, 0, 0.7)';
 		} else {
 			// Firefox 5 with shadow bug or other bad support
