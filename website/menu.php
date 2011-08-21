@@ -6,14 +6,16 @@
       <li><a href="problem_description.php">Problem Description</a></li>
       <li><a href="rules.php">Contest Rules</a></li>
     </ul>
-    <?php if (logged_in_with_valid_credentials()) { ?>
     <h1>My Account</h1>
     <ul>
+    <?php if (logged_in_with_valid_credentials()) { ?>
       <li><a href="profile.php?user=<?php echo current_user_id(); ?>">My Profile</a></li>
       <li><a href="submit.php">Upload Your Code</a></li>
       <li><a href="logout.php">Sign Out</a></li>
-    </ul>
+    <?php } else { ?>
+      <li><a href="login.php">Login</a></li>
     <?php } ?>
+    </ul>
     <h1>Getting Started</h1>
     <ul>
       <li><a href="register.php">Create Your Account</a></li>
