@@ -73,11 +73,11 @@ Config.prototype.save = function() {
 Config.prototype.load = function() {
 	if (this.hasLocalStorage() === true) {
 		for (var key in this) {
-			var val = window.localStorage['visualizer.' + key];
-			if (typeof this[key] != 'function' && val) {
+			if (typeof this[key] != 'function') {
+				var val = window.localStorage['visualizer.' + key];
 				if (val === 'null') {
 					this[key] = null;
-				} else {
+				} else if (val) {
 					switch (val.charAt(0)) {
 						case 'N':
 							this[key] = Number(val.substr(1));
