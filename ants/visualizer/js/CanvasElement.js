@@ -962,7 +962,8 @@ CanvasElementStats.prototype.draw = function(resized) {
 	// draw scores
 	stats = this.vis.getStats(this.graph.stats);
 	this.drawColorBar(95, 4, this.w - 99, 22, stats.values[this.turn],
-			(this.turn === this.graph.duration) ? stats.bonus : undefined);
+			(this.turn === this.vis.getReplayDuration()) ? stats.bonus
+					: undefined);
 
 	// graph
 	if (this.showGraph) {
