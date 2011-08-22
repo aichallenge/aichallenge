@@ -130,9 +130,9 @@
       <istrue value="${js.pretty}"/>
     </condition>
     <java jar="3rdparty/google/compiler.jar" fork="true" failonerror="yes">
-      <arg line="--compilation_level ADVANCED_OPTIMIZATIONS ${js.pretty.arg} --jscomp_off nonStandardJsDocs --js_output_file 
-${build.js}/visualizer-min.js ${js.files}" />
+      <arg line="--compilation_level ADVANCED_OPTIMIZATIONS ${js.pretty.arg} --jscomp_off nonStandardJsDocs --js_output_file ${build.js}/visualizer-min.tmp ${js.files}" />
     </java>
+    <move file="${build.js}/visualizer-min.tmp" toFile="${build.js}/visualizer-min.js"/>
   </target>
 
   <target name="minify-js-condition" depends="load-properties">
