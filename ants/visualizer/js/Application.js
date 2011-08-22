@@ -78,91 +78,91 @@ Location.prototype.contains = function(x, y) {
 Visualizer = function(container, dataDir, interactive, w, h, config) {
 	/**
 	 * any generated DOM elements will be placed here
-	 * 
+	 *
 	 * @private
 	 */
 	this.container = container;
 	/**
 	 * contains the scaled map
-	 * 
+	 *
 	 * @private
 	 */
 	this.map = new CanvasElementMap(this);
 	/**
 	 * Caches the fog of war pattern
-	 * 
+	 *
 	 * @private
 	 */
 	this.fogPattern = new CanvasElementFogPattern(this);
 	/**
 	 * Caches the fog of war
-	 * 
+	 *
 	 * @private
 	 */
 	this.fog = new CanvasElementFog(this, this.fogPattern);
 	/**
 	 * Caches the graphics of the map border
-	 * 
+	 *
 	 * @private
 	 */
 	this.mapWithAnts = new CanvasElementMapWithAnts(this, this.map, this.fog);
 	/**
 	 * Caches the graphics of the map border
-	 * 
+	 *
 	 * @private
 	 */
 	this.shiftedMap = new CanvasElementShiftedMap(this, this.mapWithAnts);
 	/**
 	 * Caches the mini map
-	 * 
+	 *
 	 * @private
 	 */
 	this.miniMap = new CanvasElementMiniMap(this);
 	/**
 	 * Caches the score graph
-	 * 
+	 *
 	 * @private
 	 */
 	this.scores = new CanvasElementStats(this, 'scores', 'scores');
 	/**
 	 * Caches the counts bar
-	 * 
+	 *
 	 * @private
 	 */
 	this.counts = new CanvasElementStats(this, '# of ants', 'counts');
 	/**
 	 * array of precomputed turn data
-	 * 
+	 *
 	 * @private
 	 */
 	this.turns = undefined;
 	/**
 	 * usable width for the visualizer
-	 * 
+	 *
 	 * @private
 	 */
 	this.w = w;
 	/**
 	 * usable height for the visualizer
-	 * 
+	 *
 	 * @private
 	 */
 	this.h = h;
 	/**
 	 * locations of elements on the screen
-	 * 
+	 *
 	 * @private
 	 */
 	this.loc = {};
 	/**
 	 * size of an ant in pixels
-	 * 
+	 *
 	 * @private
 	 */
 	this.scale = undefined;
 	/**
 	 * Options from URL GET parameters or the constructor arguments
-	 * 
+	 *
 	 * @private
 	 */
 	this.options = {};
@@ -195,13 +195,13 @@ Visualizer = function(container, dataDir, interactive, w, h, config) {
 	}
 	/**
 	 * presistable configuration values
-	 * 
+	 *
 	 * @private
 	 */
 	this.config = new Config(config);
 	/**
 	 * manages playback commands and timing
-	 * 
+	 *
 	 * @private
 	 */
 	this.director = new Director(this);
@@ -239,7 +239,7 @@ Visualizer = function(container, dataDir, interactive, w, h, config) {
 	this.mapCenterY = 0;
 	/**
 	 * buttons
-	 * 
+	 *
 	 * @private
 	 */
 	this.btnMgr = new ButtonManager(this);
@@ -266,7 +266,7 @@ Visualizer = function(container, dataDir, interactive, w, h, config) {
 	this.container.appendChild(this.log);
 	/**
 	 * images used by the visualizer
-	 * 
+	 *
 	 * @private
 	 */
 	this.imgMgr = new ImageManager((dataDir || '') + 'img/', this,
@@ -282,7 +282,7 @@ Visualizer = function(container, dataDir, interactive, w, h, config) {
 	this.imgMgr.add('graph_options.png');
 	/**
 	 * the highest player count in a previous replay to avoid button repaints
-	 * 
+	 *
 	 * @private
 	 */
 	this.colorizedPlayerCount = 0;
@@ -293,13 +293,13 @@ Visualizer = function(container, dataDir, interactive, w, h, config) {
 	this.replay = undefined;
 	/**
 	 * the main canvas
-	 * 
+	 *
 	 * @private
 	 */
 	this.main = {};
 	/**
 	 * a hint text overlay
-	 * 
+	 *
 	 * @private
 	 */
 	this.hint = '';
@@ -351,7 +351,7 @@ Visualizer.prototype.progress = function(log, func) {
 };
 /**
  * Places a paragraph with a message in the visualizer dom element.
- * 
+ *
  * @param {string}
  *        text the message text
  * @private
@@ -362,7 +362,7 @@ Visualizer.prototype.logOut = function(text) {
 };
 /**
  * Stops loading, cleans up the instance and calls logOut with the text in red.
- * 
+ *
  * @param {string}
  *        text the error message text
  * @private
@@ -403,7 +403,7 @@ Visualizer.prototype.preload = function() {
 };
 /**
  * Loads a replay file located on the same server using a XMLHttpRequest.
- * 
+ *
  * @param {string}
  *        file the relative file name
  */
@@ -435,7 +435,7 @@ Visualizer.prototype.loadReplayDataFromURI = function(file) {
 };
 /**
  * Loads a replay string directly.
- * 
+ *
  * @param {string}
  *        data the replay string
  */
@@ -500,7 +500,7 @@ Visualizer.prototype.loadParseReplay = function() {
 };
 /**
  * Creates a canvas element
- * 
+ *
  * @private
  */
 Visualizer.prototype.loadCanvas = function(prompt) {
@@ -1004,9 +1004,9 @@ Visualizer.prototype.resize = function(forced) {
 Visualizer.prototype.statusToGlyph = function(i) {
 	var status = this.replay.meta['status'][i];
 	if (status === 'survived') {
-		return '✓';
+		return '\u2713';
 	} else if (status === 'eliminated') {
-		return '✗';
+		return '\u2717';
 	} else {
 		return this.replay.meta['status'][i];
 	}
