@@ -763,8 +763,7 @@ Visualizer.prototype.tryStart = function() {
 };
 Visualizer.prototype.addPlayerButtons = function() {
 	var scores, i;
-	var bg = this.btnMgr.addTextGroup('players', TextButtonGroup.FLOW,
-			ButtonGroup.MODE_NORMAL, 2);
+	var bg = this.btnMgr.addTextGroup('players', ButtonGroup.MODE_NORMAL, 2);
 	var vis = this;
 	var func = undefined;
 	var gameId = this.replay.meta['game_id'] || this.options['game'];
@@ -786,7 +785,7 @@ Visualizer.prototype.addPlayerButtons = function() {
 			scores[i] += this.replay.meta['replaydata']['bonus'][i];
 		}
 	} else {
-		scores = this.replay.scores[this.replay.duration];
+		scores = this.replay['scores'][this.replay.duration];
 	}
 	var ranks = new Array(scores.length);
 	var order = new Array(scores.length);

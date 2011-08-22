@@ -1,13 +1,29 @@
 /**
+ * @fileOverview This file contains classes for user interface creation through
+ *               groups of buttons.
+ * @author <a href="mailto:marco.leise@gmx.de">Marco Leise</a>
+ */
+
+/**
+ * @class The base class for buttons.
  * @constructor
+ * @param {ButtonGroup}
+ *        group the button group that this button belongs to
+ * @param {Function}
+ *        onclick a callback for the button-click
  */
 function Button(group, onclick) {
 	this.group = group;
 	this.onclick = onclick;
 	this.hover = false;
 	this.down = false;
-	this.enabled = !!onclick;
+	this.enabled = onclick ? true : false;
 }
+
+/**
+ * This renders the button. drawInternal() is called from here to let derived
+ * classes add graphics or text to the basic button style.
+ */
 Button.prototype.draw = function() {
 	var g = this.group;
 	var ctx = g.manager.vis.main.ctx;
@@ -30,9 +46,7 @@ Button.prototype.draw = function() {
 	if (this.onclick && this.enabled) {
 		if (this.hover || this.down) {
 			shapeRoundedRect(ctx, loc.x, loc.y, loc.w, loc.h, 1, r);
-			ctx.fillStyle = /*this.down
-					? 'rgb(255, 200, 0)'
-					: */'rgb(255, 230, 200)';
+			ctx.fillStyle = 'rgb(255, 230, 200)';
 			ctx.fill();
 		}
 		if (this.down) {
@@ -45,7 +59,7 @@ Button.prototype.draw = function() {
 		if (Quirks.fullImageShadowSupport) {
 			ctx.shadowColor = 'rgba(0, 0, 0, 0.7)';
 		} else {
-			// Firefox 5 with shadow bug or other bad support
+			// FireFox 5 with shadow bug or other bad support
 			ctx.shadowColor = 'rgba(0, 0, 0, 0)';
 		}
 	}
@@ -61,51 +75,92 @@ Button.prototype.draw = function() {
 	}
 	ctx.restore();
 };
-Button.prototype.mouseDown = function() {
-	switch (this.group.mode) {
-		case ButtonGroup.MODE_RADIO:
-			if (this.down) return;
-			var btns = this.group.buttons;
-			for (var i = 0; i < btns.length; i++) {
-				if (btns[i].down) {
-					btns[i].down = false;
-					btns[i].draw();
-				}
-			}
-		case ButtonGroup.MODE_NORMAL:
-			this.down = true;
-			this.draw();
-			break;
-	}
-};
-Button.prototype.mouseUp = function() {
-	switch (this.group.mode) {
-		case ButtonGroup.MODE_NORMAL:
-			this.down = false;
-			this.draw();
-			break;
-	}
-};
-
 
 /**
+ * Updates the button state when it is pressed.
+ */
+Button.prototype.mouseDown = function() {
+	var i, btns;
+	switch (this.group.mode) {
+	case ButtonGroup.MODE_RADIO:
+		if (this.down) return;
+		btns = this.group.buttons;
+		for (i = 0; i < btns.length; i++) {
+			if (btns[i].down) {
+				btns[i].down = false;
+				btns[i].draw();
+			}
+		}
+	case ButtonGroup.MODE_NORMAL:
+		this.down = true;
+		this.draw();
+		break;
+	}
+};
+
+/**
+ * Updates the button state when it is released.
+ */
+Button.prototype.mouseUp = function() {
+	switch (this.group.mode) {
+	case ButtonGroup.MODE_NORMAL:
+		this.down = false;
+		this.draw();
+		break;
+	}
+};
+
+/**
+ * @class a group of buttons
  * @constructor
+ * @param {ButtonManager}
+ *        manager the button manager that this button group will belong to
+ * @param {Number}
+ *        border adds padding around the buttons on each side
  */
 function ButtonGroup(manager, border) {
 	this.buttons = [];
 	this.manager = manager;
 	this.border = border ? border : 0;
 }
+
+/**
+ * makes a button group invisible
+ */
 ButtonGroup.MODE_HIDDEN = 0;
+
+/**
+ * a normal button group where the buttons can be clicked independently
+ */
 ButtonGroup.MODE_NORMAL = 1;
+
+/**
+ * a radio button group where only one button is down at a time
+ */
 ButtonGroup.MODE_RADIO = 2;
+
+/**
+ * Redraws all buttons in this group.
+ */
 ButtonGroup.prototype.draw = function() {
-	for (var i = 0; i < this.buttons.length; i++) {
+	var i;
+	for (i = 0; i < this.buttons.length; i++) {
 		if (this.buttons[i].draw) this.buttons[i].draw();
 	}
 };
+
+/**
+ * Finds an active button under the mouse cursor.
+ * 
+ * @param {Number}
+ *        mx the mouse x position
+ * @param {Number}
+ *        my the mouse y position
+ * @returns {Button} the active button under the mouse cursor or null
+ */
 ButtonGroup.prototype.mouseMove = function(mx, my) {
-	for (var i = 0; i < this.buttons.length; i++) {
+	var i;
+	for (i = 0; i < this.buttons.length; i++) {
 		if (this.buttons[i].getLocation) {
 			if (this.buttons[i].getLocation().contains(mx, my)) {
 				return (this.buttons[i].enabled) ? this.buttons[i] : null;
@@ -115,39 +170,77 @@ ButtonGroup.prototype.mouseMove = function(mx, my) {
 	return null;
 };
 
-
 /**
+ * @class A specialized button that displays an image.
+ * @extends Button
  * @constructor
+ * @param {ImageButtonGroup}
+ *        group the button group that this button belongs to
+ * @param {Number}
+ *        idx selects the partial image to be shown from the group's image
+ * @param {Number}
+ *        delta the actual position inside the button group in pixels
+ * @param {Function}
+ *        onclick a callback for the button-click
+ * @param {String}
+ *        hint a hint that is displayed when the mouse hovers over this button
  */
-function ImageButton(group, idx, offset, delta, onclick, hint) {
-
-	Button.apply(this, [group, onclick]);
+function ImageButton(group, idx, delta, onclick, hint) {
+	Button.apply(this, [ group, onclick ]);
 	this.idx = idx;
-	this.offset = offset;
+	this.offset = (group.size - 2 * group.border) * idx;
 	this.delta = delta;
 	this.hint = hint;
 }
-ImageButton.prototype.draw = Button.prototype.draw;
-ImageButton.prototype.drawInternal = function(ctx) {
-	var b = this.group.border;
-	var bs = this.group.size - 2 * this.group.border;
-	ctx.drawImage(this.group.img, this.offset, 0, bs, bs, b, b, bs, bs);
-};
-ImageButton.prototype.getLocation = function() {
-	return new Location(
-		this.group.x + (this.group.vertical ? 0 : this.delta),
-		this.group.y + (this.group.vertical ? this.delta : 0),
-		this.group.size, this.group.size);
-};
-ImageButton.prototype.mouseUp = Button.prototype.mouseUp;
-ImageButton.prototype.mouseDown = Button.prototype.mouseDown;
-
+ImageButton.extend(Button);
 
 /**
+ * Draws the partial image into the button.
+ * 
+ * @param {CanvasRenderingContext2D}
+ *        ctx the rendering context to use
+ * @see Button#draw
+ */
+ImageButton.prototype.drawInternal = function(ctx) {
+	var b = this.group.border;
+	var bs = this.group.size - 2 * b;
+	ctx.drawImage(this.group.img, this.offset, 0, bs, bs, b, b, bs, bs);
+};
+
+/**
+ * Calculates and returns the position and size of this button.
+ * 
+ * @returns {Location} the location of this button
+ */
+ImageButton.prototype.getLocation = function() {
+	return new Location(this.group.x + (this.group.vertical ? 0 : this.delta),
+			this.group.y + (this.group.vertical ? this.delta : 0),
+			this.group.size, this.group.size);
+};
+
+/**
+ * @class A button group that displays graphics of the same size.
+ * @extends ButtonGroup
  * @constructor
+ * @param {ButtonManager}
+ *        manager the button manager that this button group will belong to
+ * @param {HTMLImageElement}
+ *        img the image that contains a row of graphics for this button group
+ * @param {Boolean}
+ *        layout one of {@link ImageButtonGroup#HORIZONTAL} or
+ *        {@link ImageButtonGroup#VERTICAL}
+ * @param {Number}
+ *        mode one of {@link ButtonGroup#MODE_HIDDEN} (hides the button group),
+ *        {@link ButtonGroup#MODE_NORMAL} (normal buttons) or
+ *        {@link ButtonGroup#MODE_RADIO} (radio buttons)
+ * @param {Number}
+ *        border adds padding around the buttons on each side
+ * @param {Number}
+ *        extent the size of the button group (height for vertical layouts,
+ *        width for horizontal layouts)
  */
 function ImageButtonGroup(manager, img, layout, mode, border, extent) {
-	ButtonGroup.apply(this, [manager, border]);
+	ButtonGroup.apply(this, [ manager, border ]);
 	this.img = img;
 	this.vertical = layout;
 	this.mode = mode;
@@ -157,44 +250,93 @@ function ImageButtonGroup(manager, img, layout, mode, border, extent) {
 	this.w = (this.vertical) ? this.size : extent;
 	this.h = (this.vertical) ? extent : this.size;
 }
+ImageButtonGroup.extend(ButtonGroup);
+
+/**
+ * horizontal button layout
+ */
 ImageButtonGroup.HORIZONTAL = false;
+
+/**
+ * vertical button layout
+ */
 ImageButtonGroup.VERTICAL = true;
-ImageButtonGroup.prototype = new ButtonGroup;
-ImageButtonGroup.prototype.draw = function() {
-	ButtonGroup.prototype.draw.apply(this, []);
-};
+
+/**
+ * Calculates the optimal position for the next added button.
+ * 
+ * @returns {Number} the optimal position for the next added button
+ */
 ImageButtonGroup.prototype.nextDelta = function() {
 	if (this.buttons.length !== 0) {
-		var lastBtn = this.buttons[this.buttons.length - 1]
+		var lastBtn = this.buttons[this.buttons.length - 1];
 		return lastBtn.delta + (lastBtn.size || this.size);
 	}
 	return 0;
 };
+
+/**
+ * Adds a button to this group according to given parameters.
+ * 
+ * @param {Number}
+ *        idx selects the partial image to be shown from the group's image
+ * @param {Function}
+ *        onclick a callback for the button-click
+ * @param {String}
+ *        hint a hint that is displayed when the mouse hovers over this button
+ * @returns {ImageButton} the newly added button
+ */
 ImageButtonGroup.prototype.addButton = function(idx, onclick, hint) {
 	var delta = this.nextDelta();
-	var btn = new ImageButton(this, idx, (this.size - 2 * this.border) * idx, delta, onclick, hint);
+	var btn = new ImageButton(this, idx, delta, onclick, hint);
 	this.buttons.push(btn);
 	return btn;
 };
+
+/**
+ * Adds a some space in between buttons.
+ * 
+ * @param {Number}
+ *        size the amount of space in pixels
+ */
 ImageButtonGroup.prototype.addSpace = function(size) {
 	var delta = this.nextDelta();
 	this.buttons.push({
-		delta: delta,
-		size: size
+		delta : delta,
+		size : size
 	});
 };
+
+/**
+ * Looks up the button displaying a partial image.
+ * 
+ * @param {Number}
+ *        idx index of the partial image
+ * @returns {ImageButton} the first found button or null if none matches
+ */
 ImageButtonGroup.prototype.getButton = function(idx) {
-	for (var i = 0; i < this.buttons.length; i++) {
+	var i;
+	for (i = 0; i < this.buttons.length; i++) {
 		if (this.buttons[i].idx === idx) return this.buttons[i];
 	}
 	return null;
 };
 
 /**
+ * @class A specialized button that displays a short label.
+ * @extends Button
  * @constructor
+ * @param {TextButtonGroup}
+ *        group the button group that this button belongs to
+ * @param {String}
+ *        text the label that is displayed on the button
+ * @param color
+ *        a fillStyle to be applied when the label is drawn
+ * @param {Function}
+ *        onclick a callback for the button-click
  */
 function TextButton(group, text, color, onclick) {
-	Button.apply(this, [group, onclick]);
+	Button.apply(this, [ group, onclick ]);
 	this.text = text;
 	this.color = color;
 	var ctx = this.group.manager.vis.main.ctx;
@@ -204,7 +346,15 @@ function TextButton(group, text, color, onclick) {
 	this.w = ctx.measureText(text).width + 8;
 	this.h = 28;
 }
-TextButton.prototype.draw = Button.prototype.draw;
+TextButton.extend(Button);
+
+/**
+ * Draws the label into the button.
+ * 
+ * @param {CanvasRenderingContext2D}
+ *        ctx the rendering context to use
+ * @see Button#draw
+ */
 TextButton.prototype.drawInternal = function(ctx) {
 	ctx.shadowColor = SAND_COLOR;
 	ctx.shadowOffsetX = 0;
@@ -216,40 +366,73 @@ TextButton.prototype.drawInternal = function(ctx) {
 	ctx.fillStyle = this.color;
 	ctx.fillText(this.text, 4, 25);
 };
-TextButton.prototype.getLocation = function() {
-	return new Location(this.group.x + this.x, this.group.y + this.y,
-			this.w, this.h);
-};
-TextButton.prototype.mouseUp = Button.prototype.mouseUp;
-TextButton.prototype.mouseDown = Button.prototype.mouseDown;
-
 
 /**
- * @constructor
+ * Calculates and returns the position and size of this button.
+ * 
+ * @returns {Location} the location of this button
  */
-function TextButtonGroup(manager, layout, mode, border) {
-	ButtonGroup.apply(this, [manager, border]);
-	this.layout = layout;
+TextButton.prototype.getLocation = function() {
+	return new Location(this.group.x + this.x, this.group.y + this.y, this.w,
+			this.h);
+};
+
+/**
+ * @class A group of labeled buttons.
+ * @extends ButtonGroup
+ * @constructor
+ * @param {ButtonManager}
+ *        manager the button manager that this button group will belong to
+ * @param {Number}
+ *        mode one of {@link ButtonGroup#MODE_HIDDEN} (hides the button group),
+ *        {@link ButtonGroup#MODE_NORMAL} (normal buttons) or
+ *        {@link ButtonGroup#MODE_RADIO} (radio buttons)
+ * @param {Number}
+ *        border adds padding around the buttons on each side
+ */
+function TextButtonGroup(manager, mode, border) {
+	ButtonGroup.apply(this, [ manager, border ]);
 	this.mode = mode;
 	this.x = 0;
 	this.y = 0;
 	this.h = undefined;
 	this.w = undefined;
 }
-TextButtonGroup.FLOW = false;
-TextButtonGroup.BLOCK = true;
+TextButtonGroup.extend(ButtonGroup);
+
+/**
+ * Adds a button to this group according to given parameters.
+ * 
+ * @param {String}
+ *        text the label that is displayed on the button
+ * @param color
+ *        a fillStyle to be applied when the label is drawn
+ * @param {Function}
+ *        onclick a callback for the button-click
+ * @returns {TextButton} the newly added button
+ */
 TextButtonGroup.prototype.addButton = function(text, color, onclick) {
 	var btn = new TextButton(this, text, color, onclick);
 	this.buttons.push(btn);
 	return btn;
 };
-TextButtonGroup.prototype.draw = ButtonGroup.prototype.draw;
+
+/**
+ * This will layout the buttons according to a given width, much like left
+ * aligned text in a word processor.
+ * 
+ * @param {Number}
+ *        width the maximum line width in pixels
+ * @returns {Number} the resulting height of the group after the process
+ */
 TextButtonGroup.prototype.cascade = function(width) {
-	this.w = width;
+	var i;
+	var btn = null;
 	var addX = 0;
 	var addY = 0;
-	for (var i = 0; i < this.buttons.length; i++) {
-		var btn = this.buttons[i];
+	this.w = width;
+	for (i = 0; i < this.buttons.length; i++) {
+		btn = this.buttons[i];
 		if (addX && addX + btn.w > this.w) {
 			addX = 0;
 			addY += btn.h + 2;
@@ -260,41 +443,108 @@ TextButtonGroup.prototype.cascade = function(width) {
 	}
 	return this.h = btn ? addY + btn.h : 0;
 };
-TextButtonGroup.prototype.mouseMove = ButtonGroup.prototype.mouseMove;
-
 
 /**
- * Manages buttons and their mouse events.
- * @param {Visualizer} vis the visualizer
+ * @class Manages buttons and their mouse events.
  * @constructor
+ * @param {Visualizer}
+ *        vis the visualizer
  */
 function ButtonManager(vis) {
 	this.vis = vis;
 	this.groups = {};
 	this.hover = null;
-	this.nailed = null;
+	this.pinned = null;
 }
+
 /**
+ * Adds a new image button group.
+ * 
+ * @param {String}
+ *        name a descriptive group name for easy lookup
+ * @param {HTMLImageElement}
+ *        img the reference image that partial images for the buttons will be
+ *        taken from
+ * @param {Boolean}
+ *        layout one of {@link ImageButtonGroup#HORIZONTAL} or
+ *        {@link ImageButtonGroup#VERTICAL}
+ * @param {Number}
+ *        mode one of {@link ButtonGroup#MODE_HIDDEN} (hides the button group),
+ *        {@link ButtonGroup#MODE_NORMAL} (normal buttons) or
+ *        {@link ButtonGroup#MODE_RADIO} (radio buttons)
+ * @param {Number}
+ *        border adds padding around the buttons on each side
+ * @param {Number}
+ *        extent the size of the button group (height for vertical layouts,
+ *        width for horizontal layouts)
  * @returns {ImageButtonGroup} the created button group
  */
-ButtonManager.prototype.addImageGroup = function(name, img, layout, mode, border, extent) {
-	return this.groups[name] = new ImageButtonGroup(this, img, layout, mode, border, extent);
+ButtonManager.prototype.addImageGroup = function(name, img, layout, mode,
+		border, extent) {
+	return this.groups[name] = new ImageButtonGroup(this, img, layout, mode,
+			border, extent);
 };
-ButtonManager.prototype.addTextGroup = function(name, layout, mode, border) {
-	return this.groups[name] = new TextButtonGroup(this, layout, mode, border);
+/**
+ * Adds a new text button group.
+ * 
+ * @param {String}
+ *        name a descriptive group name for easy lookup
+ * @param {Number}
+ *        mode one of {@link ButtonGroup#MODE_HIDDEN} (hides the button group),
+ *        {@link ButtonGroup#MODE_NORMAL} (normal buttons) or
+ *        {@link ButtonGroup#MODE_RADIO} (radio buttons)
+ * @param {Number}
+ *        border adds padding around the buttons on each side
+ * @returns {TextButtonGroup} the created button group
+ */
+ButtonManager.prototype.addTextGroup = function(name, mode, border) {
+	return this.groups[name] = new TextButtonGroup(this, mode, border);
 };
+
+/**
+ * Redraws all visible button groups.
+ */
 ButtonManager.prototype.draw = function() {
-	for (var name in this.groups) {
-		if (this.groups[name].mode !== ButtonGroup.MODE_HIDDEN) {
-			this.groups[name].draw();
+	var name = undefined;
+	for (name in this.groups)
+		if (this.groups.hasOwnProperty(name)) {
+			if (this.groups[name].mode !== ButtonGroup.MODE_HIDDEN) {
+				this.groups[name].draw();
+			}
 		}
-	}
 };
+
+/**
+ * Retrieves a button group with a given name from the manager.
+ * 
+ * @param {String}
+ *        name the name of the group
+ * @returns {ButtonGroup} the button group if it exists or undefined
+ */
+ButtonManager.prototype.getGroup = function(name) {
+	return this.groups[name];
+};
+
+/**
+ * Finds an active button under the mouse cursor. The call is forwarded to
+ * matching button groups.
+ * 
+ * @see ButtonGroup#mouseMove
+ * @param {Number}
+ *        mx the mouse x position
+ * @param {Number}
+ *        my the mouse y position
+ * @returns {Button} the active button under the mouse cursor or null
+ */
 ButtonManager.prototype.mouseMove = function(mx, my) {
+	var hoveringNonRadio;
 	var result = null;
-	for (var name in this.groups) {
-		var bg = this.groups[name];
-		if (bg.mode != ButtonGroup.MODE_HIDDEN && my >= bg.y && my < bg.y + bg.h && mx >= bg.x && mx < bg.x + bg.w) {
+	var name = undefined;
+	for (name in this.groups) {
+		// use of method, to allow Eclipse to infer the type
+		var bg = this.getGroup(name);
+		if (bg.mode != ButtonGroup.MODE_HIDDEN && my >= bg.y
+				&& my < bg.y + bg.h && mx >= bg.x && mx < bg.x + bg.w) {
 			result = bg.mouseMove(mx, my);
 			if (result !== null) {
 				break;
@@ -309,43 +559,40 @@ ButtonManager.prototype.mouseMove = function(mx, my) {
 				this.hover.draw();
 			}
 		}
-		if (result && (!this.nailed || this.nailed === result)) {
+		hoveringNonRadio = (this.hover && this.hover.group.mode !== ButtonGroup.MODE_RADIO);
+		this.hover = result;
+		if (result && (!this.pinned || this.pinned === result)) {
 			if (!result.hover) {
 				result.hover = true;
-				result.down = (result === this.nailed) || (result.down && (!this.hover || this.hover.group.mode == ButtonGroup.MODE_RADIO));
+				result.down = (result === this.pinned || result.down
+						&& !hoveringNonRadio);
 				result.draw();
 			}
 		}
-		this.hover = result;
 	}
 	return result;
 };
+
+/**
+ * Mouse release event that checks if the mouse pressed a button and fires the
+ * onclick event.
+ */
 ButtonManager.prototype.mouseUp = function() {
-	if (this.nailed) {
-		this.nailed.mouseUp();
-		if (this.nailed == this.hover) {
-			this.nailed.onclick();
+	if (this.pinned) {
+		this.pinned.mouseUp();
+		if (this.pinned == this.hover) {
+			this.pinned.onclick();
 		}
-		this.nailed = null;
-	}
-};
-ButtonManager.prototype.mouseDown = function() {
-	if (this.hover && this.hover.enabled) {
-		this.hover.mouseDown();
-		this.nailed = this.hover;
+		this.pinned = null;
 	}
 };
 
-function shapeRoundedRect(ctx, x, y, w, h, margin, r) {
-	var d = 0.5 * Math.PI;
-	ctx.beginPath();
-	ctx.moveTo(x + r + margin, y + margin);
-	ctx.lineTo(x + w - r - margin, y + margin);
-	ctx.arc(x + w - r - margin, y + r + margin, r, -d, 0, false);
-	ctx.lineTo(x + w - margin, y + h - r - margin);
-	ctx.arc(x + w - r - margin, y + h - r - margin, r, 0, d, false);
-	ctx.lineTo(x + r + margin, y + h - margin);
-	ctx.arc(x + r + margin, y + h - r - margin, r, d, 2 * d, false);
-	ctx.lineTo(x + margin, y + r + margin);
-	ctx.arc(x + r + margin, y + r + margin, r, 2 * d, 3 * d, false);
-}
+/**
+ * Mouse press event that registers the button the mouse was over.
+ */
+ButtonManager.prototype.mouseDown = function() {
+	if (this.hover && this.hover.enabled) {
+		this.hover.mouseDown();
+		this.pinned = this.hover;
+	}
+};
