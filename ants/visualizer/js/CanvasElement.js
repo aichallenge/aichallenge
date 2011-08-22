@@ -35,9 +35,13 @@ function CanvasElement() {
  *        height the new height
  */
 CanvasElement.prototype.setSize = function(width, height) {
-	if ((this.w !== width || this.h !== height) && width > 0 && height > 0) {
-		this.canvas.width = this.w = width;
-		this.canvas.height = this.h = height;
+	if (this.w !== width || this.h !== height) {
+		this.w = width;
+		this.h = height;
+		if (width > 0 && height > 0) {
+			this.canvas.width = width;
+			this.canvas.height = height;
+		}
 		this.invalid = true;
 		this.resized = true;
 	}
