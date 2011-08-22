@@ -782,7 +782,7 @@ Visualizer.prototype.addPlayerButtons = function() {
 	if (this.replay.meta['replaydata']['bonus']) {
 		scores = new Array(this.replay.players);
 		for (i = 0; i < this.replay.players; i++) {
-			scores[i] = this.replay.scores[this.replay.duration][i];
+			scores[i] = this.replay['scores'][this.replay.duration][i];
 			scores[i] += this.replay.meta['replaydata']['bonus'][i];
 		}
 	} else {

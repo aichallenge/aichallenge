@@ -866,7 +866,7 @@ CanvasElementGraph.prototype.draw = function() {
 			k = replay.meta['replaydata']['scores'][i].length - 1;
 			this.ctx.beginPath();
 			x = 0.5 + k * scaleX;
-			y = 0.5 + scaleY * (max - replay.counts[k][i]);
+			y = 0.5 + scaleY * (max - values[k][i]);
 			this.ctx.moveTo(x, y);
 			status = this.vis.statusToGlyph(i);
 			tw = this.ctx.measureText(status).width;
