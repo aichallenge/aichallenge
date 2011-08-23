@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"strings"
 	"fmt"
+	"log"
 )
 
 //Bot interface defines what we need from a bot
@@ -25,8 +26,8 @@ type State struct {
 	ViewRadius2   int //view radius squared
 	AttackRadius2 int //battle radius squared
 	SpawnRadius2  int //spawn radius squared
-
-	Turn int //current turn number
+	PlayerSeed    int64 //random player seed
+	Turn          int //current turn number
 
 	Map *Map
 }
@@ -74,13 +75,13 @@ func (s *State) Start() os.Error {
 			s.AttackRadius2 = param
 		case "spawnradius2":
 			s.SpawnRadius2 = param
-
+		case "player_seed":
+			s.PlayerSeed = param
 		case "turn":
 			s.Turn = param
 
 		default:
-			panic(1)
-			return os.NewError("unknown command: " + line)
+			log.Panicf("unknown command: %s", line)
 		}
 	}
 
@@ -91,7 +92,7 @@ func (s *State) Start() os.Error {
 
 //Loop handles the majority of communication between your bot and the server.
 //b's DoWork function gets called each turn after the map has been setup
-//BetweenTurnWork gets called after a turn but before the map is reset. It is 
+//BetweenTurnWork gets called after a turn but before the map is reset. It is
 //meant to do debugging work.
 func (s *State) Loop(b Bot, BetweenTurnWork func()) os.Error {
 
@@ -104,7 +105,7 @@ func (s *State) Loop(b Bot, BetweenTurnWork func()) os.Error {
 			if err == os.EOF {
 				return err
 			}
-			Panicf("ReadString returns an error: %s", err)
+			log.Panicf("ReadString returns an error: %s", err)
 			return err
 		}
 		line = line[:len(line)-1] //remove the delimiter
@@ -131,19 +132,19 @@ func (s *State) Loop(b Bot, BetweenTurnWork func()) os.Error {
 
 		words := strings.Split(line, " ", 5)
 		if len(words) < 2 {
-			Panicf("Invalid command format: \"%s\"", line)
+			log.Panicf("Invalid command format: \"%s\"", line)
 		}
 
 		switch words[0] {
 		case "turn":
 			turn, _ := strconv.Atoi(words[1])
 			if turn != s.Turn+1 {
-				Panicf("Turn number out of sync, expected %v got %v", s.Turn+1, turn)
+				log.Panicf("Turn number out of sync, expected %v got %v", s.Turn+1, turn)
 			}
 			s.Turn = turn
 		case "f":
 			if len(words) < 3 {
-				Panicf("Invalid command format (not enough parameters for food): \"%s\"", line)
+				log.Panicf("Invalid command format (not enough parameters for food): \"%s\"", line)
 			}
 			Row, _ := strconv.Atoi(words[1])
 			Col, _ := strconv.Atoi(words[2])
@@ -151,7 +152,7 @@ func (s *State) Loop(b Bot, BetweenTurnWork func()) os.Error {
 			s.Map.AddFood(loc)
 		case "w":
 			if len(words) < 3 {
-				Panicf("Invalid command format (not enough parameters for water): \"%s\"", line)
+				log.Panicf("Invalid command format (not enough parameters for water): \"%s\"", line)
 			}
 			Row, _ := strconv.Atoi(words[1])
 			Col, _ := strconv.Atoi(words[2])
@@ -159,7 +160,7 @@ func (s *State) Loop(b Bot, BetweenTurnWork func()) os.Error {
 			s.Map.AddWater(loc)
 		case "a":
 			if len(words) < 4 {
-				Panicf("Invalid command format (not enough parameters for ant): \"%s\"", line)
+				log.Panicf("Invalid command format (not enough parameters for ant): \"%s\"", line)
 			}
 			Row, _ := strconv.Atoi(words[1])
 			Col, _ := strconv.Atoi(words[2])
@@ -175,7 +176,7 @@ func (s *State) Loop(b Bot, BetweenTurnWork func()) os.Error {
 			}
 		case "d":
 			if len(words) < 4 {
-				Panicf("Invalid command format (not enough parameters for dead ant): \"%s\"", line)
+				log.Panicf("Invalid command format (not enough parameters for dead ant): \"%s\"", line)
 			}
 			Row, _ := strconv.Atoi(words[1])
 			Col, _ := strconv.Atoi(words[2])
