@@ -244,7 +244,7 @@ CanvasElementMiniMap.prototype.draw = function() {
 	var i, ant, color;
 	CanvasElementAbstractMap.prototype.draw.call(this);
 	for (i = this.ants.length - 1; i >= 0; i--) {
-		if ((ant = this.ants[i].interpolate(this.turn, Quality.LOW))) {
+		if ((ant = this.ants[i].interpolate(this.turn))) {
 			color = '#';
 			color += INT_TO_HEX[ant['r']];
 			color += INT_TO_HEX[ant['g']];
@@ -393,7 +393,7 @@ function CanvasElementMapWithAnts(vis, map, fog) {
 CanvasElementMapWithAnts.extend(CanvasElement);
 
 CanvasElementMapWithAnts.prototype.checkState = function() {
-	var i, k, ant, p_i, p_k, dx, dy, rows, cols, ar, owner;
+	var i, k, kf, p_i, p_k, dx, dy, rows, cols, ar, owner;
 	var hash = undefined;
 	var timeChanged = this.time !== this.vis.getTime();
 	if (timeChanged || this.scale !== this.vis.getScale()
@@ -405,30 +405,32 @@ CanvasElementMapWithAnts.prototype.checkState = function() {
 
 		// per turn calculations
 		if (this.turn !== (this.time | 0)) {
+			cols = this.vis.getCols();
+			rows = this.vis.getRows();
 			this.turn = this.time | 0;
 			this.ants = this.vis.getTurn(this.turn);
 			this.pairing = new Array(this.ants.length);
 			for (i = this.ants.length - 1; i >= 0; i--) {
-				if ((ant = this.ants[i].interpolate(this.turn, Quality.LOW))) {
-					owner = ant['owner'];
-					ant = this.ants[i].interpolate(this.turn + 1, Quality.LOW);
+				if ((kf = this.ants[i].interpolate(this.turn))) {
+					owner = kf['owner'];
+					kf = this.ants[i].interpolate(this.turn + 1);
 					this.pairing[this.ants[i].id] = {
-						ant : ant,
+						kf : kf,
 						owner : owner,
-						x : ant['x'],
-						y : ant['y'],
+						x : Math.wrapAround(kf['x'], cols),
+						y : Math.wrapAround(kf['y'], rows),
 						targets : []
 					};
 				}
 			}
-			cols = this.vis.getCols();
-			rows = this.vis.getRows();
 			if ((ar = this.vis.getAttackRadius2())) {
 				for (i = this.ants.length - 1; i >= 0; i--) {
 					if (this.ants[i].death === this.turn + 1) {
 						p_i = this.pairing[this.ants[i].id];
 						if (p_i !== undefined && p_i.owner !== undefined) {
 							for (k = this.ants.length - 1; k >= 0; k--) {
+								// this check looks odd, but accounts for
+								// surviving ants
 								if (this.ants[k].death !== this.turn + 1
 										|| k < i) {
 									p_k = this.pairing[this.ants[k].id];
@@ -445,8 +447,8 @@ CanvasElementMapWithAnts.prototype.checkState = function() {
 										if (dx * dx + dy * dy <= ar) {
 											// these two ants will be in attack
 											// range
-											p_i.targets.push(p_k.ant);
-											p_k.targets.push(p_i.ant);
+											p_i.targets.push(p_k.kf);
+											p_k.targets.push(p_i.kf);
 										}
 									}
 								}
@@ -460,18 +462,14 @@ CanvasElementMapWithAnts.prototype.checkState = function() {
 		// interpolate ants for this point in time
 		this.drawStates = new Object();
 		for (i = this.ants.length - 1; i >= 0; i--) {
-			if ((ant = this.ants[i].interpolate(this.time, Quality.LOW))) {
+			if ((kf = this.ants[i].interpolate(this.time))) {
 				hash = '#';
-				hash += INT_TO_HEX[ant['r']];
-				hash += INT_TO_HEX[ant['g']];
-				hash += INT_TO_HEX[ant['b']];
-				ant['x'] = Math.round(this.scale * ant['x']) + this.scale - 1;
-				ant['y'] = Math.round(this.scale * ant['y']) + this.scale - 1;
-				// correct coordinates
-				ant['x'] = Math.wrapAround(ant['x'], this.w) - this.scale + 1;
-				ant['y'] = Math.wrapAround(ant['y'], this.h) - this.scale + 1;
+				hash += INT_TO_HEX[kf['r']];
+				hash += INT_TO_HEX[kf['g']];
+				hash += INT_TO_HEX[kf['b']];
+				kf.calcMapCoords(this.scale, this.w, this.h);
 				if (!this.drawStates[hash]) this.drawStates[hash] = [];
-				this.drawStates[hash].push(ant);
+				this.drawStates[hash].push(kf);
 			}
 		}
 	}
@@ -504,8 +502,8 @@ CanvasElementMapWithAnts.prototype.collectAntsAroundCursor = function() {
 		drawList = this.drawStates[hash];
 		for (i = drawList.length - 1; i >= 0; i--) {
 			ant = drawList[i];
-			dr = Math.abs(row - ant['y']);
-			dc = Math.abs(col - ant['x']);
+			dr = Math.abs(row - ant.mapY);
+			dc = Math.abs(col - ant.mapX);
 			dr = Math.min(dr, rowPixels - dr);
 			dc = Math.min(dc, colPixels - dc);
 			if (ant['owner'] === undefined && (dr * dr + dc * dc <= sr)
@@ -531,7 +529,7 @@ CanvasElementMapWithAnts.prototype.collectAntsAroundCursor = function() {
 }
 
 CanvasElementMapWithAnts.prototype.draw = function() {
-	var halfScale, drawList, n, ant, w, dx, dy, d, fontSize, label, caption;
+	var halfScale, drawList, n, kf, w, dx, dy, d, fontSize, label, caption;
 	var target, rows, cols, x1, y1, x2, y2, rowPixels, colPixels, ar, sr, r;
 	var hash = undefined;
 
@@ -544,22 +542,22 @@ CanvasElementMapWithAnts.prototype.draw = function() {
 		this.ctx.fillStyle = hash;
 		drawList = this.drawStates[hash];
 		for (n = drawList.length - 1; n >= 0; n--) {
-			ant = drawList[n];
-			if (ant['owner'] === undefined) {
-				w = halfScale * ant['size'];
+			kf = drawList[n];
+			if (kf['owner'] === undefined) {
+				w = halfScale * kf['size'];
 				this.ctx.beginPath();
-				this.ctx.arc(ant['x'] + halfScale, ant['y'] + halfScale, w, 0,
+				this.ctx.arc(kf.mapX + halfScale, kf.mapY + halfScale, w, 0,
 						2 * Math.PI, false);
 				this.ctx.fill();
 			} else {
 				w = this.scale;
-				dx = ant['x'];
-				dy = ant['y'];
-				if (ant['size'] !== 1) {
-					d = 0.5 * (1.0 - ant['size']) * this.scale;
+				dx = kf.mapX;
+				dy = kf.mapY;
+				if (kf['size'] !== 1) {
+					d = 0.5 * (1.0 - kf['size']) * this.scale;
 					dx += d;
 					dy += d;
-					w *= ant['size'];
+					w *= kf['size'];
 				}
 				this.ctx.fillRect(dx, dy, w, w);
 				if (dx < 0) {
@@ -586,16 +584,16 @@ CanvasElementMapWithAnts.prototype.draw = function() {
 		this.ctx.strokeStyle = hash;
 		this.ctx.beginPath();
 		for (n = drawList.length - 1; n >= 0; n--) {
-			ant = drawList[n];
-			if (this.pairing[ant.id] !== undefined) {
-				for (d = this.pairing[ant.id].targets.length - 1; d >= 0; d--) {
-					target = this.pairing[ant.id].targets[d];
-					x1 = ant['x'] + halfScale;
-					y1 = ant['y'] + halfScale;
-					dx = Math.wrapAround(target['x'] - ant['x'], colPixels);
+			kf = drawList[n];
+			if (this.pairing[kf.antId] !== undefined) {
+				for (d = this.pairing[kf.antId].targets.length - 1; d >= 0; d--) {
+					target = this.pairing[kf.antId].targets[d];
+					x1 = kf.mapX + halfScale;
+					y1 = kf.mapY + halfScale;
+					dx = Math.wrapAround(target.mapX - kf.mapX, colPixels);
 					if (2 * dx > colPixels) dx -= colPixels;
 					x2 = x1 + 0.5 * dx;
-					dy = Math.wrapAround(target['y'] - ant['y'], rowPixels);
+					dy = Math.wrapAround(target.mapY - kf.mapY, rowPixels);
 					if (2 * dy > rowPixels) dy -= rowPixels;
 					y2 = y1 + 0.5 * dy;
 					this.drawWrapped(Math.min(x1, x2) - 1,
@@ -611,21 +609,21 @@ CanvasElementMapWithAnts.prototype.draw = function() {
 		this.ctx.stroke();
 	}
 
+	// draw attack and spawn radiuses
 	if (this.mouseOverVis) {
-		// draw attack and spawn radiuses
 		ar = this.scale * Math.sqrt(this.vis.getAttackRadius2());
 		sr = this.scale * Math.sqrt(this.vis.getSpawnRadius2());
 		for (n = this.circledAnts.length - 1; n >= 0; --n) {
-			ant = this.circledAnts[n];
+			kf = this.circledAnts[n];
 			hash = '#';
-			hash += INT_TO_HEX[ant['r']];
-			hash += INT_TO_HEX[ant['g']];
-			hash += INT_TO_HEX[ant['b']];
+			hash += INT_TO_HEX[kf['r']];
+			hash += INT_TO_HEX[kf['g']];
+			hash += INT_TO_HEX[kf['b']];
 			this.ctx.strokeStyle = hash;
 			this.ctx.beginPath();
-			dx = ant['x'] + halfScale;
-			dy = ant['y'] + halfScale;
-			r = (ant['owner'] === undefined) ? sr : ar;
+			dx = kf.mapX + halfScale;
+			dy = kf.mapY + halfScale;
+			r = (kf['owner'] === undefined) ? sr : ar;
 			x1 = dx - r;
 			y1 = dy - r;
 			this.drawWrapped(x1, y1, 2 * r, 2 * r, colPixels, rowPixels,
@@ -637,7 +635,7 @@ CanvasElementMapWithAnts.prototype.draw = function() {
 		}
 	}
 
-	// draw A, B, C, D ... on ants or alternatively the global ant id
+	// draw A, B, C, D ... on ants or alternatively the global kf id
 	label = this.vis.getConfig('label');
 	if (label) {
 		fontSize = Math.ceil(Math.max(this.scale, 8) / label);
@@ -652,30 +650,28 @@ CanvasElementMapWithAnts.prototype.draw = function() {
 		for (hash in this.drawStates) {
 			drawList = this.drawStates[hash];
 			for (n = drawList.length - 1; n >= 0; n--) {
-				ant = drawList[n];
+				kf = drawList[n];
 				if (label === 1) {
-					if (ant['owner'] === undefined) continue;
-					caption = String.fromCharCode(65 + ant['owner']);
+					if (kf['owner'] === undefined) continue;
+					caption = String.fromCharCode(65 + kf['owner']);
 				} else {
-					caption = ant.id;
+					caption = kf.antId;
 				}
-				this.ctx.strokeText(caption, ant['x'], ant['y']);
-				this.ctx.fillText(caption, ant['x'], ant['y']);
-				if (ant['x'] < 0) {
-					this.ctx.strokeText(caption, ant['x'] + this.map.w,
-							ant['y']);
-					this.ctx.fillText(caption, ant['x'] + this.map.w, ant['y']);
-					if (ant['y'] < 0) {
-						this.ctx.strokeText(caption, ant['x'] + this.map.w,
-								ant['y'] + this.map.h);
-						this.ctx.fillText(caption, ant['x'] + this.map.w,
-								ant['y'] + this.map.h);
+				this.ctx.strokeText(caption, kf.mapX, kf.mapY);
+				this.ctx.fillText(caption, kf.mapX, kf.mapY);
+				if (kf.mapX < 0) {
+					this.ctx.strokeText(caption, kf.mapX + this.map.w, kf.mapY);
+					this.ctx.fillText(caption, kf.mapX + this.map.w, kf.mapY);
+					if (kf.mapY < 0) {
+						this.ctx.strokeText(caption, kf.mapX + this.map.w,
+								kf.mapY + this.map.h);
+						this.ctx.fillText(caption, kf.mapX + this.map.w,
+								kf.mapY + this.map.h);
 					}
 				}
-				if (ant['y'] < 0) {
-					this.ctx.strokeText(caption, ant['x'], ant['y']
-							+ this.map.h);
-					this.ctx.fillText(caption, ant['x'], ant['y'] + this.map.h);
+				if (kf.mapY < 0) {
+					this.ctx.strokeText(caption, kf.mapX, kf.mapY + this.map.h);
+					this.ctx.fillText(caption, kf.mapX, kf.mapY + this.map.h);
 				}
 			}
 		}

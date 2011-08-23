@@ -1,17 +1,18 @@
 ParameterType = {
-	NONE: 0,
-	STRING: 1,
-	UINT: 2,
-	SCORES: 3,
-	LOCATION: 4,
-	LOCATION_PLAYER: 5,
-	LOCATION_NSEW: 6,
-	LOCATION_OPTION: 7
+	NONE : 0,
+	STRING : 1,
+	UINT : 2,
+	SCORES : 3,
+	LOCATION : 4,
+	LOCATION_PLAYER : 5,
+	LOCATION_NSEW : 6,
+	LOCATION_OPTION : 7
 };
 
 /**
  * Constructs a new direction from the given coordinates. X points to the rigtht
  * and Y points to the bottom. Up is 0°, Right is 90° and so on.
+ * 
  * @class A compass direction
  * @constructor
  */
@@ -23,25 +24,25 @@ function Direction(x, y) {
 
 // translate compass directions to movement offsets
 Directions = {
-	N : new Direction( 0, -1),
-	NE: new Direction(+1, -1),
-	E : new Direction(+1,  0),
-	SE: new Direction(+1, +1),
-	S : new Direction( 0, +1),
-	SW: new Direction(-1, +1),
-	W : new Direction(-1,  0),
-	NW: new Direction(-1, -1)
+	N : new Direction(0, -1),
+	NE : new Direction(+1, -1),
+	E : new Direction(+1, 0),
+	SE : new Direction(+1, +1),
+	S : new Direction(0, +1),
+	SW : new Direction(-1, +1),
+	W : new Direction(-1, 0),
+	NW : new Direction(-1, -1)
 };
 
 DataType = {
-	STRING: function(p) {
+	STRING : function(p) {
 		return [ p, null ];
 	},
-	IDENT: function(p) {
+	IDENT : function(p) {
 		p = p.match(DataType.MATCH);
 		return [ p[1], p[2] ];
 	},
-	UINT: function(p, n) {
+	UINT : function(p, n) {
 		p = p.match(DataType.MATCH);
 		p = [ parseInt(p[1]), p[2] ];
 		if (isNaN(p[0]) || p[0] < 0) {
@@ -49,14 +50,14 @@ DataType = {
 		}
 		return p;
 	},
-	POSINT: function(p, n) {
+	POSINT : function(p, n) {
 		p = DataType.UINT(p, n);
 		if (p[0] <= 0) {
 			throw new Error('Parameter ' + n + ' must be a positive integer.');
 		}
 		return p;
 	},
-	NUMBER: function(p, n) {
+	NUMBER : function(p, n) {
 		p = p.match(DataType.MATCH);
 		p = [ parseFloat(p[1]), p[2] ];
 		if (isNaN(p[0])) {
@@ -64,13 +65,13 @@ DataType = {
 		}
 		return p;
 	},
-	MAP: function(p, n) {
+	MAP : function(p, n) {
 		p = p.match(DataType.MATCH);
 		if (!p[1]) {
 			throw new Error('Parameter ' + n + ' must not be empty.');
 		}
 		p[0] = new Array(p[1].length);
-		for (var col = 0; col < p[1].length; col++) {
+		for ( var col = 0; col < p[1].length; col++) {
 			var c = p[1].charAt(col);
 			if (c !== '%' && c !== '*' && c !== '.' && (c < 'a' || c > 'z')) {
 				throw new Error('Invalid character in map line: ' + c);
@@ -79,40 +80,41 @@ DataType = {
 		}
 		return [ p[0], p[2] ];
 	},
-	ORDERS: function(p) {
+	ORDERS : function(p) {
 		p = p.match(DataType.MATCH);
 		p[1] = p[1].split('');
 		p[0] = new Array(p[1].length);
-		for (var turn = 0; turn < p[1].length; turn++) {
+		for ( var turn = 0; turn < p[1].length; turn++) {
 			switch (p[1][turn]) {
-				case 'n':
-				case 'N':
-					p[0][turn] = Directions.N;
-					break;
-				case 'e':
-				case 'E':
-					p[0][turn] = Directions.E;
-					break;
-				case 's':
-				case 'S':
-					p[0][turn] = Directions.S;
-					break;
-				case 'w':
-				case 'W':
-					p[0][turn] = Directions.W;
-					break;
-				case '-':
-					p[0][turn] = null;
-					break;
-				default:
-					throw new Error('Invalid character in orders line: ' + p[1][turn]);
+			case 'n':
+			case 'N':
+				p[0][turn] = Directions.N;
+				break;
+			case 'e':
+			case 'E':
+				p[0][turn] = Directions.E;
+				break;
+			case 's':
+			case 'S':
+				p[0][turn] = Directions.S;
+				break;
+			case 'w':
+			case 'W':
+				p[0][turn] = Directions.W;
+				break;
+			case '-':
+				p[0][turn] = null;
+				break;
+			default:
+				throw new Error('Invalid character in orders line: '
+						+ p[1][turn]);
 			}
 		}
 		return [ p[0], p[2] ];
 	},
-	SCORES: function(p) {
+	SCORES : function(p) {
 		p = p.replace(/\s+/g, ' ').replace(/\s*$/, '').split(' ');
-		for (var i = 0; i < p.length; i++) {
+		for ( var i = 0; i < p.length; i++) {
 			p[i] = parseFloat(p[i]);
 			if (isNaN(p[i])) {
 				throw new Error('Score ' + i + ' is not a number.');
@@ -120,7 +122,7 @@ DataType = {
 		}
 		return [ p, null ];
 	},
-	MATCH: /(\S*)\s*(.*)/
+	MATCH : /(\S*)\s*(.*)/
 };
 
 /**
@@ -135,11 +137,11 @@ function Replay(replay, debug, swapUser) {
 	this.debug = debug || false;
 	if (replay === undefined) {
 		this.meta = {
-			'challenge': 'ants',
-			'replayformat': format,
-			'replaydata': {
-				'map': {},
-				'ants': []
+			'challenge' : 'ants',
+			'replayformat' : format,
+			'replaydata' : {
+				'map' : {},
+				'ants' : []
 			}
 		};
 		this.duration = -1;
@@ -155,15 +157,16 @@ function Replay(replay, debug, swapUser) {
 		// check if we have meta data or just replay data
 		if (replay['challenge'] === undefined) {
 			this.meta = {
-				'challenge': 'ants',
-				'replayformat': format,
-				'replaydata': replay
+				'challenge' : 'ants',
+				'replayformat' : format,
+				'replaydata' : replay
 			};
 		} else {
 			this.meta = replay;
 			if (typeof this.meta['replaydata'] == 'string') {
 				format = 'storage';
-				this.meta['replaydata'] = this.txtToJson(this.meta['replaydata']);
+				this.meta['replaydata'] = this
+						.txtToJson(this.meta['replaydata']);
 			}
 			replay = this.meta['replaydata'];
 		}
@@ -173,8 +176,8 @@ function Replay(replay, debug, swapUser) {
 					+ ' but a "' + this.meta['challenge']
 					+ '" replay was loaded.');
 		} else if (this.meta['replayformat'] !== format) {
-			throw new Error('Replays in the format "' + this.meta['replayformat']
-					+ '" are not supported.');
+			throw new Error('Replays in the format "'
+					+ this.meta['replayformat'] + '" are not supported.');
 		}
 		if (!replay) {
 			throw new Error('replay meta data is no object notation');
@@ -186,17 +189,26 @@ function Replay(replay, debug, swapUser) {
 			var stack = [];
 			var keyEq = function(obj, key, val) {
 				if (obj[key] !== val && !that.debug) {
-					throw new Error(stack.join('.') + '.' + key + ' should be ' + val + ', but was found to be ' + obj[key] + '!');
+					throw new Error(stack.join('.') + '.' + key + ' should be '
+							+ val + ', but was found to be ' + obj[key] + '!');
 				}
 			};
 			var keyRange = function(obj, key, min, max) {
-				if (!(obj[key] >= min && (obj[key] <= max || max === undefined)) && !that.debug) {
-					throw new Error(stack.join('.') + '.' + key + ' should be within [' + min + ' .. ' + max + '], but was found to be ' + obj[key] + '!');
+				if (!(obj[key] >= min && (obj[key] <= max || max === undefined))
+						&& !that.debug) {
+					throw new Error(stack.join('.') + '.' + key
+							+ ' should be within [' + min + ' .. ' + max
+							+ '], but was found to be ' + obj[key] + '!');
 				}
 			};
 			var keyIsArr = function(obj, key, minlen, maxlen) {
 				if (!(obj[key] instanceof Array)) {
-					throw new Error(stack.join('.') + '.' + key + ' should be an array, but was found to be of type ' + typeof obj[key] + '!');
+					throw new Error(
+							stack.join('.')
+									+ '.'
+									+ key
+									+ ' should be an array, but was found to be of type '
+									+ typeof obj[key] + '!');
 				}
 				stack.push(key);
 				keyRange(obj[key], 'length', minlen, maxlen);
@@ -204,7 +216,12 @@ function Replay(replay, debug, swapUser) {
 			};
 			var keyIsStr = function(obj, key, minlen, maxlen) {
 				if (typeof obj[key] !== 'string') {
-					throw new Error(stack.join('.') + '.' + key + ' should be a string, but was found to be of type ' + typeof obj[key] + '!');
+					throw new Error(
+							stack.join('.')
+									+ '.'
+									+ key
+									+ ' should be a string, but was found to be of type '
+									+ typeof obj[key] + '!');
 				}
 				stack.push(key);
 				keyRange(obj[key], 'length', minlen, maxlen);
@@ -212,18 +229,23 @@ function Replay(replay, debug, swapUser) {
 			};
 			var keyOption = function(obj, key, func, params) {
 				if (obj[key] !== undefined) {
-					func.apply(undefined, [obj, key].concat(params));
+					func.apply(undefined, [ obj, key ].concat(params));
 				}
 			};
 			var keyDefault = function(obj, key, def, func, params) {
 				if (obj[key] === undefined) {
 					obj[key] = def;
 				}
-				func.apply(undefined, [obj, key].concat(params));
+				func.apply(undefined, [ obj, key ].concat(params));
 			};
 			var enterObj = function(obj, key) {
 				if (!(obj[key] instanceof Object)) {
-					throw new Error(stack.join('.') + '.' + key + ' should be an object, but was found to be of type ' + typeof obj[key] + '!');
+					throw new Error(
+							stack.join('.')
+									+ '.'
+									+ key
+									+ ' should be an object, but was found to be of type '
+									+ typeof obj[key] + '!');
 				}
 				stack.push(key);
 				return obj[key];
@@ -231,8 +253,14 @@ function Replay(replay, debug, swapUser) {
 			var durationSetter = null;
 			var setReplayDuration = function(duration, fixed) {
 				if (durationSetter) {
-					if (!fixed && that.duration < duration || fixed && that.duration !== duration && !that.debug) {
-						throw new Error('Replay duration was previously set to ' + that.duration + ' by "' + durationSetter + '" and is now redefined to be ' + duration + ' by "' + obj + '"');
+					if (!fixed && that.duration < duration || fixed
+							&& that.duration !== duration && !that.debug) {
+						throw new Error(
+								'Replay duration was previously set to '
+										+ that.duration + ' by "'
+										+ durationSetter
+										+ '" and is now redefined to be '
+										+ duration + ' by "' + obj + '"');
 					}
 				} else {
 					that.duration = duration;
@@ -243,28 +271,31 @@ function Replay(replay, debug, swapUser) {
 			keyEq(replay, 'revision', 2);
 			keyRange(replay, 'players', 1, 26);
 			this.players = replay['players'];
-			keyOption(replay, 'viewradius2', keyRange, [0, undefined]);
+			keyOption(replay, 'viewradius2', keyRange, [ 0, undefined ]);
 			// map
 			var map = enterObj(replay, 'map');
 			keyIsArr(map, 'data', 1, undefined);
 			stack.push('data');
 			keyIsStr(map['data'], 0, 1, undefined);
 			stack.pop();
-			keyDefault(map, 'rows', map['data'].length, keyEq, [map['data'].length]);
+			keyDefault(map, 'rows', map['data'].length, keyEq,
+					[ map['data'].length ]);
 			this.rows = map['rows'];
-			keyDefault(map, 'cols', map['data'][0].length, keyEq, [map['data'][0].length]);
+			keyDefault(map, 'cols', map['data'][0].length, keyEq,
+					[ map['data'][0].length ]);
 			this.cols = map['cols'];
 			var mapdata = enterObj(map, 'data');
 			this.walls = new Array(mapdata.length);
 			var regex = /[^%*.a-z]/;
-			for (var r = 0; r < mapdata.length; r++) {
+			for ( var r = 0; r < mapdata.length; r++) {
 				keyIsStr(mapdata, r, map['cols'], map['cols']);
 				var maprow = new String(mapdata[r]);
 				if ((i = maprow.search(regex)) !== -1 && !this.debug) {
-					throw new Error('Invalid character "' + maprow.charAt(i) + '" in map. Zero based row/col: ' + r + '/' + i);
+					throw new Error('Invalid character "' + maprow.charAt(i)
+							+ '" in map. Zero based row/col: ' + r + '/' + i);
 				}
 				this.walls[r] = new Array(maprow.length);
-				for (var c = 0; c < maprow.length; c++) {
+				for ( var c = 0; c < maprow.length; c++) {
 					this.walls[r][c] = (maprow.charAt(c) === '%');
 				}
 			}
@@ -275,7 +306,7 @@ function Replay(replay, debug, swapUser) {
 			stack.push('ants');
 			var ants = replay['ants'];
 			regex = /[^nsew-]/;
-			for (var n = 0; n < ants.length; n++) {
+			for ( var n = 0; n < ants.length; n++) {
 				keyIsArr(ants, n, 4, 7);
 				stack.push(n);
 				var obj = ants[n];
@@ -302,7 +333,10 @@ function Replay(replay, debug, swapUser) {
 					keyIsStr(obj, 6, lifespan - 1, lifespan);
 					setReplayDuration(obj[4] - 1, obj[6].length !== lifespan);
 					if ((i = obj[6].search(regex)) !== -1 && !this.debug) {
-						throw new Error('Invalid character "' + obj[6].charAt(i) + '" in move orders at index ' + i + ' in the string "' + obj[6] + '"');
+						throw new Error('Invalid character "'
+								+ obj[6].charAt(i)
+								+ '" in move orders at index ' + i
+								+ ' in the string "' + obj[6] + '"');
 					}
 				} else {
 					setReplayDuration(obj[3] - 1, false);
@@ -327,7 +361,8 @@ function Replay(replay, debug, swapUser) {
 			for (n = 0; n <= this.duration; n++) {
 				this['scores'][n] = new Array(this.players);
 				this['counts'][n] = new Array(this.players);
-				for (i = 0; i < this.players; i++) this['counts'][n][i] = 0;
+				for (i = 0; i < this.players; i++)
+					this['counts'][n][i] = 0;
 			}
 			for (i = 0; i < this.players; i++) {
 				scores = scoreslist[i];
@@ -349,7 +384,8 @@ function Replay(replay, debug, swapUser) {
 			}
 			this.aniAnts = new Array(ants.length);
 		}
-		this.hasDuration = this.duration > 0 || this.meta['replaydata']['turns'] > 0;
+		this.hasDuration = this.duration > 0
+				|| this.meta['replaydata']['turns'] > 0;
 		// add missing meta data
 		if (this.meta['user_ids']) {
 			swapIndex = this.meta['user_ids'].indexOf(swapUser, 0);
@@ -361,9 +397,12 @@ function Replay(replay, debug, swapUser) {
 /**
  * Adds optional meta data to the replay as required. This includes default
  * player names and colors.
- * @param {Number} swapIndex The index of a player who's default color should be
- *		exchanged with the first player's color. This is useful to identify a
- *		selected player by its color (the first one in the PĹAYER_COLORS array).
+ * 
+ * @param {Number}
+ *        swapIndex The index of a player who's default color should be
+ *        exchanged with the first player's color. This is useful to identify a
+ *        selected player by its color (the first one in the PĹAYER_COLORS
+ *        array).
  */
 Replay.prototype.addMissingMetaData = function(swapIndex) {
 	var i;
@@ -406,10 +445,12 @@ Replay.prototype.txtToJson = function(replay) {
 	var orders, fixed, scores, result, isReplay;
 	lit = new LineIterator(replay);
 	result = {
-		'revision': 2,
-		'map': {'data': []},
-		'ants': [],
-		'scores': []
+		'revision' : 2,
+		'map' : {
+			'data' : []
+		},
+		'ants' : [],
+		'scores' : []
 	};
 	this.turns = [];
 	try {
@@ -417,20 +458,22 @@ Replay.prototype.txtToJson = function(replay) {
 		tl = lit.gimmeNext();
 		isReplay = tl.keyword === 'v';
 		if (isReplay) {
-			tl.kw('v').as([DataType.IDENT, DataType.POSINT]);
+			tl.kw('v').as([ DataType.IDENT, DataType.POSINT ]);
 			tl.expectEq(0, 'ants'); // game name
-			tl.expectEq(1, 1);      // file version
+			tl.expectEq(1, 1); // file version
 			// players
 			tl = lit.gimmeNext();
-			tl.kw('players').as([DataType.POSINT]);
-			tl.expectLE(0, 26);     // player count <= 26
+			tl.kw('players').as([ DataType.POSINT ]);
+			tl.expectLE(0, 26); // player count <= 26
 			result['players'] = tl.params[0];
 			// parameters
 			tl = lit.gimmeNext();
 		}
 		while (tl.keyword !== 'm') {
-			args = [DataType.STRING];
-			if (tl.keyword === 'viewradius2' || tl.keyword === 'rows' || tl.keyword === 'cols' || tl.keyword === 'players' || tl.keyword === 'turns') {
+			args = [ DataType.STRING ];
+			if (tl.keyword === 'viewradius2' || tl.keyword === 'rows'
+					|| tl.keyword === 'cols' || tl.keyword === 'players'
+					|| tl.keyword === 'turns') {
 				args[0] = DataType.UINT;
 			}
 			tl.as(args);
@@ -445,7 +488,7 @@ Replay.prototype.txtToJson = function(replay) {
 		cols = undefined;
 		rows = 0;
 		do {
-			tl.as([DataType.STRING]);
+			tl.as([ DataType.STRING ]);
 			if (cols === undefined) {
 				cols = tl.params[0].length;
 			} else if (tl.params[0].length !== cols && !this.debug) {
@@ -457,9 +500,10 @@ Replay.prototype.txtToJson = function(replay) {
 				for (i = 0; i < cols; i++) {
 					c = tl.params[0].charAt(i);
 					if (c >= 'a' && c <= 'z') {
-						result['ants'].push([rows, i, 0, 0, 1, c.toUpperCase().charCodeAt(0) - 65, '-']);
+						result['ants'].push([ rows, i, 0, 0, 1,
+								c.toUpperCase().charCodeAt(0) - 65, '-' ]);
 					} else if (c === '*') {
-						result['ants'].push([rows, i, 0, 1]);
+						result['ants'].push([ rows, i, 0, 1 ]);
 					}
 				}
 			}
@@ -473,14 +517,17 @@ Replay.prototype.txtToJson = function(replay) {
 		// food / ant
 		if (isReplay) {
 			while (tl.keyword === 'a') {
-				//     row            col            start          conversion
-				tl.as([DataType.UINT, DataType.UINT, DataType.UINT, DataType.UINT,
-						DataType.UINT, DataType.UINT, DataType.STRING], 3);
-				//		end            owner          orders            # optional
+				// row col start conversion
+				tl.as([ DataType.UINT, DataType.UINT, DataType.UINT,
+						DataType.UINT, DataType.UINT, DataType.UINT,
+						DataType.STRING ], 3);
+				// end owner orders # optional
 				row = tl.params[0];
-				if (row >= this.rows) throw new Error('Row exceeds map width.');
+				if (row >= this.rows)
+					throw new Error('Row exceeds map width.');
 				col = tl.params[1];
-				if (col >= this.cols) throw new Error('Col exceeds map height.');
+				if (col >= this.cols)
+					throw new Error('Col exceeds map height.');
 				conv = tl.params[3];
 				end = tl.params[4];
 				if (end === undefined) end = conv;
@@ -496,7 +543,8 @@ Replay.prototype.txtToJson = function(replay) {
 				if (isAnt) {
 					fixed = orders.length !== end - conv;
 					if (fixed && orders.length + 1 !== end - conv) {
-						throw new Error('Number of orders does not match life span.');
+						throw new Error(
+								'Number of orders does not match life span.');
 					}
 				}
 				result['ants'].push(tl.params);
@@ -505,13 +553,13 @@ Replay.prototype.txtToJson = function(replay) {
 			// score
 			var players = this.players || result['players'];
 			for (i = 0; i < players; i++) {
-				scores = tl.kw('s').as([DataType.SCORES]).params[0];
+				scores = tl.kw('s').as([ DataType.SCORES ]).params[0];
 				result['scores'].push(scores);
 				if (i != players - 1) tl = lit.gimmeNext();
 			}
 		} else {
 			for (i = 0; i < result['players']; i++) {
-				result['scores'].push([0]);
+				result['scores'].push([ 0 ]);
 			}
 		}
 		if (lit.moar()) {
@@ -543,73 +591,39 @@ Replay.prototype.getTurn = function(n) {
 				// continue with next ant
 				continue;
 			}
-			if (ant[5] !== undefined && (ant[3] === n + 1 || n === 0 && ant[3] === 0)) {
+			if (ant[5] !== undefined
+					&& (ant[3] === n + 1 || n === 0 && ant[3] === 0)) {
 				// fade to player color
 				this.convertAnt(aniAnt, ant[3] == ant[2], ant[3], ant[5]);
 			}
-			if (ant[6] !== undefined && n >= ant[3] && n < ant[3] + ant[6].length) {
+			if (ant[6] !== undefined && n >= ant[3]
+					&& n < ant[3] + ant[6].length) {
 				// move
-				aniAnt.frameAt(n, Quality.LOW)['owner'] = ant[5];
+				aniAnt.frameAt(n)['owner'] = ant[5];
 				var dir = undefined;
 				switch (ant[6].charAt(n - ant[3])) {
-					case 'n':
-					case 'N':
-						dir = Directions.N;
-						break;
-					case 'e':
-					case 'E':
-						dir = Directions.E;
-						break;
-					case 's':
-					case 'S':
-						dir = Directions.S;
-						break;
-					case 'w':
-					case 'W':
-						dir = Directions.W;
+				case 'n':
+				case 'N':
+					dir = Directions.N;
+					break;
+				case 'e':
+				case 'E':
+					dir = Directions.E;
+					break;
+				case 's':
+				case 'S':
+					dir = Directions.S;
+					break;
+				case 'w':
+				case 'W':
+					dir = Directions.W;
 				}
 				if (dir) {
-					lastFrame = aniAnt.lo[aniAnt.lo.length - 1];
-					aniAnt.fade(Quality.LOW, 'x', lastFrame['x'] + dir.x, n, n + 0.5);
-					aniAnt.fade(Quality.LOW, 'y', lastFrame['y'] + dir.y, n, n + 0.5);
-					/*antObj.keyFrames[1].angle = offset.angle;
-					antObj.animate([{
-						time: 0.5,
-						absolute: {
-							x: antObj.keyFrames[1].x,
-							y: antObj.keyFrames[1].y//,
-							//angle: offset.angle
-						},
-						relative: {}
-					}]);
-					// only in zoom mode: < movement time reduced to 0.5, pay attention when uncommenting >
-					/*
-					nextDir = nextAntDirection(antObj.id, t);
-					if (nextDir) {
-						var angle = nextDir.angle - offset.angle;
-						if (angle < -Math.PI) {
-							angle += 2 * Math.PI;
-						} else if (angle > +Math.PI) {
-							angle -= 2 * Math.PI;
-						}
-						if (angle != 0) {
-							antObj.keyFrames[1].jitter = 0;
-							antObj.keyFrames[2].jitter = 0;
-							if (Math.abs(angle) < 0.9 * Math.PI) {
-								var sq = 1 / Math.sqrt(2);
-								antObj.keyFrames[2]['x'] = antObj.keyFrames[1]['x'] + 0.5 * (offset['x'] * sq + (1 - sq) * nextDir.x);
-								antObj.keyFrames[2]['y'] = antObj.keyFrames[1]['y'] + 0.5 * (offset['y'] * sq + (1 - sq) * nextDir.y);
-								antObj.keyFrames[2].angle += 0.5 * angle;
-							}
-						}
-					}*/
+					lastFrame = aniAnt.keyFrames[aniAnt.keyFrames.length - 1];
+					aniAnt.fade('x', lastFrame['x'] + dir.x, n, n + 0.5);
+					aniAnt.fade('y', lastFrame['y'] + dir.y, n, n + 0.5);
 				}
 			}
-//			if (ant[4] !== ant[3] + ant[6].length) {
-				// account for survivors
-//					this.turns[obj[4] - 1].clearFog(obj[5], y, x, this.rows,
-//							this.cols, replay['viewradius2']);
-//			}
 			dead = (ant[4] || ant[3]);
 			if (dead === n + 1) {
 				// end of life
@@ -626,20 +640,20 @@ Replay.prototype.getTurn = function(n) {
 Replay.prototype.spawnAnt = function(id, row, col, spawn, owner) {
 	var aniAnt = this.aniAnts[id] = new Ant(id, spawn - 0.25);
 	aniAnt.owner = owner;
-	var f = aniAnt.frameAt(spawn - 0.25, Quality.LOW);
+	var f = aniAnt.frameAt(spawn - 0.25);
 	f['x'] = col;
 	f['y'] = row;
 	f['r'] = FOOD_COLOR[0];
 	f['g'] = FOOD_COLOR[1];
 	f['b'] = FOOD_COLOR[2];
 	if (spawn !== 0) {
-		f = aniAnt.frameAt(spawn, Quality.LOW);
+		f = aniAnt.frameAt(spawn);
 		f['size'] = 1.0;
-		f = aniAnt.frameAt(spawn + 0.125, Quality.LOW);
+		f = aniAnt.frameAt(spawn + 0.125);
 		f['size'] = 1.5;
-		f = aniAnt.frameAt(spawn + 0.25, Quality.LOW);
+		f = aniAnt.frameAt(spawn + 0.25);
 		f['size'] = 0.7;
-		f = aniAnt.frameAt(spawn + 0.5, Quality.LOW);
+		f = aniAnt.frameAt(spawn + 0.5);
 	}
 	f['size'] = 1;
 	return aniAnt;
@@ -647,41 +661,41 @@ Replay.prototype.spawnAnt = function(id, row, col, spawn, owner) {
 Replay.prototype.convertAnt = function(aniAnt, instantly, turn, owner) {
 	var color = this.meta['playercolors'][owner];
 	if (!instantly) {
-		aniAnt.fade(Quality.LOW, 'r', 255, turn - 0.5, turn - 0.25);
-		aniAnt.fade(Quality.LOW, 'g', 255, turn - 0.5, turn - 0.25);
-		aniAnt.fade(Quality.LOW, 'b', 255, turn - 0.5, turn - 0.25);
+		aniAnt.fade('r', 255, turn - 0.5, turn - 0.25);
+		aniAnt.fade('g', 255, turn - 0.5, turn - 0.25);
+		aniAnt.fade('b', 255, turn - 0.5, turn - 0.25);
 	}
-	aniAnt.frameAt(turn - 0.25, Quality.LOW)['owner'] = owner;
-	aniAnt.fade(Quality.LOW, 'r', color[0], turn - 0.25, turn);
-	aniAnt.fade(Quality.LOW, 'g', color[1], turn - 0.25, turn);
-	aniAnt.fade(Quality.LOW, 'b', color[2], turn - 0.25, turn);
+	aniAnt.frameAt(turn - 0.25)['owner'] = owner;
+	aniAnt.fade('r', color[0], turn - 0.25, turn);
+	aniAnt.fade('g', color[1], turn - 0.25, turn);
+	aniAnt.fade('b', color[2], turn - 0.25, turn);
 };
 Replay.prototype.killAnt = function(aniAnt, death) {
 	var color;
-	var owner = aniAnt.frameAt(death, Quality.LOW)['owner'];
+	var owner = aniAnt.frameAt(death)['owner'];
 	if (owner === undefined) {
 		color = FOOD_COLOR;
 	} else {
 		color = this.meta['playercolors'][owner];
 	}
-	aniAnt.fade(Quality.LOW, 'r'   , 255, death - 0.80, death - 0.60);
-	aniAnt.fade(Quality.LOW, 'g'   , 255, death - 0.80, death - 0.60);
-	aniAnt.fade(Quality.LOW, 'b'   , 255, death - 0.80, death - 0.60);
-	aniAnt.fade(Quality.LOW, 'r', color[0], death - 0.60, death - 0.40);
-	aniAnt.fade(Quality.LOW, 'g', color[1], death - 0.60, death - 0.40);
-	aniAnt.fade(Quality.LOW, 'b', color[2], death - 0.60, death - 0.40);
-	aniAnt.fade(Quality.LOW, 'r'   , 0.0, death - 0.40, death);
-	aniAnt.fade(Quality.LOW, 'g'   , 0.0, death - 0.40, death);
-	aniAnt.fade(Quality.LOW, 'b'   , 0.0, death - 0.40, death);
-	aniAnt.fade(Quality.LOW, 'size', 0.7, death - 0.80, death - 0.60);
-	aniAnt.fade(Quality.LOW, 'size', 0.0, death - 0.40, death);
+	aniAnt.fade('r', 255, death - 0.80, death - 0.60);
+	aniAnt.fade('g', 255, death - 0.80, death - 0.60);
+	aniAnt.fade('b', 255, death - 0.80, death - 0.60);
+	aniAnt.fade('r', color[0], death - 0.60, death - 0.40);
+	aniAnt.fade('g', color[1], death - 0.60, death - 0.40);
+	aniAnt.fade('b', color[2], death - 0.60, death - 0.40);
+	aniAnt.fade('r', 0.0, death - 0.40, death);
+	aniAnt.fade('g', 0.0, death - 0.40, death);
+	aniAnt.fade('b', 0.0, death - 0.40, death);
+	aniAnt.fade('size', 0.7, death - 0.80, death - 0.60);
+	aniAnt.fade('size', 0.0, death - 0.40, death);
 	aniAnt.death = death;
 };
 /**
  * used by the Java live visualizer
  */
 Replay.prototype.deadAnt = function(aniAnt, dead) {
-	var f = aniAnt.frameAt(dead, Quality.LOW);
+	var f = aniAnt.frameAt(dead);
 	var owner = f['owner'];
 	var color = this.meta['playercolors'][owner];
 	var hr = color[0] >> 1;
@@ -710,13 +724,15 @@ Replay.prototype.getFog = function(player, turn) {
 		col_wrap = new Array(2 * radius + 1);
 		aniAnts = this.getTurn(turn);
 		for (i = 0; i < aniAnts.length; i++) {
-			aniAnt = aniAnts[i].interpolate(turn, Quality.LOW);
+			aniAnt = aniAnts[i].interpolate(turn);
 			if (aniAnt && aniAnt['owner'] === player) {
 				for (row = 2 * radius; row >= 0; row--) {
-					row_wrap[row] = Math.wrapAround(aniAnt['y'] - radius + row, this.rows);
+					row_wrap[row] = Math.wrapAround(aniAnt['y'] - radius + row,
+							this.rows);
 				}
 				for (col = 2 * radius; col >= 0; col--) {
-					col_wrap[col] = Math.wrapAround(aniAnt['x'] - radius + col, this.cols);
+					col_wrap[col] = Math.wrapAround(aniAnt['x'] - radius + col,
+							this.cols);
 				}
 				col = col_wrap[radius];
 				for (row = 1; row <= radius; row++) {
@@ -731,7 +747,7 @@ Replay.prototype.getFog = function(player, turn) {
 					fog_row1 = fog[row_wrap[radius - row]];
 					fog_row2 = fog[row_wrap[radius + row]];
 					for (col = 1; col <= radius; col++) {
-						if (row*row + col*col <= radius2) {
+						if (row * row + col * col <= radius2) {
 							fog_row1[col_wrap[radius - col]] = false;
 							fog_row1[col_wrap[radius + col]] = false;
 							fog_row2[col_wrap[radius - col]] = false;
@@ -747,9 +763,9 @@ Replay.prototype.getFog = function(player, turn) {
 
 /**
  * @class A highly optimized string tokenizer for replay files. It ignores blank
- *     lines and comment lines, trims and splits each line in two after the
- *     keyword. It processes a 220 KB file with over 27,000 lines in
- *     about 18 ms in Chromium on a 2,0 Ghz Core 2 Duo.
+ *        lines and comment lines, trims and splits each line in two after the
+ *        keyword. It processes a 220 KB file with over 27,000 lines in about 18
+ *        ms in Chromium on a 2,0 Ghz Core 2 Duo.
  * @constructor
  */
 function LineIterator(text) {
@@ -759,7 +775,7 @@ function LineIterator(text) {
 	this.lines = text.replace(TokenLine.NORMALIZE_REGEXP, '').split('\n');
 	this.tokenLines = new Array(this.lines.length);
 	// separate keyword from parameter list
-	for (var i = 0; i < this.lines.length; i++) {
+	for ( var i = 0; i < this.lines.length; i++) {
 		this.tokenLines[i] = new TokenLine(this.lines[i]);
 	}
 	this.pos = 0;
@@ -795,14 +811,17 @@ TokenLine.prototype.as = function(args, optional) {
 	if (optional === undefined) optional = 0;
 	var work = this.params;
 	this.params = [];
-	for (var i = 0; i < args.length; i++) {
+	for ( var i = 0; i < args.length; i++) {
 		if (work || args.length - i > optional) {
 			var parts = args[i](work);
 			this.params.push(parts[0]);
 			work = parts[1];
 		}
 	}
-	if (work) throw new Error('The following unexpected additional parameter was found: ' + work);
+	if (work)
+		throw new Error(
+				'The following unexpected additional parameter was found: '
+						+ work);
 	return this;
 };
 TokenLine.prototype.expected = function(expectation, reality) {
@@ -815,6 +834,7 @@ TokenLine.prototype.expectEq = function(idx, value) {
 };
 TokenLine.prototype.expectLE = function(idx, value) {
 	if (value < this.params[idx]) {
-		this.expected('parameter ' + idx + ' to be <= ' + value, this.params[idx]);
+		this.expected('parameter ' + idx + ' to be <= ' + value,
+				this.params[idx]);
 	}
 };

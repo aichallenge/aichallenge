@@ -1,5 +1,5 @@
 /**
- * @fileOverview This file contains classes for user interface creation through
+ * @fileoverview This file contains classes for user interface creation through
  *               groups of buttons.
  * @author <a href="mailto:marco.leise@gmx.de">Marco Leise</a>
  */
