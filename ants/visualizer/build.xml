@@ -180,11 +180,11 @@
 
   <target name="all" depends="jar,minify-or-copy-js" />
 
-  <target name="clean" depends="load-properties" description="deletes the build directory">
+  <target name="clean" depends="load-properties" description="deletes the 'build' directory">
     <delete quiet="true" dir="${build}" />
   </target>
 
-  <target name="deepclean" depends="clean" description="removes all generated or downloaded files">
+  <target name="deepclean" depends="clean" description="clean + removes all generated or downloaded files">
     <delete quiet="true" dir="3rdparty" />
     <delete quiet="true" dir="downloads" />
   </target>

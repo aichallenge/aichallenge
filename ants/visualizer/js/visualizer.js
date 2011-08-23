@@ -1,6 +1,5 @@
 $import('Util');
 $import('Ant');
-$import('AppletManager');
 $import('Application');
 $import('Buttons');
 $import('Config');
