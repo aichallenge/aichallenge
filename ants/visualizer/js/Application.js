@@ -1,5 +1,5 @@
 /**
- * @fileOverview This is a visualizer for the ant game.
+ * @fileoverview This is a visualizer for the ant game.
  * @author <a href="mailto:marco.leise@gmx.de">Marco Leise</a>
  */
 
@@ -13,8 +13,6 @@
  * @todo COSMETIC: fix duplicate 'parsing replay...' messages
  * @todo COSMETIC: dirty rectangles for drawing
  * @todo COSMETIC: draw only visible ants when zoomed in
- * @todo make input more restrictive (no keyboard modifiers, mouse button 1
- *       only)
  */
 
 LoadingState = {
@@ -78,91 +76,91 @@ Location.prototype.contains = function(x, y) {
 Visualizer = function(container, dataDir, interactive, w, h, config) {
 	/**
 	 * any generated DOM elements will be placed here
-	 *
+	 * 
 	 * @private
 	 */
 	this.container = container;
 	/**
 	 * contains the scaled map
-	 *
+	 * 
 	 * @private
 	 */
 	this.map = new CanvasElementMap(this);
 	/**
 	 * Caches the fog of war pattern
-	 *
+	 * 
 	 * @private
 	 */
 	this.fogPattern = new CanvasElementFogPattern(this);
 	/**
 	 * Caches the fog of war
-	 *
+	 * 
 	 * @private
 	 */
 	this.fog = new CanvasElementFog(this, this.fogPattern);
 	/**
 	 * Caches the graphics of the map border
-	 *
+	 * 
 	 * @private
 	 */
 	this.mapWithAnts = new CanvasElementMapWithAnts(this, this.map, this.fog);
 	/**
 	 * Caches the graphics of the map border
-	 *
+	 * 
 	 * @private
 	 */
 	this.shiftedMap = new CanvasElementShiftedMap(this, this.mapWithAnts);
 	/**
 	 * Caches the mini map
-	 *
+	 * 
 	 * @private
 	 */
 	this.miniMap = new CanvasElementMiniMap(this);
 	/**
 	 * Caches the score graph
-	 *
+	 * 
 	 * @private
 	 */
 	this.scores = new CanvasElementStats(this, 'scores', 'scores');
 	/**
 	 * Caches the counts bar
-	 *
+	 * 
 	 * @private
 	 */
 	this.counts = new CanvasElementStats(this, '# of ants', 'counts');
 	/**
 	 * array of precomputed turn data
-	 *
+	 * 
 	 * @private
 	 */
 	this.turns = undefined;
 	/**
 	 * usable width for the visualizer
-	 *
+	 * 
 	 * @private
 	 */
 	this.w = w;
 	/**
 	 * usable height for the visualizer
-	 *
+	 * 
 	 * @private
 	 */
 	this.h = h;
 	/**
 	 * locations of elements on the screen
-	 *
+	 * 
 	 * @private
 	 */
 	this.loc = {};
 	/**
 	 * size of an ant in pixels
-	 *
+	 * 
 	 * @private
 	 */
 	this.scale = undefined;
 	/**
 	 * Options from URL GET parameters or the constructor arguments
-	 *
+	 * 
 	 * @private
 	 */
 	this.options = {};
@@ -195,13 +193,13 @@ Visualizer = function(container, dataDir, interactive, w, h, config) {
 	}
 	/**
 	 * presistable configuration values
-	 *
+	 * 
 	 * @private
 	 */
 	this.config = new Config(config);
 	/**
 	 * manages playback commands and timing
-	 *
+	 * 
 	 * @private
 	 */
 	this.director = new Director(this);
@@ -239,7 +237,7 @@ Visualizer = function(container, dataDir, interactive, w, h, config) {
 	this.mapCenterY = 0;
 	/**
 	 * buttons
-	 *
+	 * 
 	 * @private
 	 */
 	this.btnMgr = new ButtonManager(this);
@@ -266,7 +264,7 @@ Visualizer = function(container, dataDir, interactive, w, h, config) {
 	this.container.appendChild(this.log);
 	/**
 	 * images used by the visualizer
-	 *
+	 * 
 	 * @private
 	 */
 	this.imgMgr = new ImageManager((dataDir || '') + 'img/', this,
@@ -282,7 +280,7 @@ Visualizer = function(container, dataDir, interactive, w, h, config) {
 	this.imgMgr.add('graph_options.png');
 	/**
 	 * the highest player count in a previous replay to avoid button repaints
-	 *
+	 * 
 	 * @private
 	 */
 	this.colorizedPlayerCount = 0;
@@ -293,13 +291,13 @@ Visualizer = function(container, dataDir, interactive, w, h, config) {
 	this.replay = undefined;
 	/**
 	 * the main canvas
-	 *
+	 * 
 	 * @private
 	 */
 	this.main = {};
 	/**
 	 * a hint text overlay
-	 *
+	 * 
 	 * @private
 	 */
 	this.hint = '';
@@ -351,7 +349,7 @@ Visualizer.prototype.progress = function(log, func) {
 };
 /**
  * Places a paragraph with a message in the visualizer dom element.
- *
+ * 
  * @param {string}
  *        text the message text
  * @private
@@ -362,7 +360,7 @@ Visualizer.prototype.logOut = function(text) {
 };
 /**
  * Stops loading, cleans up the instance and calls logOut with the text in red.
- *
+ * 
  * @param {string}
  *        text the error message text
  * @private
@@ -403,7 +401,7 @@ Visualizer.prototype.preload = function() {
 };
 /**
  * Loads a replay file located on the same server using a XMLHttpRequest.
- *
+ * 
  * @param {string}
  *        file the relative file name
  */
@@ -435,7 +433,7 @@ Visualizer.prototype.loadReplayDataFromURI = function(file) {
 };
 /**
  * Loads a replay string directly.
- *
+ * 
  * @param {string}
  *        data the replay string
  */
@@ -500,7 +498,7 @@ Visualizer.prototype.loadParseReplay = function() {
 };
 /**
  * Creates a canvas element
- *
+ * 
  * @private
  */
 Visualizer.prototype.loadCanvas = function(prompt) {
@@ -684,18 +682,23 @@ Visualizer.prototype.tryStart = function() {
 					var btn = vis.btnMgr.groups['playback'].buttons[4];
 					btn.offset = (vis.director.playing() ? 7 : 4)
 							* vis.imgMgr.images[3].height;
-					if (btn === vis.btnMgr.nailed) {
-						vis.btnMgr.nailed = null;
+					if (btn === vis.btnMgr.pinned) {
+						vis.btnMgr.pinned = null;
 					}
 					btn.mouseUp();
 				};
 				// this will fire once in FireFox when a key is held down
 				document.onkeydown = function(event) {
-					if (!event) {
-						// IE doesn't pass this as an argument
-						event = window.event;
+					if (!(event.shiftKey || event.ctrlKey || event.altKey || event.metaKey)) {
+						if (vis.keyPressed(event.keyCode)) {
+							if (event.preventDefault)
+								event.preventDefault();
+							else
+								event.returnValue = false;
+							return false;
+						}
 					}
-					vis.keyPressed(event.keyCode);
+					return true;
 				};
 			}
 			// setup mouse handlers
@@ -726,11 +729,15 @@ Visualizer.prototype.tryStart = function() {
 			this.main.canvas.onmouseout = function() {
 				vis.mouseExited();
 			};
-			this.main.canvas.onmousedown = function() {
-				vis.mousePressed();
+			this.main.canvas.onmousedown = function(event) {
+				if (event.which === 1) {
+					vis.mousePressed();
+				}
 			};
 			this.main.canvas.onmouseup = function() {
-				vis.mouseReleased();
+				if (event.which === 1) {
+					vis.mouseReleased();
+				}
 			};
 			window.onresize = function() {
 				vis.resize();
@@ -1288,10 +1295,11 @@ Visualizer.prototype.keyPressed = function(key) {
 		case 'F':
 			this.setFullscreen(!this.config['fullscreen']);
 			break;
+		default:
+			return false;
 		}
 	}
-};
-Visualizer.prototype.keyReleased = function() {
+	return true;
 };
 
 // getters for the drawing functions in CanvasElement
