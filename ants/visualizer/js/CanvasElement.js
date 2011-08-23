@@ -72,7 +72,7 @@ CanvasElement.prototype.contains = function(x, y) {
 CanvasElement.prototype.validate = function() {
 	var i;
 	for (i = 0; i < this.dependencies.length; i++) {
-		this.invalid = this.invalid || this.dependencies[i].validate();
+		if (this.dependencies[i].validate()) this.invalid = true;
 	}
 	this.checkState();
 	if (this.invalid) {
@@ -482,7 +482,7 @@ CanvasElementMapWithAnts.prototype.checkState = function() {
 		this.mouseOverVis = this.vis.getMouseOverVis();
 		this.mouseCol = this.vis.getMouseCol();
 		this.mouseRow = this.vis.getMouseRow();
-		this.invalid = this.invalid || this.collectAntsAroundCursor();
+		if (this.collectAntsAroundCursor()) this.invalid = true;
 	}
 };
 

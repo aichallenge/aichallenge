@@ -710,14 +710,14 @@ Visualizer.prototype.tryStart = function() {
 					mx += obj.offsetLeft;
 					my += obj.offsetTop;
 				} while ((obj = obj.offsetParent))
-				mx = (event || window.event).clientX
+				mx = event.clientX
 						- mx
 						+ ((window.scrollX === undefined)
 								? (document.body.parentNode.scrollLeft !== undefined)
 										? document.body.parentNode.scrollLeft
 										: document.body.scrollLeft
 								: window.scrollX);
-				my = (event || window.event).clientY
+				my = event.clientY
 						- my
 						+ ((window.scrollY === undefined)
 								? (document.body.parentNode.scrollTop !== undefined)
@@ -734,7 +734,7 @@ Visualizer.prototype.tryStart = function() {
 					vis.mousePressed();
 				}
 			};
-			this.main.canvas.onmouseup = function() {
+			this.main.canvas.onmouseup = function(event) {
 				if (event.which === 1) {
 					vis.mouseReleased();
 				}
