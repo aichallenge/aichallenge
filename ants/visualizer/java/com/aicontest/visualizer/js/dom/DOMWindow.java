@@ -40,7 +40,6 @@ public class DOMWindow {
 				} else {
 					output = msg;
 				}
-				System.out.print(msg);
 				msg = msg.replaceAll("\n", "");
 				msg = msg.replaceAll("<br>|<table[^>]*>|</tr>", "\n");
 				msg = msg.replaceAll("</td>", "\t");

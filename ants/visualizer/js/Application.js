@@ -14,22 +14,30 @@
  * @todo COSMETIC: draw only visible ants when zoomed in
  */
 
+/**
+ * @namespace Enum for the different states, the visualizer can be in.
+ */
 LoadingState = {
+	/**
+	 * The visualizer is not currently loading a replay or map.
+	 * 
+	 * @const
+	 */
 	IDLE : 0,
+	/**
+	 * The visualizer is loading a replay or map and cannot take any load
+	 * requests.
+	 * 
+	 * @const
+	 */
 	LOADING : 1,
+	/**
+	 * The visualizer is currently cleaning up.
+	 * 
+	 * @const
+	 * @see Visualizer#cleanUp
+	 */
 	CLEANUP : 2
-};
-
-Key = {
-	LEFT : 37,
-	RIGHT : 39,
-	SPACE : 32,
-	PGUP : 33,
-	PGDOWN : 34,
-	HOME : 36,
-	END : 35,
-	PLUS : 187,
-	MINUS : 189
 };
 
 /**
@@ -68,7 +76,9 @@ Location.prototype.contains = function(x, y) {
 
 /**
  * @class The main 'application' object that provides all necessary methods for
- *        the use in a web page.
+ *        the use in a web page. Usually you just construct an instance and then
+ *        call {@link Visualizer#loadReplayData} or
+ *        {@link Visualizer#loadReplayDataFromURI}.
  * @constructor
  * @param {Node}
  *        container the HTML element, that the visualizer will embed into
@@ -88,8 +98,9 @@ Location.prototype.contains = function(x, y) {
  *        {@link Config} for possible options
  */
 Visualizer = function(container, dataDir, interactive, w, h, configOverrides) {
-	var parameters, equalPos, value, i, text, options;
+	var parameters, equalPos, value, i, text;
 	var key = undefined;
+	var vis = this;
 
 	/** @private */
 	this.loading = LoadingState.LOADING;
@@ -189,13 +200,12 @@ Visualizer = function(container, dataDir, interactive, w, h, configOverrides) {
 		this.btnMgr = new ButtonManager(this);
 
 		// print out the configuration
-		options = this.options;
 		text = 'Loading visualizer...';
 		text += Html.table(function() {
 			var table = '';
 			var key = undefined;
-			for (key in options) {
-				var value = options[key];
+			for (key in vis.options) {
+				var value = vis.options[key];
 				table += Html.tr(function() {
 					return Html.td(function() {
 						return Html.bold(key);
@@ -210,26 +220,13 @@ Visualizer = function(container, dataDir, interactive, w, h, configOverrides) {
 		});
 		this.log.innerHTML = text;
 		text = (dataDir || '') + 'img/';
+
 		/** @private */
-		this.imgMgr = new ImageManager(text, this, this.completedImages);
-		this.imgMgr.add('water.png');
-		this.imgMgr.add('playback.png');
-		this.imgMgr.add('fog.png');
-		this.imgMgr.add('toolbar.png');
-		this.imgMgr.add('rank.png');
-		this.imgMgr.add('graph_options.png');
-		/**
-		 * the highest player count in a previous replay to avoid button
-		 * repaints
-		 * 
-		 * @private
-		 */
-		this.colorizedPlayerCount = 0;
-		// state information that must be reset on error/reload
-		/**
-		 * @private
-		 */
 		this.replay = undefined;
+		/** @private */
+		this.replayStr = undefined;
+		/** @private */
+		this.replayReq = undefined;
 		/**
 		 * the main canvas
 		 * 
@@ -242,24 +239,39 @@ Visualizer = function(container, dataDir, interactive, w, h, configOverrides) {
 		 * @private
 		 */
 		this.hint = '';
-		/**
-		 * @private
-		 */
+		/** @private */
 		this.fogPlayer = undefined;
-		/**
-		 * @private
-		 */
+		/** @private */
 		this.isStreaming = false;
+		/** @private */
+		this.imgMgr = new ImageManager(text, this, this.completedImages);
+		this.imgMgr.add('water.png');
+		this.imgMgr.add('playback.png');
+		this.imgMgr.add('fog.png');
+		this.imgMgr.add('toolbar.png');
+		this.imgMgr.add('rank.png');
+		this.imgMgr.add('graph_options.png');
+
+		// start loading images in the background and wait
 		this.loading = LoadingState.IDLE;
 		this.imgMgr.startRequests();
 	} catch (error) {
 		this.exceptionOut(error, false);
 		throw error;
 	}
-};
+}
 
 /**
+ * Prints a message on the screen and then executes a function. Usually the
+ * screen is not updated until the current thread of execution has finished. To
+ * work around that limitation, this method adds the function to be called to
+ * the browser's timer queue. Additionally any thrown errors are also printed.
+ * 
  * @private
+ * @param {String}
+ *        log a message to be logged before executing the function
+ * @param {Function}
+ *        func a function to be called after displaying the message
  */
 Visualizer.prototype.progress = function(log, func) {
 	if (this.loading !== LoadingState.LOADING) return;
@@ -281,18 +293,21 @@ Visualizer.prototype.progress = function(log, func) {
 		}
 	}, 50);
 };
+
 /**
- * Places a paragraph with a message in the visualizer dom element.
+ * Places a paragraph with a message in the visualizer DOM element.
  * 
- * @param {string}
- *        text the message text
  * @private
+ * @param {String}
+ *        text the message text
  */
 Visualizer.prototype.logOut = function(text) {
 	this.log.innerHTML += text.replace(/\n/g, '<br>') + '<br>';
 };
+
 /**
- * Stops loading, cleans up the instance and calls logOut with the text in red.
+ * Stops loading, cleans up the instance and calls {@link Visualizer#logOut}
+ * with the text in red.
  * 
  * @private
  * @param {string}
@@ -318,27 +333,34 @@ Visualizer.prototype.errorOut = function(text, cleanUp) {
  *        only useful if the error is not coming from the constructor.
  */
 Visualizer.prototype.exceptionOut = function(error, cleanUp) {
+	var msg;
 	var key = undefined;
-	var exception = new Object();
 	if (typeof error == 'string') {
-		exception.message = String(error);
-	} else {
-		for (key in error) {
-			if (key !== 'name') exception[key] = error[key];
-		}
+		this.exceptionOut({
+			message : error
+		}, cleanUp);
+		return;
 	}
-	var msg = '<h4><u>' + (error.name ? error.name : 'Error') + '</u></h4>';
+	msg = '<h4><u>' + (error.name ? error.name : 'Error') + '</u></h4>';
 	msg += Html.table(function() {
 		var escaped;
 		var table = '';
-		for (key in exception) {
-			escaped = new String(exception[key]).replace('&', '&amp;');
-			escaped = escaped.replace('<', '&lt;').replace('>', '&gt;');
-			table += Html.tr(function() {
-				return Html.td(function() {
-					return Html.bold(key);
-				}) + Html.td(escaped);
-			});
+		for (key in error) {
+			if (key !== 'name') {
+				try {
+					escaped = new String(error[key]);
+					escaped = escaped.replace('&', '&amp;');
+					escaped = escaped.replace('<', '&lt;');
+					escaped = escaped.replace('>', '&gt;');
+					table += Html.tr(function() {
+						return Html.td(function() {
+							return Html.bold(key);
+						}) + Html.td(escaped);
+					});
+				} catch (e) {
+					// catch FireFox UnknownClass-wrapper errors silently
+				}
+			}
 		}
 		return table;
 	});
@@ -346,15 +368,19 @@ Visualizer.prototype.exceptionOut = function(error, cleanUp) {
 };
 
 /**
+ * Resets the visualizer and associated objects to an initial state. This method
+ * is also called in case of an error.
+ * 
  * @private
  */
 Visualizer.prototype.cleanUp = function() {
 	this.loading = LoadingState.CLEANUP;
 	this.imgMgr.cleanUp();
 	this.director.cleanUp();
-	if (this.replay && this.replay instanceof XMLHttpRequest)
-		this.replay.abort();
+	if (this.replayReq) this.replayReq.abort();
 	this.replay = undefined;
+	this.replayStr = undefined;
+	this.replayReq = undefined;
 	if (this.main.canvas) {
 		if (this.container.firstChild === this.main.canvas) {
 			this.container.removeChild(this.main.canvas);
@@ -368,14 +394,23 @@ Visualizer.prototype.cleanUp = function() {
 	window.onresize = null;
 	this.log.style.display = 'block';
 };
+
+/**
+ * This is called before a replay or map is loaded to ensure the visualizer is
+ * in an idle state at that time. It then sets the state to {@link LoadingState}.LOADING.
+ * 
+ * @private
+ * @returns {Boolean} true, if the visualizer was idle.
+ */
 Visualizer.prototype.preload = function() {
 	if (this.loading !== LoadingState.IDLE) return true;
 	this.cleanUp();
 	this.loading = LoadingState.LOADING;
 	return false;
 };
+
 /**
- * Loads a replay file located on the same server using a XMLHttpRequest.
+ * Loads a replay or map file located on the same server using a XMLHttpRequest.
  * 
  * @param {string}
  *        file the relative file name
@@ -385,25 +420,27 @@ Visualizer.prototype.loadReplayDataFromURI = function(file) {
 	var vis = this;
 	this.progress('Fetching replay from: ' + Html.italic(String(file)) + '...',
 			function() {
-				vis.replay = new XMLHttpRequest();
-				vis.replay.onreadystatechange = function() {
-					if (vis.replay.readyState === 4) {
+				var request = new XMLHttpRequest();
+				vis.replayReq = request;
+				request.onreadystatechange = function() {
+					if (request.readyState === 4) {
 						if (vis.loading === LoadingState.LOADING) {
-							if (vis.replay.status === 200) {
-								vis.replay = '' + vis.replay.responseText;
+							if (request.status === 200) {
+								vis.replayStr = '' + request.responseText;
+								vis.replayReq = undefined;
 								vis.loadParseReplay();
 							} else {
-								vis.errorOut('Status ' + vis.replay.status
-										+ ': ' + vis.replay.statusText, true);
+								vis.errorOut('Status ' + request.status + ': '
+										+ request.statusText, true);
 							}
 						}
 					}
 				};
-				vis.replay.open("GET", file);
+				request.open("GET", file);
 				if (vis.options['debug']) {
-					vis.replay.setRequestHeader('Cache-Control', 'no-cache');
+					request.setRequestHeader('Cache-Control', 'no-cache');
 				}
-				vis.replay.send();
+				request.send();
 				vis.loadCanvas(true);
 			});
 };
@@ -415,7 +452,7 @@ Visualizer.prototype.loadReplayDataFromURI = function(file) {
  */
 Visualizer.prototype.loadReplayData = function(data) {
 	if (this.preload()) return;
-	this.replay = data;
+	this.replayStr = data;
 	this.loadCanvas(true);
 };
 Visualizer.prototype.streamingInit = function() {
@@ -453,21 +490,18 @@ Visualizer.prototype.streamingStart = function() {
 Visualizer.prototype.loadParseReplay = function() {
 	var vis = this;
 	this.progress('Parsing the replay...', function() {
-		if (!vis.replay) {
+		if (!(vis.replay || vis.replayReq || vis.replayStr)) {
 			if (vis.loading !== LoadingState.CLEANUP) {
 				throw new Error('Replay is undefined.');
 			}
-		} else if (vis.replay instanceof Replay) { // has just been parsed
+		} else if (vis.replay) { // has just been parsed
 			return;
-		} else if (typeof vis.replay == 'string') { // string only
-			vis.replay = new Replay(vis.replay, vis.options['debug'],
+		} else if (vis.replayStr) { // string only
+			vis.replay = new Replay(vis.replayStr, vis.options['debug'],
 					vis.options['user']);
-		} else if (vis.replay instanceof XMLHttpRequest) { // wait for the
-			// reply
+			vis.replayStr = undefined;
+		} else if (vis.replayReq) { // wait for the reply
 			return;
-		} else {
-			throw new Error('Something unknown is in the replay variable: '
-					+ vis.replay);
 		}
 		vis.tryStart();
 	});
@@ -512,7 +546,7 @@ Visualizer.prototype.tryStart = function() {
 	if (this.replay === undefined) return;
 	// we need to parse the replay, unless it has been parsed by the
 	// XmlHttpRequest callback
-	if (this.replay instanceof Replay) {
+	if (this.replay) {
 		if (this.main.ctx && !this.imgMgr.error && !this.imgMgr.pending) {
 			vis = this;
 			if (this.options['interactive']) {
@@ -617,11 +651,8 @@ Visualizer.prototype.tryStart = function() {
 				for (i = 0; i < this.replay.players; i++) {
 					colors.push(this.replay.meta['playercolors'][i]);
 				}
-				if (this.colorizedPlayerCount < this.replay.players) {
-					this.colorizedPlayerCount = this.replay.players;
-					this.imgMgr.colorize(4, colors);
-					this.imgMgr.colorize(2, colors);
-				}
+				this.imgMgr.colorize(4, colors);
+				this.imgMgr.colorize(2, colors);
 				if (this.replay.hasDuration) {
 					bg = this.btnMgr.addImageGroup('fog',
 							this.imgMgr.patterns[2], ImageButtonGroup.VERTICAL,
@@ -742,7 +773,7 @@ Visualizer.prototype.tryStart = function() {
 				}
 			}
 		}
-	} else if (!(this.replay instanceof XMLHttpRequest)) {
+	} else if (!this.replayReq) {
 		this.loadParseReplay();
 	}
 };
@@ -786,20 +817,20 @@ Visualizer.prototype.addPlayerButtons = function() {
 			k++;
 		order[k] = i;
 	}
-	var buttonAdder = function(i) {
-		var color = vis.replay.htmlPlayerColors[i];
+	var buttonAdder = function(idx) {
+		var color = vis.replay.htmlPlayerColors[idx];
 		var func = null;
 		if (vis.replay.meta['user_url'] && vis.replay.meta['user_ids']
-				&& vis.replay.meta['user_ids'][i] !== undefined) {
+				&& vis.replay.meta['user_ids'][idx] !== undefined) {
 			func = function() {
 				window.location.href = vis.replay.meta['user_url'].replace('~',
-						vis.replay.meta['user_ids'][i]);
+						vis.replay.meta['user_ids'][idx]);
 			};
 		}
-		var caption = vis.replay.meta['playernames'][i];
-		caption = ranks[i] + '. ' + caption;
+		var caption = vis.replay.meta['playernames'][idx];
+		caption = ranks[idx] + '. ' + caption;
 		if (vis.replay.meta['status']) {
-			caption += ' (' + vis.statusToGlyph(i) + ')';
+			caption += ' (' + vis.statusToGlyph(idx) + ')';
 		}
 		bg.addButton(caption, color, func);
 	};
@@ -882,11 +913,11 @@ Visualizer.prototype.setFullscreen = function(enable) {
 };
 Visualizer.prototype.setZoom = function(zoom) {
 	var oldScale = this.scale;
-	zoom = Math.max(1, zoom);
-	this.config['zoom'] = zoom;
+	var effectiveZoom = Math.max(1, zoom);
+	this.config['zoom'] = effectiveZoom;
 	this.scale = Math.max(1, Math.min((this.loc.vis.w - 20)
 			/ (this.replay.cols), (this.loc.vis.h - 20) / (this.replay.rows))) | 0;
-	this.scale = Math.min(ZOOM_SCALE, this.scale * zoom);
+	this.scale = Math.min(ZOOM_SCALE, this.scale * effectiveZoom);
 	if (oldScale) {
 		this.shiftX = (this.shiftX * this.scale / oldScale) | 0;
 		this.shiftY = (this.shiftY * this.scale / oldScale) | 0;
@@ -903,7 +934,7 @@ Visualizer.prototype.setZoom = function(zoom) {
 		zoomInBtn.enabled = !(this.scale === ZOOM_SCALE);
 		zoomInBtn.draw();
 		var zoomOutBtn = this.btnMgr.groups['toolbar'].getButton(3);
-		zoomOutBtn.enabled = !(zoom === 1);
+		zoomOutBtn.enabled = !(effectiveZoom === 1);
 		zoomOutBtn.draw();
 	}
 };
@@ -1190,7 +1221,7 @@ Visualizer.prototype.mouseMoved = function(mx, my) {
 						* this.scale;
 			}
 			var centerBtn = this.btnMgr.groups['toolbar'].getButton(4);
-			centerBtn.enabled = this.shiftX || this.shiftY;
+			centerBtn.enabled = this.shiftX !== 0 || this.shiftY !== 0;
 			centerBtn.draw();
 			this.director.draw();
 		} else {
@@ -1353,8 +1384,7 @@ Visualizer.prototype.getMouseRow = function() {
 	return this.mouseRow;
 };
 
-// make some exported functions known to Closure Compiler
+// make some exported functions known to JS minifiers
 
 Visualizer.prototype['loadReplayData'] = Visualizer.prototype.loadReplayData;
-Visualizer.prototype['loadReplayDataFromPHP'] = Visualizer.prototype.loadReplayDataFromPHP;
 Visualizer.prototype['loadReplayDataFromURI'] = Visualizer.prototype.loadReplayDataFromURI;

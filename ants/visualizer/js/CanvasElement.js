@@ -214,7 +214,7 @@ CanvasElementAbstractMap.prototype.draw = function() {
 		xs = (colOpt % cols) * this.scale - 4.5;
 		ys = (rowOpt % rows) * this.scale - 4.5;
 		this.drawWrapped(xs, ys, this.scale + 9, this.scale + 9, this.w,
-				this.h, this.redFocusRectFun, [ this.ctx, this.scale, xs, ys ]);
+				this.h, this.redFocusRectFun, [ xs, ys ]);
 	}
 };
 

@@ -33,6 +33,18 @@ Quirks = {
 			.match(/\b(Firefox\/5\.|Chrome\/1[23]\.).*/))
 };
 
+Key = {
+	LEFT : 37,
+	RIGHT : 39,
+	SPACE : 32,
+	PGUP : 33,
+	PGDOWN : 34,
+	HOME : 36,
+	END : 35,
+	PLUS : 187,
+	MINUS : 189
+};
+
 Html = {
 	/**
 	 * Creates a table HTML element.
@@ -120,7 +132,7 @@ Html = {
 		return '<' + element + ' style="' + style + '">'
 				+ (typeof content == 'function' ? content() : content) + '</'
 				+ element + '>';
-	},
+	}
 
 };
 
