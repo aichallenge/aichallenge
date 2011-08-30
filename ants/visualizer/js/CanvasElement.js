@@ -370,9 +370,9 @@ CanvasElementFog.prototype.draw = function() {
  *        map the background map
  * @param {CanvasElementFog}
  *        fog the fog overlay
- * @returns {CanvasElementMapWithAnts}
+ * @returns {CanvasElementAntsMap}
  */
-function CanvasElementMapWithAnts(vis, map, fog) {
+function CanvasElementAntsMap(vis, map, fog) {
 	CanvasElement.call(this);
 	this.vis = vis;
 	this.map = map;
@@ -390,9 +390,9 @@ function CanvasElementMapWithAnts(vis, map, fog) {
 	this.mouseRow = 0;
 }
 
-CanvasElementMapWithAnts.extend(CanvasElement);
+CanvasElementAntsMap.extend(CanvasElement);
 
-CanvasElementMapWithAnts.prototype.checkState = function() {
+CanvasElementAntsMap.prototype.checkState = function() {
 	var i, k, kf, p_i, p_k, dx, dy, rows, cols, ar, owner;
 	var hash = undefined;
 	var timeChanged = this.time !== this.vis.getTime();
@@ -486,7 +486,7 @@ CanvasElementMapWithAnts.prototype.checkState = function() {
 	}
 };
 
-CanvasElementMapWithAnts.prototype.collectAntsAroundCursor = function() {
+CanvasElementAntsMap.prototype.collectAntsAroundCursor = function() {
 	var col, row, ar, sr, colPixels, rowPixels, drawList, i, k, ant, dr, dc;
 	var found;
 	var circledAnts = [];
@@ -528,7 +528,7 @@ CanvasElementMapWithAnts.prototype.collectAntsAroundCursor = function() {
 	return true;
 }
 
-CanvasElementMapWithAnts.prototype.draw = function() {
+CanvasElementAntsMap.prototype.draw = function() {
 	var halfScale, drawList, n, kf, w, dx, dy, d, fontSize, label, caption;
 	var target, rows, cols, x1, y1, x2, y2, rowPixels, colPixels, ar, sr, r;
 	var hash = undefined;
@@ -697,14 +697,14 @@ CanvasElementMapWithAnts.prototype.draw = function() {
  * @constructor
  * @param {Visualizer}
  *        vis the visualizer for reference
- * @param {CanvasElementMapWithAnts}
- *        mapWithAnts the prepared map with ants
+ * @param {CanvasElementAntsMap}
+ *        antsMap the prepared map with ants
  */
-function CanvasElementShiftedMap(vis, mapWithAnts) {
+function CanvasElementShiftedMap(vis, antsMap) {
 	CanvasElement.call(this);
 	this.vis = vis;
-	this.mapWithAnts = mapWithAnts;
-	this.dependsOn(mapWithAnts);
+	this.antsMap = antsMap;
+	this.dependsOn(antsMap);
 	this.shiftX = 0;
 	this.shiftY = 0;
 }
@@ -722,16 +722,16 @@ CanvasElementShiftedMap.prototype.checkState = function() {
 
 CanvasElementShiftedMap.prototype.draw = function() {
 	var x, y, dx, dy;
-	var mx = (this.w - this.mapWithAnts.w) >> 1;
-	var my = (this.h - this.mapWithAnts.h) >> 1;
+	var mx = (this.w - this.antsMap.w) >> 1;
+	var my = (this.h - this.antsMap.h) >> 1;
 	// map backdrop
 	dx = mx + this.shiftX;
 	dy = my + this.shiftY;
-	dx -= Math.ceil(dx / this.mapWithAnts.w) * this.mapWithAnts.w;
-	dy -= Math.ceil(dy / this.mapWithAnts.h) * this.mapWithAnts.h;
-	for (x = dx; x < this.w; x += this.mapWithAnts.w) {
-		for (y = dy; y < this.h; y += this.mapWithAnts.h) {
-			this.ctx.drawImage(this.mapWithAnts.canvas, x, y);
+	dx -= Math.ceil(dx / this.antsMap.w) * this.antsMap.w;
+	dy -= Math.ceil(dy / this.antsMap.h) * this.antsMap.h;
+	for (x = dx; x < this.w; x += this.antsMap.w) {
+		for (y = dy; y < this.h; y += this.antsMap.h) {
+			this.ctx.drawImage(this.antsMap.canvas, x, y);
 		}
 	}
 	// map border if moved
@@ -739,25 +739,25 @@ CanvasElementShiftedMap.prototype.draw = function() {
 		this.ctx.strokeStyle = '#000';
 		this.ctx.lineWidth = 2;
 		this.ctx.beginPath();
-		for (x = dx; x <= this.w; x += this.mapWithAnts.w) {
+		for (x = dx; x <= this.w; x += this.antsMap.w) {
 			this.ctx.moveTo(x, 0);
 			this.ctx.lineTo(x, this.h);
 		}
-		for (y = dy; y <= this.h; y += this.mapWithAnts.h) {
+		for (y = dy; y <= this.h; y += this.antsMap.h) {
 			this.ctx.moveTo(0, y);
 			this.ctx.lineTo(this.w, y);
 		}
 		this.ctx.stroke();
 	}
 	// shaded static borders
-	if (this.w > this.mapWithAnts.w) {
-		dx = mx + this.mapWithAnts.w;
+	if (this.w > this.antsMap.w) {
+		dx = mx + this.antsMap.w;
 		this.ctx.fillStyle = 'rgba(0,0,0,0.3)';
 		this.ctx.fillRect(0, 0, mx, this.h);
 		this.ctx.fillRect(dx, 0, this.w - dx, this.h);
 	}
-	if (this.h > this.mapWithAnts.h) {
-		dy = my + this.mapWithAnts.h;
+	if (this.h > this.antsMap.h) {
+		dy = my + this.antsMap.h;
 		this.ctx.fillStyle = 'rgba(0,0,0,0.3)';
 		this.ctx.fillRect(0, 0, this.w, my);
 		this.ctx.fillRect(0, dy, this.w, this.h - dy);

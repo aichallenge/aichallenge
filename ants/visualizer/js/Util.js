@@ -33,6 +33,97 @@ Quirks = {
 			.match(/\b(Firefox\/5\.|Chrome\/1[23]\.).*/))
 };
 
+Html = {
+	/**
+	 * Creates a table HTML element.
+	 * 
+	 * @param {Function}
+	 *        content function that returns the content of the table
+	 * @returns {String} the HTML table
+	 */
+	table : function(content) {
+		return this.element('table', 'display:table;width:100%', content);
+	},
+
+	/**
+	 * Creates a table row HTML element.
+	 * 
+	 * @param {Function}
+	 *        content function that returns the content of the table
+	 * @returns {String} the HTML table row
+	 */
+	tr : function(content) {
+		return this.element('tr', 'display:table-row', content);
+	},
+
+	/**
+	 * Creates a table data HTML element.
+	 * 
+	 * @param {Function}
+	 *        content function that returns the content of the table
+	 * @returns {String} the HTML table cell
+	 */
+	td : function(content) {
+		return this
+				.element('td',
+						'display:table-cell;border:dotted 1px;padding:0px 2px',
+						content);
+	},
+
+	/**
+	 * Creates a HTML font element with underlined style.
+	 * 
+	 * @param {Function}
+	 *        content function that returns the content of the font element
+	 * @returns {String} the HTML font element
+	 */
+	underline : function(content) {
+		return this.element('p', 'text-decoration:underline', content);
+	},
+
+	/**
+	 * Creates a HTML font element with bold style.
+	 * 
+	 * @param {Function}
+	 *        content function that returns the content of the font element
+	 * @returns {String} the HTML font element
+	 */
+	bold : function(content) {
+		return this.element('p', 'font-weight:bold', content);
+	},
+
+	/**
+	 * Creates a HTML font element with italic style.
+	 * 
+	 * @param {Function}
+	 *        content function that returns the content of the font element
+	 * @returns {String} the HTML font element
+	 */
+	italic : function(content) {
+		return this.element('p', 'display:inline;font-style:italic', content);
+	},
+
+	/**
+	 * Helper function to create a HTML element from generic info.
+	 * 
+	 * @private
+	 * @param {String}
+	 *        element the element name
+	 * @param {String}
+	 *        style some CSS to be added
+	 * @param content
+	 *        a function or any other data type that forms the elements inner
+	 *        HTML
+	 * @returns {String} the resulting element string
+	 */
+	element : function(element, style, content) {
+		return '<' + element + ' style="' + style + '">'
+				+ (typeof content == 'function' ? content() : content) + '</'
+				+ element + '>';
+	},
+
+};
+
 function shapeRoundedRect(ctx, x, y, w, h, margin, r) {
 	var d = 0.5 * Math.PI;
 	ctx.beginPath();

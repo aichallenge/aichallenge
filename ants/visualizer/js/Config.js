@@ -1,24 +1,42 @@
 /**
  * keeps track of persistent configuration values
+ * 
  * @constructor
  */
-function Config(preset) {
+function Config() {
 	// user settings
 	this.load();
-	// override
-	if (preset) for (var key in preset) {
-		this[key] = preset[key];
-	}
 }
+/**
+ * if set, the visualizer uses the whole browser window to display, replacing
+ * any other content
+ */
 Config.prototype['fullscreen'] = false;
 Config.prototype['label'] = 0;
-Config.prototype['graphics'] = false;
 Config.prototype['zoom'] = 1;
 Config.prototype['duration'] = 100;
 Config.prototype['speedSlowest'] = 2;
 Config.prototype['speedFastest'] = 5;
 Config.prototype['speedFactor'] = 0;
 Config.prototype['cpu'] = 0.5;
+
+/**
+ * Loads all keys from a generic object into the configuration.
+ * 
+ * @param {Object}
+ *        preset the object containing configuration values
+ */
+Config.prototype.overrideFrom = function(preset) {
+	var key = undefined;
+	for (key in preset) {
+		if (!Config.prototype.hasOwnProperty(key)
+				|| (typeof this[key] === 'function'))
+			throw new Error("Cannot override '" + key
+					+ "', because it is not a known configuration value.");
+		this[key] = preset[key];
+	}
+}
+
 /**
  * checks if local storage is available
  */
@@ -31,11 +49,12 @@ Config.prototype.hasLocalStorage = function() {
 };
 /**
  * stores all keys to local storage if supported
+ * 
  * @return true, if successful, an error if not
  */
 Config.prototype.save = function() {
 	if (this.hasLocalStorage() === true) {
-		for (var key in this) {
+		for ( var key in this) {
 			if (this[key] === undefined || this[key] === Config.prototype[key]) {
 				delete window.localStorage['visualizer.' + key];
 			} else if (this[key] === null) {
@@ -58,7 +77,8 @@ Config.prototype.save = function() {
 						throw 'Only numbers, booleans and strings can be saved in the config';
 				}
 				if (prefix) {
-					window.localStorage['visualizer.' + key] = prefix + this[key];
+					window.localStorage['visualizer.' + key] = prefix
+							+ this[key];
 				}
 			}
 		}
@@ -67,12 +87,11 @@ Config.prototype.save = function() {
 	return false;
 };
 /**
- * Tries to load config values from local storage if available. Registred
- * functions on value change will fire.
+ * Tries to load config values from local storage if available.
  */
 Config.prototype.load = function() {
 	if (this.hasLocalStorage() === true) {
-		for (var key in this) {
+		for ( var key in this) {
 			if (typeof this[key] != 'function') {
 				var val = window.localStorage['visualizer.' + key];
 				if (val === 'null') {
