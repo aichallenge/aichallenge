@@ -41,8 +41,9 @@ Key = {
 	PGDOWN : 34,
 	HOME : 36,
 	END : 35,
-	PLUS : 187,
-	MINUS : 189
+	PLUS : 107,
+	PLUS_OPERA : 61,
+	MINUS : 109
 };
 
 Html = {

@@ -863,11 +863,6 @@ Visualizer.prototype.calculateCanvasSize = function() {
 		// Non-IE
 		result.width = window.innerWidth;
 		result.height = window.innerHeight;
-	} else if (document.documentElement
-			&& (document.documentElement.clientWidth || document.documentElement.clientHeight)) {
-		// IE 6+ in 'standards compliant mode'
-		result.width = document.documentElement.clientWidth;
-		result.height = document.documentElement.clientHeight;
 	}
 	var embed = (window.isFullscreenSupported && !window
 			.isFullscreenSupported())
@@ -1034,42 +1029,6 @@ Visualizer.prototype.showFog = function(fogPlayer) {
 		this.fogPlayer = fogPlayer;
 	}
 	this.director.draw();
-};
-/**
- * @private
- */
-Visualizer.prototype.interpolate = function(array1, array2, delta) {
-	if (delta === 0) return array1;
-	var result = new Array(array1.length);
-	for ( var i = 0; i < result.length; i++) {
-		result[i] = (1.0 - delta) * array1[i] + delta * array2[i];
-	}
-	return result;
-};
-/**
- * @private helper function to draw items wrapped around the map borders
- */
-Visualizer.prototype.drawWrapped = function(x, y, w, h, colPixels, rowPixels,
-		ctx, func, args) {
-	var delta_x, delta_y, tx, ty, sum;
-	if (x < 0 || y < 0 || x + w > colPixels || y + h > rowPixels) {
-		ctx.save();
-		delta_x = -Math.floor((x + w) / colPixels) * colPixels;
-		delta_y = -Math.floor((y + h) / rowPixels) * rowPixels;
-		ctx.translate(delta_x, delta_y);
-		for (ty = y + delta_y; ty < rowPixels; ty += rowPixels) {
-			sum = 0;
-			for (tx = x + delta_x; tx < colPixels; tx += colPixels) {
-				func.apply(this, args);
-				ctx.translate(colPixels, 0);
-				sum -= colPixels;
-			}
-			ctx.translate(sum, rowPixels);
-		}
-		ctx.restore();
-	} else {
-		func.apply(this, args);
-	}
 };
 /**
  * @private
@@ -1255,8 +1214,6 @@ Visualizer.prototype.mousePressed = function() {
 			}
 		}
 		this.mouseMoved(this.mouseX, this.mouseY);
-	} else {
-		this.btnMgr.mouseDown();
 	}
 };
 Visualizer.prototype.mouseReleased = function() {
@@ -1294,6 +1251,7 @@ Visualizer.prototype.keyPressed = function(key) {
 			d.gotoTick(d.duration);
 			break;
 		case Key.PLUS:
+		case Key.PLUS_OPERA:
 			this.btnMgr.groups['toolbar'].getButton(6).onclick();
 			break;
 		case Key.MINUS:
