@@ -31,7 +31,7 @@ tools/: ../../../ants
 	cp ../../../worker/engine.py tools/
 	
 	# remove "dist/" or "dist\" from paths in .cmd and .sh
-	sed -i 's/dist[/\]//g' tools/play_one_game.*
+	sed -i 's/dist[/\]//g' tools/play_one_game*
 	#sed -i 's/dist[/\]//g' tools/util/block_test.*
 
 	# We compile the java visualizer from the original directory, 
