@@ -4,4 +4,4 @@
 	"python dist/sample_bots/python/LeftyBot.py" \
 	"python dist/sample_bots/python/HunterBot.py" \
 	"python dist/sample_bots/python/LeftyBot.py" |
-java -jar visualizer/build/deploy/visualizer.jar
+java -jar visualizer.jar
