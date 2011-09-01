@@ -543,7 +543,6 @@ Visualizer.prototype.completedImages = function(error) {
 Visualizer.prototype.tryStart = function() {
 	var bg, stop, i;
 	var vis = this;
-	if (this.replay === undefined) return;
 	// we need to parse the replay, unless it has been parsed by the
 	// XmlHttpRequest callback
 	if (this.replay) {
