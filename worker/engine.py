@@ -300,7 +300,7 @@ def run_game(game, botcmds, options):
             'player_info': [{} for x in range(len(bots))],
             'status': bot_status,
             'score': scores,
-            'rank': [sorted(set(scores), reverse=True).index(x) for x in scores],
+            'rank': [sorted(scores, reverse=True).index(x) for x in scores],
             'replayformat': 'json',
             'replaydata': game.get_replay(),
             'game_length': turn
