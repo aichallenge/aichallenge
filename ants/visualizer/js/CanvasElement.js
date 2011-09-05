@@ -157,10 +157,15 @@ CanvasElement.prototype.drawWrapped = function(x, y, w, h, wField, hField,
 /**
  * @class Base class for maps
  * @extends CanvasElement
+ * @constructor
+ * @param {State}
+ *        state the visualizer state for reference
  * @returns {CanvasElementAbstractMap}
  */
-function CanvasElementAbstractMap() {
-	CanvasElement.call(this);
+function CanvasElementAbstractMap(state) {
+	this.upper();
+	this.state = state;
+	this.water = null;
 }
 CanvasElementAbstractMap.extend(CanvasElement);
 
@@ -186,17 +191,17 @@ CanvasElementAbstractMap.prototype.redFocusRectFun = function(xs, ys) {
 
 CanvasElementAbstractMap.prototype.draw = function() {
 	var row, col, start, isWall, xs, ys;
-	var rows = this.vis.getRows();
-	var cols = this.vis.getCols();
-	var rowOpt = this.vis.getOption('row');
-	var colOpt = this.vis.getOption('col');
+	var rows = this.state.replay.rows;
+	var cols = this.state.replay.cols;
+	var rowOpt = this.state.options.row;
+	var colOpt = this.state.options.col;
 	this.ctx.fillStyle = SAND_COLOR;
 	this.ctx.fillRect(0, 0, this.w, this.h);
-	this.ctx.fillStyle = this.ctx.createPattern(this.vis.getImage(0), 'repeat');
+	this.ctx.fillStyle = this.ctx.createPattern(this.water, 'repeat');
 	for (row = 0; row < rows; row++) {
 		start = undefined;
 		for (col = 0; col < cols; col++) {
-			isWall = this.vis.isWall(row, col);
+			isWall = this.state.replay.walls[row][col];
 			if (start === undefined && isWall) {
 				start = col;
 			} else if (start !== undefined && !isWall) {
@@ -220,24 +225,24 @@ CanvasElementAbstractMap.prototype.draw = function() {
 
 /**
  * @class A canvas element for the minimap.
+ * @extends CanvasElementAbstractMap
  * @constructor
- * @param {Visualizer}
- *        vis the visualizer for reference
+ * @param {State}
+ *        state the visualizer state for reference
  * @returns {CanvasElementMiniMap}
  */
-function CanvasElementMiniMap(vis) {
-	CanvasElementAbstractMap.call(this);
-	this.vis = vis;
+function CanvasElementMiniMap(state) {
+	this.upper(state);
 	this.scale = 1;
 	this.turn = undefined;
 	this.ants = [];
 }
 CanvasElementMiniMap.extend(CanvasElementAbstractMap);
 CanvasElementMiniMap.prototype.checkState = function() {
-	if ((this.vis.getTime() | 0) !== this.turn) {
+	if ((this.state.time | 0) !== this.turn) {
 		this.invalid = true;
-		this.turn = (this.vis.getTime() | 0);
-		this.ants = this.vis.getTurn(this.turn);
+		this.turn = (this.state.time | 0);
+		this.ants = this.state.replay.getTurn(this.turn);
 	}
 };
 CanvasElementMiniMap.prototype.draw = function() {
@@ -257,35 +262,35 @@ CanvasElementMiniMap.prototype.draw = function() {
 
 /**
  * @class A canvas element for the main map.
+ * @extends CanvasElementAbstractMap
  * @constructor
- * @param {Visualizer}
- *        vis the visualizer for reference
+ * @param {State}
+ *        state the visualizer state for reference
  * @returns {CanvasElementMap}
  */
-function CanvasElementMap(vis) {
-	CanvasElementAbstractMap.call(this);
-	this.vis = vis;
+function CanvasElementMap(state) {
+	this.upper(state);
 }
-
 CanvasElementMap.extend(CanvasElementAbstractMap);
 
 CanvasElementMap.prototype.draw = function() {
-	this.scale = this.vis.getScale();
+	this.scale = this.state.scale;
 	CanvasElementAbstractMap.prototype.draw.call(this);
 };
 
 /**
  * @class A canvas element for the fog overlay.
+ * @extends CanvasElement
  * @constructor
- * @param {Visualizer}
- *        vis the visualizer for reference
+ * @param {State}
+ *        state the visualizer state for reference
  * @param {CanvasElementFogPattern}
  *        pattern the fog pattern to use
  * @returns {CanvasElementFog}
  */
-function CanvasElementFog(vis, pattern) {
+function CanvasElementFog(state, pattern) {
 	CanvasElement.call(this);
-	this.vis = vis;
+	this.state = state;
 	this.turn = 0;
 	this.shiftX = 0;
 	this.shiftY = 0;
@@ -295,24 +300,22 @@ function CanvasElementFog(vis, pattern) {
 	this.dependsOn(pattern);
 	this.ptrn = null;
 }
-
 CanvasElementFog.extend(CanvasElement);
 
 CanvasElementFog.prototype.checkState = function() {
-	if (this.player !== this.vis.getFogPlayer()
-			|| (this.player !== undefined && ((this.vis.getShiftX() !== this.shiftX && this.w < this.scale
-					* this.vis.getCols())
-					|| (this.vis.getShiftY() !== this.shiftY && this.h < this.scale
-							* this.vis.getRows())
-					|| this.turn !== (this.vis.getTime() | 0) || this.scale !== this.vis
-					.getScale()))) {
+	if (this.player !== this.state.fogPlayer
+			|| (this.player !== undefined && ((this.state.shiftX !== this.shiftX && this.w < this.scale
+					* this.state.replay.cols)
+					|| (this.state.shiftY !== this.shiftY && this.h < this.scale
+							* this.state.replay.rows)
+					|| this.turn !== (this.state.time | 0) || this.scale !== this.state.scale))) {
 		this.invalid = true;
-		this.shiftX = this.vis.getShiftX();
-		this.shiftY = this.vis.getShiftY();
-		this.scale = this.vis.getScale();
-		this.turn = this.vis.getTime() | 0;
-		if (this.player !== this.vis.getFogPlayer()) {
-			this.player = this.vis.getFogPlayer();
+		this.shiftX = this.state.shiftX;
+		this.shiftY = this.state.shiftY;
+		this.scale = this.state.scale;
+		this.turn = this.state.time | 0;
+		if (this.player !== this.state.fogPlayer) {
+			this.player = this.state.fogPlayer;
 			if (this.player !== undefined) {
 				this.ptrn = this.ctx.createPattern(this.pattern.canvas,
 						'repeat');
@@ -321,7 +324,7 @@ CanvasElementFog.prototype.checkState = function() {
 		if (this.player === undefined) {
 			this.fogMap = null;
 		} else {
-			this.fogMap = this.vis.getFogMap();
+			this.fogMap = this.state.getFogMap();
 		}
 	}
 };
@@ -333,10 +336,10 @@ CanvasElementFog.prototype.draw = function() {
 	if (this.fogMap) {
 		cols = this.fogMap[0].length;
 		colPixels = this.scale * cols;
-		x = (this.w < colPixels) ? 0.5 * (this.w - colPixels) + this.shiftX : 0;
+		x = (this.w < colPixels) ? (this.w - colPixels >> 1) + this.shiftX : 0;
 		rows = this.fogMap.length;
 		rowPixels = this.scale * rows;
-		y = (this.h < rowPixels) ? 0.5 * (this.h - rowPixels) + this.shiftY : 0;
+		y = (this.h < rowPixels) ? (this.h - rowPixels >> 1) + this.shiftY : 0;
 
 		x_idx = Math.floor(-x / this.scale);
 		y_idx = Math.floor(-y / this.scale);
@@ -346,7 +349,7 @@ CanvasElementFog.prototype.draw = function() {
 		y_f = y + y_idx * this.scale;
 		while (y_f < this.h) {
 			fogRow = this.fogMap[y_i];
-			x_i = Math.wrapAround(x_idx, rows);
+			x_i = Math.wrapAround(x_idx, cols);
 			x_f = x + x_idx * this.scale;
 			while (x_f < this.w) {
 				if (fogRow[x_i]) {
@@ -364,17 +367,17 @@ CanvasElementFog.prototype.draw = function() {
 /**
  * @class The main map including ants and indicators
  * @constructor
- * @param {Visualizer}
- *        vis the visualizer for reference
+ * @param {State}
+ *        state the visualizer state for reference
  * @param {CanvasElementMap}
  *        map the background map
  * @param {CanvasElementFog}
  *        fog the fog overlay
  * @returns {CanvasElementAntsMap}
  */
-function CanvasElementAntsMap(vis, map, fog) {
+function CanvasElementAntsMap(state, map, fog) {
 	CanvasElement.call(this);
-	this.vis = vis;
+	this.state = state;
 	this.map = map;
 	this.fog = fog;
 	this.dependsOn(map);
@@ -395,20 +398,20 @@ CanvasElementAntsMap.extend(CanvasElement);
 CanvasElementAntsMap.prototype.checkState = function() {
 	var i, k, kf, p_i, p_k, dx, dy, rows, cols, ar, owner;
 	var hash = undefined;
-	var timeChanged = this.time !== this.vis.getTime();
-	if (timeChanged || this.scale !== this.vis.getScale()
-			|| this.label !== this.vis.getConfig('label')) {
+	var timeChanged = this.time !== this.state.time;
+	if (timeChanged || this.scale !== this.state.scale
+			|| this.label !== this.state.config['label']) {
 		this.invalid = true;
-		this.time = this.vis.getTime();
-		this.scale = this.vis.getScale();
-		this.label = this.vis.getConfig('label');
+		this.time = this.state.time;
+		this.scale = this.state.scale;
+		this.label = this.state.config['label'];
 
 		// per turn calculations
 		if (this.turn !== (this.time | 0)) {
-			cols = this.vis.getCols();
-			rows = this.vis.getRows();
+			cols = this.state.replay.cols;
+			rows = this.state.replay.rows;
 			this.turn = this.time | 0;
-			this.ants = this.vis.getTurn(this.turn);
+			this.ants = this.state.replay.getTurn(this.turn);
 			this.pairing = new Array(this.ants.length);
 			for (i = this.ants.length - 1; i >= 0; i--) {
 				if ((kf = this.ants[i].interpolate(this.turn))) {
@@ -423,7 +426,7 @@ CanvasElementAntsMap.prototype.checkState = function() {
 					};
 				}
 			}
-			if ((ar = this.vis.getAttackRadius2())) {
+			if ((ar = this.state.replay.meta['replaydata']['attackradius2'])) {
 				for (i = this.ants.length - 1; i >= 0; i--) {
 					if (this.ants[i].death === this.turn + 1) {
 						p_i = this.pairing[this.ants[i].id];
@@ -475,13 +478,12 @@ CanvasElementAntsMap.prototype.checkState = function() {
 	}
 
 	// find ants in range of mouse cursor
-	if (this.mouseOverVis !== this.vis.getMouseOverVis()
+	if (this.mouseOverVis !== this.state.mouseOverVis
 			|| this.mouseOverVis
-			&& (timeChanged || this.mouseCol !== this.vis.getMouseCol() || this.mouseRow !== this.vis
-					.getMouseRow())) {
-		this.mouseOverVis = this.vis.getMouseOverVis();
-		this.mouseCol = this.vis.getMouseCol();
-		this.mouseRow = this.vis.getMouseRow();
+			&& (timeChanged || this.mouseCol !== this.state.mouseCol || this.mouseRow !== this.state.mouseRow)) {
+		this.mouseOverVis = this.state.mouseOverVis;
+		this.mouseCol = this.state.mouseCol;
+		this.mouseRow = this.state.mouseRow;
 		if (this.collectAntsAroundCursor()) this.invalid = true;
 	}
 };
@@ -494,10 +496,12 @@ CanvasElementAntsMap.prototype.collectAntsAroundCursor = function() {
 	var same = true;
 	col = this.scale * this.mouseCol;
 	row = this.scale * this.mouseRow;
-	ar = this.scale * this.scale * this.vis.getAttackRadius2();
-	sr = this.scale * this.scale * this.vis.getSpawnRadius2();
-	colPixels = this.scale * this.vis.getCols();
-	rowPixels = this.scale * this.vis.getRows();
+	ar = this.state.replay.meta['replaydata']['attackradius2'];
+	ar *= this.scale * this.scale;
+	sr = this.state.replay.meta['replaydata']['spawnradius2'];
+	sr *= this.scale * this.scale;
+	colPixels = this.scale * this.state.replay.cols;
+	rowPixels = this.scale * this.state.replay.rows;
 	for (hash in this.drawStates) {
 		drawList = this.drawStates[hash];
 		for (i = drawList.length - 1; i >= 0; i--) {
@@ -574,9 +578,9 @@ CanvasElementAntsMap.prototype.draw = function() {
 	}
 
 	// draw battle indicators
-	rows = this.vis.getRows();
+	rows = this.state.replay.rows;
 	rowPixels = rows * this.scale;
-	cols = this.vis.getCols();
+	cols = this.state.replay.cols;
 	colPixels = cols * this.scale;
 	this.ctx.lineWidth = Math.pow(this.scale, 0.3);
 	for (hash in this.drawStates) {
@@ -611,8 +615,10 @@ CanvasElementAntsMap.prototype.draw = function() {
 
 	// draw attack and spawn radiuses
 	if (this.mouseOverVis) {
-		ar = this.scale * Math.sqrt(this.vis.getAttackRadius2());
-		sr = this.scale * Math.sqrt(this.vis.getSpawnRadius2());
+		ar = this.state.replay.meta['replaydata']['attackradius2'];
+		ar = this.scale * Math.sqrt(ar);
+		sr = this.state.replay.meta['replaydata']['spawnradius2'];
+		sr = this.scale * Math.sqrt(sr);
 		for (n = this.circledAnts.length - 1; n >= 0; --n) {
 			kf = this.circledAnts[n];
 			hash = '#';
@@ -636,7 +642,7 @@ CanvasElementAntsMap.prototype.draw = function() {
 	}
 
 	// draw A, B, C, D ... on ants or alternatively the global kf id
-	label = this.vis.getConfig('label');
+	label = this.state.config['label'];
 	if (label) {
 		fontSize = Math.ceil(Math.max(this.scale, 8) / label);
 		this.ctx.save();
@@ -679,7 +685,7 @@ CanvasElementAntsMap.prototype.draw = function() {
 	}
 
 	// fog
-	if (this.vis.getFogPlayer() !== undefined) {
+	if (this.state.fogPlayer !== undefined) {
 		dx = (this.fog.w < colPixels) ? 0.5 * (colPixels - this.fog.w)
 				- this.fog.shiftX : 0;
 		dy = (this.fog.h < rowPixels) ? 0.5 * (rowPixels - this.fog.h)
@@ -692,17 +698,17 @@ CanvasElementAntsMap.prototype.draw = function() {
 };
 
 /**
- * @class The main map with ants dragged with the mouse and extended by borders
+ * @class The main map with ants, dragged with the mouse and extended by borders
  *        if required
  * @constructor
- * @param {Visualizer}
- *        vis the visualizer for reference
+ * @param {State}
+ *        state the visualizer state for reference
  * @param {CanvasElementAntsMap}
  *        antsMap the prepared map with ants
  */
-function CanvasElementShiftedMap(vis, antsMap) {
+function CanvasElementShiftedMap(state, antsMap) {
 	CanvasElement.call(this);
-	this.vis = vis;
+	this.state = state;
 	this.antsMap = antsMap;
 	this.dependsOn(antsMap);
 	this.shiftX = 0;
@@ -712,11 +718,10 @@ function CanvasElementShiftedMap(vis, antsMap) {
 CanvasElementShiftedMap.extend(CanvasElement);
 
 CanvasElementShiftedMap.prototype.checkState = function() {
-	if (this.vis.getShiftX() !== this.shiftX
-			|| this.vis.getShiftY() !== this.shiftY) {
+	if (this.state.shiftX !== this.shiftX || this.state.shiftY !== this.shiftY) {
 		this.invalid = true;
-		this.shiftX = this.vis.getShiftX();
-		this.shiftY = this.vis.getShiftY();
+		this.shiftX = this.state.shiftX;
+		this.shiftY = this.state.shiftY;
 	}
 };
 
@@ -767,27 +772,27 @@ CanvasElementShiftedMap.prototype.draw = function() {
 /**
  * @class A tiny canvas to contain a cached fog pattern for the selected player.
  * @constructor
- * @param {Visualizer}
- *        vis the visualizer for reference
+ * @param {State}
+ *        state the visualizer state for reference
  */
-function CanvasElementFogPattern(vis) {
+function CanvasElementFogPattern(state) {
 	CanvasElement.call(this);
-	this.vis = vis;
+	this.state = state;
 	this.player = undefined;
 	this.setSize(2, 2);
 }
 CanvasElementFogPattern.extend(CanvasElement);
 
 CanvasElementFogPattern.prototype.checkState = function() {
-	if (this.player !== this.vis.getFogPlayer()) {
+	if (this.player !== this.state.fogPlayer) {
 		this.invalid = true;
-		this.player = this.vis.getFogPlayer();
+		this.player = this.state.fogPlayer;
 	}
 };
 
 CanvasElementFogPattern.prototype.draw = function() {
 	if (this.player !== undefined) {
-		this.ctx.fillStyle = this.vis.getHtmlPlayerColor(this.player);
+		this.ctx.fillStyle = this.state.replay.htmlPlayerColors[this.player];
 		this.ctx.fillRect(0, 0, 1, 1);
 		this.ctx.fillRect(1, 1, 1, 1);
 	}
@@ -796,24 +801,43 @@ CanvasElementFogPattern.prototype.draw = function() {
 /**
  * @class A canvas element for statistical time graphs.
  * @constructor
- * @param {Visualizer}
- *        vis the visualizer for reference
+ * @param {State}
+ *        state the visualizer state for reference
  * @param {String}
  *        stats name of the stats to query from the visualizer
  */
-function CanvasElementGraph(vis, stats) {
+function CanvasElementGraph(state, stats) {
 	CanvasElement.call(this);
-	this.vis = vis;
+	this.state = state;
 	this.stats = stats;
 	this.duration = 0;
 }
 
 CanvasElementGraph.extend(CanvasElement);
 
+CanvasElementGraph.prototype.statusToGlyph = function(i) {
+	var status = this.state.replay.meta['status'][i];
+	if (status === 'survived') {
+		return '\u2713';
+	} else if (status === 'eliminated') {
+		return '\u2717';
+	} else {
+		return this.state.replay.meta['status'][i];
+	}
+};
+
+CanvasElementGraph.prototype.getStats = function(name) {
+	return {
+		values : this.state.replay[name],
+		bonus : name === 'scores'
+				? this.state.replay.meta['replaydata']['bonus'] : undefined
+	};
+};
+
 CanvasElementGraph.prototype.checkState = function() {
-	if (this.duration !== this.vis.getReplayDuration()) {
+	if (this.duration !== this.state.replay.duration) {
 		this.invalid = true;
-		this.duration = this.vis.getReplayDuration();
+		this.duration = this.state.replay.duration;
 	}
 };
 
@@ -821,8 +845,8 @@ CanvasElementGraph.prototype.draw = function() {
 	var min, max, i, k, t, scaleX, scaleY, status, x, y, tw, tx;
 	var w = this.w - 1;
 	var h = this.h - 1;
-	var replay = this.vis.getReplay();
-	var values = this.vis.getStats(this.stats).values;
+	var replay = this.state.replay;
+	var values = this.getStats(this.stats).values;
 	this.ctx.fillStyle = '#fff';
 	this.ctx.fillRect(0, 0, this.w, this.h);
 	// find lowest and highest value
@@ -858,7 +882,7 @@ CanvasElementGraph.prototype.draw = function() {
 		}
 		this.ctx.stroke();
 	}
-	if (!this.vis.isStreaming && replay.meta['status']) {
+	if (!this.state.isStreaming && replay.meta['status']) {
 		this.ctx.font = '10px Arial,Sans';
 		for (i = values[0].length - 1; i >= 0; i--) {
 			this.ctx.fillStyle = replay.htmlPlayerColors[i];
@@ -868,7 +892,7 @@ CanvasElementGraph.prototype.draw = function() {
 			x = 0.5 + k * scaleX;
 			y = 0.5 + scaleY * (max - values[k][i]);
 			this.ctx.moveTo(x, y);
-			status = this.vis.statusToGlyph(i);
+			status = this.statusToGlyph(i);
 			tw = this.ctx.measureText(status).width;
 			tx = Math.min(x, w - tw);
 			if (y < 30) {
@@ -893,18 +917,18 @@ CanvasElementGraph.prototype.draw = function() {
  * @class A canvas element for statistics. It makes use of
  *        {@link CanvasElementGraph}.
  * @constructor
- * @param {Visualizer}
- *        vis the visualizer for reference
+ * @param {State}
+ *        state the visualizer state for reference
  * @param {String}
  *        caption the caption that is show to the left of the bar graph
  * @param {String}
  *        stats name of the stats to query from the visualizer
  */
-function CanvasElementStats(vis, caption, stats) {
+function CanvasElementStats(state, caption, stats) {
 	CanvasElement.call(this);
-	this.vis = vis;
+	this.state = state;
 	this.caption = caption;
-	this.graph = new CanvasElementGraph(vis, stats);
+	this.graph = new CanvasElementGraph(state, stats);
 	this.turn = 0;
 	this.time = 0;
 }
@@ -923,10 +947,10 @@ CanvasElementStats.prototype.setSize = function(width, height) {
 };
 
 CanvasElementStats.prototype.checkState = function() {
-	if ((this.showGraph && this.time !== this.vis.getTime())
-			|| this.time !== (this.vis.getTime() | 0)) {
+	if ((this.showGraph && this.time !== this.state.time)
+			|| this.time !== (this.state.time | 0)) {
 		this.invalid = true;
-		this.time = this.vis.getTime();
+		this.time = this.state.time;
 		this.turn = this.time | 0;
 	}
 };
@@ -956,9 +980,9 @@ CanvasElementStats.prototype.draw = function(resized) {
 	}
 
 	// draw scores
-	stats = this.vis.getStats(this.graph.stats);
+	stats = this.graph.getStats(this.graph.stats);
 	this.drawColorBar(95, 4, this.w - 99, 22, stats.values[this.turn],
-			(this.turn === this.vis.getReplayDuration()) ? stats.bonus
+			(this.turn === this.state.replay.duration) ? stats.bonus
 					: undefined);
 
 	// graph
@@ -973,7 +997,7 @@ CanvasElementStats.prototype.draw = function(resized) {
 		this.ctx.lineTo(x, 32.5 + this.graph.h - 1);
 		this.ctx.stroke();
 		text = this.caption + ' | ';
-		if (this.turn === this.graph.duration && !this.vis.isStreaming) {
+		if (this.turn === this.graph.duration && !this.state.isStreaming) {
 			text += 'end';
 		} else {
 			text += 'turn ' + (this.turn + 1) + '/' + this.graph.duration;
@@ -1026,7 +1050,7 @@ CanvasElementStats.prototype.drawColorBar = function(x, y, w, h, values, bonus) 
 	offsetX = x;
 	for (i = 0; i < useValues.length; i++) {
 		amount = scale * useValues[i];
-		this.ctx.fillStyle = this.vis.getReplay().htmlPlayerColors[i];
+		this.ctx.fillStyle = this.state.replay.htmlPlayerColors[i];
 		this.ctx.fillRect(offsetX, y, w - offsetX + x, h);
 		offsetX += amount;
 	}
@@ -1038,7 +1062,7 @@ CanvasElementStats.prototype.drawColorBar = function(x, y, w, h, values, bonus) 
 	offsetX = x + 2;
 	for (i = 0; i < useValues.length; i++) {
 		text = Math.round(values[i]);
-		if (this.vis.getConfig('label') === 1) {
+		if (this.state.config['label'] === 1) {
 			text = String.fromCharCode(65 + i) + ':' + text;
 		}
 		var bonusText = (bonus && bonus[i]) ? '+' + Math.round(bonus[i]) : '';

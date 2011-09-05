@@ -26,7 +26,7 @@ function Button(group, onclick) {
  */
 Button.prototype.draw = function() {
 	var g = this.group;
-	var ctx = g.manager.vis.main.ctx;
+	var ctx = g.manager.ctx;
 	var loc = this.getLocation();
 	var cw = (loc.w > g.x + g.w - loc.x) ? g.x + g.w - loc.x : loc.w;
 	var ch = (loc.h > g.y + g.h - loc.y) ? g.y + g.h - loc.y : loc.h;
@@ -82,19 +82,19 @@ Button.prototype.draw = function() {
 Button.prototype.mouseDown = function() {
 	var i, btns;
 	switch (this.group.mode) {
-	case ButtonGroup.MODE_RADIO:
-		if (this.down) return;
-		btns = this.group.buttons;
-		for (i = 0; i < btns.length; i++) {
-			if (btns[i].down) {
-				btns[i].down = false;
-				btns[i].draw();
+		case ButtonGroup.MODE_RADIO:
+			if (this.down) return;
+			btns = this.group.buttons;
+			for (i = 0; i < btns.length; i++) {
+				if (btns[i].down) {
+					btns[i].down = false;
+					btns[i].draw();
+				}
 			}
-		}
-	case ButtonGroup.MODE_NORMAL:
-		this.down = true;
-		this.draw();
-		break;
+		case ButtonGroup.MODE_NORMAL:
+			this.down = true;
+			this.draw();
+			break;
 	}
 };
 
@@ -103,10 +103,10 @@ Button.prototype.mouseDown = function() {
  */
 Button.prototype.mouseUp = function() {
 	switch (this.group.mode) {
-	case ButtonGroup.MODE_NORMAL:
-		this.down = false;
-		this.draw();
-		break;
+		case ButtonGroup.MODE_NORMAL:
+			this.down = false;
+			this.draw();
+			break;
 	}
 };
 
@@ -186,7 +186,7 @@ ButtonGroup.prototype.mouseMove = function(mx, my) {
  *        hint a hint that is displayed when the mouse hovers over this button
  */
 function ImageButton(group, idx, delta, onclick, hint) {
-	Button.apply(this, [ group, onclick ]);
+	this.upper(group, onclick);
 	this.idx = idx;
 	this.offset = (group.size - 2 * group.border) * idx;
 	this.delta = delta;
@@ -240,7 +240,7 @@ ImageButton.prototype.getLocation = function() {
  *        width for horizontal layouts)
  */
 function ImageButtonGroup(manager, img, layout, mode, border, extent) {
-	ButtonGroup.apply(this, [ manager, border ]);
+	this.upper(manager, border);
 	this.img = img;
 	this.vertical = layout;
 	this.mode = mode;
@@ -336,10 +336,10 @@ ImageButtonGroup.prototype.getButton = function(idx) {
  *        onclick a callback for the button-click
  */
 function TextButton(group, text, color, onclick) {
-	Button.apply(this, [ group, onclick ]);
+	this.upper(group, onclick);
 	this.text = text;
 	this.color = color;
-	var ctx = this.group.manager.vis.main.ctx;
+	var ctx = this.group.manager.ctx;
 	this.x = 0;
 	this.y = 0;
 	ctx.font = FONT;
@@ -391,7 +391,7 @@ TextButton.prototype.getLocation = function() {
  *        border adds padding around the buttons on each side
  */
 function TextButtonGroup(manager, mode, border) {
-	ButtonGroup.apply(this, [ manager, border ]);
+	this.upper(manager, border);
 	this.mode = mode;
 	this.x = 0;
 	this.y = 0;
@@ -447,11 +447,11 @@ TextButtonGroup.prototype.cascade = function(width) {
 /**
  * @class Manages buttons and their mouse events.
  * @constructor
- * @param {Visualizer}
- *        vis the visualizer
+ * @param {CanvasRenderingContext2D}
+ *        ctx The context into which the buttons are rendered.
  */
-function ButtonManager(vis) {
-	this.vis = vis;
+function ButtonManager(ctx) {
+	this.ctx = ctx;
 	this.groups = {};
 	this.hover = null;
 	this.pinned = null;

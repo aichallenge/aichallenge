@@ -28,6 +28,10 @@ Math.wrapAround = function(x, range) {
 	return x - Math.floor(x / range) * range;
 };
 
+Math.clamp = function(x, min, max) {
+	return x < min ? min : x > max ? max : x;
+};
+
 Quirks = {
 	fullImageShadowSupport : !(window.navigator && window.navigator.userAgent
 			.match(/\b(Firefox\/5\.|Chrome\/1[23]\.).*/))
@@ -55,7 +59,7 @@ Html = {
 	 * @returns {String} the HTML table
 	 */
 	table : function(content) {
-		return this.element('table', 'display:table;width:100%', content);
+		return Html.element('table', 'display:table;width:100%', content);
 	},
 
 	/**
@@ -66,7 +70,7 @@ Html = {
 	 * @returns {String} the HTML table row
 	 */
 	tr : function(content) {
-		return this.element('tr', 'display:table-row', content);
+		return Html.element('tr', 'display:table-row', content);
 	},
 
 	/**
@@ -77,7 +81,7 @@ Html = {
 	 * @returns {String} the HTML table cell
 	 */
 	td : function(content) {
-		return this
+		return Html
 				.element('td',
 						'display:table-cell;border:dotted 1px;padding:0px 2px',
 						content);
@@ -91,7 +95,7 @@ Html = {
 	 * @returns {String} the HTML font element
 	 */
 	underline : function(content) {
-		return this.element('p', 'text-decoration:underline', content);
+		return Html.element('p', 'text-decoration:underline', content);
 	},
 
 	/**
@@ -102,7 +106,7 @@ Html = {
 	 * @returns {String} the HTML font element
 	 */
 	bold : function(content) {
-		return this.element('p', 'font-weight:bold', content);
+		return Html.element('p', 'font-weight:bold', content);
 	},
 
 	/**
@@ -113,7 +117,7 @@ Html = {
 	 * @returns {String} the HTML font element
 	 */
 	italic : function(content) {
-		return this.element('p', 'display:inline;font-style:italic', content);
+		return Html.element('p', 'display:inline;font-style:italic', content);
 	},
 
 	/**
@@ -155,5 +159,10 @@ Function.prototype.extend = function(clazz) {
 	var property = undefined;
 	for (property in clazz.prototype) {
 		this.prototype[property] = clazz.prototype[property];
+	}
+	this.prototype.upper = function() {
+		if (clazz.prototype.upper) this.upper = clazz.prototype.upper;
+		clazz.apply(this, arguments);
+		delete this.upper;
 	}
 };

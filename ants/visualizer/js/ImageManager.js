@@ -24,6 +24,7 @@ function ImageManager(dataDir, vis, callback) {
 /**
  * Announces an image that must be loaded. Calling this method after
  * startRequests() results in unexpected behaviour.
+ * 
  * @see #startRequests
  */
 ImageManager.prototype.add = function(source) {
@@ -37,7 +38,7 @@ ImageManager.prototype.add = function(source) {
  * handles these cases internally.
  */
 ImageManager.prototype.cleanUp = function() {
-	for (var i = 0; i < this.images.length; i++) {
+	for ( var i = 0; i < this.images.length; i++) {
 		if (this.info[i].success === false) {
 			this.info[i].success = undefined;
 			this.images[i] = null;
@@ -49,7 +50,7 @@ ImageManager.prototype.cleanUp = function() {
 ImageManager.prototype.startRequests = function() {
 	var img;
 	this.error = '';
-	for (var i = 0; i < this.images.length; i++) {
+	for ( var i = 0; i < this.images.length; i++) {
 		if (this.info[i].success === undefined && !this.images[i]) {
 			img = new Image();
 			this.images[i] = img;
@@ -69,6 +70,7 @@ ImageManager.prototype.startRequests = function() {
 /**
  * Records the state of an image when the browser has finished loading it. If no
  * more images are pending, the visualizer is signaled.
+ * 
  * @private
  */
 ImageManager.prototype.imgHandler = function(img, success) {
@@ -82,7 +84,7 @@ ImageManager.prototype.imgHandler = function(img, success) {
 	}
 	this.info[i].success = success;
 	if (--this.pending == 0) {
-		this.callback.apply(this.vis, [this.error]);
+		this.callback.apply(this.vis, [ this.error ]);
 	}
 };
 /**
@@ -99,26 +101,26 @@ ImageManager.prototype.pattern = function(idx, ctx, repeat) {
  * Sets the pattern of an image to a set of colorized copies of itself.
  */
 ImageManager.prototype.colorize = function(idx, colors) {
-	var obj = {};
-	this.vis.createCanvas(obj);
-	this.patterns[idx] = obj.canvas;
-	obj.canvas.width = this.images[idx].width * colors.length;
-	obj.canvas.height = this.images[idx].height;
-	var ctx = obj.ctx;
+	var canvas = document.createElement('canvas');
+	var ctx = canvas.getContext('2d');
+	this.patterns[idx] = canvas;
+	canvas.width = this.images[idx].width * colors.length;
+	canvas.height = this.images[idx].height;
 	ctx.fillStyle = ctx.createPattern(this.images[idx], 'repeat');
-	ctx.fillRect(0, 0, obj.canvas.width, obj.canvas.height);
+	ctx.fillRect(0, 0, canvas.width, canvas.height);
 	if (!this.restrictSecurity) {
 		try {
-			var data = ctx.getImageData(0, 0, obj.canvas.width, obj.canvas.height);
+			var data = ctx.getImageData(0, 0, canvas.width, canvas.height);
 		} catch (error1) {
 			try {
 				var privilegeManager = netscape.security.PrivilegeManager;
 				if (this.askSecurity) {
-					// alert('Accept the next dialog to have colorized button graphics.');
+					// alert('Accept the next dialog to have colorized button
+					// graphics.');
 					this.askSecurity = false;
 				}
 				privilegeManager.enablePrivilege("UniversalBrowserRead");
-				data = ctx.getImageData(0, 0, obj.canvas.width, obj.canvas.height);
+				data = ctx.getImageData(0, 0, canvas.width, canvas.height);
 			} catch (error2) {
 				this.restrictSecurity = true;
 				return;
@@ -127,23 +129,21 @@ ImageManager.prototype.colorize = function(idx, colors) {
 		var d = data.data;
 		var ox = 0;
 		var dx = 4 * this.images[idx].width;
-		for (var i = 0; i < colors.length; i++) {
+		for ( var i = 0; i < colors.length; i++) {
 			var c = colors[i];
 			if (c) {
 				if (typeof c == 'string') {
-					c = [
-						15 * parseInt(c.charAt(1), 16),
-						15 * parseInt(c.charAt(2), 16),
-						15 * parseInt(c.charAt(3), 16)
-					];
+					c = [ 15 * parseInt(c.charAt(1), 16),
+							15 * parseInt(c.charAt(2), 16),
+							15 * parseInt(c.charAt(3), 16) ];
 				}
-				for (var y = 0; y < 4 * data.width * data.height; y += 4 * data.width) {
-					for (var p = y + ox; p < y + ox + dx; p += 4) {
-						if (d[p] === d[p+1] && d[p] === d[p+2]) {
+				for ( var y = 0; y < 4 * data.width * data.height; y += 4 * data.width) {
+					for ( var p = y + ox; p < y + ox + dx; p += 4) {
+						if (d[p] === d[p + 1] && d[p] === d[p + 2]) {
 							// only gray pixels
-							d[p+0] = (d[p+0] * c[0]) >> 8;
-							d[p+1] = (d[p+1] * c[1]) >> 8;
-							d[p+2] = (d[p+2] * c[2]) >> 8;
+							d[p + 0] = (d[p + 0] * c[0]) >> 8;
+							d[p + 1] = (d[p + 1] * c[1]) >> 8;
+							d[p + 2] = (d[p + 2] * c[2]) >> 8;
 						}
 					}
 				}
