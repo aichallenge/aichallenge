@@ -117,6 +117,11 @@ public class Stream extends IdScriptableObject {
 							scoreSet.put(i, scoreSet, new NativeArray(0));
 						}
 						replaydata.put("scores", replaydata, scoreSet);
+						NativeArray fogs = new NativeArray(players);
+						for (int i = 0; i < players; i++) {
+							fogs.put(i, fogs, new NativeArray(0));
+						}
+						replay.put("fogs", replay, fogs);
 					} else {
 						if (initialized) {
 							return line != null;
@@ -240,8 +245,6 @@ public class Stream extends IdScriptableObject {
 						replay.put("scores", replay, scores);
 						NativeArray counts = new NativeArray(value + 1);
 						replay.put("counts", replay, counts);
-						NativeArray fogs = new NativeArray(value + 1);
-						replay.put("fogs", replay, fogs);
 					}
 				}
 			}
