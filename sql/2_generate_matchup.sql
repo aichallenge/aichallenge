@@ -206,7 +206,7 @@ while @abort = 0 and @player_count < @players do
     into @last_user_id, @last_submission_id, @last_mu, @last_sigma, @c, @match_quality
     from matchup_player mp,
     (
-        select s.user_id, s.submission_id, s.mu, s.sigma,
+        select s.user_id, s.submission_id, s.mu, s.sigma
         from submission s
         inner join user u
             on u.user_id = s.user_id
