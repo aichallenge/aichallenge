@@ -207,7 +207,6 @@ while @abort = 0 and @player_count < @players do
     from matchup_player mp,
     (
         select s.user_id, s.submission_id, s.mu, s.sigma,
-        @mu_avg = (select avg(mu) from matchup_player where matchup_id = @matchup_id)
         from submission s
         inner join user u
             on u.user_id = s.user_id
@@ -216,7 +215,7 @@ while @abort = 0 and @player_count < @players do
 
         -- this order by causes a filesort, but I don't see a way around it
         -- limiting to 100 saves us from doing extra trueskill calculations
-        order by abs(s.mu - @mu_avg)
+        order by abs(s.mu - (select avg(mu) from matchup_player where matchup_id = @matchup_id))
         limit 100
     ) s
     left outer join temp_unavailable tu
