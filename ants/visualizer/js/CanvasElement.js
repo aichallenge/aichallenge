@@ -14,7 +14,6 @@
 function CanvasElement() {
 	this.canvas = document.createElement('canvas');
 	this.ctx = this.canvas.getContext('2d');
-	this.ctx.globalCompositeOperation = 'copy';
 	this.invalid = true;
 	this.resized = false;
 	this.x = 0;
@@ -722,7 +721,6 @@ CanvasElementAntsMap.prototype.draw = function() {
 
 	// fog
 	if (this.state.fogPlayer !== undefined) {
-		this.ctx.globalCompositeOperation = 'source-over';
 		dx = (this.fog.w < colPixels) ? 0.5 * (colPixels - this.fog.w)
 				- this.fog.shiftX : 0;
 		dy = (this.fog.h < rowPixels) ? 0.5 * (rowPixels - this.fog.h)
@@ -731,7 +729,6 @@ CanvasElementAntsMap.prototype.draw = function() {
 				function(ctx, img, x, y) {
 					ctx.drawImage(img, x, y);
 				}, [ this.ctx, this.fog.canvas, dx, dy ]);
-		this.ctx.globalCompositeOperation = 'copy';
 	}
 };
 
@@ -793,7 +790,6 @@ CanvasElementShiftedMap.prototype.draw = function() {
 		this.ctx.stroke();
 	}
 	// shaded static borders
-	this.ctx.globalCompositeOperation = 'source-over';
 	if (this.w > this.antsMap.w) {
 		dx = mx + this.antsMap.w;
 		this.ctx.fillStyle = 'rgba(0,0,0,0.3)';
@@ -806,7 +802,6 @@ CanvasElementShiftedMap.prototype.draw = function() {
 		this.ctx.fillRect(0, 0, this.w, my);
 		this.ctx.fillRect(0, dy, this.w, this.h - dy);
 	}
-	this.ctx.globalCompositeOperation = 'copy';
 };
 
 /**

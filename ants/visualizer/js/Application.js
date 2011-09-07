@@ -1335,18 +1335,19 @@ Visualizer.prototype.mousePressed = function() {
 				&& (this.counts.graph.contains(this.mouseX, this.mouseY) || this.scores.graph
 						.contains(this.mouseX, this.mouseY))) {
 			this.mouseDown = 1;
+		} else if (this.state.config['zoom'] !== 1
+				&& this.miniMap.contains(this.mouseX, this.mouseY)) {
+			this.mouseDown = 3;
+		} else if (this.shiftedMap.contains(this.mouseX, this.mouseY)) {
+			this.mouseDown = 2;
 		} else {
-			if (this.state.config['zoom'] !== 1
-					&& this.miniMap.contains(this.mouseX, this.mouseY)) {
-				this.mouseDown = 3;
-			} else if (this.shiftedMap.contains(this.mouseX, this.mouseY)) {
-				this.mouseDown = 2;
-			} else {
-				this.btnMgr.mouseDown();
-				return;
-			}
+			this.btnMgr.mouseDown();
+			return;
 		}
 		this.mouseMoved(this.mouseX, this.mouseY);
+	} else {
+		// handle game/player links if in non-interactive mode
+		this.btnMgr.mouseDown();
 	}
 };
 
