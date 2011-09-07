@@ -555,7 +555,6 @@ ButtonManager.prototype.getGroup = function(name) {
  * @returns {Button} the active button under the mouse cursor or null
  */
 ButtonManager.prototype.mouseMove = function(mx, my) {
-	document.title = mx + ' ' + my;
 	var result = null;
 	var name = undefined;
 	for (name in this.groups) {

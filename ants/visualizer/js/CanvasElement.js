@@ -874,9 +874,12 @@ CanvasElementGraph.prototype.draw = function() {
 	scaleX = (this.duration === 0) ? 0 : w / this.duration;
 	this.ctx.strokeStyle = 'rgba(0,0,0,0.5)';
 	this.ctx.beginPath();
-	for (i = 0; i <= this.duration + 1; i++) {
-		t = i + 1;
-		this.ctx.moveTo(0.5 + scaleX * i, h - (t % 100 ? t % 10 ? 3 : 7 : 17));
+	for (k = 1; k * scaleX < 2;) {
+		k *= 10
+	}
+	for (i = k - 1; i <= this.duration + 1; i += k) {
+		t = ((i + 1) % (100 * k) ? (i + 1) % (10 * k) ? 3 : 7 : 11);
+		this.ctx.moveTo(0.5 + scaleX * i, h - t);
 		this.ctx.lineTo(0.5 + scaleX * i, h + 1);
 	}
 	this.ctx.moveTo(0.5 + 0, h + 0.5);
