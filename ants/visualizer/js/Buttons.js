@@ -1,6 +1,5 @@
 /**
- * @fileoverview This file contains classes for user interface creation through
- *               groups of buttons.
+ * @fileoverview This file contains the visualizer UI: buttons.
  * @author <a href="mailto:marco.leise@gmx.de">Marco Leise</a>
  */
 
@@ -9,14 +8,17 @@
  * @constructor
  * @param {ButtonGroup}
  *        group the button group that this button belongs to
- * @param {Function}
+ * @param {Delegate}
  *        onclick a callback for the button-click
+ * @property {Boolean} locked true, when the button is locked down (radio
+ *           buttons)
  */
 function Button(group, onclick) {
 	this.group = group;
 	this.onclick = onclick;
 	this.hover = false;
-	this.down = false;
+	this.down = 0;
+	this.locked = false;
 	this.enabled = onclick ? true : false;
 }
 
@@ -44,18 +46,14 @@ Button.prototype.draw = function() {
 	ctx.clip();
 	var r = 0.2 * Math.min(loc.w, loc.h);
 	if (this.onclick && this.enabled) {
-		if (this.hover || this.down) {
+		if (this.hover || this.down !== 0) {
 			shapeRoundedRect(ctx, loc.x, loc.y, loc.w, loc.h, 1, r);
 			ctx.fillStyle = 'rgb(255, 230, 200)';
 			ctx.fill();
 		}
-		if (this.down) {
-			ctx.shadowBlur = 1;
-		} else {
-			ctx.shadowBlur = 4;
-			ctx.shadowOffsetX = -2;
-			ctx.shadowOffsetY = +2;
-		}
+		ctx.shadowBlur = 4 - 1.5 * this.down;
+		ctx.shadowOffsetX = -this.down;
+		ctx.shadowOffsetY = +this.down;
 		if (Quirks.fullImageShadowSupport) {
 			ctx.shadowColor = 'rgba(0, 0, 0, 0.7)';
 		} else {
@@ -64,7 +62,7 @@ Button.prototype.draw = function() {
 		}
 	}
 	ctx.save();
-	ctx.translate(loc.x, (this.down) ? loc.y + 1 : loc.y - 1);
+	ctx.translate(loc.x, loc.y - 1 + this.down);
 	this.drawInternal(ctx);
 	ctx.restore();
 	if (this.onclick && this.enabled && (this.hover || this.down)) {
@@ -77,37 +75,52 @@ Button.prototype.draw = function() {
 };
 
 /**
- * Updates the button state when it is pressed.
+ * Updates the button state when it is pressed and invokes the button onclick
+ * delegate.
  */
 Button.prototype.mouseDown = function() {
 	var i, btns;
 	switch (this.group.mode) {
 		case ButtonGroup.MODE_RADIO:
-			if (this.down) return;
-			btns = this.group.buttons;
-			for (i = 0; i < btns.length; i++) {
-				if (btns[i].down) {
-					btns[i].down = false;
-					btns[i].draw();
+			this.locked = !this.locked;
+			if (this.locked) {
+				if (this.onclick) this.onclick.invoke(this);
+				btns = this.group.buttons;
+				for (i = 0; i < btns.length; i++) {
+					if (btns[i].down !== 0) {
+						btns[i].down = 0;
+						btns[i].locked = false;
+						btns[i].draw();
+					}
 				}
 			}
 		case ButtonGroup.MODE_NORMAL:
-			this.down = true;
-			this.draw();
+			this.down = 2;
 			break;
 	}
+	this.draw();
 };
 
 /**
- * Updates the button state when it is released.
+ * Updates the button state when it is released and invokes the button onclick
+ * delegate.
  */
 Button.prototype.mouseUp = function() {
 	switch (this.group.mode) {
+		case ButtonGroup.MODE_RADIO:
+			if (this.locked) {
+				this.down = 1;
+			} else {
+				if (this.onclick) this.onclick.invoke(this);
+				this.down = 0;
+			}
+			break;
 		case ButtonGroup.MODE_NORMAL:
-			this.down = false;
-			this.draw();
+			if (this.hover && this.onclick) this.onclick.invoke(this);
+			this.down = 0;
 			break;
 	}
+	this.draw();
 };
 
 /**
@@ -180,10 +193,11 @@ ButtonGroup.prototype.mouseMove = function(mx, my) {
  *        idx selects the partial image to be shown from the group's image
  * @param {Number}
  *        delta the actual position inside the button group in pixels
- * @param {Function}
+ * @param {Delegate}
  *        onclick a callback for the button-click
  * @param {String}
  *        hint a hint that is displayed when the mouse hovers over this button
+ * @property {Number} the partial image to be shown from the group's image
  */
 function ImageButton(group, idx, delta, onclick, hint) {
 	this.upper(group, onclick);
@@ -197,6 +211,7 @@ ImageButton.extend(Button);
 /**
  * Draws the partial image into the button.
  * 
+ * @private
  * @param {CanvasRenderingContext2D}
  *        ctx the rendering context to use
  * @see Button#draw
@@ -265,6 +280,7 @@ ImageButtonGroup.VERTICAL = true;
 /**
  * Calculates the optimal position for the next added button.
  * 
+ * @private
  * @returns {Number} the optimal position for the next added button
  */
 ImageButtonGroup.prototype.nextDelta = function() {
@@ -308,10 +324,10 @@ ImageButtonGroup.prototype.addSpace = function(size) {
 };
 
 /**
- * Looks up the button displaying a partial image.
+ * Looks up the button that displays a given partial image.
  * 
  * @param {Number}
- *        idx index of the partial image
+ *        idx index into the image atlas of the partial image
  * @returns {ImageButton} the first found button or null if none matches
  */
 ImageButtonGroup.prototype.getButton = function(idx) {
@@ -332,7 +348,7 @@ ImageButtonGroup.prototype.getButton = function(idx) {
  *        text the label that is displayed on the button
  * @param color
  *        a fillStyle to be applied when the label is drawn
- * @param {Function}
+ * @param {Delegate}
  *        onclick a callback for the button-click
  */
 function TextButton(group, text, color, onclick) {
@@ -351,6 +367,7 @@ TextButton.extend(Button);
 /**
  * Draws the label into the button.
  * 
+ * @private
  * @param {CanvasRenderingContext2D}
  *        ctx the rendering context to use
  * @see Button#draw
@@ -484,6 +501,7 @@ ButtonManager.prototype.addImageGroup = function(name, img, layout, mode,
 	return this.groups[name] = new ImageButtonGroup(this, img, layout, mode,
 			border, extent);
 };
+
 /**
  * Adds a new text button group.
  * 
@@ -537,7 +555,7 @@ ButtonManager.prototype.getGroup = function(name) {
  * @returns {Button} the active button under the mouse cursor or null
  */
 ButtonManager.prototype.mouseMove = function(mx, my) {
-	var hoveringNonRadio;
+	document.title = mx + ' ' + my;
 	var result = null;
 	var name = undefined;
 	for (name in this.groups) {
@@ -552,21 +570,25 @@ ButtonManager.prototype.mouseMove = function(mx, my) {
 		}
 	}
 	if (this.hover !== result) {
+		// the hover must change
 		if (this.hover) {
-			if (this.hover.hover || this.hover.down) {
-				this.hover.hover = false;
-				this.hover.down &= this.hover.group.mode == ButtonGroup.MODE_RADIO;
+			// we had a previous hover
+			this.hover.hover = false;
+			if (this.hover === this.pinned) {
+				// this was a pinned button, release it
+				this.hover.mouseUp();
+			} else {
 				this.hover.draw();
 			}
 		}
-		hoveringNonRadio = (this.hover && this.hover.group.mode !== ButtonGroup.MODE_RADIO);
 		this.hover = result;
-		if (result && (!this.pinned || this.pinned === result)) {
-			if (!result.hover) {
-				result.hover = true;
-				result.down = (result === this.pinned || result.down
-						&& !hoveringNonRadio);
-				result.draw();
+		if (result) {
+			// we have a new hover
+			this.hover.hover = true;
+			if (this.hover === this.pinned) {
+				this.hover.mouseDown();
+			} else {
+				this.hover.draw();
 			}
 		}
 	}
@@ -574,25 +596,21 @@ ButtonManager.prototype.mouseMove = function(mx, my) {
 };
 
 /**
- * Mouse release event that checks if the mouse pressed a button and fires the
- * onclick event.
+ * Mouse release event that is forwarded to the button the mouse was on, if any.
  */
 ButtonManager.prototype.mouseUp = function() {
 	if (this.pinned) {
 		this.pinned.mouseUp();
-		if (this.pinned == this.hover) {
-			this.pinned.onclick();
-		}
 		this.pinned = null;
 	}
 };
 
 /**
- * Mouse press event that registers the button the mouse was over.
+ * Mouse press event that is forwarded to the button the mouse was over, if any.
  */
 ButtonManager.prototype.mouseDown = function() {
-	if (this.hover && this.hover.enabled) {
-		this.hover.mouseDown();
+	if (this.hover) {
 		this.pinned = this.hover;
+		this.pinned.mouseDown();
 	}
 };

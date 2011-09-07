@@ -84,7 +84,7 @@ ImageManager.prototype.imgHandler = function(img, success) {
 	}
 	this.info[i].success = success;
 	if (--this.pending == 0) {
-		this.callback.apply(this.vis, [ this.error ]);
+		this.callback.call(this.vis, this.error);
 	}
 };
 /**

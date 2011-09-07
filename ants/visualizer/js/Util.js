@@ -164,5 +164,67 @@ Function.prototype.extend = function(clazz) {
 		if (clazz.prototype.upper) this.upper = clazz.prototype.upper;
 		clazz.apply(this, arguments);
 		delete this.upper;
-	}
+	};
 };
+
+/**
+ * @class A simple class storing 2-dimensional size extents.
+ * @constructor
+ * @param {Number}
+ *        w width
+ * @param {Number}
+ *        h height
+ * @property {Number} w width
+ * @property {Number} h height
+ */
+function Size(w, h) {
+	this.w = w;
+	this.h = h;
+}
+
+/**
+ * @class A simple location class that stores information about a rectangle.
+ * @constructor
+ * @param {Number}
+ *        x left coordinate
+ * @param {Number}
+ *        y top coordinate
+ * @param {Number}
+ *        w width
+ * @param {Number}
+ *        h height
+ * @property {Number} x left coordinate
+ * @property {Number} y top coordinate
+ * @property {Number} w width
+ * @property {Number} h height
+ */
+function Location(x, y, w, h) {
+	this.x = x;
+	this.y = y;
+	this.w = w;
+	this.h = h;
+}
+
+/**
+ * Checks if a given coordinate pair is within the area described by this
+ * object.
+ * 
+ * @param {Number}
+ *        x left coordinate
+ * @param {Number}
+ *        y top coordinate
+ * @returns {Boolean} true, if the point is inside the rectangle
+ */
+Location.prototype.contains = function(x, y) {
+	return (x >= this.x && x < this.x + this.w && y >= this.y && y < this.y
+			+ this.h);
+};
+
+function Delegate(obj, func) {
+	this.obj = obj;
+	this.func = func;
+}
+
+Delegate.prototype.invoke = function() {
+	this.func.apply(this.obj, arguments);
+}

@@ -706,6 +706,10 @@ Replay.prototype.deadAnt = function(aniAnt, dead) {
 	f['b'] = hb;
 	f['size'] = 0.7;
 };
+/**
+ * @returns {Boolean[][]} a two-dimensional array in the size of the map, where
+ *          each square invisible to the player is true.
+ */
 Replay.prototype.getFog = function(player, turn) {
 	var i, fogs, fog, row, col, radius, radius2, row_wrap, col_wrap;
 	var fog_row, fog_row1, fog_row2, aniAnts, aniAnt;

@@ -348,6 +348,7 @@ CanvasElementFog.prototype.checkState = function() {
 			if (this.player !== undefined) {
 				this.ptrn = this.ctx.createPattern(this.pattern.canvas,
 						'repeat');
+				this.ctx.clearRect(0, 0, this.w, this.h);
 			}
 		}
 		if (this.player === undefined) {

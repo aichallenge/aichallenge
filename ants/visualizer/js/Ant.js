@@ -86,34 +86,35 @@ Ant.prototype.interpolate = function(time) {
 	// times beyond the last key frame always return the latter
 	lastFrame = set[set.length - 1];
 	if (time >= lastFrame.time) {
-		return this.keyFrameCache.assign(lastFrame);
-	}
-
-	timeIdx = time | 0;
-	goFrom = this.lookup[timeIdx];
-	if (goFrom === undefined) {
-		if (timeIdx < set[0].time) {
-			goFrom = 0;
-		} else {
-			min = 0;
-			max = set.length - 1;
-			do {
-				i = (min + max >> 1);
-				if (timeIdx < set[i].time) {
-					max = i;
-				} else if (timeIdx > set[i + 1].time) {
-					min = i;
-				} else {
-					goFrom = i;
-					this.lookup[timeIdx] = i;
-				}
-			} while (goFrom === undefined);
+		this.keyFrameCache.assign(lastFrame);
+	} else {
+		timeIdx = time | 0;
+		goFrom = this.lookup[timeIdx];
+		if (goFrom === undefined) {
+			if (timeIdx < set[0].time) {
+				goFrom = 0;
+			} else {
+				min = 0;
+				max = set.length - 1;
+				do {
+					i = (min + max >> 1);
+					if (timeIdx < set[i].time) {
+						max = i;
+					} else if (timeIdx > set[i + 1].time) {
+						min = i;
+					} else {
+						goFrom = i;
+						this.lookup[timeIdx] = i;
+					}
+				} while (goFrom === undefined);
+			}
+			this.lookup[timeIdx] = goFrom;
 		}
-		this.lookup[timeIdx] = goFrom;
+		while (time > set[goFrom + 1].time)
+			goFrom++;
+		this.keyFrameCache.interpolate(set[goFrom], set[goFrom + 1], time);
 	}
-	while (time > set[goFrom + 1].time)
-		goFrom++;
-	return this.keyFrameCache.interpolate(set[goFrom], set[goFrom + 1], time);
+	return this.keyFrameCache;
 };
 
 /**
@@ -218,6 +219,7 @@ KeyFrame.prototype.assign = function(other) {
  * @class An extended key frame which holds the owning ant's id and an
  *        additional coordinate pair that reflects the pixel position on the
  *        scaled map.
+ * @extends KeyFrame
  * @constructor
  * @param {Number}
  *        antId the owning ant's id
