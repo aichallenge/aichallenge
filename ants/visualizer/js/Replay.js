@@ -86,28 +86,28 @@ DataType = {
 		p[0] = new Array(p[1].length);
 		for ( var turn = 0; turn < p[1].length; turn++) {
 			switch (p[1][turn]) {
-			case 'n':
-			case 'N':
-				p[0][turn] = Directions.N;
-				break;
-			case 'e':
-			case 'E':
-				p[0][turn] = Directions.E;
-				break;
-			case 's':
-			case 'S':
-				p[0][turn] = Directions.S;
-				break;
-			case 'w':
-			case 'W':
-				p[0][turn] = Directions.W;
-				break;
-			case '-':
-				p[0][turn] = null;
-				break;
-			default:
-				throw new Error('Invalid character in orders line: '
-						+ p[1][turn]);
+				case 'n':
+				case 'N':
+					p[0][turn] = Directions.N;
+					break;
+				case 'e':
+				case 'E':
+					p[0][turn] = Directions.E;
+					break;
+				case 's':
+				case 'S':
+					p[0][turn] = Directions.S;
+					break;
+				case 'w':
+				case 'W':
+					p[0][turn] = Directions.W;
+					break;
+				case '-':
+					p[0][turn] = null;
+					break;
+				default:
+					throw new Error('Invalid character in orders line: '
+							+ p[1][turn]);
 			}
 		}
 		return [ p[0], p[2] ];
@@ -602,21 +602,21 @@ Replay.prototype.getTurn = function(n) {
 				aniAnt.frameAt(n)['owner'] = ant[5];
 				var dir = undefined;
 				switch (ant[6].charAt(n - ant[3])) {
-				case 'n':
-				case 'N':
-					dir = Directions.N;
-					break;
-				case 'e':
-				case 'E':
-					dir = Directions.E;
-					break;
-				case 's':
-				case 'S':
-					dir = Directions.S;
-					break;
-				case 'w':
-				case 'W':
-					dir = Directions.W;
+					case 'n':
+					case 'N':
+						dir = Directions.N;
+						break;
+					case 'e':
+					case 'E':
+						dir = Directions.E;
+						break;
+					case 's':
+					case 'S':
+						dir = Directions.S;
+						break;
+					case 'w':
+					case 'W':
+						dir = Directions.W;
 				}
 				if (dir) {
 					lastFrame = aniAnt.keyFrames[aniAnt.keyFrames.length - 1];

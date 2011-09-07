@@ -279,6 +279,35 @@ CanvasElementMap.prototype.draw = function() {
 };
 
 /**
+ * @class A tiny canvas to contain a cached fog pattern for the selected player.
+ * @constructor
+ * @param {State}
+ *        state the visualizer state for reference
+ */
+function CanvasElementFogPattern(state) {
+	CanvasElement.call(this);
+	this.state = state;
+	this.player = undefined;
+	this.setSize(2, 2);
+}
+CanvasElementFogPattern.extend(CanvasElement);
+
+CanvasElementFogPattern.prototype.checkState = function() {
+	if (this.player !== this.state.fogPlayer) {
+		this.invalid = true;
+		this.player = this.state.fogPlayer;
+	}
+};
+
+CanvasElementFogPattern.prototype.draw = function() {
+	if (this.player !== undefined) {
+		this.ctx.fillStyle = this.state.replay.htmlPlayerColors[this.player];
+		this.ctx.fillRect(0, 0, 1, 1);
+		this.ctx.fillRect(1, 1, 1, 1);
+	}
+};
+
+/**
  * @class A canvas element for the fog overlay.
  * @extends CanvasElement
  * @constructor
@@ -330,9 +359,11 @@ CanvasElementFog.prototype.checkState = function() {
 };
 
 CanvasElementFog.prototype.draw = function() {
-	var x, y, rowPixels, colPixels, x_idx, y_idx, rows, cols, x_i, y_i, x_f, y_f;
-	var fogRow;
-	this.ctx.clearRect(0, 0, this.w, this.h);
+	var x, y, rowPixels, colPixels, x_idx, y_idx, rows, cols;
+	var x_i, y_i, x_f, y_f, fogRow;
+	var start = -1;
+	this.ctx.fillStyle = this.ptrn;
+	this.ctx.fillRect(0, 0, this.w, this.h);
 	if (this.fogMap) {
 		cols = this.fogMap[0].length;
 		colPixels = this.scale * cols;
@@ -344,22 +375,26 @@ CanvasElementFog.prototype.draw = function() {
 		x_idx = Math.floor(-x / this.scale);
 		y_idx = Math.floor(-y / this.scale);
 
-		this.ctx.fillStyle = this.ptrn;
 		y_i = Math.wrapAround(y_idx, rows);
-		y_f = y + y_idx * this.scale;
-		while (y_f < this.h) {
+		for (y_f = y + y_idx * this.scale; y_f < this.h; y_f += this.scale) {
 			fogRow = this.fogMap[y_i];
 			x_i = Math.wrapAround(x_idx, cols);
-			x_f = x + x_idx * this.scale;
-			while (x_f < this.w) {
-				if (fogRow[x_i]) {
-					this.ctx.fillRect(x_f, y_f, this.scale, this.scale);
+			for (x_f = x + x_idx * this.scale; x_f < this.w; x_f += this.scale) {
+				if (fogRow[x_i] === false) {
+					if (start === -1) {
+						start = x_f;
+					}
+				} else if (start !== -1) {
+					this.ctx.clearRect(start, y_f, x_f - start, this.scale);
+					start = -1;
 				}
 				x_i = (x_i + 1) % cols;
-				x_f += this.scale;
+			}
+			if (start !== -1) {
+				this.ctx.clearRect(start, y_f, x_f - start, this.scale);
+				start = -1;
 			}
 			y_i = (y_i + 1) % rows;
-			y_f += this.scale;
 		}
 	}
 };
@@ -686,6 +721,7 @@ CanvasElementAntsMap.prototype.draw = function() {
 
 	// fog
 	if (this.state.fogPlayer !== undefined) {
+		this.ctx.globalCompositeOperation = 'source-over';
 		dx = (this.fog.w < colPixels) ? 0.5 * (colPixels - this.fog.w)
 				- this.fog.shiftX : 0;
 		dy = (this.fog.h < rowPixels) ? 0.5 * (rowPixels - this.fog.h)
@@ -694,6 +730,7 @@ CanvasElementAntsMap.prototype.draw = function() {
 				function(ctx, img, x, y) {
 					ctx.drawImage(img, x, y);
 				}, [ this.ctx, this.fog.canvas, dx, dy ]);
+		this.ctx.globalCompositeOperation = 'copy';
 	}
 };
 
@@ -755,6 +792,7 @@ CanvasElementShiftedMap.prototype.draw = function() {
 		this.ctx.stroke();
 	}
 	// shaded static borders
+	this.ctx.globalCompositeOperation = 'source-over';
 	if (this.w > this.antsMap.w) {
 		dx = mx + this.antsMap.w;
 		this.ctx.fillStyle = 'rgba(0,0,0,0.3)';
@@ -767,35 +805,7 @@ CanvasElementShiftedMap.prototype.draw = function() {
 		this.ctx.fillRect(0, 0, this.w, my);
 		this.ctx.fillRect(0, dy, this.w, this.h - dy);
 	}
-};
-
-/**
- * @class A tiny canvas to contain a cached fog pattern for the selected player.
- * @constructor
- * @param {State}
- *        state the visualizer state for reference
- */
-function CanvasElementFogPattern(state) {
-	CanvasElement.call(this);
-	this.state = state;
-	this.player = undefined;
-	this.setSize(2, 2);
-}
-CanvasElementFogPattern.extend(CanvasElement);
-
-CanvasElementFogPattern.prototype.checkState = function() {
-	if (this.player !== this.state.fogPlayer) {
-		this.invalid = true;
-		this.player = this.state.fogPlayer;
-	}
-};
-
-CanvasElementFogPattern.prototype.draw = function() {
-	if (this.player !== undefined) {
-		this.ctx.fillStyle = this.state.replay.htmlPlayerColors[this.player];
-		this.ctx.fillRect(0, 0, 1, 1);
-		this.ctx.fillRect(1, 1, 1, 1);
-	}
+	this.ctx.globalCompositeOperation = 'copy';
 };
 
 /**

@@ -221,6 +221,8 @@ Visualizer = function(container, dataDir, interactive, w, h, configOverrides) {
 		this.mapCenterX = 0;
 		/** @private */
 		this.mapCenterY = 0;
+		/** @private */
+		this.progressList = [];
 
 		// print out the configuration
 		text = 'Loading visualizer...';
@@ -280,14 +282,29 @@ Visualizer = function(container, dataDir, interactive, w, h, configOverrides) {
  *        log a message to be logged before executing the function
  * @param {Function}
  *        func a function to be called after displaying the message
+ * @param {String}
+ *        id An identification of the progress that will be used to filter
+ *        duplicates in the queue.
  */
-Visualizer.prototype.progress = function(log, func) {
+Visualizer.prototype.progress = function(log, func, id) {
+	var i;
 	if (this.loading !== LoadingState.LOADING) return;
+	for (i = 0; i < this.progressList.length; i++) {
+		if (id === this.progressList[i]) return;
+	}
+	this.progressList.push(id);
 	var vis = this;
 	if (log) this.logOut(log);
 	window.setTimeout(function() {
+		var k;
 		try {
 			func();
+			for (k = 0; k < vis.progressList.length; k++) {
+				if (id === vis.progressList[k]) {
+					vis.progressList.splice(k, 1);
+					break;
+				}
+			}
 		} catch (error) {
 			vis.exceptionOut(error, true);
 			var selectedPosX = 0;
@@ -449,7 +466,7 @@ Visualizer.prototype.loadReplayDataFromURI = function(file) {
 				}
 				request.send();
 				vis.loadCanvas(true);
-			});
+			}, "FETCH");
 };
 
 /**
@@ -463,21 +480,43 @@ Visualizer.prototype.loadReplayData = function(data) {
 	this.replayStr = data;
 	this.loadCanvas(true);
 };
+
+/**
+ * This initializes the visualizer to accept data pushed to it from the Java
+ * wrapper. For performance reasons native Java code in Stream.java will
+ * incrementally fill up the replay. Since visualizer is really slow in some
+ * situations, it used to be unresponsive when streaming at a high rate. To
+ * avoid that it now requests a single new turn from the wrapper for every
+ * rendered frame.
+ * 
+ * @returns {Replay} the replay object is exposed to the Java wrapper
+ */
 Visualizer.prototype.streamingInit = function() {
 	this.preload();
 	this.state.isStreaming = true;
 	return this.state.replay = new Replay();
 };
+
+/**
+ * This is called internally by {@link Visualizer#draw} to request the next turn
+ * after a rendered frame (throttling the data stream) and as a one-time,
+ * asynchronous call from Stream.java, where it is issued after the Java wrapper
+ * has set up a global 'stream' variable in the JavaScript context that refers
+ * to the Java Stream instance. First the visualizer will request new data from
+ * the wrapper and set state.isStreaming to false if the game ended. Then, if
+ * the visualizer has not finished loading yet, it will fully initialize itself
+ * based on the replay data or start/resume playback.
+ */
 Visualizer.prototype.streamingStart = function() {
 	this.state.isStreaming = stream.visualizerReady();
 	if (this.loading === LoadingState.LOADING) {
 		if (this.state.replay.duration > 0) {
-			// set cpu to 100%, we need it
+			// set CPU to 100%, we need it
 			this.director.cpu = 1;
 			this.loadCanvas(true);
 		}
 	} else {
-		// call resize to update the gui
+		// call resize() in forced mode to update the GUI (graphs)
 		this.resize(true);
 		// resume playback if we are at the end
 		resume = !this.director.playing()
@@ -491,27 +530,26 @@ Visualizer.prototype.streamingStart = function() {
 		}
 	}
 };
+
 /**
+ * In this method the replay string that has been passed directly or downloaded
+ * is parsed into a {@link Replay}. Afterwards the visualization is started.
+ * 
  * @private
  */
 Visualizer.prototype.loadParseReplay = function() {
 	var vis = this;
 	this.progress('Parsing the replay...', function() {
-		if (!(vis.state.replay || vis.replayReq || vis.replayStr)) {
-			if (vis.loading !== LoadingState.CLEANUP) {
-				throw new Error('Replay is undefined.');
-			}
-		} else if (vis.state.replay) { // has just been parsed
-			return;
-		} else if (vis.replayStr) { // string only
-			vis.state.replay = new Replay(vis.replayStr,
-					vis.state.options.debug, vis.state.options.user);
+		var debug = vis.state.options.debug;
+		var user = vis.state.options.user;
+		if (vis.replayStr) {
+			vis.state.replay = new Replay(vis.replayStr, debug, user);
 			vis.replayStr = undefined;
-		} else if (vis.replayReq) { // wait for the reply
-			return;
+		} else if (vis.loading !== LoadingState.CLEANUP) {
+			throw new Error('Replay is undefined.');
 		}
 		vis.tryStart();
-	});
+	}, "PARSE");
 };
 /**
  * Creates a canvas element
@@ -531,7 +569,7 @@ Visualizer.prototype.loadCanvas = function(prompt) {
 			vis.container.insertBefore(c, vis.log);
 		}
 		vis.tryStart();
-	});
+	}, "CANVAS");
 };
 /**
  * Called by the ImageManager when no more images are loading
@@ -772,7 +810,7 @@ Visualizer.prototype.tryStart = function() {
 				}
 			}
 		}
-	} else if (!this.replayReq) {
+	} else if (this.replayStr) {
 		this.loadParseReplay();
 	}
 };
@@ -1332,6 +1370,10 @@ Options.toBool = function(value) {
  * @class Holds public variables that need to be accessed from multiple modules
  *        of the visualizer.
  * @constructor
+ * @property {Boolean} isStreaming this should be true as long as the visualizer
+ *           is receiving data from a game in progress and be set to false when
+ *           the last turn has been sent as indicated by the result of
+ *           Stream.visualizerReady() in Stream.java.
  */
 function State() {
 	this.cleanUp();
