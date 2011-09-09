@@ -26,8 +26,8 @@ $skill = NULL;
 $userresult = contest_query("select_profile_user", $user_id);
 if ($userresult) {
     $userdata = mysql_fetch_assoc($userresult);
-    if ($userdata['rank']) {
-        $rank = nice_rank($userdata["rank"],
+    if ($userdata['rank_after']) {
+        $rank = nice_rank($userdata["rank_after"],
                           $userdata["rank_change"]);
         $skill = nice_skill($userdata['skill'],
                              $userdata['mu'],

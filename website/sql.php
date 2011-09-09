@@ -81,7 +81,7 @@ $contest_sql = array(
                            where matchup_id = %s;",
     "insert_game_player" => "insert into game_player (game_id, user_id, submission_id, rank_before, player_id, errors, status, game_rank, game_score, valid)
                              select %s, p.user_id, p.submission_id,
-                             (select rank from submission s where s.submission_id = p.submission_id)
+                             (select rank from submission s where s.submission_id = p.submission_id),
                              player_id,
                              '%s', '%s', %s, %s, 1
                              from matchup_player p

@@ -14,7 +14,7 @@
 
 drop procedure if exists update_rankings;
 delimiter $$
-create procedure update_rankings(in game_id int)
+create procedure update_rankings(in new_game_id int)
 begin
 
 -- reorder all active submmissions
@@ -41,13 +41,13 @@ update game_player
 inner join submission s
     on s.submission_id = game_player.submission_id
 set rank_after = s.rank
-where game_player.game_id = @game_id;
+where game_player.game_id = new_game_id;
 
 -- reset rank_change to absolute value for submissions in the game
 update submission
 inner join game_player gp
     on gp.submission_id = submission.submission_id
-    and gp.game_id = @game_id
+    and gp.game_id = new_game_id
 set rank_change = gp.rank_before - gp.rank_after;
 
 end$$
