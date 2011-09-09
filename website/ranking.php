@@ -1,12 +1,13 @@
 <?php
+ini_set('error_reporting', E_ALL);
+ini_set('display_errors', true);
+
 require_once('mysql_login.php');
 require_once('memcache.php');
 require_once('pagination.php');
 require_once('nice.php');
 
 $page_size = 100;
-$expiration_time = 300; // Maximum time in seconds to use memcache results
-$no_cache_results = false; // Set to true to ignore memcache results for debugging
 
 //require_once('session.php');
 // session is needed to highlight the current user
@@ -30,29 +31,39 @@ function get_type_or_else($key, $type=NULL, $default=NULL) {
     return $default;
 }
 
-function cache_key($page=0, $org_id=NULL, $country_id=NULL, $language_id=NULL, $format='json') {
-    if ($page == -1) {
-        $page = "page_count";
-    }
-    if ($org_id) {
-        $key = "ranking:organization:" . strval($org_id);
-    } elseif ($country_id) {
-        $key = "ranking:country:" . strval($country_id);
-    } elseif ($language_id) {
-        $key = "ranking:language:" . strval($language_id);
-    } else {
-        $key = "ranking:all::";
-    }
-    global $expiration_time;
-    $expts = intval(time() / $expiration_time);
-    $key = $key . ":" . strval($page) . ":" . $format . ":" . $expts;
-    return $key;
-}
-
 function produce_cache_results($page=0, $org_id=NULL, $country_id=NULL, $language_id=NULL) {
     global $memcache;
     global $page_size;
     global $expiration_time;
+
+    // setup query and querystring
+    $rank_type = NULL;
+    $where = "";
+    $page_string = "";
+    if ($org_id !== NULL) {
+        $where .= " and o.org_id = ".$org_id;
+    }
+    if ($country_id !== NULL) {
+        $where .= " and o.country_id = ".$country_id;
+    }
+    if ($language_id !== NULL) {
+        $where .= " and l.language_id = ".$language_id;
+    }
+    if ($page === NULL) {
+        $limit = "";
+    } else {
+        $limit = "limit ".$page_size." offset ".($page_size * $page);
+    }
+    // get count of rows and pages
+    $results = contest_query("select_rankings_page_count", $where);
+    if ($results) {
+        while ($row = mysql_fetch_array($list_results, MYSQL_NUM)) {
+            $row_count = $row[0];
+            $page_count = ceil($row_count / $page_size);
+        }
+    }
+    // get results
+    $results = contest_query("select_rankings", $where, $limit);
 
     $json = array("fields" => array(),
                   "values" => array());
@@ -76,6 +87,7 @@ function produce_cache_results($page=0, $org_id=NULL, $country_id=NULL, $languag
         $rank_type = NULL;
     }
     $rank_id_name = NULL;
+
     if ($rank_results) {
         $field_count = mysql_num_fields($rank_results);
         $row_count = mysql_num_rows($rank_results);
@@ -153,34 +165,53 @@ function produce_cache_results($page=0, $org_id=NULL, $country_id=NULL, $languag
     return NULL;
 }
 
-function change_marker($value, $cushion, $reverse=FALSE) {
-    if ($value > $cushion) {
-        return $reverse ? "&darr;" : "&uarr;";
-    } elseif ($value < -$cushion) {
-        return $reverse ? "&uarr;" : "&darr;";
-    } else {
-        return "&ndash;";
-    }
-}
-
-function create_ranking_table($json) {
+function create_ranking_table($page=NULL, $org_id=NULL, $country_id=NULL, $language_id=NULL) {
     global $page_size;
 
-    if ($json == NULL) {
+    // setup query and querystring
+    $filtered = False;
+    $where = "";
+    $page_string = "";
+    if ($org_id !== NULL) {
+        $filtered = True;
+        $where .= " and u.org_id = ".$org_id;
+        $page_string .= '&org='.$org_id;
+    }
+    if ($country_id !== NULL) {
+        $filtered = True;
+        $where .= " and u.country_id = ".$country_id;
+        $page_string .= '&country='.$country_id;
+    }
+    if ($language_id !== NULL) {
+        $filtered = True;
+        $where .= " and s.language_id = ".$language_id;
+        $page_string .= '&language='.$language_id;
+    }
+    $page_string .= "&page=";
+    $page_string[0] = "?";
+    if ($page === NULL) {
+        $limit = "";
+    } else {
+        $limit = "limit ".$page_size." offset ".($page_size * ($page-1));
+    }
+    // get count of rows and pages
+    $results = contest_query("select_rankings_page_count", $where);
+    if ($results) {
+        while ($row = mysql_fetch_array($results, MYSQL_NUM)) {
+            $row_count = $row[0];
+            $page_count = ceil($row_count / $page_size);
+        }
+    } else {
+        echo mysql_error();
+        $page_count = 1000;
+    }
+    // get results
+    $results = contest_query("select_rankings", $where, $limit);
+    if (!$results) {
         return '<h4>There are no rankings at this time.  Please check back later.</h4>';
     }
     $table = '<table class="ranking">';
-    if (array_key_exists('type_id', $json)) {
-        // language by name, others by id
-        if ($json['type'] == 'language') {
-            $page_string = '?'.$json['type'].'='.$json['type_name'].'&page=';
-        } else {
-            $page_string = '?'.$json['type'].'='.$json['type_id'].'&page=';
-        }
-    } else {
-        $page_string = '?page=';
-    }
-    $table .= '<caption>'.getPaginationString($json['page'], $json['page_count'], 10, $page_string)."</caption>";
+    $table .= '<caption>'.getPaginationString($page, $page_count, $page_size, $page_string)."</caption>";
     // produce header
     $table .= '<thead>
 <tr>
@@ -195,61 +226,53 @@ function create_ranking_table($json) {
   <th>Rate</th>
 </tr>
 </thead>';
-    if (count($json["values"]) > 0) {
-        $table .= '<tbody>';
-        $oddity = 'even';
-        $fields = $json["fields"];
-        foreach ($json["values"] as $values) {
-            $row = array_combine($fields, $values);
+    $table .= '<tbody>';
+    $oddity = 'even';
 
-            $oddity = $oddity == 'odd' ? 'even' : 'odd';  // quite odd?
-            $user_class = current_username() == $row["username"] ? ' user' : '';
-            $rank_class = $row["rank"] ? '' : ' old';
-            $table .= "<tr class=\"$oddity$user_class$rank_class\">";
+    if ($filtered) {
+        $filter_rank = $page_size * ($page - 1);
+    } else {
+        $filter_rank = NULL;
+    }   
+    while ($row = mysql_fetch_assoc($results)) {
+        $oddity = $oddity == 'odd' ? 'even' : 'odd';  // quite odd?
+        $user_class = current_username() == $row["username"] ? ' user' : '';
+        $rank_class = $row["rank"] ? '' : ' old';
+        $table .= "<tr class=\"$oddity$user_class$rank_class\">";
 
-            $rank = $row["rank"];
-            if ($row["rank"]) {
-                $filter_rank = in_array("filter_rank", $fields) ? $row["filter_rank"] : NULL;                
-                $table .= "<td class=\"number\">".nice_rank($row["rank"], $row["rank_change"], $filter_rank)."</td>";
-            } else {
-                $table .= "<td class=\"number\"><span title=\"best submission's last rank\">(>\")></span>";
+        $rank = $row["rank"];
+        if ($row["rank"]) {
+            if ($filtered) {
+                $filter_rank += 1;
             }
-
-            $user_id = $row["user_id"];
-            $username = htmlentities($row["username"]);
-            $table .= "<td><a href=\"profile.php?user=$user_id\">$username</a></td>";
-
-            $country_id = $row["country_id"];
-            $country_name = htmlentities($row["country"]);
-            $flag_filename = $row["flag_filename"];
-            $flag_filename = "<img alt=\"$country_name\" width=\"16\" height=\"11\" title=\"$country_name\" src=\"flags/$flag_filename\" />";
-            $table .= "<td><a href=\"country_profile.php?country=$country_id\">$flag_filename</a></td>";
-
-            $org_name = htmlentities($row["org_name"]);
-            $org_id = $row["org_id"];
-            $table .= "<td><a href=\"organization_profile.php?org=$org_id\">$org_name</a></td>";
-
-            $programming_language = htmlentities($row["programming_language"]);
-            $programming_language_link = urlencode($row["programming_language"]);
-            $table .= "<td><a href=\"language_profile.php?language=$programming_language_link\">$programming_language</a></td>";
-
-            $version = $row["version"];
-            $table .= "<td class=\"number\">$version</td>";
-
-            $skill = number_format($row["skill"], 2);
-            $skill_change = change_marker($row["skill_change"], 0.1);
-            $skill_hint = sprintf("mu=%0.2f(%+0.2f) sigma=%0.2f(%+0.2f) skill=%0.2f(%+0.2f)", $row["mu"], $row["mu_change"], $row["sigma"], $row["sigma_change"], $row["skill"], $row["skill_change"]);
-            $table .= "<td class=\"number\"><span title=\"$skill_hint\">$skill&nbsp;$skill_change</span></td>";
-            
-            $games = $row["game_count"];
-            $table .= "<td class=\"number\">$games</td>";
-            $game_rate = "<span title=\"average minutes between games\">".round($row["game_rate"], 0)."</span>";
-            $table .= "<td class=\"number\">$game_rate</td>";
-            
-            $table .= "</tr>";
+            $table .= "<td class=\"number\">".nice_rank($row["rank"], $row["rank_change"], $filter_rank)."</td>";
+        } else {
+            $table .= "<td class=\"number\"><span title=\"best submission's last rank\">(>\")></span>";
         }
-        $table .= '</tbody>';
+
+        $table .= "<td>".nice_user($row["user_id"], $row["username"])."</td>";
+        $table .= "<td>".nice_country($row["country_id"], $row["country"], $row["flag_filename"])."</td>";
+        $table .= "<td>".nice_organization($row["org_id"], $row["org_name"])."</td>";
+        
+        $programming_language = htmlentities($row["programming_language"], ENT_COMPAT, 'UTF-8');
+        $programming_language_link = urlencode($row["programming_language"]);
+        $table .= "<td>".nice_language($row["language_id"], $row["programming_language"])."</td>";
+
+        $version = $row["version"];
+        $table .= "<td class=\"number\">$version</td>";
+
+        $skill = nice_skill($row['skill'],$row['mu'],$row['sigma'],
+                            $row['skill_change'],$row['mu_change'],$row['sigma_change']);
+        $table .= "<td class=\"number\">$skill</td>";
+        
+        $games = $row["game_count"];
+        $table .= "<td class=\"number\">$games</td>";
+        $game_rate = "<span title=\"average minutes between games\">".round($row["game_rate"], 0)."</span>";
+        $table .= "<td class=\"number\">$game_rate</td>";
+        
+        $table .= "</tr>";
     }
+    $table .= '</tbody>';
     $table .= '</table>';
 
     return $table;
@@ -273,6 +296,11 @@ function get_ranking_json($page=0, $org_id=NULL, $country_id=NULL, $language_id=
 }
 
 function get_ranking_table($page=0, $org_id=NULL, $country_id=NULL, $language_id=NULL) {
+    return create_ranking_table($page, $org_id, $country_id, $language_id);
+}
+
+/*
+function get_ranking_table($page=0, $org_id=NULL, $country_id=NULL, $language_id=NULL) {
     global $memcache;
     global $no_cache_results;
     global $expiration_time;
@@ -292,6 +320,7 @@ function get_ranking_table($page=0, $org_id=NULL, $country_id=NULL, $language_id
     }
     return $results;
 }
+*/
 
 function get_language_ranking($language_id, $page=1) {
     return get_ranking_table($page, NULL, NULL, $language_id);

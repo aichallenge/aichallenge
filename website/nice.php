@@ -55,7 +55,6 @@ function nice_ordinal($num) {
     }
 }
 
-
 function nice_change_marker($value, $cushion, $reverse=FALSE) {
     if ($value == NULL) {
         $arrow = "";
@@ -78,7 +77,25 @@ function nice_outcome($num, $total) {
 }
 
 function nice_user($user_id, $username) {
+    $username = htmlentities($username, ENT_COMPAT, "UTF-8");
     return "<a href=\"profile.php?user=".$user_id."\">".$username."</a>";
+}
+
+function nice_organization($org_id, $org_name) {
+    $org_name = htmlentities($org_name, ENT_COMPAT, 'UTF-8');
+    return "<a href=\"organization_profile.php?org=$org_id\">$org_name</a>";
+}
+
+function nice_country($country_id, $country_name, $flag_filename) {
+        $country_name = htmlentities($country_name, ENT_COMPAT, 'UTF-8');
+        $flag_filename = "<img alt=\"$country_name\" width=\"16\" height=\"11\" title=\"$country_name\" src=\"flags/$flag_filename\" />";
+        return "<a href=\"country_profile.php?country=$country_id\">$flag_filename</a>";
+}
+
+function nice_language($language_id, $programming_language) {
+    $programming_language = htmlentities($programming_language, ENT_COMPAT, 'UTF-8');
+    $programming_language_link = urlencode($programming_language);
+    return "<a href=\"language_profile.php?language=$programming_language_link\">$programming_language</a>";
 }
 
 function nice_opponent($user_id, $username, $rank, $user=False) {

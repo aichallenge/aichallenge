@@ -9,7 +9,7 @@ $org_row = get_org_row(get_type_or_else('org'));
 if (!$org_row) {
     echo "<p>Invalid Organization</p>";
 } else {
-    $org_name = htmlentities($org_row['name']);
+    $org_name = htmlentities($org_row['name'], ENT_COMPAT, 'UTF-8');
     echo "<h2><span>$org_name's User Rankings</span><div class=\"divider\" /></h2>";
 
     $page = get_type_or_else("page", FILTER_VALIDATE_INT, 1);

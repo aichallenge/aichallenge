@@ -40,17 +40,17 @@ if ($userresult) {
 $rank = ($rank == NULL)?"Not Ranked":$rank;
 $skill = ($skill == NULL)?"No Skillz":$skill;
 
-$username = htmlentities($userdata["username"]);
+$username = htmlentities($userdata["username"], ENT_COMPAT, 'UTF-8');
 $created = nice_date($userdata["created"]); // date("M jS Y",$userdata["created"]);
-$country_id = htmlentities($userdata["country_id"]);
-$country_name = htmlentities($userdata["country_name"]);
+$country_id = htmlentities($userdata["country_id"], ENT_COMPAT, 'UTF-8');
+$country_name = htmlentities($userdata["country_name"], ENT_COMPAT, 'UTF-8');
 $country_name = $country_name == NULL ?
-  "Unknown" : htmlentities($country_name);
+  "Unknown" : htmlentities($country_name, ENT_COMPAT, 'UTF-8');
 $flag_filename = $userdata["flag_filename"];
 $flag_filename = $flag_filename == NULL ? "" : "<img alt=\"$country_name\" width=\"16\" height=\"11\" title=\"$country_name\" src=\"flags/$flag_filename\" />";
-$org_id = htmlentities($userdata["org_id"]);
-$org_name = htmlentities($userdata["org_name"]);
-$bio = htmlentities($userdata["bio"]);
+$org_id = htmlentities($userdata["org_id"], ENT_COMPAT, 'UTF-8');
+$org_name = htmlentities($userdata["org_name"], ENT_COMPAT, 'UTF-8');
+$bio = htmlentities($userdata["bio"], ENT_COMPAT, 'UTF-8');
 if ($org_name == NULL) {
   $org_name = "None";
 }

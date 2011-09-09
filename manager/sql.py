@@ -28,6 +28,8 @@ sql = {
         inner join game_player gp
             on s.submission_id = gp.submission_id
         set s.mu = gp.mu_after,
-            s.sigma = gp.sigma_after
+            s.mu_change = gp.mu_after - gp.mu_before,
+            s.sigma = gp.sigma_after,
+            s.sigma_change = gp.sigma_after - gp.sigma_before
         where game_id = %s;"""
 }

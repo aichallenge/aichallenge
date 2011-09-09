@@ -114,6 +114,8 @@ def update_trueskill(game_id):
     conn.commit()
     cursor.execute(sql['update_submission_trueskill'], game_id)
     conn.commit()
+    cursor.execute('call update_rankings(%s)' % game_id);
+    conn.commit()
     return True
 
 def update_leaderboard(wait_time):

@@ -39,7 +39,7 @@ if ($gamedata == null) {
         if (contest_query('update_matchup_failed',
                           json_encode($gamedata->error),
                           $gamedata->matchup_id)) {
-            echo json_encode(array( "hash" => $json_hash ));
+            // echo json_encode(array( "hash" => $json_hash ));
         } else {
             api_log(sprintf("Error updating failed matchup %s",
                             $gamedata->matchup_id));
