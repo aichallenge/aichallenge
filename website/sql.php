@@ -264,11 +264,11 @@ $contest_sql = array(
           c.name as country_name,
           u.email,
           u.activation_code,
-          gp.rank_after, (gp.rank_before - gp.rank_after) as rank_change,
+          gp.rank_after as rank, (gp.rank_before - gp.rank_after) as rank_change,
           (gp.mu_after - gp.sigma_after * 3) as skill,
           ((gp.mu_before - gp.sigma_before * 3) - (gp.mu_after - gp.sigma_after * 3)) as skill_change,
-          gp.mu_after, (gp.mu_before - gp.mu_after) as mu_change,
-          gp.sigma_after, (gp.sigma_before - gp.sigma_after) as sigma_change
+          gp.mu_after as mu, (gp.mu_before - gp.mu_after) as mu_change,
+          gp.sigma_after as sigma, (gp.sigma_before - gp.sigma_after) as sigma_change
         from
           user u
           left outer join game_player gp
