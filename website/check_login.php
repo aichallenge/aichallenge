@@ -32,7 +32,7 @@ $query = "INSERT INTO login_attempt (timestamp,username,naive_ip," .
   "'$real_ip')";
 $result = mysql_query($query);
 if (!$result) {
-  echo "<p>Could not write to log: " . htmlspecialchars(mysql_error()) . "</p>";
+  echo "<p>Could not write to log: " . htmlentities(mysql_error(), ENT_COMPAT, "UTF-8") . "</p>";
 }
 
 if (check_credentials($username, $password)) {

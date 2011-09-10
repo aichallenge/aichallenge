@@ -37,7 +37,7 @@ flush();
                     <div id="login">
                         <?php if (logged_in_with_valid_credentials()) { ?>
                             <a href="profile.php?user=<?php echo current_user_id(); ?>">
-                            My Profile: <span class="large"><?php echo htmlspecialchars(current_username()); ?></span>
+                            My Profile: <span class="large"><?php echo htmlentities(current_username(), ENT_COMPAT, "UTF-8"); ?></span>
                             </a> |
                             <a href="logout.php">Sign Out</a>
                         <?php } else { ?>

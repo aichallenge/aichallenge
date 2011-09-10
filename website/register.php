@@ -38,7 +38,7 @@ if($server_info["submissions_open"]) { ?>
   <tr>
     <td>Username</td>
     <td>&nbsp;</td>
-    <td><input name="username" type="text" id="username" value="<?php echo isset($_POST['username'])?htmlspecialchars($_POST['username']):'' ?>" /></td>
+    <td><input name="username" type="text" id="username" value="<?php echo isset($_POST['username'])?htmlentities($_POST['username'], ENT_COMPAT, "UTF-8"):'' ?>" /></td>
     <td>Your username must be at least 6 characters and composed only of the
         characters a-z, A-Z, 0-9, '-', '_', and '.'</td>
   </tr>
@@ -61,7 +61,7 @@ if($server_info["submissions_open"]) { ?>
   <tr>
     <td>Email Address</td>
     <td>&nbsp;</td>
-    <td><input name="user_email" type="text" id="user_email" value="<?php echo isset($_POST['user_email'])?htmlspecialchars($_POST['user_email']):'' ?>" /></td>
+    <td><input name="user_email" type="text" id="user_email" value="<?php echo isset($_POST['user_email'])?htmlentities($_POST['user_email'], ENT_COMPAT, "UTF-8"):'' ?>" /></td>
     <td>You can use any email address. You will use this address to confirm
         the creation of your account.</td>
   </tr>
@@ -108,7 +108,7 @@ if($server_info["submissions_open"]) { ?>
 
   foreach ( $organizations as $row ) {
     $org_id = $row['org_id'];
-    $org_name = htmlspecialchars($row['name']);
+    $org_name = htmlentities($row['name'], ENT_COMPAT, "UTF-8");
     if ( isset( $_POST['user_organization'] ) && $_POST['user_organization'] == $org_id ) $selected = ' selected="selected"';
     else $selected = '';
 
@@ -125,7 +125,7 @@ if($server_info["submissions_open"]) { ?>
         <td>&nbsp;</td>
         <td>
             <input name="user_organization_other" id="user_organization_other" <?php if (empty($_POST['user_organization']) || $_POST['user_organization'] !== '-1') {
-                ?> disabled="true"<?php } else { ?> value="<?php echo isset($_POST['user_organization_other'])?htmlspecialchars($_POST['user_organization_other']):'' ?>"<?php } ?>  />
+                ?> disabled="true"<?php } else { ?> value="<?php echo isset($_POST['user_organization_other'])?htmlentities($_POST['user_organization_other'], ENT_COMPAT, "UTF-8"):'' ?>"<?php } ?>  />
         </td>
         <td>If your organization isn't present in drowdown, select 'Other' and enter your organization.</td>
   </tr>
@@ -156,7 +156,7 @@ if($server_info["submissions_open"]) { ?>
   <tr>
     <td>About You</td>
     <td>&nbsp;</td>
-    <td><textarea name="bio" rows="3" cols="20"><?php echo isset($_POST['bio'])?htmlspecialchars($_POST['bio']):'' ?></textarea></td>
+    <td><textarea name="bio" rows="3" cols="20"><?php echo isset($_POST['bio'])?htmlentities($_POST['bio'], ENT_COMPAT, "UTF-8"):'' ?></textarea></td>
     <td>Introduce yourself. Other contestants will be able to see this on
       your profile. Optional</td>
   </tr>

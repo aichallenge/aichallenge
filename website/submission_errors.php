@@ -101,7 +101,7 @@ if ($error != NULL) {
 echo "Submission Errors</span><div class=\"divider\" /></h3>";
 
 foreach ($errors as $err_info) {
-    echo htmlspecialchars($err_info);
+    echo htmlentities($err_info, ENT_COMPAT, "UTF-8");
 }
 
 include 'footer.php';

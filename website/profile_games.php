@@ -5,7 +5,7 @@ require_once('lookup.php');
 
 $user_row = get_user_row(get_type_or_else('user'));
 $user_id = $user_row['user_id'];
-$username = htmlspecialchars($user_row['username']);
+$username = htmlentities($user_row['username'], ENT_COMPAT, "UTF-8");
 
 $page = get_type_or_else("page", FILTER_VALIDATE_INT, 1);
 
