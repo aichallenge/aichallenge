@@ -127,19 +127,13 @@ $contest_sql = array(
             s.mu_change - s.sigma_change * 3 as skill_change,
             s.latest,
             timediff(now(), s.timestamp) as age,
-            gt.game_count,
-            timestampdiff(second, gmin.timestamp, gmax.timestamp)/60/gt.game_count as game_rate
+            s.game_count,
+            timestampdiff(second, gmin.timestamp, gmax.timestamp)/60/s.game_count as game_rate
         from submission s
-        inner join (
-                select submission_id, min(game_id) min_game, max(game_id) max_game, count(*) as game_count
-                from game_player
-                group by submission_id
-                ) gt
-            on gt.submission_id = s.submission_id
         inner join game gmin
-            on gmin.game_id = gt.min_game
+            on gmin.game_id = s.min_game
         inner join game gmax
-            on gmax.game_id = gt.max_game
+            on gmax.game_id = s.max_game
         inner join user u
             on s.user_id = u.user_id
         left outer join organization o

@@ -65,20 +65,14 @@ select
     s.mu,
     s.sigma,
     l.name as language,
-    gt.game_count,
-    timestampdiff(second, gmin.timestamp, gmax.timestamp)/60/gt.game_count as game_rate
+    s.game_count,
+    timestampdiff(second, gmin.timestamp, gmax.timestamp)/60/s.game_count as game_rate
 from
     submission s
-    left outer join (
-        select submission_id, min(game_id) min_game, max(game_id) max_game, count(*) as game_count
-        from game_player
-        group by submission_id
-    ) gt
-    	on gt.submission_id = s.submission_id
     left outer join game gmin
-        on gmin.game_id = gt.min_game
+        on gmin.game_id = s.min_game
     left outer join game gmax
-        on gmax.game_id = gt.max_game
+        on gmax.game_id = s.max_game
     inner join user u on u.user_id = s.user_id
     left outer join language l on l.language_id = s.language_id
 where
