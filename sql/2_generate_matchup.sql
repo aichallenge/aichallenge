@@ -24,12 +24,6 @@ select s.user_id, s.submission_id, s.mu, s.sigma
 into @seed_id, @submission_id, @mu, @sigma
 from submission s
 left outer join (
-    select user_id, max(game_id) as max_game_id
-    from game_player
-    group by user_id
-) g
-    on s.user_id = g.user_id
-left outer join (
     select seed_id, max(matchup_id) as max_matchup_id
     from matchup
     where (worker_id >= 0 or worker_id is null)
@@ -41,7 +35,7 @@ where s.latest = 1 and s.status = 40
 -- this selects the user that was least recently used player for a seed
 -- from both the game and matchup tables
 order by m.max_matchup_id asc,
-         g.max_game_id asc,
+         s.max_game_id asc,
          s.user_id asc
 limit 1;
 
