@@ -58,7 +58,8 @@ update submission
 inner join game_player gp
     on gp.submission_id = submission.submission_id
     and gp.game_id = new_game_id
-set min_game_id = new_game_id
+set min_game_id = new_game_id,
+    game_count = 1
 where min_game_id is null;
 
 end$$
