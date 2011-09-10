@@ -51,7 +51,7 @@ $contest_sql = array(
                                  where matchup_id = %s
                                  order by player_id;",
     "select_game_metadata" => "select gp.user_id, u.username, gp.submission_id,
-                               s.rank, s.skill
+                               s.rank, s.mu - s.sigma * 3 as skill
                                from game_player gp
                                left outer join user u
                                    on u.user_id = gp.user_id
