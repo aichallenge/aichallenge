@@ -163,7 +163,7 @@ $contest_sql = array(
             where %s = %s",
     "select_game_list" => "select g.game_id, g.timestamp,
                m.players, m.map_id, m.filename as map_name,
-             a g.turns, g.winning_turn, g.ranking_turn,
+               g.turns, g.winning_turn, g.ranking_turn,
     		   gp.user_id, gp.submission_id, u.username, s.version,
     		   gp.player_id, gp.game_rank,
                gp.mu_after - 3 * gp.sigma_after as skill,
