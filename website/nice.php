@@ -136,8 +136,8 @@ function nice_skill($skill, $mu, $sigma, $skill_change=NULL, $mu_change=NULL, $s
 function nice_rank($rank, $rank_change, $filter_rank=NULL) {
     $rank_arrow = nice_change_marker($rank_change, 0, FALSE);
     if ($filter_rank) {
-        $rank = str_pad("(".strval($rank).")", 6, "&nbsp;", STR_PAD_LEFT);
-        $filter_rank = str_pad(strval($filter_rank), 4, "&nbsp;", STR_PAD_LEFT);
+        $rank = str_replace(" ", "&nbsp;", str_pad("(".strval($rank).")", 6, " ", STR_PAD_LEFT));
+        $filter_rank = str_replace(" ", "&nbsp;", str_pad(strval($filter_rank), 4, " ", STR_PAD_LEFT));
         return $filter_rank."&nbsp;<span title=\"Global Rank\">$rank&nbsp;$rank_arrow</span>";
     } else {
         $rank = str_pad(strval($rank), 4, "&nbsp;", STR_PAD_LEFT);
