@@ -131,9 +131,9 @@ $contest_sql = array(
             timestampdiff(second, gmin.timestamp, gmax.timestamp)/60/s.game_count as game_rate
         from submission s
         inner join game gmin
-            on gmin.game_id = s.min_game
+            on gmin.game_id = s.min_game_id
         inner join game gmax
-            on gmax.game_id = s.max_game
+            on gmax.game_id = s.max_game_id
         inner join user u
             on s.user_id = u.user_id
         left outer join organization o

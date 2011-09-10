@@ -70,9 +70,9 @@ select
 from
     submission s
     left outer join game gmin
-        on gmin.game_id = s.min_game
+        on gmin.game_id = s.min_game_id
     left outer join game gmax
-        on gmax.game_id = s.max_game
+        on gmax.game_id = s.max_game_id
     inner join user u on u.user_id = s.user_id
     left outer join language l on l.language_id = s.language_id
 where
