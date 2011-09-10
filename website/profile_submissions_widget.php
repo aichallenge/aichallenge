@@ -83,7 +83,7 @@ from
     left outer join language l on l.language_id = s.language_id
 where
     u.user_id = $user_id
-    order by s.timestamp desc
+    order by s.submission_id desc
 EOT;
 
     if ($viewmore) {
