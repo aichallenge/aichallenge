@@ -174,6 +174,8 @@ CREATE TABLE `submission` (
   `sigma` float NOT NULL DEFAULT '16.6667',
   `sigma_change` float DEFAULT NULL,
   `worker_id` int(11) DEFAULT NULL,
+  `min_game_id` int(11) DEFAULT NULL,
+  `max_game_id` int(11) DEFAULT NULL,
   PRIMARY KEY (`submission_id`),
   KEY `language_id` (`language_id`),
   KEY `submission_id` (`submission_id`,`user_id`),

@@ -44,11 +44,21 @@ set rank_after = s.rank
 where game_player.game_id = new_game_id;
 
 -- reset rank_change to absolute value for submissions in the game
+-- update max game ids
 update submission
 inner join game_player gp
     on gp.submission_id = submission.submission_id
     and gp.game_id = new_game_id
-set rank_change = gp.rank_before - gp.rank_after;
+set rank_change = gp.rank_before - gp.rank_after,
+    max_game_id = new_game_id;
+
+-- update min game ids
+update submission
+inner join game_player gp
+    on gp.submission_id = submission.submission_id
+    and gp.game_id = new_game_id
+set min_game_id = new_game_id
+where min_game_id is null;
 
 end$$
 delimiter ;
