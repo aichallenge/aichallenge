@@ -50,7 +50,8 @@ inner join game_player gp
     on gp.submission_id = submission.submission_id
     and gp.game_id = new_game_id
 set rank_change = gp.rank_before - gp.rank_after,
-    max_game_id = new_game_id;
+    max_game_id = new_game_id,
+    game_count = game_count + 1;
 
 -- update min game ids
 update submission
