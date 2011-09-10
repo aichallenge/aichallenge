@@ -138,7 +138,7 @@ function nice_rank($rank, $rank_change, $filter_rank=NULL) {
     if ($filter_rank) {
         $rank = str_pad("(".strval($rank).")", 6, " ", STR_PAD_LEFT);
         $filter_rank = str_pad(strval($filter_rank), 4, " ", STR_PAD_LEFT);
-        return $filter_rank." <span title=\"Global Rank\">$rank $rank_arrow</span>";
+        return $filter_rank." <span title=\"Global Rank\">$rank&nbsp;$rank_arrow</span>";
     } else {
         $rank = str_pad(strval($rank), 4, " ", STR_PAD_LEFT);
         return "$rank $rank_arrow";
