@@ -1336,7 +1336,8 @@ class Ants(Game):
         pop_count[FOOD] = len(self.current_food)
         pop_total = sum(pop_count.values())
         for owner, count in pop_count.items():
-            if count >= pop_total * self.cutoff_percent:
+            if (count >= pop_total * self.cutoff_percent
+                    and self.score[owner] == max(self.score)):
                 if self.cutoff_bot == owner:
                     self.cutoff_turns += 1
                 else:
