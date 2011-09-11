@@ -2,10 +2,6 @@
 from random import randrange, choice, shuffle, randint, seed
 from math import sqrt
 from collections import deque, defaultdict
-try:
-    from collections import OrderedDict
-except ImportError:
-    from ordereddict import OrderedDict
 
 from fractions import Fraction
 import operator
@@ -1457,7 +1453,7 @@ class Ants(Game):
         ant_count = [0 for _ in range(self.num_players+1)]
         for ant in self.current_ants.values():
             ant_count[ant.owner] += 1
-        stats = OrderedDict()
+        stats = {}
         stats['ant_count'] = ant_count
         stats['food'] = len(self.current_food)
         stats['cutoff'] = 'Food' if self.cutoff_bot == FOOD else '-' if self.cutoff_bot == LAND else self.cutoff_bot
