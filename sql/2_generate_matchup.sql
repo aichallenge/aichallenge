@@ -68,22 +68,13 @@ left outer join (
     group by g.map_id
 ) all_games
     on m.map_id = all_games.map_id
-left outer join (
-    select map_id, max(m.matchup_id) as max_matchup_id, count(*) as matchup_count
-    from matchup m
-    inner join matchup_player mp
-        on m.matchup_id = mp.matchup_id
-    where m.deleted = 0 and (worker_id is null or worker_id > 0)
-    group by m.map_id
-) matchups
-    on m.map_id = matchups.map_id
 where m.players <= @max_players
     and m.priority >= 0
--- log is used to allow for a little leniency keeping the game count even across maps
-order by floor(log2(game_count)), priority, max_game_id,
-         matchup_count, max_matchup_id,
-         floor(log2(all_game_count)), max_all_game_id,
-         map_id
+-- sqrt is used to allow for a little leniency keeping the game count even across maps
+order by floor(sqrt(game_count)),
+         floor(sqrt(all_game_count)),
+         max_game_id,
+         m.map_id
 limit 1;
 
 -- debug statement
