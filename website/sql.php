@@ -217,11 +217,19 @@ $contest_sql = array(
             or gp.status = 'crashed'
             or gp.status = 'invalid')
     ",
-    "select_worker_stats" => "select count(*)/15 as gpm, g.worker_id,
-        (select count(*) from matchup where worker_id = -g.worker_id)/15 as epm
-        from game g
+    "select_worker_stats" => "select game.worker_id,
+           count(*)/15 as gpm,
+           ifnull(errors/15,0) as epm
+        from game
+        left outer join (
+            select worker_id, count(*) as errors
+            from matchup
+            where matchup_timestamp > timestampadd(minute, -15, current_timestamp)
+            group by worker_id
+        ) m
+            on game.worker_id = -m.worker_id
         where timestamp > timestampadd(minute, -15, current_timestamp)
-        group by g.worker_id, epm;",
+        group by game.worker_id;",
     "select_next_game_in" => "select @players_ahead as players_ahead,
                Round(@players_per_minute, 1) as players_per_minute,
                @time_used as time_used,
