@@ -16,5 +16,11 @@ $page = get_type_or_else("page", FILTER_VALIDATE_INT, 1);
 
 echo get_ranking_table($page);
 
+echo '
+<script>
+$(function () {
+    $(".ranking").tablesorter();
+};
+</script>'
 include 'footer.php';
 ?>
