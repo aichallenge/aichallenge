@@ -199,6 +199,7 @@ CREATE TABLE `user` (
   `created` datetime DEFAULT NULL,
   `activated` tinyint(1) NOT NULL,
   `admin` tinyint(1) NOT NULL,
+  `shutdown_date` datetime DEFAULT NULL,
   PRIMARY KEY (`user_id`),
   UNIQUE KEY (`username`),
   KEY `user_id` (`user_id`,`username`)

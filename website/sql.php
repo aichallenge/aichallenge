@@ -128,7 +128,13 @@ $contest_sql = array(
             s.latest,
             timediff(now(), s.timestamp) as age,
             s.game_count,
-            timestampdiff(second, gmin.timestamp, gmax.timestamp)/60/s.game_count as game_rate
+            timestampdiff(second, gmin.timestamp, gmax.timestamp)/60/s.game_count as game_rate_2,
+            (select count(*)
+             from game_player gp
+             inner join game g
+                on g.game_id = gp.game_id
+             where gp.submission_id = s.submission_id
+                and g.timestamp > timestampadd(minute, -3600, current_timestamp)) as game_rate
         from submission s
         inner join game gmin
             on gmin.game_id = s.min_game_id
