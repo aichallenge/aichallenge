@@ -24,9 +24,9 @@ function ants:start(botInput)
 end
 
 function ants:processLine(line)
-	line = line:match("^%s*(.-)%s*$") -- trim
-
-	if line == "ready" then
+	local type, values = line:match("^%s*(%S+)%s*(.-)%s*$")
+	
+	if type == "ready" then
 		for row = 0, self.config.rows - 1 do
 			for col = 0, self.config.cols - 1 do
 				if col == 0 then
@@ -36,17 +36,12 @@ function ants:processLine(line)
 			end
 		end
 		self.bot:onReady()
-		return
-	elseif line == "go" then
+	elseif type == "go" then
 		self.bot:onTurn()
-		return
-	elseif line == "end" then
+	elseif type == "end" then
 		self.bot:onEnd()
-		return
-	end
-	
-	if line:sub(1, 5) == "turn " then
-		self.currentTurn = tonumber(line:sub(6))
+	elseif type == "turn" then
+		self.currentTurn = tonumber(values)
 		if self.currentTurn > 0 then
 			-- Reset map except for water:
 			for row = 0, self.config.rows - 1 do
@@ -59,38 +54,31 @@ function ants:processLine(line)
 			self.ants = {}
 			self.food = {}
 		end
-	else
-		if self.currentTurn == 0 and line ~= "ready" then
-			local type, value = line:match("^(%S+) (%d+)")
-			if type ~= nil and value ~=nil then
-				self.config[type] = tonumber(value)
-			end
-		else
-			local type, values = line:match("^(%S+) ?(.*)")
-			if type == "w" then
-				local row, col = values:match("^(%d+) (%d+)")
-				row, col = tonumber(row), tonumber(col)
-				self.map[row][col] = { type = self.landTypes.WATER, data = {} }
-			elseif type == "f" then
-				local row, col = values:match("^(%d+) (%d+)")
-				row, col = tonumber(row), tonumber(col)
-				self.map[row][col] = { type = self.landTypes.FOOD, data = {} }
-				table.insert(self.food, { row = row, col = col })
-			elseif type == "r" then
-				local row, col = values:match("^(%d+) (%d+)")
-				row, col = tonumber(row), tonumber(col)
-				self.map[row][col] = { type = self.landTypes.LAND, data = {} } -- Introduce new landtype?
-			elseif type == "a" then
-				local row, col, owner = values:match("^(%d+) (%d+) (%d+)")
-				row, col, owner = tonumber(row), tonumber(col), tonumber(owner)
-				self.map[row][col] = { type = self.landTypes.ANT, data = { owner = owner } }
-				table.insert(self.ants, { row = row, col = col, owner = owner })
-			elseif type == "d" then
-				local row, col, owner = values:match("^(%d+) (%d+) (%d+)")
-				row, col, owner = tonumber(row), tonumber(col), tonumber(owner)
-				self.map[row][col] = { type = self.landTypes.DEAD, data = { owner = owner } }
-			end
-		end
+	elseif type == "w" then
+		local row, col = values:match("^(%d+) (%d+)")
+		row, col = tonumber(row), tonumber(col)
+		self.map[row][col] = { type = self.landTypes.WATER, data = {} }
+	elseif type == "f" then
+		local row, col = values:match("^(%d+) (%d+)")
+		row, col = tonumber(row), tonumber(col)
+		self.map[row][col] = { type = self.landTypes.FOOD, data = {} }
+		table.insert(self.food, { row = row, col = col })
+	elseif type == "r" then
+		local row, col = values:match("^(%d+) (%d+)")
+		row, col = tonumber(row), tonumber(col)
+		self.map[row][col] = { type = self.landTypes.LAND, data = {} } -- Introduce new landtype?
+	elseif type == "a" then
+		local row, col, owner = values:match("^(%d+) (%d+) (%d+)")
+		row, col, owner = tonumber(row), tonumber(col), tonumber(owner)
+		self.map[row][col] = { type = self.landTypes.ANT, data = { owner = owner } }
+		table.insert(self.ants, { row = row, col = col, owner = owner })
+	elseif type == "d" then
+		local row, col, owner = values:match("^(%d+) (%d+) (%d+)")
+		row, col, owner = tonumber(row), tonumber(col), tonumber(owner)
+		self.map[row][col] = { type = self.landTypes.DEAD, data = { owner = owner } }
+	elseif type ~= nil and self.currentTurn == 0 then
+		-- On turn 0, we receive some (integer) settings
+		self.config[type] = tonumber(values)
 	end
 end
 
