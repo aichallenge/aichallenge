@@ -82,6 +82,12 @@
     <td>&nbsp;</td>
   </tr>
   <tr>
+    <td><a href="starter_packages/lua_starter_package.zip">Lua</a></td>
+    <td>luajit-2.0.0-beta5</td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+  </tr>
+  <tr>
     <td><a href="starter_packages/ocaml_starter_package.zip">OCaml</a></td>
     <td>OCaml 3.11.2</td>
     <td>&nbsp;</td>
