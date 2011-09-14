@@ -19,8 +19,19 @@ echo get_ranking_table($page);
 echo '
 <script>
 $(function () {
-    $(".ranking").tablesorter();
-};
-</script>'
+    $(".ranking").tablesorter({
+        textExtraction: function (node) {
+            node = $(node);
+            if (node.attr("class") === "number") {
+                return parseInt(node.text());
+            } else if (node.attr("class") === "country") {
+                return node.children().children().attr("title");
+            } else {
+                return node.text();
+            }
+        }
+    });
+});
+</script>';
 include 'footer.php';
 ?>

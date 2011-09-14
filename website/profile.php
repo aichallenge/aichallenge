@@ -249,5 +249,22 @@ if (logged_in_with_valid_credentials() && logged_in_as_admin()) {
 EOT;
 }
 
+echo '
+<script>
+$(function () {
+    $(".games").tablesorter({
+        /*textExtraction: function (node) {
+            node = $(node);
+            if (node.attr("class") === "number") {
+                return parseInt(node.text());
+            } else {
+                return node.text();
+            }
+        }*/
+    });
+});
+</script>
+';
+
 include 'footer.php';
 ?>

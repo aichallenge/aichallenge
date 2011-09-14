@@ -110,6 +110,119 @@ code {
 /*Tables*/
 th {
     color: #050;
+    padding-left: 2px;
+    padding-right: 5px;
+}
+
+th.headerSortUp {
+    background-color: #050;
+    color: #fff;
+    padding: 0px 2px;
+}
+
+th.headerSortUp:after {
+    content: "\00a0\21d1";
+}
+
+th.headerSortDown {
+    background-color: #050;
+    color: #fff;
+    padding: 0px 2px;
+}
+
+th.headerSortDown:after {
+    content: "\00a0\21d3";
+}
+
+table {
+    width: 100%;
+    text-align: center;
+}
+
+/* Games */
+
+table.games {
+    width: 700px;
+}
+
+table.games caption {
+    margin: 4px;
+}
+
+table.games a {
+    color: #A0522D;
+}
+
+table.games td {
+    max-width: 85px;
+    padding: 1px 5px;
+    overflow: hidden;
+}
+
+table.games td.list {
+    width: 270px;
+    text-align: left;
+}
+
+table.games td.list span {
+    width: 85px;
+    margin: 0px 2px;
+    display: inline-block;
+    overflow: hidden;
+    white-space: nowrap;
+}
+
+/* Ranking */
+
+table.ranking {
+    width: 700px;
+}
+
+table.ranking caption {
+    margin: 4px;
+}
+
+table.ranking a {
+    color: #A0522D;
+}
+
+table.ranking td {
+    padding: 1px 5px;
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+table.ranking td.username {
+    max-width: 50px;
+}
+
+table.ranking td.org {
+    max-width: 150px;
+}
+
+tr:hover {
+    background-color: #eee;
+}
+tr.even:hover {
+    background-color: #eee;
+}
+
+tr.old {
+    filter: alpha(opacity=30);
+    filter: progid:DXImageTransform.Microsoft.Alpha(opacity=30);
+    -moz-opacity: 0.30;
+    opacity:0.3;
+}
+
+tr.odd {
+    border: solid 1px #f8f8f8;
+}
+tr.even {
+    background-color: #f8fff0;
+}
+td.number {
+    font-family: Consolas, Inconsolata, monospace;
+    text-align: right;
 }
 
 /* Misc */
@@ -133,11 +246,6 @@ strong {
     text-shadow: #aaa 1px 1px 2px;
 }
 
-table {
-    width: 100%;
-    text-align: center;
-}
-
 .bigstats th{
     padding-left: 10px;
     padding-right: 10px;
@@ -155,49 +263,6 @@ table {
 	font-size: 20px;
 	padding: 10px;
 	padding-bottom: 0px;
-}
-
-/* Ranking */
-
-table.ranking caption {
-    margin: 4px;
-}
-
-table.ranking a {
-    color: #A0522D;
-}
-
-table.ranking td {
-    padding: 0px 5px;
-}
-
-tr.old {
-    filter: alpha(opacity=30);
-    filter: progid:DXImageTransform.Microsoft.Alpha(opacity=30);
-    -moz-opacity: 0.30;
-    opacity:0.3;
-}
-
-tr.odd {
-    border: solid 1px #f8f8f8;
-}
-tr.even {
-    background-color: #f8fff0;
-}
-td.number {
-    font-family: Consolas, Inconsolata, monospace;
-    text-align: right;
-}
-
-td.list span {
-    display: inline-block;
-    width: 85px;
-    overflow: hidden;
-    white-space: nowrap;
-}
-
-td.list {
-    text-align: left;
 }
 
 div.pagination span {

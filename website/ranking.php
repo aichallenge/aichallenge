@@ -165,7 +165,7 @@ function produce_cache_results($page=0, $org_id=NULL, $country_id=NULL, $languag
     return NULL;
 }
 
-function create_ranking_table($page=NULL, $org_id=NULL, $country_id=NULL, $language_id=NULL) {
+function create_ranking_table($page=0, $org_id=NULL, $country_id=NULL, $language_id=NULL) {
     global $page_size;
 
     // setup query and querystring
@@ -189,7 +189,7 @@ function create_ranking_table($page=NULL, $org_id=NULL, $country_id=NULL, $langu
     }
     $page_string .= "&page=";
     $page_string[0] = "?";
-    if ($page === NULL) {
+    if ($page === 0) {
         $limit = "";
     } else {
         $limit = "limit ".$page_size." offset ".($page_size * ($page-1));
@@ -211,7 +211,9 @@ function create_ranking_table($page=NULL, $org_id=NULL, $country_id=NULL, $langu
         return '<h4>There are no rankings at this time.  Please check back later.</h4>';
     }
     $table = '<table class="ranking">';
-    $table .= '<caption>'.getPaginationString($page, $page_count, $page_size, $page_string)."</caption>";
+    if ($page !== 0) {
+        $table .= '<caption>'.getPaginationString($page, $page_count, $page_size, $page_string)."</caption>";
+    }
     // produce header
     $table .= '<thead>
 <tr>
@@ -250,9 +252,9 @@ function create_ranking_table($page=NULL, $org_id=NULL, $country_id=NULL, $langu
             $table .= "<td class=\"number\"><span title=\"best submission's last rank\">(>\")></span>";
         }
 
-        $table .= "<td>".nice_user($row["user_id"], $row["username"])."</td>";
-        $table .= "<td>".nice_country($row["country_id"], $row["country"], $row["flag_filename"])."</td>";
-        $table .= "<td>".nice_organization($row["org_id"], $row["org_name"])."</td>";
+        $table .= "<td class=\"username\">".nice_user($row["user_id"], $row["username"])."</td>";
+        $table .= "<td class=\"country\">".nice_country($row["country_id"], $row["country"], $row["flag_filename"])."</td>";
+        $table .= "<td class=\"org\">".nice_organization($row["org_id"], $row["org_name"])."</td>";
         
         $programming_language = htmlentities($row["programming_language"], ENT_COMPAT, 'UTF-8');
         $programming_language_link = urlencode($row["programming_language"]);

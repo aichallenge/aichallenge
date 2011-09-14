@@ -57,6 +57,7 @@ EOT;
     // Fetch submission data
 $submission_query = <<<EOT
 select
+    s.submission_id,
     s.status,
     s.errors,
     s.timestamp,
@@ -109,6 +110,7 @@ EOT;
         }
 
         $version = $row["version"];
+        $submission_id = $row["submission_id"];
         $timestamp = $row["timestamp"];
         $language = $row["language"];
         $language_link = urlencode($language);
@@ -119,7 +121,7 @@ EOT;
         $game_rate = "<span title=\"average minutes between games\">".($row['game_rate'] == NULL ? "" : round($row["game_rate"],0))."</span>";
         
         $table .= "<tr class=\"$row_class\">";
-        $table .= "  <td>$version</td>";
+        $table .= "  <td>".nice_version($version, $timestamp, $submission_id)."</td>";
         $table .= "  <td>$timestamp</td>";
         $table .= "  <td class=\"$status_class\">$status</td>";
         $table .= "  <td>$skill</td>";

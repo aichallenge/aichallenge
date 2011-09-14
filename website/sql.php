@@ -128,18 +128,20 @@ $contest_sql = array(
             s.latest,
             timediff(now(), s.timestamp) as age,
             s.game_count,
-            timestampdiff(second, gmin.timestamp, gmax.timestamp)/60/s.game_count as game_rate_2,
-            (select count(*)
-             from game_player gp
-             inner join game g
-                on g.game_id = gp.game_id
-             where gp.submission_id = s.submission_id
-                and g.timestamp > timestampadd(minute, -3600, current_timestamp)) as game_rate
+            -- timestampdiff(second, gmin.timestamp, gmax.timestamp)/60/s.game_count as wait_time,
+            recent.game_count as game_rate
         from submission s
-        inner join game gmin
-            on gmin.game_id = s.min_game_id
-        inner join game gmax
-            on gmax.game_id = s.max_game_id
+        left outer join (select gp.submission_id, count(*) game_count
+            from game_player gp
+            inner join game g
+                on g.game_id = gp.game_id
+            where g.timestamp > timestampadd(minute, -1440, current_timestamp)
+            group by gp.submission_id) as recent
+            on s.submission_id = recent.submission_id
+        -- inner join game gmin
+        --     on gmin.game_id = s.min_game_id
+        -- inner join game gmax
+        --     on gmax.game_id = s.max_game_id
         inner join user u
             on s.user_id = u.user_id
         left outer join organization o
@@ -156,6 +158,11 @@ $contest_sql = array(
     "select_languages" => "select * from language",
     "select_organizations" => "select * from organization",
     "select_users" => "select * from user",
+    "select_submission_users" => "select *
+        from user u
+        inner join submission s
+            on u.user_id = s.user_id",
+    "select_maps" => "select * from map",
     "select_game_list_page_count" => "select count(*)
             from game g
             inner join game_player gp
@@ -165,7 +172,7 @@ $contest_sql = array(
                m.players, m.map_id, m.filename as map_name,
                g.turns, g.winning_turn, g.ranking_turn,
     		   gp.user_id, gp.submission_id, u.username, s.version,
-    		   gp.player_id, gp.game_rank,
+    		   gp.player_id, gp.game_rank, gp.status,
                gp.mu_after - 3 * gp.sigma_after as skill,
                gp.mu_after as mu, gp.sigma_after as sigma,
                (gp.mu_after - 3 * gp.sigma_after) - (gp.mu_before - 3 * gp.sigma_before) as skill_change,
@@ -195,7 +202,7 @@ $contest_sql = array(
                m.players, m.map_id, m.filename as map_name,
                g.turns, g.winning_turn, g.ranking_turn,
     		   gp.user_id, gp.submission_id, u.username, s.version,
-    		   gp.player_id, gp.game_rank,
+    		   gp.player_id, gp.game_rank, gp.status,
                gp.mu_after - 3 * gp.sigma_after as skill,
                gp.mu_after as mu, gp.sigma_after as sigma,
                (gp.mu_after - 3 * gp.sigma_after) - (gp.mu_before - 3 * gp.sigma_before) as skill_change,

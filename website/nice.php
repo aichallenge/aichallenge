@@ -14,21 +14,33 @@ function nice_interval($interval) {
     }
 }
 
-function nice_ago($date) {
-    $datetime = new DateTime($date);
+function nice_ago($datetime) {
+    if (is_string($datetime)) {
+        $datetime = new DateTime($datetime);
+    }
+    $now = new DateTime();
     return nice_interval($now->diff($datetime))." ago";
 }
 
-function nice_datetime_span($date) {
-    return "<span title=\"".no_wrap(nice_ago($date))."\">".no_wrap($time->format('j M g:ia'))."</span>";
+function nice_datetime_span($datetime) {
+    if (is_string($datetime)) {
+        $datetime = new DateTime($datetime);
+    }
+    return "<span title=\"".no_wrap(nice_ago($datetime))."\">".no_wrap($datetime->format('j M'))." ".no_wrap($datetime->format('g:ia'))."</span>";
 }
 
 function nice_date($date) {
     return date("M jS Y", strtotime($date));
 }
 
-function nice_version($version, $date) {
-    return "<span title=\"".nice_ago($date)."\">$version</span>";
+function nice_version($version, $date=NULL, $submission_id=NULL) {
+    if ($submission_id !== NULL) {
+        $version = "<a href=\"profile_games.php?submission=$submission_id\">$version</a>";
+    }
+    if ($date !== NULL) {
+        $version = "<span title=\"".nice_ago($date)."\">$version</span>";
+    }
+    return $version;
 }
 
 function nice_map($map) {
@@ -111,7 +123,7 @@ function nice_game($game_id, $turns, $winning_turn, $ranking_turn, $user_id=NULL
     if ($user_id) {
         $query_string .= "&user=$user_id";
     }
-    return "<a href=\"visualizer.php?game=$game_id$query_string\">$turns&nbsp;turns&nbsp;&raquo;</a>
+    return "<a href=\"visualizer.php?game=$game_id$query_string\">$turns&nbsp;turns&nbsp;&raquo;</a><br />
     <span title=\"Turn the winner last took the lead\">
     	<a href=\"visualizer.php?game=$game_id$query_string&turn=$winning_turn\">Won&nbsp;at&nbsp;$winning_turn&nbsp;&raquo;</a>
     </span>";
