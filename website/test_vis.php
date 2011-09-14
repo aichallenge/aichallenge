@@ -4,18 +4,37 @@ require_once("header.php");
 require_once("visualizer_widget.php");
 
 ?>
-<div id="map1"></div>
-<div id="map2"></div>
-<script src="visualizer/js/visualizer-min.js"></script>
-<script>
-    window.isFullscreenSupported = function () { return false; };
-    var data = 'rows 4\ncols 4\nplayers 2\nm .a..\nm ..%.\nm ...b\nm %...\n';
-    var visualizer1 = new Visualizer(document.getElementById('map1'), 'visualizer/', false, 100, 100);
-    visualizer1.loadReplayData(data);
+<pre id="map1">
+# [ true, 100, 100, {} ]
+rows 4
+cols 4
+players 2
+attackradius2 5
+spawnradius2 1
+viewradius2 75
+m ....
+m .a..
+m ..b.
+m ....
+</pre>
+<pre id="map2">
+# [false, 200, 200]
+rows 4
+cols 4
+players 2
+attackradius2 5
+spawnradius2 1
+viewradius2 75
+m ....
+m .a..
+m ..b.
+m ....
+</pre>
 
-    var visualizer2 = new Visualizer(document.getElementById('map2'), 'visualizer/', false, 100, 100);
-    visualizer2.loadReplayData(data);
-</script>
 <?php
+
+visualize_pre();
+
 require_once("footer.php");
+
 ?>

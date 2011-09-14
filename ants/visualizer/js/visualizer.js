@@ -18,10 +18,18 @@ var $import_base;
  *        file the 'package' name
  */
 function $import(file) {
+    var ends_with = function (str, pat){
+        return str.slice(-pat.length) == pat;
+    };
 	var scripts = document.getElementsByTagName("script");
 	if ($import_base === undefined) {
-		var pathLen = scripts[0].src.lastIndexOf('/') + 1;
-		$import_base = scripts[0].src.substr(0, pathLen);
+        for (var i = 0, len = scripts.length; i < len; ++i) {
+            if (ends_with(scripts[i].src, 'visualizer.js')) {
+                var pathLen = scripts[i].src.lastIndexOf('/') + 1;
+                $import_base = scripts[i].src.substr(0, pathLen);
+                break;
+            }
+        }
 	}
 	file = $import_base + file.replace(/[.]/g, '/') + '.js';
 	for ( var i = 0; i < scripts.length; i++) {
