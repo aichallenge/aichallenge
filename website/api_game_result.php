@@ -111,7 +111,8 @@ if (array_key_exists('error', $gamedata)) {
             $players[] = $player;
             $teams[] = new Team($player, $rating);
         }
-        $new_ratings = $calculator->calculateNewRatings($game_info, $teams, $gamedata->rank);
+        $inc = function($value) { return $value + 1 };
+        $new_ratings = $calculator->calculateNewRatings($game_info, $teams, array_map($inc, $gamedata->rank));
     } catch (Exception $e) {
         game_result_error(json_encode($e));
     }

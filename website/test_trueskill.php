@@ -21,21 +21,22 @@ use Moserware\Skills\SkillCalculator;
 echo 'starting trueskill test';
 
 $calculator = new FactorGraphTrueSkillCalculator();
-$player0 = new Player(1);
-$player1 = new Player(2);
-$gameInfo = new GameInfo();
+$gameInfo = new GameInfo(50.0,       // mu
+                         50.0/3.0,   // sigma
+                         50.0/6.0,   // beta
+                         50.0/300.0, // tau
+                         0.01);      // draw prob
 
-$player0Rating = new Rating(40.0, 8.333);
-$player1Rating = new Rating(60.0, 8.333);
-
-$team0 = new Team($player0, $player0Rating);
-$team1 = new Team($player1, $player1Rating);
-
+$players = array();
+$ratings = array();
 $teams = array();
-$teams[] = $team0;
-$teams[] = $team1;
-// Teams::concat($team0, $team1);
-$newRatings = $calculator->calculateNewRatings($gameInfo, $teams, array(1, 2));
+for ($i = 1; $i < 3; ++$i) {
+    $player = new Player($i);
+    $rating = new Rating(50.0, 16.66);
+    $teams[] = new Team($player, $rating);
+}
+
+$newRatings = $calculator->calculateNewRatings($gameInfo, $teams, array(0, 1));
 
 $player0NewRating = $newRatings->getRating($player0);
 $player1NewRating = $newRatings->getRating($player1);
