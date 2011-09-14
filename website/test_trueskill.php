@@ -31,15 +31,14 @@ $players = array();
 $ratings = array();
 $teams = array();
 for ($i = 1; $i < 3; ++$i) {
-    $player = new Player($i);
-    $rating = new Rating(50.0, 16.66);
-    $teams[] = new Team($player, $rating);
+    $players[] = new Player($i);
+    $teams[] = new Team($players[$i-1], new Rating(50.0, 16.66));
 }
 
 $newRatings = $calculator->calculateNewRatings($gameInfo, $teams, array(0, 1));
 
-$player0NewRating = $newRatings->getRating($player0);
-$player1NewRating = $newRatings->getRating($player1);
+$player0NewRating = $newRatings->getRating($players[0]);
+$player1NewRating = $newRatings->getRating($players[1]);
 
 echo "player 0: $player0NewRating";
 echo "player 1: $player1NewRating";

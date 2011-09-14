@@ -105,14 +105,11 @@ if (array_key_exists('error', $gamedata)) {
         $teams = array();
         while ($player_row = mysql_fetch_assoc($skill_result)) {
             $player_id = $player_row['player_id'];
-            $rating = new Rating($player_row['mu'], $player_row['sigma']);
-            $ratings[] = $rating;
-            $player = new Player($player_id+1);
-            $players[] = $player;
-            $teams[] = new Team($player, $rating);
+            $ratings[] = new Rating($player_row['mu'], $player_row['sigma']);
+            $players[] = new Player($player_id + 1);
+            $teams[] = new Team($players[$player_id], $ratings[$player_id]);
         }
-        $inc = function($value) { return $value + 1 };
-        $new_ratings = $calculator->calculateNewRatings($game_info, $teams, array_map($inc, $gamedata->rank));
+        $new_ratings = $calculator->calculateNewRatings($game_info, $teams, $gamedata->rank);
     } catch (Exception $e) {
         game_result_error(json_encode($e));
     }
@@ -133,7 +130,6 @@ if (array_key_exists('error', $gamedata)) {
             game_result_error(sprintf("Error updating game players for matchup %s",
                             $gamedata->matchup_id)."\n".mysql_error());
         }
-                                
     }
 
     if (!contest_query("delete_matchup_player", $gamedata->matchup_id)) {
