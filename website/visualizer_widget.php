@@ -18,16 +18,18 @@ var visualize = function (i) {
         var data = $(this).text();
         var options = data.split('\n')[0];
         if (options[0] === '#') {
-            options = JSON.parse(options.slice(1));
-        } else {
-            options = [false, 100, 100, {}];
+            try {
+                options = JSON.parse(options.slice(1));
+            } catch (err) {
+                options = [false, 100, 100, {}];
+            }
+            var interactive = options[0] || false;
+            var width = options[1] || 100;
+            var height = options[2] || 100;
+            options = options[3] || {};
+            var vis = new Visualizer(this, 'visualizer/', interactive, width, height, options);
+            vis.loadReplayData(data);
         }
-        var interactive = options[0] || false;
-        var width = options[1] || 100;
-        var height = options[2] || 100;
-        options = options[3] || {};
-        var vis = new Visualizer(this, 'visualizer/', interactive, width, height, options);
-        vis.loadReplayData(data);
     }
 };
 </script>
