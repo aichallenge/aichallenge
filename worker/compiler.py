@@ -97,11 +97,12 @@ def nukeglob(pattern):
                 raise
 
 def _run_cmd(sandbox, cmd, timelimit):
+    out = []
     errors = []
     sandbox.start(cmd)
     try:
         while (sandbox.is_alive and time.time() < timelimit):
-            sandbox.read_line((timelimit - time.time()) + 1)
+            out.append(sandbox.read_line((timelimit - time.time()) + 1))
     finally:
         sandbox.kill()
     if time.time() > timelimit:
@@ -111,7 +112,7 @@ def _run_cmd(sandbox, cmd, timelimit):
     while err_line is not None:
         errors.append(err_line)
         err_line = sandbox.read_error()
-    return errors
+    return out, errors
 
 def check_path(path, errors):
     if not os.path.exists(path):
@@ -141,7 +142,7 @@ class ChmodCompiler(Compiler):
         return True
 
 class ExternalCompiler(Compiler):
-    def __init__(self, args, separate=False):
+    def __init__(self, args, separate=False, vglobs=[]):
         self.args = args
         self.separate = separate
 
@@ -158,13 +159,23 @@ class ExternalCompiler(Compiler):
             if self.separate:
                 for filename in files:
                     cmdline = " ".join(self.args + [filename])
-                    cmd_errors = _run_cmd(box, cmdline, timelimit)
+                    cmd_out, cmd_errors = _run_cmd(box, cmdline, timelimit)
+                    if not cmd_errors:
+                        for vglob in vglobs:
+                            check_path(vglob, cmd_errors)
+                        if cmd_errors:
+                            cmd_errors.append(cmd_out)
                     if cmd_errors:
                         errors += cmd_errors
                         return False
             else:
                 cmdline = " ".join(self.args + files)
-                cmd_errors = _run_cmd(box, cmdline, timelimit)
+                cmd_out, cmd_errors = _run_cmd(box, cmdline, timelimit)
+                if not cmd_errors:
+                    for vglob in vglobs:
+                        check_path(vglob, cmd_errors)
+                    if cmd_errors:
+                        cmd_errors.append(cmd_out)
                 if cmd_errors:
                     errors += cmd_errors
                     return False
@@ -197,7 +208,7 @@ class TargetCompiler(Compiler):
                     errors.append("Could not determine target for source file %s." % source)
                     return False
                 cmdline = " ".join(self.args + [self.outflag, target, source])
-                cmd_errors = _run_cmd(box, cmdline, timelimit)
+                cmd_out, cmd_errors = _run_cmd(box, cmdline, timelimit)
                 if cmd_errors:
                     errors += cmd_errors
                     return False
@@ -291,8 +302,8 @@ languages = (
     Language("Go", "", "MyBot.go",
         "./MyBot",
         ["*.8", "*.6", BOT],
-        [(["*.go"], ExternalCompiler(comp_args["Go"][0])),
-            ([""], ExternalCompiler(comp_args["Go"][1]))]
+        [(["*.go"], ExternalCompiler(comp_args["Go"][0], vglobs=['_go_.6'])),
+            ([""], ExternalCompiler(comp_args["Go"][1], vglobs=['_go_.6']))]
     ),
     Language("Groovy", ".jar", "MyBot.groovy",
         "java -Xmx" + str(MEMORY_LIMIT) + "m -cp MyBot.jar:/usr/share/groovy/embeddable/groovy-all-1.7.5.jar MyBot",
