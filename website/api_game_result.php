@@ -3,6 +3,23 @@
 // ini_set('display_errors', true);
 
 require_once('api_functions.php');
+require_once('server_info.php');
+$skills_dir = $server_info["repo_path"] . "/manager/PHPSkills/Skills/";
+require_once($skills_dir.'TrueSkill/FactorGraphTrueSkillCalculator.php');
+require_once($skills_dir.'GameInfo.php');
+require_once($skills_dir.'Player.php');
+require_once($skills_dir.'Rating.php');
+require_once($skills_dir.'Team.php');
+require_once($skills_dir.'Teams.php');
+require_once($skills_dir.'SkillCalculator.php');
+
+use Moserware\Skills\TrueSkill\FactorGraphTrueSkillCalculator;
+use Moserware\Skills\GameInfo;
+use Moserware\Skills\Player;
+use Moserware\Skills\Rating;
+use Moserware\Skills\Team;
+use Moserware\Skills\Teams;
+use Moserware\Skills\SkillCalculator;
 
 
 header("Content-type: application/json");
