@@ -100,11 +100,18 @@ def _run_cmd(sandbox, cmd, timelimit):
     out = []
     errors = []
     sandbox.start(cmd)
+    # flush stdout to keep stuff moving
     try:
         while (sandbox.is_alive and time.time() < timelimit):
             out.append(sandbox.read_line((timelimit - time.time()) + 1))
     finally:
         sandbox.kill()
+    # capture final output for error reporting
+    tmp = sandbox.read_line(1)
+    while tmp:
+        out.append(tmp)
+        tmp = sandbox.read_line(1)
+
     if time.time() > timelimit:
         errors.append("Compilation timed out with command %s"
                 % (cmd,))
@@ -145,6 +152,7 @@ class ExternalCompiler(Compiler):
     def __init__(self, args, separate=False, vglobs=[]):
         self.args = args
         self.separate = separate
+        self.vglobs = vglobs
 
     def __str__(self):
         return "ExternalCompiler: %s" % (' '.join(self.args),)
@@ -161,10 +169,10 @@ class ExternalCompiler(Compiler):
                     cmdline = " ".join(self.args + [filename])
                     cmd_out, cmd_errors = _run_cmd(box, cmdline, timelimit)
                     if not cmd_errors:
-                        for vglob in vglobs:
+                        for vglob in self.vglobs:
                             check_path(vglob, cmd_errors)
                         if cmd_errors:
-                            cmd_errors.append(cmd_out)
+                            cmd_errors += cmd_out
                     if cmd_errors:
                         errors += cmd_errors
                         return False
@@ -172,10 +180,10 @@ class ExternalCompiler(Compiler):
                 cmdline = " ".join(self.args + files)
                 cmd_out, cmd_errors = _run_cmd(box, cmdline, timelimit)
                 if not cmd_errors:
-                    for vglob in vglobs:
+                    for vglob in self.vglobs:
                         check_path(vglob, cmd_errors)
                     if cmd_errors:
-                        cmd_errors.append(cmd_out)
+                        cmd_errors += cmd_out
                 if cmd_errors:
                     errors += cmd_errors
                     return False
