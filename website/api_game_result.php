@@ -113,7 +113,7 @@ if (array_key_exists('error', $gamedata)) {
     } catch (Exception $e) {
         game_result_error(json_encode($e));
     }
-    for ($player_id = 0, $size = sizeof($gamedata->rank); $player_id < $size; ++$i) {
+    for ($player_id = 0, $size = sizeof($gamedata->rank); $player_id < $size; ++$player_id) {
         $new_rating = $new_ratings->getRating($players[$player_id]);
         if (!contest_query("insert_game_player",
                            $game_id,
