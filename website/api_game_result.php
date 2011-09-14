@@ -93,24 +93,28 @@ if (array_key_exists('error', $gamedata)) {
     if (!$skill_result) {
         game_result_error("Error retrieving matchup ".strval($gamedata->matchup_id)." player data for trueskill calculation");
     }
-    $calculator = new FactorGraphTrueSkillCalculator();
-    $game_info = new GameInfo(50.0,       // mu
-                              50.0/3.0,   // sigma
-                              50.0/6.0,   // beta
-                              50.0/300.0, // tau
-                              0.01);      // draw prob
-    $ratings = array();
-    $players = array();
-    $teams = array();
-    while ($player_row = mysql_fetch_assoc($skill_result)) {
-        $player_id = $player_row['player_id'];
-        $rating = new Rating($player_row['mu'], $player_row['sigma']);
-        $ratings[] = $rating;
-        $player = new Player($player_id+1);
-        $players[] = $player;
-        $teams[] = new Team($player, $rating);
+    try {
+        $calculator = new FactorGraphTrueSkillCalculator();
+        $game_info = new GameInfo(50.0,       // mu
+                                  50.0/3.0,   // sigma
+                                  50.0/6.0,   // beta
+                                  50.0/300.0, // tau
+                                  0.01);      // draw prob
+        $ratings = array();
+        $players = array();
+        $teams = array();
+        while ($player_row = mysql_fetch_assoc($skill_result)) {
+            $player_id = $player_row['player_id'];
+            $rating = new Rating($player_row['mu'], $player_row['sigma']);
+            $ratings[] = $rating;
+            $player = new Player($player_id+1);
+            $players[] = $player;
+            $teams[] = new Team($player, $rating);
+        }
+        $new_ratings = $calculator->calculateNewRatings($game_info, $teams, $gamedata->rank);
+    } catch (Exception $e) {
+        game_result_error(json_encode($e));
     }
-    $new_ratings = $calculator->calculateNewRatings($game_info, $teams, $gamedata->rank);
     for ($player_id = 0, $size = sizeof($gamedata->rank); $player_id < $size; ++$i) {
         $new_rating = $new_ratings->getRating($players[$player_id]);
         if (!contest_query("insert_game_player",

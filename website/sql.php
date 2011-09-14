@@ -46,7 +46,7 @@ $contest_sql = array(
                               limit 1;",
     "select_matchup_confirm" => "select worker_id from matchup
                                  where matchup_id = %s",
-    "select_matchup_players" => "select *
+    "select_matchup_players" => "select s.*, mp.player_id, mp.matchup_id
                                  from matchup_player mp
                                  inner join submission s
                                     on s.submission_id = mp.submission_id
