@@ -63,6 +63,7 @@ if ($match_result) {
                        "timestamp" => date(DATE_ATOM),
                        "matchup_id" => $match_row["matchup_id"],
                        "map_filename" => $match_row["filename"],
+                       "max_turns" => $match_row["max_turns"],
                        "submissions" => array(),
                        "game_options" => $server_info["game_options"]);
         $lock_result = contest_query("lock_matchup",

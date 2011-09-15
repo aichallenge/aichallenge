@@ -48,8 +48,8 @@ set @matchup_id = last_insert_id();
 
 -- Step 2: select the map
 
-select m.map_id, m.players
-into @map_id, @players
+select m.map_id, m.players, m.max_turns
+into @map_id, @players, @max_turns
 from map m
 left outer join (
     select map_id, max(g.game_id) as max_game_id, count(*) as game_count
@@ -83,7 +83,8 @@ limit 1;
 -- Step 2.5: setup matchup and player info for following queries
 
 update matchup
-set map_id = @map_id
+set map_id = @map_id,
+    max_turns = @max_turns
 where matchup_id = @matchup_id;
 
 insert into matchup_player (matchup_id, user_id, submission_id, player_id, mu, sigma)

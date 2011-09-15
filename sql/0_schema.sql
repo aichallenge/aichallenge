@@ -12,6 +12,7 @@ CREATE TABLE `game` (
   `game_id` int(11) NOT NULL AUTO_INCREMENT,
   `seed_id` int(11) NOT NULL,
   `map_id` int(11) NOT NULL,
+  `max_turns` int(11) NOT NULL,
   `turns` int(11) NOT NULL,
   `winning_turn` int(11) NOT NULL,
   `ranking_turn` int(11) NOT NULL,
@@ -55,18 +56,6 @@ CREATE TABLE `language` (
   PRIMARY KEY (`language_id`)
 );
 
-DROP TABLE IF EXISTS `leaderboard`;
-CREATE TABLE `leaderboard` (
-  `leaderboard_id` int(11) NOT NULL AUTO_INCREMENT,
-  `timestamp` datetime NOT NULL,
-  `algorithm_name` varchar(64) DEFAULT NULL,
-  `calculation_time` bigint(20) DEFAULT '0',
-  `complete` tinyint(1) NOT NULL DEFAULT '0',
-  `last_game_id` int(11) NULL,
-  PRIMARY KEY (`leaderboard_id`),
-  KEY `timestamp` (`timestamp`)
-);
-
 DROP TABLE IF EXISTS `login_attempt`;
 CREATE TABLE `login_attempt` (
   `timestamp` datetime NOT NULL,
@@ -83,6 +72,7 @@ CREATE TABLE `map` (
   `filename` varchar(256) NOT NULL,
   `priority` int(11) NOT NULL DEFAULT '1',
   `players` int(11) NOT NULL,
+  `max_turns` int(11) NOT NULL,
   PRIMARY KEY (`map_id`)
 );
 
@@ -91,6 +81,7 @@ CREATE TABLE `matchup` (
   `matchup_id` int(11) NOT NULL AUTO_INCREMENT,
   `seed_id` int(11) NOT NULL,
   `map_id` int(11) NOT NULL,
+  `max_turns` int(11) NOT NULL,
   `worker_id` int(11) DEFAULT NULL,
   `error` varchar(4000) NULL,
   `matchup_timestamp` datetime NULL,
@@ -122,28 +113,6 @@ CREATE TABLE `organization` (
   `name` varchar(128) DEFAULT NULL,
   PRIMARY KEY (`org_id`),
   UNIQUE KEY (`name`)
-);
-
-DROP TABLE IF EXISTS `ranking`;
-CREATE TABLE `ranking` (
-  `leaderboard_id` int(11) NOT NULL,
-  `user_id` int(11) NOT NULL,
-  `submission_id` int(11) NOT NULL,
-  `version` int(11) NOT NULL,
-  `seq` int(11) NOT NULL,
-  `rank` int(11) NULL,
-  `rank_change` int(11) NULL,
-  `mu` float NOT NULL,
-  `mu_change` float NULL,
-  `sigma` float NOT NULL,
-  `sigma_change` float NULL,
-  `skill` float NOT NULL,
-  `skill_change` float NULL,
-  `latest` tinyint(1) NOT NULL,
-  `age` time NOT NULL,
-  KEY `submission_id` (`submission_id`),
-  KEY `leaderboard_id` (`leaderboard_id`,`submission_id`,`rank`),
-  KEY `leaderboard_user_id` (`leaderboard_id`,`user_id`)
 );
 
 DROP TABLE IF EXISTS `settings`;

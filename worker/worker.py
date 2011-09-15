@@ -474,6 +474,7 @@ class Worker:
             if options == None:
                 options = copy(server_info["game_options"])
             options["map"] = self.get_map(task['map_filename'])
+            options["turns"] = task['max_turns']
             options["output_json"] = True
             game = Ants(options)
             bots = []
