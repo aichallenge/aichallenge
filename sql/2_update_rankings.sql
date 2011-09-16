@@ -20,16 +20,24 @@ begin
 -- reorder all active submmissions
 update submission
 inner join (
-    select @rank := (@rank + 1) as new_rank,
-    rank - @rank as new_rank_change,
-    s.submission_id
+    select 
+           s.submission_id,
+           @skill := mu - sigma * 3 as skill,
+           @seq := (@seq + 1) as seq,
+           if(@skill = @last_skill, @last_rank, @seq) as new_rank,
+           rank - if(@skill = @last_skill, @last_rank, @seq) as new_rank_change,
+           if(@skill = @last_skill, @last_rank, @last_rank := @seq) next_rank,
+           @last_skill := @skill
     from (
-        select *
-        from submission s
-        where s.latest = 1
+        select * 
+        from submission s 
+        where s.latest = 1 
         order by s.mu - s.sigma * 3 desc
-        ) s,
-    (select @rank := 0) r
+    ) s, 
+    (select @skill := 0.0) k,
+    (select @seq := 0) r, 
+    (select @last_skill := null) lk, 
+    (select @last_rank := 0) lr 
 ) s2
     on submission.submission_id = s2.submission_id
 set rank = s2.new_rank,
