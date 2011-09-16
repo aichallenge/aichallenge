@@ -40,7 +40,7 @@ tools/: ../../../ants
 	# have overridden in visualizer/local.properties)
 	cd ../../visualizer; ant jar html-visualizer
 	cp ../../visualizer/build/deploy/visualizer.jar tools/
-	unzip ../../visualizer/build/deploy/html_visualizer.zip -d tools/visualizer
+	unzip ../../visualizer/build/html_visualizer.zip -d tools/visualizer
 
 clean:
 	-rm -Rf tools/
