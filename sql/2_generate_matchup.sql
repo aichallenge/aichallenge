@@ -56,15 +56,13 @@ left outer join (
     from game g
     inner join game_player gp
         on g.game_id = gp.game_id
-    where g.seed_id = @seed_id
+        and gp.user_id = @seed_id
     group by g.map_id
 ) games
     on m.map_id = games.map_id
 left outer join (
     select map_id, max(g.game_id) as max_all_game_id, count(*) as all_game_count
     from game g
-    inner join game_player gp
-        on g.game_id = gp.game_id
     group by g.map_id
 ) all_games
     on m.map_id = all_games.map_id
@@ -94,6 +92,16 @@ values (@matchup_id, @seed_id, @submission_id, -1, @mu, @sigma);
 -- select @matchup_id, @seed_id, @submission_id, @map_id, @players;
 
 -- Step 3: select opponents 1 at a time
+
+-- create temp table to randomize seeding for matching players
+drop temporary table if exists temp_random;
+create temporary table temp_random 
+select u.user_id, rand() as seq
+from user u
+inner join submission s
+    on s.user_id = u.user_id
+where s.latest = 1
+    and s.status = 40;
 
 -- create temp table to hold user_ids not to match
 --   due to repeat games, maps or player_counts
@@ -128,47 +136,35 @@ while @abort = 0 and @player_count < @players do
     set @last_user_id = @cur_user_id;
     if @use_limits = 1 then
 
-
-        -- exclude players that played with matched players recently
-        -- based on population size, about 10%
-        -- mysql does not allow variable limits
-        -- the prepared statement is a work around
-        set @exclude_sql = concat(
-        'insert into temp_unavailable ',
-        'select gp1.user_id ',
-        'from game_player gp1 ',
-        'inner join game_player gp2 ',
-        '    on gp1.game_id = gp2.game_id ',
-        'where gp2.user_id = @last_user_id ',
-        'order by gp1.game_id desc ',
-        'limit ', @exclude_size);
-        -- debug statement
-        -- select @exclude_sql;
-        prepare stmt from @exclude_sql;
-        execute stmt;
-
-        -- exclude players that played in the last game with the
-        -- current combination of players
+        -- exclude players who played in @last_user_id's last game
         insert into temp_unavailable
-        select gp1.user_id
-        from game_player gp1
-        inner join game_player gp2
-            on gp1.game_id = gp2.game_id
-        where gp2.user_id = @last_user_id
-        and gp1.game_id in (
-            select game_id from (
-                -- mysql does not allow limits in subqueries
-                -- wrapping in it a dummy select is a work around
-                select game_id
-                from game_player
-                where user_id = @last_user_id
-                order by game_id desc
-                limit 2
-            ) latest_games
-        );
-        
+        select gp_opponent.user_id
+        from submission s
+        inner join game_player gp_opponent
+            on s.max_game_id = gp_opponent.game_id
+        where s.latest = 1
+            and s.status = 40
+            and s.user_id = @last_user_id
+        order by gp_opponent.user_id;
+
         -- debug statement
-		-- select 'step 3: add excluded';
+		-- select 'step 3: add in users last game';
+
+        -- exclude players who played with @last_user_id last
+        insert into temp_unavailable
+        select gp_opponent.user_id
+        from submission s
+        inner join game_player gp_opponent
+            on s.user_id = gp_opponent.user_id
+            and s.max_game_id = gp_opponent.game_id
+        inner join game_player gp_user
+            on gp_user.game_id = gp_opponent.game_id
+        where s.latest = 1 and s.status = 40
+            and gp_user.user_id = @last_user_id
+        order by gp_opponent.user_id;
+
+        -- debug statement
+		-- select 'step 3: add last with user';
 		
     end if;
     
@@ -184,32 +180,41 @@ while @abort = 0 and @player_count < @players do
     -- and then rank by a match_quality approximation
     --   the approximation is not the true trueskill match_quality,
     --   but will be in the same order as if we calculated it
-    select s.user_id, s.submission_id, s.mu, s.sigma ,
-    @c := (@twiceBetaSq + pow(mp.sigma,2) + pow(s.sigma,2)) as c,
+    select s.user_id, s.submission_id, s.mu, s.sigma
+    ,@c := (@twiceBetaSq + pow(mp.sigma,2) + pow(s.sigma,2)) as c,
     exp(sum(ln(
         SQRT(@twiceBetaSq / @c) * EXP(-(pow(mp.mu - s.mu, 2) / (2 * @c)))
     ))) as match_quality
-    into @last_user_id, @last_submission_id, @last_mu, @last_sigma, @c, @match_quality
+    into @last_user_id, @last_submission_id, @last_mu, @last_sigma , @c, @match_quality
     from matchup_player mp,
     (
-        select s.user_id, s.submission_id, s.mu, s.sigma
+        select s.user_id, s.submission_id, s.mu, s.sigma, s.game_count, t.seq
         from submission s
-        inner join user u
-            on u.user_id = s.user_id
-
+        inner join temp_random t
+            on s.user_id = t.user_id
+        ,(select avg(mu) as avg_mu
+            from matchup_player
+            where matchup_id = @matchup_id) avg_mu
         where s.latest = 1 and status = 40
+        and s.user_id not in (
+            select user_id from temp_unavailable
+        )
 
         -- this order by causes a filesort, but I don't see a way around it
         -- limiting to 100 saves us from doing extra trueskill calculations
-        order by abs(s.mu - (select avg(mu) from matchup_player where matchup_id = @matchup_id))
+        order by abs(s.mu - avg_mu.avg_mu) asc,
+                 s.game_count asc
+                 ,t.seq asc
         limit 100
     ) s
-    left outer join temp_unavailable tu
-        on s.user_id = tu.user_id
+    -- left outer join temp_unavailable tu
+    --     on s.user_id = tu.user_id
     where mp.matchup_id = @matchup_id
-    and tu.user_id is null
+    -- and tu.user_id is null
     group by s.user_id, s.submission_id, s.mu, s.sigma
-    order by match_quality desc
+    order by match_quality desc,
+             s.game_count asc
+             ,s.seq asc
     limit 1;
 
     if @last_user_id = -1 then
@@ -242,6 +247,7 @@ while @abort = 0 and @player_count < @players do
         
         -- debug statement
         -- select * from temp_unavailable;
+        -- select 'added user';
         
     end if;
 
@@ -259,7 +265,28 @@ else
 
 -- Step 4: put players into map positions
 
-set @player_count = 0;
+update matchup_player
+inner join (
+    select @position := (@position + 1) as position,
+        m.user_id
+    from (
+        select mp.*
+        from matchup_player mp
+        inner join temp_random r
+            on r.user_id = mp.user_id
+        where matchup_id = @matchup_id
+        order by r.seq
+    ) m,
+    (select @position := -1) p
+) m2
+    on matchup_player.user_id = m2.user_id
+set player_id = m2.position
+where matchup_id = @matchup_id;
+
+-- since we are using symmetric maps, positions don't matter
+-- the following loop will not execute
+-- set @player_count = 0;
+set @player_count = @players;
 
 while @player_count < @players do
 
