@@ -35,7 +35,7 @@ $contest_sql = array(
                                         from language
                                         where name = '%s'",
     "insert_new_language" => "insert into language (name) values ('%s')",
-    "select_next_matchup" => "select matchup.*, map.filename
+    "select_next_matchup" => "select matchup.*, map.filename, map.max_turns
                               from matchup
                               left join map on matchup.map_id = map.map_id
                               where deleted = 0
