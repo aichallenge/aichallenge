@@ -47,7 +47,9 @@ Key = {
 	END : 35,
 	PLUS : 107,
 	PLUS_OPERA : 61,
-	MINUS : 109
+	PLUS_JAVA : 521,
+	MINUS : 109,
+	MINUS_JAVA : 45
 };
 
 Html = {
@@ -220,11 +222,12 @@ Location.prototype.contains = function(x, y) {
 			+ this.h);
 };
 
-function Delegate(obj, func) {
+function Delegate(obj, func, args) {
 	this.obj = obj;
 	this.func = func;
+	this.args = args;
 }
 
 Delegate.prototype.invoke = function() {
-	this.func.apply(this.obj, arguments);
+	this.func.apply(this.obj, this.args);
 }

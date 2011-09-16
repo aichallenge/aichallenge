@@ -99,10 +99,6 @@ Visualizer = function(container, options, w, h, configOverrides) {
 		/** @private */
 		this.miniMap = new CanvasElementMiniMap(this.state);
 		/** @private */
-		this.scores = new CanvasElementStats(this.state, 'scores', 'scores');
-		/** @private */
-		this.counts = new CanvasElementStats(this.state, '# of ants', 'counts');
-		/** @private */
 		this.turns = undefined;
 		/** @private */
 		this.w = w;
@@ -126,10 +122,14 @@ Visualizer = function(container, options, w, h, configOverrides) {
 						this.state.options['debug'] = Options.toBool(value);
 						break;
 					case 'interactive':
-						this.state.options['interactive'] = Options.toBool(value);
+						this.state.options['interactive'] = Options
+								.toBool(value);
 						break;
 					case 'profile':
 						this.state.options['profile'] = Options.toBool(value);
+						break;
+					case 'decorated':
+						this.state.options['decorated'] = Options.toBool(value);
 						break;
 					case 'col':
 						this.state.options['col'] = parseInt(value);
@@ -156,21 +156,29 @@ Visualizer = function(container, options, w, h, configOverrides) {
 			}
 		}
 		// set default zoom to max if we are going to zoom in on a square
-		if (!isNaN(this.state.options['row']) && !isNaN(this.state.options['col'])) {
+		if (!isNaN(this.state.options['row'])
+				&& !isNaN(this.state.options['col'])) {
 			this.state.config['zoom'] = 1 << Math.ceil(Math.log(ZOOM_SCALE)
 					/ Math.LN2);
 		}
-		/** @private */
 		imgDir = (this.state.options['data_dir'] || '') + 'img/';
+		/** @private */
 		this.imgMgr = new ImageManager(imgDir, this, this.completedImages);
 		this.imgMgr.add('water.png');
-		this.imgMgr.add('playback.png');
-		this.imgMgr.add('fog.png');
-		this.imgMgr.add('toolbar.png');
-		this.imgMgr.add('rank.png');
-		this.imgMgr.add('graph_options.png');
-		/** @private */
-		this.btnMgr = new ButtonManager(null);
+		if (this.state.options['decorated']) {
+			this.imgMgr.add('playback.png');
+			this.imgMgr.add('fog.png');
+			this.imgMgr.add('toolbar.png');
+			this.imgMgr.add('rank.png');
+			this.imgMgr.add('graph_options.png');
+			/** @private */
+			this.btnMgr = new ButtonManager(null);
+			/** @private */
+			this.scores = new CanvasElementStats(this.state, 'scores', 'scores');
+			/** @private */
+			this.counts = new CanvasElementStats(this.state, '# of ants',
+					'counts');
+		}
 		/** @private */
 		this.director = new Director(this);
 		/** @private */
@@ -363,7 +371,9 @@ Visualizer.prototype.exceptionOut = function(error, cleanUp) {
 Visualizer.prototype.cleanUp = function() {
 	this.loading = LoadingState.CLEANUP;
 	if (this.replayReq) this.replayReq.abort();
-	this.imgMgr.cleanUp();
+	if (this.state.options['decorated']) {
+		this.imgMgr.cleanUp();
+	}
 	this.director.cleanUp();
 	this.state.cleanUp();
 	this.replayStr = undefined;
@@ -573,7 +583,10 @@ Visualizer.prototype.tryStart = function() {
 	// we need to parse the replay, unless it has been parsed by the
 	// XmlHttpRequest callback
 	if (this.state.replay) {
-		if (this.main.ctx && !this.imgMgr.error && !this.imgMgr.pending) {
+		if (!this.main.ctx) return;
+		if (this.state.options['decorated']) {
+			if (this.imgMgr.error) return;
+			if (this.imgMgr.pending) return;
 			this.btnMgr.ctx = this.main.ctx;
 			if (this.state.options['interactive']) {
 				// add static buttons
@@ -652,14 +665,7 @@ Visualizer.prototype.tryStart = function() {
 					});
 					bg.addButton(3, dlg, 'zoom out');
 
-					dlg = new Delegate(this, function() {
-						this.state.shiftX = this.mapCenterX;
-						this.state.shiftY = this.mapCenterY;
-						var btn = this.btnMgr.groups['toolbar'].getButton(4);
-						btn.enabled = false;
-						btn.draw();
-						this.director.draw();
-					});
+					dlg = new Delegate(this, this.centerMap);
 					bg.addButton(4, dlg, 'center the map').enabled = false;
 
 					dlg = new Delegate(this, function() {
@@ -705,10 +711,12 @@ Visualizer.prototype.tryStart = function() {
 			if (this.state.replay.hasDuration) {
 				this.addPlayerButtons();
 			}
-			// calculate speed from duration and config settings
-			this.director.duration = this.state.replay.duration;
-			this.calculateReplaySpeed();
-			if (this.state.options['interactive']) {
+		}
+		// calculate speed from duration and config settings
+		this.director.duration = this.state.replay.duration;
+		this.calculateReplaySpeed();
+		if (this.state.options['interactive']) {
+			if (this.state.options['decorated']) {
 				this.director.onstate = function() {
 					var btn = vis.btnMgr.groups['playback'].buttons[4];
 					btn.offset = (vis.director.playing() ? 7 : 4)
@@ -719,82 +727,94 @@ Visualizer.prototype.tryStart = function() {
 					btn.down = 0;
 					btn.draw();
 				};
-				// this will fire once in FireFox when a key is held down
-				document.onkeydown = function(event) {
-					if (!(event.shiftKey || event.ctrlKey || event.altKey || event.metaKey)) {
-						if (vis.keyPressed(event.keyCode)) {
-							if (event.preventDefault)
-								event.preventDefault();
-							else
-								event.returnValue = false;
-							return false;
-						}
-					}
-					return true;
-				};
 			}
-			// setup mouse handlers
-			this.main.canvas.onmousemove = function(event) {
-				var mx = 0;
-				var my = 0;
-				var obj = this;
-				if (this.offsetParent) do {
-					mx += obj.offsetLeft;
-					my += obj.offsetTop;
-				} while ((obj = obj.offsetParent))
-				mx = event.clientX
-						- mx
-						+ ((window.scrollX === undefined)
-								? (document.body.parentNode.scrollLeft !== undefined)
-										? document.body.parentNode.scrollLeft
-										: document.body.scrollLeft
-								: window.scrollX);
-				my = event.clientY
-						- my
-						+ ((window.scrollY === undefined)
-								? (document.body.parentNode.scrollTop !== undefined)
-										? document.body.parentNode.scrollTop
-										: document.body.scrollTop
-								: window.scrollY);
-				vis.mouseMoved(mx, my);
-			};
-			this.main.canvas.onmouseout = function() {
-				vis.mouseExited();
-			};
-			this.main.canvas.onmousedown = function(event) {
-				if (event.which === 1) {
-					vis.mousePressed();
+			// this will fire once in FireFox when a key is held down
+			document.onkeydown = function(event) {
+				if (!(event.shiftKey || event.ctrlKey || event.altKey || event.metaKey)) {
+					if (vis.keyPressed(event.keyCode)) {
+						if (event.preventDefault)
+							event.preventDefault();
+						else
+							event.returnValue = false;
+						return false;
+					}
 				}
+				return true;
 			};
-			this.main.canvas.onmouseup = function(event) {
-				if (event.which === 1) {
-					vis.mouseReleased();
-				}
-			};
-			window.onresize = function() {
-				vis.resize();
-			};
-			Visualizer.prototype.focused = this;
-			// move to a specific row and col
-			this.calculateMapCenter(ZOOM_SCALE);
-			this.state.shiftX = this.mapCenterX;
-			this.state.shiftY = this.mapCenterY;
+		}
+		// setup mouse handlers
+		this.main.canvas.onmousemove = function(event) {
+			var mx = 0;
+			var my = 0;
+			var obj = this;
+			if (this.offsetParent) do {
+				mx += obj.offsetLeft;
+				my += obj.offsetTop;
+			} while ((obj = obj.offsetParent))
+			mx = event.clientX
+					- mx
+					+ ((window.scrollX === undefined)
+							? (document.body.parentNode.scrollLeft !== undefined)
+									? document.body.parentNode.scrollLeft
+									: document.body.scrollLeft : window.scrollX);
+			my = event.clientY
+					- my
+					+ ((window.scrollY === undefined)
+							? (document.body.parentNode.scrollTop !== undefined)
+									? document.body.parentNode.scrollTop
+									: document.body.scrollTop : window.scrollY);
+			vis.mouseMoved(mx, my);
+		};
+		this.main.canvas.onmouseout = function() {
+			vis.mouseExited();
+		};
+		this.main.canvas.onmousedown = function(event) {
+			if (event.which === 1) {
+				vis.mousePressed();
+			}
+		};
+		this.main.canvas.onmouseup = function(event) {
+			if (event.which === 1) {
+				vis.mouseReleased();
+			}
+		};
+		this.main.canvas.ondblclick = function(event) {
+			vis.centerMap();
+		};
+		window.onresize = function() {
+			vis.resize();
+		};
+		Visualizer.prototype.focused = this;
+		// move to a specific row and col
+		this.calculateMapCenter(ZOOM_SCALE);
+		this.state.shiftX = this.mapCenterX;
+		this.state.shiftY = this.mapCenterY;
 
-			this.log.style.display = 'none';
-			this.main.canvas.style.display = 'inline';
-			this.loading = LoadingState.IDLE;
-			this.setFullscreen(this.state.config['fullscreen']);
-			if (this.state.replay.hasDuration) {
-				if (!isNaN(this.state.options['turn'])) {
-					this.director.gotoTick(this.state.options['turn'] - 1);
-				} else {
-					this.director.play();
-				}
+		this.log.style.display = 'none';
+		this.main.canvas.style.display = 'inline';
+		this.loading = LoadingState.IDLE;
+		this.setFullscreen(this.state.config['fullscreen']);
+		if (this.state.replay.hasDuration) {
+			if (!isNaN(this.state.options['turn'])) {
+				this.director.gotoTick(this.state.options['turn'] - 1);
+			} else {
+				this.director.play();
 			}
 		}
 	} else if (this.replayStr) {
 		this.loadParseReplay();
 	}
+};
+
+Visualizer.prototype.centerMap = function() {
+	this.state.shiftX = this.mapCenterX;
+	this.state.shiftY = this.mapCenterY;
+	if (this.state.options['decorated']) {
+		var btn = this.btnMgr.groups['toolbar'].getButton(4);
+		btn.enabled = false;
+		btn.draw();
+	}
+	this.director.draw();
 };
 
 /**
@@ -842,7 +862,8 @@ Visualizer.prototype.addPlayerButtons = function() {
 	var bg = this.btnMgr.addTextGroup('players', ButtonGroup.MODE_NORMAL, 2);
 	var vis = this;
 	var dlg = undefined;
-	var gameId = this.state.replay.meta['game_id'] || this.state.options['game'];
+	var gameId = this.state.replay.meta['game_id']
+			|| this.state.options['game'];
 	if (gameId !== undefined) {
 		if (this.state.replay.meta['game_url']) {
 			dlg = new Delegate(this, function() {
@@ -917,7 +938,8 @@ Visualizer.prototype.calculateReplaySpeed = function() {
 	var hintText = function(base) {
 		return 'set speed modifier to ' + ((base > 0) ? '+' + base : base);
 	};
-	if (this.state.options['interactive'] && this.state.replay.hasDuration) {
+	if (this.state.options['interactive'] && this.state.options['decorated']
+			&& this.state.replay.hasDuration) {
 		var speedUpBtn = this.btnMgr.groups['toolbar'].getButton(6);
 		speedUpBtn.hint = hintText(this.state.config['speedFactor'] + 1);
 		var slowDownBtn = this.btnMgr.groups['toolbar'].getButton(7);
@@ -1015,7 +1037,7 @@ Visualizer.prototype.setZoom = function(zoom) {
 	this.antsMap.setSize(this.map.w, this.map.h);
 	this.fog.setSize(Math.min(this.map.w, this.shiftedMap.w), Math.min(
 			this.map.h, this.shiftedMap.h));
-	if (this.state.options['interactive']) {
+	if (this.state.options['interactive'] && this.state.options['decorated']) {
 		var zoomInBtn = this.btnMgr.groups['toolbar'].getButton(2);
 		zoomInBtn.enabled = !(this.state.scale === ZOOM_SCALE);
 		zoomInBtn.draw();
@@ -1060,7 +1082,7 @@ Visualizer.prototype.resize = function(forced) {
 			ctx.fillRect(0, 0, canvas.width, canvas.height);
 		}
 		this.resizing = true;
-		if (this.state.replay.hasDuration) {
+		if (this.state.replay.hasDuration && this.state.options['decorated']) {
 			// 1. player buttons
 			y = this.btnMgr.groups['players'].cascade(newSize.w) + 4;
 			// 2. scores bar & time line
@@ -1075,7 +1097,8 @@ Visualizer.prototype.resize = function(forced) {
 			y = 0;
 		}
 		// 3. visualizer placement
-		if (this.state.options['interactive']) {
+		if (this.state.options['interactive']
+				&& this.state.options['decorated']) {
 			if (this.state.replay.hasDuration) {
 				this.shiftedMap.x = LEFT_PANEL_W;
 				this.shiftedMap.y = y;
@@ -1120,7 +1143,7 @@ Visualizer.prototype.resize = function(forced) {
 				this.miniMap.y = this.shiftedMap.y + 2;
 		this.miniMap.setSize(this.state.replay.cols, this.state.replay.rows);
 		// redraw everything
-		this.btnMgr.draw();
+		if (this.state.options['decorated']) this.btnMgr.draw();
 		this.director.draw(true);
 		this.resizing = false;
 	}
@@ -1130,15 +1153,12 @@ Visualizer.prototype.resize = function(forced) {
  * Enables or disables fog of war display.
  * 
  * @private
- * @param sender
- *        {ImageButton} the originating button
+ * @param idx
+ *        {Number} The index of the player for which fog is to be displayed or
+ *        undefined.
  */
-Visualizer.prototype.showFog = function(sender) {
-	if (sender.locked) {
-		this.state.fogPlayer = sender.idx;
-	} else {
-		this.state.fogPlayer = undefined;
-	}
+Visualizer.prototype.showFog = function(idx) {
+	this.state.fogPlayer = idx;
 	this.director.draw();
 };
 
@@ -1225,7 +1245,7 @@ Visualizer.prototype.draw = function() {
 		ctx.restore();
 	}
 
-	if (this.state.replay.hasDuration) {
+	if (this.state.replay.hasDuration && this.state.options['decorated']) {
 		if (this.scores.validate() || this.resizing) {
 			ctx.drawImage(this.scores.canvas, this.scores.x, this.scores.y);
 		}
@@ -1309,15 +1329,17 @@ Visualizer.prototype.mouseMoved = function(mx, my) {
 				this.state.shiftY = (this.state.replay.rows / 2 - (this.mouseY - this.miniMap.y))
 						* this.state.scale;
 			}
-			var centerBtn = this.btnMgr.groups['toolbar'].getButton(4);
-			centerBtn.enabled = this.state.shiftX !== 0
-					|| this.state.shiftY !== 0;
-			centerBtn.draw();
+			if (this.state.options['decorated']) {
+				var centerBtn = this.btnMgr.groups['toolbar'].getButton(4);
+				centerBtn.enabled = this.state.shiftX !== 0
+						|| this.state.shiftY !== 0;
+				centerBtn.draw();
+			}
 			this.director.draw();
-		} else {
+		} else if (this.state.options['decorated']) {
 			btn = this.btnMgr.mouseMove(mx, my);
 		}
-	} else {
+	} else if (this.state.options['decorated']) {
 		btn = this.btnMgr.mouseMove(mx, my);
 	}
 	if (btn && btn.hint) {
@@ -1336,6 +1358,7 @@ Visualizer.prototype.mouseMoved = function(mx, my) {
 Visualizer.prototype.mousePressed = function() {
 	if (this.state.options['interactive']) {
 		if (this.state.replay.hasDuration
+				&& this.state.options['decorated']
 				&& (this.counts.graph.contains(this.mouseX, this.mouseY) || this.scores.graph
 						.contains(this.mouseX, this.mouseY))) {
 			this.mouseDown = 1;
@@ -1362,7 +1385,9 @@ Visualizer.prototype.mousePressed = function() {
  */
 Visualizer.prototype.mouseReleased = function() {
 	this.mouseDown = 0;
-	this.btnMgr.mouseUp();
+	if (this.state.options['decorated']) {
+		this.btnMgr.mouseUp();
+	}
 	this.mouseMoved(this.mouseX, this.mouseY);
 };
 
@@ -1372,8 +1397,10 @@ Visualizer.prototype.mouseReleased = function() {
  * @private
  */
 Visualizer.prototype.mouseExited = function() {
-	this.btnMgr.mouseMove(-1, -1);
-	this.btnMgr.mouseUp();
+	if (this.state.options['decorated']) {
+		this.btnMgr.mouseMove(-1, -1);
+		this.btnMgr.mouseUp();
+	}
 	this.mouseDown = 0;
 };
 
@@ -1412,15 +1439,20 @@ Visualizer.prototype.keyPressed = function(key) {
 			break;
 		case Key.PLUS:
 		case Key.PLUS_OPERA:
+		case Key.PLUS_JAVA:
 			this.modifySpeed(+1);
 			break;
 		case Key.MINUS:
+		case Key.MINUS_JAVA:
 			this.modifySpeed(-1);
 			break;
 		default:
 			switch (String.fromCharCode(key)) {
 				case 'F':
 					this.setFullscreen(!this.state.config['fullscreen']);
+					break;
+				case 'C':
+					this.centerMap();
 					break;
 				default:
 					return false;

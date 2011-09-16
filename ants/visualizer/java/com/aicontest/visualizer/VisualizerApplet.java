@@ -9,6 +9,7 @@ import java.net.URL;
 
 import netscape.javascript.JSObject;
 
+import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
 
 import com.aicontest.visualizer.js.dom.HTMLDocument;
@@ -73,7 +74,7 @@ public class VisualizerApplet extends Applet implements Runnable,
 				if (param != null) {
 					Object old = options.get(id.toString(), options);
 					if (old instanceof Boolean) {
-						options.put(id.toString(), options, Boolean.parseBoolean(param));
+						options.put(id.toString(), options, "true".equals(param) || "1".equals(param));
 					} else if (old instanceof Double) {
 						options.put(id.toString(), options, Double.parseDouble(param));
 					} else {

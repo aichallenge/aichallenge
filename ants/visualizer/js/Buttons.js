@@ -84,7 +84,10 @@ Button.prototype.mouseDown = function() {
 		case ButtonGroup.MODE_RADIO:
 			this.locked = !this.locked;
 			if (this.locked) {
-				if (this.onclick) this.onclick.invoke(this);
+				if (this.onclick) {
+					this.onclick.args = [ this.idx ];
+					this.onclick.invoke();
+				}
 				btns = this.group.buttons;
 				for (i = 0; i < btns.length; i++) {
 					if (btns[i].down !== 0) {
@@ -111,7 +114,10 @@ Button.prototype.mouseUp = function() {
 			if (this.locked) {
 				this.down = 1;
 			} else {
-				if (this.onclick) this.onclick.invoke(this);
+				if (this.onclick) {
+					this.onclick.args = undefined;
+					this.onclick.invoke();
+				}
 				this.down = 0;
 			}
 			break;
