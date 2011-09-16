@@ -14,6 +14,7 @@ CREATE TABLE `game` (
   `map_id` int(11) NOT NULL,
   `turns` int(11) NOT NULL,
   `game_length` int(11) NOT NULL,
+  `cutoff` tinyint(1) NOT NULL DEFAULT '0',
   `winning_turn` int(11) NOT NULL,
   `ranking_turn` int(11) NOT NULL,
   `timestamp` datetime NOT NULL,
