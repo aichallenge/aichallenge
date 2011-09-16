@@ -26,42 +26,42 @@ var visualize = function (i) {
         } catch (err) {
             options = [];
         }
-    }
-    var interactive = options[0] || false;
-    var width = options[1] || 100;
-    var height = options[2] || 100;
-    var config = options[3] || {};
-    if (typeof java_codebase !== 'undefined') {
-        this.innerHTML = '';
-        var applet = document.createElement('applet');
-        var idx = java_codebase.indexOf('=');
-        var codeBaseAttribute = java_codebase.substring(0, idx); 
-        var codeBaseValue = java_codebase.substring(idx + 2, java_codebase.length - 1); 
-        applet.setAttribute(codeBaseAttribute, codeBaseValue);
-        applet.setAttribute('code', 'com.aicontest.visualizer.VisualizerApplet');
-        applet.setAttribute('width', width);
-        applet.setAttribute('height', height);
-        var addParam = function(name, value) {
-            var param = document.createElement('param');
-            param.setAttribute('name', name);
-            param.setAttribute('value', value);
-            applet.appendChild(param);
-        };
-        data = data.replace(/\n/g, '\\n');
-        addParam('replay_string', data);
-        addParam('interactive', interactive);
-        if (typeof java_debug !== 'undefined' && java_debug) {
-            addParam('debug', 'true');
-            addParam('separate_jvm', 'true');
-            addParam('classloader_cache', 'false');
+        var interactive = options[0] || false;
+        var width = options[1] || 100;
+        var height = options[2] || 100;
+        var config = options[3] || {};
+        if (typeof java_codebase !== 'undefined') {
+            this.innerHTML = '';
+            var applet = document.createElement('applet');
+            var idx = java_codebase.indexOf('=');
+            var codeBaseAttribute = java_codebase.substring(0, idx); 
+            var codeBaseValue = java_codebase.substring(idx + 2, java_codebase.length - 1); 
+            applet.setAttribute(codeBaseAttribute, codeBaseValue);
+            applet.setAttribute('code', 'com.aicontest.visualizer.VisualizerApplet');
+            applet.setAttribute('width', width);
+            applet.setAttribute('height', height);
+            var addParam = function(name, value) {
+                var param = document.createElement('param');
+                param.setAttribute('name', name);
+                param.setAttribute('value', value);
+                applet.appendChild(param);
+            };
+            data = data.replace(/\n/g, '\\n');
+            addParam('replay_string', data);
+            addParam('interactive', interactive);
+            if (typeof java_debug !== 'undefined' && java_debug) {
+                addParam('debug', 'true');
+                addParam('separate_jvm', 'true');
+                addParam('classloader_cache', 'false');
+            }
+            this.appendChild(applet);
+        } else if (typeof Visualizer !== 'undefined') {
+            var options = new Options();
+            options.data_dir = 'visualizer/';
+            options.interactive = interactive;
+            var vis = new Visualizer(this, options, width, height, config);
+            vis.loadReplayData(data);
         }
-        this.appendChild(applet);
-    } else if (typeof Visualizer !== 'undefined') {
-        var options = new Options();
-        options.data_dir = 'visualizer/';
-        options.interactive = interactive;
-        var vis = new Visualizer(this, options, width, height, config);
-        vis.loadReplayData(data);
     }
 };
 </script>
