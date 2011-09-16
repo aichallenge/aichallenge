@@ -9,7 +9,6 @@
  * @class A canvas that serves as an off-screen buffer for some graphics to be
  *        displayed possibly in tandem with other canvas elements or graphics.
  * @constructor
- * @returns {CanvasElement}
  */
 function CanvasElement() {
 	this.canvas = document.createElement('canvas');
@@ -87,6 +86,8 @@ CanvasElement.prototype.validate = function() {
  * Causes a comparison of the relevant values that make up the visible content
  * of this canvas between the visualizer and cached values. If the cached values
  * are out of date the canvas is marked as invalid.
+ * 
+ * @returns {Boolean} true, if the internal state has changed
  */
 CanvasElement.prototype.checkState = function() {
 	// default implementation doesn't invalidate
@@ -96,7 +97,7 @@ CanvasElement.prototype.checkState = function() {
  * Makes another canvas a dependency of this one. This will cause this canvas to
  * be invalidated if the dependency becomes invalid and will cause this canvas
  * to validate the dependency before attempting to validate itself. Do not
- * create cyclic dependencies.
+ * create cyclic dependencies!
  * 
  * @param {CanvasElement}
  *        element the dependency
@@ -159,7 +160,6 @@ CanvasElement.prototype.drawWrapped = function(x, y, w, h, wField, hField,
  * @constructor
  * @param {State}
  *        state the visualizer state for reference
- * @returns {CanvasElementAbstractMap}
  */
 function CanvasElementAbstractMap(state) {
 	this.upper();
@@ -188,6 +188,9 @@ CanvasElementAbstractMap.prototype.redFocusRectFun = function(xs, ys) {
 	}
 };
 
+/**
+ * Draws the terrain map.
+ */
 CanvasElementAbstractMap.prototype.draw = function() {
 	var row, col, start, isWall, xs, ys;
 	var rows = this.state.replay.rows;
@@ -223,12 +226,11 @@ CanvasElementAbstractMap.prototype.draw = function() {
 };
 
 /**
- * @class A canvas element for the minimap.
+ * @class A canvas element for the mini map.
  * @extends CanvasElementAbstractMap
  * @constructor
  * @param {State}
  *        state the visualizer state for reference
- * @returns {CanvasElementMiniMap}
  */
 function CanvasElementMiniMap(state) {
 	this.upper(state);
@@ -237,6 +239,14 @@ function CanvasElementMiniMap(state) {
 	this.ants = [];
 }
 CanvasElementMiniMap.extend(CanvasElementAbstractMap);
+
+/**
+ * Causes a comparison of the relevant values that make up the visible content
+ * of this canvas between the visualizer and cached values. If the cached values
+ * are out of date the canvas is marked as invalid.
+ * 
+ * @returns {Boolean} true, if the internal state has changed
+ */
 CanvasElementMiniMap.prototype.checkState = function() {
 	if ((this.state.time | 0) !== this.turn) {
 		this.invalid = true;
@@ -244,6 +254,11 @@ CanvasElementMiniMap.prototype.checkState = function() {
 		this.ants = this.state.replay.getTurn(this.turn);
 	}
 };
+
+/**
+ * Invokes {@link CanvasElementAbstractMap#draw} to draw the map and then
+ * renders ants as pixels on top of it.
+ */
 CanvasElementMiniMap.prototype.draw = function() {
 	var i, ant, color;
 	CanvasElementAbstractMap.prototype.draw.call(this);
@@ -265,20 +280,29 @@ CanvasElementMiniMap.prototype.draw = function() {
  * @constructor
  * @param {State}
  *        state the visualizer state for reference
- * @returns {CanvasElementMap}
  */
 function CanvasElementMap(state) {
 	this.upper(state);
 }
 CanvasElementMap.extend(CanvasElementAbstractMap);
 
-CanvasElementMap.prototype.draw = function() {
-	this.scale = this.state.scale;
-	CanvasElementAbstractMap.prototype.draw.call(this);
+/**
+ * Causes a comparison of the relevant values that make up the visible content
+ * of this canvas between the visualizer and cached values. If the cached values
+ * are out of date the canvas is marked as invalid.
+ * 
+ * @returns {Boolean} true, if the internal state has changed
+ */
+CanvasElementMap.prototype.checkState = function() {
+	if (this.scale !== this.state.scale) {
+		this.invalid = true;
+		this.scale = this.state.scale;
+	}
 };
 
 /**
  * @class A tiny canvas to contain a cached fog pattern for the selected player.
+ * @extends CanvasElement
  * @constructor
  * @param {State}
  *        state the visualizer state for reference
@@ -291,6 +315,13 @@ function CanvasElementFogPattern(state) {
 }
 CanvasElementFogPattern.extend(CanvasElement);
 
+/**
+ * Causes a comparison of the relevant values that make up the visible content
+ * of this canvas between the visualizer and cached values. If the cached values
+ * are out of date the canvas is marked as invalid.
+ * 
+ * @returns {Boolean} true, if the internal state has changed
+ */
 CanvasElementFogPattern.prototype.checkState = function() {
 	if (this.player !== this.state.fogPlayer) {
 		this.invalid = true;
@@ -298,6 +329,9 @@ CanvasElementFogPattern.prototype.checkState = function() {
 	}
 };
 
+/**
+ * Draws the 2x2 pixel pattern.
+ */
 CanvasElementFogPattern.prototype.draw = function() {
 	if (this.player !== undefined) {
 		this.ctx.fillStyle = this.state.replay.htmlPlayerColors[this.player];
@@ -314,7 +348,6 @@ CanvasElementFogPattern.prototype.draw = function() {
  *        state the visualizer state for reference
  * @param {CanvasElementFogPattern}
  *        pattern the fog pattern to use
- * @returns {CanvasElementFog}
  */
 function CanvasElementFog(state, pattern) {
 	CanvasElement.call(this);
@@ -330,6 +363,13 @@ function CanvasElementFog(state, pattern) {
 }
 CanvasElementFog.extend(CanvasElement);
 
+/**
+ * Causes a comparison of the relevant values that make up the visible content
+ * of this canvas between the visualizer and cached values. If the cached values
+ * are out of date the canvas is marked as invalid.
+ * 
+ * @returns {Boolean} true, if the internal state has changed
+ */
 CanvasElementFog.prototype.checkState = function() {
 	if (this.player !== this.state.fogPlayer
 			|| (this.player !== undefined && ((this.state.shiftX !== this.shiftX && this.w < this.scale
@@ -358,6 +398,10 @@ CanvasElementFog.prototype.checkState = function() {
 	}
 };
 
+/**
+ * Draws the minimal fog image required to cover the currently visible area of
+ * the map.
+ */
 CanvasElementFog.prototype.draw = function() {
 	var x, y, rowPixels, colPixels, x_idx, y_idx, rows, cols;
 	var x_i, y_i, x_f, y_f, fogRow;
@@ -401,6 +445,7 @@ CanvasElementFog.prototype.draw = function() {
 
 /**
  * @class The main map including ants and indicators
+ * @extends CanvasElement
  * @constructor
  * @param {State}
  *        state the visualizer state for reference
@@ -408,7 +453,6 @@ CanvasElementFog.prototype.draw = function() {
  *        map the background map
  * @param {CanvasElementFog}
  *        fog the fog overlay
- * @returns {CanvasElementAntsMap}
  */
 function CanvasElementAntsMap(state, map, fog) {
 	CanvasElement.call(this);
@@ -427,9 +471,15 @@ function CanvasElementAntsMap(state, map, fog) {
 	this.mouseCol = 0;
 	this.mouseRow = 0;
 }
-
 CanvasElementAntsMap.extend(CanvasElement);
 
+/**
+ * Causes a comparison of the relevant values that make up the visible content
+ * of this canvas between the visualizer and cached values. If the cached values
+ * are out of date the canvas is marked as invalid.
+ * 
+ * @returns {Boolean} true, if the internal state has changed
+ */
 CanvasElementAntsMap.prototype.checkState = function() {
 	var i, k, kf, p_i, p_k, dx, dy, rows, cols, ar, owner;
 	var hash = undefined;
@@ -523,41 +573,52 @@ CanvasElementAntsMap.prototype.checkState = function() {
 	}
 };
 
+/**
+ * Builds the internal list of ants and food that need a circle drawn around
+ * them because the mouse cursor is within their radius of effect (either attack
+ * or spawn).
+ * 
+ * @returns {Boolean} true, if the internal list has changed since the last call
+ *          of this method
+ */
 CanvasElementAntsMap.prototype.collectAntsAroundCursor = function() {
 	var col, row, ar, sr, colPixels, rowPixels, drawList, i, k, ant, dr, dc;
 	var found;
 	var circledAnts = [];
 	var hash = undefined
 	var same = true;
-	col = this.scale * this.mouseCol;
-	row = this.scale * this.mouseRow;
-	ar = this.state.replay.meta['replaydata']['attackradius2'];
-	ar *= this.scale * this.scale;
-	sr = this.state.replay.meta['replaydata']['spawnradius2'];
-	sr *= this.scale * this.scale;
-	colPixels = this.scale * this.state.replay.cols;
-	rowPixels = this.scale * this.state.replay.rows;
-	for (hash in this.drawStates) {
-		drawList = this.drawStates[hash];
-		for (i = drawList.length - 1; i >= 0; i--) {
-			ant = drawList[i];
-			dr = Math.abs(row - ant.mapY);
-			dc = Math.abs(col - ant.mapX);
-			dr = Math.min(dr, rowPixels - dr);
-			dc = Math.min(dc, colPixels - dc);
-			if (ant['owner'] === undefined && (dr * dr + dc * dc <= sr)
-					|| ant['owner'] !== undefined && (dr * dr + dc * dc <= ar)) {
-				if (same) {
-					found = false;
-					for (k = 0; k < this.circledAnts.length; k++) {
-						if (this.circledAnts[k] === ant) {
-							found = true;
-							break;
+	if (this.mouseOverVis) {
+		col = this.scale * this.mouseCol;
+		row = this.scale * this.mouseRow;
+		ar = this.state.replay.meta['replaydata']['attackradius2'];
+		ar *= this.scale * this.scale;
+		sr = this.state.replay.meta['replaydata']['spawnradius2'];
+		sr *= this.scale * this.scale;
+		colPixels = this.scale * this.state.replay.cols;
+		rowPixels = this.scale * this.state.replay.rows;
+		for (hash in this.drawStates) {
+			drawList = this.drawStates[hash];
+			for (i = drawList.length - 1; i >= 0; i--) {
+				ant = drawList[i];
+				dr = Math.abs(row - ant.mapY);
+				dc = Math.abs(col - ant.mapX);
+				dr = Math.min(dr, rowPixels - dr);
+				dc = Math.min(dc, colPixels - dc);
+				if (ant['owner'] === undefined && (dr * dr + dc * dc <= sr)
+						|| ant['owner'] !== undefined
+						&& (dr * dr + dc * dc <= ar)) {
+					if (same) {
+						found = false;
+						for (k = 0; k < this.circledAnts.length; k++) {
+							if (this.circledAnts[k] === ant) {
+								found = true;
+								break;
+							}
 						}
+						same &= found;
 					}
-					same &= found;
+					circledAnts.push(ant);
 				}
-				circledAnts.push(ant);
 			}
 		}
 	}
@@ -567,6 +628,10 @@ CanvasElementAntsMap.prototype.collectAntsAroundCursor = function() {
 	return true;
 }
 
+/**
+ * Draws ants onto the map image. This includes overlay letters / ids, attack
+ * lines, effect circles and finally the fog of war.
+ */
 CanvasElementAntsMap.prototype.draw = function() {
 	var halfScale, drawList, n, kf, w, dx, dy, d, fontSize, label, caption;
 	var target, rows, cols, x1, y1, x2, y2, rowPixels, colPixels, ar, sr, r;
@@ -735,6 +800,7 @@ CanvasElementAntsMap.prototype.draw = function() {
 /**
  * @class The main map with ants, dragged with the mouse and extended by borders
  *        if required
+ * @extends CanvasElement
  * @constructor
  * @param {State}
  *        state the visualizer state for reference
@@ -749,9 +815,15 @@ function CanvasElementShiftedMap(state, antsMap) {
 	this.shiftX = 0;
 	this.shiftY = 0;
 }
-
 CanvasElementShiftedMap.extend(CanvasElement);
 
+/**
+ * Causes a comparison of the relevant values that make up the visible content
+ * of this canvas between the visualizer and cached values. If the cached values
+ * are out of date the canvas is marked as invalid.
+ * 
+ * @returns {Boolean} true, if the internal state has changed
+ */
 CanvasElementShiftedMap.prototype.checkState = function() {
 	if (this.state.shiftX !== this.shiftX || this.state.shiftY !== this.shiftY) {
 		this.invalid = true;
@@ -760,6 +832,10 @@ CanvasElementShiftedMap.prototype.checkState = function() {
 	}
 };
 
+/**
+ * Draws the visible portion of the map with ants. If the map is smaller than
+ * the view area it is repeated in a darker shade on both sides.
+ */
 CanvasElementShiftedMap.prototype.draw = function() {
 	var x, y, dx, dy;
 	var mx = (this.w - this.antsMap.w) >> 1;
@@ -806,6 +882,7 @@ CanvasElementShiftedMap.prototype.draw = function() {
 
 /**
  * @class A canvas element for statistical time graphs.
+ * @extends CanvasElement
  * @constructor
  * @param {State}
  *        state the visualizer state for reference
@@ -818,9 +895,19 @@ function CanvasElementGraph(state, stats) {
 	this.stats = stats;
 	this.duration = 0;
 }
-
 CanvasElementGraph.extend(CanvasElement);
 
+/**
+ * Tries to replace the given player's status at the end of the match with a
+ * Unicode glyph. This is basically to reduce the noise caused by the longer
+ * textual descriptions.
+ * 
+ * @private
+ * @param i
+ *        {Number} the zero based player index
+ * @returns Returns a well supported Unicode glyph for some known status, or the
+ *          original status text otherwise.
+ */
 CanvasElementGraph.prototype.statusToGlyph = function(i) {
 	var status = this.state.replay.meta['status'][i];
 	if (status === 'survived') {
@@ -832,6 +919,15 @@ CanvasElementGraph.prototype.statusToGlyph = function(i) {
 	}
 };
 
+/**
+ * Helper function that returns a replay property with the given name, that
+ * should refer to a statistics array. If the name is 'scores' the replay is
+ * also checked for the end game bonus.
+ * 
+ * @param name
+ *        {String} the property name to be queried
+ * @returns {___anonymous27567_27698}
+ */
 CanvasElementGraph.prototype.getStats = function(name) {
 	return {
 		values : this.state.replay[name],
@@ -840,6 +936,13 @@ CanvasElementGraph.prototype.getStats = function(name) {
 	};
 };
 
+/**
+ * Causes a comparison of the relevant values that make up the visible content
+ * of this canvas between the visualizer and cached values. If the cached values
+ * are out of date the canvas is marked as invalid.
+ * 
+ * @returns {Boolean} true, if the internal state has changed
+ */
 CanvasElementGraph.prototype.checkState = function() {
 	if (this.duration !== this.state.replay.duration) {
 		this.invalid = true;
@@ -940,6 +1043,7 @@ function CanvasElementStats(state, caption, stats) {
 	this.graph = new CanvasElementGraph(state, stats);
 	this.turn = 0;
 	this.time = 0;
+	this.label = false;
 }
 
 CanvasElementStats.extend(CanvasElement);
@@ -955,12 +1059,21 @@ CanvasElementStats.prototype.setSize = function(width, height) {
 	this.showGraph = this.graph.h > 0;
 };
 
+/**
+ * Causes a comparison of the relevant values that make up the visible content
+ * of this canvas between the visualizer and cached values. If the cached values
+ * are out of date the canvas is marked as invalid.
+ * 
+ * @returns {Boolean} true, if the internal state has changed
+ */
 CanvasElementStats.prototype.checkState = function() {
 	if ((this.showGraph && this.time !== this.state.time)
-			|| this.time !== (this.state.time | 0)) {
+			|| this.time !== (this.state.time | 0)
+			|| this.label !== (this.state.config['label'] === 1)) {
 		this.invalid = true;
 		this.time = this.state.time;
 		this.turn = this.time | 0;
+		this.label = this.state.config['label'] === 1;
 	}
 };
 
@@ -1071,7 +1184,7 @@ CanvasElementStats.prototype.drawColorBar = function(x, y, w, h, values, bonus) 
 	offsetX = x + 2;
 	for (i = 0; i < useValues.length; i++) {
 		text = Math.round(values[i]);
-		if (this.state.config['label'] === 1) {
+		if (this.label) {
 			text = String.fromCharCode(65 + i) + ':' + text;
 		}
 		var bonusText = (bonus && bonus[i]) ? '+' + Math.round(bonus[i]) : '';
