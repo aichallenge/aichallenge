@@ -118,7 +118,7 @@ if (array_key_exists('error', $gamedata)) {
         if (!contest_query("insert_game_player",
                            $game_id,
                            $gamedata->errors[$player_id],
-                           $gamedata->status[$$player_id],
+                           $gamedata->status[$player_id],
                            $gamedata->rank[$player_id],
                            $gamedata->score[$player_id],
                            $ratings[$player_id]->getMean(),
