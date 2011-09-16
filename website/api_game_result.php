@@ -100,7 +100,7 @@ if (array_key_exists('error', $gamedata)) {
                                   50.0/3.0,   // sigma
                                   50.0/6.0,   // beta
                                   50.0/300.0, // tau
-                                  0.01);      // draw prob
+                                  0.05);      // draw prob
         $ratings = array();
         $players = array();
         $teams = array();
