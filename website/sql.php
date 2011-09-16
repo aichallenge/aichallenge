@@ -78,7 +78,7 @@ $contest_sql = array(
                               where matchup_id = %s
                               order by player_id;",
     "insert_game_data" => "insert into game (seed_id, map_id, timestamp, worker_id, turns, game_length, winning_turn, ranking_turn) 
-                           select seed_id, map_id, current_timestamp, worker_id, %s, %s, %s
+                           select seed_id, map_id, current_timestamp, worker_id, %s, %s, %s, %s
                            from matchup
                            where matchup_id = %s;",
     "insert_game_player" => "insert into game_player (game_id, user_id, submission_id, rank_before, player_id, errors, status, game_rank, game_score, valid, mu_before, mu_after, sigma_before, sigma_after)
