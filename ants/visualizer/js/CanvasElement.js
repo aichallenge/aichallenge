@@ -195,8 +195,8 @@ CanvasElementAbstractMap.prototype.draw = function() {
 	var row, col, start, isWall, xs, ys;
 	var rows = this.state.replay.rows;
 	var cols = this.state.replay.cols;
-	var rowOpt = this.state.options.row;
-	var colOpt = this.state.options.col;
+	var rowOpt = this.state.options['row'];
+	var colOpt = this.state.options['col'];
 	this.ctx.fillStyle = SAND_COLOR;
 	this.ctx.fillRect(0, 0, this.w, this.h);
 	this.ctx.fillStyle = this.ctx.createPattern(this.water, 'repeat');
@@ -217,7 +217,7 @@ CanvasElementAbstractMap.prototype.draw = function() {
 					* (col - start), this.scale);
 		}
 	}
-	if (rowOpt !== undefined && colOpt !== undefined) {
+	if (!isNaN(rowOpt) && !isNaN(colOpt)) {
 		xs = (colOpt % cols) * this.scale - 4.5;
 		ys = (rowOpt % rows) * this.scale - 4.5;
 		this.drawWrapped(xs, ys, this.scale + 9, this.scale + 9, this.w,

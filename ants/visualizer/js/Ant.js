@@ -250,4 +250,4 @@ KeyFrameEx.prototype.calcMapCoords = function(scale, mapWidth, mapHeight) {
 	// correct coordinates
 	this.mapX = Math.wrapAround(this.mapX, mapWidth) - scale + 1;
 	this.mapY = Math.wrapAround(this.mapY, mapHeight) - scale + 1;
-}
+};

@@ -38,12 +38,12 @@ Director.prototype.play = function() {
 		this.stopAt = this.duration;
 		if (this.onstate) this.onstate();
 		this.loop(0);
-		if (this.vis.state.options.profile) console.profile();
+		if (this.vis.state.options['profile']) console.profile();
 	}
 };
 Director.prototype.stop = function() {
 	if (this.playing()) {
-		if (this.vis.state.options.profile) console.profileEnd();
+		if (this.vis.state.options['profile']) console.profileEnd();
 		this.speed = 0;
 		this.lastTime = undefined;
 		if (this.onstate) this.onstate();
@@ -97,7 +97,7 @@ Director.prototype.loop = function(delay) {
 	this.vis.draw();
 	this.tickFlag = false;
 	if (goOn) {
-		if (this.vis.state.options.debug && cpuTime !== undefined) {
+		if (this.vis.state.options['debug'] && cpuTime !== undefined) {
 			if (this.frameStart === undefined) {
 				this.frameStart = lastTime;
 				this.frameCounter = 0;

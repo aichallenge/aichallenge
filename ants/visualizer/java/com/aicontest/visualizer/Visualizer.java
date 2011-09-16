@@ -157,10 +157,6 @@ public class Visualizer extends WebWrapper implements MouseInputListener,
 		return task;
 	}
 
-	public boolean isFullscreenSupported() {
-		return app.isFullScreenSupported();
-	}
-
 	public boolean setFullscreen(boolean enable) {
 		return app.setFullScreen(enable);
 	}

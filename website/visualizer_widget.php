@@ -1,6 +1,6 @@
 <?php
 
-function visualizer_activate() {
+function visualizer_activate($extended) {
     $java = get_java_codebase();
     if (!isset ($java)) {
         if (file_exists(dirname(__FILE__)."/visualizer/js/visualizer.js")) {
@@ -12,6 +12,7 @@ function visualizer_activate() {
         <script type="text/javascript" src="<?php echo $js; ?>"></script>
 <?php
     }
+    if ($extended) {
 ?>
 <script>
 // window.isFullscreenSupported = function () { return false; };
@@ -56,12 +57,16 @@ var visualize = function (i) {
         }
         this.appendChild(applet);
     } else if (typeof Visualizer !== 'undefined') {
-        var vis = new Visualizer(this, 'visualizer/', interactive, width, height, config);
+        var options = new Options();
+        options.data_dir = 'visualizer/';
+        options.interactive = interactive;
+        var vis = new Visualizer(this, options, width, height, config);
         vis.loadReplayData(data);
     }
 };
 </script>
 <?php
+    }
 }
 
 function get_java_codebase() {
@@ -77,7 +82,7 @@ function get_java_codebase() {
 }
 
 function visualize_pre() {
-    visualizer_activate();
+    visualizer_activate(true);
     $java = get_java_codebase();
     if (isset ($java)) {
 ?>
@@ -137,10 +142,14 @@ function visualizer_widget($replay, $interactive=true, $width=690, $height=700) 
 
     // Write script tags if we use the canvas visualizer
     if (!isset ($java)) { 
-        visualizer_activate();
+        visualizer_activate(false);
         ?>
             <script type="text/javascript">
-                visualizer = new Visualizer(document.getElementById('visualizerDiv'), 'visualizer/', <?php echo ($interactive) ? 'true' : 'false'; ?>, <?php echo $width; ?>, <?php echo $height; if (!$interactive) echo ', {fullscreen:false}'?>);
+                var options = new Options();
+                options.data_dir = 'visualizer/';
+                options.interactive = <?php echo ($interactive) ? 'true' : 'false'; ?>;
+                options.embedded = <?php echo ($interactive) ? 'false' : 'true'; ?>;
+                visualizer = new Visualizer(document.getElementById('visualizerDiv'), options, <?php echo $width; ?>, <?php echo $height; ?>);
                 visualizer.loadReplayDataFromURI('<?php echo $replay; ?>');
             </script>
         <?php

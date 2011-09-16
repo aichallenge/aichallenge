@@ -31,14 +31,6 @@ public interface IVisualizerUser {
 	void setVisualizerPanel(Panel visualizerPanel);
 
 	/**
-	 * Allows the visualizer to check if fullscreen mode is supported by
-	 * application. This is not the case for unsigned applets for example.
-	 * 
-	 * @return whether fullscreen mode is supported
-	 */
-	boolean isFullScreenSupported();
-
-	/**
 	 * Enables or disables fullscreen mode.
 	 * 
 	 * @param enable

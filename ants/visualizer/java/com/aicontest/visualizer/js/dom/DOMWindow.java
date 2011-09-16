@@ -126,10 +126,6 @@ public class DOMWindow {
 		return 0;
 	}
 
-	public boolean isFullscreenSupported() {
-		return webWrapper.isFullscreenSupported();
-	}
-
 	public boolean setFullscreen(boolean enable) {
 		return webWrapper.setFullscreen(enable);
 	}
