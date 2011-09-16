@@ -23,7 +23,7 @@ $(function () {
         textExtraction: function (node) {
             node = $(node);
             if (node.attr("class") === "number") {
-                return parseInt(node.text());
+                return parseFloat(node.text());
             } else if (node.attr("class") === "country") {
                 return node.children().children().attr("title");
             } else {

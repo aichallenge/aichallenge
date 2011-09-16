@@ -256,7 +256,7 @@ $(function () {
         /*textExtraction: function (node) {
             node = $(node);
             if (node.attr("class") === "number") {
-                return parseInt(node.text());
+                return parseFloat(node.text());
             } else {
                 return node.text();
             }
