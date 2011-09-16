@@ -69,7 +69,7 @@ function nice_ordinal($num) {
 
 function nice_change_marker($value, $cushion, $reverse=FALSE) {
     if ($value == NULL) {
-        $arrow = "";
+        $arrow = "&nbsp;";
     } elseif ($value > $cushion) {
         $arrow = $reverse ? "&darr;" : "&uarr;";
     } elseif ($value < -$cushion) {
