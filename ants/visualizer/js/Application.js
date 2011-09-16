@@ -690,13 +690,13 @@ Visualizer.prototype.tryStart = function() {
 					}
 				}
 				// generate fog images
-				colors = [];
-				for (i = 0; i < this.state.replay.players; i++) {
-					colors.push(this.state.replay.meta['playercolors'][i]);
-				}
-				this.imgMgr.colorize(4, colors);
-				this.imgMgr.colorize(2, colors);
 				if (this.state.replay.hasDuration) {
+					colors = [];
+					for (i = 0; i < this.state.replay.players; i++) {
+						colors.push(this.state.replay.meta['playercolors'][i]);
+					}
+					this.imgMgr.colorize(4, colors);
+					this.imgMgr.colorize(2, colors);
 					bg = this.btnMgr.addImageGroup('fog',
 							this.imgMgr.patterns[2], ImageButtonGroup.VERTICAL,
 							ButtonGroup.MODE_RADIO, 2);
@@ -1143,7 +1143,7 @@ Visualizer.prototype.showFog = function(sender) {
  * {@link Director} and resembles the core of the visualization.
  */
 Visualizer.prototype.draw = function() {
-	var ctx, w, h, mx, my, x, y/* , ar, sr */;
+	var ctx, w, h, mx, my, x, y;
 	var loc = this.shiftedMap;
 
 	// map
