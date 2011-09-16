@@ -18,15 +18,21 @@ public class VisualizerApplet extends Applet implements Runnable,
 		IVisualizerUser {
 
 	private URL replay;
+	private String replayStr;
 	private Thread thread;
 	private Visualizer webWrapper;
 
 	@Override
 	public void init() {
-		try {
-			replay = new URL(getDocumentBase(), getParameter("replay"));
-		} catch (MalformedURLException e) {
-			e.printStackTrace();
+		replayStr = getParameter("replay_string");
+		if (replayStr != null) {
+			replayStr = replayStr.replace("\\n", "\n");
+		} else {
+			try {
+				replay = new URL(getDocumentBase(), getParameter("replay"));
+			} catch (MalformedURLException e) {
+				e.printStackTrace();
+			}
 		}
 		setBackground(Color.WHITE);
 		setFocusable(true);
@@ -61,10 +67,12 @@ public class VisualizerApplet extends Applet implements Runnable,
 			webWrapper = new Visualizer(this, getWidth(), getHeight());
 			webWrapper.setJsRoot(jsRoot);
 			HTMLDocument document = webWrapper.getDomWindow().getDocument();
-			ScriptableObject vis = webWrapper.construct("Visualizer",
-					new Object[] { document, "/" });
-			webWrapper.invoke(vis, "loadReplayDataFromURI",
-					new Object[] { replay });
+			ScriptableObject vis = webWrapper.construct("Visualizer", new Object[] { document, "/" });
+			if (replayStr != null) {
+				webWrapper.invoke(vis, "loadReplayData", new Object[] { replayStr });
+			} else {
+				webWrapper.invoke(vis, "loadReplayDataFromURI", new Object[] { replay });
+			}
 			addKeyListener(webWrapper);
 			webWrapper.loop();
 		} catch (Exception e) {
