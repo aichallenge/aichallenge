@@ -18,8 +18,6 @@ use Moserware\Skills\Team;
 use Moserware\Skills\Teams;
 use Moserware\Skills\SkillCalculator;
 
-echo 'starting trueskill test';
-
 $calculator = new FactorGraphTrueSkillCalculator();
 $gameInfo = new GameInfo(50.0,       // mu
                          50.0/3.0,   // sigma
@@ -27,22 +25,29 @@ $gameInfo = new GameInfo(50.0,       // mu
                          50.0/300.0, // tau
                          0.01);      // draw prob
 
+$mu = array(50.042, 50.0415, 50.1962, 50.1956, 50.2264, 50.2051, 50.2169, 50.2387, 50.2435, 50.2516);
+$sigma = array(16.6247, 16.6252, 16.4705, 16.4711, 16.4403, 16.4616, 16.4498, 16.428, 16.4232, 16.4151);
+
+// $mu = array(50.0,50.0,50.0,50.0,50.0,50.0,50.0,50.0,50.0,50.0);
+// $sigma = array(16.6667,16.6667,16.6667,16.6667,16.6667,16.6667,16.6667,16.6667,16.6667,16.6667);
+$game_rank = array(2,3,1,4,5,6,7,7,0,7);
+
 $players = array();
 $ratings = array();
 $teams = array();
-for ($i = 1; $i < 3; ++$i) {
+$rank = array();
+$count = 10;
+
+for ($i = 1; $i < $count; ++$i) {
     $players[] = new Player($i);
-    $teams[] = new Team($players[$i-1], new Rating(50.0, 16.66));
+    $teams[] = new Team($players[$i-1], new Rating($mu[$i-1], $sigma[$i-1]));
+    $rank[] = $game_rank[$i-1];
 }
 
-$newRatings = $calculator->calculateNewRatings($gameInfo, $teams, array(0, 1));
+$newRatings = $calculator->calculateNewRatings($gameInfo, $teams, $rank);
 
-$player0NewRating = $newRatings->getRating($players[0]);
-$player1NewRating = $newRatings->getRating($players[1]);
-
-echo "player 0: $player0NewRating";
-echo "player 1: $player1NewRating";
-
-echo 'finished trueskill test';
+for ($i = 1; $i < $count; ++$i) {
+    echo "player$i: ".$newRatings->getRating($players[$i-1])."\n";
+}
 
 ?>

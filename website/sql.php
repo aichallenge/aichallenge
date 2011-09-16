@@ -35,7 +35,7 @@ $contest_sql = array(
                                         from language
                                         where name = '%s'",
     "insert_new_language" => "insert into language (name) values ('%s')",
-    "select_next_matchup" => "select matchup.*, map.filename, map.max_turns
+    "select_next_matchup" => "select matchup.*, map.filename, map.turns
                               from matchup
                               left join map on matchup.map_id = map.map_id
                               where deleted = 0
@@ -77,7 +77,7 @@ $contest_sql = array(
                               inner join submission s on p.submission_id = s.submission_id
                               where matchup_id = %s
                               order by player_id;",
-    "insert_game_data" => "insert into game (seed_id, map_id, timestamp, worker_id, turns, winning_turn, ranking_turn) 
+    "insert_game_data" => "insert into game (seed_id, map_id, timestamp, worker_id, turns, game_length, winning_turn, ranking_turn) 
                            select seed_id, map_id, current_timestamp, worker_id, %s, %s, %s
                            from matchup
                            where matchup_id = %s;",
@@ -190,7 +190,7 @@ $contest_sql = array(
             where %s = %s",
     "select_game_list" => "select g.game_id, g.timestamp,
                m.players, m.map_id, m.filename as map_name,
-               g.turns, g.winning_turn, g.ranking_turn,
+               g.game_length, g.winning_turn, g.ranking_turn,
                gp.user_id, gp.submission_id, u.username, s.version,
                gp.player_id, gp.game_rank, gp.status,
                gp.mu_after - 3 * gp.sigma_after as skill,
@@ -220,7 +220,7 @@ $contest_sql = array(
         where %s = %s",
     "select_map_game_list" => "select g.game_id, g.timestamp,
                m.players, m.map_id, m.filename as map_name,
-               g.turns, g.winning_turn, g.ranking_turn,
+               g.game_length, g.winning_turn, g.ranking_turn,
                gp.user_id, gp.submission_id, u.username, s.version,
                gp.player_id, gp.game_rank, gp.status,
                gp.mu_after - 3 * gp.sigma_after as skill,

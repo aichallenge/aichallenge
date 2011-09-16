@@ -77,6 +77,7 @@ if (array_key_exists('error', $gamedata)) {
 } else {
     // move matchup data to game table
     if (!contest_query("insert_game_data",
+                       $gamedata->turns,
                        $gamedata->game_length,
                        $gamedata->replaydata->winning_turn,
                        $gamedata->replaydata->ranking_turn,
