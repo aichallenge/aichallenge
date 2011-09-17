@@ -160,7 +160,7 @@ function create_ranking_json($page=0, $org_id=NULL, $country_id=NULL, $language_
     return $json;
 }
 
-function create_ranking_html($page=0, $org_id=NULL, $country_id=NULL, $language_id=NULL) {
+function create_ranking_table($page=0, $org_id=NULL, $country_id=NULL, $language_id=NULL) {
     global $memcache;
 
     $cache_key = cache_key($page, $org_id, $country_id, $language_id, 'html');
@@ -292,19 +292,19 @@ function get_ranking_json($page=0, $org_id=NULL, $country_id=NULL, $language_id=
 }
 
 function get_ranking_table($page=0, $org_id=NULL, $country_id=NULL, $language_id=NULL) {
-    return create_ranking_html($page, $org_id, $country_id, $language_id);
+    return create_ranking_table($page, $org_id, $country_id, $language_id);
 }
 
 function get_language_ranking($language_id, $page=1) {
-    return get_ranking_html($page, NULL, NULL, $language_id);
+    return get_ranking_table($page, NULL, NULL, $language_id);
 }
 
 function get_country_ranking($country_id, $page=1) {
-    return get_ranking_html($page, NULL, $country_id);
+    return get_ranking_table($page, NULL, $country_id);
 }
 
 function get_org_ranking($org_id, $page=1) {
-    return get_ranking_html($page, $org_id);
+    return get_ranking_table($page, $org_id);
 }
 
 ?>
