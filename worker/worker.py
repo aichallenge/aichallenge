@@ -480,7 +480,12 @@ class Worker:
             bots = []
             for submission_id in task["submissions"]:
                 submission_id = int(submission_id)
-                if self.compile(submission_id, run_test=False):
+                # sometimes the Go bots get marked good,
+                # then the Go language is updated and breaks syntax,
+                # then they need to be marked as invalid again
+                # so this will report status to turn off bots that fail
+                #   sometime after they already succeeded
+                if self.compile(submission_id, report_status=True, run_test=False):
                     submission_dir = self.submission_dir(submission_id)
                     run_cmd = compiler.get_run_cmd(submission_dir)
                     #run_dir = tempfile.mkdtemp(dir=server_info["compiled_path"])
