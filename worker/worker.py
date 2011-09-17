@@ -293,9 +293,11 @@ class Worker:
             log.error(traceback.format_exc())
             return False
 
-    def compile(self, submission_id=None, report_status=False, run_test=True):
+    def compile(self, submission_id=None, report_status=(False, False), run_test=True):
+        report_success, report_failure = report_status
         def report(status, language="Unknown", errors=None):
-            if report_status:
+            # oooh, tricky, a terinary in an if
+            if report_success if type(errors) != list else report_failure:
                 self.post_id += 1
                 result = {"post_id": self.post_id,
                           "submission_id": submission_id,
@@ -303,7 +305,7 @@ class Worker:
                           "language": language }
                 if status != 40:
                     if type(errors) != list:
-                        errors = [errors] # for valid json according to php
+                        errors = [errors] # for valid json
                     # get rid of any binary garbage by decoding to UTF-8
                     for i in range(len(errors)):
                         try:
@@ -485,7 +487,7 @@ class Worker:
                 # then they need to be marked as invalid again
                 # so this will report status to turn off bots that fail
                 #   sometime after they already succeeded
-                if self.compile(submission_id, report_status=True, run_test=False):
+                if self.compile(submission_id, report_status=(False, True), run_test=False):
                     submission_dir = self.submission_dir(submission_id)
                     run_cmd = compiler.get_run_cmd(submission_dir)
                     #run_dir = tempfile.mkdtemp(dir=server_info["compiled_path"])
@@ -535,7 +537,7 @@ class Worker:
                 if task['task'] == 'compile':
                     submission_id = int(task['submission_id'])
                     try:
-                        if not self.compile(submission_id, True):
+                        if not self.compile(submission_id, (True, True)):
                             self.clean_download(submission_id)
                         return True
                     except Exception:
