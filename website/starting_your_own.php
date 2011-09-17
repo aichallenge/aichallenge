@@ -64,7 +64,7 @@
   sample code already in this file. Right near the top of the file, you'll see
   the following lines of code.</p>
 <p class="code">// (1) If we current have a fleet in flight, just do nothing.
-  <br />if (pw.MyFleets().size() >= 1) {<br />&nbsp;&nbsp;&nbsp;&nbsp;return;
+  <br />if (pw.MyFleets().size() &gt;= 1) {<br />&nbsp;&nbsp;&nbsp;&nbsp;return;
   <br />}</p>
 <p>These lines are what stop your bot from sending all of its ships at once.
   The number that appears in this code is the maximum number of fleets that
@@ -72,7 +72,7 @@
   you can make your bot more aggressive. Change the number from 1 to 2, so the
   code looks like this:
 <p class="code">// (1) If we current have a fleet in flight, just do nothing.
-  <br />if (pw.MyFleets().size() >= 2) {<br />&nbsp;&nbsp;&nbsp;&nbsp;return;
+  <br />if (pw.MyFleets().size() &gt;= 2) {<br />&nbsp;&nbsp;&nbsp;&nbsp;return;
   <br />}</p>
 <p>Save the file and close it. Back in the terminal, recompile your code using
   the following command.</p>

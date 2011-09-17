@@ -48,7 +48,7 @@
   the file MyBot.java. Near the very top of the file, you will see the
   following code.</p>
 <p class="code">// (1) If we current have a fleet in flight, just do nothing.
-  <br />if (pw.MyFleets().size() >= 1) {<br />&nbsp;&nbsp;&nbsp;&nbsp;return;
+  <br />if (pw.MyFleets().size() &gt;= 1) {<br />&nbsp;&nbsp;&nbsp;&nbsp;return;
   <br />}</p>
 <p>These lines are what stop your bot from sending all of its ships at once.
   The number that appears in this code is the maximum number of fleets that
@@ -56,7 +56,7 @@
   you can make your bot more aggressive. Change the number from 1 to 2, so the
   code looks like this:
 <p class="code">// (1) If we current have a fleet in flight, just do nothing.
-  <br />if (pw.MyFleets().size() >= 2) {<br />&nbsp;&nbsp;&nbsp;&nbsp;return;
+  <br />if (pw.MyFleets().size() &gt;= 2) {<br />&nbsp;&nbsp;&nbsp;&nbsp;return;
   <br />}</p>
 <p>Once you save the change to MyBot.java, recompile your bot:</p>
 <p class="code">javac *.java</p>
@@ -81,7 +81,7 @@
   double sourceScore = Double.MIN_VALUE;<br />
   for (Planet p : pw.MyPlanets()) {<br />
     &nbsp;&nbsp;&nbsp;&nbsp;double score = (double)p.NumShips();<br />
-    &nbsp;&nbsp;&nbsp;&nbsp;if (score > sourceScore) {<br />
+    &nbsp;&nbsp;&nbsp;&nbsp;if (score &gt; sourceScore) {<br />
       &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sourceScore = score;<br/>
       &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;source = p;<br />
     &nbsp;&nbsp;&nbsp;&nbsp;}<br />
@@ -91,7 +91,7 @@
   double destScore = Double.MIN_VALUE;<br />
   for (Planet p : pw.NotMyPlanets()) {<br />
     &nbsp;&nbsp;&nbsp;&nbsp;double score = 1.0 / (1 + p.NumShips());<br />
-    &nbsp;&nbsp;&nbsp;&nbsp;if (score > destScore) {<br />
+    &nbsp;&nbsp;&nbsp;&nbsp;if (score &gt; destScore) {<br />
       &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;destScore = score;<br />
       &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;dest = p;<br />
     &nbsp;&nbsp;&nbsp;&nbsp;}<br />
@@ -104,7 +104,7 @@
   for (Planet p : pw.MyPlanets()) {<br />
     &nbsp;&nbsp;&nbsp;&nbsp;double score = <b>(double)p.NumShips() /
       (1 + p.GrowthRate());</b><br />
-    &nbsp;&nbsp;&nbsp;&nbsp;if (score > sourceScore) {<br />
+    &nbsp;&nbsp;&nbsp;&nbsp;if (score &gt; sourceScore) {<br />
       &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sourceScore = score;<br />
       &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;source = p;<br />
     &nbsp;&nbsp;&nbsp;&nbsp;}<br />
@@ -115,7 +115,7 @@
   for (Planet p : pw.NotMyPlanets()) {<br />
     &nbsp;&nbsp;&nbsp;&nbsp;double score = <b>(double)(1 + p.GrowthRate()) /
       p.NumShips();</b><br />
-    &nbsp;&nbsp;&nbsp;&nbsp;if (score > destScore) {<br />
+    &nbsp;&nbsp;&nbsp;&nbsp;if (score &gt; destScore) {<br />
       &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;destScore = score;<br />
       &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;dest = p;<br />
     &nbsp;&nbsp;&nbsp;&nbsp;}<br />
@@ -137,19 +137,19 @@
   fleets at a time if we're behind.</p>
 <p>Look for the bit of code in MyBot.java that looks like this:</p>
 <p class="code">
-  if (pw.MyFleets().size() >= 2) {<br />
+  if (pw.MyFleets().size() &gt;= 2) {<br />
   &nbsp;&nbsp;&nbsp;&nbsp;return;<br />
   }</p>
 <p>and change it to this:</p>
 <p class="code">
   <b>int numFleets = 1;<br />
   boolean attackMode = false;<br />
-  if (pw.Production(1) >= pw.Production(2)) {<br />
+  if (pw.Production(1) &gt;= pw.Production(2)) {<br />
     &nbsp;&nbsp;&nbsp;&nbsp;numFleets = 1;<br />
   } else {<br />
     &nbsp;&nbsp;&nbsp;&nbsp;numFleets = 3;<br />
   }</b><br />
-  if (pw.MyFleets().size() >= <b>numShips</b>) {<br />
+  if (pw.MyFleets().size() &gt;= <b>numShips</b>) {<br />
     &nbsp;&nbsp;&nbsp;&nbsp;return;<br />
   }</p>
 <p>Basically what this strategy says is "if you're ahead then take it easy,

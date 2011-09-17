@@ -114,7 +114,9 @@ function visualize_map($map, $width=690, $height=700) {
 }
 
 function visualizer_widget($replay, $interactive=true, $width=690, $height=700) {
-    echo '<div id="visualizerDiv">';
+    ?>
+        <div id="visualizerDiv">
+    <?php
 
     // Write applet tag if we use Java
     $java = get_java_codebase();

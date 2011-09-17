@@ -54,8 +54,8 @@ class Ants {
 		SqVal[][] _map;
 
 		void setup(string data) {
-			foreach (line; data.splitlines()) {
-				line = line.strip().tolower();
+			foreach (line; data.splitLines()) {
+				line = line.strip().toLower();
 				if (line.length > 0) {
 					auto tokens = line.split();
 					auto key = tokens[0];
@@ -92,14 +92,14 @@ class Ants {
 			_myAnts.clear;
 			_enemyAnts.clear;
 			// update map and create new ant and food lists
-			foreach (line; data.splitlines()) {
+			foreach (line; data.splitLines()) {
 				line = line.strip();
 				if (line.length > 0) {
 					auto tokens = line.split();
 					if (tokens.length >= 3) {
 						auto row = to!uint(tokens[1]);
 						auto col = to!uint(tokens[2]);
-						switch(tokens[0].tolower) {
+						switch(tokens[0].toLower) {
 							case "a":
 								SqVal owner = cast(SqVal) to!byte(tokens[3]);
 								_map[row][col] = owner;
@@ -285,7 +285,7 @@ class Ants {
 			auto ants = new Ants();
 			auto mapData = appender!(string)();
 			foreach (currentLine; stdin.byLine()) {
-				currentLine.tolowerInPlace();
+				currentLine.toLowerInPlace();
 				switch (currentLine) {
 					case "ready":
 						ants.setup(mapData.data);

@@ -21,11 +21,10 @@
     <mkdir dir="${build.java}" />
     <javac destdir="${build.java}" debug="${java.debug}" target="${java.target}" includeAntRuntime="false">
       <src path="3rdparty/mozilla/js/rhino/src" />
-      <include name="**"/>
-      <exclude name="org/mozilla/javascript/JavaAdapter.java"/>
+      <include name="**" />
+      <exclude name="org/mozilla/javascript/JavaAdapter.java" />
     </javac>
-    <copy file="3rdparty/mozilla/js/rhino/src/org/mozilla/javascript/resources/Messages.properties"
-        tofile="${build.java}/org/mozilla/javascript/resources/Messages.properties"/>
+    <copy file="3rdparty/mozilla/js/rhino/src/org/mozilla/javascript/resources/Messages.properties" tofile="${build.java}/org/mozilla/javascript/resources/Messages.properties" />
   </target>
 
   <target name="compile-visualizer" depends="compile-rhino">
@@ -39,9 +38,9 @@
       <arg value="${src.js}" />
     </java>
   </target>
-  
+
   <!-- JAR generation -->
-  
+
   <target name="check-jaropt">
     <condition property="jaropt.available">
       <available file="3rdparty/cmc/jaropt.jar" />
@@ -62,20 +61,18 @@
   </target>
 
   <target name="jar" depends="compile-rhino,compile-visualizer,compile-js,download-jaropt,check-jar" unless="jar.uptodate" description="creates the visualizer jar file for use as an applet and as an offline viewer">
-    <mkdir dir="${build.deploy}"/>
+    <mkdir dir="${build.deploy}" />
     <jar jarfile="${jar.file}" update="no" compress="${jar.compression}" level="9" manifest="${src.java}/MANIFEST.MF">
       <fileset dir="${src.data}">
         <include name="img/**" />
       </fileset>
       <fileset dir="${build.java}">
-        <include name="**"/>
-        <exclude name="org/mozilla/classfile/**"/>
-        <exclude name="org/mozilla/javascript/annotations/**"/>
+        <include name="**" />
+        <exclude name="org/mozilla/classfile/**" />
+        <exclude name="org/mozilla/javascript/annotations/**" />
       </fileset>
     </jar>
-    <taskdef name="JarOpt" 
-             classname="org.cmc.jaroptimizer.JarOptTask" 
-             classpath="${java.home}/lib/plugin.jar;3rdparty/cmc/jaropt.jar"/>
+    <taskdef name="JarOpt" classname="org.cmc.jaroptimizer.JarOptTask" classpath="${java.home}/lib/plugin.jar;3rdparty/cmc/jaropt.jar" />
     <JarOpt src="${jar.file}" dst="${build.deploy}/min.jar" examinedynamicdependencies="false">
       <includePattern>com.aicontest.visualizer.Main</includePattern>
       <includePattern>com.aicontest.visualizer.VisualizerApplet</includePattern>
@@ -83,36 +80,27 @@
       <includePattern>org.mozilla.javascript.jdk15.VMBridge_jdk15</includePattern>
       <includePattern>org.mozilla.javascript.regexp.RegExpImpl</includePattern>
     </JarOpt>
-    <move file="${build.deploy}/min.jar" tofile="${jar.file}"/>
+    <move file="${build.deploy}/min.jar" tofile="${jar.file}" />
   </target>
-  
+
   <!-- HTML visualizer -->
-  
+
   <target name="html-visualizer" depends="load-properties" description="create a zip archive of the offline html visualizer files">
     <zip destfile="${html.zip}">
-      <fileset dir="." includes="copy_paste.html,replay.html.template,__init__.py,visualize_locally.py,${src.js}/**,${src.data}/**"/>
+      <fileset dir="." includes="copy_paste.html,replay.html.template,__init__.py,visualize_locally.py,${src.js}/**,${src.data}/**" />
     </zip>
   </target>
-  
+
   <!-- JavaScript transormation -->
 
-  <target name="check-closurecompiler">
-    <condition property="closurecompiler.available">
-      <available file="3rdparty/google/compiler.jar" />
-    </condition>
-    <uptodate property="closurecompiler.skip" targetfile="${build.js}/visualizer-min.js">
+  <target name="check-uglifyjs">
+    <uptodate property="uglifyjs.skip" targetfile="${build.js}/visualizer-min.js">
       <srcfiles dir="${src.js}" includes="**/*.js" />
     </uptodate>
   </target>
 
-  <target name="download-closurecompiler" unless="closurecompiler.available" depends="check-closurecompiler">
-    <mkdir dir="downloads" />
-    <get src="http://closure-compiler.googlecode.com/files/compiler-latest.zip" dest="downloads/compiler-latest.zip" usetimestamp="true" />
-    <unzip src="downloads/compiler-latest.zip" dest="3rdparty/google" />
-  </target>
-
-  <target name="minify-js" depends="load-properties,download-closurecompiler" unless="closurecompiler.skip">
-    <mkdir dir="${build.js}"/>
+  <target name="minify-js" depends="load-properties,check-uglifyjs" unless="uglifyjs.skip">
+    <mkdir dir="${build.js}" />
     <delete>
       <fileset dir="${build.js}">
         <include name="**/*.js" />
@@ -122,46 +110,80 @@
     <loadfile property="js.files" srcfile="${src.js}/visualizer.js">
       <filterchain>
         <containsregex byline="on" pattern="^\$import" />
-        <replaceregex pattern="\$import\('" replace="--js ${src.js}/" />
-        <replaceregex pattern="'\)\;\s+" flags="g" byline="false" replace=".js " />
+        <replaceregex pattern="\$import\('" replace="${src.js}/" />
+        <replaceregex pattern="'\)\;\s+" flags="g" byline="false" replace=".js," />
       </filterchain>
     </loadfile>
     <mkdir dir="${build.js}" />
-    <condition property="js.pretty.arg" value="--formatting PRETTY_PRINT" else="">
-      <istrue value="${js.pretty}"/>
+    <condition property="js.pretty.arg" value="--beautify" else="">
+      <istrue value="${js.pretty}" />
     </condition>
-    <java jar="3rdparty/google/compiler.jar" fork="true" failonerror="yes">
-      <jvmarg value="-Xmx100m" />
-      <arg line="--compilation_level ADVANCED_OPTIMIZATIONS ${js.pretty.arg} --jscomp_off nonStandardJsDocs --js_output_file ${build.js}/visualizer-min.tmp ${js.files}" />
-    </java>
-    <move file="${build.js}/visualizer-min.tmp" toFile="${build.js}/visualizer-min.js"/>
+    <concat fixlastline="yes" destfile="${build.js}/visualizer-min.tmp">
+      <filelist files="${js.files}" />
+    </concat>
+    <exec executable="node" failonerror="yes">
+      <env key="NODE_PATH" value="UglifyJS" />
+      <arg line="UglifyJS/bin/uglifyjs --no-copyright --lift-vars --mangle-toplevel --unsafe ${js.pretty.arg} --reserved-names 'Visualizer,Options,loadReplayData,loadReplayDataFromURI' --overwrite ${build.js}/visualizer-min.tmp" />
+    </exec>
+    <move file="${build.js}/visualizer-min.tmp" toFile="${build.js}/visualizer-min.js" />
   </target>
 
   <target name="minify-js-condition" depends="load-properties">
     <condition property="js.minify.set">
-      <istrue value="${js.minify}"/>
+      <istrue value="${js.minify}" />
     </condition>
   </target>
 
   <target name="minify-js-conditional" depends="minify-js-condition" if="js.minify.set">
     <antcall target="minify-js" />
   </target>
-  
+
   <target name="copy-js-conditional" depends="minify-js-condition" unless="js.minify.set">
     <sync todir="${build.js}">
       <fileset dir="${src.js}" />
     </sync>
   </target>
-  
-  <target name="minify-or-copy-js" depends="minify-js-conditional,copy-js-conditional" description="minify or copy JavaScript files to the build directory depending on the value of js.minify"/>
-  
+
+  <target name="minify-or-copy-js" depends="minify-js-conditional,copy-js-conditional" description="minify or copy JavaScript files to the build directory depending on the value of js.minify" />
+
+  <!-- JSDoc -->
+
+  <target name="check-jsdoc">
+    <condition property="jsdoc.available">
+      <available file="3rdparty/jsdoc_toolkit-2.4.0/jsdoc-toolkit/jsrun.jar" />
+    </condition>
+    <uptodate property="jsdoc.skip" targetfile="${build.jsdoc}/index.html">
+      <srcfiles dir="${src.js}" includes="**/*.js" />
+    </uptodate>
+  </target>
+
+  <target name="download-jsdoc" unless="jsdoc.available" depends="check-jsdoc">
+    <mkdir dir="downloads" />
+    <get src="http://jsdoc-toolkit.googlecode.com/files/jsdoc_toolkit-2.4.0.zip" dest="downloads/jsdoc_toolkit-2.4.0.zip" usetimestamp="true" />
+    <unzip src="downloads/jsdoc_toolkit-2.4.0.zip" dest="3rdparty" />
+  </target>
+
+  <target name="jsdoc" depends="load-properties,download-jsdoc" unless="jsdoc.skip">
+    <delete dir="${build.jsdoc}" />
+    <mkdir dir="${build.jsdoc}" />
+    <java jar="3rdparty/jsdoc_toolkit-2.4.0/jsdoc-toolkit/jsrun.jar" fork="true" dir="${src.js}" failonerror="yes" taskname="jsdoc">
+      <jvmarg value="-Xmx100m" />
+      <arg value="${basedir}/3rdparty/jsdoc_toolkit-2.4.0/jsdoc-toolkit/app/run.js" />
+      <arg value="-a" />
+      <arg value="-p" />
+      <arg value="-t=${basedir}/3rdparty/jsdoc_toolkit-2.4.0/jsdoc-toolkit/templates/jsdoc" />
+      <arg value="-d=${basedir}/${build.jsdoc}" />
+      <arg value="." />
+    </java>
+  </target>
+
   <!-- deployment -->
-  
+
   <target name="check-deploy" depends="load-properties" unless="deploy.path">
     <fail message="Please define 'deploy.path' in local.properties as the web root." />
   </target>
-  
-  <target name="deploy" depends="check-deploy,jar,minify-or-copy-js" description="compile and deploy to the path that is set in 'deploy.path'">
+
+  <target name="deploy" depends="check-deploy,jar,minify-or-copy-js,jsdoc" description="compile and deploy to the path that is set in 'deploy.path'">
     <sync todir="${build.deploy}/img">
       <fileset dir="${src.data}/img" />
     </sync>
@@ -169,7 +191,7 @@
       <fileset dir="${build.deploy}" />
     </sync>
   </target>
-  
+
   <!-- other -->
 
   <target name="run-visualizer" depends="compile-visualizer,compile-js" description="runs the visualizer with a sample replay">
@@ -188,7 +210,7 @@
     <delete quiet="true" dir="3rdparty" />
     <delete quiet="true" dir="downloads" />
   </target>
-  
+
   <target name="help">
     <echo>Type 'ant -p' to list available targets!</echo>
   </target>
