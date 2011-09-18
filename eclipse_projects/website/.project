@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<projectDescription>
+	<name>website</name>
+	<comment></comment>
+	<projects>
+	</projects>
+	<buildSpec>
+		<buildCommand>
+			<name>org.python.pydev.PyDevBuilder</name>
+			<arguments>
+			</arguments>
+		</buildCommand>
+		<buildCommand>
+			<name>org.eclipse.wst.validation.validationbuilder</name>
+			<arguments>
+			</arguments>
+		</buildCommand>
+		<buildCommand>
+			<name>org.eclipse.dltk.core.scriptbuilder</name>
+			<arguments>
+			</arguments>
+		</buildCommand>
+	</buildSpec>
+	<natures>
+		<nature>org.eclipse.php.core.PHPNature</nature>
+		<nature>org.python.pydev.pythonNature</nature>
+	</natures>
+	<linkedResources>
+		<link>
+			<name>website</name>
+			<type>2</type>
+			<locationURI>PARENT-3-PROJECT_LOC/website</locationURI>
+		</link>
+	</linkedResources>
+	<filteredResources>
+		<filter>
+			<id>0</id>
+			<name>website</name>
+			<type>10</type>
+			<matcher>
+				<id>org.eclipse.ui.ide.multiFilter</id>
+				<arguments>1.0-name-matches-false-false-visualizer</arguments>
+			</matcher>
+		</filter>
+	</filteredResources>
+</projectDescription>

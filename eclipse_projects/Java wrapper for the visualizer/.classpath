@@ -4,5 +4,5 @@
 	<classpathentry excluding="MANIFEST.MF" kind="src" path="visualizer/java"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/Java plugin"/>
-	<classpathentry kind="output" path="classes"/>
+	<classpathentry kind="output" path="visualizer/build/classes"/>
 </classpath>

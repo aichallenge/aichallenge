@@ -21,12 +21,10 @@ PROJECTS
 --------
 
 project     : JavaScript visualizer
-import from : ants/eclipse_workspace
 plugin      : JavaScript Development Tools
               http://download.eclipse.org/releases/indigo/
 
 project     : Java wrapper for the visualizer
-import from : ants/eclipse_workspace
 plugin      : Eclipse Java Development Tools
               http://download.eclipse.org/releases/indigo/
 note        : The user library 'Java plugin' must be created and list the JAR
@@ -34,28 +32,19 @@ note        : The user library 'Java plugin' must be created and list the JAR
               (jre/lib/plugin.jar for Sun/Oracle VMs)
 
 project     : Python
-import from : ants/eclipse_workspace
 plugin      : PyDev for Eclipse
               http://pydev.org/updates
 note        : Set up the interpreter.
 
 project     : website
-import from : ants/eclipse_workspace
 plugin      : PHP Development Tools (PDT) Runtime Feature
               http://download.eclipse.org/releases/indigo/
-
-project     : D starter bot
-import from : ants/dist/starter_bots
-plugin      : D Development Tools
-              http://ddt.eclipselabs.org.codespot.com/hg.updates/
-note        : Set up the interpreter.
 
 
 HINTS
 -----
 
-- The ant file (build.xml) for the visualizer can be used in the Java
-  perspective from the 'Ant' view. This is a side bar that lists all targets in
-  an ant script and executes them on double-click.
-- Eclipse workspaces aren't portable (yet), so the projects have to be imported
-  manually. (They are referenced by absolute paths.)
+- It is probably best to create a workspace outside the working copy and import
+  the projects there.
+- Shared launchers are *.launch files in the project. Right-click them and use
+  the Run As -> ... command to run and register them with your workspace.
