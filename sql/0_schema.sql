@@ -74,6 +74,7 @@ CREATE TABLE `map` (
   `priority` int(11) NOT NULL DEFAULT '1',
   `players` int(11) NOT NULL,
   `max_turns` int(11) NOT NULL,
+  `timestamp` datetime NOT NULL,
   PRIMARY KEY (`map_id`)
 );
 
