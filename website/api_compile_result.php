@@ -42,7 +42,6 @@ if ($compiledata->status_id == 40) {
                       $compiledata->status_id,
                       $lang_id,
                       $compiledata->errors,
-                      $worker["worker_id"],
                       $compiledata->submission_id)) {
         echo json_encode(array( "hash" => $json_hash ));
         api_log('worker '.$worker['worker_id'].' ('.$worker['ip_address'].') posted failed compile '.$compiledata->submission_id.":\n".$compiledata->errors);

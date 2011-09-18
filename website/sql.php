@@ -29,8 +29,7 @@ $contest_sql = array(
                                       set status = %s,
                                           language_id = %s,
                                           errors = '%s'
-                                      where worker_id = %s
-                                      and submission_id = %s;",
+                                      where submission_id = %s;",
     "select_submission_language_id" => "select language_id
                                         from language
                                         where name = '%s'",
