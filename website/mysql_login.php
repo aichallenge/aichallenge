@@ -45,12 +45,12 @@ function contest_query() {
             $query_args = array_map('mysql_real_escape_string',
                                     array_slice($args, 1));
             if (function_exists('api_log')) {
-                api_log(vsprintf($contest_sql[$query_name], $query_args));
+                // api_log(vsprintf($contest_sql[$query_name], $query_args));
             }
             return mysql_query(vsprintf($contest_sql[$query_name], $query_args));
         } else {
             if (function_exists('api_log')) {
-                api_log("sql: ".$contest_sql[$query_name]);
+                // api_log("sql: ".$contest_sql[$query_name]);
             }
             return mysql_query($contest_sql[$query_name]);
         }
