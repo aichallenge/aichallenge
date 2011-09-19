@@ -3,6 +3,8 @@ delimiter $$
 create procedure generate_matchup()
 begin
 
+-- get min and max players for matchmaking
+
 select min(players) into @min_players from map;
 
 select count(distinct s.user_id)
@@ -10,11 +12,20 @@ into @max_players
 from submission s
 inner join user u
     on u.user_id = s.user_id
-where s.status = 40 and s.latest = 1;
+left outer join matchup_player mp
+    on mp.user_id = u.user_id
+left outer join matchup m
+    on m.matchup_id = mp.matchup_id
+        and (m.worker_id > 0 or m.worker_id is null)
+        and deleted = 0
+where s.status = 40 and s.latest = 1
+    and m.matchup_id is null;
 
+-- skip entire process of less players are available than the smallest map
 if @min_players <= @max_players then
 
-set @init_mu = 25.0;
+-- setup trueskill calc values
+set @init_mu = 50.0;
 set @init_beta = @init_mu / 6;
 set @twiceBetaSq = 2 * pow(@init_beta, 2);
 
@@ -39,14 +50,19 @@ order by m.max_matchup_id asc,
          s.user_id asc
 limit 1;
 
+-- worker_id of 0 prevents workers from pulling the task
 insert into matchup (seed_id, worker_id)
 values (@seed_id, 0);
 set @matchup_id = last_insert_id();
+
+insert into matchup_player (matchup_id, user_id, submission_id, player_id, mu, sigma)
+values (@matchup_id, @seed_id, @submission_id, -1, @mu, @sigma);
 
 -- debug statement
 -- select 'step 1';
 
 -- Step 2: select the map
+-- TODO: improve distribution of games
 
 select m.map_id, m.players, m.max_turns
 into @map_id, @players, @max_turns
@@ -75,18 +91,10 @@ order by floor(sqrt(game_count)),
          m.map_id
 limit 1;
 
--- debug statement
--- select 'step 2';
-
--- Step 2.5: setup matchup and player info for following queries
-
 update matchup
 set map_id = @map_id,
     max_turns = @max_turns
 where matchup_id = @matchup_id;
-
-insert into matchup_player (matchup_id, user_id, submission_id, player_id, mu, sigma)
-values (@matchup_id, @seed_id, @submission_id, -1, @mu, @sigma);
 
 -- debug statement
 -- select @matchup_id, @seed_id, @submission_id, @map_id, @players;
@@ -103,76 +111,66 @@ inner join submission s
 where s.latest = 1
     and s.status = 40;
 
--- create temp table to hold user_ids not to match
---   due to repeat games, maps or player_counts
-drop temporary table if exists temp_unavailable;
-create temporary table temp_unavailable (
- user_id int(11) NOT NULL
-);
 
--- exclude players currently in a matchup
-insert into temp_unavailable
-select mp.user_id
-from matchup_player mp
-inner join matchup m
-	on mp.matchup_id = m.matchup_id
-where (m.worker_id >= 0 or m.worker_id is null)
-and m.deleted = 0;
-
-set @last_user_id = -1;
 set @cur_user_id = @seed_id;
-set @use_limits = 1;
-set @abort = 0;
+set @last_user_id = -1;
 set @player_count = 1;
-set @exclude_size = ceil(@max_players * 0.1 / @players);
 
-while @abort = 0 and @player_count < @players do
+while @player_count < @players do
+
+        -- select list of opponents with match quality
+        select s.user_id, s.submission_id. s.mu, s.sigma
+        into @last_user_id, @last_submmission_id, @last_mu, @last_sigma
+        from (
+            select @seq := @seq + 1 as seq, s.*
+            from (
+                select s.user_id, s.submission_id, s.mu, s.sigma
+                    ,@c := (@twiceBetaSq + pow(mp.sigma,2) + pow(s.sigma,2)) as c,
+                    exp(sum(ln(
+                        sqrt(@twiceBetaSq / @c) * exp(-(pow(mp.mu - s.mu, 2) / (2 * @c)))
+                    ))) as match_quality,
+                    -- round(mp.mu - s.mu,2) as mu_diff, round(mp.sigma - s.sigma,2) as sigma_diff
+                from
+                submission mp,
+                submission s
+                -- exclude players currently in a matchup
+                left outer join matchup_player mp2
+                    on mp2.user_id = s.user_id
+                left outer join matchup m
+                    on m.matchup_id = mp2.matchup_id
+                        and (m.worker_id >= 0 or m.worker_id is null)
+                        and m.deleted = 0
+                -- join with all players in current matchup to average match quality
+                where mp.submission_id = in (
+                    select submission_id
+                    from matchup_player
+                    where matchup_id = @matchup_id
+                )
+                and m.matchup_id is null
+                and s.latest = 1 and s.status = 40
+                group by u.user_id, s.submission_id, s.mu, s.sigma
+                -- power curve approximation, draws in some lower quality bots occasionally
+                order by match_quality * rand() desc
+            ) s,
+            (select @seq := 0) seq
+        ) s
+        -- join in user to user game counts to provide round-robin like logic
+        left outer join opponents o
+            on o.user_id = @seed_id and o.opponent_id = s.user_id,
+        -- get count of all active submissions to limit to top 10%
+        (
+            select count(*) as submission_count
+            from submission
+            where latest = 1 and status = 40
+        ) s_count
+        where s.seq < s_count.submission_count * 10/100 or s.seq <= @min_players * 2
+        order by o.game_count,
+            s.match_quality desc;
 
     -- debug statement
     -- select @matchup_id as matchup_id, @last_user_id as cur_user,
     --        @use_limits as limits, @abort as abort,
     --        @player_count as player_count, @players as total;
-
-    set @last_user_id = @cur_user_id;
-    if @use_limits = 1 then
-
-        -- exclude players who played in @last_user_id's last game
-        insert into temp_unavailable
-        select gp_opponent.user_id
-        from submission s
-        inner join game_player gp_opponent
-            on s.max_game_id = gp_opponent.game_id
-        where s.latest = 1
-            and s.status = 40
-            and s.user_id = @last_user_id
-        order by gp_opponent.user_id;
-
-        -- debug statement
-		-- select 'step 3: add in users last game';
-
-        -- exclude players who played with @last_user_id last
-        insert into temp_unavailable
-        select gp_opponent.user_id
-        from submission s
-        inner join game_player gp_opponent
-            on s.user_id = gp_opponent.user_id
-            and s.max_game_id = gp_opponent.game_id
-        inner join game_player gp_user
-            on gp_user.game_id = gp_opponent.game_id
-        where s.latest = 1 and s.status = 40
-            and gp_user.user_id = @last_user_id
-        order by gp_opponent.user_id;
-
-        -- debug statement
-		-- select 'step 3: add last with user';
-		
-    end if;
-    
-    -- debug statement
-    -- select 'step 3: exclude count', count(*) from temp_unavailable;
-	
-    -- debug statement
-	-- select * from temp_unavailable;
 
     set @last_user_id = -1; -- used to ensure an opponent was selected
 
@@ -217,31 +215,10 @@ while @abort = 0 and @player_count < @players do
              ,s.seq asc
     limit 1;
 
-    if @last_user_id = -1 then
     
-		-- debug statement
-		-- select 'step 3: dropping limits';
-		
-        if @use_limits = 0 then
-            set @abort = 1;
-        end if;
-        -- excluded too many players
-        -- drop limits and reset to players in matchup
-        delete from temp_unavailable;
-        insert into temp_unavailable
-        select user_id
-        from matchup_player
-        where matchup_id = @matchup_id;
-        set @use_limits = 0;
-    else
-    
-		-- debug statement
-		-- select @last_user_id, user_id from matchup_player where matchup_id = @matchup_id;
-		
-		-- add new player to matchup and exclude list
+		-- add new player to matchup
         insert into matchup_player (matchup_id, user_id, submission_id, player_id, mu, sigma)
         values (@matchup_id, @last_user_id, @last_submission_id, -1, @last_mu, @last_sigma);
-        insert into temp_unavailable (user_id) values (@last_user_id);
         set @player_count = @player_count + 1;
         set @cur_user_id = @last_user_id;
         
@@ -249,16 +226,8 @@ while @abort = 0 and @player_count < @players do
         -- select * from temp_unavailable;
         -- select 'added user';
         
-    end if;
-
 end while;
 
-if @abort = 1 then
-
-    delete from matchup_player where matchup_id = @matchup_id;
-    delete from matchup where matchup_id = @matchup_id;
-
-else
 
 -- debug statement
 -- select 'step 3';
@@ -283,57 +252,6 @@ inner join (
 set player_id = m2.position
 where matchup_id = @matchup_id;
 
--- since we are using symmetric maps, positions don't matter
--- the following loop will not execute
--- set @player_count = 0;
-set @player_count = @players;
-
-while @player_count < @players do
-
-    select mp.user_id, id.player_id
-    into @pos_user_id, @pos_player_id
-    from matchup_player mp
-    inner join (
-        select user_id
-        from matchup_player mp
-        where matchup_id = @matchup_id
-        and player_id = -1
-    ) avail
-        on mp.user_id = avail.user_id,
-    (
-        select @row := @row + 1 as player_id
-        from matchup_player,
-        (select @row := -1) id
-        where matchup_id = @matchup_id
-    ) id
-    where mp.matchup_id = @matchup_id
-    and id.player_id not in (
-        select player_id
-        from matchup_player mp
-        where matchup_id = @matchup_id
-        and player_id != -1
-    )
-    order by (mp.user_id = @seed_id) desc,
-    (
-        select max(g.game_id)
-        from game g
-        inner join game_player gp
-            on g.game_id = gp.game_id
-        where g.map_id = @map_id
-        and gp.user_id = mp.user_id
-        and gp.player_id = id.player_id
-    ) asc
-    limit 1;
-
-    update matchup_player
-    set player_id = @pos_player_id
-    where matchup_id = @matchup_id
-    and user_id = @pos_user_id;
-
-    set @player_count = @player_count + 1;
-
-end while;
-
 -- debug statement
 -- select 'step 4';
 
@@ -346,8 +264,6 @@ where matchup_id = @matchup_id;
 
 -- return new matchup id
 select @matchup_id as matchup_id;
-
-end if;
 
 end if;
 

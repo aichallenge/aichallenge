@@ -34,17 +34,40 @@ set @init_beta = @init_mu / 6;
 set @twiceBetaSq = 2 * pow(@init_beta, 2);
 
 -- select list of opponents with match quality
-select mp.user_id, mp.submission_id, mp.mu, mp.sigma, s.user_id, s.submission_id, s.mu, s.sigma
+select * from (
+
+select s.*, @seq := @seq + 1 as seq, @count as count
+from (
+
+select mp.user_id as p_user_id, mp.submission_id as p_submission_id, mp.mu as p_mu, mp.sigma as p_sigma,
+    s.user_id, s.submission_id, s.mu, s.sigma, s.game_count
 ,@c := (@twiceBetaSq + pow(mp.sigma,2) + pow(s.sigma,2)) as c,
-round(SQRT(@twiceBetaSq / @c) * EXP(-(pow(mp.mu - s.mu, 2) / (2 * @c))),2) as match_quality,
-round(mp.mu - s.mu,2) as mu_diff, round(mp.sigma - s.sigma,2) as sigma_diff
+round(SQRT(@twiceBetaSq / @c) * EXP(-(pow(mp.mu - s.mu, 2) / (2 * @c))),4) as match_quality,
+round(mp.mu - s.mu,2) as mu_diff, round(mp.sigma - s.sigma,3) as sigma_diff,
+recent.game_count as recent_count
 from submission mp,
 submission s
+left outer join (
+    select gp.user_id, count(*) as game_count
+    from game_player gp
+    inner join game g
+        on g.game_id = gp.game_id
+    where g.timestamp > timestampadd(day, -1, current_timestamp)
+    group by gp.user_id
+) as recent
+    on s.user_id = recent.user_id
 where mp.submission_id = @submission_id
 and s.latest = 1 and s.status = 40
 order by match_quality desc,
          s.game_count asc
-limit 100;
+
+) s,
+(select @seq := 0) seq,
+(select @count := (select count(*) from submission where latest = 1 and status = 40)) count
+where @seq < @count / 10
+) t
+order by recent_count, match_quality
+;
 
 end$$
 delimiter ;
