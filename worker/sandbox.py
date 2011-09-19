@@ -298,6 +298,14 @@ class Jail(object):
         except Empty:
             return None
 
+    def check_path(path, errors):
+        resolved_path = os.path.join(self.home_dir, path)
+        if not os.path.exists(resolved_path):
+            errors.append("Output file " + str(path) + " was not created.")
+            return False
+        else:
+            return True
+
 
 def _monitor_file(fd, q):
     while True:
@@ -481,6 +489,14 @@ class House:
             return self.stderr_queue.get(block=True, timeout=timeout)
         except Empty:
             return None
+
+    def check_path(path, errors):
+        resolved_path = os.path.join(self.working_directory, path)
+        if not os.path.exists(resolved_path):
+            errors.append("Output file " + str(path) + " was not created.")
+            return False
+        else:
+            return True
 
 def get_sandbox(working_dir, secure=None):
     if secure is None:
