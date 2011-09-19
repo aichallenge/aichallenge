@@ -298,20 +298,16 @@ $contest_sql = array(
           c.name as country_name,
           u.email,
           u.activation_code,
-          gp.rank_after as rank, (gp.rank_before - gp.rank_after) as rank_change,
-          (gp.mu_after - gp.sigma_after * 3) as skill,
-          ((gp.mu_before - gp.sigma_before * 3) - (gp.mu_after - gp.sigma_after * 3)) as skill_change,
-          gp.mu_after as mu, (gp.mu_before - gp.mu_after) as mu_change,
-          gp.sigma_after as sigma, (gp.sigma_before - gp.sigma_after) as sigma_change
+          s.rank, s.rank_change,
+          s.mu - s.sigma * 3 as skill,
+          s.mu_change * 3 - s.sigma_change * 3 as skill_change,
+          s.mu, s.mu_change,
+          s.sigma, s.sigma_change
         from
           user u
-          left outer join game_player gp
-            on gp.user_id = u.user_id
-            and gp.game_id = (
-              select max(game_id)
-              from game_player
-              where user_id = u.user_id
-            )
+          left outer join submission s
+            on s.user_id = u.user_id
+            and s.latest = 1 and s.status = 40
           left outer join organization o on o.org_id = u.org_id
           left outer join country c on c.country_id = u.country_id
         where
