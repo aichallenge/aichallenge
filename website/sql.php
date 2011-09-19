@@ -300,7 +300,7 @@ $contest_sql = array(
           u.activation_code,
           s.rank, s.rank_change,
           s.mu - s.sigma * 3 as skill,
-          s.mu_change * 3 - s.sigma_change * 3 as skill_change,
+          s.mu_change - s.sigma_change * 3 as skill_change,
           s.mu, s.mu_change,
           s.sigma, s.sigma_change
         from
