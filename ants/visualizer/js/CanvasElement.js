@@ -613,7 +613,7 @@ CanvasElementAntsMap.prototype.collectAntsAroundCursor = function() {
  * and finally the fog of war.
  */
 CanvasElementAntsMap.prototype.draw = function() {
-	var halfScale, drawList, n, kf, w, dx, dy, d, fontSize, label, caption;
+	var halfScale, drawList, n, kf, w, dx, dy, d, fontSize, label, caption, order;
 	var target, rows, cols, x1, y1, x2, y2, rowPixels, colPixels, ar, sr, r;
 	var hash = undefined;
 
@@ -730,13 +730,17 @@ CanvasElementAntsMap.prototype.draw = function() {
 		this.ctx.fillStyle = '#000';
 		this.ctx.strokeStyle = '#fff';
 		this.ctx.lineWidth = 0.2 * fontSize;
+		order = new Array(this.state.order.length);
+		for (n = 0; n < order.length; n++) {
+			order[this.state.order[n]] = n;
+		}
 		for (hash in this.drawStates) {
 			drawList = this.drawStates[hash];
 			for (n = drawList.length - 1; n >= 0; n--) {
 				kf = drawList[n];
 				if (label === 1) {
 					if (kf['owner'] === undefined) continue;
-					caption = String.fromCharCode(0x3b1 + kf['owner']);
+					caption = String.fromCharCode(0x3b1 + order[kf['owner']]);
 				} else {
 					caption = kf.antId;
 				}
@@ -1138,7 +1142,7 @@ CanvasElementStats.prototype.draw = function(resized) {
  *        separated by a '+'
  */
 CanvasElementStats.prototype.drawColorBar = function(x, y, w, h, values, bonus) {
-	var useValues, i, scale, offsetX, offsetY, amount, text;
+	var useValues, i, scale, offsetX, offsetY, amount, text, idx;
 	var sum = 0;
 	this.ctx.save();
 	this.ctx.beginPath();
@@ -1161,8 +1165,9 @@ CanvasElementStats.prototype.drawColorBar = function(x, y, w, h, values, bonus) 
 	scale = w / sum;
 	offsetX = x;
 	for (i = 0; i < useValues.length; i++) {
-		amount = scale * useValues[i];
-		this.ctx.fillStyle = this.state.replay.htmlPlayerColors[i];
+		idx = this.state.order[i];
+		amount = scale * useValues[idx];
+		this.ctx.fillStyle = this.state.replay.htmlPlayerColors[idx];
 		this.ctx.fillRect(offsetX, y, w - offsetX + x, h);
 		offsetX += amount;
 	}
@@ -1173,11 +1178,12 @@ CanvasElementStats.prototype.drawColorBar = function(x, y, w, h, values, bonus) 
 	offsetY = y + 3;
 	offsetX = x + 2;
 	for (i = 0; i < useValues.length; i++) {
-		text = Math.round(values[i]);
+		idx = this.state.order[i];
+		text = Math.round(values[idx]);
 		if (this.label) {
 			text = String.fromCharCode(0x3b1 + i) + ' ' + text;
 		}
-		var bonusText = (bonus && bonus[i]) ? '+' + Math.round(bonus[i]) : '';
+		var bonusText = (bonus && bonus[idx]) ? '+' + Math.round(bonus[idx]) : '';
 		var textWidth = this.ctx.measureText(text).width;
 		if (bonusText) {
 			this.ctx.font = 'bold italic 12px Monospace';
@@ -1186,7 +1192,7 @@ CanvasElementStats.prototype.drawColorBar = function(x, y, w, h, values, bonus) 
 		} else {
 			bonusTextWidth = 0;
 		}
-		if (scale * useValues[i] >= textWidth + bonusTextWidth) {
+		if (scale * useValues[idx] >= textWidth + bonusTextWidth) {
 			this.ctx.fillText(text, offsetX, offsetY);
 			if (bonusText) {
 				this.ctx.font = 'bold italic 12px Monospace';
@@ -1196,7 +1202,7 @@ CanvasElementStats.prototype.drawColorBar = function(x, y, w, h, values, bonus) 
 				this.ctx.fillStyle = 'rgba(0,0,0,0.5)';
 			}
 		}
-		offsetX += scale * useValues[i];
+		offsetX += scale * useValues[idx];
 	}
 	this.ctx.restore();
 };

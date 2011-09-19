@@ -560,6 +560,10 @@ Visualizer.prototype.tryStart = function() {
 			if (this.imgMgr.error) return;
 			if (this.imgMgr.pending) return;
 			this.btnMgr.ctx = this.main.ctx;
+			// add player buttons
+			if (this.state.replay.hasDuration) {
+				this.addPlayerButtons();
+			}
 			if (this.state.options['interactive']) {
 				// add static buttons
 				if (!this.btnMgr.groups['playback']) {
@@ -661,17 +665,13 @@ Visualizer.prototype.tryStart = function() {
 					var buttonAdder = function(fog) {
 						var dlg = new Delegate(vis, vis.showFog);
 						var hint = 'show/clear fog of war for ';
-						hint += vis.state.replay.meta['playernames'][i];
-						return bg.addButton(i, dlg, hint);
+						hint += vis.state.replay.meta['playernames'][fog];
+						return bg.addButton(fog, dlg, hint);
 					};
-					for ( var i = 0; i < colors.length; i++) {
-						buttonAdder(i);
+					for (i = 0; i < colors.length; i++) {
+						buttonAdder(this.state.order[i]);
 					}
 				}
-			}
-			// add player buttons
-			if (this.state.replay.hasDuration) {
-				this.addPlayerButtons();
 			}
 		}
 		// calculate speed from duration and config settings
@@ -766,7 +766,7 @@ Visualizer.prototype.tryStart = function() {
 		 *        The input event.
 		 */
 		this.main.canvas.ondblclick = function(event) {
-			vis.centerMap();
+			if (vis.shiftedMap.contains(vis.mouseX, vis.mouseY)) vis.centerMap();
 		};
 		/** @ignore */
 		window.onresize = function() {
@@ -1037,7 +1037,7 @@ Visualizer.prototype.setAntLabels = function(mode) {
 	this.state.config['label'] = mode;
 	if (recap) {
 		this.updatePlayerButtonText();
-		this.main.ctx.clearRect(0, 0, this.w, this.h);
+		this.main.ctx.clearRect(0, 0, this.main.canvas.width, this.main.canvas.height);
 		this.resize(true);
 	}
 };
