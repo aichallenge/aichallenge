@@ -1,5 +1,6 @@
 #!/usr/bin/python
 
+import argparse
 import logging
 import logging.handlers
 import os
@@ -52,7 +53,7 @@ handler2.setFormatter(formatter)
 log.addHandler(handler2)
 
 
-def main(dry_run=True, verbose=True):
+def main(dry_run):
     connection = MySQLdb.connect(host = server_info["db_host"],
                                      user = server_info["db_username"],
                                      passwd = server_info["db_password"],
@@ -88,10 +89,16 @@ def main(dry_run=True, verbose=True):
         if new_limit:
             log.info("Adjusting map %d turn limit from %d to %d"
                     % (map_id, map_limit, new_limit))
-            cursor.execute("""update map set max_turns = '%s', timestamp = NOW()
-                where map_id = '%s'""" % (new_limit, map_id))
+            if not dry_run:
+                cursor.execute("""update map
+                    set max_turns = '%s', timestamp = NOW()
+                    where map_id = '%s'""" % (new_limit, map_id))
 
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-s", "--simulate", default=False, action="store_true",
+            help="Don't store any adjustments back to the database")
+    args = parser.parse_args()
+    main(dry_run=args.simulate)
 
