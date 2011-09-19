@@ -109,6 +109,14 @@ CREATE TABLE `matchup_player` (
   KEY `matchup_player_player_id_idx` (`matchup_id`, `player_id`)
 );
 
+DROP TABLE IF EXISTS `opponents`;
+CREATE TABLE `opponents` (
+  `user_id` int(11) NOT NULL,
+  `opponent_id` int(11) NOT NULL,
+  `game_count` int(11) NOT NULL,
+  PRIMARY KEY (`user_id`, `opponent_id`),
+);
+
 DROP TABLE IF EXISTS `organization`;
 CREATE TABLE `organization` (
   `org_id` int(11) NOT NULL AUTO_INCREMENT,
