@@ -298,7 +298,7 @@ class Jail(object):
         except Empty:
             return None
 
-    def check_path(path, errors):
+    def check_path(self, path, errors):
         resolved_path = os.path.join(self.home_dir, path)
         if not os.path.exists(resolved_path):
             errors.append("Output file " + str(path) + " was not created.")
@@ -490,7 +490,7 @@ class House:
         except Empty:
             return None
 
-    def check_path(path, errors):
+    def check_path(self, path, errors):
         resolved_path = os.path.join(self.working_directory, path)
         if not os.path.exists(resolved_path):
             errors.append("Output file " + str(path) + " was not created.")
