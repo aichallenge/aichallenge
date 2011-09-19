@@ -192,7 +192,7 @@
 		<fail message="Please define 'deploy.path' in local.properties as the web root." />
 	</target>
 
-	<target name="deploy" depends="check-deploy,jar,minify-or-copy-js,jsdoc" description="compile and deploy to the path that is set in 'deploy.path'">
+	<target name="deploy" depends="check-deploy,jar,minify-or-copy-js" description="compile and deploy to the path that is set in 'deploy.path'">
 		<sync todir="${build.deploy}/img">
 			<fileset dir="${src.data}/img" />
 		</sync>
