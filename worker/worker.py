@@ -520,10 +520,10 @@ class Worker:
             if report_status:
                 return self.cloud.post_result('api_game_result', result)
         except Exception as ex:
-            log.debug(traceback.format_exc())
+            log.error(traceback.format_exc())
             result = {"post_id": self.post_id,
                       "matchup_id": matchup_id,
-                      "error": str(ex) }
+                      "error": format_exc() }
             success = self.cloud.post_result('api_game_result', result)
             # cleanup download dirs
             map(self.clean_download, map(int, task['submissions']))
