@@ -523,7 +523,7 @@ class Worker:
             log.error(traceback.format_exc())
             result = {"post_id": self.post_id,
                       "matchup_id": matchup_id,
-                      "error": format_exc() }
+                      "error": traceback.format_exc() }
             success = self.cloud.post_result('api_game_result', result)
             # cleanup download dirs
             map(self.clean_download, map(int, task['submissions']))
