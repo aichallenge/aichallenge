@@ -1,6 +1,6 @@
-drop procedure if exists generate_matchup_test;
+drop procedure if exists generate_matchup;
 delimiter $$
-create procedure generate_matchup_test()
+create procedure generate_matchup()
 begin
 
 -- get min and max players for matchmaking
@@ -119,13 +119,6 @@ if @min_players <= @max_players then
                     from
                     submission p, -- current players in match
                     submission s  -- possible next players
-                    -- exclude players currently in a matchup
-                    left outer join matchup_player mp
-                        on mp.user_id = s.user_id
-                    left outer join matchup m
-                        on m.matchup_id = mp.matchup_id
-                            and (m.worker_id >= 0 or m.worker_id is null)
-                            and m.deleted = 0
                     -- join with all players in current matchup to average match quality
                     where p.submission_id in (
                         select submission_id
