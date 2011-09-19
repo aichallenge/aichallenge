@@ -41,7 +41,8 @@ if @min_players <= @max_players then
     ) m
         on s.user_id = m.seed_id
     where s.latest = 1 and s.status = 40
-    -- this selects the user that was least recently used player for a seed
+    -- this selects the user that has least recently played in any game
+    -- and used them for the next seed player
     -- from both the game and matchup tables
     order by m.max_matchup_id asc,
              s.max_game_id asc,
