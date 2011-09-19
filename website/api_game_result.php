@@ -71,6 +71,7 @@ if (array_key_exists('error', $gamedata)) {
                       json_encode($gamedata->error),
                       $gamedata->matchup_id)) {
         // echo json_encode(array( "hash" => $json_hash ));
+        api_log('worker '.$worker['worker_id'].' ('.$worker['ip_address'].') posted failed matchup '.$gamedata->matchup_id.":\n".$gamedata->error."\n".json_encode($gamedata));
     } else {
         game_result_error("Error updating failed matchup ".$gamedata->matchup_id);
     }
@@ -79,7 +80,7 @@ if (array_key_exists('error', $gamedata)) {
     if (!contest_query("insert_game_data",
                        $gamedata->replaydata->turns,
                        $gamedata->game_length,
-                       $gamedata->replaydata->cutoff,
+                       $gamedata->replaydata->cutoff ? '1' : '0',
                        $gamedata->replaydata->winning_turn,
                        $gamedata->replaydata->ranking_turn,
                        $gamedata->matchup_id)) {
@@ -178,13 +179,13 @@ if (array_key_exists('error', $gamedata)) {
     // create pathname to replay file
     $replay_dir = $server_info["replay_path"] . "/" . strval((int) ($game_id / 1000000)) . "/" . strval((int) (($game_id / 1000) % 1000));
     if (!file_exists($replay_dir)) {
-        api_log("Replay dir: " . $replay_dir);
+        // api_log("Replay dir: " . $replay_dir);
         mkdir($replay_dir, 0775, true);
     }
     $replay_filename = $replay_dir . "/" . $game_id . ".replaygz";
-    api_log("Replay file: " . $replay_filename);
+    // api_log("Replay file: " . $replay_filename);
     try {
-        api_log("Cwd: " . getcwd());
+        // api_log("Cwd: " . getcwd());
         $replay_file = fopen($replay_filename, 'w') or api_log(json_encode(error_get_last()));
         fwrite($replay_file, gzencode(json_encode($gamedata), 9));
         fclose($replay_file);
@@ -193,6 +194,7 @@ if (array_key_exists('error', $gamedata)) {
         if ($memcache) {
             $memcache->set('last_game_id', $game_id);
         }
+        api_log('worker '.$worker['worker_id'].' ('.$worker['ip_address'].') posted matchup '.$gamedata->matchup_id.' game '.$game_id);
     } catch (Exception $e) {
         api_log(json_encode($e));
     }

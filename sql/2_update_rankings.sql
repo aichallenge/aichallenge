@@ -70,5 +70,28 @@ set min_game_id = new_game_id,
     game_count = 1
 where min_game_id is null;
 
+-- create new opponents records, if needed
+insert into opponents (user_id, opponent_id, game_count)
+select gp1.user_id, gp2.user_id, 0
+from game_player gp1, game_player gp2
+where gp1.game_id = new_game_id
+and gp2.game_id = new_game_id
+and not exists (
+    select *
+    from opponents
+    where user_id = gp1.user_id
+        and opponent_id = gp2.user_id
+);
+
+-- update opponents records
+update opponents
+inner join game_player gp1
+    on gp1.user_id = opponents.user_id
+        and gp1.game_id = new_game_id
+inner join game_player gp2
+    on gp2.user_id = opponents.opponent_id
+        and gp2.game_id = new_game_id
+set game_count = game_count + 1;
+
 end$$
 delimiter ;

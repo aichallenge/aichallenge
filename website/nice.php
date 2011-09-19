@@ -135,13 +135,13 @@ function nice_game($game_id, $turns, $winning_turn, $ranking_turn, $user_id=NULL
 }
 
 function nice_skill($skill, $mu, $sigma, $skill_change=NULL, $mu_change=NULL, $sigma_change=NULL) {
-    $skill = number_format($skill, 2);
-    $skill_change = nice_change_marker($skill_change, 0.1);
     if ($skill_change == NULL) {
         $skill_hint = sprintf("mu=%0.2f sigma=%0.2f", $mu, $sigma);
     } else {
         $skill_hint = sprintf("mu=%0.2f(%+0.2f) sigma=%0.2f(%+0.2f) skill=%0.2f(%+0.2f)", $mu, $mu_change, $sigma, $sigma_change, $skill, $skill_change);
     }
+    $skill_change = nice_change_marker($skill_change, 0.1);
+    $skill = number_format($skill, 2);
     return "<span title=\"$skill_hint\">$skill&nbsp;$skill_change</span>";
 }
 

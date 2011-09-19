@@ -74,6 +74,7 @@ CREATE TABLE `map` (
   `priority` int(11) NOT NULL DEFAULT '1',
   `players` int(11) NOT NULL,
   `max_turns` int(11) NOT NULL,
+  `timestamp` datetime NOT NULL,
   PRIMARY KEY (`map_id`)
 );
 
@@ -106,6 +107,14 @@ CREATE TABLE `matchup_player` (
   UNIQUE KEY `matchup_player_idx` (`matchup_id`,`submission_id`),
   KEY `matchup_player_user_id_idx` (`user_id`),
   KEY `matchup_player_player_id_idx` (`matchup_id`, `player_id`)
+);
+
+DROP TABLE IF EXISTS `opponents`;
+CREATE TABLE `opponents` (
+  `user_id` int(11) NOT NULL,
+  `opponent_id` int(11) NOT NULL,
+  `game_count` int(11) NOT NULL,
+  PRIMARY KEY (`user_id`, `opponent_id`),
 );
 
 DROP TABLE IF EXISTS `organization`;

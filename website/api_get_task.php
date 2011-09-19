@@ -1,7 +1,6 @@
 <?php
 
 require_once('api_functions.php');
-api_log('get task...');
 header("Content-type: application/json");
 
 // look for compile task first
@@ -15,6 +14,7 @@ if ($compile_result) {
             echo json_encode(array( "task" => "compile",
                                     "timestamp" => date(DATE_ATOM),
                                     "submission_id" => $row["submission_id"]));
+            api_log('worker '.$worker['worker_id'].' ('.$worker['ip_address'].') requesting task, sending compile: '.$row["submission_id"]);
             die();
         } else {
             api_log(sprintf("Error updating submission for compile task: %s", mysql_error()));
@@ -77,6 +77,7 @@ if ($match_result) {
                     $json["submissions"][] = $player_row["submission_id"];
                 }
                 echo json_encode($json);
+                api_log('worker '.$worker['worker_id'].' ('.$worker['ip_address'].') requesting task, sending matchup: '.$json["matchup_id"]);
                 die();
             } else {
                 api_log(sprintf("Error selecting matchup players: %s", mysql_error()));
