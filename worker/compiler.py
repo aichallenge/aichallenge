@@ -170,7 +170,7 @@ class ExternalCompiler(Compiler):
                     cmd_out, cmd_errors = _run_cmd(box, cmdline, timelimit)
                     if not cmd_errors:
                         for vglob in self.vglobs:
-                            check_path(vglob, cmd_errors)
+                            box.check_path(vglob, cmd_errors)
                         if cmd_errors:
                             cmd_errors += cmd_out
                     if cmd_errors:
@@ -181,7 +181,7 @@ class ExternalCompiler(Compiler):
                 cmd_out, cmd_errors = _run_cmd(box, cmdline, timelimit)
                 if not cmd_errors:
                     for vglob in self.vglobs:
-                        check_path(vglob, cmd_errors)
+                        box.check_path(vglob, cmd_errors)
                     if cmd_errors:
                         cmd_errors += cmd_out
                 if cmd_errors:
