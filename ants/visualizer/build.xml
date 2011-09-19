@@ -201,6 +201,15 @@
 		</sync>
 	</target>
 
+	<target name="deploy-js" depends="check-deploy,minify-or-copy-js">
+		<sync todir="${build.deploy}/img">
+			<fileset dir="${src.data}/img" />
+		</sync>
+		<sync todir="${deploy.path}/visualizer">
+			<fileset dir="${build.deploy}" />
+		</sync>
+	</target>
+
 	<!-- other -->
 
 	<target name="run-visualizer" depends="compile-visualizer,compile-js" description="runs the visualizer with a sample replay">

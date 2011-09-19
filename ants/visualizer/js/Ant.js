@@ -1,19 +1,17 @@
 /**
- * @fileoverview This file contains an ant and it's animation key frames as used
- *               by the visualization.
+ * @fileoverview This file contains an ant and it's animation key frames as used by the
+ *               visualization.
  * @author <a href="mailto:marco.leise@gmx.de">Marco Leise</a>
  */
 
 /**
  * The constructor initializes it with one key frame.
  * 
- * @class An ant in the visualization. It is used in rendering and created when
- *        the replay is parsed as well as extended with animation key frames as
- *        more turns are requested. It has turned out that pre-calculating all
- *        key frames for thousand ants over the course of thousand turns is not
- *        feasible. Key frames are practically always appended. There is no
- *        support for jumping to the end of the game and leaving gaps
- *        in-between.
+ * @class An ant in the visualization. It is used in rendering and created when the replay is parsed
+ *        as well as extended with animation key frames as more turns are requested. It has turned
+ *        out that pre-calculating all key frames for thousand ants over the course of thousand
+ *        turns is not feasible. Key frames are practically always appended. There is no support for
+ *        jumping to the end of the game and leaving gaps in-between.
  * @constructor
  * @param {Number}
  *        id This is the unique object id of the new ant.
@@ -34,16 +32,14 @@ function Ant(id, time) {
 }
 
 /**
- * Returns a key frame for the ant at the given time. If it has to be newly
- * created and is in between two existing frames it will be the result of a
- * linear interpolation of those. If the time is beyond the last key frame, the
- * result is a copy of the last key frame. It is an error to specify a time
- * before the first key frame.
+ * Returns a key frame for the ant at the given time. If it has to be newly created and is in
+ * between two existing frames it will be the result of a linear interpolation of those. If the time
+ * is beyond the last key frame, the result is a copy of the last key frame. It is an error to
+ * specify a time before the first key frame.
  * 
  * @param {Number}
  *        time the time in question
- * @returns {KeyFrame} a key frame for the time or null, if the time is before
- *          the first key frame
+ * @returns {KeyFrame} a key frame for the time or null, if the time is before the first key frame
  */
 Ant.prototype.frameAt = function(time) {
 	var frame;
@@ -67,10 +63,9 @@ Ant.prototype.frameAt = function(time) {
 };
 
 /**
- * Interpolates the key frames around the given time and returns the result. If
- * the time exceeds the time stamp of the last key frame, that key frame is
- * returned instead. If the ant doesn't exist yet at that time, null is
- * returned.
+ * Interpolates the key frames around the given time and returns the result. If the time exceeds the
+ * time stamp of the last key frame, that key frame is returned instead. If the ant doesn't exist
+ * yet at that time, null is returned.
  * 
  * @param {Number}
  *        time the time in question
@@ -97,7 +92,7 @@ Ant.prototype.interpolate = function(time) {
 				min = 0;
 				max = set.length - 1;
 				do {
-					i = (min + max >> 1);
+					i = (min + max) >> 1;
 					if (timeIdx < set[i].time) {
 						max = i;
 					} else if (timeIdx > set[i + 1].time) {
@@ -118,9 +113,9 @@ Ant.prototype.interpolate = function(time) {
 };
 
 /**
- * Creates an fade over of some attribute given the start time and the end time
- * with a target value. The attribute stays unchanged at the start time. This
- * method is used by the {@link Replay} to create animation effects.
+ * Creates an fade over of some attribute given the start time and the end time with a target value.
+ * The attribute stays unchanged at the start time. This method is used by the {@link Replay} to
+ * create animation effects.
  * 
  * @param {String}
  *        key attribute name
@@ -153,8 +148,7 @@ Ant.prototype.fade = function(key, valueb, timea, timeb) {
 };
 
 /**
- * The constructor is only called from within methods of {@link Ant} that add
- * key frames.
+ * The constructor is only called from within methods of {@link Ant} that add key frames.
  * 
  * @class A single animation key frame of an ant.
  * @constructor
@@ -171,8 +165,8 @@ function KeyFrame() {
 }
 
 /**
- * Assigns the interpolation of two other key frames at a given time to this key
- * frame. This method is used by {@link Ant}.
+ * Assigns the interpolation of two other key frames at a given time to this key frame. This method
+ * is used by {@link Ant}.
  * 
  * @param {KeyFrame}
  *        a first key frame
@@ -216,9 +210,8 @@ KeyFrame.prototype.assign = function(other) {
 };
 
 /**
- * @class An extended key frame which holds the owning ant's id and an
- *        additional coordinate pair that reflects the pixel position on the
- *        scaled map.
+ * @class An extended key frame which holds the owning ant's id and an additional coordinate pair
+ *        that reflects the pixel position on the scaled map.
  * @extends KeyFrame
  * @constructor
  * @param {Number}

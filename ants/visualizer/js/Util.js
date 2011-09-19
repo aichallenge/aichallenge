@@ -1,42 +1,56 @@
 /**
- * Random provides functions to generate random numbers in integer ranges.
+ * @fileOverview Utility functions used in the visualizer.
+ * @author <a href="mailto:marco.leise@gmx.de">Marco Leise</a>
  */
-Random = {
-	/**
-	 * returns an integer in the range [0..range[
-	 * 
-	 * @param {number}
-	 *        range the exclusive limit of the range
-	 */
-	range : function(range) {
-		return Math.random() * range | 0;
-	},
-	/**
-	 * returns an integer in the range [from..to]
-	 * 
-	 * @param {number}
-	 *        from the low value of the range (inclusive)
-	 * @param {number}
-	 *        to the high value of the range (inclusive)
-	 */
-	fromTo : function(from, to) {
-		return from + (Math.random() * (1 + to - from) | 0);
-	}
-};
 
+/**
+ * On a infinite repeating map, this maps a coordinate x into the 'original' instance of the map
+ * area. That is the area starting at (0;0) ranging to (width;height). This function operates on a
+ * single coordinate so the range parameter can be either the width or height.
+ * 
+ * @param {Number}
+ *        x The coordinate that should be remapped.
+ * @param {Number}
+ *        range The maximum for that coordinate.
+ * @return {Number} x' such that, 0 &lt;= x &lt; range.
+ */
 Math.wrapAround = function(x, range) {
 	return x - Math.floor(x / range) * range;
 };
 
+/**
+ * A simple clamp function that makes sure, a value x doesn't violate a given range.
+ * 
+ * @param {Number}
+ *        x The value that should be clamped to the range.
+ * @param {Number}
+ *        min The minimum value of a range.
+ * @param {Number}
+ *        max The maximum value of a range.
+ * @return {Number} x, clamped to the range [min..max]
+ */
 Math.clamp = function(x, min, max) {
 	return x < min ? min : x > max ? max : x;
 };
 
+/**
+ * A set of browser quirks, that can be queried to take alternate code paths.
+ * 
+ * @namespace
+ */
 Quirks = {
+	/**
+	 * True for browsers that correctly support the HTML canvas shadow effect.
+	 */
 	fullImageShadowSupport : !(window.navigator && window.navigator.userAgent
 			.match(/\b(Firefox\/5\.|Chrome\/1[23]\.).*/))
 };
 
+/**
+ * Names for common key-codes.
+ * 
+ * @namespace
+ */
 Key = {
 	LEFT : 37,
 	RIGHT : 39,
@@ -52,6 +66,11 @@ Key = {
 	MINUS_JAVA : 45
 };
 
+/**
+ * Functions that wrap content into HTML tags.
+ * 
+ * @namespace
+ */
 Html = {
 	/**
 	 * Creates a table HTML element.
@@ -83,10 +102,7 @@ Html = {
 	 * @returns {String} the HTML table cell
 	 */
 	td : function(content) {
-		return Html
-				.element('td',
-						'display:table-cell;border:dotted 1px;padding:0px 2px',
-						content);
+		return Html.element('td', 'display:table-cell;border:dotted 1px;padding:0px 2px', content);
 	},
 
 	/**
@@ -131,42 +147,74 @@ Html = {
 	 * @param {String}
 	 *        style some CSS to be added
 	 * @param content
-	 *        a function or any other data type that forms the elements inner
-	 *        HTML
+	 *        a function or any other data type that forms the elements inner HTML
 	 * @returns {String} the resulting element string
 	 */
 	element : function(element, style, content) {
 		return '<' + element + ' style="' + style + '">'
-				+ (typeof content == 'function' ? content() : content) + '</'
-				+ element + '>';
+				+ (typeof content == 'function' ? content() : content) + '</' + element + '>';
 	}
 
 };
 
-function shapeRoundedRect(ctx, x, y, w, h, margin, r) {
-	var d = 0.5 * Math.PI;
-	ctx.beginPath();
-	ctx.moveTo(x + r + margin, y + margin);
-	ctx.lineTo(x + w - r - margin, y + margin);
-	ctx.arc(x + w - r - margin, y + r + margin, r, -d, 0, false);
-	ctx.lineTo(x + w - margin, y + h - r - margin);
-	ctx.arc(x + w - r - margin, y + h - r - margin, r, 0, d, false);
-	ctx.lineTo(x + r + margin, y + h - margin);
-	ctx.arc(x + r + margin, y + h - r - margin, r, d, 2 * d, false);
-	ctx.lineTo(x + margin, y + r + margin);
-	ctx.arc(x + r + margin, y + r + margin, r, 2 * d, 3 * d, false);
-}
+/**
+ * General purpose drawing functions.
+ * 
+ * @namespace
+ */
+Shape = {
+	/**
+	 * Draws the rounded rectangles used by buttons. Drawing attributes must be set before calling
+	 * this function.
+	 * 
+	 * @param {RenderingContext2D}
+	 *        ctx The rendering context to use.
+	 * @param {Number}
+	 *        x
+	 * @param {Number}
+	 *        y
+	 * @param {Number}
+	 *        w
+	 * @param {Number}
+	 *        h
+	 * @param {Number}
+	 *        margin How much to indent the center of the line.
+	 * @param {Number}
+	 *        r Radius of the rounded corners.
+	 */
+	roundedRect : function(ctx, x, y, w, h, margin, r) {
+		var d = 0.5 * Math.PI;
+		ctx.beginPath();
+		ctx.moveTo(x + r + margin, y + margin);
+		ctx.lineTo(x + w - r - margin, y + margin);
+		ctx.arc(x + w - r - margin, y + r + margin, r, -d, 0, false);
+		ctx.lineTo(x + w - margin, y + h - r - margin);
+		ctx.arc(x + w - r - margin, y + h - r - margin, r, 0, d, false);
+		ctx.lineTo(x + r + margin, y + h - margin);
+		ctx.arc(x + r + margin, y + h - r - margin, r, d, 2 * d, false);
+		ctx.lineTo(x + margin, y + r + margin);
+		ctx.arc(x + r + margin, y + r + margin, r, 2 * d, 3 * d, false);
+	}
+};
 
+/**
+ * This function is called on functors to make their classes sub-classes of another class.
+ * 
+ * @param {Function}
+ *        clazz The functor to inherit from.
+ */
 Function.prototype.extend = function(clazz) {
 	var property = undefined;
 	for (property in clazz.prototype) {
 		this.prototype[property] = clazz.prototype[property];
 	}
-	this.prototype.upper = function() {
+	// Simulates a super() call.
+	var upper = function() {
 		if (clazz.prototype.upper) this.upper = clazz.prototype.upper;
 		clazz.apply(this, arguments);
 		delete this.upper;
 	};
+	this.prototype.upper = upper;
 };
 
 /**
@@ -208,8 +256,7 @@ function Location(x, y, w, h) {
 }
 
 /**
- * Checks if a given coordinate pair is within the area described by this
- * object.
+ * Checks if a given coordinate pair is within the area described by this object.
  * 
  * @param {Number}
  *        x left coordinate
@@ -218,16 +265,36 @@ function Location(x, y, w, h) {
  * @returns {Boolean} true, if the point is inside the rectangle
  */
 Location.prototype.contains = function(x, y) {
-	return (x >= this.x && x < this.x + this.w && y >= this.y && y < this.y
-			+ this.h);
+	return (x >= this.x && x < this.x + this.w && y >= this.y && y < this.y + this.h);
 };
 
+/**
+ * @class A delegate that calls a method on an object, with optional static parameters.
+ * @constructor
+ * @param {Object}
+ *        obj The 'this' object.
+ * @param {Function}
+ *        func The member function.
+ * @param {Array}
+ *        args The arguments array. This parameter is optional here and it can be overridden in
+ *        #invoke.
+ */
 function Delegate(obj, func, args) {
 	this.obj = obj;
 	this.func = func;
 	this.args = args;
 }
 
-Delegate.prototype.invoke = function() {
-	this.func.apply(this.obj, this.args);
-}
+/**
+ * Invokes the method stored in this Delegate.
+ * 
+ * @param {Array}
+ *        args Optional argument list that overrides any arguments passed in the constructor.
+ */
+Delegate.prototype.invoke = function(args) {
+	if (args) {
+		this.func.apply(this.obj, args);
+	} else {
+		this.func.apply(this.obj, this.args);
+	}
+};

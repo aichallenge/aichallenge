@@ -18,12 +18,12 @@
 		<link>
 			<name>classes</name>
 			<type>2</type>
-			<locationURI>PARENT-2-PROJECT_LOC/visualizer/build/classes</locationURI>
+			<locationURI>PARENT-2-PROJECT_LOC/ants/visualizer/build/classes</locationURI>
 		</link>
 		<link>
 			<name>visualizer</name>
 			<type>2</type>
-			<locationURI>PARENT-2-PROJECT_LOC/visualizer</locationURI>
+			<locationURI>PARENT-2-PROJECT_LOC/ants/visualizer</locationURI>
 		</link>
 	</linkedResources>
 </projectDescription>

@@ -10,8 +10,7 @@
  *        group the button group that this button belongs to
  * @param {Delegate}
  *        onclick a callback for the button-click
- * @property {Boolean} locked true, when the button is locked down (radio
- *           buttons)
+ * @property {Boolean} locked true, when the button is locked down (radio buttons)
  */
 function Button(group, onclick) {
 	this.group = group;
@@ -23,8 +22,8 @@ function Button(group, onclick) {
 }
 
 /**
- * This renders the button. drawInternal() is called from here to let derived
- * classes add graphics or text to the basic button style.
+ * This renders the button. drawInternal() is called from here to let derived classes add graphics
+ * or text to the basic button style.
  */
 Button.prototype.draw = function() {
 	var g = this.group;
@@ -47,7 +46,7 @@ Button.prototype.draw = function() {
 	var r = 0.2 * Math.min(loc.w, loc.h);
 	if (this.onclick && this.enabled) {
 		if (this.hover || this.down !== 0) {
-			shapeRoundedRect(ctx, loc.x, loc.y, loc.w, loc.h, 1, r);
+			Shape.roundedRect(ctx, loc.x, loc.y, loc.w, loc.h, 1, r);
 			ctx.fillStyle = 'rgb(255, 230, 200)';
 			ctx.fill();
 		}
@@ -75,56 +74,52 @@ Button.prototype.draw = function() {
 };
 
 /**
- * Updates the button state when it is pressed and invokes the button onclick
- * delegate.
+ * Updates the button state when it is pressed and invokes the button onclick delegate.
  */
 Button.prototype.mouseDown = function() {
 	var i, btns;
 	switch (this.group.mode) {
-		case ButtonGroup.MODE_RADIO:
-			this.locked = !this.locked;
-			if (this.locked) {
-				if (this.onclick) {
-					this.onclick.args = [ this.idx ];
-					this.onclick.invoke();
-				}
-				btns = this.group.buttons;
-				for (i = 0; i < btns.length; i++) {
-					if (btns[i].down !== 0) {
-						btns[i].down = 0;
-						btns[i].locked = false;
-						btns[i].draw();
-					}
+	case ButtonGroup.MODE_RADIO:
+		this.locked = !this.locked;
+		if (this.locked) {
+			if (this.onclick) {
+				this.onclick.invoke([ this.idx ]);
+			}
+			btns = this.group.buttons;
+			for (i = 0; i < btns.length; i++) {
+				if (btns[i].down !== 0) {
+					btns[i].down = 0;
+					btns[i].locked = false;
+					btns[i].draw();
 				}
 			}
-		case ButtonGroup.MODE_NORMAL:
-			this.down = 2;
-			break;
+		}
+	case ButtonGroup.MODE_NORMAL:
+		this.down = 2;
+		break;
 	}
 	this.draw();
 };
 
 /**
- * Updates the button state when it is released and invokes the button onclick
- * delegate.
+ * Updates the button state when it is released and invokes the button onclick delegate.
  */
 Button.prototype.mouseUp = function() {
 	switch (this.group.mode) {
-		case ButtonGroup.MODE_RADIO:
-			if (this.locked) {
-				this.down = 1;
-			} else {
-				if (this.onclick) {
-					this.onclick.args = undefined;
-					this.onclick.invoke();
-				}
-				this.down = 0;
+	case ButtonGroup.MODE_RADIO:
+		if (this.locked) {
+			this.down = 1;
+		} else {
+			if (this.onclick) {
+				this.onclick.invoke([]);
 			}
-			break;
-		case ButtonGroup.MODE_NORMAL:
-			if (this.hover && this.onclick) this.onclick.invoke(this);
 			this.down = 0;
-			break;
+		}
+		break;
+	case ButtonGroup.MODE_NORMAL:
+		if (this.hover && this.onclick) this.onclick.invoke();
+		this.down = 0;
+		break;
 	}
 	this.draw();
 };
@@ -234,9 +229,8 @@ ImageButton.prototype.drawInternal = function(ctx) {
  * @returns {Location} the location of this button
  */
 ImageButton.prototype.getLocation = function() {
-	return new Location(this.group.x + (this.group.vertical ? 0 : this.delta),
-			this.group.y + (this.group.vertical ? this.delta : 0),
-			this.group.size, this.group.size);
+	return new Location(this.group.x + (this.group.vertical ? 0 : this.delta), this.group.y
+			+ (this.group.vertical ? this.delta : 0), this.group.size, this.group.size);
 };
 
 /**
@@ -248,17 +242,16 @@ ImageButton.prototype.getLocation = function() {
  * @param {HTMLImageElement}
  *        img the image that contains a row of graphics for this button group
  * @param {Boolean}
- *        layout one of {@link ImageButtonGroup#HORIZONTAL} or
- *        {@link ImageButtonGroup#VERTICAL}
+ *        layout one of {@link ImageButtonGroup#HORIZONTAL} or {@link ImageButtonGroup#VERTICAL}
  * @param {Number}
  *        mode one of {@link ButtonGroup#MODE_HIDDEN} (hides the button group),
- *        {@link ButtonGroup#MODE_NORMAL} (normal buttons) or
- *        {@link ButtonGroup#MODE_RADIO} (radio buttons)
+ *        {@link ButtonGroup#MODE_NORMAL} (normal buttons) or {@link ButtonGroup#MODE_RADIO} (radio
+ *        buttons)
  * @param {Number}
  *        border adds padding around the buttons on each side
  * @param {Number}
- *        extent the size of the button group (height for vertical layouts,
- *        width for horizontal layouts)
+ *        extent the size of the button group (height for vertical layouts, width for horizontal
+ *        layouts)
  */
 function ImageButtonGroup(manager, img, layout, mode, border, extent) {
 	this.upper(manager, border);
@@ -361,11 +354,9 @@ function TextButton(group, text, color, onclick) {
 	this.upper(group, onclick);
 	this.text = text;
 	this.color = color;
-	var ctx = this.group.manager.ctx;
 	this.x = 0;
 	this.y = 0;
-	ctx.font = FONT;
-	this.w = ctx.measureText(text).width + 8;
+	this.setText(text);
 	this.h = 28;
 }
 TextButton.extend(Button);
@@ -396,8 +387,19 @@ TextButton.prototype.drawInternal = function(ctx) {
  * @returns {Location} the location of this button
  */
 TextButton.prototype.getLocation = function() {
-	return new Location(this.group.x + this.x, this.group.y + this.y, this.w,
-			this.h);
+	return new Location(this.group.x + this.x, this.group.y + this.y, this.w, this.h);
+};
+
+/**
+ * Updates the button text and resizes the button.
+ * 
+ * @param {String}
+ *        text The new caption.
+ */
+TextButton.prototype.setText = function(text) {
+	this.text = text;
+	this.group.manager.ctx.font = FONT;
+	this.w = this.group.manager.ctx.measureText(text).width + 8;
 };
 
 /**
@@ -408,8 +410,8 @@ TextButton.prototype.getLocation = function() {
  *        manager the button manager that this button group will belong to
  * @param {Number}
  *        mode one of {@link ButtonGroup#MODE_HIDDEN} (hides the button group),
- *        {@link ButtonGroup#MODE_NORMAL} (normal buttons) or
- *        {@link ButtonGroup#MODE_RADIO} (radio buttons)
+ *        {@link ButtonGroup#MODE_NORMAL} (normal buttons) or {@link ButtonGroup#MODE_RADIO} (radio
+ *        buttons)
  * @param {Number}
  *        border adds padding around the buttons on each side
  */
@@ -441,8 +443,8 @@ TextButtonGroup.prototype.addButton = function(text, color, onclick) {
 };
 
 /**
- * This will layout the buttons according to a given width, much like left
- * aligned text in a word processor.
+ * This will layout the buttons according to a given width, much like left aligned text in a word
+ * processor.
  * 
  * @param {Number}
  *        width the maximum line width in pixels
@@ -486,26 +488,22 @@ function ButtonManager(ctx) {
  * @param {String}
  *        name a descriptive group name for easy lookup
  * @param {HTMLImageElement}
- *        img the reference image that partial images for the buttons will be
- *        taken from
+ *        img the reference image that partial images for the buttons will be taken from
  * @param {Boolean}
- *        layout one of {@link ImageButtonGroup#HORIZONTAL} or
- *        {@link ImageButtonGroup#VERTICAL}
+ *        layout one of {@link ImageButtonGroup#HORIZONTAL} or {@link ImageButtonGroup#VERTICAL}
  * @param {Number}
  *        mode one of {@link ButtonGroup#MODE_HIDDEN} (hides the button group),
- *        {@link ButtonGroup#MODE_NORMAL} (normal buttons) or
- *        {@link ButtonGroup#MODE_RADIO} (radio buttons)
+ *        {@link ButtonGroup#MODE_NORMAL} (normal buttons) or {@link ButtonGroup#MODE_RADIO} (radio
+ *        buttons)
  * @param {Number}
  *        border adds padding around the buttons on each side
  * @param {Number}
- *        extent the size of the button group (height for vertical layouts,
- *        width for horizontal layouts)
+ *        extent the size of the button group (height for vertical layouts, width for horizontal
+ *        layouts)
  * @returns {ImageButtonGroup} the created button group
  */
-ButtonManager.prototype.addImageGroup = function(name, img, layout, mode,
-		border, extent) {
-	return this.groups[name] = new ImageButtonGroup(this, img, layout, mode,
-			border, extent);
+ButtonManager.prototype.addImageGroup = function(name, img, layout, mode, border, extent) {
+	return this.groups[name] = new ImageButtonGroup(this, img, layout, mode, border, extent);
 };
 
 /**
@@ -515,8 +513,8 @@ ButtonManager.prototype.addImageGroup = function(name, img, layout, mode,
  *        name a descriptive group name for easy lookup
  * @param {Number}
  *        mode one of {@link ButtonGroup#MODE_HIDDEN} (hides the button group),
- *        {@link ButtonGroup#MODE_NORMAL} (normal buttons) or
- *        {@link ButtonGroup#MODE_RADIO} (radio buttons)
+ *        {@link ButtonGroup#MODE_NORMAL} (normal buttons) or {@link ButtonGroup#MODE_RADIO} (radio
+ *        buttons)
  * @param {Number}
  *        border adds padding around the buttons on each side
  * @returns {TextButtonGroup} the created button group
@@ -550,8 +548,7 @@ ButtonManager.prototype.getGroup = function(name) {
 };
 
 /**
- * Finds an active button under the mouse cursor. The call is forwarded to
- * matching button groups.
+ * Finds an active button under the mouse cursor. The call is forwarded to matching button groups.
  * 
  * @see ButtonGroup#mouseMove
  * @param {Number}
@@ -566,8 +563,8 @@ ButtonManager.prototype.mouseMove = function(mx, my) {
 	for (groupName in this.groups) {
 		// use of method, to allow Eclipse to infer the type
 		var bg = this.getGroup(groupName);
-		if (bg.mode != ButtonGroup.MODE_HIDDEN && my >= bg.y
-				&& my < bg.y + bg.h && mx >= bg.x && mx < bg.x + bg.w) {
+		if (bg.mode != ButtonGroup.MODE_HIDDEN && my >= bg.y && my < bg.y + bg.h && mx >= bg.x
+				&& mx < bg.x + bg.w) {
 			result = bg.mouseMove(mx, my);
 			if (result !== null) {
 				break;

@@ -4,3 +4,4 @@ build/*
 local.properties
 replay.html
 jaropt.log
+.ant-targets-build.xml

@@ -18,7 +18,7 @@
 		<link>
 			<name>mapgen</name>
 			<type>2</type>
-			<location>/home/marco/Entwicklung/A.I. challenge/repo.new/ants/mapgen</location>
+			<locationURI>PARENT-2-PROJECT_LOC/ants/mapgen</locationURI>
 		</link>
 	</linkedResources>
 	<filteredResources>
