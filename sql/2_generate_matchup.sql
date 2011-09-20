@@ -114,7 +114,7 @@ if @min_players <= @max_players then
         from game_player gp
         inner join game g
             on g.game_id = gp.game_id
-        where g.timestamp > timestampadd(hour, -48, current_timestamp)
+        where g.timestamp > timestampadd(hour, -24, current_timestamp)
         group by user_id;
 
 
