@@ -301,10 +301,10 @@ class Ant {
 		this.owner = owner == Undefined.instance ? -1 : (Integer) owner;
 		this.toTurn = turn + 1;
 		if (this.owner == -1) {
-			js = (NativeObject) ScriptableObject.callMethod(replay, "spawnAnt",
+			js = (NativeObject) ScriptableObject.callMethod(replay, "spawnFood",
 					new Object[] { id, row, col, turn, owner });
 		} else {
-			js = (NativeObject) ScriptableObject.callMethod(replay, "spawnAnt",
+			js = (NativeObject) ScriptableObject.callMethod(replay, "spawnFood",
 					new Object[] { id, row, col, 0, owner });
 			if (owner != Undefined.instance) {
 				ScriptableObject.callMethod(replay, "convertAnt", new Object[] {

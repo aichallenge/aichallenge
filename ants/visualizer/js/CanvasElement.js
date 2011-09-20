@@ -183,7 +183,7 @@ CanvasElementAbstractMap.prototype.redFocusRectFun = function(xs, ys) {
  * Draws the terrain map.
  */
 CanvasElementAbstractMap.prototype.draw = function() {
-	var row, col, start, isWall, xs, ys;
+	var row, col, start, isWall, xs, ys, hills, i, hill;
 	var rows = this.state.replay.rows;
 	var cols = this.state.replay.cols;
 	var rowOpt = this.state.options['row'];
@@ -208,6 +208,24 @@ CanvasElementAbstractMap.prototype.draw = function() {
 					this.scale);
 		}
 	}
+	// hills
+	hills = this.state.replay.meta['replaydata']['hills'];
+	if (hills) {
+		this.ctx.lineWidth = 0.2 * this.scale;
+		this.ctx.fillStyle = '#000';
+		for (i = 0; i < hills.length; i++) {
+			hill = hills[i];
+			xs = (hill[1] + 0.5) * this.scale;
+			ys = (hill[0] + 0.5) * this.scale;
+			this.ctx.beginPath();
+			this.ctx.arc(xs, ys, 0.4 * this.scale, 0, 2 * Math.PI, false);
+			this.ctx.fill();
+			this.ctx.strokeStyle = this.state.replay.htmlPlayerColors[hill[2]];
+			this.ctx.stroke();
+		}
+		this.ctx.lineWidth = 1;
+	}
+	// marker
 	if (!isNaN(rowOpt) && !isNaN(colOpt)) {
 		xs = (colOpt % cols) * this.scale - 4.5;
 		ys = (rowOpt % rows) * this.scale - 4.5;
@@ -299,7 +317,7 @@ CanvasElementMap.prototype.checkState = function() {
  *        state the visualizer state for reference
  */
 function CanvasElementFogPattern(state) {
-	CanvasElement.call(this);
+	this.upper();
 	this.state = state;
 	this.player = undefined;
 	this.setSize(2, 2);
@@ -341,7 +359,7 @@ CanvasElementFogPattern.prototype.draw = function() {
  *        pattern the fog pattern to use
  */
 function CanvasElementFog(state, pattern) {
-	CanvasElement.call(this);
+	this.upper();
 	this.state = state;
 	this.turn = 0;
 	this.shiftX = 0;
@@ -443,7 +461,7 @@ CanvasElementFog.prototype.draw = function() {
  *        fog the fog overlay
  */
 function CanvasElementAntsMap(state, map, fog) {
-	CanvasElement.call(this);
+	this.upper();
 	this.state = state;
 	this.map = map;
 	this.fog = fog;
@@ -627,11 +645,13 @@ CanvasElementAntsMap.prototype.draw = function() {
 		drawList = this.drawStates[hash];
 		for (n = drawList.length - 1; n >= 0; n--) {
 			kf = drawList[n];
-			if (kf['owner'] === undefined) {
-				w = halfScale * kf['size'];
-				this.ctx.beginPath();
-				this.ctx.arc(kf.mapX + halfScale, kf.mapY + halfScale, w, 0, 2 * Math.PI, false);
-				this.ctx.fill();
+			if (kf['owner'] !== undefined) {
+				this.drawWrapped(kf.mapX, kf.mapY, this.scale, this.scale, this.w, this.h,
+						function(x, y, width) {
+							this.ctx.beginPath();
+							this.ctx.arc(x, y, width, 0, 2 * Math.PI, false);
+							this.ctx.fill();
+						}, [ kf.mapX + halfScale, kf.mapY + halfScale, halfScale * kf['size'] ]);
 			} else {
 				w = this.scale;
 				dx = kf.mapX;
@@ -643,15 +663,6 @@ CanvasElementAntsMap.prototype.draw = function() {
 					w *= kf['size'];
 				}
 				this.ctx.fillRect(dx, dy, w, w);
-				if (dx < 0) {
-					this.ctx.fillRect(dx + this.w, dy, w, w);
-					if (dy < 0) {
-						this.ctx.fillRect(dx + this.w, dy + this.h, w, w);
-					}
-				}
-				if (dy < 0) {
-					this.ctx.fillRect(dx, dy + this.h, w, w);
-				}
 			}
 		}
 	}
@@ -783,7 +794,7 @@ CanvasElementAntsMap.prototype.draw = function() {
  *        antsMap the prepared map with ants
  */
 function CanvasElementShiftedMap(state, antsMap) {
-	CanvasElement.call(this);
+	this.upper();
 	this.state = state;
 	this.antsMap = antsMap;
 	this.dependsOn(antsMap);
@@ -865,7 +876,7 @@ CanvasElementShiftedMap.prototype.draw = function() {
  *        stats name of the stats to query from the visualizer
  */
 function CanvasElementGraph(state, stats) {
-	CanvasElement.call(this);
+	this.upper();
 	this.state = state;
 	this.stats = stats;
 	this.duration = 0;
@@ -1011,7 +1022,7 @@ CanvasElementGraph.prototype.draw = function() {
  *        stats name of the stats to query from the visualizer
  */
 function CanvasElementStats(state, caption, stats) {
-	CanvasElement.call(this);
+	this.upper();
 	this.state = state;
 	this.caption = caption;
 	this.graph = new CanvasElementGraph(state, stats);

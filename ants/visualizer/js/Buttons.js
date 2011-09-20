@@ -477,7 +477,7 @@ TextButtonGroup.prototype.cascade = function(width) {
  */
 function ButtonManager(ctx) {
 	this.ctx = ctx;
-	this.groups = {};
+	this.groups = new Object();
 	this.hover = null;
 	this.pinned = null;
 }

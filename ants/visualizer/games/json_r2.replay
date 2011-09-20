@@ -11,7 +11,7 @@
 		"turntime": 1000,
 		"turns": 100,
 		"viewradius2": 96,
-		"attackradius2": 5,
+		"attackradius2": 9,
 		"spawnradius2": 2,
 		"map": {
 			"rows": 82,
