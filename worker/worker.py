@@ -549,6 +549,8 @@ class Worker:
                 else:
                     if not last:
                         time.sleep(20)
+                    # prevent worker from stopping on unknown tasks
+                    return True
             except:
                 log.error('Task Failure')
                 log.error(traceback.format_exc())
