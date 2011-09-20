@@ -103,6 +103,21 @@ if @min_players <= @max_players then
     set @last_user_id = -1;
     set @player_count = 1;
 
+    drop temporary table if exists temp_recent;
+    create temporary table temp_recent (
+        user_id int,
+        recent_games int,
+        primary key user_id
+    );
+    insert into temp_recent (user_id, recent_games)
+        select user_id, count(*) as recent_games
+        from game_player gp
+        inner join game g
+            on g.game_id = gp.game_id
+        where g.timestamp > timestampadd(hour, -48, current_timestamp)
+        group by user_id;
+
+
     while @player_count < @players do
                 
             -- select list of opponents with match quality
@@ -143,14 +158,7 @@ if @min_players <= @max_players then
                 ) s,
                 (select @seq := 0) seq
             ) s
-            inner join (
-                select user_id, count(*) as recent_games
-                from game_player gp
-                inner join game g
-                    on g.game_id = gp.game_id
-                where g.timestamp > timestampadd(hour, -48, current_timestamp)
-                group by user_id
-            ) r
+            inner join temp_recent r
                 on r.user_id = s.user_id
             -- join in user to user game counts to provide round-robin like logic
             left outer join opponents o
