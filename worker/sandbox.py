@@ -37,6 +37,7 @@ def _guard_monitor(jail):
         else:
             msg, ts, data = words
         ts = float(ts)
+        data = unicode(data, errors="replace")
         if msg == "STDOUT":
             jail.stdout_queue.put((time, data))
         elif msg == "STDERR":
@@ -278,7 +279,7 @@ class Jail(object):
             timeout=0
         try:
             time, line = self.stdout_queue.get(block=True, timeout=timeout)
-            return unicode(line, errors="replace")
+            return line
         except Empty:
             return None
 
@@ -294,7 +295,7 @@ class Jail(object):
             timeout=0
         try:
             time, line = self.stderr_queue.get(block=True, timeout=timeout)
-            return unicode(line, errors="replace")
+            return line
         except Empty:
             return None
 
@@ -313,7 +314,9 @@ def _monitor_file(fd, q):
         if not line:
             q.put(None)
             break
-        q.put(line.rstrip('\r\n'))
+        line = line.rstrip('\r\n')
+        line = unicode(line, errors="replace")
+        q.put(line)
 
 class House:
     """Provide an insecure sandbox to run arbitrary commands in.
@@ -471,8 +474,7 @@ class House:
         if not self.is_alive:
             timeout=0
         try:
-            line = self.stdout_queue.get(block=True, timeout=timeout)
-            return unicode(line, errors="replace")
+            return self.stdout_queue.get(block=True, timeout=timeout)
         except Empty:
             return None
 
@@ -487,8 +489,7 @@ class House:
         if not self.is_alive:
             timeout=0
         try:
-            line = self.stderr_queue.get(block=True, timeout=timeout)
-            return unicode(line, errors="replace")
+            return self.stderr_queue.get(block=True, timeout=timeout)
         except Empty:
             return None
 
