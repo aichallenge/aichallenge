@@ -1597,12 +1597,13 @@ class Ants(Game):
         replay['hills'] = []
         for loc, hill in self.hills.items():
             # mimic food data
-            hill_data = [hill.loc[0], hill.loc[1]]
+            hill_data = [hill.loc[0], hill.loc[1], hill.owner]
             if not hill.end_turn:
                 hill_data.append(self.turn + 1)
             else:
                 hill_data.append(hill.end_turn)
-            hill_data.append(hill.owner)
+            #if not hill.killed_by == None:
+            #    hill_data.append(hill.owner)
 
             replay['hills'].append(hill_data)
 
