@@ -107,7 +107,7 @@ if @min_players <= @max_players then
     create temporary table temp_recent (
         user_id int,
         recent_games int,
-        primary key user_id
+        primary key (user_id)
     );
     insert into temp_recent (user_id, recent_games)
         select user_id, count(*) as recent_games
