@@ -278,7 +278,7 @@ class Jail(object):
             timeout=0
         try:
             time, line = self.stdout_queue.get(block=True, timeout=timeout)
-            return line
+            return unicode(line, errors="replace")
         except Empty:
             return None
 
@@ -294,7 +294,7 @@ class Jail(object):
             timeout=0
         try:
             time, line = self.stderr_queue.get(block=True, timeout=timeout)
-            return line
+            return unicode(line, errors="replace")
         except Empty:
             return None
 
@@ -471,7 +471,8 @@ class House:
         if not self.is_alive:
             timeout=0
         try:
-            return self.stdout_queue.get(block=True, timeout=timeout)
+            line = self.stdout_queue.get(block=True, timeout=timeout)
+            return unicode(line, errors="replace")
         except Empty:
             return None
 
@@ -486,7 +487,8 @@ class House:
         if not self.is_alive:
             timeout=0
         try:
-            return self.stderr_queue.get(block=True, timeout=timeout)
+            line = self.stderr_queue.get(block=True, timeout=timeout)
+            return unicode(line, errors="replace")
         except Empty:
             return None
 
