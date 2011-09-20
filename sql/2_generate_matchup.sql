@@ -143,6 +143,15 @@ if @min_players <= @max_players then
                 ) s,
                 (select @seq := 0) seq
             ) s
+            inner join (
+                select user_id, count(*) as recent_games
+                from game_player gp
+                inner join game g
+                    on g.game_id = gp.game_id
+                where g.timestamp > timestampadd(hour, -48, current_timestamp)
+                group by user_id
+            ) r
+                on r.user_id = s.user_id
             -- join in user to user game counts to provide round-robin like logic
             left outer join opponents o
                 on o.user_id = @seed_id and o.opponent_id = s.user_id,
@@ -154,6 +163,7 @@ if @min_players <= @max_players then
             ) s_count
             where s.seq < s_count.submission_count * 10/100 or s.seq <= @min_players * 2
             order by o.game_count,
+                r.recent_games,
                 s.match_quality desc
             limit 1;
                 
