@@ -62,12 +62,12 @@ if @min_players <= @max_players then
     end if;
 
     -- debug statement
-    drop temporary table if exists tmp_matchup;
-    create temporary table tmp_matchup
+    drop table if exists tmp_matchup;
+    create table tmp_matchup
     select * from matchup;
     
-    drop temporary table if exists tmp_matchup_player;
-    create temporary table tmp_matchup_player
+    drop table if exists tmp_matchup_player;
+    create table tmp_matchup_player
     select * from matchup_player;
     
     -- create matchup and add seed player
