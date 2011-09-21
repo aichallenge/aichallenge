@@ -26,8 +26,14 @@ begin
         game_count = 0;
 
     -- delete current matchups, even those in progress
-    delete from matchup;
-    delete from matchup_player;
+    delete from matchup
+    where deleted = 0;
+    delete from matchup_player
+    where not exists (
+        select *
+        from matchup
+        where matchup.matchup_id = matchup_player.matchup_id
+    );
 
 end$$
 delimeter ;
