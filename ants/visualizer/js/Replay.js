@@ -151,7 +151,7 @@ DataType = {
  * @see Ant
  */
 function Replay(replay, debug, swapUser) {
-	var i, k, player_scores, swapIndex, c, n, r;
+	var i, k, player_scores, swapIndex, c, n, r, regex;
 	var format = 'json';
 	var storeslist = undefined;
 	/**
@@ -203,10 +203,12 @@ function Replay(replay, debug, swapUser) {
 		if (!replay) {
 			throw new Error('replay meta data is no object notation');
 		}
-		// start parsing process
+
+		// start validation process
 		this.duration = 0;
 		var that = this;
 		if (replay) {
+			// set up helper functions
 			var stack = [];
 			var keyEq = function(obj, key, val) {
 				if (obj[key] !== val && !that.debug) {
@@ -274,12 +276,15 @@ function Replay(replay, debug, swapUser) {
 					if (fixed) durationSetter = obj;
 				}
 			};
+
+			// options
 			enterObj(this.meta, 'replaydata');
 			keyRange(replay, 'revision', 2, 3);
 			this.revision = replay['revision'];
 			keyRange(replay, 'players', 1, 26);
 			this.players = replay['players'];
 			keyOption(replay, 'viewradius2', keyRange, [ 0, undefined ]);
+
 			// map
 			var map = enterObj(replay, 'map');
 			keyIsArr(map, 'data', 1, undefined);
@@ -292,7 +297,11 @@ function Replay(replay, debug, swapUser) {
 			this.cols = map['cols'];
 			var mapdata = enterObj(map, 'data');
 			this.walls = new Array(mapdata.length);
-			var regex = /[^%*.a-z]/;
+			if (this.revision >= 3) {
+				regex = /[^%*.\^a-z]/;
+			} else {
+				regex = /[^%*.a-z]/;
+			}
 			for (r = 0; r < mapdata.length; r++) {
 				keyIsStr(mapdata, r, map['cols'], map['cols']);
 				var maprow = new String(mapdata[r]);
@@ -307,13 +316,14 @@ function Replay(replay, debug, swapUser) {
 			}
 			stack.pop();
 			stack.pop();
+
 			// hills
 			if (this.revision >= 3) {
 				keyIsArr(replay, 'hills', 0, undefined);
 				stack.push('hills');
 				var hills = replay['hills'];
 				for (n = 0; n < hills.length; n++) {
-					keyIsArr(hills, n, 4, 4);
+					keyIsArr(hills, n, 4, 5);
 					stack.push(n);
 					var obj = hills[n];
 					// row must be within map height
@@ -325,8 +335,13 @@ function Replay(replay, debug, swapUser) {
 					// destruction turn must be >= 0
 					keyRange(obj, 3, 0, undefined);
 					setReplayDuration(obj[3] - 1, false);
+					if (obj.length > 4) {
+						// destroying player index must match player count
+						keyRange(obj, 4, 0, this.players - 1);
+					}
 				}
 			}
+
 			// ants
 			keyIsArr(replay, 'ants', 0, undefined);
 			stack.push('ants');
@@ -374,6 +389,7 @@ function Replay(replay, debug, swapUser) {
 				}
 				stack.pop();
 			}
+
 			// food
 			if (this.revision >= 3) {
 				keyIsArr(replay, 'food', 0, undefined);
@@ -402,6 +418,7 @@ function Replay(replay, debug, swapUser) {
 					}
 				}
 			}
+
 			// scores
 			keyIsArr(replay, 'scores', this.players, this.players);
 			stack.push('scores');
@@ -422,6 +439,7 @@ function Replay(replay, debug, swapUser) {
 				}
 				stack.pop();
 			}
+
 			// prepare score and count lists
 			this.turns = new Array(this.duration + 1);
 			this['scores'] = new Array(this.duration + 1);
@@ -460,11 +478,20 @@ function Replay(replay, debug, swapUser) {
 				}
 				this.fogs[i] = new Array(this.duration + 1);
 			}
-			for (i = 0; i < ants.length; i++) {
-				if (ants[i][5] !== undefined) {
-					// account ant to the owner
-					for (n = ants[i][3]; n < ants[i][4]; n++) {
-						this['counts'][n][ants[i][5]]++;
+			// account ants their owners
+			if (this.revision >= 3) {
+				for (i = 0; i < ants.length; i++) {
+					for (n = ants[i][2]; n < ants[i][3]; n++) {
+						this['counts'][n][ants[i][4]]++;
+					}
+				}
+			} else {
+				for (i = 0; i < ants.length; i++) {
+					if (ants[i][5] !== undefined) {
+						// account ant to the owner
+						for (n = ants[i][3]; n < ants[i][4]; n++) {
+							this['counts'][n][ants[i][5]]++;
+						}
 					}
 				}
 			}
