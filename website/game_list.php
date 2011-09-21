@@ -69,8 +69,8 @@ function produce_cache_results($page=0, $user_id=NULL, $submission_id=NULL, $map
         $list_type = "submission";
         $list_id_field = "submission_id";
     } elseif ($map_id !== NULL) {
-        // $page_count_query = "select_map_game_list_page_count";
-        // $list_query = "select_map_game_list";
+        $page_count_query = "select_map_game_list_page_count";
+        $list_query = "select_map_game_list";
         $list_select_field = "map_id";
         $list_id = $map_id;
         $list_type = "map";

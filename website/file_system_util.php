@@ -1,6 +1,7 @@
 <?php
 
 function delete_directory($dirname) {
+  $dir_handle = False;
   if (is_dir($dirname)) {
     $dir_handle = opendir($dirname);
   }
