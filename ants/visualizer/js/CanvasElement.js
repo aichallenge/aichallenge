@@ -183,7 +183,7 @@ CanvasElementAbstractMap.prototype.redFocusRectFun = function(xs, ys) {
  * Draws the terrain map.
  */
 CanvasElementAbstractMap.prototype.draw = function() {
-	var row, col, start, isWall, xs, ys, hills, i, hill;
+	var row, col, start, isWall, xs, ys;
 	var rows = this.state.replay.rows;
 	var cols = this.state.replay.cols;
 	var rowOpt = this.state.options['row'];
@@ -207,23 +207,6 @@ CanvasElementAbstractMap.prototype.draw = function() {
 			this.ctx.fillRect(this.scale * start, this.scale * row, this.scale * (col - start),
 					this.scale);
 		}
-	}
-	// hills
-	hills = this.state.replay.meta['replaydata']['hills'];
-	if (hills) {
-		this.ctx.lineWidth = 0.2 * this.scale;
-		this.ctx.fillStyle = '#000';
-		for (i = 0; i < hills.length; i++) {
-			hill = hills[i];
-			xs = (hill[1] + 0.5) * this.scale;
-			ys = (hill[0] + 0.5) * this.scale;
-			this.ctx.beginPath();
-			this.ctx.arc(xs, ys, 0.4 * this.scale, 0, 2 * Math.PI, false);
-			this.ctx.fill();
-			this.ctx.strokeStyle = this.state.replay.htmlPlayerColors[hill[2]];
-			this.ctx.stroke();
-		}
-		this.ctx.lineWidth = 1;
 	}
 	// marker
 	if (!isNaN(rowOpt) && !isNaN(colOpt)) {
@@ -632,11 +615,34 @@ CanvasElementAntsMap.prototype.collectAntsAroundCursor = function() {
  */
 CanvasElementAntsMap.prototype.draw = function() {
 	var halfScale, drawList, n, kf, w, dx, dy, d, fontSize, label, caption, order;
-	var target, rows, cols, x1, y1, x2, y2, rowPixels, colPixels, ar, sr, r;
+	var target, rows, cols, x1, y1, x2, y2, rowPixels, colPixels, ar, sr, r, hill, hills, i;
 	var hash = undefined;
 
 	// draw map
 	this.ctx.drawImage(this.map.canvas, 0, 0);
+
+	// hills
+	hills = this.state.replay.meta['replaydata']['hills'];
+	if (hills) {
+		for (i = 0; i < hills.length; i++) {
+			hill = hills[i];
+			xs = (hill[1] - 1) * this.scale;
+			ys = (hill[0] - 1) * this.scale;
+			w = 3 * this.scale;
+			d = 60 * hill[2];
+			if (this.turn >= hill[3]) {
+				this.drawWrapped(xs, ys, 3 * this.scale, 3 * this.scale, this.w, this.h,
+						function() {
+							this.ctx.drawImage(this.hillImage, d, 60, 60, 60, xs, ys, w, w);
+						}, []);
+			} else {
+				this.drawWrapped(xs, ys, 3 * this.scale, 3 * this.scale, this.w, this.h,
+						function() {
+							this.ctx.drawImage(this.hillImage, d, 0, 60, 60, xs, ys, w, w);
+						}, []);
+			}
+		}
+	}
 
 	// draw ants sorted by color
 	halfScale = 0.5 * this.scale;
@@ -785,6 +791,16 @@ CanvasElementAntsMap.prototype.draw = function() {
 };
 
 /**
+ * Sets the ant hill image to use when drawing the map.
+ * 
+ * @param {HTMLCanvasElement}
+ *        hillImage a colorized hill graphic.
+ */
+CanvasElementAntsMap.prototype.setHillImage = function(hillImage) {
+	this.hillImage = hillImage;
+};
+
+/**
  * @class The main map with ants, dragged with the mouse and extended by borders if required
  * @extends CanvasElement
  * @constructor
@@ -824,8 +840,8 @@ CanvasElementShiftedMap.prototype.checkState = function() {
  */
 CanvasElementShiftedMap.prototype.draw = function() {
 	var x, y, dx, dy;
-	var mx = (this.w - this.antsMap.w) >> 1;
-	var my = (this.h - this.antsMap.h) >> 1;
+	var mx = (this.w - this.antsMap.w + 1) >> 1;
+	var my = (this.h - this.antsMap.h + 1) >> 1;
 	// map backdrop
 	dx = mx + this.shiftX;
 	dy = my + this.shiftY;

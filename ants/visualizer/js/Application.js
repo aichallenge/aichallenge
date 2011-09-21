@@ -153,6 +153,7 @@ Visualizer = function(container, options, w, h, configOverrides) {
 			this.imgMgr.add('playback.png');
 			this.imgMgr.add('fog.png');
 			this.imgMgr.add('toolbar.png');
+			this.imgMgr.add('hill.png');
 			/** @private */
 			this.btnMgr = new ButtonManager(null);
 			/** @private */
@@ -672,6 +673,9 @@ Visualizer.prototype.tryStart = function() {
 						buttonAdder(this.state.order[i]);
 					}
 				}
+				// colorize ant hill
+				this.imgMgr.colorize(4, colors);
+				this.antsMap.setHillImage(this.imgMgr.patterns[4]);
 			}
 		}
 		// calculate speed from duration and config settings
