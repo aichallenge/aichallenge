@@ -27,7 +27,7 @@ begin
 
     -- delete current matchups, even those in progress
     delete from matchup
-    where deleted = 0;
+    where worker_id >= 0 or worker_id is null;
     delete from matchup_player
     where not exists (
         select *
@@ -36,5 +36,5 @@ begin
     );
 
 end$$
-delimeter ;
+delimiter ;
 
