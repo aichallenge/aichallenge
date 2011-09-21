@@ -705,6 +705,7 @@ class Ants(Game):
         return hill
     
     def raze_hill(self, hill, killed_by):
+        hill.end_turn = self.turn
         hill.killed_by = killed_by
         self.score[killed_by] += 1
         
