@@ -114,7 +114,7 @@ CREATE TABLE `opponents` (
   `user_id` int(11) NOT NULL,
   `opponent_id` int(11) NOT NULL,
   `game_count` int(11) NOT NULL,
-  PRIMARY KEY (`user_id`, `opponent_id`),
+  PRIMARY KEY (`user_id`, `opponent_id`)
 );
 
 DROP TABLE IF EXISTS `organization`;
