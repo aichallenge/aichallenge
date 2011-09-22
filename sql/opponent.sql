@@ -80,7 +80,9 @@ if @min_players <= @max_players then
     values (@matchup_id, @seed_id, @submission_id, -1, @mu, @sigma);
 
     -- debug statement
-    select @seed_id as seed_id, @submission_id as submission_id, @mu as mu, @sigma as sigma;
+    select @seed_id as seed_id, @submission_id as submission_id, @mu as mu, @sigma as sigma, rank
+    from submission
+    where submission_id = @submission_id;
 
     -- Step 2: select the map
     -- TODO: improve distribution of games
@@ -143,12 +145,14 @@ if @min_players <= @max_players then
 
             -- debug statement
             -- select list of opponents with match quality
-            select s.user_id, s.submission_id, s.mu, s.sigma
+            select s.user_id, s.submission_id, s.mu, s.sigma,
+            s.rank,
+            o.game_count, r.recent_games, s.match_quality
             from (
                 select @seq := @seq + 1 as seq, s.*
                 from (
                     -- list of all submission sorted by match quality
-                    select s.user_id, s.submission_id, s.mu, s.sigma
+                    select s.user_id, s.submission_id, s.mu, s.sigma, s.rank
                         -- trueskill match quality for 2 players
                         ,@match_quality := exp(sum(ln(
                             sqrt(@twiceBetaSq / (@twiceBetaSq + pow(p.sigma,2) + pow(s.sigma,2))) *
