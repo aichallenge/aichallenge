@@ -47,7 +47,7 @@
   </tr>
   <tr>
     <td><a href="starter_packages/d_starter_package.zip">D</a></td>
-    <td><i>DMD 2.055 (x86_64) + Phobos</i></td>
+    <td><i>DMD 2.054 (x86_64) + Phobos</i></td>
     <td>&nbsp;</td>
     <td>&nbsp;</td>
   </tr>
