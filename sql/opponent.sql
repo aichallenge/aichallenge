@@ -143,11 +143,12 @@ if @min_players <= @max_players then
 
     while @player_count < @players do
 
+            set @pareto = (10 / pow(rand(), 0.7));
             -- debug statement
             -- select list of opponents with match quality
             select s.user_id, s.submission_id, s.mu, s.sigma,
             sub.rank,
-            o.game_count, r.recent_games, s.match_quality
+            o.game_count, r.recent_games, s.match_quality, @pareto
             from (
                 select @seq := @seq + 1 as seq, s.*
                 from (
@@ -183,26 +184,26 @@ if @min_players <= @max_players then
                 ) s,
                 (select @seq := 0) seq
             ) s
-            left outer join temp_recent r
-                on r.user_id = s.user_id
             inner join submission sub
                 on sub.submission_id = s.submission_id
+            left outer join temp_recent r
+                on r.user_id = s.user_id
             -- join in user to user game counts to provide round-robin like logic
             left outer join opponents o
-                on o.user_id = @seed_id and o.opponent_id = s.user_id,
+                on o.user_id = @seed_id and o.opponent_id = s.user_id
             -- get count of all active submissions to limit to top 10%
-            (
-                select count(*) as submission_count
-                from submission
-                where latest = 1 and status = 40
-            ) s_count
+            -- (
+            --    select count(*) as submission_count
+            --    from submission
+            --    where latest = 1 and status = 40
+            -- ) s_count
             -- pareto distribution
             -- the size of the pool of available players will follow a pareto distribution
             -- where the minimum is 10 and 80% of the values will be <= 30
             -- due to the least played ordering, after a submission is established
             -- it will tend to pull from the lowest match quality, so the opponent
             -- rank difference selected will also follow a pareto distribution 
-            where s.seq < (10 / pow(rand(), 0.7)) 
+            where s.seq < @pareto
             order by o.game_count,
                 r.recent_games,
                 s.match_quality desc;
@@ -261,14 +262,14 @@ if @min_players <= @max_players then
             -- due to the least played ordering, after a submission is established
             -- it will tend to pull from the lowest match quality, so the opponent
             -- rank difference selected will also follow a pareto distribution 
-            where s.seq < (10 / pow(rand(), 0.7)) 
+            where s.seq < @pareto
             order by o.game_count,
                 r.recent_games,
                 s.match_quality desc
             limit 1;
                 
             -- debug statement
-            select @last_user_id as user_id, @last_submission_id as submission_id, @last_mu as mu, @last_sigma as sigma
+            select @last_user_id as user_id, @last_submission_id as submission_id, @last_mu as mu, @last_sigma as sigma, submission.rank
 	    from submission
 	    where submission_id = @last_submission_id;
 
