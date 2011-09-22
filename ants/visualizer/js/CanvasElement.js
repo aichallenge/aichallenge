@@ -459,6 +459,7 @@ function CanvasElementAntsMap(state, map, fog) {
 	this.mouseOverVis = false;
 	this.mouseCol = 0;
 	this.mouseRow = 0;
+	this.hillImage = null;
 }
 CanvasElementAntsMap.extend(CanvasElement);
 
