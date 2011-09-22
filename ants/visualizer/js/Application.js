@@ -873,7 +873,7 @@ Visualizer.prototype.calculateMapCenter = function(scale) {
  * @private
  */
 Visualizer.prototype.addPlayerButtons = function() {
-	var scores, i, k;
+	var i;
 	var bg = this.btnMgr.addTextGroup('players', ButtonGroup.MODE_NORMAL, 2);
 	var vis = this;
 	var dlg = undefined;
