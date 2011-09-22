@@ -126,11 +126,12 @@ if @min_players <= @max_players then
             from (
                 select @seq := @seq + 1 as seq, s.*
                 from (
+                    -- list of all submission sorted by match quality
                     select s.user_id, s.submission_id, s.mu, s.sigma
                         -- trueskill match quality for 2 players
-                        ,@c := (@twiceBetaSq + pow(p.sigma,2) + pow(s.sigma,2)) as c,
-                        @match_quality := exp(sum(ln(
-                            sqrt(@twiceBetaSq / @c) * exp(-(pow(p.mu - s.mu, 2) / (2 * @c)))
+                        ,@match_quality := exp(sum(ln(
+                            sqrt(@twiceBetaSq / (@twiceBetaSq + pow(p.sigma,2) + pow(s.sigma,2))) *
+                            exp(-(pow(p.mu - s.mu, 2) / (2 * (@twiceBetaSq + pow(p.sigma,2) + pow(s.sigma,2)))))
                         ))) as match_quality
                     from
                     submission p, -- current players in match
@@ -153,8 +154,7 @@ if @min_players <= @max_players then
                     )
                     and s.latest = 1 and s.status = 40
                     group by s.user_id, s.submission_id, s.mu, s.sigma
-                    -- power curve approximation, pulls in some lower quality bots occasionally
-                    order by @match_quality * rand() desc
+                    order by 5 desc
                 ) s,
                 (select @seq := 0) seq
             ) s
@@ -169,7 +169,13 @@ if @min_players <= @max_players then
                 from submission
                 where latest = 1 and status = 40
             ) s_count
-            where s.seq < s_count.submission_count * 10/100 or s.seq <= @min_players * 2
+            -- pareto distribution
+            -- the size of the pool of available players will follow a pareto distribution
+            -- where the minimum is 16 and 80% of the values will be <= 50
+            -- due to the least played ordering, after a submission is established
+            -- it will tend to pull from the lowest match quality, so the opponent
+            -- rank difference selected will also follow a pareto distribution 
+            where s.seq < (16.6667 / pow(rand(), 0.7)) 
             order by o.game_count,
                 r.recent_games,
                 s.match_quality desc

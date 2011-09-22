@@ -239,12 +239,13 @@ $contest_sql = array(
              on g.game_id = gp.game_id
          inner join user u
              on gp.user_id = u.user_id
+         inner join submission s
+            on gp.submission_id = s.submission_id
          order by g.game_id desc, gp.game_rank",
-    "select_game_errors" => "select gp.user_id, gp.errors, gp.status, u.username
+    "select_game_errors" => "select gp.user_id, gp.errors, gp.status
         from game_player gp
-        inner join user u
-            on u.user_id = gp.user_id
         where gp.game_id = %s
+        and gp.user_id = %s
         and (gp.status = 'timeout'
             or gp.status = 'crashed'
             or gp.status = 'invalid')
