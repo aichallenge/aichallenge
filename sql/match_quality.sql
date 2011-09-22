@@ -11,6 +11,11 @@ where s.user_id = the_user_id
     and s.latest = 1 and s.status = 40;
       
 -- list of all submission sorted by match quality
+-- setup trueskill calc values
+set @init_mu = 50.0;
+set @init_beta = @init_mu / 6;
+set @twiceBetaSq = 2 * pow(@init_beta, 2);
+
 select s.user_id, s.submission_id, s.mu, s.sigma, s.rank
     -- trueskill match quality for 2 players
     ,@match_quality := sqrt(@twiceBetaSq / (@twiceBetaSq + pow(p.sigma,2) + pow(s.sigma,2))) *
@@ -23,7 +28,8 @@ submission s  -- possible next players
 where p.submission_id = @submission_id
 and s.latest = 1 and s.status = 40
 group by s.user_id, s.submission_id, s.mu, s.sigma, s.rank
-order by 5 desc;
+order by 6 desc
+limit 30;
 
 select @seed_id as seed_id, @submission_id as submission_id, @mu as mu, @sigma as sigma, rank
 from submission

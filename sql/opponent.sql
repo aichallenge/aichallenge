@@ -146,13 +146,13 @@ if @min_players <= @max_players then
             -- debug statement
             -- select list of opponents with match quality
             select s.user_id, s.submission_id, s.mu, s.sigma,
-            s.rank,
+            sub.rank,
             o.game_count, r.recent_games, s.match_quality
             from (
                 select @seq := @seq + 1 as seq, s.*
                 from (
                     -- list of all submission sorted by match quality
-                    select s.user_id, s.submission_id, s.mu, s.sigma, s.rank
+                    select s.user_id, s.submission_id, s.mu, s.sigma
                         -- trueskill match quality for 2 players
                         ,@match_quality := exp(sum(ln(
                             sqrt(@twiceBetaSq / (@twiceBetaSq + pow(p.sigma,2) + pow(s.sigma,2))) *
@@ -168,23 +168,25 @@ if @min_players <= @max_players then
                         where matchup_id = @matchup_id
                     )
                     -- exclude players currently in a matchup
-                    and not exists (
-                        select *
-                        from tmp_matchup m
-                        inner join tmp_matchup_player mp
-                            on mp.matchup_id = m.matchup_id
-                        where mp.user_id = s.user_id
-                        and (m.worker_id >= 0 or m.worker_id is null)
-                        and m.deleted = 0
-                    )
+                    -- and not exists (
+                    --    select *
+                    --    from tmp_matchup m
+                    --    inner join tmp_matchup_player mp
+                    --        on mp.matchup_id = m.matchup_id
+                    --    where mp.user_id = s.user_id
+                    --    and (m.worker_id >= 0 or m.worker_id is null)
+                    --    and m.deleted = 0
+                    -- )
                     and s.latest = 1 and s.status = 40
-                    group by s.user_id, s.submission_id, s.mu, s.sigma, s.rank
+                    group by s.user_id, s.submission_id, s.mu, s.sigma
                     order by 5 desc
                 ) s,
                 (select @seq := 0) seq
             ) s
-            inner join temp_recent r
+            left outer join temp_recent r
                 on r.user_id = s.user_id
+            inner join submission sub
+                on sub.submission_id = s.submission_id
             -- join in user to user game counts to provide round-robin like logic
             left outer join opponents o
                 on o.user_id = @seed_id and o.opponent_id = s.user_id,
@@ -266,7 +268,9 @@ if @min_players <= @max_players then
             limit 1;
                 
             -- debug statement
-            select @last_user_id as user_id, @last_submission_id as submission_id, @last_mu as mu, @last_sigma as sigma;
+            select @last_user_id as user_id, @last_submission_id as submission_id, @last_mu as mu, @last_sigma as sigma
+	    from submission
+	    where submission_id = @last_submission_id;
 
             -- add new player to matchup
             insert into tmp_matchup_player (matchup_id, user_id, submission_id, player_id, mu, sigma)
