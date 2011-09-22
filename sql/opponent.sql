@@ -178,7 +178,7 @@ if @min_players <= @max_players then
                         and m.deleted = 0
                     )
                     and s.latest = 1 and s.status = 40
-                    group by s.user_id, s.submission_id, s.mu, s.sigma
+                    group by s.user_id, s.submission_id, s.mu, s.sigma, s.rank
                     order by 5 desc
                 ) s,
                 (select @seq := 0) seq
@@ -196,11 +196,11 @@ if @min_players <= @max_players then
             ) s_count
             -- pareto distribution
             -- the size of the pool of available players will follow a pareto distribution
-            -- where the minimum is 16 and 80% of the values will be <= 50
+            -- where the minimum is 10 and 80% of the values will be <= 30
             -- due to the least played ordering, after a submission is established
             -- it will tend to pull from the lowest match quality, so the opponent
             -- rank difference selected will also follow a pareto distribution 
-            where s.seq < (16.6667 / pow(rand(), 0.7)) 
+            where s.seq < (10 / pow(rand(), 0.7)) 
             order by o.game_count,
                 r.recent_games,
                 s.match_quality desc;
@@ -255,11 +255,11 @@ if @min_players <= @max_players then
             ) s_count
             -- pareto distribution
             -- the size of the pool of available players will follow a pareto distribution
-            -- where the minimum is 16 and 80% of the values will be <= 50
+            -- where the minimum is 10 and 80% of the values will be <= 30
             -- due to the least played ordering, after a submission is established
             -- it will tend to pull from the lowest match quality, so the opponent
             -- rank difference selected will also follow a pareto distribution 
-            where s.seq < (16.6667 / pow(rand(), 0.7)) 
+            where s.seq < (10 / pow(rand(), 0.7)) 
             order by o.game_count,
                 r.recent_games,
                 s.match_quality desc
