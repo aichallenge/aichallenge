@@ -26,7 +26,7 @@ type State struct {
 	ViewRadius2   int //view radius squared
 	AttackRadius2 int //battle radius squared
 	SpawnRadius2  int //spawn radius squared
-	PlayerSeed    int64 //random player seed
+	PlayerSeed    int //random player seed
 	Turn          int //current turn number
 
 	Map *Map
@@ -50,7 +50,7 @@ func (s *State) Start() os.Error {
 			break
 		}
 
-		words := strings.Split(line, " ", 2)
+		words := strings.SplitN(line, " ", 2)
 		if len(words) != 2 {
 			panic(`"` + line + `"`)
 			return os.NewError("invalid command format: " + line)
@@ -130,7 +130,7 @@ func (s *State) Loop(b Bot, BetweenTurnWork func()) os.Error {
 			break
 		}
 
-		words := strings.Split(line, " ", 5)
+		words := strings.SplitN(line, " ", 5)
 		if len(words) < 2 {
 			log.Panicf("Invalid command format: \"%s\"", line)
 		}
