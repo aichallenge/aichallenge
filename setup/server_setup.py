@@ -27,7 +27,7 @@ def install_manager_packages():
 def install_website_packages():
     """ Install system packages required for the website """
     pkg_list = ["apache2", "php5", "libapache2-mod-php5", "php5-mysql",
-            "memcached", "php5-memcache", "php5-curl", "zip",
+            "memcached", "php5-memcache", "php5-curl", "zip", "nodejs",
             "cvs", "openjdk-6-jdk", "ant", "icedtea-plugin", "markdown"]
     install_apt_packages(pkg_list)
 

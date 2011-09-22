@@ -1,4 +1,4 @@
-// created using DMD 2.055 64-bit
+// created using DMD 2.054 64-bit
 module MyBot;
 
 import ants;
