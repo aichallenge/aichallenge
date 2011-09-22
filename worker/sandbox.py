@@ -216,8 +216,13 @@ class Jail(object):
         for i in range(20):
             if self.command_process.poll() != None:
                 break
+            if i == 10:
+                self._signal("KILL")
             time.sleep(0.1)
-        self._signal("KILL")
+
+        # final check to make sure processes are died and raise error if not
+        if self.is_alive:
+            raise SandboxError("Could not kill sandbox children")
 
     def pause(self):
         """Pause the process by sending a SIGSTOP to the child"""
