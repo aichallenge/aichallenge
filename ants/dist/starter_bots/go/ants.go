@@ -18,16 +18,16 @@ var stdin = bufio.NewReader(os.Stdin)
 
 //State keeps track of everything we need to know about the state of the game
 type State struct {
-	LoadTime      int //in milliseconds
-	TurnTime      int //in milliseconds
-	Rows          int //number of rows in the map
-	Cols          int //number of columns in the map
-	Turns         int //maximum number of turns in the game
-	ViewRadius2   int //view radius squared
-	AttackRadius2 int //battle radius squared
-	SpawnRadius2  int //spawn radius squared
+	LoadTime      int   //in milliseconds
+	TurnTime      int   //in milliseconds
+	Rows          int   //number of rows in the map
+	Cols          int   //number of columns in the map
+	Turns         int   //maximum number of turns in the game
+	ViewRadius2   int   //view radius squared
+	AttackRadius2 int   //battle radius squared
+	SpawnRadius2  int   //spawn radius squared
 	PlayerSeed    int64 //random player seed
-	Turn          int //current turn number
+	Turn          int   //current turn number
 
 	Map *Map
 }
@@ -50,7 +50,7 @@ func (s *State) Start() os.Error {
 			break
 		}
 
-		words := strings.Split(line, " ", 2)
+		words := strings.SplitN(line, " ", 2)
 		if len(words) != 2 {
 			panic(`"` + line + `"`)
 			return os.NewError("invalid command format: " + line)
@@ -76,7 +76,8 @@ func (s *State) Start() os.Error {
 		case "spawnradius2":
 			s.SpawnRadius2 = param
 		case "player_seed":
-			s.PlayerSeed = param
+			param64, _ := strconv.Atoi64(words[1])
+			s.PlayerSeed = param64
 		case "turn":
 			s.Turn = param
 
@@ -130,7 +131,7 @@ func (s *State) Loop(b Bot, BetweenTurnWork func()) os.Error {
 			break
 		}
 
-		words := strings.Split(line, " ", 5)
+		words := strings.SplitN(line, " ", 5)
 		if len(words) < 2 {
 			log.Panicf("Invalid command format: \"%s\"", line)
 		}
