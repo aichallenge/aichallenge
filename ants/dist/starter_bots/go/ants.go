@@ -18,16 +18,16 @@ var stdin = bufio.NewReader(os.Stdin)
 
 //State keeps track of everything we need to know about the state of the game
 type State struct {
-	LoadTime      int //in milliseconds
-	TurnTime      int //in milliseconds
-	Rows          int //number of rows in the map
-	Cols          int //number of columns in the map
-	Turns         int //maximum number of turns in the game
-	ViewRadius2   int //view radius squared
-	AttackRadius2 int //battle radius squared
-	SpawnRadius2  int //spawn radius squared
-	PlayerSeed    int //random player seed
-	Turn          int //current turn number
+	LoadTime      int   //in milliseconds
+	TurnTime      int   //in milliseconds
+	Rows          int   //number of rows in the map
+	Cols          int   //number of columns in the map
+	Turns         int   //maximum number of turns in the game
+	ViewRadius2   int   //view radius squared
+	AttackRadius2 int   //battle radius squared
+	SpawnRadius2  int   //spawn radius squared
+	PlayerSeed    int64 //random player seed
+	Turn          int   //current turn number
 
 	Map *Map
 }
@@ -76,7 +76,8 @@ func (s *State) Start() os.Error {
 		case "spawnradius2":
 			s.SpawnRadius2 = param
 		case "player_seed":
-			s.PlayerSeed = param
+			param64, _ := strconv.Atoi64(words[1])
+			s.PlayerSeed = param64
 		case "turn":
 			s.Turn = param
 
