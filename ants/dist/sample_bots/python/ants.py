@@ -6,13 +6,16 @@ import random
 MY_ANT = 0
 ANTS = 0
 DEAD = -1
-HILL = -2
-LAND = -3
-FOOD = -4
-WATER = -5
-UNSEEN = -6
-MAX_INT=99999999
-MAP_RENDER = 'abcdefghijklmnopqrstuvwxyz?!%*.'
+LAND = -2
+FOOD = -3
+WATER = -4
+UNSEEN = -5
+
+PLAYER_ANT = 'abcdefghij'
+HILL_ANT = string = 'ABCDEFGHI'
+PLAYER_HILL = string = '0123456789'
+MAP_OBJECT = '?%*.!'
+MAP_RENDER = PLAYER_ANT + HILL_ANT + PLAYER_HILL + MAP_OBJECT
 
 
 AIM = {'n': (-1, 0),
@@ -101,10 +104,14 @@ class Ants():
                     elif tokens[0] == 'w':
                         self.map[row][col] = WATER
                     elif tokens[0] == 'd':
-                        self.map[row][col] = DEAD
+                        # food could spawn on a spot where an ant just died
+                        # don't overwrite the space unless it is land
+                        if self.map[row][col] == LAND:
+                            self.map[row][col] = DEAD
+                        # but always add to the dead list
+                        self.dead_list.append((row, col))
                     elif tokens[0] == 'h':
                         owner = int(tokens[3])
-                        self.map[row][col] = HILL
                         self.hill_list[(row, col)] = owner
 
     def issue_order(self, order):
@@ -138,7 +145,7 @@ class Ants():
         return self.map[row][col] > WATER
     
     def unoccupied(self, row, col):
-        return self.map[row][col] in (LAND, DEAD, HILL)
+        return self.map[row][col] in (LAND, DEAD)
 
     def destination(self, row, col, direction):
         d_row, d_col = AIM[direction]
@@ -183,7 +190,7 @@ class Ants():
 
     def closest_food(self,row1,col1):
         #find the closest food from this row/col
-        min_dist=MAX_INT
+        min_dist=sys.maxint
         closest_food = None
         for food in self.food_list:
             dist = self.distance(row1,col1,food[0],food[1])
@@ -194,7 +201,7 @@ class Ants():
 
     def closest_enemy_ant(self,row1,col1):
         #find the closest enemy ant from this row/col
-        min_dist=MAX_INT
+        min_dist=sys.maxint
         closest_ant = None
         for ant in self.enemy_ants():
             dist = self.distance(row1,col1,ant[0][0],ant[0][1])
@@ -205,7 +212,7 @@ class Ants():
 
     def closest_enemy_hill(self,row1,col1):
         #find the closest enemy ant from this row/col
-        min_dist=MAX_INT
+        min_dist=sys.maxint
         closest_hill = None
         for hill in self.enemy_hills():
             dist = self.distance(row1,col1,hill[0][0],hill[0][1])
