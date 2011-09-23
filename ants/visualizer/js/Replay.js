@@ -70,21 +70,6 @@ DataType = {
 		}
 		return p;
 	},
-	MAP : function(p, n) {
-		p = p.match(DataType.MATCH);
-		if (!p[1]) {
-			throw new Error('Parameter ' + n + ' must not be empty.');
-		}
-		p[0] = new Array(p[1].length);
-		for ( var col = 0; col < p[1].length; col++) {
-			var c = p[1].charAt(col);
-			if (c !== '%' && c !== '*' && c !== '.' && (c < 'a' || c > 'z')) {
-				throw new Error('Invalid character in map line: ' + c);
-			}
-			p[0][col] = (c === '%');
-		}
-		return [ p[0], p[2] ];
-	},
 	ORDERS : function(p) {
 		p = p.match(DataType.MATCH);
 		p[1] = p[1].split('');
@@ -298,7 +283,7 @@ function Replay(replay, debug, swapUser) {
 			var mapdata = enterObj(map, 'data');
 			this.walls = new Array(mapdata.length);
 			if (this.revision >= 3) {
-				regex = /[^%*.\^a-z]/;
+				regex = /[^%*.a-zA-Z0-9]/;
 			} else {
 				regex = /[^%*.a-z]/;
 			}
@@ -339,7 +324,9 @@ function Replay(replay, debug, swapUser) {
 						// destroying player index must match player count
 						keyRange(obj, 4, 0, this.players - 1);
 					}
+					stack.pop();
 				}
+				stack.pop();
 			}
 
 			// ants
@@ -389,6 +376,7 @@ function Replay(replay, debug, swapUser) {
 				}
 				stack.pop();
 			}
+			stack.pop();
 
 			// food
 			if (this.revision >= 3) {
@@ -416,7 +404,9 @@ function Replay(replay, debug, swapUser) {
 					} else {
 						setReplayDuration(obj[2] - 1, false);
 					}
+					stack.pop();
 				}
+				stack.pop();
 			}
 
 			// scores
@@ -568,12 +558,15 @@ Replay.prototype.txtToJson = function(replay) {
 	var orders, fixed, scores, result, isReplay;
 	lit = new LineIterator(replay);
 	result = {
-		'revision' : 2,
+		'revision' : 3,
 		'map' : {
 			'data' : []
 		},
+		'hills' : [],
 		'ants' : [],
-		'scores' : []
+		'food' : [],
+		'scores' : [],
+		'hive_history' : []
 	};
 	this.turns = [];
 	tl = lit.gimmeNext();
@@ -619,13 +612,20 @@ Replay.prototype.txtToJson = function(replay) {
 			result['map']['data'].push(tl.params[0]);
 			if (!isReplay) {
 				// in a map file we want to extract starting positions
-				for (i = 0; i < cols; i++) {
-					c = tl.params[0].charAt(i);
+				for (col = 0; col < cols; col++) {
+					c = tl.params[0].charAt(col);
 					if (c >= 'a' && c <= 'z') {
-						result['ants'].push([ rows, i, 0, 0, 1, c.toUpperCase().charCodeAt(0) - 65,
-								'-' ]);
+						c = c.charCodeAt(0) - 97;
+						result['ants'].push([ rows, col, 0, 1, c, '-' ]);
+					} else if (c >= 'A' && c <= 'Z') {
+						c = c.charCodeAt(0) - 65;
+						result['ants'].push([ rows, col, 0, 1, c, '-' ]);
+						result['hills'].push([ rows, col, c, 1 ]);
+					} else if (c >= '0' && c <= '9') {
+						c = c.charCodeAt(0) - 48;
+						result['hills'].push([ rows, col, c, 1 ]);
 					} else if (c === '*') {
-						result['ants'].push([ rows, i, 0, 1 ]);
+						result['food'].push([ rows, col, 0 ]);
 					}
 				}
 			}
@@ -678,6 +678,7 @@ Replay.prototype.txtToJson = function(replay) {
 		} else {
 			for (i = 0; i < result['players']; i++) {
 				result['scores'].push([ 0 ]);
+				result['hive_history'].push([ 0 ]);
 			}
 		}
 		if (lit.moar()) {
