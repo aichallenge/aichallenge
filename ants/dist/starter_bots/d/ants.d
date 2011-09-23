@@ -18,6 +18,11 @@ struct Loc {
 	uint col;
 }
 
+struct Hill {
+	Loc loc;
+	SqVal owner;
+}
+
 struct Direction {
 	char key;
 	int row;
@@ -48,9 +53,11 @@ class Ants {
 		long _spawnradius2;
 		long _player_seed;
 		TickDuration _endtime;
+		Loc[] _food;
 		Loc[] _myAnts;
 		Loc[] _enemyAnts;
-		Loc[] _food;
+		Hill[] _myHills;
+		Hill[] _enemyHills;
 		SqVal[][] _map;
 
 		void setup(string data) {
@@ -89,6 +96,8 @@ class Ants {
 				}
 			}
 			_food.clear;
+			_myHills.clear;
+			_enemyHills.clear;
 			_myAnts.clear;
 			_enemyAnts.clear;
 			// update map and create new ant and food lists
@@ -100,6 +109,14 @@ class Ants {
 						auto row = to!uint(tokens[1]);
 						auto col = to!uint(tokens[2]);
 						switch(tokens[0].toLower) {
+							case "h":
+								SqVal owner = cast(SqVal) to!byte(tokens[3]);
+								if (owner == SqVal.ME) {
+									_myHills ~= Hill(Loc(row, col), owner);
+								} else if (owner > SqVal.ME) {
+									_enemyHills ~= Hill(Loc(row, col), owner);
+								}
+								break;
 							case "a":
 								SqVal owner = cast(SqVal) to!byte(tokens[3]);
 								_map[row][col] = owner;
@@ -174,6 +191,14 @@ class Ants {
 		/// random number generator seed for the player
 		long player_seed() {
 			return _player_seed;
+		}
+
+		const(Hill)[] myHills() {
+			return _myHills;
+		}
+
+		const(Hill)[] enemyHills() {
+			return _enemyHills;
 		}
 
 		const(Loc)[] myAnts() {

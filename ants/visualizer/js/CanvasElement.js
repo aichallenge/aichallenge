@@ -1194,8 +1194,8 @@ CanvasElementStats.prototype.getStats = function(name, turn) {
  *        stats the values and boni to display
  */
 CanvasElementStats.prototype.drawColorBar = function(x, y, w, h, stats) {
-	var useValues, i, scale, offsetX, offsetY, amount, text, idx, wBar, bonusText;
-	var values, bonus, textWidth, bonusTextWidth;
+	var i, scale, offsetX, offsetY, amount, text, idx, wBar, bonusText;
+	var textWidth, bonusTextWidth;
 	var sum = 0;
 	this.ctx.save();
 	this.ctx.beginPath();
