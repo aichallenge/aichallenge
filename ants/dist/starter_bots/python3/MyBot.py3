@@ -2,10 +2,18 @@
 from ants import *
 
 # define a class with a do_turn method
-# the Ants.run method will parse, update and run the method for us
+# the Ants.run method will parse and update bot input
+# it will also run the do_turn method for us
 class MyBot:
     def __init__(self):
         # define class level variables, will be remembered between turns
+        pass
+    
+    # do_setup is run once at the start of the game
+    # after the bot has received the game settings
+    # the ants class is created and setup by the Ants.run method
+    def do_setup(self, ants):
+        # initialize data structures after learning the game settings
         pass
     
     # do turn is run once per turn
