@@ -248,12 +248,14 @@ comp_args = {
     "Lisp"      : [['sbcl', '--dynamic-space-size', str(MEMORY_LIMIT), '--script', BOT + '.lisp']],
     "OCaml"     : [["ocamlbuild -lib unix", BOT + ".native"]],
     "Scala"     : [["scalac"]],
+    "Erlang"    : [["erlc"]],
     }
 
 targets = {
     # lang : { old_ext : new_ext, ... }
     "C"     : { ".c" : ".o" },
     "C++" : { ".c" : ".o", ".cpp" : ".o", ".cc" : ".o" },
+    "Erlang" : { ".erl" : ".beam" },
     }
 
 Language = collections.namedtuple("Language",
@@ -384,6 +386,11 @@ languages = (
         "./MyBot",
         [],
         [(["*.ss"], ChmodCompiler("Scheme"))]
+    ),
+    Language("Erlang", ".beam", "MyBot.erl",
+        "erl -hms"+ str(MEMORY_LIMIT) +"m -smp disable -noshell -s MyBot start -s init stop",
+        ["*.beam"],
+        [(["*.erl"], TargetCompiler(comp_args["Erlang"][0], targets["Erlang"]))]
     ),
 )
 
