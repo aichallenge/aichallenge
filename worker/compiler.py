@@ -387,8 +387,8 @@ languages = (
         [],
         [(["*.ss"], ChmodCompiler("Scheme"))]
     ),
-    Language("Erlang", ".beam", "MyBot.erl",
-        "erl -hms"+ str(MEMORY_LIMIT) +"m -smp disable -noshell -s MyBot start -s init stop",
+    Language("Erlang", ".beam", "my_bot.erl",
+        "erl -hms"+ str(MEMORY_LIMIT) +"m -smp disable -noshell -s my_bot start -s init stop",
         ["*.beam"],
         [(["*.erl"], TargetCompiler(comp_args["Erlang"][0], targets["Erlang"]))]
     ),
