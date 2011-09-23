@@ -80,7 +80,9 @@ if @min_players <= @max_players then
     values (@matchup_id, @seed_id, @submission_id, -1, @mu, @sigma);
 
     -- debug statement
-    select @seed_id as seed_id, @submission_id as submission_id, @mu as mu, @sigma as sigma;
+    select @seed_id as seed_id, @submission_id as submission_id, @mu as mu, @sigma as sigma, rank
+    from submission
+    where submission_id = @submission_id;
 
     -- Step 2: select the map
     -- TODO: improve distribution of games
@@ -141,9 +143,12 @@ if @min_players <= @max_players then
 
     while @player_count < @players do
 
+            set @pareto = (10 / pow(rand(), 0.7));
             -- debug statement
             -- select list of opponents with match quality
-            select s.user_id, s.submission_id, s.mu, s.sigma
+            select s.user_id, s.submission_id, s.mu, s.sigma,
+            sub.rank,
+            o.game_count, r.recent_games, s.match_quality, @pareto
             from (
                 select @seq := @seq + 1 as seq, s.*
                 from (
@@ -164,39 +169,41 @@ if @min_players <= @max_players then
                         where matchup_id = @matchup_id
                     )
                     -- exclude players currently in a matchup
-                    and not exists (
-                        select *
-                        from tmp_matchup m
-                        inner join tmp_matchup_player mp
-                            on mp.matchup_id = m.matchup_id
-                        where mp.user_id = s.user_id
-                        and (m.worker_id >= 0 or m.worker_id is null)
-                        and m.deleted = 0
-                    )
+                    -- and not exists (
+                    --    select *
+                    --    from tmp_matchup m
+                    --    inner join tmp_matchup_player mp
+                    --        on mp.matchup_id = m.matchup_id
+                    --    where mp.user_id = s.user_id
+                    --    and (m.worker_id >= 0 or m.worker_id is null)
+                    --    and m.deleted = 0
+                    -- )
                     and s.latest = 1 and s.status = 40
                     group by s.user_id, s.submission_id, s.mu, s.sigma
                     order by 5 desc
                 ) s,
                 (select @seq := 0) seq
             ) s
-            inner join temp_recent r
+            inner join submission sub
+                on sub.submission_id = s.submission_id
+            left outer join temp_recent r
                 on r.user_id = s.user_id
             -- join in user to user game counts to provide round-robin like logic
             left outer join opponents o
-                on o.user_id = @seed_id and o.opponent_id = s.user_id,
+                on o.user_id = @seed_id and o.opponent_id = s.user_id
             -- get count of all active submissions to limit to top 10%
-            (
-                select count(*) as submission_count
-                from submission
-                where latest = 1 and status = 40
-            ) s_count
+            -- (
+            --    select count(*) as submission_count
+            --    from submission
+            --    where latest = 1 and status = 40
+            -- ) s_count
             -- pareto distribution
             -- the size of the pool of available players will follow a pareto distribution
-            -- where the minimum is 16 and 80% of the values will be <= 50
+            -- where the minimum is 10 and 80% of the values will be <= 30
             -- due to the least played ordering, after a submission is established
             -- it will tend to pull from the lowest match quality, so the opponent
             -- rank difference selected will also follow a pareto distribution 
-            where s.seq < (16.6667 / pow(rand(), 0.7)) 
+            where s.seq < @pareto
             order by o.game_count,
                 r.recent_games,
                 s.match_quality desc;
@@ -251,18 +258,20 @@ if @min_players <= @max_players then
             ) s_count
             -- pareto distribution
             -- the size of the pool of available players will follow a pareto distribution
-            -- where the minimum is 16 and 80% of the values will be <= 50
+            -- where the minimum is 10 and 80% of the values will be <= 30
             -- due to the least played ordering, after a submission is established
             -- it will tend to pull from the lowest match quality, so the opponent
             -- rank difference selected will also follow a pareto distribution 
-            where s.seq < (16.6667 / pow(rand(), 0.7)) 
+            where s.seq < @pareto
             order by o.game_count,
                 r.recent_games,
                 s.match_quality desc
             limit 1;
                 
             -- debug statement
-            select @last_user_id as user_id, @last_submission_id as submission_id, @last_mu as mu, @last_sigma as sigma;
+            select @last_user_id as user_id, @last_submission_id as submission_id, @last_mu as mu, @last_sigma as sigma, submission.rank
+	    from submission
+	    where submission_id = @last_submission_id;
 
             -- add new player to matchup
             insert into tmp_matchup_player (matchup_id, user_id, submission_id, player_id, mu, sigma)
