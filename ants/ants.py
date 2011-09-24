@@ -615,20 +615,6 @@ class Ants(Game):
             row, col = ant.loc
             self.map[row][col] = ant.owner
 
-#        # distribute score for ants which died from collisions
-#        for ant in colliding_ants:
-#            # find living nearby enemies
-#            enemies = self.nearby_ants(ant.loc, self.attackradius, ant.owner)
-#            # in addition to the living nearby enemies, dead nearby enemies
-#            #   should get points too!
-#            for other_ant in colliding_ants:
-#                # only interested in enemies within range
-#                if other_ant.owner != ant.owner and self.distance(ant.loc, other_ant.loc) <= self.attackradius:
-#                    enemies.append(other_ant)
-#            score_share = len(enemies)
-#            for enemy in enemies:
-#                self.score[enemy.owner] += Fraction(1,score_share)
-
     def do_spawn(self):
         """ Spawn new ants from food
 
