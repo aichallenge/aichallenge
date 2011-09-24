@@ -37,5 +37,5 @@ if not os.path.isdir(out_dir):
 with CD(out_dir):
     print "Downloading files to %s" % (out_dir,)
     for url, filename in sources:
-        run_cmd("curl '%s' > %s" % (url, filename))
+        run_cmd("wget -U NewName/1.0 '%s' -O %s" % (url, filename))
 
