@@ -5,8 +5,8 @@
 ;; Constants and lookups
 ;;****************************************************************
 
-(declare *game-info*)
-(declare *game-state*)
+(declare ^{:dynamic true} *game-info*)
+(declare ^{:dynamic true} *game-state*)
 
 (def init-state {:turn 0
                  :water #{}
@@ -152,11 +152,6 @@
   []
   (:food *game-state*))
 
-(defn passable? 
-  "Deteremine if the given location can be moved to. If so, loc is returned."
-  [loc]
-  (when (not (contains? (*game-state* :water) loc))
-    loc))
 
 (defn unit-distance 
   "Get the vector distance between two points on a torus. Negative deltas are 
@@ -179,19 +174,27 @@
   (let [[dx dy] (unit-distance loc loc2)]
     (Math/sqrt (+ (Math/pow dx 2) (Math/pow dy 2)))))
 
+(defn unoccupied? 
+  "If the given location does not contain an ant or food, return loc"
+  [loc]
+  (when (and (not (contains-ant? (food) loc)) 
+             (not (contains-ant? (my-ants) loc))
+             (not (contains-ant? (enemy-ants) loc)))
+    loc))
 
-(defn can-move? 
+(defn passable? 
+  "Deteremine if the given location can be moved to. If so, loc is returned."
+  [loc]
+  (when (and (not (contains? (*game-state* :water) loc))
+             (unoccupied? loc))
+    loc))
+
+(defn valid-move? 
   "Check if moving an ant in the given direction is passable. If so,
   return the location that the ant would then be in."
   [ant dir]
   (passable? (move-ant ant dir)))
 
-(defn unoccupied? 
-  "If the given location does not contain an ant, return loc"
-  [loc]
-  (when (and (not (contains-ant? (my-ants) loc))
-             (not (contains-ant? (enemy-ants) loc)))
-    loc))
 
 (defn direction [loc loc2]
   "Determine the directions needed to move to reach a specific location.
