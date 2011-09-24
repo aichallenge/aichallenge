@@ -9,7 +9,7 @@ import urlparse
 from install_tools import CD, run_cmd
 
 sources = [
-    ("http://cloud.github.com/downloads/clojure/clojure/clojure-1.2.0.zip",
+    ("http://repo1.maven.org/maven2/org/clojure/clojure/1.3.0/clojure-1.3.0.zip",
         "clojure.zip"),
     ("https://github.com/jashkenas/coffee-script/tarball/1.1.2",
         "coffeescript.tgz"),
@@ -37,9 +37,5 @@ if not os.path.isdir(out_dir):
 with CD(out_dir):
     print "Downloading files to %s" % (out_dir,)
     for url, filename in sources:
-        print "Downloading: %s" % (url,)
-        response = urllib2.urlopen(url)
-        with open(filename, 'w') as ofile:
-            print "Saving as %s" % (filename,)
-            ofile.write(response.read())
+        run_cmd("curl '%s' > %s" % (url, filename))
 
