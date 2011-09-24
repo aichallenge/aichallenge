@@ -5,8 +5,8 @@
 ;; Constants and lookups
 ;;****************************************************************
 
-(declare *game-info*)
-(declare *game-state*)
+(declare ^{:dynamic true} *game-info*)
+(declare ^{:dynamic true} *game-state*)
 
 (def init-state {:turn 0
                  :water #{}
