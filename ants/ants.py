@@ -95,6 +95,7 @@ class Ants(Game):
 
         # initialize scores
         self.score = [0]*self.num_players
+        self.bonus = [0]*self.num_players
         self.score_history = [[s] for s in self.score]
 
         # used to cutoff games early
@@ -708,7 +709,7 @@ class Ants(Game):
     def raze_hill(self, hill, killed_by):
         hill.end_turn = self.turn
         hill.killed_by = killed_by
-        self.score[killed_by] += 1
+        self.score[killed_by] += 2
         
     def player_hills(self, player):
         """ Return the current hills belonging to the given player """
@@ -757,7 +758,7 @@ class Ants(Game):
                 ant = self.current_ants[loc]
                 if ant.owner == hill.owner:
                     hill.last_touched = self.turn
-                else:
+                elif hill.killed_by is None:
                     self.raze_hill(hill, ant.owner)
                 
     def do_attack_damage(self):
@@ -1342,33 +1343,12 @@ class Ants(Game):
 
     def finish_game(self):
         """ Called by engine at the end of the game """
-#        players = [p for p in range(self.num_players) if self.is_alive(p)]
 
-        # if there is exactly one player remaining they get food bonus
-        # if the game ends early there is no bonus
-        #    the bonus only exists to ensure a lone survivor the best chance at winning
-        #    simply removing the bonus is the best disincentive to not ending the game
-        #    games ending do to inactivity would not have the player rank changed by splitting the bonus
-#        if len(players) == 1:
-#            player = players[0]
-            # the food bonus represents the maximum points a bot can get with perfect play
-            # remaining food and food to be spawned would be 1 point
-            #   either from collecting the food and spawning an ant
-            #   or killing an enemy ant that the food spawned into
-            # plus 1 point for killing all enemy ants (losses don't matter for points)
-#            food_bonus = (
-#                # food that will spawn
-#                (self.turns - self.turn) *
-#                Fraction(self.food_rate * self.num_players, self.food_turn)
-#                + self.food_extra
-#                # food that hasn't been collected
-#                + len(self.current_food)
-#                # enemy ants (player ants already received point when spawned)
-#                + len([ant for ant in self.current_ants.values() if ant.owner != player])
-#            ) * self.kill_points
-            #self.score[player] += food_bonus
-            # separate bonus from score history
-            #self.bonus[player] = food_bonus
+        # surviving players get 1 point for each surviving hill
+        for hill in self.hills.values():
+            if hill.killed_by is None and self.is_alive(hill.owner):
+                self.bonus[hill.owner] += 1
+                self.score[hill.owner] += 1
 
     def start_turn(self):
         """ Called by engine at the start of the turn """
@@ -1612,6 +1592,7 @@ class Ants(Game):
 
         # scores
         replay['scores'] = self.score_history
+        replay['bonus'] = self.bonus
         replay['hive_history'] = self.hive_history
         replay['winning_turn'] = self.winning_turn
         replay['ranking_turn'] = self.ranking_turn

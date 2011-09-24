@@ -57,7 +57,6 @@ class Ants():
 
     def setup(self, data):
         'parse initial input and setup starting game state'
-        sys.stderr.write('setup\n')
         for line in data.split('\n'):
             line = line.strip().lower()
             if len(line) > 0:
@@ -86,7 +85,6 @@ class Ants():
 
     def update(self, data):
         'parse engine input and update the game state'
-        sys.stderr.write('update\n')
         # start timer
         self.turn_start_time = time.clock()
         
@@ -145,7 +143,6 @@ class Ants():
         
     def finish_turn(self):
         'finish the turn by writing the go line'
-        sys.stderr.write('finish_turn\n')
         sys.stdout.write('go\n')
         sys.stdout.flush()
     
