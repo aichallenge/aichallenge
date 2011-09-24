@@ -1,5 +1,7 @@
 <?php
 
+require_once('mysql_login.php');
+
 function get_country_row($country) {
     global $memcache;
 
@@ -133,6 +135,7 @@ function get_user_row($user) {
     if ($memcache) {
         $user_row_by_id = $memcache->get('lookup:user_id');
         $user_row_by_name = $memcache->get('lookup:username');
+        $user_row_by_submission_id = $memcache->get('lookup:submission_id');
     }
     $user_row_by_id = NULL;
     if (!$user_row_by_id) {
@@ -149,6 +152,17 @@ function get_user_row($user) {
                 $memcache->set('lookup:username', $user_row_by_name);
             }
         }
+        $user_result = contest_query("select_submission_users");
+        if ($user_result) {
+            $user_row_by_submission_id = array();
+            while ($user_row = mysql_fetch_assoc($user_result)) {
+                $user_row_by_submission_id[$user_row['submission_id']] = $user_row;
+            }
+            if ($memcache) {
+                $memcache->set('lookup:submission_id', $user_row_by_submission_id);
+            }
+        }
+
     }
 
     // search by id, then name
@@ -160,6 +174,50 @@ function get_user_row($user) {
     if ($user_row_by_name) {
         if (array_key_exists($user, $user_row_by_name)) {
             return $user_row_by_name[$user];
+        }
+    }
+    if ($user_row_by_submission_id) {
+        if (array_key_exists($user, $user_row_by_submission_id)) {
+            return $user_row_by_submission_id[$user];
+        }
+    }
+    return NULL;
+}
+
+function get_map_row($map) {
+    global $memcache;
+
+    $map_row_by_id = NULL;
+    if ($memcache) {
+        $map_row_by_id = $memcache->get('lookup:map_id');
+        $map_row_by_name = $memcache->get('lookup:mapname');
+    }
+    $map_row_by_id = NULL;
+    if (!$map_row_by_id) {
+        $map_result = contest_query("select_maps");
+        if ($map_result) {
+            $map_row_by_id = array();
+            $map_row_by_name = array();
+            while ($map_row = mysql_fetch_assoc($map_result)) {
+                $map_row_by_id[$map_row['map_id']] = $map_row;
+                $map_row_by_name[$map_row['filename']] = $map_row;
+            }
+            if ($memcache) {
+                $memcache->set('lookup:map_id', $map_row_by_id);
+                $memcache->set('lookup:mapname', $map_row_by_name);
+            }
+        }
+    }
+
+    // search by id, then name
+    if ($map_row_by_id) {
+        if (array_key_exists($map, $map_row_by_id)) {
+            return $map_row_by_id[$map];
+        }
+    }
+    if ($map_row_by_name) {
+        if (array_key_exists($map, $map_row_by_name)) {
+            return $map_row_by_name[$map];
         }
     }
     return NULL;

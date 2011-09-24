@@ -1,47 +1,53 @@
-ParameterType = {
-	NONE: 0,
-	STRING: 1,
-	UINT: 2,
-	SCORES: 3,
-	LOCATION: 4,
-	LOCATION_PLAYER: 5,
-	LOCATION_NSEW: 6,
-	LOCATION_OPTION: 7
-};
+/**
+ * @fileOverview Classes for loading replays and maps into the visualizer.
+ * @author <a href="mailto:marco.leise@gmx.de">Marco Leise</a>
+ */
 
 /**
- * Constructs a new direction from the given coordinates. X points to the rigtht
- * and Y points to the bottom. Up is 0°, Right is 90° and so on.
+ * Constructs a new direction from the given coordinates. X points to the right and Y points to the
+ * bottom. Up is 0°, Right is 90° and so on.
+ * 
  * @class A compass direction
  * @constructor
+ * @param {Number}
+ *        x
+ * @param {Number}
+ *        y
  */
 function Direction(x, y) {
 	this['x'] = x;
 	this['y'] = y;
 	this.angle = Math.atan2(x, -y);
 }
+/**
+ * Offset for ants moving north.
+ */
+Direction.N = new Direction(0, -1);
+/**
+ * Offset for ants moving east.
+ */
+Direction.E = new Direction(+1, 0);
+/**
+ * Offset for ants moving south.
+ */
+Direction.S = new Direction(0, +1);
+/**
+ * Offset for ants moving west.
+ */
+Direction.W = new Direction(-1, 0);
 
-// translate compass directions to movement offsets
-Directions = {
-	N : new Direction( 0, -1),
-	NE: new Direction(+1, -1),
-	E : new Direction(+1,  0),
-	SE: new Direction(+1, +1),
-	S : new Direction( 0, +1),
-	SW: new Direction(-1, +1),
-	W : new Direction(-1,  0),
-	NW: new Direction(-1, -1)
-};
-
+/**
+ * @class Parsing functions and validators for various data types in streaming replays and maps.
+ */
 DataType = {
-	STRING: function(p) {
+	STRING : function(p) {
 		return [ p, null ];
 	},
-	IDENT: function(p) {
+	IDENT : function(p) {
 		p = p.match(DataType.MATCH);
 		return [ p[1], p[2] ];
 	},
-	UINT: function(p, n) {
+	UINT : function(p, n) {
 		p = p.match(DataType.MATCH);
 		p = [ parseInt(p[1]), p[2] ];
 		if (isNaN(p[0]) || p[0] < 0) {
@@ -49,14 +55,14 @@ DataType = {
 		}
 		return p;
 	},
-	POSINT: function(p, n) {
+	POSINT : function(p, n) {
 		p = DataType.UINT(p, n);
 		if (p[0] <= 0) {
 			throw new Error('Parameter ' + n + ' must be a positive integer.');
 		}
 		return p;
 	},
-	NUMBER: function(p, n) {
+	NUMBER : function(p, n) {
 		p = p.match(DataType.MATCH);
 		p = [ parseFloat(p[1]), p[2] ];
 		if (isNaN(p[0])) {
@@ -64,13 +70,13 @@ DataType = {
 		}
 		return p;
 	},
-	MAP: function(p, n) {
+	MAP : function(p, n) {
 		p = p.match(DataType.MATCH);
 		if (!p[1]) {
 			throw new Error('Parameter ' + n + ' must not be empty.');
 		}
 		p[0] = new Array(p[1].length);
-		for (var col = 0; col < p[1].length; col++) {
+		for ( var col = 0; col < p[1].length; col++) {
 			var c = p[1].charAt(col);
 			if (c !== '%' && c !== '*' && c !== '.' && (c < 'a' || c > 'z')) {
 				throw new Error('Invalid character in map line: ' + c);
@@ -79,40 +85,40 @@ DataType = {
 		}
 		return [ p[0], p[2] ];
 	},
-	ORDERS: function(p) {
+	ORDERS : function(p) {
 		p = p.match(DataType.MATCH);
 		p[1] = p[1].split('');
 		p[0] = new Array(p[1].length);
-		for (var turn = 0; turn < p[1].length; turn++) {
+		for ( var turn = 0; turn < p[1].length; turn++) {
 			switch (p[1][turn]) {
-				case 'n':
-				case 'N':
-					p[0][turn] = Directions.N;
-					break;
-				case 'e':
-				case 'E':
-					p[0][turn] = Directions.E;
-					break;
-				case 's':
-				case 'S':
-					p[0][turn] = Directions.S;
-					break;
-				case 'w':
-				case 'W':
-					p[0][turn] = Directions.W;
-					break;
-				case '-':
-					p[0][turn] = null;
-					break;
-				default:
-					throw new Error('Invalid character in orders line: ' + p[1][turn]);
+			case 'n':
+			case 'N':
+				p[0][turn] = Direction.N;
+				break;
+			case 'e':
+			case 'E':
+				p[0][turn] = Direction.E;
+				break;
+			case 's':
+			case 'S':
+				p[0][turn] = Direction.S;
+				break;
+			case 'w':
+			case 'W':
+				p[0][turn] = Direction.W;
+				break;
+			case '-':
+				p[0][turn] = null;
+				break;
+			default:
+				throw new Error('Invalid character in orders line: ' + p[1][turn]);
 			}
 		}
 		return [ p[0], p[2] ];
 	},
-	SCORES: function(p) {
+	SCORES : function(p) {
 		p = p.replace(/\s+/g, ' ').replace(/\s*$/, '').split(' ');
-		for (var i = 0; i < p.length; i++) {
+		for ( var i = 0; i < p.length; i++) {
 			p[i] = parseFloat(p[i]);
 			if (isNaN(p[i])) {
 				throw new Error('Score ' + i + ' is not a number.');
@@ -120,32 +126,53 @@ DataType = {
 		}
 		return [ p, null ];
 	},
-	MATCH: /(\S*)\s*(.*)/
+	MATCH : /(\S*)\s*(.*)/
 };
 
 /**
+ * Loads a replay or map in text form. The streaming format is not supported directly, but can by
+ * loaded by the Java wrapper. In the visualizer, ants are unique objects, that are mostly a list of
+ * animation key-frames that are interpolated for any given time to produce a "tick-less" animation.<br>
+ * <b>Called by the Java streaming visualizer.</b>
+ * 
+ * @class The replay class loads a replay or map in string form and prepares it for playback. All
+ *        per turn data is lazily evaluated to avoid long load times. The Java wrapper has some
+ *        extensions to load streaming replays. Make sure changes here don't break it.
  * @constructor
+ * @param {String}
+ *        replay The replay or map text.
+ * @param {Boolean}
+ *        debug If true, then partially corrupt replays are loaded instead of throwing an error.
+ * @param {String}
+ *        swapUser The user with this ID (usually a database index) in the replay will get the first
+ *        color in the player colors array.
+ * @see Options#user
+ * @see #addMissingMetaData
+ * @see Ant
  */
 function Replay(replay, debug, swapUser) {
-	var i, k, scores, swapIndex;
+	var i, k, player_scores, swapIndex;
 	var format = 'json';
 	/**
 	 * @private
 	 */
 	this.debug = debug || false;
 	if (replay === undefined) {
+		// This code path is taken by the Java wrapper for streaming replay and initializes only the
+		// basics. Most of the rest is faster done in native Java, that through Rhino.
 		this.meta = {
-			'challenge': 'ants',
-			'replayformat': format,
-			'replaydata': {
-				'map': {}
+			'challenge' : 'ants',
+			'replayformat' : format,
+			'replaydata' : {
+				'map' : {},
+				'ants' : []
 			}
 		};
 		this.duration = -1;
 		this.hasDuration = true;
 		this.aniAnts = [];
 	} else {
-		// check for a replay from the pre-json era and convert it.
+		// check for a replay from the pre-JSON era and convert it.
 		if (replay.search(/^\s*{/) === -1) {
 			replay = this.txtToJson(replay);
 		} else {
@@ -154,9 +181,9 @@ function Replay(replay, debug, swapUser) {
 		// check if we have meta data or just replay data
 		if (replay['challenge'] === undefined) {
 			this.meta = {
-				'challenge': 'ants',
-				'replayformat': format,
-				'replaydata': replay
+				'challenge' : 'ants',
+				'replayformat' : format,
+				'replaydata' : replay
 			};
 		} else {
 			this.meta = replay;
@@ -168,9 +195,8 @@ function Replay(replay, debug, swapUser) {
 		}
 		// validate metadata
 		if (this.meta['challenge'] !== 'ants') {
-			throw new Error('This visualizer is for the ants challenge,'
-					+ ' but a "' + this.meta['challenge']
-					+ '" replay was loaded.');
+			throw new Error('This visualizer is for the ants challenge,' + ' but a "'
+					+ this.meta['challenge'] + '" replay was loaded.');
 		} else if (this.meta['replayformat'] !== format) {
 			throw new Error('Replays in the format "' + this.meta['replayformat']
 					+ '" are not supported.');
@@ -185,17 +211,21 @@ function Replay(replay, debug, swapUser) {
 			var stack = [];
 			var keyEq = function(obj, key, val) {
 				if (obj[key] !== val && !that.debug) {
-					throw new Error(stack.join('.') + '.' + key + ' should be ' + val + ', but was found to be ' + obj[key] + '!');
+					throw new Error(stack.join('.') + '.' + key + ' should be ' + val
+							+ ', but was found to be ' + obj[key] + '!');
 				}
 			};
 			var keyRange = function(obj, key, min, max) {
 				if (!(obj[key] >= min && (obj[key] <= max || max === undefined)) && !that.debug) {
-					throw new Error(stack.join('.') + '.' + key + ' should be within [' + min + ' .. ' + max + '], but was found to be ' + obj[key] + '!');
+					throw new Error(stack.join('.') + '.' + key + ' should be within [' + min
+							+ ' .. ' + max + '], but was found to be ' + obj[key] + '!');
 				}
 			};
 			var keyIsArr = function(obj, key, minlen, maxlen) {
 				if (!(obj[key] instanceof Array)) {
-					throw new Error(stack.join('.') + '.' + key + ' should be an array, but was found to be of type ' + typeof obj[key] + '!');
+					throw new Error(stack.join('.') + '.' + key
+							+ ' should be an array, but was found to be of type ' + typeof obj[key]
+							+ '!');
 				}
 				stack.push(key);
 				keyRange(obj[key], 'length', minlen, maxlen);
@@ -203,7 +233,9 @@ function Replay(replay, debug, swapUser) {
 			};
 			var keyIsStr = function(obj, key, minlen, maxlen) {
 				if (typeof obj[key] !== 'string') {
-					throw new Error(stack.join('.') + '.' + key + ' should be a string, but was found to be of type ' + typeof obj[key] + '!');
+					throw new Error(stack.join('.') + '.' + key
+							+ ' should be a string, but was found to be of type ' + typeof obj[key]
+							+ '!');
 				}
 				stack.push(key);
 				keyRange(obj[key], 'length', minlen, maxlen);
@@ -211,18 +243,20 @@ function Replay(replay, debug, swapUser) {
 			};
 			var keyOption = function(obj, key, func, params) {
 				if (obj[key] !== undefined) {
-					func.apply(undefined, [obj, key].concat(params));
+					func.apply(undefined, [ obj, key ].concat(params));
 				}
 			};
 			var keyDefault = function(obj, key, def, func, params) {
 				if (obj[key] === undefined) {
 					obj[key] = def;
 				}
-				func.apply(undefined, [obj, key].concat(params));
+				func.apply(undefined, [ obj, key ].concat(params));
 			};
 			var enterObj = function(obj, key) {
 				if (!(obj[key] instanceof Object)) {
-					throw new Error(stack.join('.') + '.' + key + ' should be an object, but was found to be of type ' + typeof obj[key] + '!');
+					throw new Error(stack.join('.') + '.' + key
+							+ ' should be an object, but was found to be of type '
+							+ typeof obj[key] + '!');
 				}
 				stack.push(key);
 				return obj[key];
@@ -230,8 +264,11 @@ function Replay(replay, debug, swapUser) {
 			var durationSetter = null;
 			var setReplayDuration = function(duration, fixed) {
 				if (durationSetter) {
-					if (!fixed && that.duration < duration || fixed && that.duration !== duration && !that.debug) {
-						throw new Error('Replay duration was previously set to ' + that.duration + ' by "' + durationSetter + '" and is now redefined to be ' + duration + ' by "' + obj + '"');
+					if (!fixed && that.duration < duration || fixed && that.duration !== duration
+							&& !that.debug) {
+						throw new Error('Replay duration was previously set to ' + that.duration
+								+ ' by "' + durationSetter + '" and is now redefined to be '
+								+ duration + ' by "' + obj + '"');
 					}
 				} else {
 					that.duration = duration;
@@ -242,28 +279,29 @@ function Replay(replay, debug, swapUser) {
 			keyEq(replay, 'revision', 2);
 			keyRange(replay, 'players', 1, 26);
 			this.players = replay['players'];
-			keyOption(replay, 'viewradius2', keyRange, [0, undefined]);
+			keyOption(replay, 'viewradius2', keyRange, [ 0, undefined ]);
 			// map
 			var map = enterObj(replay, 'map');
 			keyIsArr(map, 'data', 1, undefined);
 			stack.push('data');
 			keyIsStr(map['data'], 0, 1, undefined);
 			stack.pop();
-			keyDefault(map, 'rows', map['data'].length, keyEq, [map['data'].length]);
+			keyDefault(map, 'rows', map['data'].length, keyEq, [ map['data'].length ]);
 			this.rows = map['rows'];
-			keyDefault(map, 'cols', map['data'][0].length, keyEq, [map['data'][0].length]);
+			keyDefault(map, 'cols', map['data'][0].length, keyEq, [ map['data'][0].length ]);
 			this.cols = map['cols'];
 			var mapdata = enterObj(map, 'data');
 			this.walls = new Array(mapdata.length);
 			var regex = /[^%*.a-z]/;
-			for (var r = 0; r < mapdata.length; r++) {
+			for ( var r = 0; r < mapdata.length; r++) {
 				keyIsStr(mapdata, r, map['cols'], map['cols']);
 				var maprow = new String(mapdata[r]);
 				if ((i = maprow.search(regex)) !== -1 && !this.debug) {
-					throw new Error('Invalid character "' + maprow.charAt(i) + '" in map. Zero based row/col: ' + r + '/' + i)
+					throw new Error('Invalid character "' + maprow.charAt(i)
+							+ '" in map. Zero based row/col: ' + r + '/' + i);
 				}
 				this.walls[r] = new Array(maprow.length);
-				for (var c = 0; c < maprow.length; c++) {
+				for ( var c = 0; c < maprow.length; c++) {
 					this.walls[r][c] = (maprow.charAt(c) === '%');
 				}
 			}
@@ -274,7 +312,7 @@ function Replay(replay, debug, swapUser) {
 			stack.push('ants');
 			var ants = replay['ants'];
 			regex = /[^nsew-]/;
-			for (var n = 0; n < ants.length; n++) {
+			for ( var n = 0; n < ants.length; n++) {
 				keyIsArr(ants, n, 4, 7);
 				stack.push(n);
 				var obj = ants[n];
@@ -301,7 +339,9 @@ function Replay(replay, debug, swapUser) {
 					keyIsStr(obj, 6, lifespan - 1, lifespan);
 					setReplayDuration(obj[4] - 1, obj[6].length !== lifespan);
 					if ((i = obj[6].search(regex)) !== -1 && !this.debug) {
-						throw new Error('Invalid character "' + obj[6].charAt(i) + '" in move orders at index ' + i + ' in the string "' + obj[6] + '"');
+						throw new Error('Invalid character "' + obj[6].charAt(i)
+								+ '" in move orders at index ' + i + ' in the string "' + obj[6]
+								+ '"');
 					}
 				} else {
 					setReplayDuration(obj[3] - 1, false);
@@ -320,21 +360,22 @@ function Replay(replay, debug, swapUser) {
 			}
 			// prepare score and count lists
 			this.turns = new Array(this.duration + 1);
-			this.scores = new Array(this.duration + 1);
-			this.counts = new Array(this.duration + 1);
+			this['scores'] = new Array(this.duration + 1);
+			this['counts'] = new Array(this.duration + 1);
 			this.fogs = new Array(this.players);
 			for (n = 0; n <= this.duration; n++) {
-				this.scores[n] = new Array(this.players);
-				this.counts[n] = new Array(this.players);
-				for (i = 0; i < this.players; i++) this.counts[n][i] = 0;
+				this['scores'][n] = new Array(this.players);
+				this['counts'][n] = new Array(this.players);
+				for (i = 0; i < this.players; i++)
+					this['counts'][n][i] = 0;
 			}
 			for (i = 0; i < this.players; i++) {
-				scores = scoreslist[i];
-				for (k = 0; k < scores.length; k++) {
-					this.scores[k][i] = scores[k];
+				player_scores = scoreslist[i];
+				for (k = 0; k < player_scores.length; k++) {
+					this['scores'][k][i] = player_scores[k];
 				}
 				for (; k <= this.duration; k++) {
-					this.scores[k][i] = scores[scores.length - 1];
+					this['scores'][k][i] = player_scores[player_scores.length - 1];
 				}
 				this.fogs[i] = new Array(this.duration + 1);
 			}
@@ -342,7 +383,7 @@ function Replay(replay, debug, swapUser) {
 				if (ants[i][5] !== undefined) {
 					// account ant to the owner
 					for (n = ants[i][3]; n < ants[i][4]; n++) {
-						this.counts[n][ants[i][5]]++;
+						this['counts'][n][ants[i][5]]++;
 					}
 				}
 			}
@@ -350,6 +391,7 @@ function Replay(replay, debug, swapUser) {
 		}
 		this.hasDuration = this.duration > 0 || this.meta['replaydata']['turns'] > 0;
 		// add missing meta data
+		swapIndex = undefined;
 		if (this.meta['user_ids']) {
 			swapIndex = this.meta['user_ids'].indexOf(swapUser, 0);
 			if (swapIndex === -1) swapIndex = undefined;
@@ -357,12 +399,15 @@ function Replay(replay, debug, swapUser) {
 		this.addMissingMetaData(swapIndex);
 	}
 }
+
 /**
- * Adds optional meta data to the replay as required. This includes default
- * player names and colors.
- * @param {Number} swapIndex The index of a player who's default color should be
- *		exchanged with the first player's color. This is useful to identify a
- *		selected player by its color (the first one in the PĹAYER_COLORS array).
+ * Adds optional meta data to the replay as required. This includes default player names and colors.
+ * 
+ * @private
+ * @param {Number}
+ *        swapIndex The index of a player who's default color should be exchanged with the first
+ *        player's color. This is useful to identify a selected player by its color (the first one
+ *        in the PĹAYER_COLORS array).
  */
 Replay.prototype.addMissingMetaData = function(swapIndex) {
 	var i;
@@ -400,36 +445,49 @@ Replay.prototype.addMissingMetaData = function(swapIndex) {
 		this.htmlPlayerColors[i] += INT_TO_HEX[this.meta['playercolors'][i][2]];
 	}
 };
+
+/**
+ * Converts a line old based replay file or a map into a JavaScript object. This method is used to
+ * prepare the data for further parsing. The old formats are first converted to the new format.
+ * 
+ * @private
+ * @param {String}
+ *        replay The map or ancient replay file.
+ * @returns {Object} The map or replay in a JavaScript object notation.
+ */
 Replay.prototype.txtToJson = function(replay) {
 	var i, c, lit, tl, args, rows, cols, owner, row, col, isAnt, conv, end;
 	var orders, fixed, scores, result, isReplay;
 	lit = new LineIterator(replay);
 	result = {
-		'revision': 2,
-		'map': {'data': []},
-		'ants': [],
-		'scores': []
+		'revision' : 2,
+		'map' : {
+			'data' : []
+		},
+		'ants' : [],
+		'scores' : []
 	};
 	this.turns = [];
+	tl = lit.gimmeNext();
 	try {
 		// version check
-		tl = lit.gimmeNext();
 		isReplay = tl.keyword === 'v';
 		if (isReplay) {
-			tl.kw('v').as([DataType.IDENT, DataType.POSINT]);
+			tl.kw('v').as([ DataType.IDENT, DataType.POSINT ]);
 			tl.expectEq(0, 'ants'); // game name
-			tl.expectEq(1, 1);      // file version
+			tl.expectEq(1, 1); // file version
 			// players
 			tl = lit.gimmeNext();
-			tl.kw('players').as([DataType.POSINT]);
-			tl.expectLE(0, 26);     // player count <= 26
+			tl.kw('players').as([ DataType.POSINT ]);
+			tl.expectLE(0, 26); // player count <= 26
 			result['players'] = tl.params[0];
 			// parameters
 			tl = lit.gimmeNext();
 		}
 		while (tl.keyword !== 'm') {
-			args = [DataType.STRING];
-			if (tl.keyword === 'viewradius2' || tl.keyword === 'rows' || tl.keyword === 'cols' || tl.keyword === 'players' || tl.keyword === 'turns') {
+			args = [ DataType.STRING ];
+			if (tl.keyword === 'viewradius2' || tl.keyword === 'rows' || tl.keyword === 'cols'
+					|| tl.keyword === 'players' || tl.keyword === 'turns') {
 				args[0] = DataType.UINT;
 			}
 			tl.as(args);
@@ -444,7 +502,7 @@ Replay.prototype.txtToJson = function(replay) {
 		cols = undefined;
 		rows = 0;
 		do {
-			tl.as([DataType.STRING]);
+			tl.as([ DataType.STRING ]);
 			if (cols === undefined) {
 				cols = tl.params[0].length;
 			} else if (tl.params[0].length !== cols && !this.debug) {
@@ -456,9 +514,10 @@ Replay.prototype.txtToJson = function(replay) {
 				for (i = 0; i < cols; i++) {
 					c = tl.params[0].charAt(i);
 					if (c >= 'a' && c <= 'z') {
-						result['ants'].push([rows, i, 0, 0, 1, c.toUpperCase().charCodeAt(0) - 65, '-']);
+						result['ants'].push([ rows, i, 0, 0, 1, c.toUpperCase().charCodeAt(0) - 65,
+								'-' ]);
 					} else if (c === '*') {
-						result['ants'].push([rows, i, 0, 0]);
+						result['ants'].push([ rows, i, 0, 1 ]);
 					}
 				}
 			}
@@ -472,10 +531,10 @@ Replay.prototype.txtToJson = function(replay) {
 		// food / ant
 		if (isReplay) {
 			while (tl.keyword === 'a') {
-				//     row            col            start          conversion
-				tl.as([DataType.UINT, DataType.UINT, DataType.UINT, DataType.UINT,
-						DataType.UINT, DataType.UINT, DataType.STRING], 3);
-				//		end            owner          orders            # optional
+				// row col start conversion
+				tl.as([ DataType.UINT, DataType.UINT, DataType.UINT, DataType.UINT, DataType.UINT,
+						DataType.UINT, DataType.STRING ], 3);
+				// end owner orders # optional
 				row = tl.params[0];
 				if (row >= this.rows) throw new Error('Row exceeds map width.');
 				col = tl.params[1];
@@ -504,13 +563,13 @@ Replay.prototype.txtToJson = function(replay) {
 			// score
 			var players = this.players || result['players'];
 			for (i = 0; i < players; i++) {
-				scores = tl.kw('s').as([DataType.SCORES]).params[0];
+				scores = tl.kw('s').as([ DataType.SCORES ]).params[0];
 				result['scores'].push(scores);
 				if (i != players - 1) tl = lit.gimmeNext();
 			}
 		} else {
 			for (i = 0; i < result['players']; i++) {
-				result['scores'].push([0]);
+				result['scores'].push([ 0 ]);
 			}
 		}
 		if (lit.moar()) {
@@ -523,6 +582,20 @@ Replay.prototype.txtToJson = function(replay) {
 	}
 	return result;
 };
+
+/**
+ * Computes a list of visible ants for a given turn. This list is then used to render the
+ * visualization.
+ * <ul>
+ * <li>The turns are computed on reqest.</li>
+ * <li>The result is cached.</li>
+ * <li>Turns are calculated iteratively so there is no quick random access to turn 1000.</li>
+ * </ul>
+ * 
+ * @param {Number}
+ *        n The requested turn.
+ * @returns {Ant[]} The array of visible ants.
+ */
 Replay.prototype.getTurn = function(n) {
 	var i, turn, ants, ant, aniAnt, lastFrame, dead;
 	if (this.turns[n] === undefined) {
@@ -548,67 +621,31 @@ Replay.prototype.getTurn = function(n) {
 			}
 			if (ant[6] !== undefined && n >= ant[3] && n < ant[3] + ant[6].length) {
 				// move
-				aniAnt.frameAt(n, Quality.LOW)['owner'] = ant[5];
+				aniAnt.frameAt(n)['owner'] = ant[5];
 				var dir = undefined;
 				switch (ant[6].charAt(n - ant[3])) {
-					case 'n':
-					case 'N':
-						dir = Directions.N;
-						break;
-					case 'e':
-					case 'E':
-						dir = Directions.E;
-						break;
-					case 's':
-					case 'S':
-						dir = Directions.S;
-						break;
-					case 'w':
-					case 'W':
-						dir = Directions.W;
+				case 'n':
+				case 'N':
+					dir = Direction.N;
+					break;
+				case 'e':
+				case 'E':
+					dir = Direction.E;
+					break;
+				case 's':
+				case 'S':
+					dir = Direction.S;
+					break;
+				case 'w':
+				case 'W':
+					dir = Direction.W;
 				}
 				if (dir) {
-					lastFrame = aniAnt.lo[aniAnt.lo.length - 1];
-					aniAnt.fade(Quality.LOW, 'x', lastFrame['x'] + dir.x, n, n + 0.5);
-					aniAnt.fade(Quality.LOW, 'y', lastFrame['y'] + dir.y, n, n + 0.5);
-					/*antObj.keyFrames[1].angle = offset.angle;
-					antObj.animate([{
-						time: 0.5,
-						absolute: {
-							x: antObj.keyFrames[1].x,
-							y: antObj.keyFrames[1].y//,
-							//angle: offset.angle
-						},
-						relative: {}
-					}]);
-					// only in zoom mode: < movement time reduced to 0.5, pay attention when uncommenting >
-					/*
-					nextDir = nextAntDirection(antObj.id, t);
-					if (nextDir) {
-						var angle = nextDir.angle - offset.angle;
-						if (angle < -Math.PI) {
-							angle += 2 * Math.PI;
-						} else if (angle > +Math.PI) {
-							angle -= 2 * Math.PI;
-						}
-						if (angle != 0) {
-							antObj.keyFrames[1].jitter = 0;
-							antObj.keyFrames[2].jitter = 0;
-							if (Math.abs(angle) < 0.9 * Math.PI) {
-								var sq = 1 / Math.sqrt(2);
-								antObj.keyFrames[2]['x'] = antObj.keyFrames[1]['x'] + 0.5 * (offset['x'] * sq + (1 - sq) * nextDir.x);
-								antObj.keyFrames[2]['y'] = antObj.keyFrames[1]['y'] + 0.5 * (offset['y'] * sq + (1 - sq) * nextDir.y);
-								antObj.keyFrames[2].angle += 0.5 * angle;
-							}
-						}
-					}*/
+					lastFrame = aniAnt.keyFrames[aniAnt.keyFrames.length - 1];
+					aniAnt.fade('x', lastFrame['x'] + dir.x, n, n + 0.5);
+					aniAnt.fade('y', lastFrame['y'] + dir.y, n, n + 0.5);
 				}
 			}
-//			if (ant[4] !== ant[3] + ant[6].length) {
-				// account for survivors
-//					this.turns[obj[4] - 1].clearFog(obj[5], y, x, this.rows,
-//							this.cols, replay['viewradius2']);
-//			}
 			dead = (ant[4] || ant[3]);
 			if (dead === n + 1) {
 				// end of life
@@ -622,59 +659,143 @@ Replay.prototype.getTurn = function(n) {
 	}
 	return this.turns[n];
 };
+
+/**
+ * Spawns a new food item that may eventually be turned into an ant at any time.<br>
+ * <b>Called by the Java streaming visualizer.</b>
+ * 
+ * @param {Number}
+ *        id Global ant id, an auto-incrementing number for each new ant. See {@link Config#label}
+ * @param {Number}
+ *        row Map row to spawn the ant on.
+ * @param {Number}
+ *        col Map column to spawn the ant on.
+ * @param {Number}
+ *        spawn
+ * @param owner
+ * @returns {Ant}
+ */
 Replay.prototype.spawnAnt = function(id, row, col, spawn, owner) {
 	var aniAnt = this.aniAnts[id] = new Ant(id, spawn - 0.25);
 	aniAnt.owner = owner;
-	var f = aniAnt.frameAt(spawn - 0.25, Quality.LOW);
+	var f = aniAnt.frameAt(spawn - 0.25);
 	f['x'] = col;
 	f['y'] = row;
 	f['r'] = FOOD_COLOR[0];
 	f['g'] = FOOD_COLOR[1];
 	f['b'] = FOOD_COLOR[2];
 	if (spawn !== 0) {
-		f = aniAnt.frameAt(spawn, Quality.LOW);
+		f = aniAnt.frameAt(spawn);
 		f['size'] = 1.0;
-		f = aniAnt.frameAt(spawn + 0.125, Quality.LOW);
+		f = aniAnt.frameAt(spawn + 0.125);
 		f['size'] = 1.5;
-		f = aniAnt.frameAt(spawn + 0.25, Quality.LOW);
+		f = aniAnt.frameAt(spawn + 0.25);
 		f['size'] = 0.7;
-		f = aniAnt.frameAt(spawn + 0.5, Quality.LOW);
+		f = aniAnt.frameAt(spawn + 0.5);
 	}
 	f['size'] = 1;
 	return aniAnt;
 };
+
+/**
+ * Animates food conversion to a player ant.<br>
+ * <b>Called by the Java streaming visualizer.</b>
+ * 
+ * @private
+ * @param {Ant}
+ *        aniAnt The ant to be worked on.
+ * @param {Boolean}
+ *        instantly This is set to true for the initial player ants and leaves out one animation
+ *        step that will have no effect in this case.
+ * @param {Number}
+ *        turn The zero-based turn, that the ant was converted in.
+ * @param {Number}
+ *        owner The player index of the new owner.
+ */
 Replay.prototype.convertAnt = function(aniAnt, instantly, turn, owner) {
 	var color = this.meta['playercolors'][owner];
 	if (!instantly) {
-		aniAnt.fade(Quality.LOW, 'r', 255, turn - 0.5, turn - 0.25);
-		aniAnt.fade(Quality.LOW, 'g', 255, turn - 0.5, turn - 0.25);
-		aniAnt.fade(Quality.LOW, 'b', 255, turn - 0.5, turn - 0.25);
+		aniAnt.fade('r', 255, turn - 0.5, turn - 0.25);
+		aniAnt.fade('g', 255, turn - 0.5, turn - 0.25);
+		aniAnt.fade('b', 255, turn - 0.5, turn - 0.25);
 	}
-	aniAnt.frameAt(turn - 0.25, Quality.LOW)['owner'] = owner;
-	aniAnt.fade(Quality.LOW, 'r', color[0], turn - 0.25, turn);
-	aniAnt.fade(Quality.LOW, 'g', color[1], turn - 0.25, turn);
-	aniAnt.fade(Quality.LOW, 'b', color[2], turn - 0.25, turn);
+	aniAnt.frameAt(turn - 0.25)['owner'] = owner;
+	aniAnt.fade('r', color[0], turn - 0.25, turn);
+	aniAnt.fade('g', color[1], turn - 0.25, turn);
+	aniAnt.fade('b', color[2], turn - 0.25, turn);
 };
-Replay.prototype.killAnt = function(aniAnt, dead) {
+
+/**
+ * Animates an ant's death.<br>
+ * <b>Called by the Java streaming visualizer.</b>
+ * 
+ * @private
+ * @param {Ant}
+ *        aniAnt The ant to be worked on.
+ * @param {Number}
+ *        death The zero-based turn, that the ant died in.
+ */
+Replay.prototype.killAnt = function(aniAnt, death) {
 	var color;
-	var owner = aniAnt.frameAt(dead, Quality.LOW)['owner'];
+	var owner = aniAnt.frameAt(death)['owner'];
 	if (owner === undefined) {
 		color = FOOD_COLOR;
 	} else {
 		color = this.meta['playercolors'][owner];
 	}
-	aniAnt.fade(Quality.LOW, 'r'   , 255, dead - 0.80, dead - 0.60);
-	aniAnt.fade(Quality.LOW, 'g'   , 255, dead - 0.80, dead - 0.60);
-	aniAnt.fade(Quality.LOW, 'b'   , 255, dead - 0.80, dead - 0.60);
-	aniAnt.fade(Quality.LOW, 'r', color[0], dead - 0.60, dead - 0.40);
-	aniAnt.fade(Quality.LOW, 'g', color[1], dead - 0.60, dead - 0.40);
-	aniAnt.fade(Quality.LOW, 'b', color[2], dead - 0.60, dead - 0.40);
-	aniAnt.fade(Quality.LOW, 'r'   , 0.0, dead - 0.40, dead);
-	aniAnt.fade(Quality.LOW, 'g'   , 0.0, dead - 0.40, dead);
-	aniAnt.fade(Quality.LOW, 'b'   , 0.0, dead - 0.40, dead);
-	aniAnt.fade(Quality.LOW, 'size', 0.7, dead - 0.80, dead - 0.60);
-	aniAnt.fade(Quality.LOW, 'size', 0.0, dead - 0.40, dead);
+	aniAnt.fade('r', 255, death - 0.80, death - 0.60);
+	aniAnt.fade('g', 255, death - 0.80, death - 0.60);
+	aniAnt.fade('b', 255, death - 0.80, death - 0.60);
+	aniAnt.fade('r', color[0], death - 0.60, death - 0.40);
+	aniAnt.fade('g', color[1], death - 0.60, death - 0.40);
+	aniAnt.fade('b', color[2], death - 0.60, death - 0.40);
+	aniAnt.fade('r', 0.0, death - 0.40, death);
+	aniAnt.fade('g', 0.0, death - 0.40, death);
+	aniAnt.fade('b', 0.0, death - 0.40, death);
+	aniAnt.fade('size', 0.7, death - 0.80, death - 0.60);
+	aniAnt.fade('size', 0.0, death - 0.40, death);
+	aniAnt.death = death;
 };
+
+/**
+ * Used by the Java live visualizer to add dead ants. Since the streaming replay doesn't contain
+ * data about dying ants they cannot be animated in the usual way. Instead they are displayed as
+ * darker, smaller squares for the duration of a turn.<br>
+ * <b>Called by the Java streaming visualizer.</b>
+ * 
+ * @param {Ant}
+ *        aniAnt The ant to be worked on.
+ * @param {Number}
+ *        dead The zero-based turn, that the ant died in.
+ */
+Replay.prototype.deadAnt = function(aniAnt, dead) {
+	var f = aniAnt.frameAt(dead);
+	var owner = f['owner'];
+	var color = this.meta['playercolors'][owner];
+	var hr = color[0] >> 1;
+	var hg = color[1] >> 1;
+	var hb = color[2] >> 1;
+	f['r'] = hr;
+	f['g'] = hg;
+	f['b'] = hb;
+	f['size'] = 0.7;
+};
+
+/**
+ * Fetches a 2D-matrix (of map size) of boolean values representing, what is covered by fog-of-war
+ * for a player. For an eleminated player this will be an all-true matrix.<br>
+ * <ul>
+ * <li>Once computed, the map will be cached.</li>
+ * <li>Unlike the turn data, fog of war is not computed iteratively. So it does not depend on the
+ * previous turn's fog data, but also doesn't use the optimization opportunity there.</li>
+ * </ul>
+ * 
+ * @param {Number}
+ *        player The index of the player.
+ * @param {Number}
+ *        turn The zero-based turn number for which the fog of war is to be computed.
+ * @returns {Boolean[][]} The fog matrix.
+ */
 Replay.prototype.getFog = function(player, turn) {
 	var i, fogs, fog, row, col, radius, radius2, row_wrap, col_wrap;
 	var fog_row, fog_row1, fog_row2, aniAnts, aniAnt;
@@ -689,19 +810,17 @@ Replay.prototype.getFog = function(player, turn) {
 		}
 		radius2 = this.meta['replaydata']['viewradius2'];
 		radius = Math.sqrt(radius2) | 0;
+		row_wrap = new Array(2 * radius + 1);
+		col_wrap = new Array(2 * radius + 1);
 		aniAnts = this.getTurn(turn);
 		for (i = 0; i < aniAnts.length; i++) {
-			aniAnt = aniAnts[i].interpolate(turn, Quality.LOW);
+			aniAnt = aniAnts[i].interpolate(turn);
 			if (aniAnt && aniAnt['owner'] === player) {
-				row_wrap = new Array(2 * radius + 1);
 				for (row = 2 * radius; row >= 0; row--) {
-					row_wrap[row] = aniAnt['y'] - radius + row;
-					row_wrap[row] -= Math.floor(row_wrap[row] / this.rows) * this.rows;
+					row_wrap[row] = Math.wrapAround(aniAnt['y'] - radius + row, this.rows);
 				}
-				col_wrap = new Array(2 * radius + 1);
 				for (col = 2 * radius; col >= 0; col--) {
-					col_wrap[col] = aniAnt['x'] - radius + col;
-					col_wrap[col] -= Math.floor(col_wrap[col] / this.cols) * this.cols;
+					col_wrap[col] = Math.wrapAround(aniAnt['x'] - radius + col, this.cols);
 				}
 				col = col_wrap[radius];
 				for (row = 1; row <= radius; row++) {
@@ -716,7 +835,7 @@ Replay.prototype.getFog = function(player, turn) {
 					fog_row1 = fog[row_wrap[radius - row]];
 					fog_row2 = fog[row_wrap[radius + row]];
 					for (col = 1; col <= radius; col++) {
-						if (row*row + col*col <= radius2) {
+						if (row * row + col * col <= radius2) {
 							fog_row1[col_wrap[radius - col]] = false;
 							fog_row1[col_wrap[radius + col]] = false;
 							fog_row2[col_wrap[radius - col]] = false;
@@ -731,36 +850,64 @@ Replay.prototype.getFog = function(player, turn) {
 };
 
 /**
- * @class A highly optimized string tokenizer for replay files. It ignores blank
- *     lines and comment lines, trims and splits each line in two after the
- *     keyword. It processes a 220 KB file with over 27,000 lines in
- *     about 18 ms in Chromium on a 2,0 Ghz Core 2 Duo.
+ * @class A highly optimized string tokenizer for replay files. It ignores blank lines and comment
+ *        lines, trims and splits each line in two after the keyword. It processes a 220 KB file
+ *        with over 27,000 lines in about 18 ms in Chromium on a 2,0 Ghz Core 2 Duo. This class is
+ *        used by {@link Replay#txtToJson}.
  * @constructor
+ * @param {String}
+ *        text A replay string.
  */
 function LineIterator(text) {
 	// we keep a backup copy of the original for debugging purposes
 	this.text = text;
 	// eat comment lines and trim others; split text into lines
-	this.lines = text.replace(TokenLine.NORMALIZE_REGEXP, '').split('\n');
+	this.lines = text.replace(LineIterator.NORMALIZE_REGEXP, '').split('\n');
 	this.tokenLines = new Array(this.lines.length);
 	// separate keyword from parameter list
-	for (var i = 0; i < this.lines.length; i++) {
+	for ( var i = 0; i < this.lines.length; i++) {
 		this.tokenLines[i] = new TokenLine(this.lines[i]);
 	}
 	this.pos = 0;
 }
+
+/**
+ * An ugly looking regexp that finds all extra whitespace and comment lines in a block of text.
+ */
+LineIterator.NORMALIZE_REGEXP = /^([^\S\n]*(#.*)?\n)*|(\n[^\S\n]*(#.*)?)*$|\n[^\S\n]*(#.*)?(?=\n)/g;
+
+/**
+ * Fetches the next line from the replay.
+ * 
+ * @throws {Error}
+ *         If an attempt is made to read past the last line.
+ * @returns {String} The next non-empty, non-comment line.
+ */
 LineIterator.prototype.gimmeNext = function() {
 	if (this.pos < this.tokenLines.length) {
 		return this.tokenLines[this.pos++];
 	}
 	throw new Error('Tried to read past the end of the file. Is it truncated?');
 };
+
+/**
+ * Checks for the end of file condition.
+ * 
+ * @returns {Boolean} True, if the end of the replay string has been reached.
+ */
 LineIterator.prototype.moar = function() {
 	return this.pos < this.tokenLines.length;
 };
 
 /**
+ * Splits a line of text into keyword and parameter block. Since the parameter block is allowed to
+ * be a single string with spaces no further splitting is done.
+ * 
+ * @class A single line of replay / map text in the general format "keyword param1 param2 ...". The
+ *        class offers methods to apply external splitting functions to it. And validate values.
  * @constructor
+ * @param {String}
+ *        line A replay / map line of text.
  */
 function TokenLine(line) {
 	this.line = line;
@@ -768,19 +915,50 @@ function TokenLine(line) {
 	this.keyword = match[1].toLowerCase();
 	this.params = match[2];
 }
-TokenLine.NORMALIZE_REGEXP = /^([^\S\n]*(#.*)?\n)*|(\n[^\S\n]*(#.*)?)*$|\n[^\S\n]*(#.*)?(?=\n)/g;
+
+/**
+ * Finds the first block of whitespace and splits the string into the part in front and after it.
+ */
 TokenLine.KEYWORD_REGEXP = /(\S+)\s*(.*)/;
+
+/**
+ * Enforces that this TokenLine starts with the expected keyword.
+ * 
+ * @param {String}
+ *        keyword The expected keyword.
+ * @throws {Error}
+ *         If the TokenLine doesn't start with the keyword.
+ * @returns {TokenLine} This object for cascading calls.
+ */
 TokenLine.prototype.kw = function(keyword) {
 	if (this.keyword !== keyword) {
 		this.expected(keyword, this.keyword);
 	}
 	return this;
 };
+
+/**
+ * Splits the parameter block of this object using given parsing-and-validation functions. Most of
+ * those functions will split after the first white-space. Some will check for positive integers or
+ * other constraints.
+ * 
+ * @param {Array}
+ *        args A list of parsing-and-validation functions.
+ * @param {Number}
+ *        optional Number of optional parameters that need not exist at the end of the line. In that
+ *        case 'args' contains the complete list of functions for all possible parameters, but the
+ *        last 'optional' number of them may not be put to use if the TokenLine lacks these. This
+ *        parameter itself is optional and defaults to 0.
+ * @throws {Error}
+ *         If the the functions did not parse all of the line. (To many parameters for a keyword in
+ *         the replay.)
+ * @returns {TokenLine} This object for cascading calls.
+ */
 TokenLine.prototype.as = function(args, optional) {
 	if (optional === undefined) optional = 0;
 	var work = this.params;
 	this.params = [];
-	for (var i = 0; i < args.length; i++) {
+	for ( var i = 0; i < args.length; i++) {
 		if (work || args.length - i > optional) {
 			var parts = args[i](work);
 			this.params.push(parts[0]);
@@ -790,14 +968,55 @@ TokenLine.prototype.as = function(args, optional) {
 	if (work) throw new Error('The following unexpected additional parameter was found: ' + work);
 	return this;
 };
+
+/**
+ * Helper function to construct an Error object with a message about keywords / parameters in the
+ * replay / map that did not match a certain expectation.
+ * 
+ * @private
+ * @throws {Error}
+ *         Always.
+ * @param expectation
+ *        The expected value (that can be implicitly converted to string).
+ * @param reality
+ *        The value that was found in the replay (that can be implicitly converted to string).
+ */
 TokenLine.prototype.expected = function(expectation, reality) {
 	throw new Error('Expected ' + expectation + ', but ' + reality + ' found.');
 };
+
+/**
+ * Enforces that the n-th zero-based parameter matches a certain value.<br>
+ * <h4>Example</h4>
+ * "v ants 1" is a constant line in the replay. expectEq(0, 'ants') verifies that the first
+ * parameter is the string 'ants' and expectEq(1, 1) validates the number 1 following it.
+ * 
+ * @throws {Error}
+ *         If value !== params[idx]
+ * @param {Number}
+ *        idx The index of the parameter.
+ * @param value
+ *        Any comparison value that must be exactly matched by the parameter.
+ */
 TokenLine.prototype.expectEq = function(idx, value) {
 	if (value !== this.params[idx]) {
 		this.expected(value, this.params[idx]);
 	}
 };
+
+/**
+ * Enforces that the n-th zero-based parameter is less or equal to a certain value.<br>
+ * <h4>Example</h4>
+ * "v ants 1" is a constant line in the replay. expectEq(0, 'ants') verifies that the first
+ * parameter is the string 'ants' and expectEq(1, 1) validates the number 1 following it.
+ * 
+ * @throws {Error}
+ *         If value &lt; params[idx]
+ * @param {Number}
+ *        idx The index of the parameter.
+ * @param {Number}
+ *        value Any comparison value that must be greater or equal to the parameter.
+ */
 TokenLine.prototype.expectLE = function(idx, value) {
 	if (value < this.params[idx]) {
 		this.expected('parameter ' + idx + ' to be <= ' + value, this.params[idx]);

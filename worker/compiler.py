@@ -8,15 +8,17 @@
 # the available languages. If the number of matching languages is 0 or
 # more than 1, it is an error, and an appropriate error message is returned.
 #
-# To add a new language you must add an entry to the "languages" dictionary in
-# the following format:
-#     LanguageName : (extension, [NukeGlobs], [(Compile_globs, Compile_class)])
+# To add a new language you must add an entry to the "languages" list.
 #
 # For example the entry for Python is as follows:
-#     "Python" : (".py", ["*.pyc"], [("*.py", ChmodCompiler("Python"))]).
-# This defines the extension as .py, removes all .pyc files, and runs all the
-# found .py files through the ChmodCompiler, which is a pseudo-compiler class
-# which only chmods the found files.
+#    Language("Python", BOT +".py", "MyBot.py",
+#        "python MyBot.py",
+#        ["*.pyc"],
+#        [(["*.py"], ChmodCompiler("Python"))]
+#    ),
+# This defines the output file as MyBot.py, removes all .pyc files, and runs
+# all the found .py files through the ChmodCompiler, which is a pseudo-compiler
+# class which only chmods the found files.
 #
 # If you want to run a real compiler then you need to define a set of flags to
 # send it. In this case you would either use TargetCompiler or ExternalCompiler.
@@ -53,10 +55,8 @@ from sandbox import get_sandbox
 try:
     from server_info import server_info
     MEMORY_LIMIT = server_info.get('memory_limit', 500)
-    COMPILE_TIME = server_info.get('compile_time', 10 * 60)
 except ImportError:
     MEMORY_LIMIT = 500
-    COMPILE_TIME = 10 * 60
 
 BOT = "MyBot"
 SAFEPATH = re.compile('[a-zA-Z0-9_.$-]+$')
@@ -99,13 +99,21 @@ def nukeglob(pattern):
                 raise
 
 def _run_cmd(sandbox, cmd, timelimit):
+    out = []
     errors = []
     sandbox.start(cmd)
+    # flush stdout to keep stuff moving
     try:
         while (sandbox.is_alive and time.time() < timelimit):
-            sandbox.read_line((timelimit - time.time()) + 1)
+            out.append(sandbox.read_line((timelimit - time.time()) + 1))
     finally:
         sandbox.kill()
+    # capture final output for error reporting
+    tmp = sandbox.read_line(1)
+    while tmp:
+        out.append(tmp)
+        tmp = sandbox.read_line(1)
+
     if time.time() > timelimit:
         errors.append("Compilation timed out with command %s"
                 % (cmd,))
@@ -113,7 +121,7 @@ def _run_cmd(sandbox, cmd, timelimit):
     while err_line is not None:
         errors.append(err_line)
         err_line = sandbox.read_error()
-    return errors
+    return out, errors
 
 def check_path(path, errors):
     if not os.path.exists(path):
@@ -143,9 +151,10 @@ class ChmodCompiler(Compiler):
         return True
 
 class ExternalCompiler(Compiler):
-    def __init__(self, args, separate=False):
+    def __init__(self, args, separate=False, vglobs=[]):
         self.args = args
         self.separate = separate
+        self.vglobs = vglobs
 
     def __str__(self):
         return "ExternalCompiler: %s" % (' '.join(self.args),)
@@ -160,13 +169,23 @@ class ExternalCompiler(Compiler):
             if self.separate:
                 for filename in files:
                     cmdline = " ".join(self.args + [filename])
-                    cmd_errors = _run_cmd(box, cmdline, timelimit)
+                    cmd_out, cmd_errors = _run_cmd(box, cmdline, timelimit)
+                    if not cmd_errors:
+                        for vglob in self.vglobs:
+                            box.check_path(vglob, cmd_errors)
+                        if cmd_errors:
+                            cmd_errors += cmd_out
                     if cmd_errors:
                         errors += cmd_errors
                         return False
             else:
                 cmdline = " ".join(self.args + files)
-                cmd_errors = _run_cmd(box, cmdline, timelimit)
+                cmd_out, cmd_errors = _run_cmd(box, cmdline, timelimit)
+                if not cmd_errors:
+                    for vglob in self.vglobs:
+                        box.check_path(vglob, cmd_errors)
+                    if cmd_errors:
+                        cmd_errors += cmd_out
                 if cmd_errors:
                     errors += cmd_errors
                     return False
@@ -199,7 +218,7 @@ class TargetCompiler(Compiler):
                     errors.append("Could not determine target for source file %s." % source)
                     return False
                 cmdline = " ".join(self.args + [self.outflag, target, source])
-                cmd_errors = _run_cmd(box, cmdline, timelimit)
+                cmd_out, cmd_errors = _run_cmd(box, cmdline, timelimit)
                 if cmd_errors:
                     errors += cmd_errors
                     return False
@@ -216,55 +235,64 @@ comp_args = {
     "C"             : [["gcc", "-O3", "-funroll-loops", "-c"],
                              ["gcc", "-O2", "-lm", "-o", BOT]],
     "C#"            : [["gmcs", "-warn:0", "-out:%s.exe" % BOT]],
+    "VB"            : [["vbnc", "-out:%s.exe" % BOT]],
     "C++"         : [["g++", "-O3", "-funroll-loops", "-c"],
                              ["g++", "-O2", "-lm", "-o", BOT]],
-    "D"             : [["dmd", "-O", "-inline", "-release", "-of" + BOT]],
+    "D"             : [["dmd", "-O", "-inline", "-release", "-noboundscheck", "-of" + BOT]],
     "Go"            : [["6g", "-o", "_go_.6"],
                              ["6l", "-o", BOT, "_go_.6"]],
     "Groovy"    : [["groovyc"],
                              ["jar", "cfe", BOT + ".jar", BOT]],
+    # If we ever upgrade to GHC 7, we will need to add -rtsopts to this command
+    # in order for the maximum heap size RTS flag to work on the executable.
     "Haskell" : [["ghc", "--make", BOT + ".hs", "-O", "-v0"]],
     "Java"        : [["javac", "-J-Xmx%sm" % (MEMORY_LIMIT)],
                              ["jar", "cfe", BOT + ".jar", BOT]],
     "Lisp"      : [['sbcl', '--dynamic-space-size', str(MEMORY_LIMIT), '--script', BOT + '.lisp']],
     "OCaml"     : [["ocamlbuild -lib unix", BOT + ".native"]],
     "Scala"     : [["scalac"]],
+    "Erlang"    : [["erlc"]],
     }
 
 targets = {
     # lang : { old_ext : new_ext, ... }
     "C"     : { ".c" : ".o" },
     "C++" : { ".c" : ".o", ".cpp" : ".o", ".cc" : ".o" },
+    "Erlang" : { ".erl" : ".beam" },
     }
 
 Language = collections.namedtuple("Language",
-        ['name', 'extension', 'main_code_file', 'command', 'nukeglobs',
+        ['name', 'out_file', 'main_code_file', 'command', 'nukeglobs',
             'compilers']
         )
 
 languages = (
-    # Language(name, output extension,
+    # Language(name, output file,
     #      main_code_file
     #      command_line
     #      [nukeglobs],
     #      [(source glob, compiler), ...])
     #
     # The compilers are run in the order given.
-    # If the extension is "" it means the output file is just BOT
     # If a source glob is "" it means the source is part of the compiler
     #   arguments.
-    Language("C", "", "MyBot.c",
+    Language("C", BOT, "MyBot.c",
         "./MyBot",
         ["*.o", BOT],
         [(["*.c"], TargetCompiler(comp_args["C"][0], targets["C"])),
             (["*.o"], ExternalCompiler(comp_args["C"][1]))]
     ),
-    Language("C#", ".exe", "MyBot.cs",
+    Language("C#", BOT +".exe", "MyBot.cs",
         "mono MyBot.exe",
         [BOT + ".exe"],
         [(["*.cs"], ExternalCompiler(comp_args["C#"][0]))]
     ),
-    Language("C++", "", "MyBot.cc",
+    Language("VB", BOT +".exe", "MyBot.vb",
+        "mono MyBot.exe",
+        [BOT + ".exe"],
+        [(["*.vb"], ExternalCompiler(comp_args["VB"][0]))]
+    ),
+    Language("C++", BOT, "MyBot.cc",
         "./MyBot",
         ["*.o", BOT],
         [
@@ -273,95 +301,100 @@ languages = (
             (["*.o"], ExternalCompiler(comp_args["C++"][1]))
         ]
     ),
-    Language("Clojure", ".clj", "MyBot.clj",
+    Language("Clojure", BOT +".clj", "MyBot.clj",
 		"java -Xmx%sm -cp /usr/share/java/clojure.jar:. clojure.main MyBot.clj" % (MEMORY_LIMIT,),
         [],
         [(["*.clj"], ChmodCompiler("Clojure"))]
     ),
-    Language("CoffeeScript", ".coffee", "MyBot.coffee",
+    Language("CoffeeScript", BOT +".coffee", "MyBot.coffee",
         "coffee MyBot.coffee",
         [],
         [(["*.coffee"], ChmodCompiler("CoffeeScript"))]
     ),
-    Language("D", "", "MyBot.d",
+    Language("D", BOT, "MyBot.d",
         "./MyBot",
         ["*.o", BOT],
         [(["*.d"], ExternalCompiler(comp_args["D"][0]))]
     ),
-    Language("Go", "", "MyBot.go",
+    Language("Erlang", "my_bot.beam", "my_bot.erl",
+        "erl -hms"+ str(MEMORY_LIMIT) +"m -smp disable -noshell -s my_bot start -s init stop",
+        ["*.beam"],
+        [(["*.erl"], TargetCompiler(comp_args["Erlang"][0], targets["Erlang"]))]
+    ),
+    Language("Go", BOT, "MyBot.go",
         "./MyBot",
         ["*.8", "*.6", BOT],
-        [(["*.go"], ExternalCompiler(comp_args["Go"][0])),
-            ([""], ExternalCompiler(comp_args["Go"][1]))]
+        [(["*.go"], ExternalCompiler(comp_args["Go"][0], vglobs=['_go_.6'])),
+            ([""], ExternalCompiler(comp_args["Go"][1], vglobs=['_go_.6']))]
     ),
-    Language("Groovy", ".jar", "MyBot.groovy",
+    Language("Groovy", BOT +".jar", "MyBot.groovy",
         "java -Xmx" + str(MEMORY_LIMIT) + "m -cp MyBot.jar:/usr/share/groovy/embeddable/groovy-all-1.7.5.jar MyBot",
         ["*.class, *.jar"],
         [(["*.groovy"], ExternalCompiler(comp_args["Groovy"][0])),
         (["*.class"], ExternalCompiler(comp_args["Groovy"][1]))]
     ),
-    Language("Haskell", "", "MyBot.hs",
-        "./MyBot",
+    Language("Haskell", BOT, "MyBot.hs",
+        "./MyBot +RTS -M" + str(MEMORY_LIMIT) + "m",
         [BOT],
         [([""], ExternalCompiler(comp_args["Haskell"][0]))]
     ),
-    Language("Java", ".jar", "MyBot.java",
+    Language("Java", BOT +".jar", "MyBot.java",
         "java -Xmx" + str(MEMORY_LIMIT) + "m -jar MyBot.jar",
         ["*.class", "*.jar"],
         [(["*.java"], ExternalCompiler(comp_args["Java"][0])),
             (["*.class"], ExternalCompiler(comp_args["Java"][1]))]
     ),
-    Language("Javascript", ".js", "MyBot.js",
+    Language("Javascript", BOT +".js", "MyBot.js",
         "node MyBot.js",
         [],
         [(["*.js"], ChmodCompiler("Javascript"))]
     ),
-    Language("Lisp", "", "MyBot.lisp",
+    Language("Lisp", BOT, "MyBot.lisp",
         "./MyBot --dynamic-space-size " + str(MEMORY_LIMIT),
         [BOT],
         [([""], ExternalCompiler(comp_args["Lisp"][0]))]
     ),
-    Language("Lua", ".lua", "MyBot.lua",
+    Language("Lua", BOT +".lua", "MyBot.lua",
         "luajit-2.0.0-beta5 MyBot.lua",
         [],
         [(["*.lua"], ChmodCompiler("Lua"))]
     ),
-    Language("OCaml", ".native", "MyBot.ml",
+    Language("OCaml", BOT +".native", "MyBot.ml",
         "./MyBot.native",
         [BOT + ".native"],
         [([""], ExternalCompiler(comp_args["OCaml"][0]))]
     ),
-    Language("Perl", ".pl", "MyBot.pl",
+    Language("Perl", BOT +".pl", "MyBot.pl",
         "perl MyBot.pl",
         [],
         [(["*.pl"], ChmodCompiler("Perl"))]
     ),
-    Language("PHP", ".php", "MyBot.php",
+    Language("PHP", BOT +".php", "MyBot.php",
         "php MyBot.php",
         [],
         [(["*.php"], ChmodCompiler("PHP"))]
     ),
-    Language("Python", ".py", "MyBot.py",
+    Language("Python", BOT +".py", "MyBot.py",
         "python MyBot.py",
         ["*.pyc"],
         [(["*.py"], ChmodCompiler("Python"))]
     ),
-    Language("Python3", ".py3", "MyBot.py3",
+    Language("Python3", BOT +".py3", "MyBot.py3",
         "python3 MyBot.py3",
         ["*.pyc"],
         [(["*.py3"], ChmodCompiler("Python3"))]
     ),
-    Language("Ruby", ".rb", "MyBot.rb",
+    Language("Ruby", BOT +".rb", "MyBot.rb",
         "ruby MyBot.rb",
         [],
         [(["*.rb"], ChmodCompiler("Ruby"))]
     ),
-    Language("Scala", ".scala", "MyBot.scala",
-        'JAVA_OPTS="-Xmx'+ str(MEMORY_LIMIT) +'m";scala -howtorun:object MyBot',
+    Language("Scala", BOT +".scala", "MyBot.scala",
+        'scala -J-Xmx'+ str(MEMORY_LIMIT) +'m -howtorun:object MyBot',
         ["*.scala, *.jar"],
         [(["*.scala"], ExternalCompiler(comp_args["Scala"][0]))]
     ),
-    Language("Scheme", ".ss", "MyBot.ss",
+    Language("Scheme", BOT +".ss", "MyBot.ss",
         "./MyBot",
         [],
         [(["*.ss"], ChmodCompiler("Scheme"))]
@@ -369,17 +402,17 @@ languages = (
 )
 
 
-def compile_function(language, bot_dir):
+def compile_function(language, bot_dir, timelimit):
     """Compile submission in the current directory with a specified language."""
     with CD(bot_dir):
         for glob in language.nukeglobs:
             nukeglob(glob)
 
     errors = []
-    timelimit = time.time() + COMPILE_TIME
+    stop_time = time.time() + timelimit
     for globs, compiler in language.compilers:
         try:
-            if not compiler.compile(bot_dir, globs, errors, timelimit):
+            if not compiler.compile(bot_dir, globs, errors, stop_time):
                 return False, errors
         except StandardError, exc:
             raise
@@ -387,7 +420,7 @@ def compile_function(language, bot_dir):
                     % (compiler, exc))
             return False, errors
 
-    compiled_bot_file = os.path.join(bot_dir, BOT + language.extension)
+    compiled_bot_file = os.path.join(bot_dir, language.out_file)
     return check_path(compiled_bot_file, errors), errors
 
 _LANG_NOT_FOUND = """Did not find a recognized MyBot.* file.
@@ -430,13 +463,14 @@ def get_run_lang(submission_dir):
                     if line[0] == '#':
                         return line[1:-1]
 
-def compile_anything(bot_dir):
+def compile_anything(bot_dir, timelimit=600):
     """Autodetect the language of an entry and compile it."""
     detected_language, errors = detect_language(bot_dir)
     if detected_language:
         # If we get this far, then we have successfully auto-detected
         # the language that this entry is using.
-        compiled, errors = compile_function(detected_language, bot_dir)
+        compiled, errors = compile_function(detected_language, bot_dir,
+                timelimit)
         if compiled:
             name = detected_language.name
             run_cmd = detected_language.command

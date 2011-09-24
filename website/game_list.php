@@ -69,16 +69,14 @@ function produce_cache_results($page=0, $user_id=NULL, $submission_id=NULL, $map
         $list_type = "submission";
         $list_id_field = "submission_id";
     } elseif ($map_id !== NULL) {
-        $page_count_query = "select_game_list_page_count";
-        $list_query = "select_game_list";
+        $page_count_query = "select_map_game_list_page_count";
+        $list_query = "select_map_game_list";
         $list_select_field = "map_id";
         $list_id = $map_id;
         $list_type = "map";
         $list_id_field = "map_id";
     } else {
         // make the where clause always return true
-        $page_count_query = "select_map_game_list_page_count";
-        $list_query = "select_map_game_list";
         $list_select_field = "1";
         $list_id = 1;
         $list_type = NULL;
@@ -115,8 +113,8 @@ function produce_cache_results($page=0, $user_id=NULL, $submission_id=NULL, $map
         }
         $json["fields"] = $field_names;
         // this list and offset should match the results of the sql queries
-        //    select_game_list and select_map_game_list
-        $user_fields = array("user_id", "submission_id", "username", "version", "player_id", "game_rank", "skill", "mu", "sigma", "skill_change", "mu_change", "sigma_change");
+        //    select_game_list
+        $user_fields = array("user_id", "submission_id", "username", "version", "player_id", "game_rank", "status", "skill", "mu", "sigma", "skill_change", "mu_change", "sigma_change");
         $user_fields_offset = 8;
         /*
         if ($user_id !== NULL or $submission_id !== NULL) {
@@ -141,13 +139,6 @@ function produce_cache_results($page=0, $user_id=NULL, $submission_id=NULL, $map
                 for ($i = 0; $i < count($user_fields); $i++) {
                     $cur_row[$i + $user_fields_offset][] = $list_row[$i + $user_fields_offset];
                 }
-                /*
-                if ($list_row[2] == $user_id or $list_row[3] == $submission_id) {
-                    $cur_row[] = $list_row[6] - $list_row[5]*3;
-                    $cur_row[] = $list_row[8];
-                    $cur_row[] = $list_row[9];
-                }
-                */
             } else {
             // get new game info
                 // dump results of row
@@ -161,13 +152,6 @@ function produce_cache_results($page=0, $user_id=NULL, $submission_id=NULL, $map
                 for ($i = 0; $i < count($user_fields); $i++) {
                     $cur_row[$i + $user_fields_offset] = array($cur_row[$i + $user_fields_offset]);
                 }
-                /*
-                if ($list_row[2] == $user_id or $list_row[3] == $submission_id) {
-                    $cur_row[] = $list_row[6] - $list_row[5]*3;
-                    $cur_row[] = $list_row[8];
-                    $cur_row[] = $list_row[9];
-                }
-                */
             }
             $last_game_id = $list_row[0];
         }
@@ -203,8 +187,7 @@ function create_game_list_table($json, $top=FALSE, $targetpage=NULL) {
     } else {
         $user_id = NULL;
     }
-    $version = 0;
-    $table = '<table class="ranking">';
+    $table = '<table class="games">';
     if (array_key_exists('type', $json)) {
         // language by name, others by id
         if ($json['type'] == 'language') {
@@ -221,11 +204,12 @@ function create_game_list_table($json, $top=FALSE, $targetpage=NULL) {
     // produce header
     $table .= '<thead><tr><th>Time</th>';
     if ($user_id) {
-        $table .= '<th>Skill</th>';
+        $table .= '<th>Version</th><th>Skill</th>';
     }
     $table .= '<th>Opponents</th>';
     if ($user_id) {
         $table .= '<th>Outcome</th>';
+        $table .= '<th>Status</th>';
     }
     $table .= '<th>Map</th><th>Viewer</th></tr></thead>';
     if (count($json["values"]) > 0) {
@@ -233,7 +217,6 @@ function create_game_list_table($json, $top=FALSE, $targetpage=NULL) {
         $oddity = 'even';
         $fields = $json["fields"];
         $row_num = 0;
-        $now = new DateTime();
         foreach ($json["values"] as $values) {
             $row_num++;
             $row = array_combine($fields, $values);
@@ -243,6 +226,7 @@ function create_game_list_table($json, $top=FALSE, $targetpage=NULL) {
                 for ($i = 0; $i < $row['players']; $i++) {
                     if ($row["user_id"][$i] == $user_id) {
                         $user_version = $row["version"][$i];
+                        $user_submission_id = $row["submission_id"][$i];
                         $user_skill = $row["skill"][$i];
                         $user_mu = $row["mu"][$i];
                         $user_sigma = $row["sigma"][$i];
@@ -250,14 +234,10 @@ function create_game_list_table($json, $top=FALSE, $targetpage=NULL) {
                         $user_mu_change = $row["mu_change"][$i];
                         $user_sigma_change = $row["sigma_change"][$i];
                         $user_rank = $row["game_rank"][$i];
+                        $user_status = $row["status"][$i];
                         break;
                     }
                 }                
-            }
-
-            if ($user_id and $version !== $user_version) {
-            	$version = $user_version;
-            	$table .= "<tr colspan=\"6\"><th>Version $version</th></tr>";
             }
 
             $oddity = $oddity == 'odd' ? 'even' : 'odd';  // quite odd?
@@ -265,11 +245,13 @@ function create_game_list_table($json, $top=FALSE, $targetpage=NULL) {
             $table .= "<tr class=\"$oddity$user_class\">";
 
             $time = new DateTime($row["timestamp"]);
-            $time = "<span title=\"".no_wrap(nice_interval($now->diff($time))." ago")."\">".no_wrap($time->format('j M G:i'))."</span>";
+            // $time = "<span title=\"".no_wrap(nice_interval($now->diff($time))." ago")."\">".no_wrap($time->format('j M G:i'))."</span>";
+            $time = nice_datetime_span($time);
             $table .= "<td>$time</td>";
 
             if ($user_id) {
-                $table .= "<td class\"number\">".nice_skill($user_skill, $user_mu, $user_sigma, $user_skill_change, $user_mu_change, $user_sigma_change)."</td>";
+                $table .= "<td class=\"number\">".nice_version($user_version, NULL, $user_submission_id)."</td>";
+                $table .= "<td class=\"number\">".nice_skill($user_skill, $user_mu, $user_sigma, $user_skill_change, $user_mu_change, $user_sigma_change)."</td>";
             }
 
             // TODO: consider linking the submission id instead
@@ -282,12 +264,14 @@ function create_game_list_table($json, $top=FALSE, $targetpage=NULL) {
             if ($user_id) {
                 $outcome = nice_outcome($user_rank+1, $row['players']);
                 $table .= "<td>$outcome</td>";
+
+                $table .= "<td>$user_status</td>";
             }
 
             $map = nice_map($row['map_name']);
-            $table .= "<td class=\"list\"><span>$map</span></td>";
+            $table .= "<td>$map</td>";
 
-            $game = nice_game($row['game_id'], $row['turns'], $row['winning_turn'], $row['ranking_turn'], $user_id);
+            $game = nice_game($row['game_id'], $row['game_length'], $row['winning_turn'], $row['ranking_turn'], $user_id);
             $table .= "<td>$game</td>";
 
             $table .= "</tr>";

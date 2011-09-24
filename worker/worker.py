@@ -6,6 +6,7 @@ import json
 import urllib
 import logging.handlers
 import logging
+import pickle
 import shutil
 from hashlib import md5
 import time
@@ -137,7 +138,12 @@ class GameAPIClient:
     def post_result(self, method, result):
         # save result in case of failure
         with open('last_game.json', 'w') as f:
-            f.write(json.dumps(result))
+            try:
+                f.write(json.dumps(result))
+            except:
+                with open('bad_result', 'w') as br:
+                    pickle.dump(result, br)
+                raise
         # retry 10 times or until post is successful
         retry = 100
         wait_time = 2
@@ -259,6 +265,10 @@ class Worker:
                 else:
                     zip_files = [
                         ("entry.tar.gz", "mkdir bot; tar xfz entry.tar.gz -C bot > /dev/null 2> /dev/null"),
+                        ("entry.tar.xz", "mkdir bot; tar xfJ entry.tar.xz -C bot > /dev/null 2> /dev/null"),
+                        ("entry.tar.bz2", "mkdir bot; tar xfj entry.tar.bz2 -C bot > /dev/null 2> /dev/null"),
+                        ("entry.txz", "mkdir bot; tar xfJ entry.txz -C bot > /dev/null 2> /dev/null"),
+                        ("entry.tbz", "mkdir bot; tar xfj entry.tbz -C bot > /dev/null 2> /dev/null"),
                         ("entry.tgz", "mkdir bot; tar xfz entry.tgz -C bot > /dev/null 2> /dev/null"),
                         ("entry.zip", "unzip -u -dbot entry.zip > /dev/null 2> /dev/null")
                     ]
@@ -289,9 +299,11 @@ class Worker:
             log.error(traceback.format_exc())
             return False
 
-    def compile(self, submission_id=None, report_status=False, run_test=True):
+    def compile(self, submission_id=None, report_status=(False, False), run_test=True):
+        report_success, report_failure = report_status
         def report(status, language="Unknown", errors=None):
-            if report_status:
+            # oooh, tricky, a terinary in an if
+            if report_success if type(errors) != list else report_failure:
                 self.post_id += 1
                 result = {"post_id": self.post_id,
                           "submission_id": submission_id,
@@ -299,7 +311,7 @@ class Worker:
                           "language": language }
                 if status != 40:
                     if type(errors) != list:
-                        errors = [errors] # for valid json according to php
+                        errors = [errors] # for valid json
                     # get rid of any binary garbage by decoding to UTF-8
                     for i in range(len(errors)):
                         try:
@@ -349,7 +361,16 @@ class Worker:
                         return False
             log.info("Compiling %s " % submission_id)
             bot_dir = os.path.join(download_dir, 'bot')
-            detected_lang, errors = compiler.compile_anything(bot_dir)
+            timelimit = 10 * 60 # 10 minute limit to compile submission
+            if not run_test:
+                # give it 50% more time if this isn't the initial compilation
+                # this is to try and prevent the situation where the initial
+                # compilation just makes it in the time limit and then a
+                # subsequent compilation fails when another worker goes to
+                # play a game with it
+                timelimit += timelimit * 0.5
+            detected_lang, errors = compiler.compile_anything(bot_dir,
+                    timelimit)
             if errors != None:
                 log.info(errors)
                 if not self.debug:
@@ -461,12 +482,18 @@ class Worker:
             if options == None:
                 options = copy(server_info["game_options"])
             options["map"] = self.get_map(task['map_filename'])
+            options["turns"] = task['max_turns']
             options["output_json"] = True
             game = Ants(options)
             bots = []
             for submission_id in task["submissions"]:
                 submission_id = int(submission_id)
-                if self.compile(submission_id, run_test=False):
+                # sometimes the Go bots get marked good,
+                # then the Go language is updated and breaks syntax,
+                # then they need to be marked as invalid again
+                # so this will report status to turn off bots that fail
+                #   sometime after they already succeeded
+                if self.compile(submission_id, report_status=(False, True), run_test=False):
                     submission_dir = self.submission_dir(submission_id)
                     run_cmd = compiler.get_run_cmd(submission_dir)
                     #run_dir = tempfile.mkdtemp(dir=server_info["compiled_path"])
@@ -499,10 +526,10 @@ class Worker:
             if report_status:
                 return self.cloud.post_result('api_game_result', result)
         except Exception as ex:
-            log.debug(traceback.format_exc())
+            log.error(traceback.format_exc())
             result = {"post_id": self.post_id,
                       "matchup_id": matchup_id,
-                      "error": str(ex) }
+                      "error": traceback.format_exc() }
             success = self.cloud.post_result('api_game_result', result)
             # cleanup download dirs
             map(self.clean_download, map(int, task['submissions']))
@@ -516,7 +543,7 @@ class Worker:
                 if task['task'] == 'compile':
                     submission_id = int(task['submission_id'])
                     try:
-                        if not self.compile(submission_id, True):
+                        if not self.compile(submission_id, (True, True)):
                             self.clean_download(submission_id)
                         return True
                     except Exception:
@@ -528,6 +555,8 @@ class Worker:
                 else:
                     if not last:
                         time.sleep(20)
+                    # prevent worker from stopping on unknown tasks
+                    return True
             except:
                 log.error('Task Failure')
                 log.error(traceback.format_exc())
@@ -611,12 +640,16 @@ def main(argv):
                 os.remove('last_game.json')
         if opts.num_tasks <= 0:
             try:
+                script_loc = os.path.realpath(os.path.dirname(__file__))
                 while True:
                     log.info("Getting task infinity + 1")
                     if not worker.task():
                         log.warning("Task failed, stopping worker")
                         break
                     print()
+                    if os.path.exists(os.path.join(script_loc, "stop_worker")):
+                        log.info("Found worker stop file, exiting.")
+                        break
             except KeyboardInterrupt:
                 log.info("[Ctrl] + C, Stopping worker")
         else:

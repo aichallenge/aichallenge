@@ -5,13 +5,11 @@
 	<title>Ant Canvas</title>
 	<script type="text/javascript" src="## PATH PLACEHOLDER ##js/visualizer.js"></script>
 	<script type="text/javascript">
-		window.isFullscreenSupported = function() {
-			return false;
-		};
-
 		function init() {
-			var visualizer = new Visualizer(document.body, 
-'## PATH PLACEHOLDER ##data/');
+            var options = new Options();
+            options.data_dir = '## PATH PLACEHOLDER ##data/';
+            options.embedded = true;
+			var visualizer = new Visualizer(document.body, options);
 			visualizer.loadReplayData('## REPLAY PLACEHOLDER ##');
 		}
 	</script>

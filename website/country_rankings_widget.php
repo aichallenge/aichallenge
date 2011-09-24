@@ -79,7 +79,7 @@ EOT;
         $num_leaders = $row["num_leaders"];
         $country_id = $row["country_id"];
         $country_name = $row["country_name"];
-        $country_name = $country_name == NULL ? "Unknown" : htmlentities($country_name);
+        $country_name = $country_name == NULL ? "Unknown" : htmlentities($country_name, ENT_COMPAT, 'UTF-8');
         $flag_filename = $row["flag_filename"];
         $flag_filename = $flag_filename == NULL ? "unk.png" : $flag_filename;
         $flag_filename = "<img alt=\"$country_name\" width=\"16\" height=\"11\" title=\"$country_name\" src=\"flags/$flag_filename\" />";

@@ -83,7 +83,7 @@ public class Visualizer extends WebWrapper implements MouseInputListener,
 	}
 
 	public synchronized void canvasResized() {
-		if ((canvas.getWidth() > 0) && (canvas.getHeight() > 0)) {
+		if (canvas != null && canvas.getWidth() > 0 && canvas.getHeight() > 0 && (offscreen == null || offscreen.getWidth(drawPanel) != canvas.getWidth() ||offscreen.getHeight(drawPanel) != canvas.getHeight())) {
 			offscreen = drawPanel.createImage(canvas.getWidth(),
 					canvas.getHeight());
 			if (offscreen != null) {
@@ -146,6 +146,7 @@ public class Visualizer extends WebWrapper implements MouseInputListener,
 						new Object[] { event });
 			} else if ((e instanceof KeyEvent)) {
 				KeyEvent ke = (KeyEvent) e;
+				System.out.println(Integer.valueOf(ke.getKeyCode()));
 				event.put("keyCode", event, Integer.valueOf(ke.getKeyCode()));
 				event.put("which", event, Integer.valueOf(ke.getKeyChar()));
 				task = new EventExecutionUnit(domWindow.getDocument(), "on"
@@ -155,10 +156,6 @@ public class Visualizer extends WebWrapper implements MouseInputListener,
 			e.consume();
 		}
 		return task;
-	}
-
-	public boolean isFullscreenSupported() {
-		return app.isFullScreenSupported();
 	}
 
 	public boolean setFullscreen(boolean enable) {

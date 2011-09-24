@@ -39,7 +39,9 @@ public class Main implements IVisualizerUser, WindowListener {
 	private ScriptableObject init() throws InstantiationException, IllegalAccessException, IOException {
 		visualizer = new Visualizer(this, 640, 640);
 		HTMLDocument document = visualizer.getDomWindow().getDocument();
-		return visualizer.construct("Visualizer", new Object[] { document, "/", true });
+		ScriptableObject options = visualizer.construct("Options", null);
+		options.put("data_dir", options, "/");
+		return visualizer.construct("Visualizer", new Object[] { document, options });
 	}
 
 	public Main(String replay) throws InstantiationException, IllegalAccessException, IOException, URISyntaxException {
@@ -81,11 +83,6 @@ public class Main implements IVisualizerUser, WindowListener {
 		frame.setLocationByPlatform(true);
 		frame.addWindowListener(this);
 		frame.setVisible(true);
-	}
-
-	@Override
-	public boolean isFullScreenSupported() {
-		return true;
 	}
 
 	@Override

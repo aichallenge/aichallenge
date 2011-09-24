@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 from collections import deque, defaultdict
+import sys
 
 #returns the new location after moving in a particular direction
 directions = {'N': (-1,0), 'S': (1,0), 'E': (0,1), 'W': (0,-1)}
@@ -102,17 +103,6 @@ def analyze_map(map_location):
                         if not p in access_map[n_loc[0]][n_loc[1]][1]:
                             access_map[n_loc[0] ][n_loc[1] ][1].append(p)
                     access_map[n_loc[0]][n_loc[1]][1].sort()
-
-    #outputs the partitioned map_data						
-    '''for row in range(len(access_map)):
-        for col in range(len(access_map[row])):
-            if map_data[row][col] == '%':
-                print '%',
-            elif len(access_map[row][col][1]) == 1:
-                print chr(int(access_map[row][col][1][0]) + 97),
-            else:
-                print len(access_map[row][col][1]),
-        print'''
             
     #works out access counts
     land_access_counts = defaultdict(int)
@@ -130,8 +120,26 @@ def analyze_map(map_location):
         'counts': ant_counts,
         'space': land_access_counts
     }
+    sys.stdout.write("# " + str(result) + "\n")
 
+    #outputs the partitioned map_data
+    sys.stdout.write("players " + str(no_players) + "\n")                        
+    sys.stdout.write("rows " + str(rows) + "\n")                        
+    sys.stdout.write("cols " + str(cols) + "\n")                        
+    for row in range(len(access_map)):
+        sys.stdout.write("m ")
+        for col in range(len(access_map[row])):
+            if map_data[row][col] == '%':
+                sys.stdout.write('%')
+            elif len(access_map[row][col][1]) == 1:
+                sys.stdout.write( chr(int(access_map[row][col][1][0]) + 97))
+            else:
+                #sys.stdout.write(str( len(access_map[row][col][1])))
+                sys.stdout.write(".")
+        sys.stdout.write('\n')
+
+    
     return result
 
 if __name__ == '__main__':
-    print analyze_map("amap.map")
+    analyze_map(sys.argv[1])

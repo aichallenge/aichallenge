@@ -9,6 +9,7 @@ import java.net.URL;
 
 import netscape.javascript.JSObject;
 
+import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
 
 import com.aicontest.visualizer.js.dom.HTMLDocument;
@@ -18,15 +19,21 @@ public class VisualizerApplet extends Applet implements Runnable,
 		IVisualizerUser {
 
 	private URL replay;
+	private String replayStr;
 	private Thread thread;
 	private Visualizer webWrapper;
 
 	@Override
 	public void init() {
-		try {
-			replay = new URL(getDocumentBase(), getParameter("replay"));
-		} catch (MalformedURLException e) {
-			e.printStackTrace();
+		replayStr = getParameter("replay_string");
+		if (replayStr != null) {
+			replayStr = replayStr.replace("\\n", "\n");
+		} else {
+			try {
+				replay = new URL(getDocumentBase(), getParameter("replay"));
+			} catch (MalformedURLException e) {
+				e.printStackTrace();
+			}
 		}
 		setBackground(Color.WHITE);
 		setFocusable(true);
@@ -61,10 +68,28 @@ public class VisualizerApplet extends Applet implements Runnable,
 			webWrapper = new Visualizer(this, getWidth(), getHeight());
 			webWrapper.setJsRoot(jsRoot);
 			HTMLDocument document = webWrapper.getDomWindow().getDocument();
-			ScriptableObject vis = webWrapper.construct("Visualizer",
-					new Object[] { document, "/" });
-			webWrapper.invoke(vis, "loadReplayDataFromURI",
-					new Object[] { replay });
+			ScriptableObject options = webWrapper.construct("Options", null);
+			for (Object id: options.getIds()) {
+				String param = getParameter(id.toString());
+				if (param != null) {
+					Object old = options.get(id.toString(), options);
+					if (old instanceof Boolean) {
+						options.put(id.toString(), options, "true".equals(param) || "1".equals(param));
+					} else if (old instanceof Double) {
+						options.put(id.toString(), options, Double.parseDouble(param));
+					} else {
+						options.put(id.toString(), options, param);
+					}
+				}
+			}
+			options.put("data_dir", options, "/");
+			options.put("embedded", options, true);
+			ScriptableObject vis = webWrapper.construct("Visualizer", new Object[] { document, options });
+			if (replayStr != null) {
+				webWrapper.invoke(vis, "loadReplayData", new Object[] { replayStr });
+			} else {
+				webWrapper.invoke(vis, "loadReplayDataFromURI", new Object[] { replay });
+			}
 			addKeyListener(webWrapper);
 			webWrapper.loop();
 		} catch (Exception e) {
@@ -86,15 +111,8 @@ public class VisualizerApplet extends Applet implements Runnable,
 	@Override
 	public void setVisualizerPanel(Panel visualizerPanel) {
 		visualizerPanel.setSize(getWidth(), getHeight());
-		if (Thread.currentThread().isInterrupted()) {
-			System.out.println("pre add");
-		}
+		Thread.currentThread().isInterrupted();
 		add(visualizerPanel);
-	}
-
-	@Override
-	public boolean isFullScreenSupported() {
-		return false;
 	}
 
 	@Override

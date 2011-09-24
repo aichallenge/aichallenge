@@ -11,7 +11,7 @@
   you want to be in five minutes or less. My mom completed the steps in this
   guide, and so can you! <a href="quickstart.php">Read more &gt;&gt;</a></p>
 
-<h3><a href="off_the_ground.php">Compiling & Running</a></h3>
+<h3><a href="off_the_ground.php">Compiling &amp; Running</a></h3>
 <p>This is the next step after you complete the Quickstart Guide. This article
   will show some cool things you can do with the starter packages, like playing
   a game between two of the example bots. Also covers compiling and running

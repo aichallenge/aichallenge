@@ -37,6 +37,7 @@ def _guard_monitor(jail):
         else:
             msg, ts, data = words
         ts = float(ts)
+        data = unicode(data, errors="replace")
         if msg == "STDOUT":
             jail.stdout_queue.put((time, data))
         elif msg == "STDERR":
@@ -116,6 +117,9 @@ class Jail(object):
             raise SandboxError("Sandbox released while still alive")
         if not self.locked:
             raise SandboxError("Attempt to release jail that is already unlocked")
+        if os.system("sudo umount %s" % (os.path.join(self.base_dir, "root"),)):
+            raise SandboxError("Error returned from umount of jail %d"
+                    % (self.number,))
         lock_dir = os.path.join(self.base_dir, "locked")
         pid_filename = os.path.join(lock_dir, "lock.pid")
         with open(pid_filename, 'r') as pid_file:
@@ -142,6 +146,9 @@ class Jail(object):
         if os.system("cp -r %s %s" % (command_dir, home_dir)) != 0:
             raise SandboxError("Error copying working directory '%s' to jail %d"
                     % (command_dir, self.number))
+        if os.system("sudo mount %s" % (os.path.join(self.base_dir, "root"),)):
+            raise SandboxError("Error returned from mount of %d in prepare"
+                    % (self.number,))
         if os.system("%s j %d" % (self.jchown, self.number)) != 0:
             raise SandboxError("Error returned from jail_own j %d in prepare"
                     % (self.number,))
@@ -192,8 +199,30 @@ class Jail(object):
         suddenly terminated.
 
         """
-        self._signal("KILL")
+        try:
+            self.command_process.stdin.write("KILL\n")
+            self.command_process.stdin.flush()
+        except IOError as exc:
+            if exc.errno != 32:
+                raise
+        try:
+            item = self.resp_queue.get(timeout=5)
+            if item[1] != "KILL" and item[1] is not None:
+                raise SandboxError("Bad response from jailguard after kill, %s"
+                        % (item,))
+        except Empty:
+            pass
         self._signal("CONT")
+        for i in range(20):
+            if self.command_process.poll() != None:
+                break
+            if i == 10:
+                self._signal("KILL")
+            time.sleep(0.1)
+
+        # final check to make sure processes are died and raise error if not
+        if self.is_alive:
+            raise SandboxError("Could not kill sandbox children")
 
     def pause(self):
         """Pause the process by sending a SIGSTOP to the child"""
@@ -275,6 +304,14 @@ class Jail(object):
         except Empty:
             return None
 
+    def check_path(self, path, errors):
+        resolved_path = os.path.join(self.home_dir, path)
+        if not os.path.exists(resolved_path):
+            errors.append("Output file " + str(path) + " was not created.")
+            return False
+        else:
+            return True
+
 
 def _monitor_file(fd, q):
     while True:
@@ -282,7 +319,9 @@ def _monitor_file(fd, q):
         if not line:
             q.put(None)
             break
-        q.put(line.rstrip('\r\n'))
+        line = line.rstrip('\r\n')
+        line = unicode(line, errors="replace")
+        q.put(line)
 
 class House:
     """Provide an insecure sandbox to run arbitrary commands in.
@@ -459,9 +498,17 @@ class House:
         except Empty:
             return None
 
+    def check_path(self, path, errors):
+        resolved_path = os.path.join(self.working_directory, path)
+        if not os.path.exists(resolved_path):
+            errors.append("Output file " + str(path) + " was not created.")
+            return False
+        else:
+            return True
+
 def get_sandbox(working_dir, secure=None):
     if secure is None:
-        secure = server_info["secure_jail"]
+        secure = _SECURE_DEFAULT
     if secure:
         return Jail(working_dir)
     else:

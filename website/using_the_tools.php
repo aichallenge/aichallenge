@@ -1,5 +1,15 @@
-<?php include 'header.php'; ?>
+<?php
+
+require_once('header.php');
+require_once('visualizer_widget.php');
+visualize_pre();
+
+?>
 
 <!--<MarkdownReplacement with="Using-the-Tools.md">--><!--</MarkdownReplacement>-->
 
-<?php include 'footer.php'; ?>
+<?php
+
+require_once('footer.php');
+
+?>

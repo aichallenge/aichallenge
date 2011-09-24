@@ -114,6 +114,8 @@ def update_trueskill(game_id):
     conn.commit()
     cursor.execute(sql['update_submission_trueskill'], game_id)
     conn.commit()
+    cursor.execute('call update_rankings(%s)' % game_id);
+    conn.commit()
     return True
 
 def update_leaderboard(wait_time):
@@ -121,14 +123,14 @@ def update_leaderboard(wait_time):
     cursor = conn.cursor(MySQLdb.cursors.DictCursor)
     while True:
         try:
-            for s in range(wait_time):
-                # allow for a [Ctrl]+C during the sleep cycle
-                time.sleep(1)
             if use_log:
                 log.info("Updating leaderboard and adding some sigma")
             cursor.execute("call generate_leaderboard;")
             if wait_time == 0:
                 break
+            for s in range(wait_time):
+                # allow for a [Ctrl]+C during the sleep cycle
+                time.sleep(1)
         except KeyboardInterrupt:
             break
         except:

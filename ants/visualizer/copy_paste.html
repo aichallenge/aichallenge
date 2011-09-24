@@ -5,14 +5,13 @@
 	<title>Ant Canvas</title>
 	<script type="text/javascript" src="js/visualizer.js"></script>
 	<script type="text/javascript">
-		window.isFullscreenSupported = function() {
-			return false;
-		};
-
 		function visualizePasted() {
 			document.getElementById('gui').style.display = 'none';
 			var replay = document.getElementById('txtReplay').value;
-			var visualizer = new Visualizer(document.body, 'data/');
+            var options = new Options();
+            options.data_dir = 'data/';
+            options.embedded = true;
+			var visualizer = new Visualizer(document.body, options);
 			visualizer.loadReplayData(replay);
 		}
 	</script>

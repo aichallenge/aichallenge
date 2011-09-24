@@ -57,6 +57,7 @@ EOT;
     // Fetch submission data
 $submission_query = <<<EOT
 select
+    s.submission_id,
     s.status,
     s.errors,
     s.timestamp,
@@ -65,25 +66,19 @@ select
     s.mu,
     s.sigma,
     l.name as language,
-    gt.game_count,
-    timestampdiff(second, gmin.timestamp, gmax.timestamp)/60/gt.game_count as game_rate
+    s.game_count,
+    timestampdiff(second, gmin.timestamp, gmax.timestamp)/60/s.game_count as game_rate
 from
     submission s
-    left outer join (
-        select submission_id, min(game_id) min_game, max(game_id) max_game, count(*) as game_count
-        from game_player
-        group by submission_id
-    ) gt
-    	on gt.submission_id = s.submission_id
     left outer join game gmin
-        on gmin.game_id = gt.min_game
+        on gmin.game_id = s.min_game_id
     left outer join game gmax
-        on gmax.game_id = gt.max_game
+        on gmax.game_id = s.max_game_id
     inner join user u on u.user_id = s.user_id
     left outer join language l on l.language_id = s.language_id
 where
     u.user_id = $user_id
-    order by s.timestamp desc
+    order by s.submission_id desc
 EOT;
 
     if ($viewmore) {
@@ -115,6 +110,7 @@ EOT;
         }
 
         $version = $row["version"];
+        $submission_id = $row["submission_id"];
         $timestamp = $row["timestamp"];
         $language = $row["language"];
         $language_link = urlencode($language);
@@ -125,7 +121,7 @@ EOT;
         $game_rate = "<span title=\"average minutes between games\">".($row['game_rate'] == NULL ? "" : round($row["game_rate"],0))."</span>";
         
         $table .= "<tr class=\"$row_class\">";
-        $table .= "  <td>$version</td>";
+        $table .= "  <td>".nice_version($version, $timestamp, $submission_id)."</td>";
         $table .= "  <td>$timestamp</td>";
         $table .= "  <td class=\"$status_class\">$status</td>";
         $table .= "  <td>$skill</td>";
@@ -147,7 +143,7 @@ EOT;
                 }
             }
             $error_msg .= "</pre>";
-            $table .= "<tr><td colspan=\"5\">$error_msg</td></tr>";
+            $table .= "<tr><td colspan=\"7\">$error_msg</td></tr>";
         }
     }
     $table .= "</tbody></table>";

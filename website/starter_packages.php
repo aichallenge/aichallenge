@@ -29,7 +29,7 @@
   </tr>
   <tr>
     <td><a href="starter_packages/csharp_starter_package.zip">C&#35;</a></td>
-    <td>Mono 1.2.6</td>
+    <td>Mono 2.6.7</td>
     <td>&nbsp;</td>
     <td>&nbsp;</td>
   </tr>
@@ -47,7 +47,7 @@
   </tr>
   <tr>
     <td><a href="starter_packages/d_starter_package.zip">D</a></td>
-    <td><i>DMD 2.053 (x86_64) + Phobos</i></td>
+    <td><i>DMD 2.054 (x86_64) + Phobos</i></td>
     <td>&nbsp;</td>
     <td>&nbsp;</td>
   </tr>
@@ -78,6 +78,12 @@
   <tr>
     <td><a href="starter_packages/javascript_starter_package.zip">JavaScript</a></td>
     <td>Node 0.1.97</td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+  </tr>
+  <tr>
+    <td><a href="starter_packages/lua_starter_package.zip">Lua</a></td>
+    <td>luajit-2.0.0-beta5</td>
     <td>&nbsp;</td>
     <td>&nbsp;</td>
   </tr>

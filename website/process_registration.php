@@ -76,7 +76,7 @@ if (strcmp($server_info["mailer_address"], "donotsend") == 0) {
 }
 else
 {
-    require_once "gmail.php";
+    require_once "email.php";
 }
 
 // Check if the username already exists.
@@ -88,10 +88,14 @@ if (mysql_num_rows($result) > 0) {
 
 // Check if the email is already in use (except by an admin account or a donotsend account).
 if (strcmp($user_email, "donotsend") != 0) {
-  $sql="select u.email from user where u.email = '$user_email' and admin = 0";
+  $sql="select email from user where email = '$user_email' and admin = 0";
   $result = mysql_query($sql);
   if ($result && mysql_num_rows($result) > 0) {
-    $errors[] = "The email $user_email is already in use. You are only allowed to have one account! It is easy for us to tell if you have two accounts, and you will be disqualified if you have two accounts! If there is some problem with your existing account, get in touch with the contest organizers by dropping by the Computer Science Club office and we will help you get up-and-running again!  :-)";
+    $errors[] = "The email $user_email is already in use. You are only allowed to have one account! It is easy for us to tell if you have two accounts, and you will be disqualified if you have two accounts! If there is some problem with your existing account, get in touch with the contest organizers on irc.freenode.com channel #aichallenge and we will help you get up-and-running again!";
+  }
+  $edomain = substr(strrchr($user_email, '@'), 1);
+  if (strcmp(gethostbyname($edomain), $edomain) == 0) {
+    $errors[] = "Could not find the email address entered. Please enter a valid email address.";
   }
 }
 
@@ -100,7 +104,7 @@ if (!valid_username($username)) {
   $errors[] = "Invalid username. Your username must be longer than 6 characters and composed only of the characters a-z, A-Z, 0-9, '-', '_', and '.'";
 }
 
-// Check that the username is between 8 and 16 characters long
+// Check that the username is between 6 and 16 characters long
 if (strlen($username) < 6 || strlen($username) > 16) {
   $errors[] = "Your username must be between 6 and 16 characters long.";
 }
@@ -112,8 +116,8 @@ if ($password1 != $password2) {
 }
 
 // Check that the desired password is long enough.
-if (strlen($password1) < 8) {
-  $errors[] = "Your password must be at least 8 characters long.";
+if (strlen($password1) < 5) {
+  $errors[] = "Your password must be at least 5 characters long.";
 }
 
 // Check that the email address is not blank.
@@ -162,15 +166,20 @@ if (count($errors) <= 0) {
       $org_name = $row['name'];
       $num_peers = $row['peers'];
       if ($num_peers == 0) {
-        $peer_message = "You are the first person from your school to sign up " .
+        $peer_message = "You are the first person from your organization to sign up " .
           "for the Google AI Challenge. We would really appreciate it if you would " .
           "encourage your friends to sign up for the Challenge as well. The more, " .
           "the merrier!\n\n";
+      } else if (strcmp($org_name, "Other") == 0) {
+          $peer_message = "You didn't associate yourself with an organization ".
+              "when you signed up. You might want to change this in your ".
+              "profile so you can compare how you're doing with others in ".
+              "your school or company.\n\n";
       } else {
         $peer_message = "" . $num_peers . " other people from " . $org_name .
           " have already signed up for the Google AI Challenge. When you look " .
-          "at the rankings, you can see the global rankings for all schools, or " .
-          "you can filter the list to only show other contestants from your school!\n\n";
+          "at the rankings, you can see the global rankings, or " .
+          "you can filter the list to only show other contestants from your organization!\n\n";
       }
     }
   }
@@ -193,9 +202,9 @@ if (count($errors) <= 0) {
       "?confirmation_code=" . $confirmation_code . "\n\n" .
       "After you activate your account by clicking the link above, you will " .
       "be able to sign in and start competing. Good luck!\n\n" .
-      $peer_message . "Contest Staff\nUniversity of Waterloo Computer Science Club";
-    if ($send_email == 1) {
-      $mail_accepted = send_gmail($user_email, $mail_subject, $mail_content);
+      $peer_message . "Thanks for participating and have fun,\nContest Staff\n";
+    if ($send_email == 1 && strcmp($user_email, "donotsend") != 0) {
+      $mail_accepted = send_email($user_email, $mail_subject, $mail_content);
     } else {
       $mail_accepted = true;
     }

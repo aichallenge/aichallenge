@@ -16,6 +16,7 @@ public class HTMLCanvasElement extends HTMLElement {
 	private Function onmouseout;
 	private Function onmousedown;
 	private Function onmouseup;
+	private Function ondblclick;
 
 	public HTMLCanvasElement(ImageObserver imageObsever) {
 		imageObserver = imageObsever;
@@ -98,5 +99,13 @@ public class HTMLCanvasElement extends HTMLElement {
 
 	public void setOnmouseup(Function onmouseup) {
 		this.onmouseup = onmouseup;
+	}
+
+	public Function getOndblclick() {
+		return ondblclick;
+	}
+
+	public void setOndblclick(Function ondblclick) {
+		this.ondblclick = ondblclick;
 	}
 }

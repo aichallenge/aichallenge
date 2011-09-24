@@ -41,7 +41,8 @@ public class DOMWindow {
 					output = msg;
 				}
 				msg = msg.replaceAll("\n", "");
-				msg = msg.replaceAll("<br>|<table>|</tr>|<p>", "\n");
+				msg = msg.replaceAll("<br>|<table[^>]*>|</tr>", "\n");
+				msg = msg.replaceAll("</td>", "\t");
 				int redIdx;
 				int blackIdx;
 				do {
@@ -123,10 +124,6 @@ public class DOMWindow {
 
 	public int getScrollY() {
 		return 0;
-	}
-
-	public boolean isFullscreenSupported() {
-		return webWrapper.isFullscreenSupported();
 	}
 
 	public boolean setFullscreen(boolean enable) {

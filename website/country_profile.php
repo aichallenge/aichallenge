@@ -9,7 +9,7 @@ $country_row = get_country_row(get_type_or_else('country'));
 if (!$country_row) {
     echo "<p>Invalid Country</p>";
 } else {
-    $country_name = htmlentities($country_row['name']);
+    $country_name = htmlentities($country_row['name'], ENT_COMPAT, 'UTF-8');
     echo "<h2><span>$country_name's User Rankings</span><div class=\"divider\" /></h2>";
 
     $page = get_type_or_else("page", FILTER_VALIDATE_INT, 1);

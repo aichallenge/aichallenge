@@ -1,10 +1,6 @@
 *.pyc
 *~
-*.project
-*.pydevproject
-*.settings
 .metadata
-*.buildpath
 submissions/*
 maps/*
 server_info.py

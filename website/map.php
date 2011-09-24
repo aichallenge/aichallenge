@@ -1,16 +1,23 @@
 <?php
 
-include "header.php";
+require_once("header.php");
+require_once("visualizer_widget.php");
+require_once("game_list.php");
+require_once("lookup.php");
 
-include "visualizer_widget.php";
 $map = str_replace("%2F", "/", filter_input(INPUT_GET, 'map', FILTER_SANITIZE_ENCODED));
-if ($map !== FALSE and $map !== NULL) {
-    echo $map;
-    visualize_map($map);    
+$map_row = get_map_row($map);
+
+if ($map_row !== NULL) {
+    echo "<a href=\"map/".$map_row['filename']."\">".$map_row['filename']."</a> (download link)";
+    visualize_map($map_row['filename']);    
+    echo get_game_list_table(1, NULL, NULL, $map_row['map_id'], FALSE, 'map.php');
 } else {
-    echo "<p>Incorrect Map $map</p>";
+    $map = htmlentities($map);
+    echo "<p>Map $map does not exist</p>";
 }
 
-include "footer.php";
+
+require_once("footer.php");
 
 ?>

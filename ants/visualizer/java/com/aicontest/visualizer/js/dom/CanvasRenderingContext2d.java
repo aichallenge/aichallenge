@@ -49,13 +49,13 @@ public class CanvasRenderingContext2d extends RenderingContext2dState {
 	}
 
 	public void restore() {
-		setFrom((RenderingContext2dState) stack.removeLast());
+		setFrom(stack.removeLast());
 		fontChanged = true;
 		fillChanged = true;
 		strokeChanged = true;
 		gfx.setTransform(transform);
 		gfx.setClip(clip);
-		setGlobalAlpha(globalAlpha);
+		gfx.setComposite(globalCompositeOperation);
 	}
 
 	public void save() {
@@ -347,6 +347,7 @@ public class CanvasRenderingContext2d extends RenderingContext2dState {
 		gfx.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_PURE);
 		gfx.setTransform(transform);
 		gfx.setClip(clip);
+		gfx.setComposite(globalCompositeOperation);
 		drawn = true;
 	}
 
@@ -415,13 +416,44 @@ public class CanvasRenderingContext2d extends RenderingContext2dState {
 		this.shadowColor = shadowColor;
 	}
 
-	public void setGlobalAlpha(double globalAlpha) {
-		this.globalAlpha = globalAlpha;
-		if (globalAlpha == 1.0) {
-			gfx.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER));
-		} else {
-			gfx.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, (float) globalAlpha));
+	private void setComposite() {
+		if (gfx.getComposite() != globalCompositeOperation) {
+			gfx.setComposite(globalCompositeOperation);
 		}
+	}
+
+	public void setGlobalAlpha(double globalAlpha) {
+		globalCompositeOperation = globalCompositeOperation.derive((float) globalAlpha);
+		setComposite();
+	}
+
+	public void setGlobalCompositeOperation(String globalCompositeOperation) {
+		if ("source-over".equals(globalCompositeOperation)) {
+			this.globalCompositeOperation = this.globalCompositeOperation.derive(AlphaComposite.SRC_OVER);
+		} else if ("source-in".equals(globalCompositeOperation)) {
+			this.globalCompositeOperation = this.globalCompositeOperation.derive(AlphaComposite.SRC_IN);
+		} else if ("source-out".equals(globalCompositeOperation)) {
+			this.globalCompositeOperation = this.globalCompositeOperation.derive(AlphaComposite.SRC_OUT);
+		} else if ("source-atop".equals(globalCompositeOperation)) {
+			this.globalCompositeOperation = this.globalCompositeOperation.derive(AlphaComposite.SRC_ATOP);
+		} else if ("destination-over".equals(globalCompositeOperation)) {
+			this.globalCompositeOperation = this.globalCompositeOperation.derive(AlphaComposite.DST_OVER);
+		} else if ("destination-in".equals(globalCompositeOperation)) {
+			this.globalCompositeOperation = this.globalCompositeOperation.derive(AlphaComposite.DST_IN);
+		} else if ("destination-out".equals(globalCompositeOperation)) {
+			this.globalCompositeOperation = this.globalCompositeOperation.derive(AlphaComposite.DST_OUT);
+		} else if ("destination-atop".equals(globalCompositeOperation)) {
+			this.globalCompositeOperation = this.globalCompositeOperation.derive(AlphaComposite.DST_ATOP);
+		} else if ("lighter".equals(globalCompositeOperation)) {
+			this.globalCompositeOperation = this.globalCompositeOperation.derive(AlphaComposite.CLEAR);
+		} else if ("darker".equals(globalCompositeOperation)) {
+			this.globalCompositeOperation = this.globalCompositeOperation.derive(AlphaComposite.DST);
+		} else if ("copy".equals(globalCompositeOperation)) {
+			this.globalCompositeOperation = this.globalCompositeOperation.derive(AlphaComposite.SRC);
+		} else if ("xor".equals(globalCompositeOperation)) {
+			this.globalCompositeOperation = this.globalCompositeOperation.derive(AlphaComposite.XOR);
+		}
+		setComposite();
 	}
 
 	public boolean isDrawn() {

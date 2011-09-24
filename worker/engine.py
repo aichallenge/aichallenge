@@ -231,14 +231,17 @@ def run_game(game, botcmds, options):
 
             if verbose_log:
                 stats = game.get_stats()
+                stat_keys = sorted(stats.keys())
                 s = 'turn %4d stats: ' % turn
                 if turn % 50 == 0:
                     verbose_log.write(' '*len(s))
-                    for key, values in stats.items():
+                    for key in stat_keys:
+                        values = stats[key]
                         verbose_log.write(' {0:^{1}}'.format(key, max(len(key), len(str(values)))))
                     verbose_log.write('\n')
                 verbose_log.write(s)
-                for key, values in stats.items():
+                for key in stat_keys:
+                    values = stats[key]
                     verbose_log.write(' {0:^{1}}'.format(values, max(len(key), len(str(values)))))
                 verbose_log.write('\n')
 
@@ -300,7 +303,7 @@ def run_game(game, botcmds, options):
             'player_info': [{} for x in range(len(bots))],
             'status': bot_status,
             'score': scores,
-            'rank': [sorted(set(scores), reverse=True).index(x) for x in scores],
+            'rank': [sorted(scores, reverse=True).index(x) for x in scores],
             'replayformat': 'json',
             'replaydata': game.get_replay(),
             'game_length': turn
@@ -372,6 +375,12 @@ def get_moves(game, bots, bot_nums, time_limit, turn):
         if not finished:
             error_lines[b].append('turn %4d bot %s timed out' % (turn, bot_nums[b]))
             statuses[b] = 'timeout'
+            bot = bots[b]
+            for x in range(100):
+                line = bot.read_error()
+                if line is None:
+                    break
+                error_lines[b].append(line)
             game.kill_player(bot_nums[b])
             bots[b].kill()
 

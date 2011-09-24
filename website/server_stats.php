@@ -137,7 +137,7 @@ if (is_readable($PAIRCUT_FILE)) {
   </tr>
   <tr>
   <?php foreach ($games_per_server as $server): ?>
-    <th>Server #<?php echo htmlspecialchars($server['worker_id'])?></th>
+    <th>Server #<?php echo htmlentities($server['worker_id'], ENT_COMPAT, "UTF-8")?></th>
   <?php endforeach ?>
   </tr>
   <tr>

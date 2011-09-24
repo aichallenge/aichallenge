@@ -27,12 +27,28 @@ if (file_exists("entry.zip")) {
 	$file = getcwd() . "/entry.zip";
 } else if (file_exists("entry.tgz")) {
 	header("Content-disposition: attachment; filename=entry.tgz");
-	header("Content-type: application/x-compressed");
+	header("Content-type: application/x-gtar");
 	$file = getcwd() . "/entry.tgz";
 } else if (file_exists("entry.tar.gz")) {
 	header("Content-disposition: attachment; filename=entry.tgz");
-	header("Content-type: application/x-compressed");
+	header("Content-type: application/x-gtar");
 	$file = getcwd() . "/entry.tar.gz";
+} else if (file_exists("entry.tar.xz")) {
+	header("Content-disposition: attachment; filename=entry.txz");
+	header("Content-type: application/x-gtar");
+	$file = getcwd() . "/entry.tar.xz";
+} else if (file_exists("entry.txz")) {
+	header("Content-disposition: attachment; filename=entry.txz");
+	header("Content-type: application/x-gtar");
+	$file = getcwd() . "/entry.txz";
+} else if (file_exists("entry.tar.bz2")) {
+	header("Content-disposition: attachment; filename=entry.tbz");
+	header("Content-type: application/x-gtar");
+	$file = getcwd() . "/entry.tar.bz2";
+} else if (file_exists("entry.tbz")) {
+	header("Content-disposition: attachment; filename=entry.tbz");
+	header("Content-type: application/x-gtar");
+	$file = getcwd() . "/entry.tbz";
 } else {
 	header("HTTP/1.0 404 Not Found");
 	die();

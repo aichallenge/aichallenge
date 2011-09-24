@@ -1,3 +1,4 @@
+*.cmd	eol=crlf
 *.sh    eol=lf
 *.c text
 *.h text

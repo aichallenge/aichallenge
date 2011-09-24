@@ -7,7 +7,7 @@ import sys
 import time
 from Queue import Queue, Empty
 from threading import Thread
-from signal import SIGSTOP, SIGCONT
+from signal import SIGSTOP, SIGCONT, SIGKILL
 from subprocess import Popen, PIPE
 
 # Seconds between updating potential child processes
@@ -71,6 +71,18 @@ class Guard(object):
                     break
                 raise
 
+    def signal_children(self, sig):
+        cpids = frozenset(self.child_pids)
+        for pid in cpids:
+            try:
+                os.kill(pid, sig)
+            except OSError as exc:
+                if exc.errno == 3:
+                    self.child_pids.remove(pid)
+                    self.checked_pids.remove(pid)
+                else:
+                    raise
+
     def cmd_loop(self, pipe):
         while True:
             cmd = pipe.readline()
@@ -78,28 +90,14 @@ class Guard(object):
                 self.kill()
                 break
             elif cmd == "STOP\n":
-                cpids = frozenset(self.child_pids)
-                for pid in cpids:
-                    try:
-                        os.kill(pid, SIGSTOP)
-                    except OSError as exc:
-                        if exc.errno == 3:
-                            self.child_pids.remove(pid)
-                            self.checked_pids.remove(pid)
-                        else:
-                            raise
+                self.signal_children(SIGSTOP)
                 self.out_queue.put(("SIGNALED", time.time(), "STOP"))
             elif cmd == "CONT\n":
-                for pid in self.child_pids:
-                    try:
-                        os.kill(pid, SIGCONT)
-                    except OSError as exc:
-                        if exc.errno == 3:
-                            self.child_pids.remove(pid)
-                            self.checked_pids.remove(pid)
-                        else:
-                            raise
+                self.signal_children(SIGCONT)
                 self.out_queue.put(("SIGNALED", time.time(), "CONT"))
+            elif cmd == "KILL\n":
+                self.signal_children(SIGKILL)
+                self.out_queue.put(("SIGNALED", time.time(), "KILL"))
             elif cmd.startswith("SEND"):
                 self.child_queue.put(cmd[5:])
             else:

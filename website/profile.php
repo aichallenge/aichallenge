@@ -40,17 +40,17 @@ if ($userresult) {
 $rank = ($rank == NULL)?"Not Ranked":$rank;
 $skill = ($skill == NULL)?"No Skillz":$skill;
 
-$username = htmlentities($userdata["username"]);
+$username = htmlentities($userdata["username"], ENT_COMPAT, 'UTF-8');
 $created = nice_date($userdata["created"]); // date("M jS Y",$userdata["created"]);
-$country_id = htmlentities($userdata["country_id"]);
-$country_name = htmlentities($userdata["country_name"]);
+$country_id = htmlentities($userdata["country_id"], ENT_COMPAT, 'UTF-8');
+$country_name = htmlentities($userdata["country_name"], ENT_COMPAT, 'UTF-8');
 $country_name = $country_name == NULL ?
-  "Unknown" : htmlentities($country_name);
+  "Unknown" : htmlentities($country_name, ENT_COMPAT, 'UTF-8');
 $flag_filename = $userdata["flag_filename"];
 $flag_filename = $flag_filename == NULL ? "" : "<img alt=\"$country_name\" width=\"16\" height=\"11\" title=\"$country_name\" src=\"flags/$flag_filename\" />";
-$org_id = htmlentities($userdata["org_id"]);
-$org_name = htmlentities($userdata["org_name"]);
-$bio = htmlentities($userdata["bio"]);
+$org_id = htmlentities($userdata["org_id"], ENT_COMPAT, 'UTF-8');
+$org_name = htmlentities($userdata["org_name"], ENT_COMPAT, 'UTF-8');
+$bio = str_replace("\n","<br />",str_replace("\r","", htmlentities($userdata["bio"], ENT_COMPAT, 'UTF-8')));
 if ($org_name == NULL) {
   $org_name = "None";
 }
@@ -205,18 +205,19 @@ EOT;
 
     $in_game_result = contest_query("select_in_game", $user_id);
     if ($in_game_result and mysql_num_rows($in_game_result) > 0) {
-        echo "<p><strong>In Game:</strong> You are playing in a game right now.</p>";
+        echo "<p><strong>In Game:</strong> Playing in a game right now.</p>";
     } else {    
         $next_game_result = contest_query("select_next_game_in", $user_id);
         if ($next_game_result) {
             while ($next_game_row = mysql_fetch_assoc($next_game_result)) {
-                echo "<p><strong>Next Game:</strong> ".$next_game_row["players_ahead"]." players are ahead of you.<br />";
+                echo "<p><strong>Next Game:</strong> ".$next_game_row["players_ahead"]." players are ahead.<br />";
                 echo "The current game rate is about ".$next_game_row["players_per_minute"]." players per minute.<br />";
                 if ($next_game_row["players_per_minute"] == 0) {
-                    echo "Your next game could take awhile...";
+                    echo "Next game could take awhile...";
                 } else {
-                    echo "Your next game should be within ".$next_game_row["next_game_in_adjusted"]." minutes.";
+                    echo "Next game should be within ".$next_game_row["next_game_in_adjusted"]." minutes.";
                 }
+                echo "<br />Page refreshed at ".date(DATE_ATOM).".";
                 echo "</p>";
             }
         } else {
@@ -247,6 +248,23 @@ if (logged_in_with_valid_credentials() && logged_in_as_admin()) {
 </form>
 EOT;
 }
+
+echo '
+<script>
+$(function () {
+    $(".games").tablesorter({
+        /*textExtraction: function (node) {
+            node = $(node);
+            if (node.attr("class") === "number") {
+                return parseFloat(node.text());
+            } else {
+                return node.text();
+            }
+        }*/
+    });
+});
+</script>
+';
 
 include 'footer.php';
 ?>
