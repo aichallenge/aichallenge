@@ -95,7 +95,6 @@ class Ants(Game):
 
         # initialize scores
         self.score = [0]*self.num_players
-        self.bonus = [0]*self.num_players
         self.score_history = [[s] for s in self.score]
 
         # used to cutoff games early
@@ -696,6 +695,7 @@ class Ants(Game):
         hill.end_turn = self.turn
         hill.killed_by = killed_by
         self.score[killed_by] += 2
+        self.score[hill.owner] -= 1
         
     def player_hills(self, player):
         """ Return the current hills belonging to the given player """
@@ -1329,12 +1329,7 @@ class Ants(Game):
 
     def finish_game(self):
         """ Called by engine at the end of the game """
-
-        # surviving players get 1 point for each surviving hill
-        for hill in self.hills.values():
-            if hill.killed_by is None and self.is_alive(hill.owner):
-                self.bonus[hill.owner] += 1
-                self.score[hill.owner] += 1
+        pass
 
     def start_turn(self):
         """ Called by engine at the start of the turn """
@@ -1578,7 +1573,6 @@ class Ants(Game):
 
         # scores
         replay['scores'] = self.score_history
-        replay['bonus'] = self.bonus
         replay['hive_history'] = self.hive_history
         replay['winning_turn'] = self.winning_turn
         replay['ranking_turn'] = self.ranking_turn
