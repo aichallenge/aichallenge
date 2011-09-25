@@ -20,7 +20,7 @@ exports.ants = {
 		var thisoutside = this;
 		process.stdin.on('data', function(chunk) {
 			var lines = chunk.split("\n");
-			for (var i in lines) {
+			for (var i = 0, len = lines.length; i < len; ++i) {
 				thisoutside.processLine(lines[i]);
 			}
 		});
@@ -50,43 +50,48 @@ exports.ants = {
 			this.currentTurn = parseInt(line[1]);
 			if (this.currentTurn > 0) {
 				//Reset map except for water:
-				for (var row in this.map) {
-					for (var col in this.map[row]) {
+				for (var row = 0, rlen = this.map.length; row < rlen; ++row) {
+					for (var col = 0, clen = this.map[row].length; col < clen; ++col) {
 						if (this.map[row][col].type !== this.landTypes.WATER) {
 							this.map[row][col] = {'type': this.landTypes.LAND};
 						}
 					}
 				}
+				this.hills = [];
 				this.ants = [];
 				this.food = [];
+				this.dead = [];
 			}
 		} else {
 			if (this.currentTurn === 0 && line[0] !== 'ready') {
 				this.config[line[0]] = line[1];
 			} else {
+				var row = parseInt(line[1]);
+				var col = parseInt(line[2]);
+				var obj = { 'row': row, 'col': col };
 				if (line[0] === 'w') {
-					this.map[parseInt(line[1])][parseInt(line[2])] = {'type': this.landTypes.WATER, 'data': {}};
+					this.map[row][col] = {'type': this.landTypes.WATER, 'data': {}};
 				} else if (line[0] === 'f') {
-					this.map[parseInt(line[1])][parseInt(line[2])] = {'type': this.landTypes.FOOD, 'data': {}};
-					this.food.push({
-						'row': parseInt(line[1]),
-						'col': parseInt(line[2])
-					});
-				} else if (line[0] === 'r') {
-					this.map[parseInt(line[1])][parseInt(line[2])] = {'type': this.landTypes.LAND, 'data': {}};//Introduce new landtype?
-				} else if (line[0] === 'a') {
-					this.map[parseInt(line[1])][parseInt(line[2])] = {'type': this.landTypes.ANT, 'data': {
-						'owner': parseInt(line[3])
-					}};
-					this.ants.push({
-						'row': parseInt(line[1]),
-						'col': parseInt(line[2]),
-						'owner': parseInt(line[3])
-					});
-				} else if (line[0] === 'd') {
-					this.map[parseInt(line[1])][parseInt(line[2])] = {'type': this.landTypes.DEAD, 'data': {
-						'owner': parseInt(line[3])
-					}};
+					this.map[row][col] = {'type': this.landTypes.FOOD, 'data': {}};
+					this.food.push(obj);
+				} else {
+					var owner = parseInt(line[3]);
+					obj['owner'] = owner;
+					if (line[0] === 'a') {
+						this.map[row][col] = {'type': this.landTypes.ANT, 'data': {
+							'owner': owner
+						}};
+						this.ants.push(obj);
+					} else if (line[0] === 'd') {
+						if (this.map[row][col] !== this.landTypes.LAND) {
+							this.map[row][col] = {'type': this.landTypes.DEAD, 'data': {
+								'owner': owner
+							}};
+						}
+						this.dead.push(obj)
+					} else  if (line[0] === 'h') {
+						this.hills.push(obj);
+					}
 				}
 			}
 		}
@@ -99,7 +104,7 @@ exports.ants = {
 		});
 	},
 	'finishTurn': function() {
-		for (var i in this.orders) {
+		for (var i = 0, len = this.orders.length; i < len; ++i) {
 			var order = this.orders[i];
 			console.log('o '+order.row+' '+order.col+' '+order.direction);
 		}
@@ -132,26 +137,78 @@ exports.ants = {
 		}
 		return this.map[newrow][newcol];
 	},
+	'myHills': function() {
+		var result = [];
+		for (var i = 0, len = this.hills.length; i < len; ++i) {
+			var hill = this.hills[i];
+			if (hill.owner === 0) {
+				result.push(hill);
+			}
+		}
+		return result;
+	},
+	'enemyHills': function() {
+		var result = [];
+		for (var i = 0, len = this.hills.length; i < len; ++i) {
+			var hill = this.hills[i];
+			if (hill.owner !== 0) {
+				result.push(hill);
+			}
+		}
+		return result;
+	},
 	'myAnts': function() {
 		var result = [];
-		for (var i in this.ants) {
-			if (this.ants[i].owner === 0) {
-				result.push(this.ants[i]);
+		for (var i = 0, len = this.ants.length; i < len; ++i) {
+			var ant = this.ants[i];
+			if (ant.owner === 0) {
+				result.push(ant);
 			}
 		}
 		return result;
 	},
 	'enemyAnts': function() {
 		var result = [];
-		for (var i in this.ants) {
-			if (this.ants[i].owner !== 0) {
-				result.push(this.ants[i]);
+		for (var i = 0, len = this.ants.length; i < len; ++i) {
+			var ant = this.ants[i];
+			if (ant.owner !== 0) {
+				result.push(ant);
 			}
 		}
 		return result;
 	},
-	'passable': function(row, col, direction) {
-		return (this.tileInDirection(row, col, direction).type !== this.landTypes.WATER);
+	'passable': function(row, col) {
+		return (this.map[row][col].type !== this.landTypes.WATER);
+	},
+	'unoccupied': function(row, col) {
+		return (this.map[row][col].type === this.landTypes.LAND ||
+				this.map[row][col].type === this.landTypes.DEAD);
+	},
+	'destination': function(row, col, direction) {
+		var rowd = 0;
+		var cold = 0;
+		if (direction === 'N') {
+			rowd = -1;
+		} else if (direction === 'E') {
+			cold = 1;
+		} else if (direction === 'S') {
+			rowd = 1;
+		} else if (direction === 'W') {
+			cold = -1;
+		}
+		var newrow = row + rowd;
+		var newcol = col + cold;
+		if (newrow < 0) {
+			newrow = this.config.rows-1;
+		} else if (newrow > this.config.rows-1) {
+			newrow = 0;
+		}
+		if (newcol < 0) {
+			newcol = this.config.cols-1;
+		} else if (newcol > this.config.cols-1) {
+			newcol = 0;
+		}
+		return [newrow, newcol];
 	},
 	'distance': function(fromRow, fromCol, toRow, toCol) {
 		var dr = Math.min(Math.abs(fromRow - toRow), this.config.rows - Math.abs(fromRow - toRow));
