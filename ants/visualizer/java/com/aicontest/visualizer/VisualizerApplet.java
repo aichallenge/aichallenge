@@ -9,7 +9,6 @@ import java.net.URL;
 
 import netscape.javascript.JSObject;
 
-import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
 
 import com.aicontest.visualizer.js.dom.HTMLDocument;

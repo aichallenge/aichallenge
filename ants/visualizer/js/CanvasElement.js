@@ -208,6 +208,7 @@ CanvasElementAbstractMap.prototype.draw = function() {
 					this.scale);
 		}
 	}
+	// marker
 	if (!isNaN(rowOpt) && !isNaN(colOpt)) {
 		xs = (colOpt % cols) * this.scale - 4.5;
 		ys = (rowOpt % rows) * this.scale - 4.5;
@@ -299,7 +300,7 @@ CanvasElementMap.prototype.checkState = function() {
  *        state the visualizer state for reference
  */
 function CanvasElementFogPattern(state) {
-	CanvasElement.call(this);
+	this.upper();
 	this.state = state;
 	this.player = undefined;
 	this.setSize(2, 2);
@@ -341,7 +342,7 @@ CanvasElementFogPattern.prototype.draw = function() {
  *        pattern the fog pattern to use
  */
 function CanvasElementFog(state, pattern) {
-	CanvasElement.call(this);
+	this.upper();
 	this.state = state;
 	this.turn = 0;
 	this.shiftX = 0;
@@ -443,7 +444,7 @@ CanvasElementFog.prototype.draw = function() {
  *        fog the fog overlay
  */
 function CanvasElementAntsMap(state, map, fog) {
-	CanvasElement.call(this);
+	this.upper();
 	this.state = state;
 	this.map = map;
 	this.fog = fog;
@@ -458,6 +459,7 @@ function CanvasElementAntsMap(state, map, fog) {
 	this.mouseOverVis = false;
 	this.mouseCol = 0;
 	this.mouseRow = 0;
+	this.hillImage = null;
 }
 CanvasElementAntsMap.extend(CanvasElement);
 
@@ -614,11 +616,34 @@ CanvasElementAntsMap.prototype.collectAntsAroundCursor = function() {
  */
 CanvasElementAntsMap.prototype.draw = function() {
 	var halfScale, drawList, n, kf, w, dx, dy, d, fontSize, label, caption, order;
-	var target, rows, cols, x1, y1, x2, y2, rowPixels, colPixels, ar, sr, r;
+	var target, rows, cols, x1, y1, x2, y2, rowPixels, colPixels, ar, sr, r, hill, hills, i;
 	var hash = undefined;
 
 	// draw map
 	this.ctx.drawImage(this.map.canvas, 0, 0);
+
+	// hills
+	hills = this.state.replay.meta['replaydata']['hills'];
+	if (hills) {
+		for (i = 0; i < hills.length; i++) {
+			hill = hills[i];
+			xs = (hill[1] - 1) * this.scale;
+			ys = (hill[0] - 1) * this.scale;
+			w = 3 * this.scale;
+			d = 60 * hill[2];
+			if (this.turn >= hill[3]) {
+				this.drawWrapped(xs, ys, 3 * this.scale, 3 * this.scale, this.w, this.h,
+						function() {
+							this.ctx.drawImage(this.hillImage, d, 60, 60, 60, xs, ys, w, w);
+						}, []);
+			} else {
+				this.drawWrapped(xs, ys, 3 * this.scale, 3 * this.scale, this.w, this.h,
+						function() {
+							this.ctx.drawImage(this.hillImage, d, 0, 60, 60, xs, ys, w, w);
+						}, []);
+			}
+		}
+	}
 
 	// draw ants sorted by color
 	halfScale = 0.5 * this.scale;
@@ -627,11 +652,13 @@ CanvasElementAntsMap.prototype.draw = function() {
 		drawList = this.drawStates[hash];
 		for (n = drawList.length - 1; n >= 0; n--) {
 			kf = drawList[n];
-			if (kf['owner'] === undefined) {
-				w = halfScale * kf['size'];
-				this.ctx.beginPath();
-				this.ctx.arc(kf.mapX + halfScale, kf.mapY + halfScale, w, 0, 2 * Math.PI, false);
-				this.ctx.fill();
+			if (kf['owner'] !== undefined) {
+				this.drawWrapped(kf.mapX, kf.mapY, this.scale, this.scale, this.w, this.h,
+						function(x, y, width) {
+							this.ctx.beginPath();
+							this.ctx.arc(x, y, width, 0, 2 * Math.PI, false);
+							this.ctx.fill();
+						}, [ kf.mapX + halfScale, kf.mapY + halfScale, halfScale * kf['size'] ]);
 			} else {
 				w = this.scale;
 				dx = kf.mapX;
@@ -643,15 +670,6 @@ CanvasElementAntsMap.prototype.draw = function() {
 					w *= kf['size'];
 				}
 				this.ctx.fillRect(dx, dy, w, w);
-				if (dx < 0) {
-					this.ctx.fillRect(dx + this.w, dy, w, w);
-					if (dy < 0) {
-						this.ctx.fillRect(dx + this.w, dy + this.h, w, w);
-					}
-				}
-				if (dy < 0) {
-					this.ctx.fillRect(dx, dy + this.h, w, w);
-				}
 			}
 		}
 	}
@@ -774,6 +792,16 @@ CanvasElementAntsMap.prototype.draw = function() {
 };
 
 /**
+ * Sets the ant hill image to use when drawing the map.
+ * 
+ * @param {HTMLCanvasElement}
+ *        hillImage a colorized hill graphic.
+ */
+CanvasElementAntsMap.prototype.setHillImage = function(hillImage) {
+	this.hillImage = hillImage;
+};
+
+/**
  * @class The main map with ants, dragged with the mouse and extended by borders if required
  * @extends CanvasElement
  * @constructor
@@ -783,7 +811,7 @@ CanvasElementAntsMap.prototype.draw = function() {
  *        antsMap the prepared map with ants
  */
 function CanvasElementShiftedMap(state, antsMap) {
-	CanvasElement.call(this);
+	this.upper();
 	this.state = state;
 	this.antsMap = antsMap;
 	this.dependsOn(antsMap);
@@ -865,7 +893,7 @@ CanvasElementShiftedMap.prototype.draw = function() {
  *        stats name of the stats to query from the visualizer
  */
 function CanvasElementGraph(state, stats) {
-	CanvasElement.call(this);
+	this.upper();
 	this.state = state;
 	this.stats = stats;
 	this.duration = 0;
@@ -877,8 +905,8 @@ CanvasElementGraph.extend(CanvasElement);
  * basically to reduce the noise caused by the longer textual descriptions.
  * 
  * @private
- * @param i
- *        {Number} the zero based player index
+ * @param {Number}
+ *        i the zero based player index
  * @returns Returns a well supported Unicode glyph for some known status, or the original status
  *          text otherwise.
  */
@@ -890,21 +918,6 @@ CanvasElementGraph.prototype.statusToGlyph = function(i) {
 		return '\u2717';
 	}
 	return status_i;
-};
-
-/**
- * Helper function that returns a replay property with the given name, that should refer to a
- * statistics array. If the name is 'scores' the replay is also checked for the end game bonus.
- * 
- * @param name
- *        {String} the property name to be queried
- * @returns {Stats} the statistics set for the given item name.
- */
-CanvasElementGraph.prototype.getStats = function(name) {
-	var values = this.state.replay[name];
-	var bonus = undefined;
-	if (name === 'scores') bonus = this.state.replay.meta['replaydata']['bonus'];
-	return new Stats(values, bonus);
 };
 
 /**
@@ -1000,6 +1013,28 @@ CanvasElementGraph.prototype.draw = function() {
 };
 
 /**
+ * Helper function that returns a replay property with the given name, that should refer to a
+ * statistics array. If the name is 'scores' the replay is also checked for the end game bonus.
+ * 
+ * @param {String}
+ *        name The property name to be queried.
+ * @returns {Stats} the statistics set for the given item name.
+ */
+CanvasElementGraph.prototype.getStats = function(name) {
+	var values = this.state.replay[name];
+	var bonus;
+	if (name === 'counts') {
+		bonus = this.state.replay['sores'];
+	} else {
+		bonus = new Array(values.length);
+		if (name === 'scores' && this.turn === this.state.replay.duration) {
+			bonus[values.length - 1] = this.state.replay.meta['replaydata']['bonus'];
+		}
+	}
+	return new Stats(values, bonus);
+};
+
+/**
  * @class A canvas element for statistics. It makes use of {@link CanvasElementGraph}.
  * @extends CanvasElement
  * @constructor
@@ -1009,15 +1044,18 @@ CanvasElementGraph.prototype.draw = function() {
  *        caption the caption that is show to the left of the bar graph
  * @param {String}
  *        stats name of the stats to query from the visualizer
+ * @param {String}
+ *        bonusText Title over bonus section in the graph.
  */
-function CanvasElementStats(state, caption, stats) {
-	CanvasElement.call(this);
+function CanvasElementStats(state, caption, stats, bonusText) {
+	this.upper();
 	this.state = state;
 	this.caption = caption;
 	this.graph = new CanvasElementGraph(state, stats);
 	this.turn = 0;
 	this.time = 0;
 	this.label = false;
+	this.bonusText = bonusText;
 }
 CanvasElementStats.extend(CanvasElement);
 
@@ -1097,9 +1135,8 @@ CanvasElementStats.prototype.draw = function(resized) {
 	}
 
 	// draw scores
-	stats = this.graph.getStats(this.graph.stats);
-	this.drawColorBar(95, 4, this.w - 99, 22, stats.values[this.turn],
-			(this.turn === this.state.replay.duration) ? stats.bonus : undefined);
+	stats = this.getStats(this.graph.stats, this.turn);
+	this.drawColorBar(95, 2, this.w - 99, 26, stats, this.bonusText);
 
 	// graph
 	if (this.showGraph) {
@@ -1123,8 +1160,28 @@ CanvasElementStats.prototype.draw = function(resized) {
 };
 
 /**
- * Renders a horizontal bar graph of fixed size. Each block is colored using the respective player
- * color.
+ * Helper function that returns a replay property with the given name, that should refer to a
+ * statistics array. If the name is 'scores' the replay is also checked for the end game bonus.
+ * 
+ * @param {String}
+ *        name The property name to be queried.
+ * @param {Number}
+ *        turn The turn for which to fetch the stats
+ * @returns {Stats} the statistics set for the given item name.
+ */
+CanvasElementStats.prototype.getStats = function(name, turn) {
+	var values = this.state.replay[name][turn];
+	var bonus = undefined;
+	if (name === 'scores' && this.turn === this.state.replay.duration) {
+		bonus = this.state.replay.meta['replaydata']['bonus'];
+	} else if (name === 'counts') {
+		bonus = this.state.replay['stores'][turn];
+	}
+	return new Stats(values, bonus);
+};
+
+/**
+ * Renders a horizontal 'stacked' bar graph.
  * 
  * @private
  * @param {Number}
@@ -1135,74 +1192,131 @@ CanvasElementStats.prototype.draw = function(resized) {
  *        w the width
  * @param {Number}
  *        h the height
- * @param {Array}
- *        values the values to display
- * @param {Array}
- *        bonus the bonus to apply to 'values', if any; the text will display value and bonus
- *        separated by a '+'
+ * @param {Stats}
+ *        stats The values and boni to display. The bonus field can be undefined or contain
+ *        undefined values.
+ * @param {String}
+ *        bonusText Title over bonus section.
  */
-CanvasElementStats.prototype.drawColorBar = function(x, y, w, h, values, bonus) {
-	var useValues, i, scale, offsetX, offsetY, amount, text, idx;
-	var sum = 0;
-	this.ctx.save();
-	this.ctx.beginPath();
-	this.ctx.rect(x, y, w, h);
-	this.ctx.clip();
-	for (i = 0; i < values.length; i++) {
-		sum += bonus ? values[i] + bonus[i] : values[i];
-	}
-	useValues = new Array(values.length);
-	if (sum == 0) {
-		for (i = 0; i < values.length; i++) {
-			useValues[i] = 1;
-		}
-		sum = values.length;
-	} else {
-		for (i = 0; i < values.length; i++) {
-			useValues[i] = bonus ? values[i] + bonus[i] : values[i];
-		}
-	}
-	scale = w / sum;
-	offsetX = x;
-	for (i = 0; i < useValues.length; i++) {
-		idx = this.state.order[i];
-		amount = scale * useValues[idx];
-		this.ctx.fillStyle = this.state.replay.htmlPlayerColors[idx];
-		this.ctx.fillRect(offsetX, y, w - offsetX + x, h);
-		offsetX += amount;
-	}
-	this.ctx.textAlign = 'left';
-	this.ctx.textBaseline = 'top';
-	this.ctx.font = 'bold 16px Monospace';
-	this.ctx.fillStyle = 'rgba(0,0,0,0.5)';
-	offsetY = y + 3;
-	offsetX = x + 2;
-	for (i = 0; i < useValues.length; i++) {
-		idx = this.state.order[i];
-		text = Math.round(values[idx]);
-		if (this.label) {
-			text = String.fromCharCode(0x3b1 + i) + ' ' + text;
-		}
-		var bonusText = (bonus && bonus[idx]) ? '+' + Math.round(bonus[idx]) : '';
-		var textWidth = this.ctx.measureText(text).width;
-		if (bonusText) {
-			this.ctx.font = 'bold italic 12px Monospace';
-			var bonusTextWidth = this.ctx.measureText(bonusText).width;
-			this.ctx.font = 'bold 16px Monospace';
-		} else {
-			bonusTextWidth = 0;
-		}
-		if (scale * useValues[idx] >= textWidth + bonusTextWidth) {
-			this.ctx.fillText(text, offsetX, offsetY);
-			if (bonusText) {
-				this.ctx.font = 'bold italic 12px Monospace';
-				this.ctx.fillStyle = 'rgba(0,0,0,0.8)';
-				this.ctx.fillText(bonusText, offsetX + textWidth, offsetY);
-				this.ctx.font = 'bold 16px Monospace';
-				this.ctx.fillStyle = 'rgba(0,0,0,0.5)';
+CanvasElementStats.prototype.drawColorBar = function(x, y, w, h, stats, bonusText) {
+	var i, idx, wUsable, xNegSep;
+	var showBoni = false;
+	var boni = new Array(stats.values.length);
+	var boniList = new Array(stats.values.length);
+	var negatives = new Array();
+	var positives = new Array();
+	var sumBoni = 0;
+	var sumNegative = 0;
+	var sumPositive = 0;
+	var sumValues, sum;
+	var xOffset = x;
+	var drawPart = function(ctx, pixels, div, list, values, state, arrow) {
+		var k, kIdx, wBarRaw, wBar, textWidth;
+		ctx.save();
+		for (k = 0; k < list.length; k++) {
+			kIdx = state.order[list[k]];
+			ctx.fillStyle = state.replay.htmlPlayerColors[kIdx];
+			if (div) {
+				wBarRaw = Math.abs(values[kIdx]) * pixels / div;
+			} else {
+				wBarRaw = pixels / values.length;
+			}
+			if (wBarRaw !== 0) {
+				// always draw a full width pixel to avoid aliasing
+				wBar = Math.ceil(xOffset + wBarRaw) - xOffset;
+				wBar = Math.min(x + w - xOffset, wBar);
+				if (arrow) {
+					ctx.beginPath();
+					if (values[kIdx] >= 0) {
+						ctx.moveTo(xOffset, y + 2);
+						ctx.lineTo(xOffset + wBar, y + h / 2);
+						ctx.lineTo(xOffset, y + h - 2);
+					} else {
+						ctx.moveTo(xOffset + wBar, y + 2);
+						ctx.lineTo(xOffset, y + h / 2);
+						ctx.lineTo(xOffset + wBar, y + h - 2);
+					}
+					ctx.fill();
+				} else {
+					ctx.fillRect(xOffset, y + 2, wBar, h - 4);
+				}
+				ctx.textBaseline = 'middle';
+				ctx.font = 'bold 16px Monospace';
+				ctx.fillStyle = 'rgba(0,0,0,0.5)';
+				textWidth = ctx.measureText(values[kIdx]).width + 4;
+				if (textWidth <= wBar) {
+					if (values[kIdx] >= 0) {
+						ctx.textAlign = 'left';
+						ctx.fillText(values[kIdx], xOffset + 2, y + h / 2);
+					} else {
+						ctx.textAlign = 'right';
+						ctx.fillText(values[kIdx], xOffset + wBarRaw - 2, y + h / 2);
+					}
+				}
+				xOffset += wBarRaw;
 			}
 		}
-		offsetX += scale * useValues[idx];
+		ctx.restore();
+	};
+	this.ctx.save();
+	this.ctx.fillStyle = '#fff';
+	this.ctx.beginPath();
+	this.ctx.rect(x, y, w, h);
+	this.ctx.fill();
+	// will we show a separate bonus section?
+	for (i = 0; i < stats.values.length; i++) {
+		if (stats.bonus !== undefined && stats.bonus[i]) {
+			boni[i] = stats.bonus[i];
+			sumBoni += boni[i];
+			showBoni = true;
+		} else {
+			boni[i] = 0;
+		}
+		boniList[i] = i;
+	}
+	wUsable = showBoni ? w - 6 : w;
+	// sum up absolutes of all values to determine width
+	for (i = 0; i < stats.values.length; i++) {
+		idx = this.state.order[i];
+		if (stats.values[idx] >= 0) {
+			positives.push(i);
+			sumPositive += stats.values[idx];
+		} else {
+			negatives.push(i);
+			sumNegative -= stats.values[idx];
+		}
+	}
+	sumValues = sumNegative + sumPositive;
+	sum = sumValues + sumBoni;
+	// show negative scores
+	if (negatives.length) {
+		drawPart(this.ctx, wUsable, sum, negatives, stats.values, this.state, true);
+	}
+	xNegSep = (x + sumNegative * wUsable / sum) | 0;
+	// show positive scores
+	drawPart(this.ctx, wUsable, sum, positives, stats.values, this.state, false);
+	this.ctx.lineWidth = 2;
+	this.ctx.strokeStyle = '#000';
+	this.ctx.beginPath();
+	if (showBoni) {
+		xOffset = Math.ceil(xOffset) + 3;
+		this.ctx.moveTo(xOffset, y);
+		this.ctx.lineTo(xOffset, y + h);
+	}
+	if (negatives.length) {
+		this.ctx.moveTo(xNegSep, y + 2);
+		this.ctx.lineTo(xNegSep, y + h - 2);
+	}
+	this.ctx.stroke();
+	this.ctx.fillStyle = '#000';
+	this.ctx.font = 'bold 12px Monospace';
+	this.ctx.textBaseline = 'top';
+	// draw boni
+	if (showBoni) {
+		xOffset += 3;
+		drawPart(this.ctx, wUsable, sum, boniList, boni, this.state, true);
+		this.ctx.textAlign = 'right';
+		this.ctx.fillText(bonusText, x + w - 2, y);
 	}
 	this.ctx.restore();
 };
@@ -1211,12 +1325,12 @@ CanvasElementStats.prototype.drawColorBar = function(x, y, w, h, values, bonus) 
  * @class A helper class to transfer statistical values inside {@link CanvasElement} descendants.
  * @constructor
  * @param values
- *        {Number[][]} Statistical values for every player and turn.
+ *        {Array} Statistical values for every player and turn.
  * @param bonus
- *        {Number[]} The bonus that will be added to each player's values at the end of the replay.
- *        Can be undefined and is used for the 'scores' statistical item.
- * @property values {Number[][]}
- * @property bonus {Number[]}
+ *        {Array} The bonus that will be added to each player's values at the end of the replay. Can
+ *        be undefined and is used for the 'scores' statistical item.
+ * @property values {Array}
+ * @property bonus {Array}
  */
 function Stats(values, bonus) {
 	this.values = values;

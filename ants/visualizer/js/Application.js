@@ -153,12 +153,13 @@ Visualizer = function(container, options, w, h, configOverrides) {
 			this.imgMgr.add('playback.png');
 			this.imgMgr.add('fog.png');
 			this.imgMgr.add('toolbar.png');
+			this.imgMgr.add('hill.png');
 			/** @private */
 			this.btnMgr = new ButtonManager(null);
 			/** @private */
-			this.scores = new CanvasElementStats(this.state, 'scores', 'scores');
+			this.scores = new CanvasElementStats(this.state, 'scores', 'scores', 'bonus');
 			/** @private */
-			this.counts = new CanvasElementStats(this.state, '# of ants', 'counts');
+			this.counts = new CanvasElementStats(this.state, '# of ants', 'counts', 'hive');
 		}
 		/** @private */
 		this.director = new Director(this);
@@ -459,7 +460,7 @@ Visualizer.prototype.streamingInit = function() {
 Visualizer.prototype.streamingStart = function() {
 	this.state.isStreaming = stream.visualizerReady();
 	if (this.loading === LoadingState.LOADING) {
-		if (this.state.replay.duration > 0) {
+		if (this.state.replay.hasDuration) {
 			// set CPU to 100%, we need it
 			this.director.cpu = 1;
 			this.loadCanvas();
@@ -550,7 +551,7 @@ Visualizer.prototype.completedImages = function(error) {
  * @private
  */
 Visualizer.prototype.tryStart = function() {
-	var bg, i, dlg;
+	var bg, i, k, dlg, scores;
 	var vis = this;
 	// we need to parse the replay, unless it has been parsed by the
 	// XmlHttpRequest callback
@@ -560,12 +561,43 @@ Visualizer.prototype.tryStart = function() {
 			if (this.imgMgr.error) return;
 			if (this.imgMgr.pending) return;
 			this.btnMgr.ctx = this.main.ctx;
+			// calculate player order
+			if (this.state.replay.meta['replaydata']['bonus']) {
+				scores = new Array(this.state.replay.players);
+				for (i = 0; i < this.state.replay.players; i++) {
+					scores[i] = this.state.replay['scores'][this.state.replay.duration][i];
+					scores[i] += this.state.replay.meta['replaydata']['bonus'][i];
+				}
+			} else {
+				scores = this.state.replay['scores'][this.state.replay.duration];
+			}
+			this.state.ranks = new Array(scores.length);
+			this.state.order = new Array(scores.length);
+			for (i = 0; i < scores.length; i++) {
+				this.state.ranks[i] = 1;
+				for (k = 0; k < scores.length; k++) {
+					if (scores[i] < scores[k]) {
+						this.state.ranks[i]++;
+					}
+				}
+				k = this.state.ranks[i] - 1;
+				while (this.state.order[k] !== undefined)
+					k++;
+				this.state.order[k] = i;
+			}
 			// add player buttons
 			if (this.state.replay.hasDuration) {
 				this.addPlayerButtons();
 			}
+			// colorize ant hill
+			colors = [];
+			for (i = 0; i < this.state.replay.players; i++) {
+				colors.push(this.state.replay.meta['playercolors'][i]);
+			}
+			this.imgMgr.colorize(4, colors);
+			this.antsMap.setHillImage(this.imgMgr.patterns[4]);
+			// add static buttons
 			if (this.state.options['interactive']) {
-				// add static buttons
 				if (!this.btnMgr.groups['playback']) {
 					if (this.state.replay.hasDuration) {
 						bg = this.btnMgr.addImageGroup('playback', this.imgMgr.images[1],
@@ -655,10 +687,6 @@ Visualizer.prototype.tryStart = function() {
 				}
 				// generate fog images
 				if (this.state.replay.hasDuration) {
-					colors = [];
-					for (i = 0; i < this.state.replay.players; i++) {
-						colors.push(this.state.replay.meta['playercolors'][i]);
-					}
 					this.imgMgr.colorize(2, colors);
 					bg = this.btnMgr.addImageGroup('fog', this.imgMgr.patterns[2],
 							ImageButtonGroup.VERTICAL, ButtonGroup.MODE_RADIO, 2);
@@ -845,7 +873,7 @@ Visualizer.prototype.calculateMapCenter = function(scale) {
  * @private
  */
 Visualizer.prototype.addPlayerButtons = function() {
-	var scores, i, k;
+	var i;
 	var bg = this.btnMgr.addTextGroup('players', ButtonGroup.MODE_NORMAL, 2);
 	var vis = this;
 	var dlg = undefined;
@@ -859,29 +887,6 @@ Visualizer.prototype.addPlayerButtons = function() {
 		bg.addButton('Game #' + gameId + ':', '#000', dlg);
 	} else {
 		bg.addButton('Players:', '#000', undefined);
-	}
-	if (this.state.replay.meta['replaydata']['bonus']) {
-		scores = new Array(this.state.replay.players);
-		for (i = 0; i < this.state.replay.players; i++) {
-			scores[i] = this.state.replay['scores'][this.state.replay.duration][i];
-			scores[i] += this.state.replay.meta['replaydata']['bonus'][i];
-		}
-	} else {
-		scores = this.state.replay['scores'][this.state.replay.duration];
-	}
-	this.state.ranks = new Array(scores.length);
-	this.state.order = new Array(scores.length);
-	for (i = 0; i < scores.length; i++) {
-		this.state.ranks[i] = 1;
-		for (k = 0; k < scores.length; k++) {
-			if (scores[i] < scores[k]) {
-				this.state.ranks[i]++;
-			}
-		}
-		k = this.state.ranks[i] - 1;
-		while (this.state.order[k] !== undefined)
-			k++;
-		this.state.order[k] = i;
 	}
 	var buttonAdder = function(idx) {
 		var color = vis.state.replay.htmlPlayerColors[idx];
@@ -1033,7 +1038,8 @@ Visualizer.prototype.setZoom = function(zoom) {
  *        {Number} 0 = no display, 1 = letters, 2 = global ant ids
  */
 Visualizer.prototype.setAntLabels = function(mode) {
-	var recap = (mode === 1) !== (this.state.config['label'] === 1);
+	var hasDuration = this.state.replay.hasDuration;
+	var recap = hasDuration && (mode === 1) !== (this.state.config['label'] === 1);
 	this.state.config['label'] = mode;
 	if (recap) {
 		this.updatePlayerButtonText();

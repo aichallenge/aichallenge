@@ -21,6 +21,8 @@ class Ants
     public $map;
     public $myAnts = array();
     public $enemyAnts = array();
+    public $myHills = array();
+    public $enemyHills = array();
     public $deadAnts = array();
     public $food = array();
 
@@ -106,6 +108,9 @@ class Ants
             $this->map[$row][$col] = LAND;
         }
         $this->food = array();
+        
+        $this->myHills = array();
+        $this->enemyHills = array();
 
         # update map and create new ant and food lists
         foreach ( $data as $line) {
@@ -129,8 +134,17 @@ class Ants
                     } elseif ($tokens[0] == 'w') {
                         $this->map[$row][$col] = WATER;
                     } elseif ($tokens[0] == 'd') {
-                        $this->map[$row][$col] = DEAD;
+                        if ($this->map[$row][$col] === LAND) {
+                            $this->map[$row][$col] = DEAD;
+                        }
                         $this->deadAnts []= array($row,$col);
+                    } elseif ($tokens[0] == 'h') {
+                        $owner = (int)$tokens[3];
+                        if ($owner === 0) {
+                            $this->myHills []= array($row,$col);
+                        } else {
+                            $this->enemyHills []= array($row,$col);
+                        }
                     }
                 }
             }
@@ -144,7 +158,7 @@ class Ants
     }
 
     public function unoccupied($row, $col) {
-        return in_array($this->map[$row][$col], array(LAND, DEAD, FOOD));
+        return in_array($this->map[$row][$col], array(LAND, DEAD));
     }
 
     public function destination($row, $col, $direction)

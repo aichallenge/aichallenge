@@ -11,7 +11,8 @@ var bot = {
 			var ant = myAnts[i];
 			for (dirI in directions) {
 				var dir = directions[dirI];
-				if (ants.passable(ant.row, ant.col, dir)) {
+				var loc = ants.destination(ant.row, ant.col, dir);
+				if (ants.passable(loc[0], loc[1])) {
 					ants.issueOrder(ant.row, ant.col, dir);
 					break;
 				}

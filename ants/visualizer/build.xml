@@ -214,7 +214,7 @@
 
 	<target name="run-visualizer" depends="compile-visualizer,compile-js" description="runs the visualizer with a sample replay">
 		<java classname="com.aicontest.visualizer.Main" classpath="${build.java}:${src.data}" dir="${build.java}" fork="yes" failonerror="yes">
-			<arg value="${basedir}/games/0/1.replay" />
+			<arg value="${basedir}/games/json_r2.replay" />
 		</java>
 	</target>
 
