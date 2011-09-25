@@ -1044,8 +1044,10 @@ CanvasElementGraph.prototype.getStats = function(name) {
  *        caption the caption that is show to the left of the bar graph
  * @param {String}
  *        stats name of the stats to query from the visualizer
+ * @param {String}
+ *        bonusText Title over bonus section in the graph.
  */
-function CanvasElementStats(state, caption, stats) {
+function CanvasElementStats(state, caption, stats, bonusText) {
 	this.upper();
 	this.state = state;
 	this.caption = caption;
@@ -1053,6 +1055,7 @@ function CanvasElementStats(state, caption, stats) {
 	this.turn = 0;
 	this.time = 0;
 	this.label = false;
+	this.bonusText = bonusText;
 }
 CanvasElementStats.extend(CanvasElement);
 
@@ -1133,7 +1136,7 @@ CanvasElementStats.prototype.draw = function(resized) {
 
 	// draw scores
 	stats = this.getStats(this.graph.stats, this.turn);
-	this.drawColorBar(95, 4, this.w - 99, 22, stats);
+	this.drawColorBar(95, 2, this.w - 99, 26, stats, this.bonusText);
 
 	// graph
 	if (this.showGraph) {
@@ -1178,8 +1181,7 @@ CanvasElementStats.prototype.getStats = function(name, turn) {
 };
 
 /**
- * Renders a horizontal bar graph of fixed size. Each block is colored using the respective player
- * color.
+ * Renders a horizontal 'stacked' bar graph.
  * 
  * @private
  * @param {Number}
@@ -1191,93 +1193,130 @@ CanvasElementStats.prototype.getStats = function(name, turn) {
  * @param {Number}
  *        h the height
  * @param {Stats}
- *        stats the values and boni to display
+ *        stats The values and boni to display. The bonus field can be undefined or contain
+ *        undefined values.
+ * @param {String}
+ *        bonusText Title over bonus section.
  */
-CanvasElementStats.prototype.drawColorBar = function(x, y, w, h, stats) {
-	var i, scale, offsetX, offsetY, amount, text, idx, wBar, bonusText;
-	var textWidth, bonusTextWidth;
-	var sum = 0;
-	this.ctx.save();
-	this.ctx.beginPath();
-	this.ctx.rect(x, y, w, h);
-	this.ctx.clip();
-	for (i = 0; i < stats.values.length; i++) {
-		sum += stats.values[i];
-		if (stats.bonus && stats.bonus[i] !== undefined) {
-			sum += stats.bonus[i];
-		}
-	}
-	if (sum === 0) {
-		scale = 0;
-	} else {
-		scale = w / sum;
-	}
-	this.ctx.fillStyle = '#fff';
-	this.ctx.fillRect(x, y, w, h);
-	offsetX = x;
-	for (i = 0; i < stats.values.length; i++) {
-		idx = this.state.order[i];
-		this.ctx.fillStyle = this.state.replay.htmlPlayerColors[idx];
-		if (sum === 0) {
-			amount = w / stats.values.length;
-		} else {
-			amount = scale * stats.values[idx];
-		}
-		wBar = Math.ceil(offsetX + amount) - offsetX;
-		this.ctx.beginPath();
-		this.ctx.moveTo(offsetX + wBar, y);
-		this.ctx.lineTo(offsetX, y);
-		this.ctx.lineTo(offsetX, y + h);
-		this.ctx.lineTo(offsetX + wBar, y + h);
-		offsetX += amount;
-		if (stats.bonus && stats.bonus[idx]) {
-			amount = scale * stats.bonus[idx];
-			wBar = Math.ceil(offsetX + amount) - offsetX;
-			this.ctx.lineTo(offsetX + wBar, y + 0.5 * h);
-			offsetX += amount;
-		}
-		this.ctx.fill();
-	}
-	this.ctx.textAlign = 'left';
-	this.ctx.textBaseline = 'top';
-	this.ctx.font = 'bold 16px Monospace';
-	this.ctx.fillStyle = 'rgba(0,0,0,0.5)';
-	offsetY = y + 3;
-	offsetX = x + 2;
-	wBar = w / stats.values.length;
-	for (i = 0; i < stats.values.length; i++) {
-		idx = this.state.order[i];
-		text = Math.round(stats.values[idx]);
-		if (this.label) {
-			text = String.fromCharCode(0x3b1 + i) + ' ' + text;
-		}
-		amount = stats.values[idx];
-		if (stats.bonus && stats.bonus[idx] !== undefined) {
-			bonusText = '+' + Math.round(stats.bonus[idx]);
-			amount += stats.bonus[idx];
-		} else {
-			bonusText = '';
-		}
-		textWidth = this.ctx.measureText(text).width;
-		if (bonusText) {
-			this.ctx.font = 'bold italic 12px Monospace';
-			bonusTextWidth = this.ctx.measureText(bonusText).width;
-			this.ctx.font = 'bold 16px Monospace';
-		} else {
-			bonusTextWidth = 0;
-		}
-		if (sum !== 0) wBar = scale * amount;
-		if (wBar >= textWidth + bonusTextWidth) {
-			this.ctx.fillText(text, offsetX, offsetY);
-			if (bonusText) {
-				this.ctx.font = 'bold italic 12px Monospace';
-				this.ctx.fillStyle = 'rgba(0,0,0,0.8)';
-				this.ctx.fillText(bonusText, offsetX + textWidth, offsetY);
-				this.ctx.font = 'bold 16px Monospace';
-				this.ctx.fillStyle = 'rgba(0,0,0,0.5)';
+CanvasElementStats.prototype.drawColorBar = function(x, y, w, h, stats, bonusText) {
+	var i, idx, wUsable, xNegSep;
+	var showBoni = false;
+	var boni = new Array(stats.values.length);
+	var boniList = new Array(stats.values.length);
+	var negatives = new Array();
+	var positives = new Array();
+	var sumBoni = 0;
+	var sumNegative = 0;
+	var sumPositive = 0;
+	var sumValues, sum;
+	var xOffset = x;
+	var drawPart = function(ctx, pixels, div, list, values, state, arrow) {
+		var k, kIdx, wBarRaw, wBar, textWidth;
+		ctx.save();
+		for (k = 0; k < list.length; k++) {
+			kIdx = state.order[list[k]];
+			ctx.fillStyle = state.replay.htmlPlayerColors[kIdx];
+			if (div) {
+				wBarRaw = Math.abs(values[kIdx]) * pixels / div;
+			} else {
+				wBarRaw = pixels / values.length;
+			}
+			if (wBarRaw !== 0) {
+				// always draw a full width pixel to avoid aliasing
+				wBar = Math.ceil(xOffset + wBarRaw) - xOffset;
+				wBar = Math.min(x + w - xOffset, wBar);
+				if (arrow) {
+					ctx.beginPath();
+					if (values[kIdx] >= 0) {
+						ctx.moveTo(xOffset, y + 2);
+						ctx.lineTo(xOffset + wBar, y + h / 2);
+						ctx.lineTo(xOffset, y + h - 2);
+					} else {
+						ctx.moveTo(xOffset + wBar, y + 2);
+						ctx.lineTo(xOffset, y + h / 2);
+						ctx.lineTo(xOffset + wBar, y + h - 2);
+					}
+					ctx.fill();
+				} else {
+					ctx.fillRect(xOffset, y + 2, wBar, h - 4);
+				}
+				ctx.textBaseline = 'middle';
+				ctx.font = 'bold 16px Monospace';
+				ctx.fillStyle = 'rgba(0,0,0,0.5)';
+				textWidth = ctx.measureText(values[kIdx]).width + 4;
+				if (textWidth <= wBar) {
+					if (values[kIdx] >= 0) {
+						ctx.textAlign = 'left';
+						ctx.fillText(values[kIdx], xOffset + 2, y + h / 2);
+					} else {
+						ctx.textAlign = 'right';
+						ctx.fillText(values[kIdx], xOffset + wBarRaw - 2, y + h / 2);
+					}
+				}
+				xOffset += wBarRaw;
 			}
 		}
-		offsetX += wBar;
+		ctx.restore();
+	};
+	this.ctx.save();
+	this.ctx.fillStyle = '#fff';
+	this.ctx.beginPath();
+	this.ctx.rect(x, y, w, h);
+	this.ctx.fill();
+	// will we show a separate bonus section?
+	for (i = 0; i < stats.values.length; i++) {
+		if (stats.bonus !== undefined && stats.bonus[i]) {
+			boni[i] = stats.bonus[i];
+			sumBoni += boni[i];
+			showBoni = true;
+		} else {
+			boni[i] = 0;
+		}
+		boniList[i] = i;
+	}
+	wUsable = showBoni ? w - 6 : w;
+	// sum up absolutes of all values to determine width
+	for (i = 0; i < stats.values.length; i++) {
+		idx = this.state.order[i];
+		if (stats.values[idx] >= 0) {
+			positives.push(i);
+			sumPositive += stats.values[idx];
+		} else {
+			negatives.push(i);
+			sumNegative -= stats.values[idx];
+		}
+	}
+	sumValues = sumNegative + sumPositive;
+	sum = sumValues + sumBoni;
+	// show negative scores
+	if (negatives.length) {
+		drawPart(this.ctx, wUsable, sum, negatives, stats.values, this.state, true);
+	}
+	xNegSep = (x + sumNegative * wUsable / sum) | 0;
+	// show positive scores
+	drawPart(this.ctx, wUsable, sum, positives, stats.values, this.state, false);
+	this.ctx.lineWidth = 2;
+	this.ctx.strokeStyle = '#000';
+	this.ctx.beginPath();
+	if (showBoni) {
+		xOffset = Math.ceil(xOffset) + 3;
+		this.ctx.moveTo(xOffset, y);
+		this.ctx.lineTo(xOffset, y + h);
+	}
+	if (negatives.length) {
+		this.ctx.moveTo(xNegSep, y + 2);
+		this.ctx.lineTo(xNegSep, y + h - 2);
+	}
+	this.ctx.stroke();
+	this.ctx.fillStyle = '#000';
+	this.ctx.font = 'bold 12px Monospace';
+	this.ctx.textBaseline = 'top';
+	// draw boni
+	if (showBoni) {
+		xOffset += 3;
+		drawPart(this.ctx, wUsable, sum, boniList, boni, this.state, true);
+		this.ctx.textAlign = 'right';
+		this.ctx.fillText(bonusText, x + w - 2, y);
 	}
 	this.ctx.restore();
 };

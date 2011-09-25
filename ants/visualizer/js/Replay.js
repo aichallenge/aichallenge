@@ -145,7 +145,7 @@ function Replay(replay, debug, swapUser) {
 	this.debug = debug || false;
 	if (replay === undefined) {
 		// This code path is taken by the Java wrapper for streaming replay and initializes only the
-		// basics. Most of the rest is faster done in native Java, that through Rhino.
+		// basics. Most of the rest is faster done in native Java, than through Rhino.
 		this.meta = new Object();
 		this.meta['challenge'] = 'ants';
 		this.meta['replayformat'] = format;

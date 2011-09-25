@@ -157,9 +157,9 @@ Visualizer = function(container, options, w, h, configOverrides) {
 			/** @private */
 			this.btnMgr = new ButtonManager(null);
 			/** @private */
-			this.scores = new CanvasElementStats(this.state, 'scores', 'scores');
+			this.scores = new CanvasElementStats(this.state, 'scores', 'scores', 'bonus');
 			/** @private */
-			this.counts = new CanvasElementStats(this.state, '# of ants', 'counts');
+			this.counts = new CanvasElementStats(this.state, '# of ants', 'counts', 'hive');
 		}
 		/** @private */
 		this.director = new Director(this);
