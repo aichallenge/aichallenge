@@ -148,7 +148,7 @@ ImageManager.prototype.pattern = function(idx, ctx, repeat) {
  *        ([31, 124, 59]) or HTML color string ("#f90433").
  */
 ImageManager.prototype.colorize = function(idx, colors) {
-	var d, ox, dx, c, i, y, p, data;
+	var d, ox, dx, c, i, y, p, data, g;
 	var canvas = document.createElement('canvas');
 	var ctx = canvas.getContext('2d');
 	this.patterns[idx] = canvas;
@@ -186,11 +186,19 @@ ImageManager.prototype.colorize = function(idx, colors) {
 				}
 				for (y = 0; y < 4 * data.width * data.height; y += 4 * data.width) {
 					for (p = y + ox; p < y + ox + dx; p += 4) {
-						if (d[p] === d[p + 1] && d[p] === d[p + 2]) {
-							// only gray pixels
-							d[p + 0] = (d[p + 0] * c[0]) >> 8;
-							d[p + 1] = (d[p + 1] * c[1]) >> 8;
-							d[p + 2] = (d[p + 2] * c[2]) >> 8;
+						// only gray pixels
+						g = d[p];
+						if (g === d[p + 1] && g === d[p + 2]) {
+							if (g < 128) {
+								d[p + 0] = (d[p + 0] * c[0]) >> 7;
+								d[p + 1] = (d[p + 1] * c[1]) >> 7;
+								d[p + 2] = (d[p + 2] * c[2]) >> 7;
+							} else {
+								g = (g / 127.5) - 1;
+								d[p + 0] = (1 - g) * c[0] + g * 255;
+								d[p + 1] = (1 - g) * c[1] + g * 255;
+								d[p + 2] = (1 - g) * c[2] + g * 255;
+							}
 						}
 					}
 				}

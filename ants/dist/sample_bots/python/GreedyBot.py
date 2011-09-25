@@ -25,7 +25,29 @@ class GreedyBot:
         log_filter  = LogFilter()
         getLogger().addFilter(log_filter)
         self.visited = [] #keep track of visited row/cols
-        
+
+    def hunt_hills(self,ants,destinations,a_row,a_col):
+        getLogger().debug("Start Finding Ant")
+        closest_enemy_hill = ants.closest_enemy_hill(a_row,a_col)
+        getLogger().debug("Done Finding Ant")            
+        moved =False
+        if closest_enemy_hill!=None:
+            getLogger().debug("attacking hill:start")
+            directions = ants.direction(a_row,a_col,closest_enemy_hill[0],closest_enemy_hill[1])
+            getLogger().debug("attacking hill:directions:%s","".join(directions))
+            shuffle(directions)            
+            for direction in directions:
+                getLogger().debug("attacking hill:direction:%s",direction)
+                (n_row,n_col) = ants.destination(a_row,a_col,direction)
+                if (not (n_row,n_col) in destinations and
+                    ants.unoccupied(n_row,n_col)):
+                    moved=True
+                    ants.issue_order((a_row,a_col,direction))
+                    getLogger().debug("issue_order:%s,%d,%d,%s","attacking hill",a_row,a_col,direction)                        
+                    destinations.append((n_row,n_col))
+                    break
+        return moved
+            
     def hunt_ants(self,ants,destinations,a_row,a_col):
         getLogger().debug("Start Finding Ant")
         closest_enemy_ant = ants.closest_enemy_ant(a_row,a_col)

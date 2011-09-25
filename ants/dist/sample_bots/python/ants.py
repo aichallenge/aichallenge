@@ -10,8 +10,12 @@ LAND = -2
 FOOD = -3
 WATER = -4
 UNSEEN = -5
-MAX_INT=99999999
-MAP_RENDER = 'abcdefghijklmnopqrstuvwxyz?!%*.'
+
+PLAYER_ANT = 'abcdefghij'
+HILL_ANT = string = 'ABCDEFGHI'
+PLAYER_HILL = string = '0123456789'
+MAP_OBJECT = '?%*.!'
+MAP_RENDER = PLAYER_ANT + HILL_ANT + PLAYER_HILL + MAP_OBJECT
 
 
 AIM = {'n': (-1, 0),
@@ -39,6 +43,7 @@ class Ants():
         self.ant_list = {}
         self.food_list = []
         self.dead_list = []
+        self.hill_list = {}
 
     def setup(self, data):
         'parse initial input and setup starting game state'
@@ -77,6 +82,9 @@ class Ants():
         for row, col in self.dead_list:
             self.map[row][col] = LAND
         self.dead_list = []
+        for (row, col), owner in self.hill_list.items():
+            self.map[row][col] = LAND
+        self.hill_list = {}
 
         # update map and create new ant and food lists
         for line in data.split('\n'):
@@ -96,7 +104,15 @@ class Ants():
                     elif tokens[0] == 'w':
                         self.map[row][col] = WATER
                     elif tokens[0] == 'd':
-                        self.map[row][col] = DEAD
+                        # food could spawn on a spot where an ant just died
+                        # don't overwrite the space unless it is land
+                        if self.map[row][col] == LAND:
+                            self.map[row][col] = DEAD
+                        # but always add to the dead list
+                        self.dead_list.append((row, col))
+                    elif tokens[0] == 'h':
+                        owner = int(tokens[3])
+                        self.hill_list[(row, col)] = owner
 
     def issue_order(self, order):
         sys.stdout.write('o %s %s %s\n' % (order[0], order[1], order[2]))
@@ -107,13 +123,21 @@ class Ants():
         sys.stdout.flush()
 
     def my_ants(self):
-        return [(row, col) for (row, col), owner in self.ant_list.items()
+        return [loc for loc, owner in self.ant_list.items()
                     if owner == MY_ANT]
 
     def enemy_ants(self):
-        return [((row, col), owner) for (row, col), owner in self.ant_list.items()
+        return [(loc, owner) for loc, owner in self.ant_list.items()
                     if owner != MY_ANT]
+    
+    def my_hills(self):
+        return [loc for loc, owner in self.hill_list.items()
+                    if owner == MY_ANT]
 
+    def enemy_hills(self):
+        return [(loc, owner) for loc, owner in self.hill_list.items()
+                    if owner != MY_ANT]
+        
     def food(self):
         return self.food_list[:]
 
@@ -166,7 +190,7 @@ class Ants():
 
     def closest_food(self,row1,col1):
         #find the closest food from this row/col
-        min_dist=MAX_INT
+        min_dist=sys.maxint
         closest_food = None
         for food in self.food_list:
             dist = self.distance(row1,col1,food[0],food[1])
@@ -177,7 +201,7 @@ class Ants():
 
     def closest_enemy_ant(self,row1,col1):
         #find the closest enemy ant from this row/col
-        min_dist=MAX_INT
+        min_dist=sys.maxint
         closest_ant = None
         for ant in self.enemy_ants():
             dist = self.distance(row1,col1,ant[0][0],ant[0][1])
@@ -185,7 +209,18 @@ class Ants():
                 min_dist = dist
                 closest_ant = ant[0]
         return closest_ant    
-        
+
+    def closest_enemy_hill(self,row1,col1):
+        #find the closest enemy ant from this row/col
+        min_dist=sys.maxint
+        closest_hill = None
+        for hill in self.enemy_hills():
+            dist = self.distance(row1,col1,hill[0][0],hill[0][1])
+            if dist<min_dist:
+                min_dist = dist
+                closest_hill = hill[0]
+        return closest_hill   
+            
     def render_text_map(self):
         tmp = ''
         for row in self.map:

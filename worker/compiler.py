@@ -8,15 +8,17 @@
 # the available languages. If the number of matching languages is 0 or
 # more than 1, it is an error, and an appropriate error message is returned.
 #
-# To add a new language you must add an entry to the "languages" dictionary in
-# the following format:
-#     LanguageName : (extension, [NukeGlobs], [(Compile_globs, Compile_class)])
+# To add a new language you must add an entry to the "languages" list.
 #
 # For example the entry for Python is as follows:
-#     "Python" : (".py", ["*.pyc"], [("*.py", ChmodCompiler("Python"))]).
-# This defines the extension as .py, removes all .pyc files, and runs all the
-# found .py files through the ChmodCompiler, which is a pseudo-compiler class
-# which only chmods the found files.
+#    Language("Python", BOT +".py", "MyBot.py",
+#        "python MyBot.py",
+#        ["*.pyc"],
+#        [(["*.py"], ChmodCompiler("Python"))]
+#    ),
+# This defines the output file as MyBot.py, removes all .pyc files, and runs
+# all the found .py files through the ChmodCompiler, which is a pseudo-compiler
+# class which only chmods the found files.
 #
 # If you want to run a real compiler then you need to define a set of flags to
 # send it. In this case you would either use TargetCompiler or ExternalCompiler.
@@ -233,6 +235,7 @@ comp_args = {
     "C"             : [["gcc", "-O3", "-funroll-loops", "-c"],
                              ["gcc", "-O2", "-lm", "-o", BOT]],
     "C#"            : [["gmcs", "-warn:0", "-out:%s.exe" % BOT]],
+    "VB"            : [["vbnc", "-out:%s.exe" % BOT]],
     "C++"         : [["g++", "-O3", "-funroll-loops", "-c"],
                              ["g++", "-O2", "-lm", "-o", BOT]],
     "D"             : [["dmd", "-O", "-inline", "-release", "-noboundscheck", "-of" + BOT]],
@@ -248,42 +251,48 @@ comp_args = {
     "Lisp"      : [['sbcl', '--dynamic-space-size', str(MEMORY_LIMIT), '--script', BOT + '.lisp']],
     "OCaml"     : [["ocamlbuild -lib unix", BOT + ".native"]],
     "Scala"     : [["scalac"]],
+    "Erlang"    : [["erlc"]],
     }
 
 targets = {
     # lang : { old_ext : new_ext, ... }
     "C"     : { ".c" : ".o" },
     "C++" : { ".c" : ".o", ".cpp" : ".o", ".cc" : ".o" },
+    "Erlang" : { ".erl" : ".beam" },
     }
 
 Language = collections.namedtuple("Language",
-        ['name', 'extension', 'main_code_file', 'command', 'nukeglobs',
+        ['name', 'out_file', 'main_code_file', 'command', 'nukeglobs',
             'compilers']
         )
 
 languages = (
-    # Language(name, output extension,
+    # Language(name, output file,
     #      main_code_file
     #      command_line
     #      [nukeglobs],
     #      [(source glob, compiler), ...])
     #
     # The compilers are run in the order given.
-    # If the extension is "" it means the output file is just BOT
     # If a source glob is "" it means the source is part of the compiler
     #   arguments.
-    Language("C", "", "MyBot.c",
+    Language("C", BOT, "MyBot.c",
         "./MyBot",
         ["*.o", BOT],
         [(["*.c"], TargetCompiler(comp_args["C"][0], targets["C"])),
             (["*.o"], ExternalCompiler(comp_args["C"][1]))]
     ),
-    Language("C#", ".exe", "MyBot.cs",
+    Language("C#", BOT +".exe", "MyBot.cs",
         "mono MyBot.exe",
         [BOT + ".exe"],
         [(["*.cs"], ExternalCompiler(comp_args["C#"][0]))]
     ),
-    Language("C++", "", "MyBot.cc",
+    Language("VB", BOT +".exe", "MyBot.vb",
+        "mono MyBot.exe",
+        [BOT + ".exe"],
+        [(["*.vb"], ExternalCompiler(comp_args["VB"][0]))]
+    ),
+    Language("C++", BOT, "MyBot.cc",
         "./MyBot",
         ["*.o", BOT],
         [
@@ -292,95 +301,100 @@ languages = (
             (["*.o"], ExternalCompiler(comp_args["C++"][1]))
         ]
     ),
-    Language("Clojure", ".clj", "MyBot.clj",
+    Language("Clojure", BOT +".clj", "MyBot.clj",
 		"java -Xmx%sm -cp /usr/share/java/clojure.jar:. clojure.main MyBot.clj" % (MEMORY_LIMIT,),
         [],
         [(["*.clj"], ChmodCompiler("Clojure"))]
     ),
-    Language("CoffeeScript", ".coffee", "MyBot.coffee",
+    Language("CoffeeScript", BOT +".coffee", "MyBot.coffee",
         "coffee MyBot.coffee",
         [],
         [(["*.coffee"], ChmodCompiler("CoffeeScript"))]
     ),
-    Language("D", "", "MyBot.d",
+    Language("D", BOT, "MyBot.d",
         "./MyBot",
         ["*.o", BOT],
         [(["*.d"], ExternalCompiler(comp_args["D"][0]))]
     ),
-    Language("Go", "", "MyBot.go",
+    Language("Erlang", "my_bot.beam", "my_bot.erl",
+        "erl -hms"+ str(MEMORY_LIMIT) +"m -smp disable -noshell -s my_bot start -s init stop",
+        ["*.beam"],
+        [(["*.erl"], TargetCompiler(comp_args["Erlang"][0], targets["Erlang"]))]
+    ),
+    Language("Go", BOT, "MyBot.go",
         "./MyBot",
         ["*.8", "*.6", BOT],
         [(["*.go"], ExternalCompiler(comp_args["Go"][0], vglobs=['_go_.6'])),
             ([""], ExternalCompiler(comp_args["Go"][1], vglobs=['_go_.6']))]
     ),
-    Language("Groovy", ".jar", "MyBot.groovy",
+    Language("Groovy", BOT +".jar", "MyBot.groovy",
         "java -Xmx" + str(MEMORY_LIMIT) + "m -cp MyBot.jar:/usr/share/groovy/embeddable/groovy-all-1.7.5.jar MyBot",
         ["*.class, *.jar"],
         [(["*.groovy"], ExternalCompiler(comp_args["Groovy"][0])),
         (["*.class"], ExternalCompiler(comp_args["Groovy"][1]))]
     ),
-    Language("Haskell", "", "MyBot.hs",
+    Language("Haskell", BOT, "MyBot.hs",
         "./MyBot +RTS -M" + str(MEMORY_LIMIT) + "m",
         [BOT],
         [([""], ExternalCompiler(comp_args["Haskell"][0]))]
     ),
-    Language("Java", ".jar", "MyBot.java",
+    Language("Java", BOT +".jar", "MyBot.java",
         "java -Xmx" + str(MEMORY_LIMIT) + "m -jar MyBot.jar",
         ["*.class", "*.jar"],
         [(["*.java"], ExternalCompiler(comp_args["Java"][0])),
             (["*.class"], ExternalCompiler(comp_args["Java"][1]))]
     ),
-    Language("Javascript", ".js", "MyBot.js",
+    Language("Javascript", BOT +".js", "MyBot.js",
         "node MyBot.js",
         [],
         [(["*.js"], ChmodCompiler("Javascript"))]
     ),
-    Language("Lisp", "", "MyBot.lisp",
+    Language("Lisp", BOT, "MyBot.lisp",
         "./MyBot --dynamic-space-size " + str(MEMORY_LIMIT),
         [BOT],
         [([""], ExternalCompiler(comp_args["Lisp"][0]))]
     ),
-    Language("Lua", ".lua", "MyBot.lua",
+    Language("Lua", BOT +".lua", "MyBot.lua",
         "luajit-2.0.0-beta5 MyBot.lua",
         [],
         [(["*.lua"], ChmodCompiler("Lua"))]
     ),
-    Language("OCaml", ".native", "MyBot.ml",
+    Language("OCaml", BOT +".native", "MyBot.ml",
         "./MyBot.native",
         [BOT + ".native"],
         [([""], ExternalCompiler(comp_args["OCaml"][0]))]
     ),
-    Language("Perl", ".pl", "MyBot.pl",
+    Language("Perl", BOT +".pl", "MyBot.pl",
         "perl MyBot.pl",
         [],
         [(["*.pl"], ChmodCompiler("Perl"))]
     ),
-    Language("PHP", ".php", "MyBot.php",
+    Language("PHP", BOT +".php", "MyBot.php",
         "php MyBot.php",
         [],
         [(["*.php"], ChmodCompiler("PHP"))]
     ),
-    Language("Python", ".py", "MyBot.py",
+    Language("Python", BOT +".py", "MyBot.py",
         "python MyBot.py",
         ["*.pyc"],
         [(["*.py"], ChmodCompiler("Python"))]
     ),
-    Language("Python3", ".py3", "MyBot.py3",
+    Language("Python3", BOT +".py3", "MyBot.py3",
         "python3 MyBot.py3",
         ["*.pyc"],
         [(["*.py3"], ChmodCompiler("Python3"))]
     ),
-    Language("Ruby", ".rb", "MyBot.rb",
+    Language("Ruby", BOT +".rb", "MyBot.rb",
         "ruby MyBot.rb",
         [],
         [(["*.rb"], ChmodCompiler("Ruby"))]
     ),
-    Language("Scala", ".scala", "MyBot.scala",
+    Language("Scala", BOT +".scala", "MyBot.scala",
         'scala -J-Xmx'+ str(MEMORY_LIMIT) +'m -howtorun:object MyBot',
         ["*.scala, *.jar"],
         [(["*.scala"], ExternalCompiler(comp_args["Scala"][0]))]
     ),
-    Language("Scheme", ".ss", "MyBot.ss",
+    Language("Scheme", BOT +".ss", "MyBot.ss",
         "./MyBot",
         [],
         [(["*.ss"], ChmodCompiler("Scheme"))]
@@ -406,7 +420,7 @@ def compile_function(language, bot_dir, timelimit):
                     % (compiler, exc))
             return False, errors
 
-    compiled_bot_file = os.path.join(bot_dir, BOT + language.extension)
+    compiled_bot_file = os.path.join(bot_dir, language.out_file)
     return check_path(compiled_bot_file, errors), errors
 
 _LANG_NOT_FOUND = """Did not find a recognized MyBot.* file.

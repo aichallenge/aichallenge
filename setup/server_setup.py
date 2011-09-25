@@ -109,6 +109,17 @@ def setup_database(opts):
             run_cmd("mysql -u %s %s %s < %s" % (opts.database_user,
                 password_opt, opts.database_name, sp))
 
+def setup_language_repo(opts):
+    """ Download languages not part of OS distribution locally for workers """
+    download_dir = os.path.join(opts.local_repo, "website/langs")
+    try:
+        os.mkdir(download_dir)
+    except OSError:
+        if not os.path.isdir(download_dir):
+            raise
+    retrieve_cmd = os.path.join(opts.local_repo, "setup/retrieve_languages.py")
+    run_cmd("%s %s" % (retrieve_cmd, download_dir))
+
 def setup_website(opts):
     """ Configure apache to serve the website and set a server_info.php """
     website_root = os.path.join(opts.local_repo, "website")
@@ -141,6 +152,8 @@ def setup_website(opts):
         with CD(visualizer_path):
             run_cmd("ant deploy -Djava.plugin=%s -Ddeploy.path=%s"
                     % (plugin_path, website_root))
+    setup_language_repo(opts)
+
     site_config = "/etc/apache2/sites-available/" + opts.website_hostname
     if not os.path.exists(site_config):
         site_filename = os.path.join(TEMPLATE_DIR, "apache_site.template")

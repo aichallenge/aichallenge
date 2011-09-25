@@ -640,12 +640,16 @@ def main(argv):
                 os.remove('last_game.json')
         if opts.num_tasks <= 0:
             try:
+                script_loc = os.path.realpath(os.path.dirname(__file__))
                 while True:
                     log.info("Getting task infinity + 1")
                     if not worker.task():
                         log.warning("Task failed, stopping worker")
                         break
                     print()
+                    if os.path.exists(os.path.join(script_loc, "stop_worker")):
+                        log.info("Found worker stop file, exiting.")
+                        break
             except KeyboardInterrupt:
                 log.info("[Ctrl] + C, Stopping worker")
         else:

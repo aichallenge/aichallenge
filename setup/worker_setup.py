@@ -37,82 +37,87 @@ def install_extra_distribution_languages():
     """ Install all extra languages that are part of the Ubuntu distribution
         and don't require any special installation steps """
     pkg_list = ["ruby1.9.1", "php5-cli", "perl", "ocaml", "luajit", "ghc",
-            "common-lisp-controller", "sbcl", "mono-2.0-devel"]
+            "common-lisp-controller", "sbcl", "mono-2.0-devel", "mono-vbnc",
+            "erlang-base"]
     install_apt_packages(pkg_list)
     if not os.path.exists("/usr/bin/ruby"):
         os.symlink("/usr/bin/ruby1.9.1", "/usr/bin/ruby")
 
-def install_golang():
+def install_golang(download_base):
     """ Install golang """
-    run_cmd("add-apt-repository ppa:gophers/go")
-    run_cmd("apt-get update")
-    install_apt_packages(['golang'])
+    with CD("/root"):
+        run_cmd("curl '%s/golang.deb' > golang.deb" % (download_base,))
+        run_cmd("dpkg -i golang.deb")
 
-def install_nodejs():
+def install_nodejs(download_base):
     """ Install node.js """
-    run_cmd("add-apt-repository ppa:jerome-etienne/neoip")
-    run_cmd("apt-get update")
-    install_apt_packages(['nodejs'])
+    install_apt_packages(["rlwrap"])
+    with CD("/root"):
+        run_cmd("curl '%s/nodejs.deb' > nodejs.deb" % (download_base,))
+        run_cmd("dpkg -i nodejs.deb")
 
-def install_coffeescript():
+def install_coffeescript(download_base):
     """ Install coffeescript """
     if os.path.exists("/usr/local/bin/coffee"):
         return
-    run_cmd("curl http://npmjs.org/install.sh | clean=no sh")
-    run_cmd("npm install -g coffee-script")
+    with CD("/root"):
+        run_cmd("curl '%s/coffeescript.tgz' > coffeescript.tgz" % (download_base,))
+        run_cmd("tar xzf coffeescript.tgz")
+        with CD("jashkenas-coffee-script-1a652a9"):
+            run_cmd("bin/cake install")
 
-def install_clojure():
+def install_clojure(download_base):
     """ Install the Clojure language """
     if os.path.exists("/usr/share/java/clojure.jar"):
         return
     with CD("/root"):
-        run_cmd("curl 'http://cloud.github.com/downloads/clojure/clojure/clojure-1.2.0.zip' > clojure-1.2.0.zip")
-        run_cmd("unzip clojure-1.2.0.zip")
-        run_cmd("cp clojure-1.2.0/clojure.jar /usr/share/java")
+        run_cmd("curl '%s/clojure.zip' > clojure.zip" % (download_base,))
+        run_cmd("unzip clojure.zip")
+        run_cmd("cp clojure-1.3.0/clojure-1.3.0.jar /usr/share/java/clojure.jar")
 
-def install_groovy():
+def install_groovy(download_base):
     """ Install the Groovy language """
     if os.path.exists("/usr/bin/groovy"):
         return
     with CD("/root"):
-        run_cmd("curl 'http://dist.groovy.codehaus.org/distributions/installers/deb/groovy_1.7.8-1_all.deb' > groovy_1.7.8-1_all.deb")
-        run_cmd("dpkg -i groovy_1.7.8-1_all.deb")
+        run_cmd("curl '%s/groovy.deb' > groovy.deb" % (download_base,))
+        run_cmd("dpkg -i groovy.deb")
 
-def install_scala():
+def install_scala(download_base):
     """ Install the Scala language """
     if os.path.exists("/usr/bin/scala"):
         return
     with CD("/root"):
-        run_cmd("curl 'http://www.scala-lang.org/downloads/distrib/files/scala-2.9.0.1.tgz' | tar xz")
+        run_cmd("curl '%s/scala.tgz' | tar xz" % (download_base,))
         os.rename("scala-2.9.0.1", "/usr/share/scala")
         os.symlink("/usr/share/scala/bin/scala", "/usr/bin/scala")
         os.symlink("/usr/share/scala/bin/scalac", "/usr/bin/scalac")
 
-def install_dmd():
+def install_dmd(download_base):
     """ Install the D language """
     if os.path.exists("/usr/bin/dmd"):
         return
     install_apt_packages("gcc-multilib")
     with CD("/root"):
-        run_cmd("curl 'http://ftp.digitalmars.com/dmd_2.054-0_amd64.deb' > dmd_2.054-0_amd64.deb")
-        run_cmd("dpkg -i dmd_2.054-0_amd64.deb")
+        run_cmd("curl '%s/dmd.deb' > dmd.deb" % (download_base,))
+        run_cmd("dpkg -i dmd.deb")
 
 def install_packaged_languages():
     install_basic_languages()
     install_extra_distribution_languages()
-    install_golang()
-    install_nodejs()
 
-def install_all_languages():
+def install_all_languages(options):
+    download_base = options.api_url +"langs"
     install_basic_languages()
     install_extra_distribution_languages()
-    install_golang()
-    install_nodejs()
-    install_coffeescript()
-    install_clojure()
-    install_groovy()
-    install_scala()
-    install_dmd()
+
+    install_clojure(download_base)
+    install_dmd(download_base)
+    install_golang(download_base)
+    install_groovy(download_base)
+    install_nodejs(download_base)
+    install_coffeescript(download_base) # must come after nodejs
+    install_scala(download_base)
 
 def install_jailguard(options):
     worker_dir = os.path.join(options.local_repo, "worker")
@@ -235,8 +240,9 @@ exit 0
 
 def setup_base_jail(options):
     """ Create and configure base jail """
-    run_cmd("schroot -c aic-base -- %s/setup/worker_setup.py --chroot-setup"
-            % (os.path.join(options.root_dir, options.local_repo),))
+    run_cmd("schroot -c aic-base -- %s/setup/worker_setup.py --chroot-setup --api-url %s"
+            % (os.path.join(options.root_dir, options.local_repo),
+                options.api_url))
     create_jail_group(options)
     iptablesload_path = "/etc/network/if-pre-up.d/iptablesload"
     if not os.path.exists(iptablesload_path):
@@ -404,7 +410,7 @@ def main(argv=["worker_setup.py"]):
         if opts.install_pkg_languages:
             install_packaged_languages()
         if opts.install_languages:
-            install_all_languages()
+            install_all_languages(opts)
     if opts.install_jailguard:
         install_jailguard(opts)
     if opts.create_jails:
