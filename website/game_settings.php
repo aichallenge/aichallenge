@@ -1,6 +1,6 @@
 <?php
 
-include 'header.php';
+require_once('header.php');
 require_once('server_info.php');
 
 ?>

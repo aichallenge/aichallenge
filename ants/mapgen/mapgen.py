@@ -315,7 +315,7 @@ class Grid():
     #adds ants to the map
     def add_ants(self):
         a_locs = self.get_symmetric_locs(self.a_loc)
-        player = 'a'
+        player = '0'
         for n in range(self.no_players):
             self.squares[a_locs[n][0]][a_locs[n][1]] = player
             player = chr(ord(player)+1)
