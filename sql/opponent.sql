@@ -169,15 +169,15 @@ if @min_players <= @max_players then
                         where matchup_id = @matchup_id
                     )
                     -- exclude players currently in a matchup
-                    -- and not exists (
-                    --    select *
-                    --    from tmp_matchup m
-                    --    inner join tmp_matchup_player mp
-                    --        on mp.matchup_id = m.matchup_id
-                    --    where mp.user_id = s.user_id
-                    --    and (m.worker_id >= 0 or m.worker_id is null)
-                    --    and m.deleted = 0
-                    -- )
+                    and not exists (
+                        select *
+                        from tmp_matchup m
+                        inner join tmp_matchup_player mp
+                            on mp.matchup_id = m.matchup_id
+                        where mp.user_id = s.user_id
+                        and (m.worker_id >= 0 or m.worker_id is null)
+                        and m.deleted = 0
+                    )
                     and s.latest = 1 and s.status = 40
                     group by s.user_id, s.submission_id, s.mu, s.sigma
                     order by 5 desc
