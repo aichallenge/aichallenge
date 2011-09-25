@@ -158,7 +158,7 @@ if @min_players <= @max_players then
                 ) s,
                 (select @seq := 0) seq
             ) s
-            inner join temp_recent r
+            left outer join temp_recent r
                 on r.user_id = s.user_id
             -- join in user to user game counts to provide round-robin like logic
             left outer join opponents o
