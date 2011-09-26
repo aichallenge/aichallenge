@@ -420,7 +420,7 @@ class Ants(Game):
                 visible_updates.append(update)
 
                 # switch player perspective of player numbers
-                if type in ['a','d']:
+                if type in ['a', 'd', 'h']:
                     # an ant can appear in a bots vision and die the same turn
                     # in this case the ant has not been assigned a number yet
                     #   assign the enemy the next index
