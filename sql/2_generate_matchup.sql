@@ -159,8 +159,8 @@ if @min_players <= @max_players then
     );
     insert into temp_opponents
         select mp1.user_id, mp2.user_id as opponent_id, count(*)
-        from tmp_matchup m
-        inner join tmp_matchup_player mp1
+        from matchup m
+        inner join matchup_player mp1
             on m.matchup_id = mp1.matchup_id
         inner join matchup_player mp2
             on m.matchup_id = mp2.matchup_id
@@ -195,7 +195,7 @@ if @min_players <= @max_players then
                     -- exclude players currently in the matchup
                     and not exists (
                         select *
-                        from tmp_matchup_player mp
+                        from matchup_player mp
                         where mp.matchup_id = @matchup_id
                         and mp.user_id = s.user_id
                     )
