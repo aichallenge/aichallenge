@@ -371,10 +371,9 @@ class Worker:
             detected_lang, errors = compiler.compile_anything(bot_dir,
                     timelimit)
             if errors != None:
-                log.info(errors)
+                log.error(errors)
                 if not self.debug:
                     shutil.rmtree(download_dir)
-                log.error(uni_to_ascii(errors))
                 log.error(detected_lang)
                 report(STATUS_COMPILE_ERROR, detected_lang, errors=errors);
                 log.error("Compile Error")
