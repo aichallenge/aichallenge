@@ -240,7 +240,7 @@ if @min_players <= @max_players then
                 select opponent_id, sum(game_count) as game_count
                 from (
 	                select *
-	                from opponent o
+	                from opponents o
 	                where o.user_id in (
 	                    select user_id
 	                    from tmp_matchup_player mp
@@ -248,7 +248,7 @@ if @min_players <= @max_players then
 	                )
 	                union
 	                select *
-	                from temp_opponent o
+	                from temp_opponents o
 	                where o.user_id in (
 	                    select user_id
 	                    from tmp_matchup_player mp
