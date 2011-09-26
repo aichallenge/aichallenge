@@ -23,6 +23,9 @@ PLAYER_HILL = string = '0123456789'
 MAP_OBJECT = '?%*.!'
 MAP_RENDER = PLAYER_ANT + HILL_ANT + PLAYER_HILL + MAP_OBJECT
 
+HILL_POINTS = 2
+RAZE_POINTS = -1
+
 # possible directions an ant can move
 AIM = {'n': (-1, 0),
        'e': (0, 1),
@@ -95,9 +98,11 @@ class Ants(Game):
 
         # initialize scores
         self.score = [0]*self.num_players
+        self.bonus = [0]*self.num_players
         self.score_history = [[s] for s in self.score]
 
         # used to cutoff games early
+        self.cutoff = None
         self.cutoff_bot = LAND # Can be ant owner, FOOD or LAND
         self.cutoff_turns = 0
         # used to calculate the turn when the winner took the lead
@@ -694,8 +699,8 @@ class Ants(Game):
     def raze_hill(self, hill, killed_by):
         hill.end_turn = self.turn
         hill.killed_by = killed_by
-        self.score[killed_by] += 2
-        self.score[hill.owner] -= 1
+        self.score[killed_by] += HILL_POINTS
+        self.score[hill.owner] += RAZE_POINTS
         
     def player_hills(self, player):
         """ Return the current hills belonging to the given player """
@@ -777,11 +782,7 @@ class Ants(Game):
         # kill ants with at least 1 damage
         for ant in damage:
             if damage[ant] >= 1:
-                self.kill_ant(ant)
-                #score = Fraction(self.kill_points, len(nearby_enemies[ant]))
-                #for enemy in nearby_enemies[ant]:
-                #    self.score[enemy.owner] += score
-        
+                self.kill_ant(ant)        
 
     def do_attack_support(self):
         """ Kill ants which have more enemies nearby than friendly ants
@@ -811,10 +812,6 @@ class Ants(Game):
         # actually do the killing and score distribution
         for ant, enemies in ants_to_kill.items():
             self.kill_ant(ant)
-#            score_share = len(enemies)
-#            for enemy in enemies:
-#                self.score[enemy.owner] += Fraction(self.kill_points, score_share)
-
 
     def do_attack_focus(self):
         """ Kill ants which are the most surrounded by enemies
@@ -847,10 +844,6 @@ class Ants(Game):
         # kill ants and distribute score
         for ant in ants_to_kill:
             self.kill_ant(ant)
-#            score_share = len(nearby_enemies[ant])
-#            for enemy in nearby_enemies[ant]:
-#                self.score[enemy.owner] += Fraction(self.kill_points, score_share)
-
 
     def do_attack_closest(self):
         """ Iteratively kill neighboring groups of ants """
@@ -889,9 +882,7 @@ class Ants(Game):
                 #  the ant group is the same regardless of which ant
                 #  you start looking at
                 if len(ant_group) > 1:
-#                    score_share = len(ant_group)
                     for ant in ant_group:
-#                        self.score[ant.owner] += Fraction(self.kill_points, score_share)
                         self.kill_ant(ant)
 
     def destination(self, loc, d):
@@ -1279,24 +1270,32 @@ class Ants(Game):
 
     def remaining_players(self):
         """ Return the number of players still alive """
-        return sum(self.is_alive(p) for p in range(self.num_players))
+        return [p for p in range(self.num_players) if self.is_alive(p)]
 
     # Common functions for all games
 
     def can_rank_change(self):
-        """ Determines if there are enough hills left for any player to overtake
-            another in score
+        """ Determine if the rank can be changed by bots with hills.
+        
+            Determines if there are enough hills left for any player to overtake
+            another in score.  Only consider bots with remaining hills.
+            Those without hills will not be given the opportunity to overtake
         """
         for player in range(self.num_players):
-            if self.is_alive(player):
-                scores_above = [s for p, s in enumerate(self.score)
-                                if p != player and s >= self.score[player]]
-                if len(scores_above) > 0:
-                    diff = (self.score[player] - min(scores_above))
-                    hills = len([hill for _, hill in self.hills.items()
-                                   if hill.owner != player])
-                    if hills >= diff:
+            if self.is_alive(player) and self.has_hills(player):
+                max_score = sum([HILL_POINTS for hill in self.hills.values()
+                                 if hill.killed_by == None
+                                 and hill.owner != player]) + self.score[player]
+                for opponent in range(self.num_players):
+                    min_score = sum([RAZE_POINTS for hill in self.hills.values()
+                                     if hill.killed_by == None
+                                     and hill.owner == opponent]) + self.score[opponent]
+                    if ((self.score[player] < self.score[opponent]
+                            and max_score >= min_score)
+                            or (self.score[player] == self.score[opponent]
+                            and max_score > min_score)):
                         return True
+                    
         return False
     
     def game_over(self):
@@ -1306,9 +1305,13 @@ class Ants(Game):
             A game is over when there are no players remaining, or a single
               winner remaining.
         """
-        if self.remaining_players() <= 1:
+        if len(self.remaining_players()) <= 1:
             return True
         if self.cutoff_turns >= self.cutoff_turn:
+            if self.cutoff_bot == FOOD:
+                self.cutoff = 'food'
+            else:
+                self.cutoff = 'ants'
             return True
         if not self.can_rank_change():
             return True
@@ -1329,7 +1332,13 @@ class Ants(Game):
 
     def finish_game(self):
         """ Called by engine at the end of the game """
-        pass
+        
+        # lone survivor gets bonus of killing all other hills
+        players = self.remaining_players()
+        if len(players) == 1:
+            self.bonus[players[0]] += sum([HILL_POINTS for hill in self.hills.values()
+                                           if hill.killed_by == None
+                                           and hill.owner != players[0]])
 
     def start_turn(self):
         """ Called by engine at the start of the turn """
@@ -1446,6 +1455,14 @@ class Ants(Game):
         else:
             return bool(self.player_ants(player))
 
+    def has_hills(self, player):
+        """ Determine if player has hills
+        
+            Used by engine to determine influencing players
+        """
+        return bool(len([hill for hill in self.hills.values()
+                         if hill.owner == player]) > 0)
+        
     def get_error(self, player):
         """ Returns the reason a player was killed
 
@@ -1572,73 +1589,11 @@ class Ants(Game):
 
         # scores
         replay['scores'] = self.score_history
+        replay['bonus'] = self.bonus
         replay['hive_history'] = self.hive_history
         replay['winning_turn'] = self.winning_turn
         replay['ranking_turn'] = self.ranking_turn
-        replay['cutoff'] = bool(self.remaining_players() > 1 and self.turns > self.turn)
-
-        return replay
-
-    def get_replay_old(self):
-        """ Return a summary of the entire game
-
-            Used by the engine to create a replay file which may be used
-              to replay the game.
-        """
-        replay = {}
-        # required params
-        replay['revision'] = 2
-        replay['players'] = self.num_players
-
-        # optional params
-        replay['loadtime'] = self.loadtime
-        replay['turntime'] = self.turntime
-        replay['turns'] = self.turns
-        replay['viewradius2'] = self.viewradius
-        replay['attackradius2'] = self.attackradius
-        replay['spawnradius2'] = self.spawnradius
-        replay['engine_seed'] = self.engine_seed
-        replay['player_seed'] = self.player_seed
-        replay['food_rate'] = self.food_rate
-        replay['food_turn'] = self.food_turn
-        replay['food_start'] = self.food_start
-
-        # map
-        replay['map'] = {}
-        replay['map']['rows'] = self.height
-        replay['map']['cols'] = self.width
-        replay['map']['data'] = self.get_map_output()
-
-        # food and ants combined
-        replay['ants'] = []
-        for food in self.all_food:
-            ant_data = [ food.loc[0], food.loc[1], food.start_turn]
-            if food.end_turn is None:
-                # food survives to end of game
-                ant_data.append(self.turn + 1)
-            else: # food.ant is None:
-                # food disappears
-                ant_data.append(food.end_turn)
-            replay['ants'].append(ant_data)
-
-        for ant in self.all_ants:
-            # mimic food data
-            ant_data = [ ant.initial_loc[0], ant.initial_loc[1], max(0, ant.spawn_turn - 1)]
-            ant_data.append(ant.spawn_turn)
-            if not ant.killed:
-                ant_data.append(self.turn + 1)
-            else:
-                ant_data.append(ant.die_turn)
-            ant_data.append(ant.owner)
-            ant_data.append(''.join(ant.orders))
-
-            replay['ants'].append(ant_data)
-
-        # scores
-        replay['scores'] = self.score_history
-        replay['winning_turn'] = self.winning_turn
-        replay['ranking_turn'] = self.ranking_turn
-        replay['cutoff'] = bool(self.remaining_players() > 1 and self.turns > self.turn)
+        replay['cutoff'] = self.cutoff
 
         return replay
 
