@@ -139,7 +139,7 @@ class AsymmetricMap():
         value = type
         for n in range(self.no_players):
             self.map_data[loc[0] ][loc[1] ] = value
-            if type == 'a':
+            if type == '0':
                 value = chr(ord(value)+1)
             loc = self.get_translate_loc(loc)
 
@@ -178,7 +178,7 @@ class AsymmetricMap():
     def add_ants(self):
         self.land_squares = self.no_players
         self.a_loc = self.c_loc = self.pick_square()
-        self.fill_squares(self.a_loc, 'a')
+        self.fill_squares(self.a_loc, '0')
 
         for c_loc in self.c_locs:
             self.land_squares += self.no_players

@@ -12,7 +12,7 @@ LAND = -2
 FOOD = -3
 WATER = -4
 UNSEEN = -5
-MAP_RENDER = 'abcdefghijklmnopqrstuvwxyz?%*.!'
+MAP_RENDER = '0123456789?%*.!'
 
 AIM = {'n': (-1, 0),
        'e': (0, 1),
