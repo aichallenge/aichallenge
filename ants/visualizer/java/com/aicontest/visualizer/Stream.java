@@ -2,6 +2,7 @@ package com.aicontest.visualizer;
 
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.StringTokenizer;
 
@@ -25,6 +26,7 @@ public class Stream extends IdScriptableObject {
 	private NativeObject replaydata;
 	private NativeObject map;
 	private NativeArray ants;
+	private NativeArray hills;
 	private NativeArray antLists;
 	private NativeArray antList;
 	private NativeArray antListOld;
@@ -40,19 +42,21 @@ public class Stream extends IdScriptableObject {
 	private boolean initialized;
 
 	public Stream(ScriptableObject vis, Visualizer visualizer,
-			Scriptable scope, String name) {
+			InputStream inputStream, String name) {
 		activatePrototypeMap(MAX_ID);
-		setPrototype(getObjectPrototype(scope));
-		setParentScope(scope);
-		ScriptableObject.defineProperty(scope, name, this,
+		ScriptableObject global = visualizer.getGlobal();
+		setPrototype(getObjectPrototype(global));
+		setParentScope(global);
+		ScriptableObject.defineProperty(global, name, this,
 				ScriptableObject.DONTENUM);
 		replay = (ScriptableObject) visualizer.invoke(vis, "streamingInit",
 				null);
 		meta = (NativeObject) replay.get("meta", replay);
 		replaydata = (NativeObject) meta.get("replaydata", meta);
 		ants = (NativeArray) replaydata.get("ants", replaydata);
+		hills = (NativeArray) replaydata.get("hills", replaydata);
 		map = (NativeObject) replaydata.get("map", replaydata);
-		br = new BufferedReader(new InputStreamReader(System.in));
+		br = new BufferedReader(new InputStreamReader(inputStream));
 		turn = -2;
 		visualizer.addTask(new FunctionExecutionUnit(vis, "streamingStart",
 				null));
@@ -76,7 +80,7 @@ public class Stream extends IdScriptableObject {
 			if (line == null) {
 				tokens = new String[0];
 			} else {
-				line = line.trim().toLowerCase();
+				line = line.trim();
 				if (line.startsWith("#")) {
 					continue;
 				}
@@ -84,6 +88,9 @@ public class Stream extends IdScriptableObject {
 				tokens = new String[st.countTokens()];
 				for (int i = 0; i < tokens.length; i++) {
 					tokens[i] = st.nextToken();
+					if (i == 0) {
+						tokens[i] = tokens[i].toLowerCase();
+					}
 				}
 			}
 			// filter by keyword
@@ -103,6 +110,13 @@ public class Stream extends IdScriptableObject {
 					NativeArray counts = (NativeArray) replay.get("counts",
 							replay);
 					counts.put(turn, counts, countSet);
+					NativeArray storeSet = new NativeArray(players);
+					for (int i = 0; i < players; i++) {
+						storeSet.put(i, storeSet, 0);
+					}
+					NativeArray stores = (NativeArray) replay.get("stores",
+							replay);
+					stores.put(turn, stores, storeSet);
 					int duration = (line == null) ? turn - 1 : turn - 2;
 					replay.put("duration", replay, duration);
 					if (turn == 0) {
@@ -137,13 +151,32 @@ public class Stream extends IdScriptableObject {
 				char[] mapLine = tokens[1].toCharArray();
 				for (int i = 0; i < mapLine.length; i++) {
 					char c = mapLine[i];
+					int playerId = -1;
+					boolean isHill = false;
 					if (c >= 'a' && c <= 'z') {
-						int playerId = Character.getNumericValue(c) - 10;
+						playerId = Character.getNumericValue(c) - 10;
+					} else if (c >= 'A' && c <= 'Z') {
+						playerId = Character.getNumericValue(c) - 10;
+						isHill = true;
+					} else if (c >= '0' && c <= '9') {
+						playerId = Integer.parseInt("" + c);
+						isHill = true;
+					}
+					if (playerId == -1) {
+						wallsRow.put(i, wallsRow, c == '%');
+					} else {
 						if (players < playerId + 1) {
 							players = playerId + 1;
 						}
+						if (isHill) {
+							NativeArray hill = new NativeArray(4);
+							hill.put(0, hill, row);
+							hill.put(1, hill, i);
+							hill.put(2, hill, playerId);
+							hill.put(3, hill, 0);
+							hills.put((int) hills.getLength(), hills, hill);
+						}
 					}
-					wallsRow.put(i, wallsRow, c == '%');
 				}
 				walls.put(row, walls, wallsRow);
 				NativeArray mapRow = (NativeArray) map.get("data", map);
@@ -184,6 +217,19 @@ public class Stream extends IdScriptableObject {
 				} else if (owner.equals(ant.owner)) {
 					ant.toTurn++;
 					antList.put(antList.size(), antList, ant.js);
+				}
+			} else if ("h".equals(tokens[0])) {
+				int hillRow = Integer.parseInt(tokens[1]);
+				int hillCol = Integer.parseInt(tokens[2]);
+				int hillPlayer = Integer.parseInt(tokens[3]);
+				NativeArray hill;
+				for (int i = 0; i < players; i++) {
+					hill = (NativeArray) hills.get(i);
+					if ((Integer) hill.get(0) == hillRow
+							&& (Integer) hill.get(1) == hillCol
+							&& (Integer) hill.get(2) == hillPlayer) {
+						hill.put(3, hill, turn + 1);
+					}
 				}
 			} else if ("d".equals(tokens[0])) {
 				// ants died
@@ -245,6 +291,8 @@ public class Stream extends IdScriptableObject {
 						replay.put("scores", replay, scores);
 						NativeArray counts = new NativeArray(value + 1);
 						replay.put("counts", replay, counts);
+						NativeArray stores = new NativeArray(value + 1);
+						replay.put("stores", replay, stores);
 					}
 				}
 			}
@@ -301,11 +349,11 @@ class Ant {
 		this.owner = owner == Undefined.instance ? -1 : (Integer) owner;
 		this.toTurn = turn + 1;
 		if (this.owner == -1) {
-			js = (NativeObject) ScriptableObject.callMethod(replay, "spawnFood",
-					new Object[] { id, row, col, turn, owner });
+			js = (NativeObject) ScriptableObject.callMethod(replay,
+					"spawnFood", new Object[] { id, row, col, turn, owner });
 		} else {
-			js = (NativeObject) ScriptableObject.callMethod(replay, "spawnFood",
-					new Object[] { id, row, col, 0, owner });
+			js = (NativeObject) ScriptableObject.callMethod(replay,
+					"spawnFood", new Object[] { id, row, col, 0, owner });
 			if (owner != Undefined.instance) {
 				ScriptableObject.callMethod(replay, "convertAnt", new Object[] {
 						js, true, 0, owner });
