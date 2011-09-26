@@ -125,7 +125,7 @@ def _run_cmd(sandbox, cmd, timelimit):
 
 def check_path(path, errors):
     if not os.path.exists(path):
-        errors.append("Output file " + str(path) + " was not created.")
+        errors.append("Output file " + str(os.path.basename(path)) + " was not created.")
         return False
     else:
         return True
