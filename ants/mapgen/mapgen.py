@@ -45,8 +45,8 @@ class Grid():
 
         self.squares = [ ['%' for c in range(self.cols)] for r in range(self.rows) ]
         
-        self.add_ants()
-        a_block = self.make_block(self.a_loc, self.block_size)
+        self.add_starting_hills()
+        a_block = self.make_block(self.h_loc, self.block_size)
         self.add_block_land(a_block)
         return True
 
@@ -69,8 +69,8 @@ class Grid():
 
         self.squares = [ ['%' for c in range(self.cols)] for r in range(self.rows) ]
         
-        self.add_ants()
-        a_block = self.make_block(self.a_loc, self.block_size)
+        self.add_starting_hills()
+        a_block = self.make_block(self.h_loc, self.block_size)
         self.add_block_land(a_block)
         return True
 
@@ -91,7 +91,7 @@ class Grid():
                 self.no_players = lcm(self.rows/gcd(self.row_t, self.rows), 
                                       self.cols/gcd(self.col_t, self.cols))
 
-            self.a_loc = self.random_loc()
+            self.h_loc = self.random_loc()
 
             if self.rows <= self.max_dimensions and \
                self.cols <= self.max_dimensions and \
@@ -145,11 +145,11 @@ class Grid():
             visited = [ [False for c in range(self.cols)] for r in range(self.rows)]
             for a_attempt in range(2*self.rows):
                 while True:                
-                    self.a_loc = self.random_loc()
-                    if not visited[self.a_loc[0]][self.a_loc[1]]:
+                    self.h_loc = self.random_loc()
+                    if not visited[self.h_loc[0]][self.h_loc[1]]:
                         break
 
-                visited[self.a_loc[0]][self.a_loc[1]] = True
+                visited[self.h_loc[0]][self.h_loc[1]] = True
 
                 if self.rows <= self.max_dimensions and \
                    self.cols <= self.max_dimensions and \
@@ -164,7 +164,7 @@ class Grid():
         self.is_basis_loc = [ [False for c in range(self.cols)] for r in range(self.rows)]
         visited = [ [False for c in range(self.cols)] for r in range(self.rows)]
         
-        a_block = self.make_block(self.a_loc, self.block_size)
+        a_block = self.make_block(self.h_loc, self.block_size)
 
         queue = deque([a_block[0]])
         
@@ -296,9 +296,21 @@ class Grid():
 
     #checks whether the players start far enough apart
     def is_valid_start(self):
-        a_locs = self.get_symmetric_locs(self.a_loc)
+        h_locs = self.get_symmetric_locs(self.h_loc)
         for n in range(self.no_players-1):
-            if self.dist(a_locs[0], a_locs[n+1]) < self.min_starting_distance:
+            if self.dist(h_locs[0], h_locs[n+1]) < self.min_starting_distance:
+                return False
+        return True
+
+    #checks whether the hills start far enough apart
+    def is_valid_hill_loc(self, h_loc):
+        h_locs = self.get_symmetric_locs(h_loc)
+        for n in range(len(h_locs)-1):
+            if self.dist(h_locs[0], h_locs[n+1]) < self.min_starting_distance:
+                return False
+
+        for c_loc in self.h_locs:
+            if self.dist(c_loc, h_loc) < self.min_starting_distance:
                 return False
         return True
 
@@ -313,12 +325,32 @@ class Grid():
             self.add_land(loc)
 
     #adds ants to the map
-    def add_ants(self):
-        a_locs = self.get_symmetric_locs(self.a_loc)
+    def add_starting_hills(self):
+        h_locs = self.get_symmetric_locs(self.h_loc)
         player = '0'
         for n in range(self.no_players):
-            self.squares[a_locs[n][0]][a_locs[n][1]] = player
+            self.squares[h_locs[n][0]][h_locs[n][1]] = player
             player = chr(ord(player)+1)
+
+    #adds extra hills to the map
+    def add_extra_hills(self):
+        self.h_locs = self.get_symmetric_locs(self.h_loc)
+
+        for h in range(self.no_hills-1):
+            for d_attempt in range(100):
+                h_loc = self.random_loc()
+                if self.is_valid_hill_loc(h_loc):
+                    break
+
+            if not self.is_valid_hill_loc(h_loc):
+                return
+
+            player = '0'
+            h_locs = self.get_symmetric_locs(h_loc)
+            for n in range(self.no_players):
+                self.squares[h_locs[n][0]][h_locs[n][1]] = player
+                self.h_locs.append(h_locs[n])
+                player = chr(ord(player)+1)
 
     #outputs the grid in the expected format
     def print_grid(self):
@@ -332,7 +364,7 @@ class Grid():
     #adds land to a water map using backtracking "recursively"
     def add_land_with_recursive_backtracking(self):
         stack = []  
-        c_loc = self.a_loc
+        c_loc = self.h_loc
         c_block = self.make_block(c_loc, self.block_size)
         visited = [ [False for c in range(self.cols)] for r in range(self.rows)]
 
@@ -384,7 +416,7 @@ class Grid():
         for extra_loc in range(extra_locs):
             block_found = False
             for b_attempt in range(100):
-                c_block = self.make_block(self.a_loc, self.block_size)
+                c_block = self.make_block(self.h_loc, self.block_size)
 
                 r_directions = self.random_directions()
                 for d in r_directions:
@@ -424,8 +456,8 @@ class Grid():
         visited = [ [False for c in range(self.cols)] for r in range(self.rows)]
         w_locs = []
 
-        stack = [self.a_loc]
-        visited[self.a_loc[0]][self.a_loc[1]] = True
+        stack = [self.h_loc]
+        visited[self.h_loc[0]][self.h_loc[1]] = True
 
         while stack:
             c_loc = stack.pop()
@@ -466,7 +498,7 @@ class Grid():
 
         t_loc = [random.randint(1, self.rows-2), random.randint(1, self.cols-2)]
 
-        self.a_loc = self.get_translate_loc(self.a_loc, t_loc)
+        self.h_loc = self.get_translate_loc(self.h_loc, t_loc)
 
         for r in range(self.rows):
             for c in range(self.cols):
@@ -480,6 +512,14 @@ def main(argv):
                       type="int", default=-1,
                       help="Minimum number of players to be used")
 
+    parser.add_option("--min_hills", dest="min_hills",
+                      type="int", default=1,
+                      help="Minimum number of hills for each player")
+
+    parser.add_option("--max_hills", dest="max_hills",
+                      type="int", default=9,
+                      help="Maximum number of hills for each player")
+
     parser.add_option("--min_dimensions", dest="min_dimensions",
                       type="int", default=60,
                       help="Minimum number of rows/cols to be used")
@@ -488,7 +528,7 @@ def main(argv):
                       help="Maximum number of rows/cols to be used")
 
     parser.add_option("--min_starting_distance", dest="min_starting_distance",
-                      type="int", default=30**2,
+                      type="int", default=10**2,
                       help="Minimum starting distance between ants")
 
     parser.add_option("--symmetry", dest="symmetry",
@@ -511,6 +551,9 @@ def main(argv):
     if (opts.no_players < min_players and opts.no_players != -1)\
             or opts.no_players > max_players:
         print "Invalid number of players"
+        return
+    if opts.min_hills < 1 or opts.max_hills < opts.min_hills:
+        print "Invalid min/max number of hills per player"
         return
     if opts.min_dimensions < 1 or opts.max_dimensions < opts.min_dimensions:
         print "Invalid min/max dimensions parameters"
@@ -535,6 +578,9 @@ def main(argv):
 
     #creates the map
     grid = Grid()
+
+    #works out how many hills to have
+    grid.no_hills = random.randint(opts.min_hills, opts.max_hills)
 
     #works out the type of symmetry
     if opts.symmetry == "rotational":
@@ -576,6 +622,7 @@ def main(argv):
     grid.add_extra_land_blocks()
     grid.add_extra_land_locs()
     grid.make_symmetric()    
+    grid.add_extra_hills()
     grid.translate() #this will make it (even) harder to determine some symmetries
 
     grid.print_grid()
