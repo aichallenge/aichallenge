@@ -306,14 +306,28 @@ if @min_players <= @max_players then
             left outer join temp_recent r
                 on r.user_id = s.user_id
             -- join in user to user game counts to provide round-robin like logic
-            left outer join opponents o
-                on o.user_id = @seed_id and o.opponent_id = s.user_id,
-            -- get count of all active submissions to limit to top 10%
-            (
-                select count(*) as submission_count
-                from submission
-                where latest = 1 and status = 40
-            ) s_count
+            left outer join (
+                select opponent_id, sum(game_count) as game_count
+                from (
+                    select *
+                    from opponents o
+                    where o.user_id in (
+                        select user_id
+                        from tmp_matchup_player mp
+                        where mp.matchup_id = @matchup_id
+                    )
+                    union
+                    select *
+                    from temp_opponents o
+                    where o.user_id in (
+                        select user_id
+                        from tmp_matchup_player mp
+                        where mp.matchup_id = @matchup_id
+                    )
+                ) ao
+                group by opponent_id
+            ) o
+                on o.opponent_id = s.user_id
             -- pareto distribution
             -- the size of the pool of available players will follow a pareto distribution
             -- where the minimum is 10 and 80% of the values will be <= 30
