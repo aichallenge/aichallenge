@@ -1370,8 +1370,9 @@ class Ants(Game):
             self.score[players[0]] += self.bonus[players[0]]
 
         # record score in score history
+        # update last score to include bonus
         for i, s in enumerate(self.score):
-            self.score_history[i].append(s)
+            self.score_history[i][-1] = s
 
         self.calc_significant_turns()
 
