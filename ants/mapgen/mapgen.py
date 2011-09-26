@@ -304,6 +304,9 @@ class Grid():
 
     #checks whether the hills start far enough apart
     def is_valid_hill_loc(self, h_loc):
+        if self.squares[h_loc[0]][h_loc[1]] != '.':
+            return False
+
         h_locs = self.get_symmetric_locs(h_loc)
         for n in range(len(h_locs)-1):
             if self.dist(h_locs[0], h_locs[n+1]) < self.min_starting_distance:
