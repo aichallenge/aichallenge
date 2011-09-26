@@ -103,6 +103,8 @@ if @min_players <= @max_players then
     set @last_user_id = -1;
     set @player_count = 1;
 
+    -- create list of recent games by user_id
+    -- used to keep the matchups even across all users
     drop temporary table if exists temp_recent;
     create temporary table temp_recent (
         user_id int,
@@ -116,8 +118,56 @@ if @min_players <= @max_players then
             on g.game_id = gp.game_id
         where g.timestamp > timestampadd(hour, -24, current_timestamp)
         group by user_id;
+    -- update with current matchups
+    insert into temp_recent (user_id, recent_games)
+        select mp.user_id, 0 as recent_games
+        from matchup_player mp
+        inner join matchup m
+            on mp.matchup_id = m.matchup_id
+        where (m.worker_id >= 0 or m.worker_id is null)
+        and m.deleted = 0
+        and not exists (
+            select user_id
+            from game_player gp
+            inner join game g
+                on g.game_id = gp.game_id
+            where g.timestamp > timestampadd(hour, -24, current_timestamp)
+            and gp.user_id = mp.user_id
+        )
+        group by mp.user_id;
+    update temp_recent
+    inner join (
+        select mp.user_id, count(*) as recent_games
+        from matchup_player mp
+        inner join matchup m
+            on mp.matchup_id = m.matchup_id
+        where (m.worker_id >= 0 or m.worker_id is null)
+        and m.deleted = 0
+        group by mp.user_id
+     ) r
+        on temp_recent.user_id = r.user_id
+     set temp_recent.recent_games = temp_recent.recent_games + r.recent_games;
 
-
+    -- create list of recent opponent matchups
+    -- used to keep matchups even for a user across all other users
+    drop temporary table if exists temp_opponents;
+    create temporary table temp_opponents (
+        user_id int,
+        opponent_id int,
+        game_count int,
+        primary key (user_id, opponent_id)
+    );
+    insert into temp_opponents
+        select mp1.user_id, mp2.user_id as opponent_id, count(*)
+        from tmp_matchup m
+        inner join tmp_matchup_player mp1
+            on m.matchup_id = mp1.matchup_id
+        inner join matchup_player mp2
+            on m.matchup_id = mp2.matchup_id
+        where (m.worker_id >= 0 or m.worker_id is null)
+        and m.deleted = 0
+        group by mp1.user_id, mp2.user_id;
+        
     while @player_count < @players do
                 
             -- select list of opponents with match quality
@@ -142,15 +192,12 @@ if @min_players <= @max_players then
                         from matchup_player
                         where matchup_id = @matchup_id
                     )
-                    -- exclude players currently in a matchup
+                    -- exclude players currently in the matchup
                     and not exists (
                         select *
-                        from matchup m
-                        inner join matchup_player mp
-                            on mp.matchup_id = m.matchup_id
-                        where mp.user_id = s.user_id
-                        and (m.worker_id >= 0 or m.worker_id is null)
-                        and m.deleted = 0
+                        from tmp_matchup_player mp
+                        where mp.matchup_id = @matchup_id
+                        and mp.user_id = s.user_id
                     )
                     and s.latest = 1 and s.status = 40
                     group by s.user_id, s.submission_id, s.mu, s.sigma
@@ -161,14 +208,28 @@ if @min_players <= @max_players then
             left outer join temp_recent r
                 on r.user_id = s.user_id
             -- join in user to user game counts to provide round-robin like logic
-            left outer join opponents o
-                on o.user_id = @seed_id and o.opponent_id = s.user_id,
-            -- get count of all active submissions to limit to top 10%
-            (
-                select count(*) as submission_count
-                from submission
-                where latest = 1 and status = 40
-            ) s_count
+            left outer join (
+                select opponent_id, sum(game_count) as game_count
+                from (
+                    select *
+                    from opponent o
+                    where o.user_id in (
+                        select user_id
+                        from matchup_player mp
+                        where mp.matchup_id = @matchup_id
+                    )
+                    union
+                    select *
+                    from temp_opponent o
+                    where o.user_id in (
+                        select user_id
+                        from matchup_player mp
+                        where mp.matchup_id = @matchup_id
+                    )
+                ) ao
+                group by opponent_id
+            ) o
+                on o.opponent_id = s.user_id
             -- pareto distribution
             -- the size of the pool of available players will follow a pareto distribution
             -- where the minimum is 10 and 80% of the values will be <= 30
