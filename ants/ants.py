@@ -1618,7 +1618,7 @@ class Ants(Game):
         replay['hive_history'] = self.hive_history
         replay['winning_turn'] = self.winning_turn
         replay['ranking_turn'] = self.ranking_turn
-        replay['cutoff'] = self.cutoff
+        replay['cutoff'] = 'turn limit reached' if self.cutoff is None else self.cutoff
 
         return replay
 

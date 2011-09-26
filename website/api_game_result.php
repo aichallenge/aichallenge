@@ -80,7 +80,7 @@ if (array_key_exists('error', $gamedata)) {
     if (!contest_query("insert_game_data",
                        $gamedata->replaydata->turns,
                        $gamedata->game_length,
-                       $gamedata->replaydata->cutoff ? '1' : '0',
+                       $gamedata->replaydata->cutoff,
                        $gamedata->replaydata->winning_turn,
                        $gamedata->replaydata->ranking_turn,
                        $gamedata->matchup_id)) {
