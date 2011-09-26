@@ -456,12 +456,22 @@ class Worker:
         result = run_game(game, bots, options)
         if 'status' in result:
             if result['status'][1] in ('crashed', 'timeout', 'invalid'):
-                msg = 'TestBot is not operational\n' + uni_to_ascii(result['errors'][1])
+                if type(result['errors'][1]) == unicode:
+                    errors_str = uni_to_ascii(result['errors'][1])
+                else:
+                    errors_str = '["'+ '","'.join(uni_to_ascii(e) for e in
+                        result['errors'][1]) + '"]'
+                msg = 'TestBot is not operational\n' + errors_str
                 log.error(msg)
                 return msg
             log.info(result['status'][0]) # player 0 is the bot we are testing
             if result['status'][0] in ('crashed', 'timeout', 'invalid'):
-                log.info(uni_to_ascii(result['errors'][0]))
+                if type(result['errors'][1]) == unicode:
+                    errors_str = uni_to_ascii(result['errors'][0])
+                else:
+                    errors_str = '["'+ '","'.join(uni_to_ascii(e) for e in
+                        result['errors'][0]) + '"]'
+                log.info(errors_str)
                 return result['errors'][0]
         elif 'error' in result:
             msg = 'Function Test failure: ' + uni_to_ascii(result['error'])

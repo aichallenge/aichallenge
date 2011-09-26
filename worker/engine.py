@@ -15,9 +15,9 @@ class HeadTail(object):
     def __init__(self, file, max_capture=510):
         self.file = file
         self.max_capture = max_capture
-        self.capture_head = ''
+        self.capture_head = u''
         self.capture_head_len = 0
-        self.capture_tail = ''
+        self.capture_tail = u''
     def write(self, data):
         if self.file:
             self.file.write(data)
@@ -47,9 +47,9 @@ class HeadTail(object):
         return self.capture_tail
     def headtail(self):
         if self.capture_head != '' and self.capture_tail != '':
-            sep = '\n..\n'
+            sep = u'\n..\n'
         else:
-            sep = ''
+            sep = u''
         return self.capture_head + sep + self.capture_tail
 
 def run_game(game, botcmds, options):
@@ -165,7 +165,7 @@ def run_game(game, botcmds, options):
             for b, errors in enumerate(error_lines):
                 if errors:
                     if error_logs and error_logs[b]:
-                        error_logs[b].write('\n'.join(errors)+'\n')
+                        error_logs[b].write(u'\n'.join(errors)+u'\n')
             # set status for timeouts and crashes
             for b, status in enumerate(statuses):
                 if status != None:
@@ -347,7 +347,7 @@ def get_moves(game, bots, bot_nums, time_limit, turn):
             if bot_finished[b]:
                 continue # already got bot moves
             if not bot.is_alive:
-                error_lines[b].append('turn %4d bot %s crashed' % (turn, bot_nums[b]))
+                error_lines[b].append(u'turn %4d bot %s crashed' % (turn, bot_nums[b]))
                 statuses[b] = 'crashed'
                 line = bot.read_error()
                 while line != None:
@@ -383,7 +383,7 @@ def get_moves(game, bots, bot_nums, time_limit, turn):
     # kill timed out bots
     for b, finished in enumerate(bot_finished):
         if not finished:
-            error_lines[b].append('turn %4d bot %s timed out' % (turn, bot_nums[b]))
+            error_lines[b].append(u'turn %4d bot %s timed out' % (turn, bot_nums[b]))
             statuses[b] = 'timeout'
             bot = bots[b]
             for x in range(100):

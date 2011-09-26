@@ -10,16 +10,16 @@ from optparse import OptionParser
 cdirections = ['N', 'E', 'S', 'W']
 directions = {'N': (-1,0), 'S': (1,0), 'E': (0,1), 'W': (0,-1)}
 
-#game parameters    
+#game parameters
 min_players = 2
 max_players = 8
 
-#functions	
+#functions
 def gcd(a, b):
     while b:
         a, b = b, a%b
     return a
-        
+
 def lcm(a, b):
     if a == 0 and b == 0:
         return 0
@@ -44,7 +44,7 @@ class Grid():
             return False
 
         self.squares = [ ['%' for c in range(self.cols)] for r in range(self.rows) ]
-        
+
         self.add_starting_hills()
         a_block = self.make_block(self.h_loc, self.block_size)
         self.add_block_land(a_block)
@@ -63,12 +63,12 @@ class Grid():
         self.min_starting_distance = min_starting_distance
         self.min_block_size = min_block_size
         self.max_block_size = max_block_size
-            
+
         if not self.pick_rotational_dimensions():
             return False
 
         self.squares = [ ['%' for c in range(self.cols)] for r in range(self.rows) ]
-        
+
         self.add_starting_hills()
         a_block = self.make_block(self.h_loc, self.block_size)
         self.add_block_land(a_block)
@@ -76,7 +76,7 @@ class Grid():
 
     #picks valid dimensions for a tile symmetric grid
     def pick_tile_dimensions(self):
-        original_no_players = self.no_players    
+        original_no_players = self.no_players
         for d_attempt in range(200000):
             self.block_size = random.randint(self.min_block_size, self.max_block_size)
             self.rows = random.randint(self.min_dimensions, self.max_dimensions)
@@ -88,14 +88,14 @@ class Grid():
             self.col_t = random.randint(3, self.cols-3)
 
             if original_no_players == -1:
-                self.no_players = lcm(self.rows/gcd(self.row_t, self.rows), 
+                self.no_players = lcm(self.rows/gcd(self.row_t, self.rows),
                                       self.cols/gcd(self.col_t, self.cols))
 
             self.h_loc = self.random_loc()
 
             if self.rows <= self.max_dimensions and \
                self.cols <= self.max_dimensions and \
-               self.no_players == lcm(self.rows/gcd(self.row_t, self.rows), 
+               self.no_players == lcm(self.rows/gcd(self.row_t, self.rows),
                                   self.cols/gcd(self.col_t, self.cols) ) and \
                self.no_players >= min_players and \
                self.no_players <= max_players and\
@@ -144,7 +144,7 @@ class Grid():
 
             visited = [ [False for c in range(self.cols)] for r in range(self.rows)]
             for a_attempt in range(2*self.rows):
-                while True:                
+                while True:
                     self.h_loc = self.random_loc()
                     if not visited[self.h_loc[0]][self.h_loc[1]]:
                         break
@@ -163,11 +163,11 @@ class Grid():
         self.is_basis_block = [ [False for c in range(self.cols)] for r in range(self.rows)]
         self.is_basis_loc = [ [False for c in range(self.cols)] for r in range(self.rows)]
         visited = [ [False for c in range(self.cols)] for r in range(self.rows)]
-        
+
         a_block = self.make_block(self.h_loc, self.block_size)
 
         queue = deque([a_block[0]])
-        
+
         self.is_basis_block[a_block[0][0]][a_block[0][1]] = True
         for loc in a_block:
             self.is_basis_loc[loc[0]][loc[1]] = True
@@ -185,11 +185,11 @@ class Grid():
                 n_loc = n_block[0]
                 if not visited[n_loc[0]][n_loc[1]]:
                     queue.append(n_loc)
-                    
+
                     self.is_basis_block[n_loc[0]][n_loc[1]] = True
                     for loc in n_block:
-                        self.is_basis_loc[loc[0]][loc[1]] = True     
-                        self.basis_locs.append(loc)             
+                        self.is_basis_loc[loc[0]][loc[1]] = True
+                        self.basis_locs.append(loc)
                         s_locs = self.get_symmetric_locs(loc)
                         for s_loc in s_locs:
                             visited[s_loc[0]][s_loc[1]] = True
@@ -207,13 +207,13 @@ class Grid():
         return [random.randint(0, self.rows-1), random.randint(0, self.cols-1)]
 
     #returns the new location after moving in a particular direction
-    def get_loc(self, loc, direction):                                    
-        dr, dc = directions[direction]                              
+    def get_loc(self, loc, direction):
+        dr, dc = directions[direction]
         return [(loc[0]+dr)%self.rows, (loc[1]+dc)%self.cols ]
 
     #returns the new location after translating it by t_amount = [rt, ct]
     def get_translate_loc(self, loc, t_amount):
-        return [(loc[0]+t_amount[0])%self.rows, 
+        return [(loc[0]+t_amount[0])%self.rows,
                 (loc[1]+t_amount[1])%self.cols ]
 
     #returns a symmetrically equivalent location as specified by num
@@ -226,7 +226,7 @@ class Grid():
             return [self.rows - loc[0]-1, self.cols - loc[1]-1]
         elif num == 4: #diagonal/transpose
             return [loc[1], loc[0]]
-        elif num == 5: # horizontal then vertical then diagonal 
+        elif num == 5: # horizontal then vertical then diagonal
             return [self.rows - loc[1]-1, self.cols - loc[0]-1]
         elif num == 6: # horizontal then diagonal
             return [self.rows - loc[1]-1, loc[0]]
@@ -236,7 +236,7 @@ class Grid():
     #returns a list of the symmetric locations for all players
     def get_symmetric_locs(self, loc):
         locs = [loc]
-        
+
         if self.symmetry == "tile":
             n_loc = loc
             for n in range(self.no_players-1):
@@ -266,7 +266,7 @@ class Grid():
     #makes a block inside the map
     def make_block(self, loc, block_size):
         block = []
-        
+
         for row_t in range(block_size):
             for col_t in range(block_size):
                 block.append(self.get_translate_loc(loc, [row_t, col_t]))
@@ -284,7 +284,7 @@ class Grid():
         for n in range(int(math.sqrt(len(block)))):
             block = self.get_block(block, direction)
         return block
-    
+
 
     #returns the euclidean distance (squared) between two squares
     def dist(self, loc1, loc2):
@@ -318,7 +318,7 @@ class Grid():
     def add_land(self, loc):
         if self.squares[loc[0]][loc[1]] == '%':
             self.squares[loc[0]][loc[1]] = '.'
-    
+
     #add land information for a block
     def add_block_land(self, block):
         for loc in block:
@@ -363,7 +363,7 @@ class Grid():
 
     #adds land to a water map using backtracking "recursively"
     def add_land_with_recursive_backtracking(self):
-        stack = []  
+        stack = []
         c_loc = self.h_loc
         c_block = self.make_block(c_loc, self.block_size)
         visited = [ [False for c in range(self.cols)] for r in range(self.rows)]
@@ -371,32 +371,32 @@ class Grid():
         while True:
             visited[c_loc[0]][c_loc[1]] = True
             neighbour_found = False
-            
+
             r_directions = self.random_directions()
-            for d in r_directions:                
+            for d in r_directions:
                 n_block = self.get_adjacent_block(c_block, d)
                 n_loc = n_block[0]
 
                 if not self.is_basis_block[n_loc[0]][n_loc[1]]: #can't carve here
-                    continue                
+                    continue
 
                 t_block = self.get_adjacent_block(n_block, d)
                 t_loc = t_block[0]
                 f_loc = t_block[0]
                 f_block = t_block
 
-                if not self.is_basis_block[t_loc[0]][t_loc[1]]:   
-                    f_loc = c_loc 
+                if not self.is_basis_block[t_loc[0]][t_loc[1]]:
+                    f_loc = c_loc
                     f_block = self.make_block(c_loc, self.block_size)
-                
+
                 if not visited[t_loc[0]][t_loc[1]]:
-                    if self.is_basis_block[t_loc[0]][t_loc[1]]:       
+                    if self.is_basis_block[t_loc[0]][t_loc[1]]:
                         stack.append(c_loc)
                         self.add_block_land(n_block)
-                        self.add_block_land(f_block)              
+                        self.add_block_land(f_block)
                     elif random.randint(1,3) == 1:
                         self.add_block_land(n_block)
-                        
+
                     c_loc = f_loc
                     c_block = self.make_block(c_loc, self.block_size)
                     neighbour_found = True
@@ -449,7 +449,7 @@ class Grid():
                 return
             for loc in c_block:
                 if self.is_basis_loc[loc[0]][loc[1]]:
-                    self.add_land(loc) 
+                    self.add_land(loc)
 
     #adds extra land locations to the map
     def add_extra_land_locs(self):
@@ -463,7 +463,7 @@ class Grid():
             c_loc = stack.pop()
             for d in directions:
                 n_loc = self.get_loc(c_loc, d)
-                
+
                 if not visited[n_loc[0]][n_loc[1]]:
                     if self.is_basis_loc[n_loc[0]][n_loc[1]] and \
                        self.squares[n_loc[0]][n_loc[1]] == '%':
@@ -479,7 +479,7 @@ class Grid():
             self.add_land(w_locs[r_square])
             w_locs.remove(w_locs[r_square])
             if len(w_locs) == 0:
-                break   
+                break
 
     #makes the map symmetric
     def make_symmetric(self):
@@ -544,7 +544,7 @@ def main(argv):
     parser.add_option("--max_block_size", dest="max_block_size",
                       type="int", default=4,
                       help="Maximum block size to be used")
-    
+
     (opts,_) = parser.parse_args(argv)
 
     #makes sure the parameters are valid
@@ -563,7 +563,7 @@ def main(argv):
         return
     if opts.symmetry == "rotational":
         if opts.no_players != -1 and opts.no_players != 2 and\
-           opts.no_players != 4 and opts.no_players != 8:   
+           opts.no_players != 4 and opts.no_players != 8:
             print "Invalid number of players for a rotationally symmetric map"
             return
         if opts.rotational_symmetry != -1:
@@ -574,7 +574,7 @@ def main(argv):
                 or (opts.no_players == 8 and opts.rotational_symmetry != 1)   \
                 or (opts.rotational_symmetry < 0 or opts.rotational_symmetry > 5):
                 print "Invalid rotational symmetry type for the number of players"
-                return 
+                return
 
     #creates the map
     grid = Grid()
@@ -599,7 +599,7 @@ def main(argv):
 
     #constructs a water filled grid
     if grid.symmetry == "rotational":
-        if not grid.rotationally_symmetric_grid(opts.no_players, 
+        if not grid.rotationally_symmetric_grid(opts.no_players,
                                          opts.min_dimensions, opts.max_dimensions,
                                          opts.min_starting_distance,
                                          opts.min_block_size, opts.max_block_size,
@@ -621,7 +621,7 @@ def main(argv):
     grid.add_land_with_recursive_backtracking()
     grid.add_extra_land_blocks()
     grid.add_extra_land_locs()
-    grid.make_symmetric()    
+    grid.make_symmetric()
     grid.add_extra_hills()
     grid.translate() #this will make it (even) harder to determine some symmetries
 
