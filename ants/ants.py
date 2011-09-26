@@ -96,11 +96,6 @@ class Ants(Game):
         self.hive_food = [0]*self.num_players # food waiting to spawn for player
         self.hive_history = [[0] for _ in range(self.num_players)]
 
-        # initialize scores
-        self.score = [0]*self.num_players
-        self.bonus = [0]*self.num_players
-        self.score_history = [[s] for s in self.score]
-
         # used to cutoff games early
         self.cutoff = None
         self.cutoff_bot = LAND # Can be ant owner, FOOD or LAND
@@ -125,11 +120,20 @@ class Ants(Game):
             self.map[row][col] = WATER
 
         # initialize hills
+        hill_count = 0
         for owner, locs in map_data['hills'].items():
+            if owner == 0:
+                hill_count += 1
             for loc in locs:
                 hill = self.add_hill(loc, owner)
                 self.add_ant(hill)               
 
+        # initialize scores
+        # points start at # of hills to prevent negative scores
+        self.score = [hill_count]*self.num_players
+        self.bonus = [0]*self.num_players
+        self.score_history = [[s] for s in self.score]
+        
         # for new games
         # ants are ignored and 1 ant is created per hill
         # food is ignored
