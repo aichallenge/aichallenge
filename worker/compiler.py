@@ -290,7 +290,7 @@ languages = (
     Language("VB", BOT +".exe", "MyBot.vb",
         "mono MyBot.exe",
         [BOT + ".exe"],
-        [(["*.vb"], ExternalCompiler(comp_args["VB"][0]))]
+        [(["*.vb"], ExternalCompiler(comp_args["VB"][0], vglobs=['MyBot.exe']))]
     ),
     Language("C++", BOT, "MyBot.cc",
         "./MyBot",
