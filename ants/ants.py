@@ -163,11 +163,11 @@ class Ants(Game):
         # the engine may kill players before the game starts and this is needed to prevent errors
         self.orders = [[] for i in range(self.num_players)]
 
-    def distance(self, x, y):
+    def distance(self, a_loc, b_loc):
         """ Returns distance between x and y squared """
-        d_row = abs(x[0] - y[0])
+        d_row = abs(a_loc[0] - b_loc[0])
         d_row = min(d_row, self.height - d_row)
-        d_col = abs(x[1] - y[1])
+        d_col = abs(a_loc[1] - b_loc[1])
         d_col = min(d_col, self.width - d_col)
         return d_row**2 + d_col**2
 
@@ -643,7 +643,7 @@ class Ants(Game):
                 # hill must not be razed or occupied to be used
                 # player must have food in hive to spawn
                 if (self.hive_food[player] > 0 and
-                        not hill.loc in self.current_ants):
+                        hill.loc not in self.current_ants):
                     new_ant_locations.append(hill)
                     self.hive_food[player] -= 1
             
@@ -1197,6 +1197,26 @@ class Ants(Game):
                             "There are no valid orientation sets")
         return valid_orientations
 
+    def get_initial_vision_squares(self):
+        """ Get initial squares in bots vision that are traversable 
+        
+            flood fill from each starting hill up to the vision radius
+        """
+        vision_squares = {}
+        for hill in self.hills.values():
+            squares = deque()
+            squares.append(hill.loc)
+            while squares:
+                c_loc = squares.popleft()
+                vision_squares[c_loc] = True
+                for d in AIM.values():
+                    n_loc = self.destination(c_loc, d)
+                    if (n_loc not in vision_squares
+                            and self.map[n_loc[0]][n_loc[1]] != WATER and
+                            self.distance(hill.loc, n_loc) <= self.viewradius):
+                        squares.append(n_loc)
+        return vision_squares    
+        
     def get_symmetric_food_sets(self, starting=False):
         """ Split map into sets of squares
 
@@ -1221,6 +1241,9 @@ class Ants(Game):
         # aim for ant 0 will always be 0
         ant0 = self.map_symmetry[0][0]
 
+        if starting:
+            vision_squares = self.get_initial_vision_squares()
+            
         for row, squares in enumerate(visited):
             for col, square in enumerate(squares):
                 # if this square has been visited then we don't need to process
@@ -1234,11 +1257,7 @@ class Ants(Game):
                     
                 if starting:
                     # skip locations outside of initial ants' view radius
-                    for ant in self.initial_ant_list:
-                        if self.distance(ant.loc, (row, col)) <= self.viewradius:
-                            break
-                    else:
-                        # square not close enough to any starting ant
+                    if (row, col) not in vision_squares:
                         continue
 
                 # offset to ant 0
@@ -1498,7 +1517,7 @@ class Ants(Game):
             Used by engine for ending bot states
         """
         s = self.switch[player]
-        return [None if not i in s else data[s.index(i)]
+        return [None if i not in s else data[s.index(i)]
                 for i in range(max(len(data),self.num_players))]
 
     def get_stats(self):
