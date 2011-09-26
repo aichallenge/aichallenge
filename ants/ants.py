@@ -623,8 +623,8 @@ class Ants(Game):
             row, col = ant.loc
             self.map[row][col] = ant.owner
 
-    def do_spawn(self):
-        """ Spawn new ants from food
+    def do_gather(self):
+        """ Gather food
 
             If there are no ants within spawnradius of a food then
               the food remains.
@@ -634,19 +634,7 @@ class Ants(Game):
             If ants of more than one owner are within spawnradius of a food
               then that food disappears.
         """
-        # Determine new ant locations
-        new_ant_locations = []
-        for player in range(self.num_players):
-            player_hills = sorted(self.player_hills(player),
-                                  key=lambda hill: (hill.last_touched, random()))
-            for hill in player_hills:
-                # hill must not be razed or occupied to be used
-                # player must have food in hive to spawn
-                if (self.hive_food[player] > 0 and
-                        hill.loc not in self.current_ants):
-                    new_ant_locations.append(hill)
-                    self.hive_food[player] -= 1
-            
+        
         # gather food
         for f_loc in self.current_food.keys():
             # find the owners of all the ants near the food
@@ -655,16 +643,31 @@ class Ants(Game):
             )
 
             if len(nearby_players) == 1:
-                # spawn food because there is only one player near the food
+                # gather food because there is only one player near the food
                 owner = nearby_players.pop()
                 self.remove_food(f_loc, owner)
             elif nearby_players:
                 # remove food because it is contested
                 self.remove_food(f_loc)
 
-        # Create new ants
-        for hill in new_ant_locations:
-            self.add_ant(hill)
+    def do_spawn(self):
+        """ Spawn new ants at hills from hive amount
+
+            Ants spawn at hills.  The least recently touched hill has priority.
+            Ties are done randomly.  The bot can control by standing over a hill
+            to prevent spawning where they don't want to spawn.
+        """
+        # Determine new ant locations
+        for player in range(self.num_players):
+            player_hills = sorted(self.player_hills(player),
+                                  key=lambda hill: (hill.last_touched, random()))
+            for hill in player_hills:
+                # hill must not be razed or occupied to be used
+                # player must have food in hive to spawn
+                if (self.hive_food[player] > 0 and
+                        hill.loc not in self.current_ants):
+                    self.hive_food[player] -= 1
+                    self.add_ant(hill)
 
     def add_food(self, loc):
         """ Add food to a location
@@ -1381,6 +1384,7 @@ class Ants(Game):
         self.do_attack()
         self.do_raze_hills()
         self.do_spawn()
+        self.do_gather()
         self.food_extra += Fraction(self.food_rate * self.num_players, self.food_turn)
         food_now = int(self.food_extra)
         left_over = self.do_food(food_now)
