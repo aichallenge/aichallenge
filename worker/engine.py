@@ -77,6 +77,7 @@ def run_game(game, botcmds, options):
 
     bots = []
     bot_status = []
+    bot_turns = []
     if capture_errors:
         error_logs = [HeadTail(log) for log in error_logs]
     try:
@@ -88,10 +89,12 @@ def run_game(game, botcmds, options):
             sandbox.start(bot_cmd)
             bots.append(sandbox)
             bot_status.append('survived')
+            bot_turns.append(0)
 
             # ensure it started
             if not sandbox.is_alive:
                 bot_status[-1] = 'crashed 0'
+                bot_turns[-1] = 0
                 if verbose_log:
                     verbose_log.write('bot %s did not start\n' % b)
                 game.kill_player(b)
@@ -122,6 +125,7 @@ def run_game(game, botcmds, options):
                         if input_logs and input_logs[b]:
                             input_logs[b].write(state)
                             input_logs[b].flush()
+                        bot_turns[b] = turn
 
             if turn > 0:
                 if stream_log:
@@ -166,6 +170,7 @@ def run_game(game, botcmds, options):
             for b, status in enumerate(statuses):
                 if status != None:
                     bot_status[b] = status
+                    bot_turns[b] = turn
 
             # process all moves
             bot_alive = [game.is_alive(b) for b in range(len(bots))]
@@ -191,6 +196,7 @@ def run_game(game, botcmds, options):
                             if strict:
                                 game.kill_player(b)
                                 bot_status[b] = 'invalid'
+                                bot_turns[b] = turn
                             if error_logs and error_logs[b]:
                                 error_logs[b].write('turn %4d bot %s invalid actions:\n' % (turn, b))
                                 error_logs[b].write('\n'.join(invalid)+'\n')
@@ -212,8 +218,10 @@ def run_game(game, botcmds, options):
                     verbose_log.write('turn %4d bot %s eliminated\n' % (turn, b))
                 if bot_status[b] == 'survived': # could be invalid move
                     bot_status[b] = 'eliminated'
+                    bot_turns[b] = turn
                 score_line ='score %s\n' % ' '.join([str(s) for s in game.get_scores(b)])
                 status_line = 'status %s\n' % ' '.join(map(str, game.order_for_player(b, bot_status)))
+                status_line += 'playerturns %s\n' % ' '.join(map(str, game.order_for_player(b, bot_turns)))
                 end_line = 'end\nplayers %s\n' % len(bots) + score_line + status_line
                 state = end_line + game.get_player_state(b) + 'go\n'
                 bots[b].write(state)
@@ -254,6 +262,7 @@ def run_game(game, botcmds, options):
         game.finish_game()
         score_line ='score %s\n' % ' '.join(map(str, game.get_scores()))
         status_line = 'status %s\n' % ' '.join(bot_status)
+        status_line += 'playerturns %s\n' % ' '.join(bot_turns)
         end_line = 'end\nplayers %s\n' % len(bots) + score_line + status_line
         if stream_log:
             stream_log.write(end_line)
@@ -267,6 +276,7 @@ def run_game(game, botcmds, options):
             if game.is_alive(b):
                 score_line ='score %s\n' % ' '.join([str(s) for s in game.get_scores(b)])
                 status_line = 'status %s\n' % ' '.join(map(str, game.order_for_player(b, bot_status)))
+                status_line += 'playerturns %s\n' % ' '.join(map(str, game.order_for_player(b, bot_turns)))
                 end_line = 'end\nplayers %s\n' % len(bots) + score_line + status_line
                 state = end_line + game.get_player_state(b) + 'go\n'
                 bot.write(state)
@@ -300,8 +310,8 @@ def run_game(game, botcmds, options):
             'challenge': game.__class__.__name__.lower(),
             'location': location,
             'game_id': game_id,
-            'player_info': [{} for x in range(len(bots))],
             'status': bot_status,
+            'playerturns': bot_turns,
             'score': scores,
             'rank': [sorted(scores, reverse=True).index(x) for x in scores],
             'replayformat': 'json',
