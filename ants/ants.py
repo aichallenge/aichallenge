@@ -1310,18 +1310,18 @@ class Ants(Game):
         for player in range(self.num_players):
             if self.is_alive(player) and self.has_hills(player):
                 max_score = sum([HILL_POINTS for hill in self.hills.values()
-                                 if hill.killed_by == None
+                                 if hill.killed_by is None
                                  and hill.owner != player]) + self.score[player]
                 for opponent in range(self.num_players):
-                    min_score = sum([RAZE_POINTS for hill in self.hills.values()
-                                     if hill.killed_by == None
-                                     and hill.owner == opponent]) + self.score[opponent]
-                    if ((self.score[player] < self.score[opponent]
-                            and max_score >= min_score)
-                            or (self.score[player] == self.score[opponent]
-                            and max_score > min_score)):
-                        return True
-                    
+                    if player != opponent:
+                        min_score = sum([RAZE_POINTS for hill in self.hills.values()
+                                         if hill.killed_by is None
+                                         and hill.owner == opponent]) + self.score[opponent]
+                        if ((self.score[player] < self.score[opponent]
+                                and max_score >= min_score)
+                                or (self.score[player] == self.score[opponent]
+                                and max_score > min_score)):
+                            return True                    
         return False
     
     def game_over(self):
