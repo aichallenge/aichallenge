@@ -1,4 +1,6 @@
-﻿Public Enum Tile
+Imports System.Collections.Generic
+
+Public Enum Tile
     ANTS = 0
     DEAD = -1
     LAND = -2
@@ -49,6 +51,7 @@ Public Class Ants
     Private TurnStartTime As DateTime
 
     Public Sub ParseSetup(ByVal data As List(Of String))
+        Dim line as String
         For Each line In data
             Dim token As String() = line.Split()
             Dim value As Long
@@ -100,6 +103,7 @@ Public Class Ants
         Me.DeadList.Clear()
 
         ' Parse input
+        Dim line As String
         For Each line In data
             Dim token As String() = line.Split()
             Try
@@ -148,6 +152,7 @@ Public Class Ants
 
     Public Function MyHills() As List(Of Location)
         Dim hills As List(Of Location) = New List(Of Location)
+        Dim hill As Location
         For Each hill In Me.HillList
             If hill.Value = 0 Then
                 hills.Add(hill.Key)
@@ -158,6 +163,7 @@ Public Class Ants
 
     Public Function EnemyHills() As List(Of Location)
         Dim hills As List(Of Location) = New List(Of Location)
+        Dim hill As Location
         For Each hill In Me.HillList
             If hill.Value <> 0 Then
                 hills.Add(hill.Key)
@@ -168,6 +174,7 @@ Public Class Ants
 
     Public Function MyAnts() As List(Of Location)
         Dim ants As List(Of Location) = New List(Of Location)
+        Dim ant As Location
         For Each ant In Me.AntList
             If ant.Value = 0 Then
                 ants.Add(ant.Key)
@@ -178,6 +185,7 @@ Public Class Ants
 
     Public Function EnemyAnts() As List(Of Location)
         Dim ants As List(Of Location) = New List(Of Location)
+        Dim ant As Location
         For Each ant In Me.AntList
             If ant.Value <> 0 Then
                 ants.Add(ant.Key)

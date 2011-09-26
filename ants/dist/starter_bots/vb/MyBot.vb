@@ -1,4 +1,6 @@
-﻿Module MyBot
+Imports System.Collections.Generic
+
+Module MyBot
 
     Class MyBot
         Implements Bot
@@ -7,8 +9,10 @@
         End Sub
 
         Public Sub DoTurn(ByVal a As Ants) Implements Bot.DoTurn
+            Dim antLoc as Location
             For Each antLoc In a.MyAnts()
                 Dim directions() As Direction = {Direction.n, Direction.e, Direction.s, Direction.w}
+                Dim d as Direction
                 For Each d In directions
                     Dim newLoc = a.Destination(antLoc, d)
                     If a.Passable(newLoc) Then
