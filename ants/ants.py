@@ -1373,6 +1373,8 @@ class Ants(Game):
         for i, s in enumerate(self.score):
             self.score_history[i].append(s)
 
+        self.calc_significant_turns()
+
     def start_turn(self):
         """ Called by engine at the start of the turn """
         self.turn += 1
@@ -1426,7 +1428,9 @@ class Ants(Game):
         else:
             self.cutoff_bot = LAND
             self.cutoff_turns = 0
+        self.calc_significant_turns()
 
+    def calc_significant_turns(self):
         ranking_bots = [sorted(set(self.score), reverse=True).index(x) for x in self.score]
         if self.ranking_bots != ranking_bots:
             self.ranking_turn = self.turn
