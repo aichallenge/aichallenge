@@ -12,6 +12,7 @@ from hashlib import md5
 import time
 import stat
 import platform
+import unicodedata
 import traceback
 import tempfile
 from copy import copy, deepcopy
@@ -55,6 +56,10 @@ STATUS_TEST_ERROR = 80
 # get game from ants dir
 sys.path.append(os.path.join(server_info.get('repo_path', '..'), 'ants'))
 from ants import Ants
+
+
+def uni_to_ascii(ustr):
+    return unicodedata.normalize('NFKD', ustr).encode('ascii','ignore')
 
 class CD(object):
     def __init__(self, new_dir):
@@ -312,12 +317,6 @@ class Worker:
                 if status != 40:
                     if type(errors) != list:
                         errors = [errors] # for valid json
-                    # get rid of any binary garbage by decoding to UTF-8
-                    for i in range(len(errors)):
-                        try:
-                            errors[i] = errors[i].decode("UTF-8", "replace")
-                        except AttributeError:
-                            pass
                     result['errors'] = json.dumps(errors)
                 return self.cloud.post_result('api_compile_result', result)
             else:
@@ -375,7 +374,7 @@ class Worker:
                 log.info(errors)
                 if not self.debug:
                     shutil.rmtree(download_dir)
-                log.error(str(errors))
+                log.error(uni_to_ascii(errors))
                 log.error(detected_lang)
                 report(STATUS_COMPILE_ERROR, detected_lang, errors=errors);
                 log.error("Compile Error")
@@ -458,15 +457,15 @@ class Worker:
         result = run_game(game, bots, options)
         if 'status' in result:
             if result['status'][1] in ('crashed', 'timeout', 'invalid'):
-                msg = 'TestBot is not operational\n' + str(result['errors'][1])
+                msg = 'TestBot is not operational\n' + uni_to_ascii(result['errors'][1])
                 log.error(msg)
                 return msg
             log.info(result['status'][0]) # player 0 is the bot we are testing
             if result['status'][0] in ('crashed', 'timeout', 'invalid'):
-                log.info(str(result['errors'][0]))
+                log.info(uni_to_ascii(result['errors'][0]))
                 return result['errors'][0]
         elif 'error' in result:
-            msg = 'Function Test failure: ' + str(result['error'])
+            msg = 'Function Test failure: ' + uni_to_ascii(result['error'])
             log.error(msg)
             return msg
         return None
