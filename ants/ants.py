@@ -1369,6 +1369,12 @@ class Ants(Game):
                                            and hill.owner != players[0]])
             self.score[players[0]] += self.bonus[players[0]]
 
+        # record score in score history
+        for i, s in enumerate(self.score):
+            self.score_history[i].append(s)
+
+        self.calc_significant_turns()
+
     def start_turn(self):
         """ Called by engine at the start of the turn """
         self.turn += 1
@@ -1422,14 +1428,15 @@ class Ants(Game):
         else:
             self.cutoff_bot = LAND
             self.cutoff_turns = 0
+        self.calc_significant_turns()
 
-        scores = [int(score) for score in self.score]
-        ranking_bots = [sorted(set(scores), reverse=True).index(x) for x in scores]
+    def calc_significant_turns(self):
+        ranking_bots = [sorted(set(self.score), reverse=True).index(x) for x in self.score]
         if self.ranking_bots != ranking_bots:
             self.ranking_turn = self.turn
         self.ranking_bots = ranking_bots
 
-        winning_bot = [p for p in range(len(scores)) if scores[p] == max(scores)]
+        winning_bot = [p for p in range(len(self.score)) if self.score[p] == max(self.score)]
         if self.winning_bot != winning_bot:
             self.winning_turn = self.turn
         self.winning_bot = winning_bot
@@ -1516,9 +1523,9 @@ class Ants(Game):
             Used by engine for ranking
         """
         if player is None:
-            return [int(score) for score in self.score]
+            return self.score
         else:
-            return self.order_for_player(player, map(int, self.score))
+            return self.order_for_player(player, self.score)
 
     def order_for_player(self, player, data):
         """ Orders a list of items for a players perspective of player #
