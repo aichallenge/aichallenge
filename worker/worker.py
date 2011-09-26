@@ -474,7 +474,7 @@ class Worker:
                 log.info(errors_str)
                 return result['errors'][0]
         elif 'error' in result:
-            msg = 'Function Test failure: ' + uni_to_ascii(result['error'])
+            msg = 'Function Test failure: ' + result['error']
             log.error(msg)
             return msg
         return None
