@@ -1364,6 +1364,7 @@ class Ants(Game):
             self.bonus[players[0]] += sum([HILL_POINTS for hill in self.hills.values()
                                            if hill.killed_by == None
                                            and hill.owner != players[0]])
+            self.score[players[0]] += self.bonus[players[0]]
 
     def start_turn(self):
         """ Called by engine at the start of the turn """
