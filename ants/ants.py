@@ -1367,12 +1367,10 @@ class Ants(Game):
         # FOOD can end the game as well, since no one is gathering it
         pop_count = defaultdict(int)
         for ant in self.current_ants.values():
-            print ant.owner
             pop_count[ant.owner] += 1
         pop_count[FOOD] = len(self.current_food)
         pop_total = sum(pop_count.values())
         for owner, count in pop_count.items():
-            print self.score, owner
             if (count >= pop_total * self.cutoff_percent):
                 if self.cutoff_bot == owner:
                     self.cutoff_turns += 1
