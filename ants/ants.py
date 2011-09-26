@@ -1329,14 +1329,16 @@ class Ants(Game):
               winner remaining.
         """
         if len(self.remaining_players()) <= 1:
+            self.cutoff = 'lone survivor'
             return True
         if self.cutoff_turns >= self.cutoff_turn:
             if self.cutoff_bot == FOOD:
-                self.cutoff = 'food'
+                self.cutoff = 'food not being gathered'
             else:
-                self.cutoff = 'ants'
+                self.cutoff = 'ants not razing hills'
             return True
         if not self.can_rank_change():
+            self.cutoff = 'rank stabilized'
             return True
         return False
 
