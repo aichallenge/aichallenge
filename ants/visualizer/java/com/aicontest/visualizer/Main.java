@@ -7,7 +7,9 @@ import java.awt.GraphicsDevice;
 import java.awt.Panel;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 
@@ -24,7 +26,8 @@ public class Main implements IVisualizerUser, WindowListener {
 	public static void main(String[] args) {
 		try {
 			if (args.length > 1) {
-				System.out.println("The visualizer takes a replay file as its only argument. If no argument is given, stdin is used.");
+				System.out
+						.println("The visualizer takes a replay file as its only argument. If no argument is given, stdin is used.");
 			} else if (args.length == 0) {
 				new Main();
 			} else {
@@ -36,19 +39,36 @@ public class Main implements IVisualizerUser, WindowListener {
 		}
 	}
 
-	private ScriptableObject init() throws InstantiationException, IllegalAccessException, IOException {
+	private ScriptableObject init() throws InstantiationException,
+			IllegalAccessException, IOException {
 		visualizer = new Visualizer(this, 640, 640);
 		HTMLDocument document = visualizer.getDomWindow().getDocument();
 		ScriptableObject options = visualizer.construct("Options", null);
 		options.put("data_dir", options, "/");
-		return visualizer.construct("Visualizer", new Object[] { document, options });
+		return visualizer.construct("Visualizer", new Object[] { document,
+				options });
 	}
 
-	public Main(String replay) throws InstantiationException, IllegalAccessException, IOException, URISyntaxException {
+	public Main(String replay) throws InstantiationException,
+			IllegalAccessException, IOException, URISyntaxException {
+		if (replay.endsWith(".stream")) {
+			startStream(new FileInputStream(replay));
+		} else {
+			startReplay(replay);
+		}
+	}
+
+	private void startStream(InputStream inputStream) throws InstantiationException, IllegalAccessException, IOException {
+		new Stream(init(), visualizer, inputStream, "stream");
+		visualizer.loop();
+	}
+
+	private void startReplay(String replay) throws URISyntaxException, InstantiationException, IllegalAccessException, IOException {
 		URI uri = null;
 		try {
 			uri = new URI(replay);
-		} catch (URISyntaxException e) {}
+		} catch (URISyntaxException e) {
+		}
 		if (uri == null || uri.getScheme() == null) {
 			uri = new URI("file", replay, null);
 		}
@@ -57,9 +77,9 @@ public class Main implements IVisualizerUser, WindowListener {
 		visualizer.loop();
 	}
 
-	public Main() throws IOException, InstantiationException, IllegalAccessException {
-		new Stream(init(), visualizer, visualizer.getGlobal(), "stream");
-		visualizer.loop();
+	public Main() throws IOException, InstantiationException,
+			IllegalAccessException {
+		startStream(System.in);
 	}
 
 	@Override
@@ -108,7 +128,8 @@ public class Main implements IVisualizerUser, WindowListener {
 	}
 
 	@Override
-	public void windowOpened(WindowEvent e) {}
+	public void windowOpened(WindowEvent e) {
+	}
 
 	@Override
 	public void windowClosing(WindowEvent e) {
@@ -117,17 +138,22 @@ public class Main implements IVisualizerUser, WindowListener {
 	}
 
 	@Override
-	public void windowClosed(WindowEvent e) {}
+	public void windowClosed(WindowEvent e) {
+	}
 
 	@Override
-	public void windowIconified(WindowEvent e) {}
+	public void windowIconified(WindowEvent e) {
+	}
 
 	@Override
-	public void windowDeiconified(WindowEvent e) {}
+	public void windowDeiconified(WindowEvent e) {
+	}
 
 	@Override
-	public void windowActivated(WindowEvent e) {}
+	public void windowActivated(WindowEvent e) {
+	}
 
 	@Override
-	public void windowDeactivated(WindowEvent e) {}
+	public void windowDeactivated(WindowEvent e) {
+	}
 }

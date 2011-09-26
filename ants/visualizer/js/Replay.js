@@ -151,7 +151,9 @@ function Replay(replay, debug, swapUser) {
 		this.meta['replayformat'] = format;
 		this.meta['replaydata'] = {
 			'map' : {},
-			'ants' : []
+			'ants' : [],
+			'food' : [],
+			'hills' : []
 		};
 		this.duration = -1;
 		this.hasDuration = true;
