@@ -264,23 +264,28 @@ $contest_sql = array(
             on game.worker_id = -m.worker_id
         where timestamp > timestampadd(minute, -15, current_timestamp)
         group by game.worker_id;",
-    "select_next_game_in" => "select @players_ahead as players_ahead,
-               Round(@players_per_minute, 1) as players_per_minute,
+    "select_next_game_in" => "select ahead.players as players_ahead,
+               Round(per_minute.players, 1) as players_per_minute,
+               Round(per_minute.games, 1) as games_per_minute,
                @time_used as time_used,
-               @players_ahead / @players_per_minute as next_game_in,
-               Round(@players_ahead / @players_per_minute - @time_used, 1) as next_game_in_adjusted
+               -- average per game and per player guesses
+               Round((ahead.players / per_minute.players + ahead.players / per_minute.games) / 2, 1) as next_game_in,
+               Round((ahead.players / per_minute.players + ahead.players / per_minute.games) / 2 - @time_used, 1) as next_game_in_adjusted
         from
-        (select @players_ahead := ((select count(*) from submission where latest = 1 and status = 40) -
-               (select count(distinct user_id) from game_player
-                where game_id >
-                    (select max(game_id) from game_player where user_id = %s)
-               ))) c1,
-        (select @players_per_minute := (select count(*)/30
-                from game
-                inner join game_player
-                    on game.game_id = game_player.game_id
-                where timestamp > timestampadd(minute, -30, current_timestamp)
-               )) c2,
+        (
+            select count(*) as players
+            from game g
+            inner join game_player gp
+                on g.game_id = gp.game_id
+                and g.timestamp > timestampadd(minute, -30, current_timestamp);
+        ) ahead,
+        (
+            select count(distinct g.game_id)/30 as games, count(*)/30 as players
+            from game g
+            inner join game_player gp
+                on g.game_id = gp.game_id
+                and g.timestamp > timestampadd(minute, -30, current_timestamp);
+        ) per_minute,
         (select @time_used := ifnull((select avg(timestampdiff(second, matchup_timestamp, current_timestamp)/60)
                                from matchup
                                where deleted = 0

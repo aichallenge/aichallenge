@@ -202,26 +202,29 @@ echo <<<EOT
 EOT;
 }
     echo "<p><strong>Rank:</strong> <span class=\"stats\">$rank</span> <strong>Skill:</strong> <span class=\"stats\">$skill</span></p>";
-
-    $in_game_result = contest_query("select_in_game", $user_id);
-    if ($in_game_result and mysql_num_rows($in_game_result) > 0) {
-        echo "<p><strong>In Game:</strong> Playing in a game right now.</p>";
-    } else {    
-        $next_game_result = contest_query("select_next_game_in", $user_id);
-        if ($next_game_result) {
-            while ($next_game_row = mysql_fetch_assoc($next_game_result)) {
-                echo "<p><strong>Next Game:</strong> ".$next_game_row["players_ahead"]." players are ahead.<br />";
-                echo "The current game rate is about ".$next_game_row["players_per_minute"]." players per minute.<br />";
-                if ($next_game_row["players_per_minute"] == 0) {
-                    echo "Next game could take awhile...";
-                } else {
-                    echo "Next game should be within ".$next_game_row["next_game_in_adjusted"]." minutes.";
+    if ($user_id &&
+            logged_in_with_valid_credentials() &&
+            current_user_id() === $user_id) {
+        $in_game_result = contest_query("select_in_game", $user_id);
+        if ($in_game_result and mysql_num_rows($in_game_result) > 0) {
+            echo "<p><strong>In Game:</strong> Playing in a game right now.</p>";
+        } else {    
+            $next_game_result = contest_query("select_next_game_in", $user_id);
+            if ($next_game_result) {
+                while ($next_game_row = mysql_fetch_assoc($next_game_result)) {
+                    echo "<p><strong>Next Game:</strong> ".$next_game_row["players_ahead"]." players are ahead.<br />";
+                    echo "The current game rate is about ".$next_game_row["players_per_minute"]." players per minute.<br />";
+                    if ($next_game_row["players_per_minute"] == 0) {
+                        echo "Next game could take awhile...";
+                    } else {
+                        echo "Next game should be within ".$next_game_row["next_game_in_adjusted"]." minutes.";
+                    }
+                    echo "<br />Page refreshed at ".date(DATE_ATOM).".";
+                    echo "</p>";
                 }
-                echo "<br />Page refreshed at ".date(DATE_ATOM).".";
-                echo "</p>";
+            } else {
+                echo "<p><strong>Next Game:</strong> The current game rate is unavailable. :'(</p>";
             }
-        } else {
-            echo "<p><strong>Next Game:</strong> The current game rate is unavailable. :'(</p>";
         }
     }
 
