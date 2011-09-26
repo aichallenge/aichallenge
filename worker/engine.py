@@ -262,7 +262,7 @@ def run_game(game, botcmds, options):
         game.finish_game()
         score_line ='score %s\n' % ' '.join(map(str, game.get_scores()))
         status_line = 'status %s\n' % ' '.join(bot_status)
-        status_line += 'playerturns %s\n' % ' '.join(bot_turns)
+        status_line += 'playerturns %s\n' % ' '.join(map(str, bot_turns))
         end_line = 'end\nplayers %s\n' % len(bots) + score_line + status_line
         if stream_log:
             stream_log.write(end_line)
