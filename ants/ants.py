@@ -1392,11 +1392,13 @@ class Ants(Game):
 
         # record score in score history
         for i, s in enumerate(self.score):
-            self.score_history[i].append(s)
+            if self.is_alive(i):
+                self.score_history[i].append(s)
             
         # record hive_food in hive_history
         for i, f in enumerate(self.hive_food):
-            self.hive_history[i].append(f)
+            if self.is_alive(i):
+                self.hive_history[i].append(f)
 
         # now that all the ants have moved we can update the vision
         self.update_vision()
