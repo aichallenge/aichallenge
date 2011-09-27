@@ -54,6 +54,8 @@ type tgame_state =
     turn : int;
     my_ants : ant list;
     enemy_ants : ant list;
+    my_hills : ((int * int) * int) list;
+    enemy_hills : ((int * int) * int) list;
     dead_ants : ant list;
     food : (int * int) list;
     tmap: mapb array array; 
@@ -191,8 +193,22 @@ let clear_gstate gs =
          test_row.(count_col) <- clear_tile test_row.(count_col)
       done
    done;
-   {gs with my_ants = []; enemy_ants = []; dead_ants = []; food = []}
+   {gs with my_ants = []; enemy_ants = []; dead_ants = []; food = [];
+         my_hills = []; enemy_hills = []}
   )
+;;
+
+let add_hill gstate row col owner =
+   try
+     (
+      match owner with
+       | 0 ->
+            {gstate with my_hills = (((row, col), owner) :: gstate.my_hills)}
+       | n ->
+            {gstate with enemy_hills = 
+               (((row, col), owner) :: gstate.enemy_hills)}
+     )
+   with _ -> gstate
 ;;
 
 let add_ant gstate row col owner =
@@ -237,6 +253,7 @@ let add_line gstate line =
        match ad with
         | "a" -> add_ant gstate row col owner
         | "d" -> add_dead_ant gstate row col owner
+        | "h" -> add_hill gstate row col owner
         | bd -> gstate)
     (sscanf_cps "%s %d %d"
       (fun fw row col ->
@@ -515,6 +532,9 @@ class swrap state =
    method get_state = state
    method turn = state.turn
    method my_ants = state.my_ants
+   method enemy_ants = state.enemy_ants
+   method my_hills = state.my_hills
+   method enemy_hills = state.enemy_hills
    method get_map = state.tmap
    method get_player_seed = state.setup.player_seed
 (*
@@ -551,6 +571,8 @@ let loop engine =
       turn = 0;
       my_ants = [];
       enemy_ants = [];
+      my_hills = [];
+      enemy_hills = [];
       dead_ants = [];
       food = [];
       tmap = Array.make_matrix 1 1 proto_tile; 
