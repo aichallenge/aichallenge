@@ -1289,7 +1289,7 @@ class Ants(Game):
 
     # Common functions for all games
 
-    def can_rank_change(self):
+    def is_rank_stabilized(self):
         """ Determine if the rank can be changed by bots with hills.
 
             Determines if there are enough hills left for any player to overtake
@@ -1310,8 +1310,8 @@ class Ants(Game):
                                 and max_score >= min_score)
                                 or (self.score[player] == self.score[opponent]
                                 and max_score > min_score)):
-                            return True
-        return False
+                            return False
+        return True
 
     def game_over(self):
         """ Determine if the game is over
@@ -1329,7 +1329,7 @@ class Ants(Game):
             else:
                 self.cutoff = 'ants not razing hills'
             return True
-        if not self.can_rank_change():
+        if self.is_rank_stabilized():
             self.cutoff = 'rank stabilized'
             return True
         return False
