@@ -319,7 +319,8 @@ languages = (
     Language("Erlang", "my_bot.beam", "my_bot.erl",
         "erl -hms"+ str(MEMORY_LIMIT) +"m -smp disable -noshell -s my_bot start -s init stop",
         ["*.beam"],
-        [(["*.erl"], TargetCompiler(comp_args["Erlang"][0], targets["Erlang"]))]
+        [(["*.erl"],
+            TargetCompiler(comp_args["Erlang"][0], targets["Erlang"], ""))]
     ),
     Language("Go", BOT, "MyBot.go",
         "./MyBot",
