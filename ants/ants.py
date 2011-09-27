@@ -1295,8 +1295,10 @@ class Ants(Game):
         return food_sets
 
     def remaining_players(self):
-        """ Return the number of players still alive """
-        return [p for p in range(self.num_players) if self.is_alive(p)]
+        """ Return the number of players still alive with a hill """
+        living = [p for p in range(self.num_players) if self.is_alive(p)]
+        has_hill = [h.owner for h in self.hills.values() if h.killed_by is None]
+        return list(set(living) & set(has_hill))
 
     # Common functions for all games
 
