@@ -27,6 +27,7 @@ if(file_exists('server_message.html')) {
     include 'visualizer_widget.php';
     visualize_game($game_id=strval($last_game_id),false,550,550);
 ?>
+<p>Browse other <a href="games.php">recent games here</a>.</p>
 
 <h2>Planet Wars Final Rankings</h2>
 <p>Congratulations to this term's winner, <a href="http://quotenil.com/">
