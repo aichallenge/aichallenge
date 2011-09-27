@@ -149,11 +149,11 @@ Visualizer = function(container, options, w, h, configOverrides) {
 		/** @private */
 		this.imgMgr = new ImageManager(imgDir, new Delegate(this, this.completedImages));
 		this.imgMgr.add('water.png');
+		this.imgMgr.add('hill.png');
 		if (this.state.options['decorated']) {
 			this.imgMgr.add('playback.png');
 			this.imgMgr.add('fog.png');
 			this.imgMgr.add('toolbar.png');
-			this.imgMgr.add('hill.png');
 			/** @private */
 			this.btnMgr = new ButtonManager(null);
 			/** @private */
@@ -557,6 +557,14 @@ Visualizer.prototype.tryStart = function() {
 	// XmlHttpRequest callback
 	if (this.state.replay) {
 		if (!this.main.ctx) return;
+		// colorize ant hill
+		colors = [];
+		for (i = 0; i < this.state.replay.players; i++) {
+			colors.push(this.state.replay.meta['playercolors'][i]);
+		}
+		this.imgMgr.colorize(1, colors);
+		this.antsMap.setHillImage(this.imgMgr.patterns[1]);
+		// add GUI
 		if (this.state.options['decorated']) {
 			if (this.imgMgr.error) return;
 			if (this.imgMgr.pending) return;
@@ -589,18 +597,11 @@ Visualizer.prototype.tryStart = function() {
 			if (this.state.replay.hasDuration) {
 				this.addPlayerButtons();
 			}
-			// colorize ant hill
-			colors = [];
-			for (i = 0; i < this.state.replay.players; i++) {
-				colors.push(this.state.replay.meta['playercolors'][i]);
-			}
-			this.imgMgr.colorize(4, colors);
-			this.antsMap.setHillImage(this.imgMgr.patterns[4]);
 			// add static buttons
 			if (this.state.options['interactive']) {
 				if (!this.btnMgr.groups['playback']) {
 					if (this.state.replay.hasDuration) {
-						bg = this.btnMgr.addImageGroup('playback', this.imgMgr.images[1],
+						bg = this.btnMgr.addImageGroup('playback', this.imgMgr.images[2],
 								ImageButtonGroup.HORIZONTAL, ButtonGroup.MODE_NORMAL, 2, 0);
 
 						dlg = new Delegate(this, function() {
@@ -633,7 +634,7 @@ Visualizer.prototype.tryStart = function() {
 						bg.addButton(2, dlg, 'jump to end of the last turn');
 					}
 
-					bg = this.btnMgr.addImageGroup('toolbar', this.imgMgr.images[3],
+					bg = this.btnMgr.addImageGroup('toolbar', this.imgMgr.images[4],
 							ImageButtonGroup.VERTICAL, ButtonGroup.MODE_NORMAL, 2, 0);
 
 					if (this.state.config.hasLocalStorage()) {
@@ -687,8 +688,8 @@ Visualizer.prototype.tryStart = function() {
 				}
 				// generate fog images
 				if (this.state.replay.hasDuration) {
-					this.imgMgr.colorize(2, colors);
-					bg = this.btnMgr.addImageGroup('fog', this.imgMgr.patterns[2],
+					this.imgMgr.colorize(3, colors);
+					bg = this.btnMgr.addImageGroup('fog', this.imgMgr.patterns[3],
 							ImageButtonGroup.VERTICAL, ButtonGroup.MODE_RADIO, 2);
 					var buttonAdder = function(fog) {
 						var dlg = new Delegate(vis, vis.showFog);
@@ -709,7 +710,7 @@ Visualizer.prototype.tryStart = function() {
 			if (this.state.options['decorated']) {
 				this.director.onstate = function() {
 					var btn = vis.btnMgr.groups['playback'].buttons[4];
-					btn.offset = (vis.director.playing() ? 7 : 4) * vis.imgMgr.images[1].height;
+					btn.offset = (vis.director.playing() ? 7 : 4) * vis.imgMgr.images[2].height;
 					if (btn === vis.btnMgr.pinned) {
 						vis.btnMgr.pinned = null;
 					}
