@@ -39,7 +39,7 @@ struct State
     bool gameover;
 
     std::vector<std::vector<Square> > grid;
-    std::vector<Location> myAnts, enemyAnts, food;
+    std::vector<Location> myAnts, enemyAnts, myHills, enemyHills, food;
 
     Timer timer;
     Bug bug;

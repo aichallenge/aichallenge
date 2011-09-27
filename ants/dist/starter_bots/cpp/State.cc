@@ -27,6 +27,8 @@ void State::reset()
 {
     myAnts.clear();
     enemyAnts.clear();
+    myHills.clear();
+    enemyHills.clear();
     food.clear();
     for(int row=0; row<rows; row++)
         for(int col=0; col<cols; col++)
@@ -120,6 +122,8 @@ ostream& operator<<(ostream &os, const State &state)
                 os << '%';
             else if(state.grid[row][col].isFood)
                 os << '*';
+            else if(state.grid[row][col].isHill)
+                os << (char)('A' + state.grid[row][col].hillPlayer);
             else if(state.grid[row][col].ant >= 0)
                 os << (char)('a' + state.grid[row][col].ant);
             else if(state.grid[row][col].isVisible)
@@ -224,6 +228,17 @@ istream& operator>>(istream &is, State &state)
             {
                 is >> row >> col >> player;
                 state.grid[row][col].deadAnts.push_back(player);
+            }
+            else if(inputType == "h")
+            {
+                is >> row >> col >> player;
+                state.grid[row][col].isHill = 1;
+                state.grid[row][col].hillPlayer = player;
+                if(player == 0)
+                    state.myHills.push_back(Location(row, col));
+                else
+                    state.enemyHills.push_back(Location(row, col));
+
             }
             else if(inputType == "players") //player information
                 is >> state.noPlayers;
