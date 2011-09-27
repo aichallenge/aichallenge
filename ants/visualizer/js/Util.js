@@ -33,6 +33,14 @@ Math.clamp = function(x, min, max) {
 	return x < min ? min : x > max ? max : x;
 };
 
+Math.dist_2 = function(x1, y1, x2, y2, w, h) {
+	var dx = Math.abs(x1 - x2);
+	var dy = Math.abs(y1 - y2);
+	dx = Math.min(dx, w - dx);
+	dy = Math.min(dy, h - dy);
+	return dx * dx + dy * dy;
+};
+
 /**
  * A set of browser quirks, that can be queried to take alternate code paths.
  * 

@@ -329,6 +329,8 @@ function Replay(replay, debug, swapUser) {
 					stack.pop();
 				}
 				stack.pop();
+			} else {
+				replay['hills'] = [];
 			}
 
 			// ants

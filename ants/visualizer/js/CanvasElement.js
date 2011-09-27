@@ -565,7 +565,7 @@ CanvasElementAntsMap.prototype.checkState = function() {
  * @returns {Boolean} true, if the internal list has changed since the last call of this method
  */
 CanvasElementAntsMap.prototype.collectAntsAroundCursor = function() {
-	var col, row, ar, sr, colPixels, rowPixels, drawList, i, k, ant, dr, dc;
+	var col, row, ar, sr, colPixels, rowPixels, drawList, i, k, ant, d, owned;
 	var found;
 	var circledAnts = [];
 	var hash = undefined;
@@ -583,12 +583,9 @@ CanvasElementAntsMap.prototype.collectAntsAroundCursor = function() {
 			drawList = this.drawStates[hash];
 			for (i = drawList.length - 1; i >= 0; i--) {
 				ant = drawList[i];
-				dr = Math.abs(row - ant.mapY);
-				dc = Math.abs(col - ant.mapX);
-				dr = Math.min(dr, rowPixels - dr);
-				dc = Math.min(dc, colPixels - dc);
-				if (ant['owner'] === undefined && (dr * dr + dc * dc <= sr)
-						|| ant['owner'] !== undefined && (dr * dr + dc * dc <= ar)) {
+				d = Math.dist_2(col, row, ant.mapX, ant.mapY, colPixels, rowPixels);
+				owned = ant['owner'] !== undefined;
+				if (!owned && (d <= sr) || owned && (d <= ar)) {
 					if (same) {
 						found = false;
 						for (k = 0; k < this.circledAnts.length; k++) {
@@ -623,30 +620,70 @@ CanvasElementAntsMap.prototype.draw = function() {
 	this.ctx.drawImage(this.map.canvas, 0, 0);
 
 	// hills
+	halfScale = 0.5 * this.scale;
 	hills = this.state.replay.meta['replaydata']['hills'];
-	if (hills) {
-		for (i = 0; i < hills.length; i++) {
-			hill = hills[i];
-			xs = (hill[1] - 1) * this.scale;
-			ys = (hill[0] - 1) * this.scale;
-			w = 3 * this.scale;
-			d = 60 * hill[2];
-			if (this.turn >= hill[3]) {
-				this.drawWrapped(xs, ys, 3 * this.scale, 3 * this.scale, this.w, this.h,
-						function() {
-							this.ctx.drawImage(this.hillImage, d, 60, 60, 60, xs, ys, w, w);
-						}, []);
-			} else {
-				this.drawWrapped(xs, ys, 3 * this.scale, 3 * this.scale, this.w, this.h,
-						function() {
-							this.ctx.drawImage(this.hillImage, d, 0, 60, 60, xs, ys, w, w);
-						}, []);
+	this.ctx.lineWidth = this.scale;
+	for (i = 0; i < hills.length; i++) {
+		hill = hills[i];
+		x1 = (hill[1] - 1) * this.scale;
+		y1 = (hill[0] - 1) * this.scale;
+		x2 = (hill[1] + 0.5) * this.scale;
+		y2 = (hill[0] + 0.5) * this.scale;
+		w = 3 * this.scale;
+		dx = 60 * hill[2];
+		if (this.turn >= hill[3]) {
+			// dead
+			this.drawWrapped(x1, y1, 3 * this.scale, 3 * this.scale, this.w, this.h, function() {
+				this.ctx.drawImage(this.hillImage, dx, 60, 60, 60, x1, y1, w, w);
+			}, []);
+		} else {
+			// or alive
+			r = this.scale * (3 + this.time);
+			outer: for (hash in this.drawStates) {
+				drawList = this.drawStates[hash];
+				for (n = drawList.length - 1; n >= 0; n--) {
+					kf = drawList[n];
+					if (kf['owner'] !== undefined && kf['owner'] !== hill[2]) {
+						d = Math.dist_2(this.scale * hill[1], this.scale * hill[0], kf.mapX,
+								kf.mapY, this.w, this.h);
+						if (r * r > d) {
+							r = Math.sqrt(d);
+							if (r < 3 * this.scale) {
+								r = 3 * this.scale;
+								break outer;
+							}
+						}
+					}
+				}
 			}
+			r -= this.scale;
+			this.ctx.strokeStyle = this.state.replay.htmlPlayerColors[hill[2]];
+			this.ctx.fillStyle = this.state.replay.htmlPlayerColors[hill[2]];
+			this.drawWrapped(x2 - r, y2 - r, 2 * r, 2 * r, this.w, this.h, function() {
+				if (r > 0) {
+					var alpha = r / halfScale;
+					this.ctx.globalAlpha = Math.min(1, 0.04 + 3 / alpha);
+					this.ctx.beginPath();
+					this.ctx.arc(x2, y2, r, 0, 2 * Math.PI, false);
+					this.ctx.stroke();
+					this.ctx.globalAlpha = Math.min(1, 0.02 + 2 / alpha);
+					this.ctx.beginPath();
+					this.ctx.arc(x2, y2, r - this.scale, 0, 2 * Math.PI, false);
+					this.ctx.stroke();
+				}
+				this.ctx.globalAlpha = 0.3;
+				this.ctx.beginPath();
+				this.ctx.arc(x2, y2, 3 * this.scale, 0, 2 * Math.PI, false);
+				this.ctx.stroke();
+				this.ctx.globalAlpha = 1;
+			}, []);
+			this.drawWrapped(x1, y1, 3 * this.scale, 3 * this.scale, this.w, this.h, function() {
+				this.ctx.drawImage(this.hillImage, dx, 0, 60, 60, x1, y1, w, w);
+			}, []);
 		}
 	}
 
 	// draw ants sorted by color
-	halfScale = 0.5 * this.scale;
 	for (hash in this.drawStates) {
 		this.ctx.fillStyle = hash;
 		drawList = this.drawStates[hash];
@@ -939,13 +976,15 @@ CanvasElementGraph.prototype.checkState = function() {
  * it's last turn.
  */
 CanvasElementGraph.prototype.draw = function() {
-	var min, max, i, k, t, scaleX, scaleY, txt, x, y, tw, tx;
+	var min, max, i, k, t, scaleX, scaleY, txt, x, y, tw, tx, hills;
 	var w = this.w - 1;
 	var h = this.h - 1;
 	var replay = this.state.replay;
 	var values = this.getStats(this.stats).values;
 	this.ctx.fillStyle = '#fff';
 	this.ctx.fillRect(0, 0, this.w, this.h);
+	this.ctx.font = '10px Arial,Sans';
+
 	// find lowest and highest value
 	min = 0;
 	max = -Infinity;
@@ -956,7 +995,8 @@ CanvasElementGraph.prototype.draw = function() {
 			}
 		}
 	}
-	// draw lines
+
+	// draw ticks
 	scaleX = (this.duration === 0) ? 0 : w / this.duration;
 	this.ctx.strokeStyle = 'rgba(0,0,0,0.5)';
 	this.ctx.beginPath();
@@ -972,6 +1012,30 @@ CanvasElementGraph.prototype.draw = function() {
 	this.ctx.lineTo(0.5 + scaleX * (this.duration + 1), h + 0.5);
 	this.ctx.stroke();
 	scaleY = h / (max - min);
+
+	// hill razes
+	this.ctx.textAlign = 'center';
+	perPlayer = new Array(values[0].length);
+	for (i = 0; i < perPlayer.length; i++)
+		perPlayer[i] = 0;
+	hills = this.state.replay.meta['replaydata']['hills'];
+	for (k = 0; k < hills.length; k++) {
+		if (hills[k][3] !== undefined && values[hills[k][3]]) {
+			x = 0.5 + scaleX * hills[k][3];
+			y = 0.5 + scaleY * (max - values[hills[k][3]][hills[k][2]]);
+			this.ctx.fillStyle = replay.htmlPlayerColors[hills[k][2]];
+			this.ctx.fillText(++perPlayer[hills[k][2]], x, y - 10);
+			this.ctx.beginPath();
+			this.ctx.moveTo(x, y);
+			this.ctx.lineTo(x - 4, y - 8);
+			this.ctx.lineTo(x + 4, y - 8);
+			this.ctx.lineTo(x, y);
+			this.ctx.fill();
+		}
+	}
+
+	// time line
+	this.ctx.textAlign = 'left';
 	for (i = values[0].length - 1; i >= 0; i--) {
 		this.ctx.strokeStyle = replay.htmlPlayerColors[i];
 		this.ctx.beginPath();
@@ -982,7 +1046,6 @@ CanvasElementGraph.prototype.draw = function() {
 		this.ctx.stroke();
 	}
 	if (!this.state.isStreaming && replay.meta['status']) {
-		this.ctx.font = '10px Arial,Sans';
 		for (i = values[0].length - 1; i >= 0; i--) {
 			this.ctx.fillStyle = replay.htmlPlayerColors[i];
 			this.ctx.strokeStyle = replay.htmlPlayerColors[i];
