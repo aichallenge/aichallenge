@@ -123,7 +123,7 @@ class Ants(Game):
         hill_count = 0
         for owner, locs in map_data['hills'].items():
             if owner == 0:
-                hill_count += 1
+                hill_count += len(locs)
             for loc in locs:
                 hill = self.add_hill(loc, owner)
                 self.add_ant(hill)               
