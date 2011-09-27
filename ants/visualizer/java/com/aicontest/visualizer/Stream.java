@@ -121,22 +121,11 @@ public class Stream extends IdScriptableObject {
 					replay.put("duration", replay, duration);
 					if (turn == 0) {
 						// initialization turn 1
-						replay.put("players", replay, players);
-						replaydata.put("players", replaydata, players);
-						ScriptableObject.callMethod(replay,
-								"addMissingMetaData", Context.emptyArgs);
-						antMap = new Ant[rows][cols];
-						NativeArray scoreSet = new NativeArray(players);
-						for (int i = 0; i < players; i++) {
-							scoreSet.put(i, scoreSet, new NativeArray(0));
-						}
-						replaydata.put("scores", replaydata, scoreSet);
-						NativeArray fogs = new NativeArray(players);
-						for (int i = 0; i < players; i++) {
-							fogs.put(i, fogs, new NativeArray(0));
-						}
-						replay.put("fogs", replay, fogs);
+						this.initialize();
 					} else {
+						if (line == null) {
+							finish();
+						}
 						if (initialized) {
 							return line != null;
 						} else if (duration > 0) {
@@ -298,6 +287,33 @@ public class Stream extends IdScriptableObject {
 			}
 		} while (line != null && !interrupted);
 		return false;
+	}
+
+	private void initialize() {
+		replay.put("players", replay, players);
+		replaydata.put("players", replaydata, players);
+		ScriptableObject.callMethod(replay, "addMissingMetaData",
+				Context.emptyArgs);
+		antMap = new Ant[rows][cols];
+		NativeArray scoreSet = new NativeArray(players);
+		for (int i = 0; i < players; i++) {
+			scoreSet.put(i, scoreSet, new NativeArray(0));
+		}
+		replaydata.put("scores", replaydata, scoreSet);
+		NativeArray fogs = new NativeArray(players);
+		for (int i = 0; i < players; i++) {
+			fogs.put(i, fogs, new NativeArray(0));
+		}
+		replay.put("fogs", replay, fogs);
+	}
+
+	private void finish() {
+		NativeArray scoreSet = (NativeArray) replaydata.get("scores");
+		NativeArray playerTurns = (NativeArray) meta.get("playerturns");
+		for (int i = 0; i < scoreSet.getLength(); i++) {
+			long length = ((NativeArray) scoreSet.get(i)).getLength() - 1;
+			playerTurns.put(i, playerTurns, length);
+		}
 	}
 
 	@Override
