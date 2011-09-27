@@ -77,6 +77,8 @@ function produce_cache_results($page=0, $user_id=NULL, $submission_id=NULL, $map
         $list_id_field = "map_id";
     } else {
         // make the where clause always return true
+        $page_count_query = "select_map_game_list_page_count";
+        $list_query = "select_map_game_list";
         $list_select_field = "1";
         $list_id = 1;
         $list_type = NULL;
