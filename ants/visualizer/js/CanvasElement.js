@@ -622,7 +622,6 @@ CanvasElementAntsMap.prototype.draw = function() {
 	// hills
 	halfScale = 0.5 * this.scale;
 	hills = this.state.replay.meta['replaydata']['hills'];
-	this.ctx.lineWidth = this.scale;
 	for (i = 0; i < hills.length; i++) {
 		hill = hills[i];
 		x1 = (hill[1] - 1) * this.scale;
@@ -659,18 +658,21 @@ CanvasElementAntsMap.prototype.draw = function() {
 			r -= this.scale;
 			this.ctx.strokeStyle = this.state.replay.htmlPlayerColors[hill[2]];
 			this.ctx.fillStyle = this.state.replay.htmlPlayerColors[hill[2]];
-			this.drawWrapped(x2 - r, y2 - r, 2 * r, 2 * r, this.w, this.h, function() {
-				if (r > 0) {
-					var alpha = r / halfScale;
-					this.ctx.globalAlpha = Math.min(1, 0.04 + 3 / alpha);
+			this.drawWrapped(x2 - r - halfScale, y2 - r - halfScale, 2 * r + this.scale, 2 * r
+					+ this.scale, this.w, this.h, function() {
+				var alpha = r / halfScale;
+				if (alpha < 25) {
+					this.ctx.lineWidth = 2 * halfScale;
+					this.ctx.globalAlpha = Math.max(0, 1.0 - 0.04 * alpha);
 					this.ctx.beginPath();
 					this.ctx.arc(x2, y2, r, 0, 2 * Math.PI, false);
 					this.ctx.stroke();
-					this.ctx.globalAlpha = Math.min(1, 0.02 + 2 / alpha);
+					this.ctx.globalAlpha = Math.max(0, 0.5 - 0.02 * alpha);
 					this.ctx.beginPath();
 					this.ctx.arc(x2, y2, r - this.scale, 0, 2 * Math.PI, false);
 					this.ctx.stroke();
 				}
+				this.ctx.lineWidth = halfScale;
 				this.ctx.globalAlpha = 0.3;
 				this.ctx.beginPath();
 				this.ctx.arc(x2, y2, 3 * this.scale, 0, 2 * Math.PI, false);
