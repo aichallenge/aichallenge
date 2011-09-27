@@ -662,7 +662,7 @@ CanvasElementAntsMap.prototype.draw = function() {
 					+ this.scale, this.w, this.h, function() {
 				var m;
 				var alpha = r / halfScale;
-				if (alpha < 25) {
+				if (alpha < 25 && this.state.replay.hasDuration) {
 					this.ctx.lineWidth = 2 * halfScale;
 					this.ctx.globalAlpha = Math.max(0, 1.0 - 0.04 * alpha);
 					this.ctx.beginPath();
