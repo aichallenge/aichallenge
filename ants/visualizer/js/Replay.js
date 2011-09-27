@@ -523,9 +523,15 @@ Replay.prototype.addMissingMetaData = function(swapIndex) {
 	if (!(this.meta['playercolors'] instanceof Array)) {
 		this.meta['playercolors'] = new Array(this.players);
 	}
+	if (!(this.meta['playerturns'] instanceof Array)) {
+		this.meta['playerturns'] = new Array(this.players);
+	}
 	for (i = 0; i < this.players; i++) {
 		if (!this.meta['playernames'][i]) {
 			this.meta['playernames'][i] = 'player ' + (i + 1);
+		}
+		if (this.meta['replaydata']['scores'] && !this.meta['playerturns'][i]) {
+			this.meta['playerturns'][i] = this.meta['replaydata']['scores'][i].length - 1;
 		}
 		if (!(this.meta['playercolors'][i] instanceof Array)) {
 			if (swapIndex !== undefined && i == 0) {

@@ -928,7 +928,7 @@ CanvasElementGraph.prototype.statusToGlyph = function(i) {
  * @returns {Boolean} true, if the internal state has changed
  */
 CanvasElementGraph.prototype.checkState = function() {
-	if (this.duration !== this.state.replay.duration) {
+	if (this.duration !== this.state.replay.duration && this.h > 0) {
 		this.invalid = true;
 		this.duration = this.state.replay.duration;
 	}
@@ -986,7 +986,7 @@ CanvasElementGraph.prototype.draw = function() {
 		for (i = values[0].length - 1; i >= 0; i--) {
 			this.ctx.fillStyle = replay.htmlPlayerColors[i];
 			this.ctx.strokeStyle = replay.htmlPlayerColors[i];
-			k = replay.meta['replaydata']['scores'][i].length - 1;
+			k = replay.meta['playerturns'][i];
 			this.ctx.beginPath();
 			x = 0.5 + k * scaleX;
 			y = 0.5 + scaleY * (max - values[k][i]);
@@ -1051,11 +1051,12 @@ function CanvasElementStats(state, caption, stats, bonusText) {
 	this.upper();
 	this.state = state;
 	this.caption = caption;
-	this.graph = new CanvasElementGraph(state, stats);
 	this.turn = 0;
 	this.time = 0;
 	this.label = false;
 	this.bonusText = bonusText;
+	this.graph = new CanvasElementGraph(state, stats);
+	this.dependsOn(this.graph);
 }
 CanvasElementStats.extend(CanvasElement);
 
@@ -1140,7 +1141,6 @@ CanvasElementStats.prototype.draw = function(resized) {
 
 	// graph
 	if (this.showGraph) {
-		this.graph.validate();
 		this.ctx.drawImage(this.graph.canvas, 4, 32);
 		// time indicator
 		x = 4.5 + (this.graph.w - 1) * this.time / this.graph.duration;
