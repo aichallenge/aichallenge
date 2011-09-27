@@ -160,7 +160,8 @@ class Ants(Game):
         # the engine may kill players before the game starts and this is needed to prevent errors
         self.orders = [[] for i in range(self.num_players)]
         
-        self.extended_play = None
+        self.probable_rank = None
+        self.probably_turn = None
 
     def distance(self, a_loc, b_loc):
         """ Returns distance between x and y squared """
@@ -1301,7 +1302,8 @@ class Ants(Game):
             Those without hills will not be given the opportunity to overtake
         """
         for player in range(self.num_players):
-            if self.is_alive(player) and player in self.remaining_hills():
+            # TODO: add hill check back in, testing extended play
+            if self.is_alive(player): # and player in self.remaining_hills():
                 max_score = sum([HILL_POINTS for hill in self.hills.values()
                                  if hill.killed_by is None
                                  and hill.owner != player]) + self.score[player]
@@ -1337,10 +1339,16 @@ class Ants(Game):
             self.cutoff = 'rank stabilized'
             return True
               
-        # check if not ending a game earlier makes any difference  
-        if len(set(list(self.remaining_players())) & set(self.remaining_hills())) == 0:
+        # check if not ending a game earlier makes any difference
+        probable_winner = list(set(list(self.remaining_players())) & set(self.remaining_hills()))
+        if len(probable_winner) <= 1:
+            probable_score = self.score
+            probable_score[probable_winner[0]] += sum([HILL_POINTS for hill in self.hills.values()
+                                                       if hill.killed_by == None
+                                                       and hill.owner != probable_winner[0]])            
             # entering extended player period
-            self.extended_play = self.ranking_bots
+            self.probable_rank = [sorted(set(probable_score), reverse=True).index(x) for x in probable_score]
+            self.probably_turn = self.turn
             
         return False
 
@@ -1375,8 +1383,8 @@ class Ants(Game):
         self.calc_significant_turns()
         
         # check if a rule change lengthens games needlessly
-        if self.extended_play is not None:
-            if self.extended_play == self.ranking_bots:
+        if self.probable_rank is not None:
+            if self.probable_rank == self.ranking_bots:
                 self.cutoff += " extended same"
             else:
                 self.cutoff += " extended different"
@@ -1658,6 +1666,9 @@ class Ants(Game):
         replay['winning_turn'] = self.winning_turn
         replay['ranking_turn'] = self.ranking_turn
         replay['cutoff'] = 'turn limit reached' if self.cutoff is None else self.cutoff
+        if self.probable_rank is not None:
+            replay['probable_rank'] = self.probable_rank
+            replay['probable_turn'] = self.probably_turn
 
         return replay
 
