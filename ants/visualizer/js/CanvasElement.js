@@ -660,6 +660,7 @@ CanvasElementAntsMap.prototype.draw = function() {
 			this.ctx.fillStyle = this.state.replay.htmlPlayerColors[hill[2]];
 			this.drawWrapped(x2 - r - halfScale, y2 - r - halfScale, 2 * r + this.scale, 2 * r
 					+ this.scale, this.w, this.h, function() {
+				var m;
 				var alpha = r / halfScale;
 				if (alpha < 25) {
 					this.ctx.lineWidth = 2 * halfScale;
@@ -672,11 +673,14 @@ CanvasElementAntsMap.prototype.draw = function() {
 					this.ctx.arc(x2, y2, r - this.scale, 0, 2 * Math.PI, false);
 					this.ctx.stroke();
 				}
-				this.ctx.lineWidth = halfScale;
-				this.ctx.globalAlpha = 0.3;
-				this.ctx.beginPath();
-				this.ctx.arc(x2, y2, 3 * this.scale, 0, 2 * Math.PI, false);
-				this.ctx.stroke();
+				this.ctx.lineWidth = 1;
+				this.ctx.globalAlpha = 0.5;
+				for (m = 0; m < 40; m += 2) {
+					this.ctx.beginPath();
+					this.ctx.arc(x2, y2, 3 * this.scale, (m - 0.5) * Math.PI / 20, (m + 0.5)
+							* Math.PI / 20, false);
+					this.ctx.stroke();
+				}
 				this.ctx.globalAlpha = 1;
 			}, []);
 			this.drawWrapped(x1, y1, 3 * this.scale, 3 * this.scale, this.w, this.h, function() {
