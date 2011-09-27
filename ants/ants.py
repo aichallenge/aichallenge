@@ -120,17 +120,14 @@ class Ants(Game):
             self.map[row][col] = WATER
 
         # initialize hills
-        hill_count = 0
         for owner, locs in map_data['hills'].items():
-            if owner == 0:
-                hill_count += len(locs)
             for loc in locs:
                 hill = self.add_hill(loc, owner)
                 self.add_ant(hill)
 
         # initialize scores
         # points start at # of hills to prevent negative scores
-        self.score = [hill_count]*self.num_players
+        self.score = [len(map_data['hills'][0])]*self.num_players
         self.bonus = [0]*self.num_players
         self.score_history = [[s] for s in self.score]
 
