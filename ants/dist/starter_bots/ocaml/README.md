@@ -1,5 +1,8 @@
 # Objective Caml Starter Package for Ant Wars
 
+NOTE - Anthills were added after most of this material was written, and it
+has not been updated.
+
 See the section after "Google AI Challenge Blurb" for information
 specific to this OCaml starter package.
 
