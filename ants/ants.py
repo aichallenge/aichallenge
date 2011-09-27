@@ -159,6 +159,8 @@ class Ants(Game):
 
         # the engine may kill players before the game starts and this is needed to prevent errors
         self.orders = [[] for i in range(self.num_players)]
+        
+        self.extended_play = None
 
     def distance(self, a_loc, b_loc):
         """ Returns distance between x and y squared """
@@ -1282,10 +1284,12 @@ class Ants(Game):
         return food_sets
 
     def remaining_players(self):
-        """ Return the number of players still alive with a hill """
-        living = [p for p in range(self.num_players) if self.is_alive(p)]
-        has_hill = [h.owner for h in self.hills.values() if h.killed_by is None]
-        return list(set(living) & set(has_hill))
+        """ Return the players still alive """
+        return [p for p in range(self.num_players) if self.is_alive(p)]
+
+    def remaining_hills(self):
+        """ Return the players with active hills """
+        return [h.owner for h in self.hills.values() if h.killed_by is None]
 
     # Common functions for all games
 
@@ -1297,7 +1301,7 @@ class Ants(Game):
             Those without hills will not be given the opportunity to overtake
         """
         for player in range(self.num_players):
-            if self.is_alive(player) and self.has_hills(player):
+            if self.is_alive(player) and player in self.remaining_hills():
                 max_score = sum([HILL_POINTS for hill in self.hills.values()
                                  if hill.killed_by is None
                                  and hill.owner != player]) + self.score[player]
@@ -1332,6 +1336,12 @@ class Ants(Game):
         if self.is_rank_stabilized():
             self.cutoff = 'rank stabilized'
             return True
+              
+        # check if not ending a game earlier makes any difference  
+        if len(set(list(self.remaining_players())) & set(self.remaining_hills())) == 0:
+            # entering extended player period
+            self.extended_play = self.ranking_bots
+            
         return False
 
     def kill_player(self, player):
@@ -1363,6 +1373,13 @@ class Ants(Game):
             self.score_history[i][-1] = s
 
         self.calc_significant_turns()
+        
+        # check if a rule change lengthens games needlessly
+        if self.extended_play is not None:
+            if self.extended_play == self.ranking_bots:
+                self.cutoff += " extended same"
+            else:
+                self.cutoff += " extended different"
 
     def start_turn(self):
         """ Called by engine at the start of the turn """
@@ -1482,14 +1499,6 @@ class Ants(Game):
         else:
             return bool(self.player_ants(player))
 
-    def has_hills(self, player):
-        """ Determine if player has hills
-
-            Used by engine to determine influencing players
-        """
-        return bool(len([hill for hill in self.hills.values()
-                         if hill.owner == player]) > 0)
-
     def get_error(self, player):
         """ Returns the reason a player was killed
 
@@ -1542,6 +1551,34 @@ class Ants(Game):
         stats['ranking_bots'] = self.ranking_bots
         stats['r_turn'] = self.ranking_turn
         stats['score'] = map(int, self.score)
+        stats['s_alive'] = [1 if self.is_alive(player) else 0 for player in range(self.num_players)]
+        stats['s_hills'] = [1 if player in self.remaining_hills() else 0 for player in range(self.num_players)]
+        stats['climb?'] = []
+#        stats['max_score'] = {}
+        for player in range(self.num_players):
+            if self.is_alive(player) and player in self.remaining_hills():
+                found = 0
+                max_score = sum([HILL_POINTS for hill in self.hills.values()
+                                 if hill.killed_by is None
+                                 and hill.owner != player]) + self.score[player]
+#                stats['max_score'][player] = max_score
+#                stats['min_score_%s' % player] = {}
+                for opponent in range(self.num_players):
+                    if player != opponent:
+                        min_score = sum([RAZE_POINTS for hill in self.hills.values()
+                                         if hill.killed_by is None
+                                         and hill.owner == opponent]) + self.score[opponent]
+#                        stats['min_score_%s' % player][opponent] = min_score
+                        if ((self.score[player] < self.score[opponent]
+                                and max_score >= min_score)
+                                or (self.score[player] == self.score[opponent]
+                                and max_score > min_score)):
+                            found = 1
+                            #return False
+                            break
+                stats['climb?'].append(found)
+            else:
+                stats['climb?'].append(0)
         return stats
 
     def get_replay(self):
