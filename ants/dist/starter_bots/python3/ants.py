@@ -264,7 +264,7 @@ class Ants():
         map_data = ''
         while(True):
             try:
-                current_line = raw_input()
+                current_line = sys.stdin.readline().rstrip('\r\n') # string new line char
                 if current_line.lower() == 'ready':
                     ants.setup(map_data)
                     bot.do_setup(ants)

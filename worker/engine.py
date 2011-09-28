@@ -7,6 +7,9 @@ import random
 import sys
 import json
 import io
+if sys.version_info >= (3,):
+    def unicode(s):
+        return s
 
 from sandbox import get_sandbox
 
@@ -15,9 +18,9 @@ class HeadTail(object):
     def __init__(self, file, max_capture=510):
         self.file = file
         self.max_capture = max_capture
-        self.capture_head = u''
         self.capture_head_len = 0
-        self.capture_tail = u''
+        self.capture_head = unicode('')
+        self.capture_tail = unicode('')
     def write(self, data):
         if self.file:
             self.file.write(data)
@@ -47,9 +50,9 @@ class HeadTail(object):
         return self.capture_tail
     def headtail(self):
         if self.capture_head != '' and self.capture_tail != '':
-            sep = u'\n..\n'
+            sep = unicode('\n..\n')
         else:
-            sep = u''
+            sep = unicode('')
         return self.capture_head + sep + self.capture_tail
 
 def run_game(game, botcmds, options):
@@ -165,7 +168,7 @@ def run_game(game, botcmds, options):
             for b, errors in enumerate(error_lines):
                 if errors:
                     if error_logs and error_logs[b]:
-                        error_logs[b].write(u'\n'.join(errors)+u'\n')
+                        error_logs[b].write(unicode('\n').join(errors)+unicode('\n'))
             # set status for timeouts and crashes
             for b, status in enumerate(statuses):
                 if status != None:
@@ -250,6 +253,8 @@ def run_game(game, botcmds, options):
                 verbose_log.write(s)
                 for key in stat_keys:
                     values = stats[key]
+                    if type(values) == list:
+                        values = '[' + ','.join(map(str,values)) + ']'
                     verbose_log.write(' {0:^{1}}'.format(values, max(len(key), len(str(values)))))
                 verbose_log.write('\n')
 
@@ -347,7 +352,7 @@ def get_moves(game, bots, bot_nums, time_limit, turn):
             if bot_finished[b]:
                 continue # already got bot moves
             if not bot.is_alive:
-                error_lines[b].append(u'turn %4d bot %s crashed' % (turn, bot_nums[b]))
+                error_lines[b].append(unicode('turn %4d bot %s crashed') % (turn, bot_nums[b]))
                 statuses[b] = 'crashed'
                 line = bot.read_error()
                 while line != None:
@@ -383,7 +388,7 @@ def get_moves(game, bots, bot_nums, time_limit, turn):
     # kill timed out bots
     for b, finished in enumerate(bot_finished):
         if not finished:
-            error_lines[b].append(u'turn %4d bot %s timed out' % (turn, bot_nums[b]))
+            error_lines[b].append(unicode('turn %4d bot %s timed out') % (turn, bot_nums[b]))
             statuses[b] = 'timeout'
             bot = bots[b]
             for x in range(100):

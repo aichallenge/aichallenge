@@ -8,8 +8,11 @@ from optparse import OptionParser, OptionGroup
 import random
 import cProfile
 import visualizer.visualize_locally
-import StringIO
 import json
+try:
+    from StringIO import StringIO
+except ImportError:
+    from io import StringIO
 
 from ants import Ants
 
@@ -398,7 +401,7 @@ def run_rounds(opts,args):
 
         # intercept replay log so we can add player names
         if opts.log_replay:
-            intcpt_replay_io = StringIO.StringIO()
+            intcpt_replay_io = StringIO()
             real_replay_io = engine_options['replay_log']
             engine_options['replay_log'] = intcpt_replay_io
 

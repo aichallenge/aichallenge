@@ -7,8 +7,16 @@ import subprocess
 import sys
 import time
 from optparse import OptionParser
-from Queue import Queue, Empty
 from threading import Thread
+try:
+    from Queue import Queue, Empty
+except ImportError:
+    from queue import Queue, Empty
+
+# make python 2.x compatible with python 3.x
+if sys.version_info >= (3,):
+    def unicode(s, *args, **kwargs):
+        return s
 
 try:
     from server_info import server_info
@@ -16,7 +24,7 @@ try:
 except ImportError:
     _SECURE_DEFAULT = False
 
-class SandboxError(StandardError):
+class SandboxError(Exception):
     pass
 
 def _guard_monitor(jail):
@@ -319,7 +327,10 @@ def _monitor_file(fd, q):
         if not line:
             q.put(None)
             break
-        line = line.rstrip('\r\n')
+        try:
+            line = line.rstrip('\r\n')
+        except TypeError:
+            line = line.decode().rstrip('\r\n')
         line = unicode(line, errors="replace")
         q.put(line)
 
@@ -446,7 +457,10 @@ class House:
             if ln is None:
                 break
             try:
-                stdin.write(ln)
+                try:
+                    stdin.write(ln)
+                except TypeError:
+                    stdin.write(ln.encode())
                 stdin.flush()
             except (OSError, IOError):
                 self.kill()

@@ -7,8 +7,11 @@ from fractions import Fraction
 import operator
 import string
 from game import Game
-from sys import maxint
 from copy import deepcopy
+try:
+    from sys import maxint
+except ImportError:
+    from sys import maxsize as maxint
 
 ANTS = 0
 DEAD = -1
@@ -147,7 +150,7 @@ class Ants(Game):
 
         # used to give a different ordering of players to each player
         #   initialized to ensure that each player thinks they are player 0
-        self.switch = [[None]*self.num_players + range(-5,0) for i in range(self.num_players)]
+        self.switch = [[None]*self.num_players + list(range(-5,0)) for i in range(self.num_players)]
         for i in range(self.num_players):
             self.switch[i][i] = 0
         # used to track water and land already reveal to player
@@ -633,7 +636,7 @@ class Ants(Game):
               then that food disappears.
         """
         # gather food
-        for f_loc in self.current_food.keys():
+        for f_loc in list(self.current_food.keys()):
             # find the owners of all the ants near the food
             nearby_players = set(
                 ant.owner for ant in self.nearby_ants(f_loc, self.spawnradius)
@@ -1081,7 +1084,7 @@ class Ants(Game):
     def place_food(self):
         """ Place food in scheduled locations if they are free
         """
-        for loc in self.pending_food.keys():
+        for loc in list(self.pending_food.keys()):
             if self.map[loc[0]][loc[1]] == LAND:
                 self.add_food(loc)
                 self.pending_food[loc] -= 1
@@ -1738,7 +1741,7 @@ def test_symmetry():
     a = Ants(options)
     ors = a.get_map_symmetry()
     for o_count, ant_aims in enumerate(ors):
-        print '=== orientation {0} '.format(o_count) + '=' * 30
+        sys.stdout.write('=== orientation {0} \n'.format(o_count) + '=' * 30)
         fix = []
         lines = ['' for _ in range(a.height)]
         for loc, aim, enemy_map in ant_aims:
@@ -1746,15 +1749,12 @@ def test_symmetry():
             fix.append(((row, col), a.map[row][col]))
             a.map[row][col] = FOOD
         for loc, aim, enemy_map in ant_aims:
-            print aim, enemy_map, loc
+            sys.stdout.write('{0} {1} {2}'.format(aim, enemy_map, loc))
             for row in range(a.height):
                 lines[row] += ' '
                 for col in range(a.width):
                     row1, col1 = a.destination(loc, a.offset_aim((row, col), aim))
                     lines[row] += MAP_RENDER[a.map[row1][col1]]
-        #for line in lines:
-        #    print line
-        #print
         # write test file
         if len(sys.argv) > 2:
             test_map_name = map_file_name + ''.join([str(aim) for _, aim, __ in ant_aims]) + '.replay'
@@ -1770,5 +1770,6 @@ def test_symmetry():
             visualizer.visualize_locally.launch(test_map_name)
             for (row, col), ilk in reversed(fix):
                 a.map[row][col] = ilk
+
 if __name__ == '__main__':
     test_symmetry()
