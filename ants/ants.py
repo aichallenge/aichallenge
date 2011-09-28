@@ -1347,7 +1347,7 @@ class Ants(Game):
                                                            if hill.killed_by == None
                                                            and hill.owner != probable_winner[0]])            
                 # entering extended player period
-                self.probable_rank = [sorted(set(probable_score), reverse=True).index(x) for x in probable_score]
+                self.probable_rank = [sorted(probable_score, reverse=True).index(x) for x in probable_score]
                 self.probably_turn = self.turn
             
         return False
@@ -1453,7 +1453,7 @@ class Ants(Game):
         self.calc_significant_turns()
 
     def calc_significant_turns(self):
-        ranking_bots = [sorted(set(self.score), reverse=True).index(x) for x in self.score]
+        ranking_bots = [sorted(self.score, reverse=True).index(x) for x in self.score]
         if self.ranking_bots != ranking_bots:
             self.ranking_turn = self.turn
         self.ranking_bots = ranking_bots
