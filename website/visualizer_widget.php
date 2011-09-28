@@ -55,7 +55,7 @@ var visualize = function (i) {
             };
             data = data.replace(/\n/g, '\\n');
             if (uri) {
-                addParam('replay', options[4]);
+                addParam('replay', uri);
             } else {
 	            addParam('replay_string', data);
             }
@@ -72,7 +72,7 @@ var visualize = function (i) {
             options.interactive = interactive;
             var vis = new Visualizer(this, options, width, height, config);
             if (uri) {
-            	vis.loadReplayDataFromURI(options[4]);
+            	vis.loadReplayDataFromURI(uri);
             } else {
             	vis.loadReplayData(data);
             }
