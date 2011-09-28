@@ -42,8 +42,8 @@ var visualize = function (i) {
         var height = setup[2] || 100;
         var config = setup[3] || {};
         var uri = null;
-        if (options.length === 5 && typeof options[4] === 'string') {
-            uri = options[4];
+        if (setup.length === 5 && typeof setup[4] === 'string') {
+            uri = setup[4];
         }
         if (typeof java_codebase !== 'undefined') {
             this.innerHTML = '';
