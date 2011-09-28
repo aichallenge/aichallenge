@@ -1,10 +1,10 @@
 <div id="menu">
-    <h1>Overview</h1>
+    <h1><a href="index.php">Home</a></h1>
+    <h1>Contest Overview</h1>
     <ul>
-      <li><a href="index.php">Home</a></li>
       <li><a href="rankings.php">Current Rankings</a></li>
-      <li><a href="problem_description.php">Problem Description</a></li>
-      <li><a href="rules.php">Contest Rules</a></li>
+      <li><a href="games.php">Latest Games</a></li>
+      <li><a href="maps">Official Maps</a></li>
     </ul>
     <?php if (logged_in_with_valid_credentials()) { ?>
     <h1>My Account</h1>
@@ -14,13 +14,23 @@
       <li><a href="logout.php">Sign Out</a></li>
     </ul>
     <?php } ?>
+    <h1>Ants</h1>
+    <ul>
+      <li><a href="problem_description.php">Problem Description</a></li>
+      <li><a href="specification.php">Game Specification</a></li>
+      <li><a href="advanced_strategy_guide.php">Strategy Guide</a></li>
+      <li><hr /></li>
+      <li><a href="starter_packages.php">Starter Packages</a></li>
+    </ul>
     <h1>Getting Started</h1>
     <ul>
-      <li><a href="register.php">Create Your Account</a></li>
       <li><a href="quickstart.php">Five Minute Quickstart Guide</a></li>
-      <li><a href="starter_packages.php">Starter Packages</a></li>
-      <li><a href="resources.php">Tutorials &amp; Strategy Guides</a></li>
-      <li><a href="specification.php">Game Specification</a></li>
+      <li><hr /></li>
+      <li><a href="rules.php">Contest Rules</a></li>
+      <li><a href="register.php">Create Your Account</a></li>
+      <li><a href="starting_your_own.php">Starting Your Own</a></li>
+      <li><a href="using_the_tools.php">Using the Tools</a></li>
+      <li><a href="simple_strategy_guide.php">Climbing the Rankings</a></li>
     </ul>
     <h1>Help</h1>
     <ul>
