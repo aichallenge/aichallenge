@@ -7,11 +7,13 @@ require_once('mysql_login.php');
 require_once('server_info.php');
 
 if (!isset($_GET['api_key'])) {
+    api_log('api request without a key from '.$_SERVER['REMOTE_ADDR']);
     header('HTTP/1.0 401 Unauthorized');
     die();
 } else {
 	$worker = valid_worker($_GET['api_key'],$_SERVER['REMOTE_ADDR']);
 	if (!$worker) {
+        api_log('api request with invalid key from '.$_SERVER['REMOTE_ADDR'].' : '.$_GET['api_key']);
 	    header('HTTP/1.0 401 Unauthorized');
     	die();
 	}
