@@ -22,7 +22,7 @@ var visualize = function (i) {
     var options = data.split('\n')[0];
     if (options[0] === '#') {
         try {
-            // option is a list of 4 or 5 values, [ interactive, width, height, config, uri ]
+            // option is a list of 5 or 6 values, [ interactive, embedded width, height, config, uri ]
             // if the uri is not there, the remaining data will be considered a map
             // otherwise the uri is loaded
             options = $.parseJSON(options.slice(1));
@@ -30,12 +30,13 @@ var visualize = function (i) {
             options = [];
         }
         var interactive = options[0] || false;
-        var width = options[1] || 100;
-        var height = options[2] || 100;
-        var config = options[3] || {};
+        var embedded = options[1] || false;
+        var width = options[2] || 100;
+        var height = options[3] || 100;
+        var config = options[4] || {};
         var uri = null;
-        if (options.length === 5 && typeof options[4] === 'string') {
-            uri = options[4];
+        if (options.length === 6 && typeof options[5] === 'string') {
+            uri = options[5];
         }
         if (typeof java_codebase !== 'undefined') {
             this.innerHTML = '';
@@ -60,6 +61,7 @@ var visualize = function (i) {
 	            addParam('replay_string', data);
             }
             addParam('interactive', interactive);
+            addParam('embedded', embedded);
             if (typeof java_debug !== 'undefined' && java_debug) {
                 addParam('debug', 'true');
                 addParam('separate_jvm', 'true');
@@ -70,6 +72,7 @@ var visualize = function (i) {
             var options = new Options();
             options.data_dir = 'visualizer/';
             options.interactive = interactive;
+            options.embedded = embedded;
             var vis = new Visualizer(this, options, width, height, config);
             if (uri) {
             	vis.loadReplayDataFromURI(uri);
