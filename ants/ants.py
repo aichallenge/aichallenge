@@ -1374,11 +1374,6 @@ class Ants(Game):
                                            and hill.owner != players[0]])
             self.score[players[0]] += self.bonus[players[0]]
 
-        # record score in score history
-        # update last score to include bonus
-        for i, s in enumerate(self.score):
-            self.score_history[i][-1] = s
-
         self.calc_significant_turns()
         
         # check if a rule change lengthens games needlessly
@@ -1412,10 +1407,24 @@ class Ants(Game):
         for i, s in enumerate(self.score):
             if self.is_alive(i):
                 self.score_history[i].append(s)
+            elif s != self.score_history[i][-1]:
+                # the score has changed, probably due to a dead bot losing a hill
+                # increase the history length to the proper amount
+                last_score = self.score_history[i][-1]
+                score_len = len(self.score_history[i])
+                self.score_history[i].extend([last_score]*(self.turn-score_len))
+                self.score_history[i].append(s)
 
         # record hive_food in hive_history
         for i, f in enumerate(self.hive_food):
             if self.is_alive(i):
+                self.hive_history[i].append(f)
+            elif f != self.hive_history[i][-1]:
+                # the hive has changed, probably due to a dead bot gathering food
+                # increase the history length to the proper amount
+                last_hive = self.hive_history[i][-1]
+                hive_len = len(self.hive_history[i])
+                self.hive_history[i].extend([last_hive]*(self.turn-hive_len))
                 self.hive_history[i].append(f)
 
         # now that all the ants have moved we can update the vision
