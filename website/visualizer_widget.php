@@ -22,7 +22,10 @@ var visualize = function (i) {
     var options = data.split('\n')[0];
     if (options[0] === '#') {
         try {
-            options = JSON.parse(options.slice(1));
+            // option is a list of 4 or 5 values, [ interactive, width, height, config, uri ]
+            // if the uri is not there, the remaining data will be considered a map
+            // otherwise the uri is loaded
+            options = $.parseJSON(options.slice(1));
         } catch (err) {
             options = [];
         }
@@ -47,7 +50,11 @@ var visualize = function (i) {
                 applet.appendChild(param);
             };
             data = data.replace(/\n/g, '\\n');
-            addParam('replay_string', data);
+            if (options.length === 5 && typeof options[4] === 'string') {
+                addParam('replay', options[4]);
+            } else {
+	            addParam('replay_string', data);
+            }
             addParam('interactive', interactive);
             if (typeof java_debug !== 'undefined' && java_debug) {
                 addParam('debug', 'true');
@@ -60,7 +67,11 @@ var visualize = function (i) {
             options.data_dir = 'visualizer/';
             options.interactive = interactive;
             var vis = new Visualizer(this, options, width, height, config);
-            vis.loadReplayData(data);
+            if (options.length === 5 && typeof options[4] === 'string') {
+            	vis.loadReplayDataFromURI(options[4]);
+            } else {
+            	vis.loadReplayData(data);
+            }
         }
     }
 };
