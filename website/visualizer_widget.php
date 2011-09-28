@@ -24,7 +24,7 @@ var visualize = function (i) {
             // option is a list of 4 or 5 values, [ options, width, height, config, uri ]
             // if the uri is not there, the remaining data will be considered a map
             // otherwise the uri is loaded
-            setup = $.parseJSON(options.slice(1));
+            setup = $.parseJSON(setup.slice(1));
         } catch (err) {
             setup = [];
         }
