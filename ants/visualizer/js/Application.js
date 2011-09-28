@@ -557,6 +557,7 @@ Visualizer.prototype.tryStart = function() {
 	// XmlHttpRequest callback
 	if (this.state.replay) {
 		if (!this.main.ctx) return;
+		if (this.imgMgr.pending !== 0) return;
 		// colorize ant hill
 		colors = [];
 		for (i = 0; i < this.state.replay.players; i++) {
