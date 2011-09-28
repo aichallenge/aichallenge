@@ -1339,15 +1339,16 @@ class Ants(Game):
             return True
               
         # check if not ending a game earlier makes any difference
-        probable_winner = list(set(list(self.remaining_players())) & set(self.remaining_hills()))
-        if len(probable_winner) <= 1:
-            probable_score = self.score
-            probable_score[probable_winner[0]] += sum([HILL_POINTS for hill in self.hills.values()
-                                                       if hill.killed_by == None
-                                                       and hill.owner != probable_winner[0]])            
-            # entering extended player period
-            self.probable_rank = [sorted(set(probable_score), reverse=True).index(x) for x in probable_score]
-            self.probably_turn = self.turn
+        if self.probably_turn is None:
+            probable_winner = list(set(list(self.remaining_players())) & set(self.remaining_hills()))
+            if len(probable_winner) <= 1:
+                probable_score = self.score
+                probable_score[probable_winner[0]] += sum([HILL_POINTS for hill in self.hills.values()
+                                                           if hill.killed_by == None
+                                                           and hill.owner != probable_winner[0]])            
+                # entering extended player period
+                self.probable_rank = [sorted(set(probable_score), reverse=True).index(x) for x in probable_score]
+                self.probably_turn = self.turn
             
         return False
 
