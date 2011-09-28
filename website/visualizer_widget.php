@@ -28,16 +28,6 @@ var visualize = function (i) {
         } catch (err) {
             setup = [];
         }
-        // initialize options with defaults and override them
-        var options = new Options();
-        if (setup[0]) {
-        	for (var key in setup[0]) {
-        		if (!options.hasOwnProperty(key) || (typeof options[key] === 'function')) {
-        			throw new Error("Cannot override '" + key + "', because it is not a known option.");
-        		}
-        		options[key] = setup[0][key];
-        	}
-        }
         var width = setup[1] || 100;
         var height = setup[2] || 100;
         var config = setup[3] || {};
@@ -61,8 +51,8 @@ var visualize = function (i) {
                 param.setAttribute('value', value);
                 applet.appendChild(param);
             };
-        	for (var key in options) {
-	            addParam(key, options[key]);
+        	for (var key in setup[0]) {
+	            addParam(key, setup[0][key]);
         	}
             if (uri) {
                 addParam('replay', uri);
@@ -77,7 +67,17 @@ var visualize = function (i) {
             }
             this.appendChild(applet);
         } else if (typeof Visualizer !== 'undefined') {
+            // initialize options with defaults and override them
+            var options = new Options();
             options.data_dir = 'visualizer/';
+            if (setup[0]) {
+            	for (key in setup[0]) {
+            		if (!options.hasOwnProperty(key) || (typeof options[key] === 'function')) {
+            			throw new Error("Cannot override '" + key + "', because it is not a known option.");
+            		}
+            		options[key] = setup[0][key];
+            	}
+            }
             var vis = new Visualizer(this, options, width, height, config);
             if (uri) {
             	vis.loadReplayDataFromURI(uri);
