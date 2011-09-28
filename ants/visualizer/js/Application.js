@@ -1364,7 +1364,7 @@ Visualizer.prototype.mousePressed = function() {
 			return;
 		}
 		this.mouseMoved(this.mouseX, this.mouseY);
-	} else {
+	} else if (this.state.options['decorated']) {
 		// handle game/player links if in non-interactive mode
 		this.btnMgr.mouseDown();
 	}
