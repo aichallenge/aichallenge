@@ -252,7 +252,7 @@ CanvasElementMiniMap.prototype.checkState = function() {
  * top of it.
  */
 CanvasElementMiniMap.prototype.draw = function() {
-	var i, ant, color;
+	var i, ant, color, hills, hill, x, y;
 	CanvasElementAbstractMap.prototype.draw.call(this);
 	for (i = this.ants.length - 1; i >= 0; i--) {
 		if ((ant = this.ants[i].interpolate(this.turn))) {
@@ -262,6 +262,18 @@ CanvasElementMiniMap.prototype.draw = function() {
 			color += INT_TO_HEX[ant['b']];
 			this.ctx.fillStyle = color;
 			this.ctx.fillRect(ant['x'], ant['y'], 1, 1);
+		}
+	}
+	hills = this.state.replay.meta['replaydata']['hills'];
+	for (i = 0; i < hills.length; i++) {
+		hill = hills[i];
+		x = (hill[1] + 0.5);
+		y = (hill[0] + 0.5);
+		if (this.turn < hill[3]) {
+			this.ctx.fillStyle = this.state.replay.htmlPlayerColors[hill[2]];
+			this.ctx.beginPath();
+			this.ctx.arc(x, y, 1.4, 0, 2 * Math.PI, false);
+			this.ctx.fill();
 		}
 	}
 };
@@ -636,53 +648,65 @@ CanvasElementAntsMap.prototype.draw = function() {
 				this.ctx.drawImage(this.hillImage, dx, 60, 60, 60, x1, y1, w, w);
 			}, []);
 		} else {
-			// or alive
-			r = this.scale * (3 + this.time);
-			outer: for (hash in this.drawStates) {
-				drawList = this.drawStates[hash];
-				for (n = drawList.length - 1; n >= 0; n--) {
-					kf = drawList[n];
-					if (kf['owner'] !== undefined && kf['owner'] !== hill[2]) {
-						d = Math.dist_2(this.scale * hill[1], this.scale * hill[0], kf.mapX,
-								kf.mapY, this.w, this.h);
-						if (r * r > d) {
-							r = Math.sqrt(d);
-							if (r < 3 * this.scale) {
-								r = 3 * this.scale;
-								break outer;
+			// or alive ...
+			this.ctx.strokeStyle = this.state.replay.htmlPlayerColors[hill[2]];
+			this.ctx.fillStyle = this.state.replay.htmlPlayerColors[hill[2]];
+			// draw dashed circle around hill, if low resolution
+			if (this.scale < 5) {
+				this.drawWrapped(x2 - 3 * this.scale, y2 - 3 * this.scale, 6 * this.scale,
+						6 * this.scale, this.w, this.h, function() {
+							var m;
+							var pieces = Math.max(4 * this.scale, 8);
+							this.ctx.lineWidth = 1;
+							this.ctx.globalAlpha = 0.5;
+							for (m = 0; m < 2 * pieces; m += 2) {
+								this.ctx.beginPath();
+								this.ctx.arc(x2, y2, 3 * this.scale, (m - 0.3) * Math.PI / pieces,
+										(m + 0.3) * Math.PI / pieces, false);
+								this.ctx.stroke();
+							}
+						}, []);
+			}
+			if (this.turn >= hill[3] - 30 || this.turn <= 10) {
+				// draw proximity indicator just before the hill is captured
+				r = this.scale * Math.max(3, hill[3] - this.time - 17);
+				sr = this.scale * (3 + this.time);
+				ar = 99;
+				outer: for (hash in this.drawStates) {
+					drawList = this.drawStates[hash];
+					for (n = drawList.length - 1; n >= 0; n--) {
+						kf = drawList[n];
+						if (kf['owner'] !== undefined && kf['owner'] !== hill[2]) {
+							d = Math.dist_2(this.scale * hill[1], this.scale * hill[0], kf.mapX,
+									kf.mapY, this.w, this.h);
+							if (!(ar * ar < d)) {
+								ar = Math.sqrt(d);
+								if (ar < 3 * this.scale) {
+									ar = 3 * this.scale;
+									break outer;
+								}
 							}
 						}
 					}
 				}
+				r = Math.min(Math.max(r, ar), sr) - this.scale;
+				this.drawWrapped(x2 - r - halfScale, y2 - r - halfScale, 2 * r + this.scale, 2 * r
+						+ this.scale, this.w, this.h, function() {
+					var alpha = r / halfScale;
+					if (alpha < 25 && this.state.replay.hasDuration) {
+						this.ctx.lineWidth = 2 * halfScale;
+						this.ctx.globalAlpha = Math.max(0, 1.0 - 0.04 * alpha);
+						this.ctx.beginPath();
+						this.ctx.arc(x2, y2, r, 0, 2 * Math.PI, false);
+						this.ctx.stroke();
+						this.ctx.globalAlpha = Math.max(0, 0.5 - 0.02 * alpha);
+						this.ctx.beginPath();
+						this.ctx.arc(x2, y2, r - this.scale, 0, 2 * Math.PI, false);
+						this.ctx.stroke();
+					}
+				}, []);
 			}
-			r -= this.scale;
-			this.ctx.strokeStyle = this.state.replay.htmlPlayerColors[hill[2]];
-			this.ctx.fillStyle = this.state.replay.htmlPlayerColors[hill[2]];
-			this.drawWrapped(x2 - r - halfScale, y2 - r - halfScale, 2 * r + this.scale, 2 * r
-					+ this.scale, this.w, this.h, function() {
-				var m;
-				var alpha = r / halfScale;
-				if (alpha < 25 && this.state.replay.hasDuration) {
-					this.ctx.lineWidth = 2 * halfScale;
-					this.ctx.globalAlpha = Math.max(0, 1.0 - 0.04 * alpha);
-					this.ctx.beginPath();
-					this.ctx.arc(x2, y2, r, 0, 2 * Math.PI, false);
-					this.ctx.stroke();
-					this.ctx.globalAlpha = Math.max(0, 0.5 - 0.02 * alpha);
-					this.ctx.beginPath();
-					this.ctx.arc(x2, y2, r - this.scale, 0, 2 * Math.PI, false);
-					this.ctx.stroke();
-				}
-				this.ctx.lineWidth = 1;
-				this.ctx.globalAlpha = 0.5;
-				for (m = 0; m < 40; m += 2) {
-					this.ctx.beginPath();
-					this.ctx.arc(x2, y2, 3 * this.scale, (m - 0.5) * Math.PI / 20, (m + 0.5)
-							* Math.PI / 20, false);
-					this.ctx.stroke();
-				}
-				this.ctx.globalAlpha = 1;
-			}, []);
+			this.ctx.globalAlpha = 1;
 			this.drawWrapped(x1, y1, 3 * this.scale, 3 * this.scale, this.w, this.h, function() {
 				this.ctx.drawImage(this.hillImage, dx, 0, 60, 60, x1, y1, w, w);
 			}, []);
