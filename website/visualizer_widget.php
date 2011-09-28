@@ -33,6 +33,10 @@ var visualize = function (i) {
         var width = options[1] || 100;
         var height = options[2] || 100;
         var config = options[3] || {};
+        var uri = null;
+        if (options.length === 5 && typeof options[4] === 'string') {
+            uri = options[4];
+        }
         if (typeof java_codebase !== 'undefined') {
             this.innerHTML = '';
             var applet = document.createElement('applet');
@@ -50,7 +54,7 @@ var visualize = function (i) {
                 applet.appendChild(param);
             };
             data = data.replace(/\n/g, '\\n');
-            if (options.length === 5 && typeof options[4] === 'string') {
+            if (uri) {
                 addParam('replay', options[4]);
             } else {
 	            addParam('replay_string', data);
@@ -67,7 +71,7 @@ var visualize = function (i) {
             options.data_dir = 'visualizer/';
             options.interactive = interactive;
             var vis = new Visualizer(this, options, width, height, config);
-            if (options.length === 5 && typeof options[4] === 'string') {
+            if (uri) {
             	vis.loadReplayDataFromURI(options[4]);
             } else {
             	vis.loadReplayData(data);
