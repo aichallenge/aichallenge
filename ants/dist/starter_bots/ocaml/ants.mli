@@ -27,6 +27,8 @@ type tgame_state = {
   turn : int;
   my_ants : ant list;
   enemy_ants : ant list;
+  my_hills : ((int * int) * int) list;
+  enemy_hills : ((int * int) * int) list;
   dead_ants : ant list;
   food : (int * int) list;
   tmap : mapb array array;
@@ -52,6 +54,9 @@ class swrap :
     method get_tile : int * int -> tile
     method issue_order : order -> unit
     method my_ants : ant list
+    method enemy_ants : ant list
+    method my_hills : ((int * int) * int) list
+    method enemy_hills : ((int * int) * int) list
     method passable : int * int -> bool
     method set_state : tgame_state -> unit
     method step_dir : int * int -> dir -> int * int
