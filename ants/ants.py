@@ -1302,8 +1302,7 @@ class Ants(Game):
             Those without hills will not be given the opportunity to overtake
         """
         for player in range(self.num_players):
-            # TODO: add hill check back in, testing extended play
-            if self.is_alive(player): # and player in self.remaining_hills():
+            if self.is_alive(player) and player in self.remaining_hills():
                 max_score = sum([HILL_POINTS for hill in self.hills.values()
                                  if hill.killed_by is None
                                  and hill.owner != player]) + self.score[player]

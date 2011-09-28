@@ -3,7 +3,7 @@ import sys
 import traceback
 import random
 import time
-from collections import deque
+from collections import deque, defaultdict
 from math import sqrt
 
 MY_ANT = 0
@@ -44,7 +44,7 @@ class Ants():
         self.map = None
         self.hill_list = {}
         self.ant_list = {}
-        self.dead_list = {}
+        self.dead_list = defaultdict(list)
         self.food_list = []
         self.turntime = 0
         self.loadtime = 0
@@ -98,7 +98,7 @@ class Ants():
         self.ant_list = {}
         for row, col in self.dead_list.keys():
             self.map[row][col] = LAND
-        self.dead_list = {}
+        self.dead_list = defaultdict(list)
         for row, col in self.food_list:
             self.map[row][col] = LAND
         self.food_list = []

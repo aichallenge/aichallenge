@@ -21,7 +21,10 @@ var visualize = function (i) {
     var setup = data.split('\n')[0];
     if (setup[0] === '#') {
         try {
-            setup = JSON.parse(setup.slice(1));
+            // option is a list of 4 or 5 values, [ options, width, height, config, uri ]
+            // if the uri is not there, the remaining data will be considered a map
+            // otherwise the uri is loaded
+            setup = $.parseJSON(options.slice(1));
         } catch (err) {
             setup = [];
         }
@@ -38,6 +41,10 @@ var visualize = function (i) {
         var width = setup[1] || 100;
         var height = setup[2] || 100;
         var config = setup[3] || {};
+        var uri = null;
+        if (options.length === 5 && typeof options[4] === 'string') {
+            uri = options[4];
+        }
         if (typeof java_codebase !== 'undefined') {
             this.innerHTML = '';
             var applet = document.createElement('applet');
@@ -54,11 +61,15 @@ var visualize = function (i) {
                 param.setAttribute('value', value);
                 applet.appendChild(param);
             };
-            data = data.replace(/\n/g, '\\n');
-            addParam('replay_string', data);
         	for (var key in options) {
 	            addParam(key, options[key]);
         	}
+            if (uri) {
+                addParam('replay', uri);
+            } else {
+	            data = data.replace(/\n/g, '\\n');
+	            addParam('replay_string', data);
+            }
             if (typeof java_debug !== 'undefined' && java_debug) {
                 addParam('debug', 'true');
                 addParam('separate_jvm', 'true');
@@ -68,7 +79,11 @@ var visualize = function (i) {
         } else if (typeof Visualizer !== 'undefined') {
             options.data_dir = 'visualizer/';
             var vis = new Visualizer(this, options, width, height, config);
-            vis.loadReplayData(data);
+            if (uri) {
+            	vis.loadReplayDataFromURI(uri);
+            } else {
+            	vis.loadReplayData(data);
+            }
         }
     }
 };
