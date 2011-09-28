@@ -15,21 +15,29 @@ function visualizer_activate($extended) {
     if ($extended) {
 ?>
 <script>
-// window.isFullscreenSupported = function () { return false; };
 // function requires jQuery
 var visualize = function (i) {
     var data = $(this).text();
-    var options = data.split('\n')[0];
-    if (options[0] === '#') {
+    var setup = data.split('\n')[0];
+    if (setup[0] === '#') {
         try {
-            options = JSON.parse(options.slice(1));
+            setup = JSON.parse(setup.slice(1));
         } catch (err) {
-            options = [];
+            setup = [];
         }
-        var interactive = options[0] || false;
-        var width = options[1] || 100;
-        var height = options[2] || 100;
-        var config = options[3] || {};
+        // initialize options with defaults and override them
+        var options = new Options();
+        if (setup[0]) {
+        	for (var key in setup[0]) {
+        		if (!options.hasOwnProperty(key) || (typeof options[key] === 'function')) {
+        			throw new Error("Cannot override '" + key + "', because it is not a known option.");
+        		}
+        		options[key] = setup[0][key];
+        	}
+        }
+        var width = setup[1] || 100;
+        var height = setup[2] || 100;
+        var config = setup[3] || {};
         if (typeof java_codebase !== 'undefined') {
             this.innerHTML = '';
             var applet = document.createElement('applet');
@@ -48,7 +56,9 @@ var visualize = function (i) {
             };
             data = data.replace(/\n/g, '\\n');
             addParam('replay_string', data);
-            addParam('interactive', interactive);
+        	for (var key in options) {
+	            addParam(key, options[key]);
+        	}
             if (typeof java_debug !== 'undefined' && java_debug) {
                 addParam('debug', 'true');
                 addParam('separate_jvm', 'true');
@@ -56,9 +66,7 @@ var visualize = function (i) {
             }
             this.appendChild(applet);
         } else if (typeof Visualizer !== 'undefined') {
-            var options = new Options();
             options.data_dir = 'visualizer/';
-            options.interactive = interactive;
             var vis = new Visualizer(this, options, width, height, config);
             vis.loadReplayData(data);
         }
