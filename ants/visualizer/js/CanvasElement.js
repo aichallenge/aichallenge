@@ -252,7 +252,7 @@ CanvasElementMiniMap.prototype.checkState = function() {
  * top of it.
  */
 CanvasElementMiniMap.prototype.draw = function() {
-	var i, ant, color;
+	var i, ant, color, hills, hill, x, y;
 	CanvasElementAbstractMap.prototype.draw.call(this);
 	for (i = this.ants.length - 1; i >= 0; i--) {
 		if ((ant = this.ants[i].interpolate(this.turn))) {
@@ -262,6 +262,18 @@ CanvasElementMiniMap.prototype.draw = function() {
 			color += INT_TO_HEX[ant['b']];
 			this.ctx.fillStyle = color;
 			this.ctx.fillRect(ant['x'], ant['y'], 1, 1);
+		}
+	}
+	hills = this.state.replay.meta['replaydata']['hills'];
+	for (i = 0; i < hills.length; i++) {
+		hill = hills[i];
+		x = (hill[1] + 0.5);
+		y = (hill[0] + 0.5);
+		if (this.turn < hill[3]) {
+			this.ctx.fillStyle = this.state.replay.htmlPlayerColors[hill[2]];
+			this.ctx.beginPath();
+			this.ctx.arc(x, y, 1.4, 0, 2 * Math.PI, false);
+			this.ctx.fill();
 		}
 	}
 };
@@ -612,7 +624,7 @@ CanvasElementAntsMap.prototype.collectAntsAroundCursor = function() {
  * and finally the fog of war.
  */
 CanvasElementAntsMap.prototype.draw = function() {
-	var halfScale, drawList, n, kf, w, dx, dy, d, fontSize, label, caption, order;
+	var halfScale, drawList, n, kf, w, dx, dy, d, fontSize, label, caption, order, survives;
 	var target, rows, cols, x1, y1, x2, y2, rowPixels, colPixels, ar, sr, r, hill, hills, i;
 	var hash = undefined;
 
@@ -636,53 +648,66 @@ CanvasElementAntsMap.prototype.draw = function() {
 				this.ctx.drawImage(this.hillImage, dx, 60, 60, 60, x1, y1, w, w);
 			}, []);
 		} else {
-			// or alive
-			r = this.scale * (3 + this.time);
-			outer: for (hash in this.drawStates) {
-				drawList = this.drawStates[hash];
-				for (n = drawList.length - 1; n >= 0; n--) {
-					kf = drawList[n];
-					if (kf['owner'] !== undefined && kf['owner'] !== hill[2]) {
-						d = Math.dist_2(this.scale * hill[1], this.scale * hill[0], kf.mapX,
-								kf.mapY, this.w, this.h);
-						if (r * r > d) {
-							r = Math.sqrt(d);
-							if (r < 3 * this.scale) {
-								r = 3 * this.scale;
-								break outer;
+			// or alive ...
+			this.ctx.strokeStyle = this.state.replay.htmlPlayerColors[hill[2]];
+			this.ctx.fillStyle = this.state.replay.htmlPlayerColors[hill[2]];
+			// draw dashed circle around hill, if low resolution
+			if (this.scale < 5) {
+				this.drawWrapped(x2 - 3 * this.scale, y2 - 3 * this.scale, 6 * this.scale,
+						6 * this.scale, this.w, this.h, function() {
+							var m;
+							var pieces = Math.max(4 * this.scale, 8);
+							this.ctx.lineWidth = 1;
+							this.ctx.globalAlpha = 0.5;
+							for (m = 0; m < 2 * pieces; m += 2) {
+								this.ctx.beginPath();
+								this.ctx.arc(x2, y2, 3 * this.scale, (m - 0.3) * Math.PI / pieces,
+										(m + 0.3) * Math.PI / pieces, false);
+								this.ctx.stroke();
+							}
+						}, []);
+			}
+			survives = this.state.replay.duration !== hills[3];
+			if (this.turn >= hill[3] - 30 && survives || this.turn <= 10) {
+				// draw proximity indicator just before the hill is captured
+				r = this.scale * Math.max(3, hill[3] - this.time - 17);
+				sr = this.scale * (3 + this.time);
+				ar = 99;
+				outer: for (hash in this.drawStates) {
+					drawList = this.drawStates[hash];
+					for (n = drawList.length - 1; n >= 0; n--) {
+						kf = drawList[n];
+						if (kf['owner'] !== undefined && kf['owner'] !== hill[2]) {
+							d = Math.dist_2(this.scale * hill[1], this.scale * hill[0], kf.mapX,
+									kf.mapY, this.w, this.h);
+							if (!(ar * ar < d)) {
+								ar = Math.sqrt(d);
+								if (ar < 3 * this.scale) {
+									ar = 3 * this.scale;
+									break outer;
+								}
 							}
 						}
 					}
 				}
+				r = Math.min(Math.max(r, ar), sr) - this.scale;
+				this.drawWrapped(x2 - r - halfScale, y2 - r - halfScale, 2 * r + this.scale, 2 * r
+						+ this.scale, this.w, this.h, function() {
+					var alpha = r / halfScale;
+					if (alpha < 25 && this.state.replay.hasDuration) {
+						this.ctx.lineWidth = 2 * halfScale;
+						this.ctx.globalAlpha = Math.max(0, 1.0 - 0.04 * alpha);
+						this.ctx.beginPath();
+						this.ctx.arc(x2, y2, r, 0, 2 * Math.PI, false);
+						this.ctx.stroke();
+						this.ctx.globalAlpha = Math.max(0, 0.5 - 0.02 * alpha);
+						this.ctx.beginPath();
+						this.ctx.arc(x2, y2, r - this.scale, 0, 2 * Math.PI, false);
+						this.ctx.stroke();
+					}
+				}, []);
 			}
-			r -= this.scale;
-			this.ctx.strokeStyle = this.state.replay.htmlPlayerColors[hill[2]];
-			this.ctx.fillStyle = this.state.replay.htmlPlayerColors[hill[2]];
-			this.drawWrapped(x2 - r - halfScale, y2 - r - halfScale, 2 * r + this.scale, 2 * r
-					+ this.scale, this.w, this.h, function() {
-				var m;
-				var alpha = r / halfScale;
-				if (alpha < 25 && this.state.replay.hasDuration) {
-					this.ctx.lineWidth = 2 * halfScale;
-					this.ctx.globalAlpha = Math.max(0, 1.0 - 0.04 * alpha);
-					this.ctx.beginPath();
-					this.ctx.arc(x2, y2, r, 0, 2 * Math.PI, false);
-					this.ctx.stroke();
-					this.ctx.globalAlpha = Math.max(0, 0.5 - 0.02 * alpha);
-					this.ctx.beginPath();
-					this.ctx.arc(x2, y2, r - this.scale, 0, 2 * Math.PI, false);
-					this.ctx.stroke();
-				}
-				this.ctx.lineWidth = 1;
-				this.ctx.globalAlpha = 0.5;
-				for (m = 0; m < 40; m += 2) {
-					this.ctx.beginPath();
-					this.ctx.arc(x2, y2, 3 * this.scale, (m - 0.5) * Math.PI / 20, (m + 0.5)
-							* Math.PI / 20, false);
-					this.ctx.stroke();
-				}
-				this.ctx.globalAlpha = 1;
-			}, []);
+			this.ctx.globalAlpha = 1;
 			this.drawWrapped(x1, y1, 3 * this.scale, 3 * this.scale, this.w, this.h, function() {
 				this.ctx.drawImage(this.hillImage, dx, 0, 60, 60, x1, y1, w, w);
 			}, []);
@@ -982,7 +1007,7 @@ CanvasElementGraph.prototype.checkState = function() {
  * it's last turn.
  */
 CanvasElementGraph.prototype.draw = function() {
-	var min, max, i, k, t, scaleX, scaleY, txt, x, y, tw, tx, hills;
+	var min, max, i, k, t, scaleX, scaleY, txt, x, y, tw, tx, hills, razed;
 	var w = this.w - 1;
 	var h = this.h - 1;
 	var replay = this.state.replay;
@@ -1026,7 +1051,8 @@ CanvasElementGraph.prototype.draw = function() {
 		perPlayer[i] = 0;
 	hills = this.state.replay.meta['replaydata']['hills'];
 	for (k = 0; k < hills.length; k++) {
-		if (hills[k][3] !== undefined && values[hills[k][3]]) {
+		razed = hills[k][3] < this.state.replay.duration;
+		if (razed && values[hills[k][3]]) {
 			x = 0.5 + scaleX * hills[k][3];
 			y = 0.5 + scaleY * (max - values[hills[k][3]][hills[k][2]]);
 			this.ctx.fillStyle = replay.htmlPlayerColors[hills[k][2]];
@@ -1268,7 +1294,7 @@ CanvasElementStats.prototype.getStats = function(name, turn) {
  *        bonusText Title over bonus section.
  */
 CanvasElementStats.prototype.drawColorBar = function(x, y, w, h, stats, bonusText) {
-	var i, idx, wUsable, xNegSep;
+	var i, idx, wUsable, xNegSep, text;
 	var showBoni = false;
 	var boni = new Array(stats.values.length);
 	var boniList = new Array(stats.values.length);
@@ -1279,7 +1305,7 @@ CanvasElementStats.prototype.drawColorBar = function(x, y, w, h, stats, bonusTex
 	var sumPositive = 0;
 	var sumValues, sum;
 	var xOffset = x;
-	var drawPart = function(ctx, pixels, div, list, values, state, arrow) {
+	var drawPart = function(ctx, pixels, div, list, values, state, arrow, label) {
 		var k, kIdx, wBarRaw, wBar, textWidth;
 		ctx.save();
 		for (k = 0; k < list.length; k++) {
@@ -1312,14 +1338,21 @@ CanvasElementStats.prototype.drawColorBar = function(x, y, w, h, stats, bonusTex
 				ctx.textBaseline = 'middle';
 				ctx.font = 'bold 16px Monospace';
 				ctx.fillStyle = 'rgba(0,0,0,0.5)';
-				textWidth = ctx.measureText(values[kIdx]).width + 4;
+				text = values[kIdx];
+				if (label) {
+					text = String.fromCharCode(0x3b1 + k) + ' ' + text;
+					if (ctx.measureText(text).width + 4 > wBar) {
+						text = String.fromCharCode(0x3b1 + k);
+					}
+				}
+				textWidth = ctx.measureText(text).width + 4;
 				if (textWidth <= wBar) {
 					if (values[kIdx] >= 0) {
 						ctx.textAlign = 'left';
-						ctx.fillText(values[kIdx], xOffset + 2, y + h / 2);
+						ctx.fillText(text, xOffset + 2, y + h / 2);
 					} else {
 						ctx.textAlign = 'right';
-						ctx.fillText(values[kIdx], xOffset + wBarRaw - 2, y + h / 2);
+						ctx.fillText(text, xOffset + wBarRaw - 2, y + h / 2);
 					}
 				}
 				xOffset += wBarRaw;
@@ -1359,11 +1392,11 @@ CanvasElementStats.prototype.drawColorBar = function(x, y, w, h, stats, bonusTex
 	sum = sumValues + sumBoni;
 	// show negative scores
 	if (negatives.length) {
-		drawPart(this.ctx, wUsable, sum, negatives, stats.values, this.state, true);
+		drawPart(this.ctx, wUsable, sum, negatives, stats.values, this.state, true, this.label);
 	}
 	xNegSep = (x + sumNegative * wUsable / sum) | 0;
 	// show positive scores
-	drawPart(this.ctx, wUsable, sum, positives, stats.values, this.state, false);
+	drawPart(this.ctx, wUsable, sum, positives, stats.values, this.state, false, this.label);
 	this.ctx.lineWidth = 2;
 	this.ctx.strokeStyle = '#000';
 	this.ctx.beginPath();
@@ -1383,7 +1416,7 @@ CanvasElementStats.prototype.drawColorBar = function(x, y, w, h, stats, bonusTex
 	// draw boni
 	if (showBoni) {
 		xOffset += 3;
-		drawPart(this.ctx, wUsable, sum, boniList, boni, this.state, true);
+		drawPart(this.ctx, wUsable, sum, boniList, boni, this.state, true, this.label);
 		this.ctx.textAlign = 'right';
 		this.ctx.fillText(bonusText, x + w - 2, y);
 	}
