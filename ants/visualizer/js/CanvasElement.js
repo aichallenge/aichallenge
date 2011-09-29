@@ -624,7 +624,7 @@ CanvasElementAntsMap.prototype.collectAntsAroundCursor = function() {
  * and finally the fog of war.
  */
 CanvasElementAntsMap.prototype.draw = function() {
-	var halfScale, drawList, n, kf, w, dx, dy, d, fontSize, label, caption, order;
+	var halfScale, drawList, n, kf, w, dx, dy, d, fontSize, label, caption, order, survives;
 	var target, rows, cols, x1, y1, x2, y2, rowPixels, colPixels, ar, sr, r, hill, hills, i;
 	var hash = undefined;
 
@@ -667,7 +667,8 @@ CanvasElementAntsMap.prototype.draw = function() {
 							}
 						}, []);
 			}
-			if (this.turn >= hill[3] - 30 || this.turn <= 10) {
+			survives = this.state.replay.duration !== hills[3];
+			if (this.turn >= hill[3] - 30 && survives || this.turn <= 10) {
 				// draw proximity indicator just before the hill is captured
 				r = this.scale * Math.max(3, hill[3] - this.time - 17);
 				sr = this.scale * (3 + this.time);
@@ -1006,7 +1007,7 @@ CanvasElementGraph.prototype.checkState = function() {
  * it's last turn.
  */
 CanvasElementGraph.prototype.draw = function() {
-	var min, max, i, k, t, scaleX, scaleY, txt, x, y, tw, tx, hills;
+	var min, max, i, k, t, scaleX, scaleY, txt, x, y, tw, tx, hills, razed;
 	var w = this.w - 1;
 	var h = this.h - 1;
 	var replay = this.state.replay;
@@ -1050,7 +1051,8 @@ CanvasElementGraph.prototype.draw = function() {
 		perPlayer[i] = 0;
 	hills = this.state.replay.meta['replaydata']['hills'];
 	for (k = 0; k < hills.length; k++) {
-		if (hills[k][3] !== undefined && values[hills[k][3]]) {
+		razed = hills[k][3] < this.state.replay.duration;
+		if (razed && values[hills[k][3]]) {
 			x = 0.5 + scaleX * hills[k][3];
 			y = 0.5 + scaleY * (max - values[hills[k][3]][hills[k][2]]);
 			this.ctx.fillStyle = replay.htmlPlayerColors[hills[k][2]];
@@ -1292,7 +1294,7 @@ CanvasElementStats.prototype.getStats = function(name, turn) {
  *        bonusText Title over bonus section.
  */
 CanvasElementStats.prototype.drawColorBar = function(x, y, w, h, stats, bonusText) {
-	var i, idx, wUsable, xNegSep;
+	var i, idx, wUsable, xNegSep, text;
 	var showBoni = false;
 	var boni = new Array(stats.values.length);
 	var boniList = new Array(stats.values.length);
@@ -1303,7 +1305,7 @@ CanvasElementStats.prototype.drawColorBar = function(x, y, w, h, stats, bonusTex
 	var sumPositive = 0;
 	var sumValues, sum;
 	var xOffset = x;
-	var drawPart = function(ctx, pixels, div, list, values, state, arrow) {
+	var drawPart = function(ctx, pixels, div, list, values, state, arrow, label) {
 		var k, kIdx, wBarRaw, wBar, textWidth;
 		ctx.save();
 		for (k = 0; k < list.length; k++) {
@@ -1336,14 +1338,21 @@ CanvasElementStats.prototype.drawColorBar = function(x, y, w, h, stats, bonusTex
 				ctx.textBaseline = 'middle';
 				ctx.font = 'bold 16px Monospace';
 				ctx.fillStyle = 'rgba(0,0,0,0.5)';
-				textWidth = ctx.measureText(values[kIdx]).width + 4;
+				text = values[kIdx];
+				if (label) {
+					text = String.fromCharCode(0x3b1 + k) + ' ' + text;
+					if (ctx.measureText(text).width + 4 > wBar) {
+						text = String.fromCharCode(0x3b1 + k);
+					}
+				}
+				textWidth = ctx.measureText(text).width + 4;
 				if (textWidth <= wBar) {
 					if (values[kIdx] >= 0) {
 						ctx.textAlign = 'left';
-						ctx.fillText(values[kIdx], xOffset + 2, y + h / 2);
+						ctx.fillText(text, xOffset + 2, y + h / 2);
 					} else {
 						ctx.textAlign = 'right';
-						ctx.fillText(values[kIdx], xOffset + wBarRaw - 2, y + h / 2);
+						ctx.fillText(text, xOffset + wBarRaw - 2, y + h / 2);
 					}
 				}
 				xOffset += wBarRaw;
@@ -1383,11 +1392,11 @@ CanvasElementStats.prototype.drawColorBar = function(x, y, w, h, stats, bonusTex
 	sum = sumValues + sumBoni;
 	// show negative scores
 	if (negatives.length) {
-		drawPart(this.ctx, wUsable, sum, negatives, stats.values, this.state, true);
+		drawPart(this.ctx, wUsable, sum, negatives, stats.values, this.state, true, this.label);
 	}
 	xNegSep = (x + sumNegative * wUsable / sum) | 0;
 	// show positive scores
-	drawPart(this.ctx, wUsable, sum, positives, stats.values, this.state, false);
+	drawPart(this.ctx, wUsable, sum, positives, stats.values, this.state, false, this.label);
 	this.ctx.lineWidth = 2;
 	this.ctx.strokeStyle = '#000';
 	this.ctx.beginPath();
@@ -1407,7 +1416,7 @@ CanvasElementStats.prototype.drawColorBar = function(x, y, w, h, stats, bonusTex
 	// draw boni
 	if (showBoni) {
 		xOffset += 3;
-		drawPart(this.ctx, wUsable, sum, boniList, boni, this.state, true);
+		drawPart(this.ctx, wUsable, sum, boniList, boni, this.state, true, this.label);
 		this.ctx.textAlign = 'right';
 		this.ctx.fillText(bonusText, x + w - 2, y);
 	}
