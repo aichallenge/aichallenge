@@ -1345,7 +1345,7 @@ class Ants(Game):
         if self.probably_turn is None:
             probable_winner = list(set(list(self.remaining_players())) & set(self.remaining_hills()))
             if len(probable_winner) <= 1:
-                probable_score = self.score
+                probable_score = self.score[:]
                 probable_score[probable_winner[0]] += sum([HILL_POINTS for hill in self.hills.values()
                                                            if hill.killed_by == None
                                                            and hill.owner != probable_winner[0]])            
@@ -1570,7 +1570,7 @@ class Ants(Game):
         stats['w_turn'] = self.winning_turn
         stats['ranking_bots'] = self.ranking_bots
         stats['r_turn'] = self.ranking_turn
-        stats['score'] = map(int, self.score)
+        stats['score'] = self.score
         stats['s_alive'] = [1 if self.is_alive(player) else 0 for player in range(self.num_players)]
         stats['s_hills'] = [1 if player in self.remaining_hills() else 0 for player in range(self.num_players)]
         stats['climb?'] = []
