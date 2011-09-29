@@ -379,6 +379,7 @@ class House:
                                                     stdin=subprocess.PIPE,
                                                     stdout=subprocess.PIPE,
                                                     stderr=subprocess.PIPE,
+                                                    universal_newlines=True,
                                                     cwd=working_directory)
         except OSError:
             raise SandboxError('Failed to start {0}'.format(shell_command))
@@ -458,10 +459,7 @@ class House:
             if ln is None:
                 break
             try:
-                try:
-                    stdin.write(ln)
-                except TypeError:
-                    stdin.write(ln.encode())
+                stdin.write(ln)
                 stdin.flush()
             except (OSError, IOError):
                 self.kill()
