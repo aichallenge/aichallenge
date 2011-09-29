@@ -1045,7 +1045,8 @@ Visualizer.prototype.setAntLabels = function(mode) {
 	this.state.config['label'] = mode;
 	if (recap) {
 		this.updatePlayerButtonText();
-		this.main.ctx.clearRect(0, 0, this.main.canvas.width, this.main.canvas.height);
+		this.main.ctx.fillStyle = '#fff';
+		this.main.ctx.fillRect(0, 0, this.main.canvas.width, this.main.canvas.height);
 		this.resize(true);
 	}
 };
