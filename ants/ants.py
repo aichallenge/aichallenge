@@ -683,7 +683,7 @@ class Ants(Game):
         self.all_food.append(food)
         return food
 
-    def remove_food(self, loc, owner):
+    def remove_food(self, loc, owner=None):
         """ Remove food from a location
 
             An error is raised if no food exists there.
@@ -691,8 +691,9 @@ class Ants(Game):
         try:
             self.map[loc[0]][loc[1]] = LAND
             self.current_food[loc].end_turn = self.turn
-            self.current_food[loc].owner = owner
-            self.hive_food[owner] += 1
+            if owner is not None:
+                self.current_food[loc].owner = owner
+                self.hive_food[owner] += 1
             return self.current_food.pop(loc)
         except KeyError:
             raise Exception("Remove food error",
@@ -1440,6 +1441,8 @@ class Ants(Game):
         pop_count = defaultdict(int)
         for ant in self.current_ants.values():
             pop_count[ant.owner] += 1
+        for owner in range(self.num_players):
+            pop_count[owner] += self.hive_food[owner]
         pop_count[FOOD] = len(self.current_food)
         pop_total = sum(pop_count.values())
         for owner, count in pop_count.items():
