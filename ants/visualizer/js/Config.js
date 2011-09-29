@@ -14,11 +14,11 @@
  * @property {Number} zoom Sets the zoom factor. The actual size of map squares depends on the
  *           visualizer size. Default: 1
  * @property {Number} duration How long a replay should normally play, in seconds. The speed is
- *           adapted to that. Default: 100
+ *           adapted to that. Default: 75
  * @property {Number} speedSlowest Overrides the duration in case the replay is so short that the
  *           playback rate would be below this turns per second. Default: 2
  * @property {Number} speedFastest Overrides the duration in case the replay is so long that the
- *           playback rate would be over this turns per second. Default: 5
+ *           playback rate would be over this turns per second. Default: 8
  * @property {Number} speedFactor An additional speed factor that is applied (logarithmically) to
  *           the result of the calculation and can be modified with the speed buttons in the
  *           visualizer. Default: 0
@@ -34,9 +34,9 @@ function Config() {
 Config.prototype['fullscreen'] = false;
 Config.prototype['label'] = 0;
 Config.prototype['zoom'] = 1;
-Config.prototype['duration'] = 100;
+Config.prototype['duration'] = 75;
 Config.prototype['speedSlowest'] = 2;
-Config.prototype['speedFastest'] = 5;
+Config.prototype['speedFastest'] = 8;
 Config.prototype['speedFactor'] = 0;
 Config.prototype['cpu'] = 0.5;
 
