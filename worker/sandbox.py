@@ -13,10 +13,14 @@ try:
 except ImportError:
     from queue import Queue, Empty
 
-# make python 2.x compatible with python 3.x
+# make python 3.x compatible with python 2.x
 if sys.version_info >= (3,):
-    def unicode(s, *args, **kwargs):
-        return s
+    def unicode(s, errors="strict"):
+        if isinstance(s, str):
+            return s
+        elif isinstance(s, bytes) or isinstance(s, bytearray):
+            return s.decode("utf-8", errors)
+        raise SandboxError("Tried to convert unrecognized type to unicode")
 
 try:
     from server_info import server_info
@@ -327,11 +331,8 @@ def _monitor_file(fd, q):
         if not line:
             q.put(None)
             break
-        try:
-            line = line.rstrip('\r\n')
-        except TypeError:
-            line = line.decode().rstrip('\r\n')
         line = unicode(line, errors="replace")
+        line = line.rstrip('\r\n')
         q.put(line)
 
 class House:
