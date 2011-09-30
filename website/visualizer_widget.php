@@ -65,6 +65,7 @@ var visualize = function (i) {
                 addParam('separate_jvm', 'true');
                 addParam('classloader_cache', 'false');
             }
+            addParam('configOverrides', JSON.stringify(config));
             this.appendChild(applet);
         } else if (typeof Visualizer !== 'undefined') {
             // initialize options with defaults and override them
@@ -156,6 +157,11 @@ function visualizer_widget($replay, $interactive=true, $width=690, $height=700) 
                 <param name="classloader_cache" value="false">
             <?php
         }
+        if (!$interactive) {
+            ?>
+                <param name="configOverrides" value="{&quot;zoom&quot;:1}">
+            <?php
+        }
         ?>
             </applet>
         <?php
@@ -174,7 +180,12 @@ function visualizer_widget($replay, $interactive=true, $width=690, $height=700) 
                 options.data_dir = 'visualizer/';
                 options.interactive = <?php echo ($interactive) ? 'true' : 'false'; ?>;
                 options.embedded = <?php echo ($interactive) ? 'false' : 'true'; ?>;
-                visualizer = new Visualizer(document.getElementById('visualizerDiv'), options, <?php echo $width; ?>, <?php echo $height; ?>);
+                var config = {};
+                if (!options.interactive) {
+                    // typically we want no zoom in non-interactive visualizers
+                    config.zoom = 1;
+                }
+                visualizer = new Visualizer(document.getElementById('visualizerDiv'), options, <?php echo $width; ?>, <?php echo $height; ?>, config);
                 visualizer.loadReplayDataFromURI('<?php echo $replay; ?>');
             </script>
         <?php

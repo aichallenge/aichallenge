@@ -624,7 +624,7 @@ CanvasElementAntsMap.prototype.collectAntsAroundCursor = function() {
  * and finally the fog of war.
  */
 CanvasElementAntsMap.prototype.draw = function() {
-	var halfScale, drawList, n, kf, w, dx, dy, d, fontSize, label, caption, order, survives;
+	var halfScale, drawList, n, kf, w, dx, dy, d, fontSize, label, caption, order, razed;
 	var target, rows, cols, x1, y1, x2, y2, rowPixels, colPixels, ar, sr, r, hill, hills, i;
 	var hash = undefined;
 
@@ -667,8 +667,8 @@ CanvasElementAntsMap.prototype.draw = function() {
 							}
 						}, []);
 			}
-			survives = this.state.replay.duration !== hills[3];
-			if (this.turn >= hill[3] - 30 && survives || this.turn <= 10) {
+			razed = hill[3] <= this.state.replay.duration;
+			if (razed && this.turn >= hill[3] - 30 || this.turn <= 10) {
 				// draw proximity indicator just before the hill is captured
 				r = this.scale * Math.max(3, hill[3] - this.time - 17);
 				sr = this.scale * (3 + this.time);
