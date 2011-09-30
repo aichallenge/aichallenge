@@ -1461,7 +1461,7 @@ class Ants(Game):
         pop_count = defaultdict(int)
         for ant in self.current_ants.values():
             pop_count[ant.owner] += 1
-        for owner in range(self.num_players):
+        for owner in self.remaining_hills():
             pop_count[owner] += self.hive_food[owner]
         pop_count[FOOD] = len(self.current_food)
         pop_total = sum(pop_count.values())
