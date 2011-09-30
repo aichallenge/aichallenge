@@ -82,6 +82,8 @@ class Ants(Game):
             'symmetric': self.do_food_symmetric
         }.get(options.get('food'), self.do_food_sections)
 
+        self.scenario = options.get('scenario', False)
+
         map_data = self.parse_map(map_text)
 
         self.turn = 0
@@ -122,21 +124,32 @@ class Ants(Game):
         for row, col in map_data['water']:
             self.map[row][col] = WATER
 
+        # for new games
+        # ants are ignored and 1 ant is created per hill
+        # food is ignored
+        # for scenarios, the map file is followed exactly
+
         # initialize hills
         for owner, locs in map_data['hills'].items():
             for loc in locs:
                 hill = self.add_hill(loc, owner)
-                self.add_ant(hill)
+                if not self.scenario:
+                    self.add_ant(hill)
+
+        if self.scenario:
+            # initialize ants
+            for player, player_ants in enumerate(map_data['ants']):
+                for ant_loc in player_ants:
+                    self.add_initial_ant(ant_loc, player)
+            # initialize food
+            for food in map_data['food']:
+                self.add_food(food)
 
         # initialize scores
         # points start at # of hills to prevent negative scores
         self.score = [len(map_data['hills'][0])]*self.num_players
         self.bonus = [0]*self.num_players
         self.score_history = [[s] for s in self.score]
-
-        # for new games
-        # ants are ignored and 1 ant is created per hill
-        # food is ignored
 
         # used to remember where the ants started
         self.initial_ant_list = sorted(self.current_ants.values(), key=operator.attrgetter('owner'))
@@ -728,6 +741,14 @@ class Ants(Game):
         hill.last_touched = self.turn
         return ant
 
+    def add_initial_ant(self, loc, owner):
+        ant = Ant(loc, owner, self.turn)
+        row, col = loc
+        self.map[row][col] = owner
+        self.all_ants.append(ant)
+        self.current_ants[loc] = ant
+        return ant
+    
     def kill_ant(self, ant, ignore_error=False):
         """ Kill the ant at the given location
 
@@ -1142,51 +1163,51 @@ class Ants(Game):
         return enemy_map
 
     def get_map_symmetry(self):
-        """ Get orientation for each starting ant
+        """ Get orientation for each starting hill
         """
-        # get list of player 0 ants
-        ants = [ant for ant in self.initial_ant_list if ant.owner == 0]
+        # get list of player 0 hills
+        hills = [hill for hill in self.hills.values() if hill.owner == 0]
         # list of
         #     list of tuples containing
         #         location, aim, and enemy map dict
-        orientations = [[(ants[0].loc, 0,
+        orientations = [[(hills[0].loc, 0,
             dict([(i, i, ) for i in range(self.num_players)]))]]
         for player in range(1, self.num_players):
-            player_ants = [ant for ant in self.initial_ant_list if ant.owner == player]
-            if len(player_ants) != len(ants):
+            player_hills = [hill for hill in self.hills.values() if hill.owner == player]
+            if len(player_hills) != len(hills):
                 raise Exception("Invalid map",
-                                "This map is not symmetric.  Player 0 has {0} ants while player {1} has {2} ants."
-                                .format(len(ants), player, len(player_ants)))
+                                "This map is not symmetric.  Player 0 has {0} hills while player {1} has {2} hills."
+                                .format(len(hills), player, len(player_hills)))
             new_orientations = []
-            for player_ant in player_ants:
+            for player_hill in player_hills:
                 for aim in range(8):
                 # check if map looks similar given the orientation
-                    enemy_map = self.map_similar(ants[0].loc, player_ant.loc, aim, player)
+                    enemy_map = self.map_similar(hills[0].loc, player_hill.loc, aim, player)
                     if enemy_map != None:
                         # produce combinations of orientation sets
-                        for ant_aims in orientations:
-                            new_ant_aims = deepcopy(ant_aims)
-                            new_ant_aims.append((player_ant.loc, aim, enemy_map))
-                            new_orientations.append(new_ant_aims)
+                        for hill_aims in orientations:
+                            new_hill_aims = deepcopy(hill_aims)
+                            new_hill_aims.append((player_hill.loc, aim, enemy_map))
+                            new_orientations.append(new_hill_aims)
             orientations = new_orientations
             if len(orientations) == 0:
                 raise Exception("Invalid map",
                                 "This map is not symmetric. Player {0} does not have an orientation that matches player 0"
                                 .format(player))
-        # ensure types of ant aims in orientations are symmetric
+        # ensure types of hill aims in orientations are symmetric
         # place food set and double check symmetry
         valid_orientations = []
-        for ant_aims in orientations:
+        for hill_aims in orientations:
             fix = []
-            for loc, aim, enemy_map in ant_aims:
+            for loc, aim, enemy_map in hill_aims:
                 row, col = self.destination(loc, self.offset_aim((1,2), aim))
                 fix.append(((row, col), self.map[row][col]))
                 self.map[row][col] = FOOD
-            for loc, aim, enemy_map in ant_aims:
-                if self.map_similar(ant_aims[0][0], loc, aim, enemy_map[0]) is None:
+            for loc, aim, enemy_map in hill_aims:
+                if self.map_similar(hill_aims[0][0], loc, aim, enemy_map[0]) is None:
                     break
             else:
-                valid_orientations.append(ant_aims)
+                valid_orientations.append(hill_aims)
             for (row, col), ilk in reversed(fix):
                 self.map[row][col] = ilk
         if len(valid_orientations) == 0:
@@ -1235,7 +1256,7 @@ class Ants(Game):
         visited = [[False for col in range(self.width)]
                           for row in range(self.height)]
 
-        # aim for ant 0 will always be 0
+        # aim for ahill0 will always be 0
         ant0 = self.map_symmetry[0][0]
 
         if starting:
@@ -1247,10 +1268,9 @@ class Ants(Game):
                 if square:
                     continue
 
-                # skip locations of starting ants
-                for ant in self.initial_ant_list:
-                    if ant.loc == (row, col):
-                        continue
+                # skip locations of hills
+                if (row, col) in self.hills:
+                    continue
 
                 if starting:
                     # skip locations outside of initial ants' view radius
