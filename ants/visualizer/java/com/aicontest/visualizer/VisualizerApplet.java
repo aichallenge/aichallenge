@@ -9,7 +9,6 @@ import java.net.URL;
 
 import netscape.javascript.JSObject;
 
-import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ScriptableObject;
 import org.mozilla.javascript.Undefined;
 
@@ -71,11 +70,13 @@ public class VisualizerApplet extends Applet implements Runnable,
 			HTMLDocument document = webWrapper.getDomWindow().getDocument();
 			ScriptableObject options = webWrapper.construct("Options", null);
 			Object config = null;
+			String configString = getParameter("configOverrides");
+			if (configString != null) {
+				config = webWrapper.parseJSON(configString);
+			}
 			for (Object id : options.getIds()) {
 				String param = getParameter(id.toString());
-				if (id.toString().equals("configOverrides")) {
-					config = webWrapper.parseJSON(param);
-				} else if (param != null) {
+				if (param != null) {
 					Object old = options.get(id.toString(), options);
 					if (old instanceof Boolean) {
 						options.put(id.toString(), options,
