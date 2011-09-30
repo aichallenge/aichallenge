@@ -74,6 +74,7 @@ def install_clojure(download_base):
         run_cmd("curl '%s/clojure.zip' > clojure.zip" % (download_base,))
         run_cmd("unzip clojure.zip")
         run_cmd("cp clojure-1.3.0/clojure-1.3.0.jar /usr/share/java/clojure.jar")
+        run_cmd("chmod a+r /usr/share/java/clojure.jar")
 
 def install_groovy(download_base):
     """ Install the Groovy language """
