@@ -20,28 +20,52 @@ function get_map_data() {
         return NULL;
     }
     $maps = array();
+    $totals = array();
+    $totals["overall"] = 0;
     while ($list_row = mysql_fetch_assoc($map_results)) {
         $maps[] = $list_row;
     }
     foreach ($maps as &$map) {
         $cutoff_results = mysql_query(sprintf($cutoff_query, $map["map_id"],
             $map["timestamp"]));
+        $totals["overall"] += $map["game_count"];
         $map["cutoffs"] = array();
         if ($cutoff_results) {
             while ($cutoff_row = mysql_fetch_assoc($cutoff_results)) {
                 $map["cutoffs"][] = $cutoff_row;
+                $name = $cutoff_row["cutoff"];
+                if (isset($totals[$name])) {
+                    $totals[$name] += $cutoff_row["cutoff_count"];
+                } else {
+                    $totals[$name] = $cutoff_row["cutoff_count"];
+                }
             }
         }
     }
-    return $maps;
+    ksort($totals);
+    return array($maps, $totals);
 }
 
 function render_map_list($map_data) {
-    $html = "<div>";
-    foreach ($map_data as $map) {
+    $html = "<div><h3>Overall game stats</h3>";
+    $totals = $map_data[1];
+    $total_games = $totals["overall"];
+    $html .= "<p>Total Games: ". $total_games;
+    $html .= "<table><tr><th>Game End Reason</th><th>Count</th></th></tr>";
+    foreach ($totals as $reason => $count) {
+        if (strcmp($reason, "overall") == 0) {
+            continue;
+        }
+        $cutoff_per = ($count / $total_games) * 100;
+        $html .= sprintf("<tr><td>%s</td><td>%d (%.2f%%)</td></tr>",
+            $reason, $count, $cutoff_per);
+    }
+    $html .= "</table>";
+
+    foreach ($map_data[0] as $map) {
         $html .= "<div><h3>". nice_map($map["filename"]) ."</h3>\n";
         if ($map["priority"] < 0) {
-            $html .= "<p><em>Disabled</em></p>";
+            $html .= "<p><strong>Disabled</strong></p>";
         }
         $html .= "<p>Players: ". $map["players"] ." Max turns: ".
             $map["max_turns"] ." Set at: ". $map["timestamp"] ."</p>\n";
