@@ -285,6 +285,8 @@ function create_game_list_table($json, $top=FALSE, $targetpage=NULL) {
     }
     if ($top) {
         $table .= '<caption align="bottom"><a href="'.$targetpage.$page_string.'1">View More &raquo;</a></caption>';
+    } else {
+        $table .= '<caption>'.getPaginationString($json['page'], $json['page_count'], 10, $page_string)."</caption>";
     }
     $table .= '</table>';
 
