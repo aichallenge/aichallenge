@@ -8,9 +8,11 @@ function get_map_data() {
         players, count(*) as game_count, avg(g.game_length) as avg_length,
         STDDEV(g.game_length) as stddev_length
         from map m inner join game g on g.map_id = m.map_id
+        where g.timestamp > m.timestamp
         group by m.map_id order by IF(priority >= 0, 0, 1), m.filename asc";
     $cutoff_query = "select cutoff, count(*) as cutoff_count,
-        avg(game_length) as avg_length from game where map_id = %s
+        avg(game_length) as avg_length from game
+        where map_id = %s and timestamp > %s
         group by cutoff";
 
     $map_results = mysql_query($map_query);
@@ -22,7 +24,8 @@ function get_map_data() {
         $maps[] = $list_row;
     }
     foreach ($maps as &$map) {
-        $cutoff_results = mysql_query(sprintf($cutoff_query, $map["map_id"]));
+        $cutoff_results = mysql_query(sprintf($cutoff_query, $map["map_id"],
+            $map["timestamp"]));
         if (!$cutoff_results) {
             die("Error while retreiving map data.");
         }
