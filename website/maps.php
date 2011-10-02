@@ -60,7 +60,8 @@ function render_map_list($map_data) {
         $html .= sprintf("<tr><td>%s</td><td>%d (%.2f%%)</td></tr>",
             $reason, $count, $cutoff_per);
     }
-    $html .= "</table>";
+    $html .= "</table>
+        <p>Each &uarr; and &darr; next to ending percentage signify a 10% difference from the overall average.</p>";
 
     foreach ($map_data[0] as $map) {
         $html .= "<div><h3>". nice_map($map["filename"]) ."</h3>\n";
@@ -75,9 +76,18 @@ function render_map_list($map_data) {
         $html .= "<table><tr><th>Game End Reason</th><th>Count</th><th>Average Length</th></tr>\n";
         foreach($map["cutoffs"] as $cutoff) {
             $cutoff_per = ($cutoff["cutoff_count"] / $map["game_count"]) * 100;
-            $html .= sprintf("<tr><td>%s</td><td>%d (%.1f%%)</td><td>%.2f</td></tr>\n",
+            $total_per = ($totals[$cutoff["cutoff"]] / $total_games) * 100;
+            $per_diff = $total_per - $cutoff_per;
+            $diff_arrow = "";
+            if ($per_diff > 10) {
+                $diff_arrow = str_repeat("&darr;", $per_diff / 10);
+            }
+            else if ($per_diff < -10) {
+                $diff_arrow = str_repeat("&uarr;", (0-$per_diff) / 10);
+            }
+            $html .= sprintf("<tr><td>%s</td><td>%d (%.1f%%)%s</td><td>%.2f</td></tr>\n",
                 $cutoff["cutoff"], $cutoff["cutoff_count"], $cutoff_per,
-                $cutoff["avg_length"]);
+                $diff_arrow, $cutoff["avg_length"]);
         }
         $html .= "</table></div>";
     }
