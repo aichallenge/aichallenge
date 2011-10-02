@@ -4,7 +4,7 @@
     <ul>
       <li><a href="rankings.php">Current Rankings</a></li>
       <li><a href="games.php">Latest Games</a></li>
-      <li><a href="maps">Official Maps</a></li>
+      <li><a href="maps.php">Official Maps</a></li>
     </ul>
     <?php if (logged_in_with_valid_credentials()) { ?>
     <h1>My Account</h1>

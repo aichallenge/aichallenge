@@ -190,7 +190,7 @@ function create_game_list_table($json, $top=FALSE, $targetpage=NULL) {
         $user_id = NULL;
     }
     $table = '<table class="games">';
-    if (array_key_exists('type', $json)) {
+    if (array_key_exists('type', $json) && strcmp($json['type'], "all") != 0) {
         // language by name, others by id
         if ($json['type'] == 'language') {
             $page_string = '?'.$json['type'].'='.$json['type_name'].'&page=';
@@ -287,6 +287,9 @@ function create_game_list_table($json, $top=FALSE, $targetpage=NULL) {
         $table .= '<caption align="bottom"><a href="'.$targetpage.$page_string.'1">View More &raquo;</a></caption>';
     }
     $table .= '</table>';
+    if (!$top) {
+        $table .= '<div style="text-align:center">'.getPaginationString($json['page'], $json['page_count'], 10, $page_string)."</div>";
+    }
 
     return $table;
 }

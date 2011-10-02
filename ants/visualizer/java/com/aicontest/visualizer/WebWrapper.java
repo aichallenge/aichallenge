@@ -33,6 +33,8 @@ import org.mozilla.javascript.ScriptableObject;
 import org.mozilla.javascript.SecurityController;
 import org.mozilla.javascript.ast.AstRoot;
 import org.mozilla.javascript.ast.ScriptNode;
+import org.mozilla.javascript.json.JsonParser;
+import org.mozilla.javascript.json.JsonParser.ParseException;
 import org.mozilla.javascript.optimizer.Codegen;
 
 import com.aicontest.visualizer.js.dom.Console;
@@ -55,6 +57,7 @@ public class WebWrapper {
 	private ErrorReporter compilationErrorReporter;
 	private GeneratedClassLoader loader;
 	private volatile boolean running = true;
+	private JsonParser jsonParser;
 	protected ArrayList<WebWrapper.Script> scripts = new ArrayList<WebWrapper.Script>();
 	protected Context cx;
 	protected ScriptableObject global;
@@ -90,6 +93,7 @@ public class WebWrapper {
 		global.put("XMLHttpRequest", global, xmlHttpRequest);
 		new Console(global, "console");
 		cx.evaluateString(global, "alert = function(x) { java.lang.System.out.println(x) }", "<web-wrapper>", 1, null);
+		jsonParser = new JsonParser(cx, global);
 	}
 
 	private Class<?> recompile(String file) throws IOException {
@@ -200,6 +204,10 @@ public class WebWrapper {
 	public Object invoke(Scriptable thiz, String functionName, Object[] args) {
 		Function f = (Function) ScriptableObject.getProperty(thiz, functionName);
 		return f.call(cx, global, thiz, args);
+	}
+	
+	public Object parseJSON(String json) throws ParseException {
+		return jsonParser.parseValue(json);
 	}
 
 	public static WebWrapper getInstance() {
