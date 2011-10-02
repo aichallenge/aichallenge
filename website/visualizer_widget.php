@@ -150,7 +150,7 @@ function visualizer_widget($replay, $interactive=true, $width=690, $height=700) 
             <param name="replay" value="<?php echo $replay; ?>">
             <param name="interactive" value="<?php echo $interactive; ?>">
         <?php
-        if ($_GET["debug"] == "true") {
+        if (isset($_GET["DEBUG"]) && $_GET["debug"] == "true") {
             ?>
                 <param name="debug" value="true">
                 <param name="separate_jvm" value="true">
