@@ -190,7 +190,7 @@ function create_game_list_table($json, $top=FALSE, $targetpage=NULL) {
         $user_id = NULL;
     }
     $table = '<table class="games">';
-    if (array_key_exists('type', $json)) {
+    if (array_key_exists('type', $json) && strcmp($json['type'], "all") != 0) {
         // language by name, others by id
         if ($json['type'] == 'language') {
             $page_string = '?'.$json['type'].'='.$json['type_name'].'&page=';
