@@ -53,16 +53,16 @@ class Ants(Game):
         seed(self.engine_seed)
         self.food_rate = options.get('food_rate', (2,8)) # total food
         if type(self.food_rate) in (list, tuple):
-            self.food_rate = randrange(*self.food_rate)
+            self.food_rate = randrange(self.food_rate[0], self.food_rate[1]+1)
         self.food_turn = options.get('food_turn', (12,30)) # per turn
         if type(self.food_turn) in (list, tuple):
-            self.food_turn = randrange(*self.food_turn)
+            self.food_turn = randrange(self.food_turn[0], self.food_turn[1]+1)
         self.food_start = options.get('food_start', (75,175)) # per land area
         if type(self.food_start) in (list, tuple):
-            self.food_start = randrange(*self.food_start)
+            self.food_start = randrange(self.food_start[0], self.food_start[1]+1)
         self.food_visible = options.get('food_visible', (1,3)) # in starting loc
         if type(self.food_visible) in (list, tuple):
-            self.food_visible = randrange(*self.food_visible)
+            self.food_visible = randrange(self.food_visible[0], self.food_visible[1]+1)
         self.food_extra = Fraction(0,1)
 
         self.cutoff_percent = options.get('cutoff_percent', 0.90)
@@ -138,7 +138,7 @@ class Ants(Game):
 
         if self.scenario:
             # initialize ants
-            for player, player_ants in enumerate(map_data['ants']):
+            for player, player_ants in map_data['ants'].items():
                 for ant_loc in player_ants:
                     self.add_initial_ant(ant_loc, player)
             # initialize food
@@ -203,13 +203,14 @@ class Ants(Game):
         num_players = None
 
         for line in map_text.split('\n'):
-            line = line.strip().lower()
+            line = line.strip()
 
             # ignore blank lines and comments
             if not line or line[0] == '#':
                 continue
 
             key, value = line.split(' ', 1)
+            key = key.lower()
             if key == 'cols':
                 width = int(value)
             elif key == 'rows':
@@ -737,6 +738,8 @@ class Ants(Game):
         hill.killed_by = killed_by
         self.score[killed_by] += HILL_POINTS
         self.score[hill.owner] += RAZE_POINTS
+        # reset cutoff_turns
+        self.cutoff_turns = 0
 
     def player_hills(self, player):
         """ Return the current hills belonging to the given player """
@@ -1399,8 +1402,11 @@ class Ants(Game):
         """ Called by engine at the start of the game """
         if self.do_food != self.do_food_none:
             self.game_started = True
-            starting_food = ((self.land_area // self.food_start)
-                             - self.food_visible * self.num_players)
+            if self.food_start:
+                starting_food = ((self.land_area // self.food_start)
+                                 - self.food_visible * self.num_players)
+            else:
+                starting_food = 0
             self.do_food_visible(self.food_visible * self.num_players)
             self.do_food(starting_food)
 
