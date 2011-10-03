@@ -91,14 +91,9 @@ if @min_players <= @max_players then
     order by floor(user_count / map_count / total_map_count),
         floor(game_count / map_count / total_map_count)
     limit 1;
-
-    update matchup
-    set map_id = @map_id,
-        max_turns = @max_turns
-    where matchup_id = @matchup_id;
-
+    
     -- debug statement
-    -- select * from map where map_id = @map_id;
+    -- select @players;
 
     -- Step 3: select opponents 1 at a time
     set @cur_user_id = @seed_id;

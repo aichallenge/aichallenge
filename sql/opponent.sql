@@ -146,7 +146,7 @@ if @min_players <= @max_players then
     limit 1;
 
     -- debug statement
-    select @players
+    select @players;
 
     -- Step 3: select opponents 1 at a time
     set @cur_user_id = @seed_id;
