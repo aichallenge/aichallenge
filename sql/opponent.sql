@@ -84,42 +84,69 @@ if @min_players <= @max_players then
     from submission
     where submission_id = @submission_id;
 
-    -- Step 2: select the map
-    -- TODO: improve distribution of games
-    select m.map_id, m.players, m.max_turns
-    into @map_id, @players, @max_turns
-    from map m
-    left outer join (
-        select map_id, max(g.game_id) as max_game_id, count(*) as game_count
+    -- Step 2: select the player count
+    select p.players, map_count, total_map_count,
+    @map_percent := map_count / total_map_count as map_percent,
+    game_count, floor(game_count / @map_percent) as game_percent,
+    user_count, floor(user_count / @map_percent) as user_percent
+    from (
+        select players, count(*) as map_count
+        from map
+        where priority > 0
+        group by players
+    ) p
+    inner join (
+        select m.players, count(*) game_count, count(gp.user_id) user_count
         from game g
-        inner join game_player gp
+        inner join map m
+            on m.map_id = g.map_id
+        left outer join game_player gp
             on g.game_id = gp.game_id
             and gp.user_id = @seed_id
-        group by g.map_id
-    ) games
-        on m.map_id = games.map_id
-    left outer join (
-        select map_id, max(g.game_id) as max_all_game_id, count(*) as all_game_count
+        where m.priority > 0
+            and g.timestamp > timestampadd(hour, -24, current_timestamp)
+        group by players
+    ) u
+       on u.players = p.players,
+    (
+       select count(*) as total_map_count
+       from map
+       where priority > 0
+    ) t
+    order by 8, 6;
+    
+    select p.players
+    into @players
+    from (
+        select players, count(*) as map_count
+        from map
+        where priority > 0
+        group by players
+    ) p
+    inner join (
+        select m.players, count(*) game_count, count(gp.user_id) user_count
         from game g
-        group by g.map_id
-    ) all_games
-        on m.map_id = all_games.map_id
-    where m.players <= @max_players
-        and m.priority >= 0
-    -- sqrt is used to allow for a little leniency keeping the game count even across maps
-    order by floor(sqrt(game_count)),
-             floor(sqrt(all_game_count)),
-             max_game_id,
-             m.map_id
+        inner join map m
+            on m.map_id = g.map_id
+        left outer join game_player gp
+            on g.game_id = gp.game_id
+            and gp.user_id = @seed_id
+        where m.priority > 0
+            and g.timestamp > timestampadd(hour, -24, current_timestamp)
+        group by players
+    ) u
+       on u.players = p.players,
+    (
+       select count(*) as total_map_count
+       from map
+       where priority > 0
+    ) t
+    order by floor(user_count / map_count / total_map_count),
+        floor(game_count / map_count / total_map_count)
     limit 1;
 
-    update tmp_matchup
-    set map_id = @map_id,
-        max_turns = @max_turns
-    where matchup_id = @matchup_id;
-
     -- debug statement
-    select * from map where map_id = @map_id;
+    select @players
 
     -- Step 3: select opponents 1 at a time
     set @cur_user_id = @seed_id;
@@ -328,7 +355,41 @@ if @min_players <= @max_players then
             
     end while;
 
-    -- Step 4: put players into map positions
+    -- Step 4: select the map
+    select m.map_id, m.max_turns, m.players
+    into @map_id, @max_turns
+    from game g
+    inner join map m
+        on m.map_id = g.map_id
+    left outer join game_player gp
+        on g.game_id = gp.game_id
+        and gp.user_id in (
+            select user_id
+            from tmp_matchup_player
+            where matchup_id = @matchup_id
+        )
+    ,(
+        select count(*) as total_map_count
+        from map
+        where priority > 0
+            and players = @players
+    ) t
+    where m.priority > 0
+        and m.players = @players
+        and g.timestamp > timestampadd(hour, -24, current_timestamp)
+    group by m.map_id
+    order by count(gp.user_id), count(*), priority, map_id desc
+    limit 1;
+    
+    update tmp_matchup
+    set map_id = @map_id,
+        max_turns = @max_turns
+    where matchup_id = @matchup_id;
+
+    -- debug statement
+    select * from map where map_id = @map_id;
+    
+    -- Step 4.5: put players into map positions
     update tmp_matchup_player
     inner join (
         select @position := (@position + 1) as position,
