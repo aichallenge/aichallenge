@@ -105,15 +105,15 @@ if @min_players <= @max_players then
 
     -- create a list of recent game matchups by user_id
     -- used to keep the matchups even across all users and pairings
-    drop temporary table if exists tmp_recent;
-    create temporary table tmp_recent (
+    drop temporary table if exists tmp_opponent;
+    create temporary table tmp_opponent (
         user_id int,
         opponent_id int,
         game_count int,
         primary key (user_id, opponent_id)
     );
 
-    insert into tmp_recent
+    insert into tmp_opponent
         select user_id, opponent_id, sum(game_count) as game_count
         from (
             select gp1.user_id as user_id,
@@ -143,7 +143,18 @@ if @min_players <= @max_players then
             group by mp1.user_id, mp2.user_id
         ) g
         group by 1, 2;
-        
+
+    drop temporary table if exists tmp_games;
+    create temporary table tmp_games (
+        user_id int,
+        game_count int,
+        primary key (user_id)
+    );
+    insert into tmp_games
+        select user_id, sum(game_count) as game_count
+        from tmp_opponent
+        group by user_id;
+    
     while @player_count < @players do
                 
             -- select list of opponents with match quality
@@ -184,14 +195,14 @@ if @min_players <= @max_players then
             -- join to get total game count for last 24 hours
             left outer join (
                 select user_id, count(*) as game_count
-                from tmp_recent
+                from tmp_games
                 group by user_id
             ) r
                 on r.user_id = s.user_id
             -- join in user to user game counts to provide round-robin like logic
             left outer join (
                 select opponent_id, sum(game_count)
-                from tmp_recent
+                from tmp_opponent
                 where user_id in (
                     select user_id
                     from matchup_player mp
