@@ -232,7 +232,7 @@ if @min_players <= @max_players then
     end while;
 
     -- Step 4: select the map
-    select m.map_id, m.max_turns, m.players
+    select m.map_id, m.max_turns
     into @map_id, @max_turns
     from game g
     inner join map m
