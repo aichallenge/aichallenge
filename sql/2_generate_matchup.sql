@@ -201,7 +201,7 @@ if @min_players <= @max_players then
                 on r.user_id = s.user_id
             -- join in user to user game counts to provide round-robin like logic
             left outer join (
-                select opponent_id, sum(game_count)
+                select opponent_id, sum(game_count) as game_count
                 from tmp_opponent
                 where user_id in (
                     select user_id
@@ -219,7 +219,7 @@ if @min_players <= @max_players then
             -- rank difference selected will also follow a pareto distribution 
             where s.seq < (5 / pow(rand(), 0.65)) 
             order by o.game_count,
-                r.recent_games,
+                r.game_count,
                 s.match_quality desc
             limit 1;
                 

@@ -126,70 +126,57 @@ if @min_players <= @max_players then
     set @last_user_id = -1;
     set @player_count = 1;
 
-    -- create list of recent games by user_id
-    -- used to keep the matchups even across all users
-    drop temporary table if exists temp_recent;
-    create temporary table temp_recent (
-        user_id int,
-        recent_games int,
-        primary key (user_id)
-    );
-    insert into temp_recent (user_id, recent_games)
-        select user_id, count(*) as recent_games
-        from game_player gp
-        inner join game g
-            on g.game_id = gp.game_id
-        where g.timestamp > timestampadd(hour, -24, current_timestamp)
-        group by user_id;
-    -- update with current matchups
-    insert into temp_recent (user_id, recent_games)
-        select mp.user_id, 0 as recent_games
-        from matchup_player mp
-        inner join matchup m
-            on mp.matchup_id = m.matchup_id
-        where (m.worker_id >= 0 or m.worker_id is null)
-        and m.deleted = 0
-        and not exists (
-            select user_id
-            from game_player gp
-            inner join game g
-                on g.game_id = gp.game_id
-            where g.timestamp > timestampadd(hour, -24, current_timestamp)
-            and gp.user_id = mp.user_id
-        )
-        group by mp.user_id;
-    update temp_recent
-    inner join (
-        select mp.user_id, count(*) as recent_games
-        from matchup_player mp
-        inner join matchup m
-            on mp.matchup_id = m.matchup_id
-        where (m.worker_id >= 0 or m.worker_id is null)
-        and m.deleted = 0
-        group by mp.user_id
-     ) r
-        on temp_recent.user_id = r.user_id
-     set temp_recent.recent_games = temp_recent.recent_games + r.recent_games;
-
-    -- create list of recent opponent matchups
-    -- used to keep matchups even for a user across all other users
-    drop temporary table if exists temp_opponents;
-    create temporary table temp_opponents (
+    -- create a list of recent game matchups by user_id
+    -- used to keep the matchups even across all users and pairings
+    drop temporary table if exists tmp_opponent;
+    create temporary table tmp_opponent (
         user_id int,
         opponent_id int,
         game_count int,
         primary key (user_id, opponent_id)
     );
-    insert into temp_opponents
-	    select mp1.user_id, mp2.user_id as opponent_id, count(*)
-	    from tmp_matchup m
-	    inner join tmp_matchup_player mp1
-	        on m.matchup_id = mp1.matchup_id
-	    inner join matchup_player mp2
-	        on m.matchup_id = mp2.matchup_id
-	    where (m.worker_id >= 0 or m.worker_id is null)
-	    and m.deleted = 0
-	    group by mp1.user_id, mp2.user_id;
+
+    insert into tmp_opponent
+        select user_id, opponent_id, sum(game_count) as game_count
+        from (
+            select gp1.user_id as user_id,
+                gp2.user_id as opponent_id,
+                count(*) as game_count
+            from game_player gp1
+            inner join game g
+                on g.game_id = gp1.game_id
+            inner join game_player gp2
+                on gp2.game_id = g.game_id
+            where g.timestamp > timestampadd(hour, -24, current_timestamp)
+            and gp1.user_id != gp2.user_id
+            group by gp1.user_id, gp2.user_id
+            union
+            select mp1.user_id as user_id,
+                mp2.user_id as opponent_id,
+                count(*) as game_count
+            from matchup_player mp1
+            inner join matchup m
+                on m.matchup_id = mp1.matchup_id
+            inner join matchup_player mp2
+                on mp2.matchup_id = m.matchup_id
+            where m.matchup_timestamp > timestampadd(hour, -24, current_timestamp)
+            and (m.worker_id >= 0 or m.worker_id is null)
+            and m.deleted = 0
+            and mp1.user_id != mp2.user_id
+            group by mp1.user_id, mp2.user_id
+        ) g
+        group by 1, 2;
+
+    drop temporary table if exists tmp_games;
+    create temporary table tmp_games (
+        user_id int,
+        game_count int,
+        primary key (user_id)
+    );
+    insert into tmp_games
+        select user_id, sum(game_count) as game_count
+        from tmp_opponent
+        group by user_id;
      
     while @player_count < @players do
 
@@ -233,29 +220,23 @@ if @min_players <= @max_players then
             ) s
             inner join submission sub
                 on sub.submission_id = s.submission_id
-            left outer join temp_recent r
+            -- join to get total game count for last 24 hours
+            left outer join (
+                select user_id, count(*) as game_count
+                from tmp_games
+                group by user_id
+            ) r
                 on r.user_id = s.user_id
             -- join in user to user game counts to provide round-robin like logic
             left outer join (
                 select opponent_id, sum(game_count) as game_count
-                from (
-	                select *
-	                from opponents o
-	                where o.user_id in (
-	                    select user_id
-	                    from tmp_matchup_player mp
-	                    where mp.matchup_id = @matchup_id
-	                )
-	                union
-	                select *
-	                from temp_opponents o
-	                where o.user_id in (
-	                    select user_id
-	                    from tmp_matchup_player mp
-	                    where mp.matchup_id = @matchup_id
-	                )
-	            ) ao
-	            group by opponent_id
+                from tmp_opponent
+                where user_id in (
+                    select user_id
+                    from tmp_matchup_player mp
+                    where mp.matchup_id = @matchup_id
+                )
+                group by opponent_id
             ) o
                 on o.opponent_id = s.user_id
             -- pareto distribution
@@ -266,7 +247,7 @@ if @min_players <= @max_players then
             -- rank difference selected will also follow a pareto distribution 
             where s.seq < @pareto
             order by o.game_count,
-                r.recent_games,
+                r.game_count,
                 s.match_quality desc;
             
             -- select list of opponents with match quality
@@ -303,28 +284,22 @@ if @min_players <= @max_players then
                 ) s,
                 (select @seq := 0) seq
             ) s
-            left outer join temp_recent r
+            -- join to get total game count for last 24 hours
+            left outer join (
+                select user_id, count(*) as game_count
+                from tmp_games
+                group by user_id
+            ) r
                 on r.user_id = s.user_id
             -- join in user to user game counts to provide round-robin like logic
             left outer join (
                 select opponent_id, sum(game_count) as game_count
-                from (
-                    select *
-                    from opponents o
-                    where o.user_id in (
-                        select user_id
-                        from tmp_matchup_player mp
-                        where mp.matchup_id = @matchup_id
-                    )
-                    union
-                    select *
-                    from temp_opponents o
-                    where o.user_id in (
-                        select user_id
-                        from tmp_matchup_player mp
-                        where mp.matchup_id = @matchup_id
-                    )
-                ) ao
+                from tmp_opponent
+                where user_id in (
+                    select user_id
+                    from tmp_matchup_player mp
+                    where mp.matchup_id = @matchup_id
+                )
                 group by opponent_id
             ) o
                 on o.opponent_id = s.user_id
@@ -336,14 +311,14 @@ if @min_players <= @max_players then
             -- rank difference selected will also follow a pareto distribution 
             where s.seq < @pareto
             order by o.game_count,
-                r.recent_games,
+                r.game_count,
                 s.match_quality desc
             limit 1;
                 
             -- debug statement
             select @last_user_id as user_id, @last_submission_id as submission_id, @last_mu as mu, @last_sigma as sigma, submission.rank
-	    from submission
-	    where submission_id = @last_submission_id;
+            from submission
+            where submission_id = @last_submission_id;
 
             -- add new player to matchup
             insert into tmp_matchup_player (matchup_id, user_id, submission_id, player_id, mu, sigma)
