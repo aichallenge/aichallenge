@@ -356,6 +356,30 @@ if @min_players <= @max_players then
     end while;
 
     -- Step 4: select the map
+    select m.map_id, m.max_turns, m.players,
+    count(gp.user_id) as user_count, count(*) as game_count, priority
+    from game g
+    inner join map m
+        on m.map_id = g.map_id
+    left outer join game_player gp
+        on g.game_id = gp.game_id
+        and gp.user_id in (
+            select user_id
+            from tmp_matchup_player
+            where matchup_id = @matchup_id
+        )
+    ,(
+        select count(*) as total_map_count
+        from map
+        where priority > 0
+            and players = @players
+    ) t
+    where m.priority > 0
+        and m.players = @players
+        and g.timestamp > timestampadd(hour, -24, current_timestamp)
+    group by m.map_id
+    order by count(gp.user_id), count(*), priority, map_id desc;
+    
     select m.map_id, m.max_turns
     into @map_id, @max_turns
     from game g
