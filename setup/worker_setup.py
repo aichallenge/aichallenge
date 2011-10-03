@@ -187,12 +187,12 @@ def create_jail_group(options):
     limits_conf = "/etc/security/limits.conf"
     if not file_contains(limits_conf, "@jailusers"):
         # limit jailuser processes to:
-        # 10 processes or system threads
+        # 25 processes or system threads
         append_line(limits_conf, "@jailusers hard nproc 25 # ai-contest")
         # 20 minutes of cpu time
-        append_line(limits_conf, "@jailusers hard cpu 35 # ai-contest")
-        # slightly more than 1GB of ram
-        append_line(limits_conf, "@jailusers hard rss 1048600 # ai-contest")
+        append_line(limits_conf, "@jailusers hard cpu 20 # ai-contest")
+        # slightly more than 1.5GB of ram
+        append_line(limits_conf, "@jailusers hard rss 1580000 # ai-contest")
     if not file_contains("/etc/sudoers",
             "^%s.+jailusers" % (options.username,)):
         org_mode = os.stat("/etc/sudoers")[0]
