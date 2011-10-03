@@ -185,7 +185,7 @@ if @min_players <= @max_players then
             -- select list of opponents with match quality
             select s.user_id, s.submission_id, s.mu, s.sigma,
             sub.rank,
-            o.game_count, r.recent_games, s.match_quality, @pareto
+            o.game_count, r.game_count, s.match_quality, @pareto
             from (
                 select @seq := @seq + 1 as seq, s.*
                 from (
