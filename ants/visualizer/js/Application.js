@@ -1489,6 +1489,7 @@ Visualizer.prototype.keyPressed = function(key) {
  *           {@link Options#row} to jump to a specific event.
  * @property {String} user If set, the replay will give this user id the first color in the list so
  *           it can easily be identified on the map.
+ * @property {Boolean} loop If set, the replay will fade out and start again at the end.
  */
 Options = function() {
 	this['data_dir'] = '';
@@ -1502,6 +1503,7 @@ Options = function() {
 	this['row'] = NaN;
 	this['turn'] = NaN;
 	this['user'] = '';
+	this['loop'] = false;
 };
 
 /**
@@ -1537,6 +1539,8 @@ Options.toBool = function(value) {
  * @property {Boolean} isStreaming This should be true as long as the visualizer is receiving data
  *           from a game in progress and be set to false when the last turn has been sent as
  *           indicated by the result of Stream.visualizerReady() in Stream.java.
+ * @property fade Undefined, unless a fade out/in effect is to be drawn. Then this is set to a
+ *           rgba() fill style.
  */
 function State() {
 	this.cleanUp();
@@ -1560,6 +1564,7 @@ State.prototype.cleanUp = function() {
 	this.mouseCol = undefined;
 	this.mouseRow = undefined;
 	this.isStreaming = false;
+	this.fade = undefined;
 };
 
 /**
