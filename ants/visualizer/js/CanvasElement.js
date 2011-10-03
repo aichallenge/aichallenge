@@ -885,6 +885,7 @@ function CanvasElementShiftedMap(state, antsMap) {
 	this.dependsOn(antsMap);
 	this.shiftX = 0;
 	this.shiftY = 0;
+	this.fade = undefined;
 }
 CanvasElementShiftedMap.extend(CanvasElement);
 
@@ -896,10 +897,12 @@ CanvasElementShiftedMap.extend(CanvasElement);
  * @returns {Boolean} true, if the internal state has changed
  */
 CanvasElementShiftedMap.prototype.checkState = function() {
-	if (this.state.shiftX !== this.shiftX || this.state.shiftY !== this.shiftY) {
+	if (this.state.shiftX !== this.shiftX || this.state.shiftY !== this.shiftY
+			|| this.state.fade !== this.fade) {
 		this.invalid = true;
 		this.shiftX = this.state.shiftX;
 		this.shiftY = this.state.shiftY;
+		this.fade = this.state.fade;
 	}
 };
 
@@ -948,6 +951,11 @@ CanvasElementShiftedMap.prototype.draw = function() {
 		this.ctx.fillStyle = 'rgba(0,0,0,0.3)';
 		this.ctx.fillRect(0, 0, this.w, my);
 		this.ctx.fillRect(0, dy, this.w, this.h - dy);
+	}
+	// fade out
+	if (this.fade) {
+		this.ctx.fillStyle = this.fade;
+		this.ctx.fillRect(0, 0, this.w, this.h);
 	}
 };
 
