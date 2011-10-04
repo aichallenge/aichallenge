@@ -259,7 +259,7 @@ function Replay(replay, debug, swapUser) {
 								+ duration + ' by "' + obj + '"');
 					}
 				} else {
-					that.duration = duration;
+					that.duration = Math.max(that.duration, duration);
 					if (fixed) durationSetter = obj;
 				}
 			};
@@ -492,6 +492,7 @@ function Replay(replay, debug, swapUser) {
 			this.aniAnts = new Array(ants.length);
 		}
 		this.hasDuration = this.duration > 0 || this.meta['replaydata']['turns'] > 0;
+
 		// add missing meta data
 		swapIndex = undefined;
 		if (this.meta['user_ids']) {

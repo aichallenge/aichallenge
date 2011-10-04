@@ -898,11 +898,12 @@ CanvasElementShiftedMap.extend(CanvasElement);
  */
 CanvasElementShiftedMap.prototype.checkState = function() {
 	if (this.state.shiftX !== this.shiftX || this.state.shiftY !== this.shiftY
-			|| this.state.fade !== this.fade) {
+			|| this.state.fade !== this.fade || this.state.time !== this.time) {
 		this.invalid = true;
 		this.shiftX = this.state.shiftX;
 		this.shiftY = this.state.shiftY;
 		this.fade = this.state.fade;
+		this.time = this.state.time;
 	}
 };
 
@@ -911,7 +912,7 @@ CanvasElementShiftedMap.prototype.checkState = function() {
  * repeated in a darker shade on both sides.
  */
 CanvasElementShiftedMap.prototype.draw = function() {
-	var x, y, dx, dy;
+	var x, y, dx, dy, cutoff;
 	var mx = (this.w - this.antsMap.w) >> 1;
 	var my = (this.h - this.antsMap.h) >> 1;
 	// map backdrop
@@ -956,6 +957,19 @@ CanvasElementShiftedMap.prototype.draw = function() {
 	if (this.fade) {
 		this.ctx.fillStyle = this.fade;
 		this.ctx.fillRect(0, 0, this.w, this.h);
+	}
+	// game cut-off reason
+	cutoff = this.state.replay.meta['replaydata']['cutoff'];
+	if (this.time > this.state.replay.duration - 1 && cutoff) {
+		cutoff = '"' + cutoff + '"';
+		this.ctx.font = FONT;
+		dx = 0.5 * (this.w - this.ctx.measureText(cutoff).width);
+		dy = this.h - 5;
+		this.ctx.lineWidth = 4;
+		this.ctx.strokeStyle = '#000';
+		this.ctx.strokeText(cutoff, dx, dy);
+		this.ctx.fillStyle = '#fff';
+		this.ctx.fillText(cutoff, dx, dy);
 	}
 };
 
