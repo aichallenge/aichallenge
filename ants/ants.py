@@ -221,16 +221,16 @@ class Ants(Game):
                     raise Exception("map",
                                     "player count must be between 2 and 10")
             elif key == 'score':
-                score = map(int, value.split())
+                score = list(map(int, value.split()))
             elif key == 'hive':
-                hive = map(int, value.split())
+                hive = list(map(int, value.split()))
             elif key == 'm':
                 if ant_list is None:
                     if num_players is None:
                         raise Exception("map",
                                         "players count expected before map lines")
                     ant_list = [chr(97 + i) for i in range(num_players)]
-                    hill_list = map(str, range(num_players))
+                    hill_list = list(map(str, range(num_players)))
                     hill_ant = [chr(65 + i) for i in range(num_players)]
                 if len(value) != width:
                     raise Exception("map",
