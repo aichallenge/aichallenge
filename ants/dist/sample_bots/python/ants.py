@@ -3,6 +3,11 @@ import sys
 import traceback
 import random
 
+try:
+    from sys import maxint
+except ImportError:
+    from sys import maxsize as maxint
+        
 MY_ANT = 0
 ANTS = 0
 DEAD = -1
@@ -10,6 +15,7 @@ LAND = -2
 FOOD = -3
 WATER = -4
 UNSEEN = -5
+HILL = -6
 
 PLAYER_ANT = 'abcdefghij'
 HILL_ANT = string = 'ABCDEFGHI'
@@ -68,7 +74,7 @@ class Ants():
                     self.attackradius2 = int(tokens[1])
                 elif key == 'spawnradius2':
                     self.spawnradius2 = int(tokens[1])
-        self.map = [[LAND for col in range(self.width)]
+        self.map = [[UNSEEN for col in range(self.width)]
                     for row in range(self.height)]
 
     def update(self, data):
@@ -103,6 +109,8 @@ class Ants():
                         self.food_list.append((row, col))
                     elif tokens[0] == 'w':
                         self.map[row][col] = WATER
+                    elif tokens[0] == 'l':
+                        self.map[row][col] = LAND
                     elif tokens[0] == 'd':
                         # food could spawn on a spot where an ant just died
                         # don't overwrite the space unless it is land
@@ -142,10 +150,10 @@ class Ants():
         return self.food_list[:]
 
     def passable(self, row, col):
-        return self.map[row][col] > WATER
+        return self.map[row][col] != WATER
     
     def unoccupied(self, row, col):
-        return self.map[row][col] in (LAND, DEAD)
+        return self.map[row][col] in (LAND, DEAD, UNSEEN)
 
     def destination(self, row, col, direction):
         d_row, d_col = AIM[direction]
@@ -158,7 +166,7 @@ class Ants():
         col2 = col2 % self.width
         d_col = min(abs(col1 - col2), self.width - abs(col1 - col2))
         d_row = min(abs(row1 - row2), self.height - abs(row1 - row2))
-        return d_row + d_col
+        return d_col + d_row
 
     def direction(self, row1, col1, row2, col2):
         d = []
@@ -188,39 +196,56 @@ class Ants():
                 d.append('w')
         return d
 
-    def closest_food(self,row1,col1):
+    def closest_food(self,row1,col1,filter=None):
         #find the closest food from this row/col
-        min_dist=sys.maxint
+        min_dist=maxint
         closest_food = None
         for food in self.food_list:
-            dist = self.distance(row1,col1,food[0],food[1])
-            if dist<min_dist:
-                min_dist = dist
-                closest_food = food
+            if filter is None or food not in filter:
+                dist = self.distance(row1,col1,food[0],food[1])
+                if dist<min_dist:
+                    min_dist = dist
+                    closest_food = food
         return closest_food    
 
-    def closest_enemy_ant(self,row1,col1):
+    def closest_enemy_ant(self,row1,col1,filter=None):
         #find the closest enemy ant from this row/col
-        min_dist=sys.maxint
+        min_dist=maxint
         closest_ant = None
         for ant in self.enemy_ants():
-            dist = self.distance(row1,col1,ant[0][0],ant[0][1])
-            if dist<min_dist:
-                min_dist = dist
-                closest_ant = ant[0]
+            if filter is None or ant not in filter:
+                dist = self.distance(row1,col1,ant[0][0],ant[0][1])
+                if dist<min_dist:
+                    min_dist = dist
+                    closest_ant = ant[0]
         return closest_ant    
 
-    def closest_enemy_hill(self,row1,col1):
-        #find the closest enemy ant from this row/col
-        min_dist=sys.maxint
+    def closest_enemy_hill(self,row1,col1,filter=None):
+        #find the closest enemy hill from this row/col
+        min_dist=maxint
         closest_hill = None
         for hill in self.enemy_hills():
-            dist = self.distance(row1,col1,hill[0][0],hill[0][1])
-            if dist<min_dist:
-                min_dist = dist
-                closest_hill = hill[0]
+            if filter is None or hill[0] not in filter:
+                dist = self.distance(row1,col1,hill[0][0],hill[0][1])
+                if dist<min_dist:
+                    min_dist = dist
+                    closest_hill = hill[0]
         return closest_hill   
-            
+
+    def closest_unseen(self,row1,col1,filter=None):
+        #find the closest unseen from this row/col
+        min_dist=maxint
+        closest_unseen = None
+        for row in range(self.height):
+            for col in range(self.width):
+                if filter is None or (row, col) not in filter:
+                    if self.map[row][col] == UNSEEN:
+                        dist = self.distance(row1,col1,row,col)
+                        if dist<min_dist:
+                            min_dist = dist
+                            closest_unseen = (row, col)
+        return closest_unseen
+
     def render_text_map(self):
         tmp = ''
         for row in self.map:
@@ -233,7 +258,7 @@ class Ants():
         map_data = ''
         while(True):
             try:
-                current_line = raw_input()
+                current_line = sys.stdin.readline().rstrip('\r\n') # strip new line char
                 if current_line.lower() == 'ready':
                     ants.setup(map_data)
                     ants.finish_turn()
