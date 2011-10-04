@@ -128,7 +128,7 @@ function nice_game($game_id, $turns, $winning_turn, $ranking_turn, $end_reason,
     return "<a href=\"visualizer.php?game=$game_id$query_string\">$turns&nbsp;turns&nbsp;&raquo;</a><br />
     <span title=\"Turn the winner last took the lead\">
     	<a href=\"visualizer.php?game=$game_id$query_string&turn=$winning_turn\">Won&nbsp;at&nbsp;$winning_turn&nbsp;&raquo;</a>
-    </span>
+    </span><br />
     <span title=\"Reason for game end\">
         Ending:&nbsp;$end_reason
     </span>";

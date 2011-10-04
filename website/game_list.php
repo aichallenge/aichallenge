@@ -117,7 +117,7 @@ function produce_cache_results($page=0, $user_id=NULL, $submission_id=NULL, $map
         // this list and offset should match the results of the sql queries
         //    select_game_list
         $user_fields = array("user_id", "submission_id", "username", "version", "player_id", "game_rank", "status", "skill", "mu", "sigma", "skill_change", "mu_change", "sigma_change");
-        $user_fields_offset = 8;
+        $user_fields_offset = 9;
         /*
         if ($user_id !== NULL or $submission_id !== NULL) {
             foreach ($user_fields as $user_field) {
