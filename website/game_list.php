@@ -275,7 +275,7 @@ function create_game_list_table($json, $top=FALSE, $targetpage=NULL) {
             $map = nice_map($row['map_name']);
             $table .= "<td>$map</td>";
 
-            $game = nice_game($row['game_id'], $row['game_length'], $row['winning_turn'], $row['ranking_turn'], $user_id);
+            $game = nice_game($row['game_id'], $row['game_length'], $row['winning_turn'], $row['ranking_turn'], $row['cutoff'], $user_id);
             $table .= "<td>$game</td>";
 
             $table .= "</tr>";

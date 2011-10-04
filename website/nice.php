@@ -119,7 +119,8 @@ function nice_opponent($user_id, $username, $rank, $user=False) {
     }
 }
 
-function nice_game($game_id, $turns, $winning_turn, $ranking_turn, $user_id=NULL) {
+function nice_game($game_id, $turns, $winning_turn, $ranking_turn, $end_reason,
+        $user_id=NULL) {
     $query_string = "";
     if ($user_id) {
         $query_string .= "&user=$user_id";
@@ -127,6 +128,9 @@ function nice_game($game_id, $turns, $winning_turn, $ranking_turn, $user_id=NULL
     return "<a href=\"visualizer.php?game=$game_id$query_string\">$turns&nbsp;turns&nbsp;&raquo;</a><br />
     <span title=\"Turn the winner last took the lead\">
     	<a href=\"visualizer.php?game=$game_id$query_string&turn=$winning_turn\">Won&nbsp;at&nbsp;$winning_turn&nbsp;&raquo;</a>
+    </span>
+    <span title=\"Reason for game end\">
+        Ending:&nbsp;$end_reason
     </span>";
     /*
     <span title=\"Turn the player ranks stopped changing\">
