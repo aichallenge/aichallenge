@@ -38,6 +38,7 @@ flush();
             </div>
             <div class="columns">
                 <div class="left">
+                    <!--
                     <div id="login">
                         <?php if (logged_in_with_valid_credentials()) { ?>
                             <a href="profile.php?user=<?php echo current_user_id(); ?>">
@@ -49,4 +50,5 @@ flush();
                             <span><a href="register.php">Sign Up</a></span>
                         <?php } ?>
                     </div>
+                    -->
                     <div id="content">
