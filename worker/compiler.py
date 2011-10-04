@@ -151,10 +151,21 @@ class ChmodCompiler(Compiler):
         return True
 
 class ExternalCompiler(Compiler):
-    def __init__(self, args, separate=False, vglobs=[]):
+    def __init__(self, args, separate=False, out_files=[], out_ext=None):
+        """Compile files using an external compiler.
+
+        args, is a list of the compiler command and any arguments to run.
+        separate, controls whether all input files are sent to the compiler
+            in one command or one file per compiler invocation.
+        out_files, is a list of files that should exist after each invocation
+        out_ext, is an extension that is replaced on each input file and should
+            exist after each invocation.
+        """
+
         self.args = args
         self.separate = separate
-        self.vglobs = vglobs
+        self.out_files = out_files
+        self.out_ext = out_ext
 
     def __str__(self):
         return "ExternalCompiler: %s" % (' '.join(self.args),)
@@ -171,8 +182,11 @@ class ExternalCompiler(Compiler):
                     cmdline = " ".join(self.args + [filename])
                     cmd_out, cmd_errors = _run_cmd(box, cmdline, timelimit)
                     if not cmd_errors:
-                        for vglob in self.vglobs:
-                            box.check_path(vglob, cmd_errors)
+                        for ofile in self.out_files:
+                            box.check_path(ofile, cmd_errors)
+                        if self.out_ext:
+                            oname = os.path.splitext(filename)[0] + self.out_ext
+                            box.check_path(oname, cmd_errors)
                         if cmd_errors:
                             cmd_errors += cmd_out
                     if cmd_errors:
@@ -182,8 +196,12 @@ class ExternalCompiler(Compiler):
                 cmdline = " ".join(self.args + files)
                 cmd_out, cmd_errors = _run_cmd(box, cmdline, timelimit)
                 if not cmd_errors:
-                    for vglob in self.vglobs:
-                        box.check_path(vglob, cmd_errors)
+                    for ofile in self.out_files:
+                        box.check_path(ofile, cmd_errors)
+                    if self.out_ext:
+                        for filename in files:
+                            oname = os.path.splitext(filename)[0] + self.out_ext
+                            box.check_path(oname, cmd_errors)
                     if cmd_errors:
                         cmd_errors += cmd_out
                 if cmd_errors:
@@ -288,7 +306,8 @@ languages = (
     Language("VB", BOT +".exe", "MyBot.vb",
         "mono MyBot.exe",
         [BOT + ".exe"],
-        [(["*.vb"], ExternalCompiler(comp_args["VB"][0], vglobs=['MyBot.exe']))]
+        [(["*.vb"],
+            ExternalCompiler(comp_args["VB"][0], out_files=['MyBot.exe']))]
     ),
     Language("C++", BOT, "MyBot.cc",
         "./MyBot",
@@ -317,13 +336,13 @@ languages = (
     Language("Erlang", "my_bot.beam", "my_bot.erl",
         "erl -hms"+ str(MEMORY_LIMIT) +"m -smp disable -noshell -s my_bot start -s init stop",
         ["*.beam"],
-        [(["*.erl"], ExternalCompiler(["erlc"]))]
+        [(["*.erl"], ExternalCompiler(["erlc"], out_ext=".beam"))]
     ),
     Language("Go", BOT, "MyBot.go",
         "./MyBot",
         ["*.8", "*.6", BOT],
-        [(["*.go"], ExternalCompiler(comp_args["Go"][0], vglobs=['_go_.6'])),
-            ([""], ExternalCompiler(comp_args["Go"][1], vglobs=['_go_.6']))]
+        [(["*.go"], ExternalCompiler(comp_args["Go"][0], out_files=['_go_.6'])),
+            ([""], ExternalCompiler(comp_args["Go"][1], out_files=['_go_.6']))]
     ),
     Language("Groovy", BOT +".jar", "MyBot.groovy",
         "java -Xmx" + str(MEMORY_LIMIT) + "m -cp MyBot.jar:/usr/share/groovy/embeddable/groovy-all-1.7.5.jar MyBot",
