@@ -32,7 +32,7 @@ flush();
                 <div class="right">
                     <img src="images/ants.png" alt="Ants Logo" />
                     <h2>Ants</h2>
-                    <h3>Spring 2011</h3>
+                    <h3>Fall 2011</h3>
                     <div id="triangle"></div>
                 </div>
             </div>
