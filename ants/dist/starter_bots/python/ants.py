@@ -12,7 +12,6 @@ DEAD = -1
 LAND = -2
 FOOD = -3
 WATER = -4
-UNSEEN = -5
 
 PLAYER_ANT = 'abcdefghij'
 HILL_ANT = string = 'ABCDEFGHI'
@@ -80,7 +79,7 @@ class Ants():
                     self.spawnradius2 = int(tokens[1])
                 elif key == 'turns':
                     self.turns = int(tokens[1])
-        self.map = [[LAND for col in range(self.cols)]
+        self.map = [[UNSEEN for col in range(self.cols)]
                     for row in range(self.rows)]
 
     def update(self, data):
@@ -172,7 +171,7 @@ class Ants():
     def passable(self, loc):
         'true if not water'
         row, col = loc
-        return self.map[row][col] > WATER
+        return self.map[row][col] != WATER
     
     def unoccupied(self, loc):
         'true if no ants are at the location'

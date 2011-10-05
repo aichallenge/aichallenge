@@ -12,7 +12,6 @@ DEAD = -1
 LAND = -2
 FOOD = -3
 WATER = -4
-UNSEEN = -5
 
 PLAYER_ANT = 'abcdefghij'
 HILL_ANT = string = 'ABCDEFGHI'
