@@ -30,7 +30,6 @@ flush();
                     <h1>Google AI Challenge</h1>
                 </div>
                 <div class="right">
-                    <img src="images/ants.png" alt="Ants Logo" />
                     <h2>Ants</h2>
                     <h3>Fall 2011</h3>
                     <div id="triangle"></div>
