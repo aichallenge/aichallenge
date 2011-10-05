@@ -9,6 +9,7 @@
    (enemy-ants :reader enemy-ants :initform nil)
    (my-ants :reader my-ants :initform nil)
    (food :reader food :initform nil)
+   (hills :reader hills :initform nil)
    (turn-time :reader turn-time :initform 1000)
    (load-time :reader load-time :initform 3000)
    (turn-start-time :reader turn-start-time :initform nil)
@@ -183,6 +184,21 @@
          (col (parse-integer (elt split 2))))
     (setf (aref (game-map *state*) row col) 1)))
 
+;; TODO detect the razing of hills
+(defun set-hill (string)
+  "Parses the \"a row col owner\" STRING and sets the specific map tile to
+  a hill of owner.  Modifies (HILLS *STATE*) and (GAME-MAP *STATE*)."
+  (let* ((split (split-state-string string))
+         (row (parse-integer (elt split 1)))
+         (col (parse-integer (elt split 2)))
+         (owner (parse-integer (elt split 3))))
+
+    (let ((hill-record (list row col owner)))
+      (unless (member hill-record (hills *state*) :test 'equal)
+        (push hill-record (slot-value *state* 'hills))))
+
+    (setf (aref (game-map *state*) row col) (+ owner 300))))
+
 (defun parse-turn ()
   "Parses a typical turn.  Modifies *STATE* indirectly through RESET-GAME-MAP
   and the SET-* functions."
@@ -192,7 +208,8 @@
         do (cond ((starts-with line "f ") (set-food line))
                  ((starts-with line "w ") (set-water line))
                  ((starts-with line "a ") (set-ant line))
-                 ((starts-with line "d ") (set-dead line)))))
+                 ((starts-with line "d ") (set-dead line))
+                 ((starts-with line "h ") (set-hill line)))))
 
 (defun reset-some-state ()
   "Sets (ENEMY-ANTS *STATE*), (MY-ANTS *STATE*) and (FOOD *STATE*) to NIL."
