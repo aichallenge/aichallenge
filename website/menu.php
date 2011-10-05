@@ -23,19 +23,19 @@
     <ul>
       <li><a href="problem_description.php">Problem Description</a></li>
       <li><a href="specification.php">Game Specification</a></li>
-      <li><a href="advanced_strategy_guide.php">Strategy Guide</a></li>
-      <li><hr /></li>
+      <li><a href="strategy_guide.php">Strategy Guide</a></li>
+      <hr />
       <li><a href="starter_packages.php">Starter Packages</a></li>
     </ul>
     <h1>Getting Started</h1>
     <ul>
       <li><a href="quickstart.php">Five Minute Quickstart Guide</a></li>
-      <li><hr /></li>
+      <hr />
       <li><a href="rules.php">Contest Rules</a></li>
       <li><a href="register.php">Create Your Account</a></li>
       <li><a href="starting_your_own.php">Starting Your Own</a></li>
       <li><a href="using_the_tools.php">Using the Tools</a></li>
-      <li><a href="simple_strategy_guide.php">Climbing the Rankings</a></li>
+      <li><a href="ants_tutorial.php">Climbing the Rankings</a></li>
     </ul>
     <h1>Help</h1>
     <ul>

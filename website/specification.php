@@ -1,10 +1,12 @@
 <?php
 
 require_once('header.php');
-require_once('visualizer_widget.php');
-visualize_pre();
 
 ?>
+
+<h1>Ants Game Specification</h1>
+
+<p>Contents:</p>
 
 <ol>
 <li><a href="#Turns-and-Phases">Turns and Phases</a></li>
@@ -13,6 +15,9 @@ visualize_pre();
 <li><a href="#Ant-Spawning">Ant Spawning</a></li>
 <li><a href="#Food-Spawning">Food Spawning</a></li>
 <li><a href="#Battle-Resolution">Battle Resolution</a></li>
+<ol>
+<li><a href="specification_battle.php">Focus Battle Resolution</a></li>
+</ol>
 <li><a href="#Bot-Input">Bot Input</a></li>
 <li><a href="#Bot-Output">Bot Output</a></li>
 <li><a href="#Map-Format">Map Format</a></li>
@@ -63,6 +68,8 @@ visualize_pre();
 
 <?php
 
+require_once('visualizer_widget.php');
+visualize_pre();
 require_once('footer.php');
 
 ?>
