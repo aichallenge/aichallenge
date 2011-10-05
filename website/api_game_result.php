@@ -160,6 +160,7 @@ if (array_key_exists('error', $gamedata)) {
     $gamedata->challenge_skill = array();
     $result = contest_query("select_game_metadata",
                             $game_id);
+    $high_rank = 1000;
     if ($result) {
         while ($meta_row = mysql_fetch_assoc($result)) {
             $gamedata->playernames[] = $meta_row["username"];
@@ -167,6 +168,9 @@ if (array_key_exists('error', $gamedata)) {
             $gamedata->user_ids[] = $meta_row["user_id"];
             $gamedata->challenge_rank[] = $meta_row["rank"];
             $gamedata->challenge_skill[] = $meta_row["skill"];
+            if ($meta_row["rank"] < high_rank) {
+                $high_rank = $meta_row["rank"];
+            }
         }
     }
     $gamedata->user_url = "http://" . $gamedata->location . "/profile.php?user=~";
@@ -191,7 +195,7 @@ if (array_key_exists('error', $gamedata)) {
         fclose($replay_file);
         chmod($replay_filename, 0664);
         // put game id in memcache for front page
-        if ($memcache) {
+        if ($memcache && ($high_rank <= 10)) {
             $memcache->set('last_game_id', $game_id);
         }
         api_log('worker '.$worker['worker_id'].' ('.$worker['ip_address'].') posted matchup '.$gamedata->matchup_id.' game '.$game_id);
