@@ -108,6 +108,14 @@ pre {
     background: #F7FFE5;
     overflow: auto;
 }
+code {
+    background-color: #F7FFE5;
+    border: 1px solid #F0FFCC;
+}
+pre code {
+    background-color: transparent;
+    border: none;
+}
 
 /*Tables*/
 th {
