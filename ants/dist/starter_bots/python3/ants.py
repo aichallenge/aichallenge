@@ -3,7 +3,7 @@ import sys
 import traceback
 import random
 import time
-from collections import deque, defaultdict
+from collections import defaultdict
 from math import sqrt
 
 MY_ANT = 0
@@ -12,7 +12,6 @@ DEAD = -1
 LAND = -2
 FOOD = -3
 WATER = -4
-UNSEEN = -5
 
 PLAYER_ANT = 'abcdefghij'
 HILL_ANT = string = 'ABCDEFGHI'

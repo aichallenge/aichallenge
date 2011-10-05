@@ -53,12 +53,15 @@ body {
 
 #header .left {
     position: relative;
-    height: 200px;
+    height: 100px;
 }
 
 #header .right {
-    height: 200px;
+    height: 100px;
     overflow: hidden;
+    background-image: url('images/ants.png');
+    background-repeat: no-repeat;
+    background-position: bottom;
 }
 
 #header .left, #footer {
@@ -72,7 +75,7 @@ body {
 #header h1, #header h2, #header h3 {
     font-weight: normal;
     font-size: 60px;
-    padding-top: 70px;
+    padding-top: 15px;
     text-shadow: none;
     margin: 0px;
 }
@@ -102,18 +105,18 @@ body {
     position: absolute;
     float: right;
     right: 0px;
-    top: 0px;
+    top: 40px;
 }
 
 /* IE matrix transform and CSS transform have different behaviour, this hack should do */
 #header #triangle {
-    width: 6em;
-    height: 6em;
+    width: 3em;
+    height: 3em;
     background: #050;
     position: absolute;
     float: left;
-    top: 51px;
-    left: -4.24264068711em;
+    top: 20px;
+    left: -2.8em;
     filter: progid:DXImageTransform.Microsoft.Matrix(SizingMethod='auto expand', M11=0.707106781, M12=-0.707106781, M21=0.707106781, M22=0.707106781);
     -webkit-transform: translate(1.24264068711em, 15px) rotate(45deg);
     -moz-transform: translate(1.24264068711em, 15px) rotate(45deg);

@@ -167,6 +167,8 @@ def main(argv):
                           help="Number of turns cutoff percentage is maintained to end game early")
     game_group.add_option("--cutoff_percent", dest="cutoff_percent", type="float", default=0.90,
                           help="Number of turns cutoff percentage is maintained to end game early")
+    game_group.add_option("--scenario", dest="scenario",
+                          action='store_true', default=False)
     parser.add_option_group(game_group)
 
     # the log directory must be specified for any logging to occur, except:
@@ -280,7 +282,8 @@ def run_rounds(opts,args):
         "food_start": opts.food_start,
         "food_visible": opts.food_visible,
         "cutoff_turn": opts.cutoff_turn,
-        "cutoff_percent": opts.cutoff_percent }
+        "cutoff_percent": opts.cutoff_percent,
+        "scenario": opts.scenario }
     if opts.player_seed != None:
         game_options['player_seed'] = opts.player_seed
     if opts.engine_seed != None:

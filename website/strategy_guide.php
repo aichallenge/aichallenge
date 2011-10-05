@@ -4,7 +4,7 @@ require_once('header.php');
 
 ?>
 
-<!--<MarkdownReplacement with="competition-Starting-Your-Own-Bot.md">--><!--</MarkdownReplacement>-->
+<!--<MarkdownReplacement with="competition-Strategy-Guide.md">--><!--</MarkdownReplacement>-->
 
 <?php
 

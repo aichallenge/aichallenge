@@ -3,7 +3,7 @@ import sys
 import traceback
 import random
 import time
-from collections import deque, defaultdict
+from collections import defaultdict
 from math import sqrt
 
 MY_ANT = 0
@@ -12,7 +12,6 @@ DEAD = -1
 LAND = -2
 FOOD = -3
 WATER = -4
-UNSEEN = -5
 
 PLAYER_ANT = 'abcdefghij'
 HILL_ANT = string = 'ABCDEFGHI'
@@ -172,7 +171,7 @@ class Ants():
     def passable(self, loc):
         'true if not water'
         row, col = loc
-        return self.map[row][col] > WATER
+        return self.map[row][col] != WATER
     
     def unoccupied(self, loc):
         'true if no ants are at the location'
@@ -242,7 +241,7 @@ class Ants():
             # loop through ants and set all squares around ant as visible
             self.vision = [[False]*self.cols for row in range(self.rows)]
             for ant in self.my_ants():
-                a_row, a_col = ant.loc
+                a_row, a_col = ant
                 for v_row, v_col in self.vision_offsets_2:
                     self.vision[a_row+v_row][a_col+v_col] = True
         row, col = loc

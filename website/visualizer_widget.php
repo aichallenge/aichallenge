@@ -17,7 +17,8 @@ function visualizer_activate($extended) {
 <script>
 // function requires jQuery
 var visualize = function (i) {
-    var data = $(this).text();
+	var pre = $(this);
+    var data = pre.text();
     var setup = data.split('\n')[0];
     if (setup[0] === '#') {
         try {
@@ -28,6 +29,8 @@ var visualize = function (i) {
         } catch (err) {
             setup = [];
         }
+    	// remove styles
+    	pre.css('border','none').css('background','none');
         var width = setup[1] || 100;
         var height = setup[2] || 100;
         var config = setup[3] || {};

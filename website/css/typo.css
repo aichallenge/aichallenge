@@ -102,13 +102,20 @@ pre, code {
 }
 pre {
     padding: 10px;
-
     display: block;
     margin-bottom: 1em;
+    border: 1px solid #7a0;
+    background: #F7FFE5;
+    overflow: auto;
 }
 code {
-    border: 1px solid #7a0;
-    background: #ad6;
+    background-color: #F7FFE5;
+    border: 1px solid #D6E6B3;
+    padding: 0px 3px;
+}
+pre code {
+    background-color: transparent;
+    border: none;
 }
 
 /*Tables*/
