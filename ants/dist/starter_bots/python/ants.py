@@ -241,7 +241,7 @@ class Ants():
             # loop through ants and set all squares around ant as visible
             self.vision = [[False]*self.cols for row in range(self.rows)]
             for ant in self.my_ants():
-                a_row, a_col = ant.loc
+                a_row, a_col = ant
                 for v_row, v_col in self.vision_offsets_2:
                     self.vision[a_row+v_row][a_col+v_col] = True
         row, col = loc
