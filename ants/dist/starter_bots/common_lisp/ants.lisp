@@ -172,7 +172,7 @@
   (let* ((split (split-state-string string))
          (row (parse-integer (elt split 1)))
          (col (parse-integer (elt split 2))))
-    (push (list col row) (slot-value *state* 'food))
+    (push (list row col) (slot-value *state* 'food))
     (setf (aref (game-map *state*) row col) 2)))
 
 (defun set-water (string)
