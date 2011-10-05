@@ -110,7 +110,8 @@ pre {
 }
 code {
     background-color: #F7FFE5;
-    border: 1px solid #F0FFCC;
+    border: 1px solid #D6E6B3;
+    padding: 0px 3px;
 }
 pre code {
     background-color: transparent;
