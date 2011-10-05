@@ -3,7 +3,7 @@ import sys
 import traceback
 import random
 import time
-from collections import deque, defaultdict
+from collections import defaultdict
 from math import sqrt
 
 MY_ANT = 0
@@ -79,7 +79,7 @@ class Ants():
                     self.spawnradius2 = int(tokens[1])
                 elif key == 'turns':
                     self.turns = int(tokens[1])
-        self.map = [[UNSEEN for col in range(self.cols)]
+        self.map = [[LAND for col in range(self.cols)]
                     for row in range(self.rows)]
 
     def update(self, data):

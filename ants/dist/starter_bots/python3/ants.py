@@ -3,7 +3,7 @@ import sys
 import traceback
 import random
 import time
-from collections import deque, defaultdict
+from collections import defaultdict
 from math import sqrt
 
 MY_ANT = 0
