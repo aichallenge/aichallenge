@@ -69,12 +69,14 @@
                        (t col))))
     (list dst-row dst-col)))
 
-;; TODO proper CL convention would be "waterp"
-(defun water? (row col direction)
+(defun waterp (row col direction)
   "Returns T if the tile in the DIRECTION of ROW,COL is water, otherwise
   returns NIL."
   (let ((nl (new-location row col direction)))
     (= 1 (aref (game-map *state*) (elt nl 0) (elt nl 1)))))
+
+;; maintain WATER? for backwards compatibility
+(setf (symbol-function 'water?) #'waterp)
 
 (defun finish-turn ()
   "Prints the \"finish turn\" string to standard output."
