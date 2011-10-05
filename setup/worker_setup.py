@@ -38,7 +38,7 @@ def install_extra_distribution_languages():
         and don't require any special installation steps """
     pkg_list = ["ruby1.9.1", "php5-cli", "perl", "ocaml", "luajit", "ghc",
             "common-lisp-controller", "sbcl", "mono-2.0-devel", "mono-vbnc",
-            "erlang-base"]
+            "erlang-base", "fp-compiler" ]
     install_apt_packages(pkg_list)
     if not os.path.exists("/usr/bin/ruby"):
         os.symlink("/usr/bin/ruby1.9.1", "/usr/bin/ruby")
