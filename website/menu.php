@@ -6,12 +6,17 @@
       <li><a href="games.php">Latest Games</a></li>
       <li><a href="maps.php">Official Maps</a></li>
     </ul>
-    <?php if (logged_in_with_valid_credentials()) { ?>
     <h1>My Account</h1>
+    <?php if (logged_in_with_valid_credentials()) { ?>
     <ul>
       <li><a href="profile.php?user=<?php echo current_user_id(); ?>">My Profile</a></li>
       <li><a href="submit.php">Upload Your Code</a></li>
       <li><a href="logout.php">Sign Out</a></li>
+    </ul>
+    <?php } else { ?>
+    <ul>
+      <li><a href="login.php">Sign In</a></li>
+      <li><a href="register.php">Sign Up</a></li>
     </ul>
     <?php } ?>
     <h1>Ants</h1>
