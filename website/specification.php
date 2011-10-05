@@ -40,7 +40,7 @@ visualize_pre();
 </div>
 
 <div id="Battle-Resolution">
-<!--<MarkdownReplacement with="competition-Battle-Resolution".md">--><!--</MarkdownReplacement>-->
+<!--<MarkdownReplacement with="competition-Battle-Resolution.md">--><!--</MarkdownReplacement>-->
 </div>
 
 <div id="Bot-Input">
