@@ -1,3 +1,5 @@
+Option Strict On
+
 Imports System.Collections.Generic
 
 Public Enum Tile
@@ -17,9 +19,9 @@ Public Enum Direction
 End Enum
 
 Public Structure Location
-    Public Row As Long
-    Public Col As Long
-    Public Sub New(ByVal row As Long, ByVal col As Long)
+    Public Row As Integer
+    Public Col As Integer
+    Public Sub New(ByVal row As Integer, ByVal col As Integer)
         Me.Row = row
         Me.Col = col
     End Sub
@@ -27,36 +29,35 @@ End Structure
 
 Public Class Ants
     ' Game Class Settings
-    Public Rows As Long
-    Public Cols As Long
-    Public Turns As Long
+    Public Rows As Integer
+    Public Cols As Integer
+    Public Turns As Integer
 
-    Public ViewRadius2 As Long
-    Public AttackRadius2 As Long
-    Public SpawnRadius2 As Long
+    Public ViewRadius2 As Integer
+    Public AttackRadius2 As Integer
+    Public SpawnRadius2 As Integer
 
-    Public LoadTime As Long
-    Public TurnTime As Long
+    Public LoadTime As Integer
+    Public TurnTime As Integer
 
-    Public PlayerSeed As Long
+    Public PlayerSeed As Integer
 
     ' Properties updated during the game
-    Public Turn As Long
+    Public Turn As Integer
     Public Map(,) As Tile
-    Public HillList As Dictionary(Of Location, Long) = New Dictionary(Of Location, Long)
-    Public AntList As Dictionary(Of Location, Long) = New Dictionary(Of Location, Long)
+    Public HillList As Dictionary(Of Location, Integer) = New Dictionary(Of Location, Integer)
+    Public AntList As Dictionary(Of Location, Integer) = New Dictionary(Of Location, Integer)
     Public FoodList As List(Of Location) = New List(Of Location)
-    Public DeadList As Dictionary(Of Location, List(Of Long)) = New Dictionary(Of Location, List(Of Long))
+    Public DeadList As Dictionary(Of Location, List(Of Integer)) = New Dictionary(Of Location, List(Of Integer))
 
     Private TurnStartTime As DateTime
 
     Public Sub ParseSetup(ByVal data As List(Of String))
-        Dim line as String
-        For Each line In data
+        For Each line As String In data
             Dim token As String() = line.Split()
-            Dim value As Long
+            Dim value As Integer
             Try
-                value = CLng(token(1))
+                value = CInt(token(1))
             Catch ex As InvalidCastException
                 Console.Error.WriteLine("Token " & token(0) & " not followed by an integer: " & token(1))
             Catch ex As Exception
@@ -90,10 +91,8 @@ Public Class Ants
         Me.TurnStartTime = DateTime.Now
 
         ' Clear out lists
-        Dim i As Long
-        Dim j As Long
-        For i = 0 To Me.Rows - 1
-            For j = 0 To Me.Cols - 1
+        For i As Integer = 0 To Me.Rows - 1
+            For j As Integer = 0 To Me.Cols - 1
                 If Me.Map(i, j) <> Tile.WATER Then
                     Me.Map(i, j) = Tile.LAND
                 End If
@@ -105,12 +104,11 @@ Public Class Ants
         Me.DeadList.Clear()
 
         ' Parse input
-        Dim line As String
-        For Each line In data
+        For Each line As String In data
             Dim token As String() = line.Split()
             Try
-                Dim row As Long = CLng(token(1))
-                Dim col As Long = CLng(token(2))
+                Dim row As Integer = CInt(token(1))
+                Dim col As Integer = CInt(token(2))
                 Dim objLoc As Location = New Location(row, col)
                 If token(0) = "w" Then
                     Me.Map(row, col) = Tile.WATER
@@ -118,16 +116,16 @@ Public Class Ants
                     Me.Map(row, col) = Tile.FOOD
                     Me.FoodList.Add(objLoc)
                 Else
-                    Dim owner As Long = CLng(token(3))
+                    Dim owner As Integer = CInt(token(3))
                     If token(0) = "a" Then
-                        Me.Map(row, col) = owner
+                        Me.Map(row, col) = CType(owner, Tile)
                         Me.AntList.Add(objLoc, owner)
                     ElseIf token(0) = "d" Then
                         If Me.Map(row, col) = Tile.LAND Then
                             Me.Map(row, col) = Tile.DEAD
                         End If
                         If Not Me.DeadList.ContainsKey(objLoc) Then
-                            Me.DeadList.Add(objLoc, New List(Of Long))
+                            Me.DeadList.Add(objLoc, New List(Of Integer))
                         End If
                         Me.DeadList(objLoc).Add(owner)
                     ElseIf token(0) = "h" Then
@@ -140,8 +138,8 @@ Public Class Ants
         Next
     End Sub
 
-    Public Function TimeRemaining() As Long
-        Return 1000 - DateTime.Now.Subtract(Me.TurnStartTime).TotalMilliseconds
+    Public Function TimeRemaining() As Integer
+        Return 1000 - CInt(DateTime.Now.Subtract(Me.TurnStartTime).TotalMilliseconds)
     End Function
 
     Public Sub IssueOrder(ByVal loc As Location, ByVal dir As Direction)
@@ -154,8 +152,7 @@ Public Class Ants
 
     Public Function MyHills() As List(Of Location)
         Dim hills As List(Of Location) = New List(Of Location)
-        Dim hill As KeyValuePair(Of Location, Long)
-        For Each hill In Me.HillList
+        For Each hill As KeyValuePair(Of Location, Integer) In Me.HillList
             If hill.Value = 0 Then
                 hills.Add(hill.Key)
             End If
@@ -165,8 +162,7 @@ Public Class Ants
 
     Public Function EnemyHills() As List(Of Location)
         Dim hills As List(Of Location) = New List(Of Location)
-        Dim hill As KeyValuePair(Of Location, Long)
-        For Each hill In Me.HillList
+        For Each hill As KeyValuePair(Of Location, Integer) In Me.HillList
             If hill.Value <> 0 Then
                 hills.Add(hill.Key)
             End If
@@ -176,8 +172,7 @@ Public Class Ants
 
     Public Function MyAnts() As List(Of Location)
         Dim ants As List(Of Location) = New List(Of Location)
-        Dim ant As KeyValuePair(Of Location, Long)
-        For Each ant In Me.AntList
+        For Each ant As KeyValuePair(Of Location, Integer) In Me.AntList
             If ant.Value = 0 Then
                 ants.Add(ant.Key)
             End If
@@ -187,8 +182,7 @@ Public Class Ants
 
     Public Function EnemyAnts() As List(Of Location)
         Dim ants As List(Of Location) = New List(Of Location)
-        Dim ant As KeyValuePair(Of Location, Long)
-        For Each ant In Me.AntList
+        For Each ant As KeyValuePair(Of Location, Integer) In Me.AntList
             If ant.Value <> 0 Then
                 ants.Add(ant.Key)
             End If
@@ -197,7 +191,7 @@ Public Class Ants
     End Function
 
     Public Function Food() As List(Of Location)
-        Dim foods = New List(Of Location)
+        Dim foods As List(Of Location) = New List(Of Location)
         foods.AddRange(Me.FoodList)
         Return foods
     End Function
@@ -211,8 +205,8 @@ Public Class Ants
     End Function
 
     Public Function Aim(ByVal loc As Location, ByVal dir As Direction) As Location
-        Dim dRow As Long = 0
-        Dim dCol As Long = 0
+        Dim dRow As Integer = 0
+        Dim dCol As Integer = 0
         Select Case dir
             Case Direction.n
                 dRow = -1
@@ -226,13 +220,13 @@ Public Class Ants
         Return New Location(dRow, dCol)
     End Function
 
-    Public Function Destination(ByVal loc As Location, ByVal dir As Direction)
+    Public Function Destination(ByVal loc As Location, ByVal dir As Direction) As Location
         Dim dloc As Location = Me.Aim(loc, dir)
-        Dim dRow As Long = (loc.Row + dloc.Row) Mod Me.Rows
+        Dim dRow As Integer = (loc.Row + dloc.Row) Mod Me.Rows
         If dRow < 0 Then
             dRow += Me.Rows
         End If
-        Dim dCol As Long = (loc.Col + dloc.Col) Mod Me.Cols
+        Dim dCol As Integer = (loc.Col + dloc.Col) Mod Me.Cols
         If dCol < 0 Then
             dCol += Me.Cols
         End If
@@ -257,6 +251,9 @@ Public Class Ants
                     b.DoTurn(a)
                     a.FinishTurn()
                     mapData = New List(Of String)
+                ElseIf line.ToLower() = "end" Then
+                    b.DoEnd(a)
+                    Exit Do
                 Else
                     mapData.Add(line)
                 End If

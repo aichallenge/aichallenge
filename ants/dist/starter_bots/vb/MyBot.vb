@@ -9,12 +9,10 @@ Module MyBot
         End Sub
 
         Public Sub DoTurn(ByVal a As Ants) Implements Bot.DoTurn
-            Dim antLoc as Location
-            For Each antLoc In a.MyAnts()
+            For Each antLoc As Location In a.MyAnts()
                 Dim directions() As Direction = {Direction.n, Direction.e, Direction.s, Direction.w}
-                Dim d as Direction
-                For Each d In directions
-                    Dim newLoc = a.Destination(antLoc, d)
+                For Each d As Direction In directions
+                    Dim newLoc As Location = a.Destination(antLoc, d)
                     If a.Passable(newLoc) Then
                         a.IssueOrder(antLoc, d)
                         Exit For
@@ -25,6 +23,10 @@ Module MyBot
                 End If
             Next
         End Sub
+
+        Public Sub DoEnd(ByVal a As Ants) Implements Bot.DoEnd
+        End Sub
+
     End Class
 
     Sub Main()
