@@ -1423,6 +1423,8 @@ class Ants(Game):
         self.calc_significant_turns()
         
         # check if a rule change lengthens games needlessly
+        if self.cutoff is None:
+            self.cutoff = 'turn limit reached'
         if self.probable_rank is not None:
             if self.probable_rank == self.ranking_bots:
                 self.cutoff += " extended same"
@@ -1721,7 +1723,7 @@ class Ants(Game):
         replay['hive_history'] = self.hive_history
         replay['winning_turn'] = self.winning_turn
         replay['ranking_turn'] = self.ranking_turn
-        replay['cutoff'] = 'turn limit reached' if self.cutoff is None else self.cutoff
+        replay['cutoff'] =  self.cutoff
         if self.probable_rank is not None:
             replay['probable_rank'] = self.probable_rank
             replay['probable_turn'] = self.probably_turn
