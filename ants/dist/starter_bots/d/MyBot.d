@@ -7,9 +7,8 @@ import std.stdio : stdout;
 class MyBot : IBot {
 
 	void doTurn(Ants engine) {
-		// consider all squares free
 		foreach (antLoc; engine.myAnts) {
-			// try all directions until one is passable and not occupied
+			// try all directions until one leads to land
 			foreach(direction; AIM) {
 				auto antGoto = engine.destination(antLoc, direction);
 				if (engine.passable(antGoto)) {
