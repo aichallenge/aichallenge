@@ -90,6 +90,8 @@ Public Class Ants
         Me.TurnStartTime = DateTime.Now
 
         ' Clear out lists
+        Dim i As Long
+        Dim j As Long
         For i = 0 To Me.Rows - 1
             For j = 0 To Me.Cols - 1
                 If Me.Map(i, j) <> Tile.WATER Then
@@ -152,7 +154,7 @@ Public Class Ants
 
     Public Function MyHills() As List(Of Location)
         Dim hills As List(Of Location) = New List(Of Location)
-        Dim hill As Location
+        Dim hill As KeyValuePair(Of Location, Long)
         For Each hill In Me.HillList
             If hill.Value = 0 Then
                 hills.Add(hill.Key)
@@ -163,7 +165,7 @@ Public Class Ants
 
     Public Function EnemyHills() As List(Of Location)
         Dim hills As List(Of Location) = New List(Of Location)
-        Dim hill As Location
+        Dim hill As KeyValuePair(Of Location, Long)
         For Each hill In Me.HillList
             If hill.Value <> 0 Then
                 hills.Add(hill.Key)
@@ -174,7 +176,7 @@ Public Class Ants
 
     Public Function MyAnts() As List(Of Location)
         Dim ants As List(Of Location) = New List(Of Location)
-        Dim ant As Location
+        Dim ant As KeyValuePair(Of Location, Long)
         For Each ant In Me.AntList
             If ant.Value = 0 Then
                 ants.Add(ant.Key)
@@ -185,7 +187,7 @@ Public Class Ants
 
     Public Function EnemyAnts() As List(Of Location)
         Dim ants As List(Of Location) = New List(Of Location)
-        Dim ant As Location
+        Dim ant As KeyValuePair(Of Location, Long)
         For Each ant In Me.AntList
             If ant.Value <> 0 Then
                 ants.Add(ant.Key)
