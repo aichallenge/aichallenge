@@ -604,6 +604,7 @@ INSERT INTO `language` VALUES (0,'Unknown'),
 (13,'OCaml'),
 (14,'CoffeeScript'),
 (15,'Lisp'),
+(16,'Pascal'),
 (17,'Go'),
 (18,'Groovy');
 UNLOCK TABLES;
