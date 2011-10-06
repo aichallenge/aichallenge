@@ -268,6 +268,7 @@ comp_args = {
                              ["jar", "cfe", BOT + ".jar", BOT]],
     "Lisp"      : [['sbcl', '--dynamic-space-size', str(MEMORY_LIMIT), '--script', BOT + '.lisp']],
     "OCaml"     : [["ocamlbuild -lib unix", BOT + ".native"]],
+    "Pascal"    : [["fpc", "-Mdelphi", "-Si", "-O3", "-Xs", "-o" + BOT]],
     "Scala"     : [["scalac"]],
     }
 
@@ -380,6 +381,11 @@ languages = (
         "./MyBot.native",
         [BOT + ".native"],
         [([""], ExternalCompiler(comp_args["OCaml"][0]))]
+    ),
+    Language("Pascal", BOT, BOT + ".pas",
+        "./" + BOT,
+        [BOT, "*.o", "*.ppu"],
+        [([BOT + ".pas"], ExternalCompiler(comp_args["Pascal"][0]))]
     ),
     Language("Perl", BOT +".pl", "MyBot.pl",
         "perl MyBot.pl",
