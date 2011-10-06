@@ -385,7 +385,8 @@ languages = (
     Language("Pascal", BOT, BOT + ".pas",
         "./" + BOT,
         [BOT, "*.o", "*.ppu"],
-        [([BOT + ".pas"], ExternalCompiler(comp_args["Pascal"][0]))]
+        [([BOT + ".pas"],
+            ExternalCompiler(comp_args["Pascal"][0], out_files=["MyBot"]))]
     ),
     Language("Perl", BOT +".pl", "MyBot.pl",
         "perl MyBot.pl",
