@@ -41,7 +41,7 @@
   </tr>
   <tr>
     <td><a href="starter_packages/common_lisp_starter_package.zip">Common Lisp</a></td>
-    <td>SBCL 1.0.40 </td>
+    <td>SBCL 1.0.45.0.debian</td>
     <td><a href="http://github.com/aerique/google-ai-challenge-2011-1-ants">aerique's proxy-bot package</a></td>
     <td>&nbsp;</td>
   </tr>
