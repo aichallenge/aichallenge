@@ -154,6 +154,7 @@ if @min_players <= @max_players then
     
     -- used to undo a matchup
     set @abort = 0;
+    set @abort_reason = '';
 
     while @player_count < @players and @abort = 0 do
 
@@ -231,6 +232,7 @@ if @min_players <= @max_players then
 
             if @last_user_id = -1 then
                 set @abort = 1;
+                set @abort_reason = 'could not find opponent';
             else
 	            -- add new player to matchup
 	            insert into matchup_player (matchup_id, user_id, submission_id, player_id, mu, sigma)
@@ -243,8 +245,10 @@ if @min_players <= @max_players then
 
 	if @abort = 1 then
 
-	    delete from matchup_player where matchup_id = @matchup_id;
-	    delete from matchup where matchup_id = @matchup_id;
+	    update matchup
+	    set worker_id = -1,
+	        error = 'abort matchup: ' + @abort_reason
+	    where matchup_id = @matchup_id;
 
 	else
 
