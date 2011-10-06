@@ -94,6 +94,12 @@
     <td>&nbsp;</td>
   </tr>
   <tr>
+    <td><a href="starter_packages/pascal_starter_package.zip">Pascal</a></td>
+    <td>FreePascal 2.4.0</td>
+    <td>&nbsp;</td>
+    <td>Delphi mode is ON</td>
+  </tr>
+  <tr>
     <td><a href="starter_packages/perl_starter_package.zip">Perl</a></td>
     <td>Perl 5.10.1</td>
     <td>&nbsp;</td>
@@ -122,12 +128,6 @@
     <td>Scala 2.7.7</td>
     <td>&nbsp;</td>
     <td>&nbsp;</td>
-  </tr>
-  <tr>
-    <td><a href="starter_packages/pascal_starter_package.zip">Pascal</a></td>
-    <td>FreePascal 2.4.0</td>
-    <td>&nbsp;</td>
-    <td>Delphi mode is ON</td>
   </tr>
 </table>
 
