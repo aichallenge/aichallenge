@@ -318,7 +318,8 @@ class Ants {
 						mapData = appender!(string)();
 						break;
 					case "go":
-						ants._endtime = TickDuration.currSystemTick();
+						ants._endtime = TickDuration.currSystemTick(); 
+						ants._endtime += TickDuration.from!"msecs"(ants._turntime);
 						ants.update(mapData.data);
 						bot.doTurn(ants);
 						ants.finishTurn();

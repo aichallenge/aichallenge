@@ -123,6 +123,12 @@
     <td>&nbsp;</td>
     <td>&nbsp;</td>
   </tr>
+  <tr>
+    <td>Pascal</td>
+    <td>FreePascal 2.4.0</td>
+    <td>&nbsp;</td>
+    <td><i>no official package yet</i></td>
+  </tr>
 </table>
 
 <?php include 'footer.php'; ?>
