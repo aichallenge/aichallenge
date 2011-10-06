@@ -152,8 +152,14 @@ if @min_players <= @max_players then
         from tmp_opponent
         group by user_id;
     
-    while @player_count < @players do
-                
+    -- used to undo a matchup
+    set @abort = 0;
+
+    while @player_count < @players and @abort = 0 do
+
+            -- used to detect not finding an opponent
+            set @last_user_id = -1;
+
             -- select list of opponents with match quality
             select s.user_id, s.submission_id, s.mu, s.sigma
             into @last_user_id, @last_submission_id, @last_mu, @last_sigma
@@ -223,75 +229,88 @@ if @min_players <= @max_players then
             -- debug statement
             -- select @last_user_id as user_id, @last_submission_id as submission_id, @last_mu as mu, @last_sigma as sigma;
 
-            -- add new player to matchup
-            insert into matchup_player (matchup_id, user_id, submission_id, player_id, mu, sigma)
-            values (@matchup_id, @last_user_id, @last_submission_id, -1, @last_mu, @last_sigma);
-            set @player_count = @player_count + 1;
-            set @cur_user_id = @last_user_id;
-            
+            if @last_user_id = -1 then
+                set @abort = 1;
+            else
+	            -- add new player to matchup
+	            insert into matchup_player (matchup_id, user_id, submission_id, player_id, mu, sigma)
+	            values (@matchup_id, @last_user_id, @last_submission_id, -1, @last_mu, @last_sigma);
+	            set @player_count = @player_count + 1;
+	            set @cur_user_id = @last_user_id;
+            end if;
+
     end while;
 
-    -- Step 4: select the map
-    select m.map_id, m.max_turns
-    into @map_id, @max_turns
-    from game g
-    inner join map m
-        on m.map_id = g.map_id
-    left outer join game_player gp
-        on g.game_id = gp.game_id
-        and gp.user_id in (
-            select user_id
-            from matchup_player
-            where matchup_id = @matchup_id
-        )
-    ,(
-        select count(*) as total_map_count
-        from map
-        where priority > 0
-            and players = @players
-    ) t
-    where m.priority > 0
-        and m.players = @players
-        and g.timestamp > timestampadd(hour, -24, current_timestamp)
-    group by m.map_id
-    order by count(gp.user_id), count(*), priority, map_id desc
-    limit 1;
-    
-    update matchup
-    set map_id = @map_id,
-        max_turns = @max_turns
-    where matchup_id = @matchup_id;
+	if @abort = 1 then
 
-    -- debug statement
-    -- select * from map where map_id = @map_id;
-    
-    -- Step 4.5: put players into map positions
-    update matchup_player
-    inner join (
-        select @position := (@position + 1) as position,
-            m.user_id
-        from (
-            select mp.*
-            from matchup_player mp
-            where matchup_id = @matchup_id
-            order by rand()
-        ) m,
-        (select @position := -1) p
-    ) m2
-        on matchup_player.user_id = m2.user_id
-    set player_id = m2.position
-    where matchup_id = @matchup_id;
+	    delete from matchup_player where matchup_id = @matchup_id;
+	    delete from matchup where matchup_id = @matchup_id;
 
-    -- debug statement
-    -- select * from matchup m inner join matchup_player mp on mp.matchup_id = m.matchup_id where m.matchup_id = @matchup_id;
+	else
 
-    -- turn matchup on
-    update matchup
-    set worker_id = null
-    where matchup_id = @matchup_id;
+	    -- Step 4: select the map
+	    select m.map_id, m.max_turns
+	    into @map_id, @max_turns
+	    from game g
+	    inner join map m
+	        on m.map_id = g.map_id
+	    left outer join game_player gp
+	        on g.game_id = gp.game_id
+	        and gp.user_id in (
+	            select user_id
+	            from matchup_player
+	            where matchup_id = @matchup_id
+	        )
+	    ,(
+	        select count(*) as total_map_count
+	        from map
+	        where priority > 0
+	            and players = @players
+	    ) t
+	    where m.priority > 0
+	        and m.players = @players
+	        and g.timestamp > timestampadd(hour, -24, current_timestamp)
+	    group by m.map_id
+	    order by count(gp.user_id), count(*), priority, map_id desc
+	    limit 1;
 
-    -- return new matchup id
-    select @matchup_id as matchup_id;
+	    update matchup
+	    set map_id = @map_id,
+	        max_turns = @max_turns
+	    where matchup_id = @matchup_id;
+
+	    -- debug statement
+	    -- select * from map where map_id = @map_id;
+
+	    -- Step 4.5: put players into map positions
+	    update matchup_player
+	    inner join (
+	        select @position := (@position + 1) as position,
+	            m.user_id
+	        from (
+	            select mp.*
+	            from matchup_player mp
+	            where matchup_id = @matchup_id
+	            order by rand()
+	        ) m,
+	        (select @position := -1) p
+	    ) m2
+	        on matchup_player.user_id = m2.user_id
+	    set player_id = m2.position
+	    where matchup_id = @matchup_id;
+
+	    -- debug statement
+	    -- select * from matchup m inner join matchup_player mp on mp.matchup_id = m.matchup_id where m.matchup_id = @matchup_id;
+
+	    -- turn matchup on
+	    update matchup
+	    set worker_id = null
+	    where matchup_id = @matchup_id;
+
+	    -- return new matchup id
+	    select @matchup_id as matchup_id;
+
+	end if;
 
 end if;
 
