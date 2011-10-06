@@ -62,6 +62,7 @@ Public Class Ants
                 Console.Error.WriteLine("Token " & token(0) & " not followed by an integer: " & token(1))
             Catch ex As Exception
                 Console.Error.WriteLine("Failed to parse: " & token(0))
+                Console.Error.WriteLine(ex.ToString)
             End Try
             Select Case token(0)
                 Case "rows"
@@ -134,6 +135,7 @@ Public Class Ants
                 End If
             Catch ex As Exception
                 Console.Error.WriteLine("Error parsing line: " & line)
+                Console.Error.WriteLine(ex.ToString)
             End Try
         Next
     End Sub
