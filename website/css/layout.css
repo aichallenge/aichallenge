@@ -169,6 +169,12 @@ body {
     color: #fff;
 }
 
+#menu hr {
+    border-color: #8c0;
+    margin: 2px;
+    width: 50%;
+}
+
 #footer {
     padding: 15px;
     color: #fff;
