@@ -43,7 +43,7 @@ $contest_sql = array(
                                   and matchup_timestamp < (NOW() - INTERVAL 20 MINUTE)))
                               order by matchup_id asc
                               limit 1;",
-    "select_matchup_confirm" => "select worker_id from matchup
+    "select_matchup_confirm" => "select worker_id, map_id from matchup
                                  where matchup_id = %s",
     "select_matchup_players" => "select s.*, mp.player_id, mp.matchup_id
                                  from matchup_player mp
@@ -52,7 +52,8 @@ $contest_sql = array(
                                  where matchup_id = %s
                                  order by player_id;",
     "select_game_metadata" => "select gp.user_id, u.username, gp.submission_id,
-                               s.rank, s.mu - s.sigma * 3 as skill
+                               s.rank, s.mu - s.sigma * 3 as skill,
+                               u.country_id, u.org_id, s.language_id
                                from game_player gp
                                left outer join user u
                                    on u.user_id = gp.user_id

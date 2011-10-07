@@ -1,4 +1,7 @@
 <?php
+// ini_set('error_reporting', E_ALL);
+// ini_set('display_errors', true);
+
 require_once('header.php');
 require_once('mysql_login.php');
 
@@ -7,16 +10,6 @@ if(!filter_var($user_id, FILTER_VALIDATE_INT)) {
     $user_id = NULL;
 }
 
-#require_once 'Zend/Cache.php';
-
-//$frontendOptions = array('lifeTime' => 120, 'automatic_serialization' => true, 'automatic_cleaning_factor' => 10);
-//$backendOptions = array('cache_file_umask' => '777', 'file_name_prefix' => 'ai_contest', 'cacheDir' => '/tmp/');
-
-//$cache = Zend_Cache::factory('Output', 'File', $frontendOptions, $backendOptions);
-
-//$cacheID="profile_$user_id";
-
-//if (!($cache->start($cacheID))) {
 require_once('profile_submissions_widget.php');
 require_once('profile_games_widget.php');
 require_once('game_list.php');
@@ -229,15 +222,12 @@ EOT;
     }
 
     echo "<h3><span>Latest Games</span><div class=\"divider\" /></h3>";
-    echo get_game_list_table(1, $user_id, NULL, NULL, TRUE, 'profile_games.php');
-    //echo getGamesTableString($user_id, true, 15, "profile_games.php?user=$user_id");
+    echo get_user_game_list($user_id, 0, True, 'profile_games.php');
     echo "<p></p>";
     echo "<h3><span>Recent Submissions</span><div class=\"divider\" /></h3>";
     echo getSubmissionTableString($user_id, true, 10, "profile_submissions.php?user=$user_id&page=1");
 
 }
-//$cache->end();
-//}
 
 if (logged_in_with_valid_credentials() && logged_in_as_admin()) {
     $username = current_username();

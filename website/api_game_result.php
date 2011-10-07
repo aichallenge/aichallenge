@@ -50,9 +50,11 @@ echo json_encode(array( "hash" => $json_hash ));
 $confirm_result = contest_query("select_matchup_confirm",
                                 $gamedata->matchup_id);
 $confirm_worker_id = NULL;
+$map_id = NULL;
 if ($confirm_result) {
     while ($confirm_row = mysql_fetch_assoc($confirm_result)) {
         $confirm_worker_id = $confirm_row["worker_id"];
+        $map_id = $confirm_row["map_id"];
     }
 } else {
     game_result_error("Error confirming matchup ".strval($gamedata->matchup_id)." is owned by ".$worker['worker_id']);
@@ -158,9 +160,13 @@ if (array_key_exists('error', $gamedata)) {
     $gamedata->user_ids = array();
     $gamedata->challenge_rank = array();
     $gamedata->challenge_skill = array();
+    $country_ids = array();
+    $org_ids = array();
+    $language_ids = array();
     $result = contest_query("select_game_metadata",
                             $game_id);
-    $high_rank = 1000;
+                            
+    $high_rank = 99999;
     if ($result) {
         while ($meta_row = mysql_fetch_assoc($result)) {
             $gamedata->playernames[] = $meta_row["username"];
@@ -168,6 +174,9 @@ if (array_key_exists('error', $gamedata)) {
             $gamedata->user_ids[] = $meta_row["user_id"];
             $gamedata->challenge_rank[] = $meta_row["rank"];
             $gamedata->challenge_skill[] = $meta_row["skill"];
+            $country_ids[] = $meta_row["country_id"];
+            $org_ids[] = $meta_row["org_id"];
+            $language_ids[] = $meta_row["language_id"];
             if ($meta_row["rank"] < $high_rank) {
                 $high_rank = $meta_row["rank"];
             }
@@ -194,9 +203,30 @@ if (array_key_exists('error', $gamedata)) {
         fwrite($replay_file, gzencode(json_encode($gamedata), 9));
         fclose($replay_file);
         chmod($replay_filename, 0664);
-        // put game id in memcache for front page
-        if ($memcache && ($high_rank <= 10)) {
-            $memcache->set('last_game_id', $game_id);
+        if ($memcache) {
+        // update memcache
+            // put game id in memcache for front page example game
+            if ($high_rank <= 10) {
+                $memcache->set('l:splash', $game_id);
+            }
+            $memcache->set('l:all', $game_id);
+            $memcache->set('l:m:'.$map_id, $game_id);
+            // record last game id for user, submission, country, org and language
+            foreach ($gamedata->user_ids as $user_id) {
+                $memcache->set('l:u:'.$user_id, $game_id);
+            }
+            foreach ($gamedata->submission_ids as $submission_id) {
+                $memcache->set('l:s:'.$submission_id, $game_id);
+            }
+            foreach ($country_ids as $country_id) {
+                $memcache->set('l:c:'.$country_id, $game_id);
+            }
+            foreach ($org_ids as $org_id) {
+                $memcache->set('l:o:'.$org_id, $game_id);
+            }
+            foreach ($language_ids as $language_id) {
+                $memcache->set('l:l:'.$language_id, $game_id);
+            }
         }
         api_log('worker '.$worker['worker_id'].' ('.$worker['ip_address'].') posted matchup '.$gamedata->matchup_id.' game '.$game_id);
     } catch (Exception $e) {

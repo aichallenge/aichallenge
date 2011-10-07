@@ -1,4 +1,6 @@
 <?php
+// ini_set('error_reporting', E_ALL);
+// ini_set('display_errors', true);
 
 require_once('game_list.php');
 require_once('session.php');

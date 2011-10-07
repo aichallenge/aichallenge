@@ -1,6 +1,6 @@
 <?php
-ini_set('error_reporting', E_ALL);
-ini_set('display_errors', true);
+//ini_set('error_reporting', E_ALL);
+//ini_set('display_errors', true);
 
 require_once('mysql_login.php');
 require_once('memcache.php');
@@ -37,31 +37,39 @@ function get_type_or_else($key, $type=NULL, $default=NULL) {
     return $default;
 }
 
-function cache_key($page=0, $org_id=NULL, $country_id=NULL, $language_id=NULL, $format='json') {
-    global $last_game_id;
-    if ($org_id) {
-        $key = $last_game_id."r:o:" . strval($org_id);
-    } elseif ($country_id) {
-        $key = $last_game_id."r:c:" . strval($country_id);
-    } elseif ($language_id) {
-        $key = $last_game_id."r:l:" . strval($language_id);
-    } else {
-        $key = $last_game_id."r:a:";
+function get_last_game_id($type=NULL, $id=NULL) {
+    global $memcache;
+    $last_game_id = 0;
+    if ($memcache) {
+        if ($type === NULL) {
+            $$last_game_id = $memcache->get('l:all');            
+        } else {
+            $last_game_id = $memcache->get('l:'.$type.':'.$id);
+        }
+        if ($last_game_id === False) {
+            $last_game_id = 0;
+        }
     }
-    return $key . ":" . strval($page) . ":" . $format;
+    return $last_game_id;
+}
+
+function cache_key($page=0, $org_id=NULL, $country_id=NULL, $language_id=NULL, $format='json') {
+    $cache_length = 120;    
+    if ($org_id) {
+        $key = get_last_game_id('o',$org_id)."r:o:" . strval($org_id);
+        $cache_length = 1440;
+    } elseif ($country_id) {
+        $key = get_last_game_id('c',$country_id)."r:c:" . strval($country_id);
+        $cache_length = 600;
+    } elseif ($language_id) {
+        $key = get_last_game_id('l',$language_id)."r:l:" . strval($language_id);
+    } else {
+        $key = get_last_game_id()."r:a:";
+    }
+    return array($key . ":" . strval($page) . ":" . $format, $cache_length);
 }
 
 function create_ranking_json($page=0, $org_id=NULL, $country_id=NULL, $language_id=NULL) {
-    global $memcache;
-
-    $cache_key = cache_key($page, $org_id, $country_id, $language_id, 'json');
-    if ($memcache) {
-        $table = $memcache->get($cache_key);
-        if ($table) {
-            return $table;
-        }
-    }
-
     global $page_size;
 
     // setup query and querystring
@@ -154,23 +162,10 @@ function create_ranking_json($page=0, $org_id=NULL, $country_id=NULL, $language_
     }
     $json = json_encode($json);
 
-    if ($memcache) {
-        $memcache->set($cache_key, $json, MEMCACHE_COMPRESSED, 60);
-    }
     return $json;
 }
 
 function create_ranking_table($page=0, $org_id=NULL, $country_id=NULL, $language_id=NULL) {
-    global $memcache;
-
-    $cache_key = cache_key($page, $org_id, $country_id, $language_id, 'html');
-    if ($memcache) {
-        $table = $memcache->get($cache_key);
-        if ($table) {
-            return $table;
-        }
-    }
-
     global $page_size;
 
     // setup query and querystring
@@ -281,18 +276,39 @@ function create_ranking_table($page=0, $org_id=NULL, $country_id=NULL, $language
     $table .= '</tbody>';
     $table .= '</table>';
 
-    if ($memcache) {
-        $memcache->set($cache_key, $table, MEMCACHE_COMPRESSED, 60);
-    }
     return $table;
 }
 
 function get_ranking_json($page=0, $org_id=NULL, $country_id=NULL, $language_id=NULL) {
-    return create_ranking_json($page, $org_id, $country_id, $language_id);
+    global $memcache;
+    list ($cache_key, $cache_length) = cache_key($page, $org_id, $country_id, $language_id, 'json');
+    if ($memcache) {
+        $json = $memcache->get($cache_key);
+        if ($json) {
+            return $json;
+        }
+    }
+    $json = create_ranking_json($page, $org_id, $country_id, $language_id);
+    if ($memcache) {
+        $memcache->set($cache_key, $json, MEMCACHE_COMPRESSED, $cache_length);
+    }
+    return $json;
 }
 
 function get_ranking_table($page=0, $org_id=NULL, $country_id=NULL, $language_id=NULL) {
-    return create_ranking_table($page, $org_id, $country_id, $language_id);
+    global $memcache;
+    list($cache_key, $cache_length) = cache_key($page, $org_id, $country_id, $language_id, 'html');
+    if ($memcache) {
+        $table = $memcache->get($cache_key);
+        if ($table) {
+            return $table;
+        }
+    }
+    $table = create_ranking_table($page, $org_id, $country_id, $language_id);
+    if ($memcache) {
+        $memcache->set($cache_key, $table, MEMCACHE_COMPRESSED, $cache_length);
+    }    
+    return $table;
 }
 
 function get_language_ranking($language_id, $page=1) {
