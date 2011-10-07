@@ -41,7 +41,7 @@
   </tr>
   <tr>
     <td><a href="starter_packages/common_lisp_starter_package.zip">Common Lisp</a></td>
-    <td>SBCL 1.0.40 </td>
+    <td>SBCL 1.0.45.0.debian</td>
     <td><a href="http://github.com/aerique/google-ai-challenge-2011-1-ants">aerique's proxy-bot package</a></td>
     <td>&nbsp;</td>
   </tr>
@@ -94,6 +94,12 @@
     <td>&nbsp;</td>
   </tr>
   <tr>
+    <td><a href="starter_packages/pascal_starter_package.zip">Pascal</a></td>
+    <td>FreePascal 2.4.0</td>
+    <td>&nbsp;</td>
+    <td>Delphi mode is ON</td>
+  </tr>
+  <tr>
     <td><a href="starter_packages/perl_starter_package.zip">Perl</a></td>
     <td>Perl 5.10.1</td>
     <td>&nbsp;</td>
@@ -122,12 +128,6 @@
     <td>Scala 2.7.7</td>
     <td>&nbsp;</td>
     <td>&nbsp;</td>
-  </tr>
-  <tr>
-    <td>Pascal</td>
-    <td>FreePascal 2.4.0</td>
-    <td>&nbsp;</td>
-    <td><i>no official package yet</i></td>
   </tr>
 </table>
 

@@ -51,6 +51,7 @@ import time
 from optparse import OptionParser
 
 from sandbox import get_sandbox
+from string import split
 
 try:
     from server_info import server_info
@@ -174,13 +175,13 @@ class ExternalCompiler(Compiler):
         with CD(bot_dir):
             files = safeglob_multi(globs)
 
-        errored = False
         box = get_sandbox(bot_dir)
         try:
             if self.separate:
                 for filename in files:
                     cmdline = " ".join(self.args + [filename])
                     cmd_out, cmd_errors = _run_cmd(box, cmdline, timelimit)
+                    cmd_errors = self.cmd_error_filter(cmd_out, cmd_errors);
                     if not cmd_errors:
                         for ofile in self.out_files:
                             box.check_path(ofile, cmd_errors)
@@ -195,6 +196,7 @@ class ExternalCompiler(Compiler):
             else:
                 cmdline = " ".join(self.args + files)
                 cmd_out, cmd_errors = _run_cmd(box, cmdline, timelimit)
+                cmd_errors = self.cmd_error_filter(cmd_out, cmd_errors);
                 if not cmd_errors:
                     for ofile in self.out_files:
                         box.check_path(ofile, cmd_errors)
@@ -211,6 +213,58 @@ class ExternalCompiler(Compiler):
         finally:
             box.release()
         return True
+
+    def cmd_error_filter(self, cmd_out, cmd_errors):
+        """Default implementation doesn't filter"""
+        return cmd_errors
+
+
+# An external compiler with some stdout/sdtderr post-processing power
+class ErrorFilterCompiler(ExternalCompiler):
+    def __init__(self, args, separate=False, out_files=[], out_ext=None, stdout_is_error=False, skip_stdout=0, filter_stdout=None, filter_stderr=None):
+        """Compile files using an external compiler.
+
+        args, is a list of the compiler command and any arguments to run.
+        separate, controls whether all input files are sent to the compiler
+            in one command or one file per compiler invocation.
+        out_files, is a list of files that should exist after each invocation
+        out_ext, is an extension that is replaced on each input file and should
+            exist after each invocation.
+        stdout_is_error, controls if stdout contains error compiler error messages
+        skip_stdout, controls how many lines at the start of stdout are ignored
+        filter_stdout, is a regex that filters out lines from stdout that are no errors
+        filter_stderr, is a regex that filters out lines from stderr that are no errors
+        """
+
+        ExternalCompiler.__init__(self, args, separate, out_files, out_ext)
+        self.stdout_is_error = stdout_is_error
+        self.skip_stdout = skip_stdout;
+        if filter_stdout is None:
+            self.stdout_re = None
+        else:
+            self.stdout_re = re.compile(filter_stdout)
+        if filter_stderr is None:
+            self.stderr_re = None
+        else:
+            self.stderr_re = re.compile(filter_stderr)
+
+    def __str__(self):
+        return "ErrorFilterCompiler: %s" % (' '.join(self.args),)
+
+    def cmd_error_filter(self, cmd_out, cmd_errors):
+        """Skip and filter lines"""
+        if self.skip_stdout > 0:
+            del cmd_out[:self.skip_stdout]
+        # Somehow there are None values in the output
+        if self.stdout_re is not None:
+            cmd_out = [line for line in cmd_out if
+                       line is None or not self.stdout_re.search(line)]
+        if self.stderr_re is not None:
+            cmd_errors = [line for line in cmd_errors if
+                          line is None or not self.stderr_re.search(line)]
+        if self.stdout_is_error:
+            return [line for line in cmd_out if line is not None] + cmd_errors
+        return cmd_errors
 
 # Compiles each file to its own output, based on the replacements dict.
 class TargetCompiler(Compiler):
@@ -268,7 +322,7 @@ comp_args = {
                              ["jar", "cfe", BOT + ".jar", BOT]],
     "Lisp"      : [['sbcl', '--dynamic-space-size', str(MEMORY_LIMIT), '--script', BOT + '.lisp']],
     "OCaml"     : [["ocamlbuild -lib unix", BOT + ".native"]],
-    "Pascal"    : [["fpc", "-Mdelphi", "-Si", "-O3", "-Xs", "-o" + BOT]],
+    "Pascal"    : [["fpc", "-Mdelphi", "-Si", "-O3", "-Xs", "-v0", "-o" + BOT]],
     "Scala"     : [["scalac"]],
     }
 
@@ -385,7 +439,9 @@ languages = (
     Language("Pascal", BOT, BOT + ".pas",
         "./" + BOT,
         [BOT, "*.o", "*.ppu"],
-        [([BOT + ".pas"], ExternalCompiler(comp_args["Pascal"][0]))]
+        [([BOT + ".pas"], ErrorFilterCompiler(comp_args["Pascal"][0], 
+           stdout_is_error=True, skip_stdout=2,
+           filter_stderr='^/usr/bin/ld: warning: link.res contains output sections; did you forget -T\?$'))]
     ),
     Language("Perl", BOT +".pl", "MyBot.pl",
         "perl MyBot.pl",
