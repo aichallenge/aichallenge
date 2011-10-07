@@ -275,17 +275,29 @@ $contest_sql = array(
         from
         (
             select count(*) as players
-            from game g
-            inner join game_player gp
-                on g.game_id = gp.game_id
-                and g.timestamp > timestampadd(minute, -30, current_timestamp);
+            from submission
+            where latest = 1 and status = 40
+            and (max_game_id < (
+                select max_game_id
+                from submission
+                where latest = 1 and status = 40
+                    and user_id = %s
+            ) or submission_id in (
+                select submission_id
+                from matchup_player mp
+                inner join matchup m
+                    on m.matchup_id = mp.matchup_id
+                where (m.worker_id > 0 or m.worker_id is null)
+                    and m.deleted = 0
+            )
+            )
         ) ahead,
         (
             select count(distinct g.game_id)/30 as games, count(*)/30 as players
             from game g
             inner join game_player gp
                 on g.game_id = gp.game_id
-                and g.timestamp > timestampadd(minute, -30, current_timestamp);
+                and g.timestamp > timestampadd(minute, -30, current_timestamp)
         ) per_minute,
         (select @time_used := ifnull((select avg(timestampdiff(second, matchup_timestamp, current_timestamp)/60)
                                from matchup
