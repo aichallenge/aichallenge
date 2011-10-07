@@ -23,19 +23,31 @@
   </tr>
   <tr>
     <td>C</td>
-    <td><i>unknown</i></td>
+    <td>gcc (Ubuntu/Linaro 4.5.2-8ubuntu4) 4.5.2</td>
     <td>&nbsp;</td>
     <td><i>no official package yet</i></td>
   </tr>
   <tr>
     <td><a href="starter_packages/csharp_starter_package.zip">C&#35;</a></td>
-    <td>Mono 2.6.7</td>
+    <td>Mono version 2.6.7 (Debian 2.6.7-5ubuntu3)</td>
     <td>&nbsp;</td>
     <td>&nbsp;</td>
   </tr>
   <tr>
     <td><a href="starter_packages/cpp_starter_package.zip">C++</a></td>
-    <td><i>unknown</i></td>
+    <td>gcc (Ubuntu/Linaro 4.5.2-8ubuntu4) 4.5.2</td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+  </tr>
+  <tr>
+    <td>Clojure</td>
+    <td>Clojure 1.3.0</td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+  </tr>
+  <tr>
+    <td>CoffeeScript</td>
+    <td>CoffeeScript version 1.1.2</td>
     <td>&nbsp;</td>
     <td>&nbsp;</td>
   </tr>
@@ -52,38 +64,44 @@
     <td>&nbsp;</td>
   </tr>
   <tr>
+    <td>Erlang</td>
+    <td>Erlang R13B03 (erts-5.7.4)</td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+  </tr>
+  <tr>
     <td><a href="starter_packages/go_starter_package.zip">Go</a></td>
-    <td><i>unknown</i></td>
+    <td>6g version release.r60.1 9753+</td>
     <td>&nbsp;</td>
     <td>&nbsp;</td>
   </tr>
   <tr>
     <td>Groovy</td>
-    <td>Groovy v1.7.5</td>
+    <td>Groovy compiler version 1.7.8</td>
     <td>&nbsp;</td>
     <td><i>no official package yet</i></td>
   </tr>
   <tr>
     <td>Haskell</td>
-    <td>GHC v6.8.2</td>
+    <td>GHC, version 6.12.3</td>
     <td>&nbsp;</td>
     <td><i>no official package yet</i></td>
   </tr>
   <tr>
     <td><a href="starter_packages/java_starter_package.zip">Java</a></td>
-    <td>OpenJDK 1.6</td>
+    <td>OpenJDK 6 (IcedTea6 1.10.2) (6b22-1.10.2-0ubuntu1~11.04.1)</td>
     <td>&nbsp;</td>
     <td>&nbsp;</td>
   </tr>
   <tr>
     <td><a href="starter_packages/javascript_starter_package.zip">JavaScript</a></td>
-    <td>Node 0.1.97</td>
+    <td>Node v0.4.10</td>
     <td>&nbsp;</td>
     <td>&nbsp;</td>
   </tr>
   <tr>
     <td><a href="starter_packages/lua_starter_package.zip">Lua</a></td>
-    <td>luajit-2.0.0-beta5</td>
+    <td>LuaJIT 2.0.0-beta5</td>
     <td>&nbsp;</td>
     <td>&nbsp;</td>
   </tr>
@@ -95,37 +113,49 @@
   </tr>
   <tr>
     <td><a href="starter_packages/pascal_starter_package.zip">Pascal</a></td>
-    <td>FreePascal 2.4.0</td>
+    <td>FreePascal version 2.4.0-2ubuntu3.1</td>
     <td>&nbsp;</td>
     <td>Delphi mode is ON</td>
   </tr>
   <tr>
     <td><a href="starter_packages/perl_starter_package.zip">Perl</a></td>
-    <td>Perl 5.10.1</td>
+    <td>Perl v5.10.1</td>
     <td>&nbsp;</td>
     <td>&nbsp;</td>
   </tr>
   <tr>
     <td><a href="starter_packages/php_starter_package.zip">PHP</a></td>
-    <td><i>unknown</i></td>
+    <td>PHP 5.3.5-1ubuntu7.2 with Suhosin-Patch</td>
     <td>&nbsp;</td>
     <td>&nbsp;</td>
   </tr>
   <tr>
     <td><a href="starter_packages/python_starter_package.zip">Python</a></td>
-    <td>Python 2.5</td>
+    <td>Python 2.7.1+</td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+  </tr>
+  <tr>
+    <td><a href="starter_packages/python_starter_package.zip">Python</a></td>
+    <td>Python 3.2</td>
     <td>&nbsp;</td>
     <td>&nbsp;</td>
   </tr>
   <tr>
     <td><a href="starter_packages/ruby_starter_package.zip">Ruby</a></td>
-    <td>Ruby 4.5</td>
+    <td>ruby 1.9.2p0</td>
     <td>&nbsp;</td>
     <td>&nbsp;</td>
   </tr>
   <tr>
     <td><a href="starter_packages/scala_starter_package.zip">Scala</a></td>
-    <td>Scala 2.7.7</td>
+    <td>Scala version 2.9.0.1</td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+  </tr>
+  <tr>
+    <td>Visual Basic</td>
+    <td>Visual Basic.Net Compiler version 0.0.0.5917</td>
     <td>&nbsp;</td>
     <td>&nbsp;</td>
   </tr>
