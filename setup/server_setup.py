@@ -28,7 +28,8 @@ def install_website_packages():
     """ Install system packages required for the website """
     pkg_list = ["apache2", "php5", "libapache2-mod-php5", "php5-mysql",
             "memcached", "php5-memcache", "php5-curl", "zip", "nodejs",
-            "cvs", "openjdk-6-jdk", "ant", "icedtea-plugin", "markdown"]
+            "cvs", "openjdk-6-jdk", "ant", "icedtea-plugin", "markdown",
+            "ruby", "rubygems"]
     install_apt_packages(pkg_list)
 
 def setup_base_files(opts):
@@ -176,6 +177,8 @@ def setup_website(opts):
         run_cmd("a2enmod rewrite")
         run_cmd("/etc/init.d/apache2 restart")
     run_cmd("chown -R {0}:{0} {1}".format(opts.username, website_root))
+    # setup github flavored markdown
+    run_cmd("gem install redcarpet --pre")
 
 def interactive_options(options):
     print "Warning: This script is meant to be run as root and will make changes to the configuration of the machine it is run on."
