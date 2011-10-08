@@ -22,7 +22,7 @@ public abstract class AbstractSystemInputParser extends AbstractSystemInputReade
     }
     
     private enum UpdateToken {
-        W, A, F, D;
+        W, A, F, D, H;
         
         private static final Pattern PATTERN = compilePattern(UpdateToken.class);
     }
@@ -157,6 +157,11 @@ public abstract class AbstractSystemInputParser extends AbstractSystemInputReade
                         removeAnt(row, col, scanner.nextInt());
                     }
                 break;
+                case H:
+                    if (scanner.hasNextInt()) {
+                        addHill(row, col, scanner.nextInt());
+                    }
+                break;
             }
         }
         afterUpdate();
@@ -216,6 +221,15 @@ public abstract class AbstractSystemInputParser extends AbstractSystemInputReade
      * @param owner player id
      */
     public abstract void removeAnt(int row, int col, int owner);
+    
+    /**
+     * Adds new hill tile.
+     *
+     * @param row row index
+     * @param col column index
+     * @param owner player id
+     */
+    public abstract void addHill(int row, int col, int owner);
     
     /**
      * Enables performing actions which should take place just after the game state has been

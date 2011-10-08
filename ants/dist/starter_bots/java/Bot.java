@@ -40,6 +40,8 @@ public abstract class Bot extends AbstractSystemInputParser {
         ants.setTurnStartTime(System.currentTimeMillis());
         ants.clearMyAnts();
         ants.clearEnemyAnts();
+        ants.clearMyHills();
+        ants.clearEnemyHills();
         ants.getFoodTiles().clear();
         ants.getOrders().clear();
     }
@@ -74,6 +76,14 @@ public abstract class Bot extends AbstractSystemInputParser {
     @Override
     public void removeAnt(int row, int col, int owner) {
         ants.update(Ilk.DEAD, new Tile(row, col));
+    }
+    
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void addHill(int row, int col, int owner) {
+        ants.updateHills(owner, new Tile(row, col));
     }
     
     /**

@@ -35,6 +35,10 @@ public class Ants {
     
     private final Set<Tile> enemyAnts = new HashSet<Tile>();
     
+    private final Set<Tile> myHills = new HashSet<Tile>();
+    
+    private final Set<Tile> enemyHills = new HashSet<Tile>();
+    
     private final Set<Tile> foodTiles = new HashSet<Tile>();
     
     private final Set<Order> orders = new HashSet<Order>();
@@ -230,6 +234,24 @@ public class Ants {
     }
     
     /**
+     * Returns a set containing all my hills locations.
+     * 
+     * @return a set containing all my hills locations
+     */
+    public Set<Tile> getMyHills() {
+        return myHills;
+    }
+    
+    /**
+     * Returns a set containing all enemy hills locations.
+     * 
+     * @return a set containing all enemy hills locations
+     */
+    public Set<Tile> getEnemyHills() {
+        return enemyHills;
+    }
+    
+    /**
      * Returns a set containing all food locations.
      * 
      * @return a set containing all food locations
@@ -323,6 +345,20 @@ public class Ants {
     }
     
     /**
+     * Clears game state information about my hills locations.
+     */
+    public void clearMyHills() {
+        myHills.clear();
+    }
+    
+    /**
+     * Clears game state information about enemy hills locations.
+     */
+    public void clearEnemyHills() {
+        enemyHills.clear();
+    }
+    
+    /**
      * Updates game state information about new ants and food locations.
      * 
      * @param ilk ilk to be updated
@@ -341,6 +377,19 @@ public class Ants {
                 enemyAnts.add(tile);
             break;
         }
+    }
+    
+    /**
+     * Updates game state information about hills locations.
+     *
+     * @param owner owner of hill
+     * @param tile location on the game map to be updated
+     */
+    public void updateHills(int owner, Tile tile) {
+        if (owner > 0)
+            enemyHills.add(tile);
+        else
+            myHills.add(tile);
     }
     
     /**
