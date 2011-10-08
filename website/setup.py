@@ -15,7 +15,7 @@ for page in glob.iglob("*.php"):
         for toreplace, markdownfilename in matches:
             realmarkdownfilename=markdownfilename.replace("competition",competition)
             print "Inserting `%s` into `%s`, where `%s...` was." % (realmarkdownfilename,page,toreplace[:90])
-            compiledmarkdown=os.popen("markdown %s" % markdownlocation+realmarkdownfilename).read()
+            compiledmarkdown=os.popen("python md.py %s" % markdownlocation+realmarkdownfilename).read()
             compiledmarkdown='<!--<MarkdownReplacement with="%s">-->%s<!--</MarkdownReplacement>-->' % (markdownfilename,compiledmarkdown)
             pagecontent=pagecontent.replace(toreplace,compiledmarkdown)
         open(page,"w").write(pagecontent)

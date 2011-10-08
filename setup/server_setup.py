@@ -28,7 +28,8 @@ def install_website_packages():
     """ Install system packages required for the website """
     pkg_list = ["apache2", "php5", "libapache2-mod-php5", "php5-mysql",
             "memcached", "php5-memcache", "php5-curl", "zip", "nodejs",
-            "cvs", "openjdk-6-jdk", "ant", "icedtea-plugin", "markdown"]
+            "cvs", "openjdk-6-jdk", "ant", "icedtea-plugin",
+            "python-setuptools", "dvipng", "texlive-latex-base"]
     install_apt_packages(pkg_list)
 
 def setup_base_files(opts):
@@ -138,6 +139,13 @@ def setup_website(opts):
         if not os.path.exists("server_info.php"):
             with open("server_info.php", "w") as si_file:
                 si_file.write(si_contents)
+        # setup pygments flavored markdown
+        run_cmd("easy_install ElementTree")
+        run_cmd("easy_install Markdown")
+        run_cmd("easy_install Pygments")
+        if not os.path.exists("Markdown-LaTeX"):
+            run_cmd("git clone git://github.com/justinvh/Markdown-LaTeX.git")
+            run_cmd("cp Markdown-LaTeX/latex.py mdx_latex.py")
         if not os.path.exists("aichallenge.wiki"):
             run_cmd("git clone git://github.com/aichallenge/aichallenge.wiki.git")
             run_cmd("python setup.py")
