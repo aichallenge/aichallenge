@@ -27,8 +27,7 @@ public abstract class AbstractSystemInputParser extends AbstractSystemInputReade
         private static final Pattern PATTERN = compilePattern(UpdateToken.class);
     }
     
-    @SuppressWarnings("rawtypes")
-    private static final Pattern compilePattern(Class<? extends Enum> clazz) {
+    private static Pattern compilePattern(Class<? extends Enum> clazz) {
         StringBuilder builder = new StringBuilder("(");
         for (Enum enumConstant : clazz.getEnumConstants()) {
             if (enumConstant.ordinal() > 0) {
