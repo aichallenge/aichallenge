@@ -53,6 +53,10 @@ class Game
     constructor: (data, @type=LAND_TYPES.ANT, @is_alive=yes) ->
       [@x, @y, @owner] = data
 
+  class Hill extends Location
+    constructor: (data, @type=LAND_TYPES.HILL) ->
+      [@x, @y, @owner] = data
+
   # The main game loop
   run: (bot) ->
     process.stdin.resume()
@@ -92,7 +96,7 @@ class Game
           @MAP[x][y] = water
           @MAP.seen_water.push water
         when "h"
-          @MAP[x][y] = new Ant data, type=LAND_TYPES.HILL
+          @MAP[x][y] = new Hill data
         when "a"
           @MAP[x][y] = new Ant data
         when "d"
