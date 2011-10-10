@@ -76,7 +76,7 @@ on a copy if you have to.
 Each square of the map can be accessed by ants.MAP[x][y] 
 and the values of the squares have to following properties:
 
-MAP[x][y].type is one of {"WATER", "LAND", "DEAD", "FOOD", "ANT"}
+MAP[x][y].type is one of {"WATER", "LAND", "DEAD", "FOOD", "ANT", "HILL"}
 
 Additionally squares on the map representing ants have the following properties:
 

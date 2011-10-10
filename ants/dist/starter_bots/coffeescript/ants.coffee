@@ -84,7 +84,7 @@ class Game
     [command, data...] = line.split /\W+/
     if command in CONFIG_COMMANDS
       CONFIG[command] = parseInt(data[0])
-    else if command in ["f", "w", "a", "d"]
+    else if command in ["f", "w", "h", "a", "d"]
       if data.length < 2 then return command # bad data
       data = (parseInt(_) for _ in data)
       [x,y] = [data[0], data[1]]
