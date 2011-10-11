@@ -84,8 +84,7 @@ body {
     position: relative;
     right: 0px;
     z-index: 1;
-
-    text-align: left;
+    text-align: right;
     text-shadow: #7a0 0px 0px 20px; /*Glow*/
 }
 
