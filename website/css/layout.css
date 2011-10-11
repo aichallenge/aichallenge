@@ -81,7 +81,7 @@ body {
 }
 
 #header h1 {
-    position: absolute;
+    position: relative;
     right: 0px;
     z-index: 1;
 
