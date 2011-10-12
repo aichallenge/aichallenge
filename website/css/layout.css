@@ -154,17 +154,17 @@ body {
     margin-top: 10px;
     margin-bottom: 0px;
 }
+
 #menu form, #menu ul {
     margin: 5px 5px 5px 10px;
 }
+
 #menu a {
     color: #fff;
 }
 
-#menu hr {
-    border-color: #8c0;
-    margin: 2px;
-    width: 50%;
+#menu .higlight {
+    color: #fff;
 }
 
 #footer {
