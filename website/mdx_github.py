@@ -1,6 +1,5 @@
 import markdown
 import re
-import sys
 
 START_FENCE = re.compile('^```(.*)')
 END_FENCE = re.compile('^```$')
@@ -11,7 +10,6 @@ class GithubPreprocessor(markdown.preprocessors.Preprocessor):
         new_lines = []
         fenced = False
         for line in lines:
-            sys.stderr.write(')) '+line+' ((\n')
             if fenced:
                 if END_FENCE.match(line):
                     new_lines.append('')
@@ -27,8 +25,6 @@ class GithubPreprocessor(markdown.preprocessors.Preprocessor):
                         new_lines.append('    :::' + fence.group(1))
                 else:
                     new_lines.append(line)
-        for line in new_lines:
-            sys.stderr.write('>> '+line+' <<\n')
         return new_lines
 
 class MarkdownGithub(markdown.Extension):
