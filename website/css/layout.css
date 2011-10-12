@@ -53,11 +53,11 @@ body {
 
 #header .left {
     position: relative;
-    height: 100px;
+    height: 110px;
 }
 
 #header .right {
-    height: 100px;
+    height: 110px;
     overflow: hidden;
     background-image: url('images/ants.png');
     background-repeat: no-repeat;
@@ -88,8 +88,9 @@ body {
     text-shadow: 0px 0px 20px #7a0; /*Glow*/
 }
 
-#header .left h1 {
+#header .left h1, #header .left h3 {
     text-align: right;
+    padding-right: 20px;
 }
 
 #header h2 {
@@ -102,7 +103,7 @@ body {
     color: #fff;
     text-shadow: #000 1px 1px 3px;
     text-align: right;
-    padding: 0 20px;
+    padding: 5px 20px 0px 20px;
 }
 
 #header .right img {
