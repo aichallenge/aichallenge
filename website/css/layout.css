@@ -164,7 +164,7 @@ body {
 }
 
 #menu .highlight {
-    color: #fff;
+    list-style-type: circle;
 }
 
 #footer {
