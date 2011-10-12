@@ -132,11 +132,11 @@ function visualize_pre() {
 <?php
 }
 
-function visualize_game($game_id, $interactive=true, $width=690, $height=700) {
+function visualize_game($game_id, $interactive=true, $width=710, $height=700) {
     visualizer_widget("game/" . $game_id, $interactive, $width, $height);
 }
 
-function visualize_map($map, $width=690, $height=700) {
+function visualize_map($map, $width=710, $height=700) {
     visualizer_widget("map/" . $map, true, $width, $height);
 }
 
