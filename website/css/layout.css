@@ -28,14 +28,14 @@ body {
 .left {
     display: block;
     float: left;
-    width: 720px;
+    width: 740px;
 }
 
 .right {
     position: relative;
     display: block;
     float: right;
-    width: 240px;
+    width: 220px;
 }
 
 .columns {
@@ -157,7 +157,7 @@ body {
 }
 
 #menu {
-    padding: 15px;
+    padding: 10px;
 }
 
 #menu h1 {
