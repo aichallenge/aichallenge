@@ -38,17 +38,4 @@ flush();
             </div>
             <div class="columns">
                 <div class="left">
-                    <!--
-                    <div id="login">
-                        <?php if (logged_in_with_valid_credentials()) { ?>
-                            <a href="profile.php?user=<?php echo current_user_id(); ?>">
-                            My Profile: <span class="large"><?php echo htmlentities(current_username(), ENT_COMPAT, "UTF-8"); ?></span>
-                            </a> |
-                            <a href="logout.php">Sign Out</a>
-                        <?php } else { ?>
-                            <a href="login.php">Sign In</a> |
-                            <span><a href="register.php">Sign Up</a></span>
-                        <?php } ?>
-                    </div>
-                    -->
                     <div id="content">

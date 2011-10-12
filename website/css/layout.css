@@ -127,19 +127,6 @@ body {
     -o-transform: translate(1.24264068711em, 15px) rotate(45deg);
 }
 
-#login {
-    position: absolute;
-    float: left;
-    bottom: 100%;
-    padding: 15px;
-}
-
-#login, #login a {
-    font-size: 1.1em;
-    color: #fff;
-    text-shadow: #000 1px 1px 3px;
-}
-
 #content {
     background: #fff;
     padding: 15px;
