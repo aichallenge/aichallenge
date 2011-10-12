@@ -85,11 +85,16 @@ body {
     right: 0px;
     z-index: 1;
     text-align: right;
-    text-shadow: #7a0 0px 0px 20px; /*Glow*/
+    text-shadow: 0px 0px 20px #7a0; /*Glow*/
+}
+
+#header .left h1 {
+    text-align: right;
 }
 
 #header h2 {
     text-align: center;
+    text-shadow: 1px 1px 3px #cfa, -1px -1px 3px #460;
 }
 
 #header h3 {
