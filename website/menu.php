@@ -19,23 +19,20 @@
       <li><a href="register.php">Sign Up</a></li>
     </ul>
     <?php } ?>
-    <h1>Ants</h1>
-    <ul>
-      <li><a href="problem_description.php">Problem Description</a></li>
-      <li><a href="specification.php">Game Specification</a></li>
-      <li><a href="strategy_guide.php">Strategy Guide</a></li>
-      <hr />
-      <li><a href="starter_packages.php">Starter Packages</a></li>
-    </ul>
     <h1>Getting Started</h1>
     <ul>
-      <li><a href="quickstart.php">Five Minute Quickstart Guide</a></li>
-      <hr />
+      <li class="highlight"><a href="quickstart.php">Five Minute Quickstart Guide</a></li>
       <li><a href="rules.php">Contest Rules</a></li>
-      <li><a href="register.php">Create Your Account</a></li>
       <li><a href="starting_your_own.php">Starting Your Own</a></li>
       <li><a href="using_the_tools.php">Using the Tools</a></li>
       <li><a href="ants_tutorial.php">Climbing the Rankings</a></li>
+    </ul>
+    <h1>Ants</h1>
+    <ul>
+      <li class="highlight"><a href="starter_packages.php">Starter Packages</a></li>
+      <li><a href="problem_description.php">Problem Description</a></li>
+      <li><a href="specification.php">Game Specification</a></li>
+      <li><a href="strategy_guide.php">Strategy Guide</a></li>
     </ul>
     <h1>Help</h1>
     <ul>
