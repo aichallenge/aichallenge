@@ -95,7 +95,7 @@ body {
 
 #header h2 {
     text-align: center;
-    text-shadow: 1px 1px 3px #cfa, -1px -1px 3px #460;
+    text-shadow: 0px 0px 10px #cfa;
 }
 
 #header h3 {
