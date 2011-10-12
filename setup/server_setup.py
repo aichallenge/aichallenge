@@ -143,9 +143,6 @@ def setup_website(opts):
         run_cmd("easy_install ElementTree")
         run_cmd("easy_install Markdown")
         run_cmd("easy_install Pygments")
-        if not os.path.exists("Markdown-LaTeX"):
-            run_cmd("git clone git://github.com/justinvh/Markdown-LaTeX.git")
-            run_cmd("cp Markdown-LaTeX/latex.py mdx_latex.py")
         if not os.path.exists("aichallenge.wiki"):
             run_cmd("git clone git://github.com/aichallenge/aichallenge.wiki.git")
             run_cmd("python setup.py")
