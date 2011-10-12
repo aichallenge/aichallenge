@@ -154,7 +154,7 @@ body {
     margin-bottom: 0px;
 }
 #menu form, #menu ul {
-    margin: 5px 10px;
+    margin: 5px 5px 5px 10px;
 }
 #menu a {
     color: #fff;
