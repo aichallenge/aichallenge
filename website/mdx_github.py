@@ -1,19 +1,35 @@
 import markdown
 import re
+import sys
 
-FENCE = re.compile('^```+(.*)')
+START_FENCE = re.compile('^```(.*)')
+END_FENCE = re.compile('^```$')
 
 class GithubPreprocessor(markdown.preprocessors.Preprocessor):
     def run(self, lines):
         # replace github fenced code blocks with python markdown ones
-        for i, line in enumerate(lines):
-            fence = FENCE.match(line)
-            if fence:
-                if fence.group(1):
-                    lines[i] = '~~~~{.' + fence.group(1) + '}'
+        new_lines = []
+        fenced = False
+        for line in lines:
+            sys.stderr.write(')) '+line+' ((\n')
+            if fenced:
+                if END_FENCE.match(line):
+                    new_lines.append('')
+                    fenced = False
                 else:
-                    lines[i] = '~~~~'
-        return lines
+                    new_lines.append('    '+line)
+            else:
+                fence = START_FENCE.match(line)
+                if fence:
+                    fenced = True
+                    new_lines.append('')
+                    if fence.group(1):
+                        new_lines.append('    :::' + fence.group(1))
+                else:
+                    new_lines.append(line)
+        for line in new_lines:
+            sys.stderr.write('>> '+line+' <<\n')
+        return new_lines
 
 class MarkdownGithub(markdown.Extension):
     def extendMarkdown(self, md, md_globals):
