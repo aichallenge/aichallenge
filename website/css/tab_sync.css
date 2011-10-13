@@ -1,0 +1,31 @@
+.tab_sync {
+    margin-bottom: 1em;
+}
+
+.tab_content {
+    margin: 0px;
+    padding: 5px;
+    margin: 0px -5px;
+    border: solid 1px #888;
+    background-color: white;
+}
+
+.tab_button {
+    cursor: pointer;
+    display: inline-block;
+    overflow: hidden;
+    width: 100px;
+    height: 20px;
+    padding: 5px;
+    margin-bottom: -1px;
+    border: solid 1px #888;
+    border-top-left-radius: 15px;
+    border-top-right-radius: 15px;
+    text-align: center;
+    background-color: #eee;
+}
+
+.tab_selected {
+    background-color: white;
+    border-bottom: 1px solid white;
+}

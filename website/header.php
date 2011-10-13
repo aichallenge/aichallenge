@@ -5,7 +5,7 @@ $page_render_start_time = microtime(true);
 <html xmlns="http://www.w3.org/1999/xhtml"> 
     <head> 
         <title>AI Challenge</title> 
-        <meta name="description" content="The Google AI Challenge is an international programming contest started by the University of Waterloo Computer Science Club." /> 
+        <meta name="description" content="The AI Challenge (sponsored by Google) is an international programming contest started by the University of Waterloo Computer Science Club." /> 
         <meta name="keywords" content="" /> 
         
         <!-- Global Tags --> 
@@ -13,11 +13,12 @@ $page_render_start_time = microtime(true);
         <link rel="shortcut icon" href="favicon.ico" />
  
         <!-- CSS --> 
-        <link href="ai-contest.css" rel="stylesheet" type="text/css" /> 
+        <link href="ai-contest.css" rel="stylesheet" type="text/css" />
 
         <!-- JavaScript -->
         <script src="//ajax.googleapis.com/ajax/libs/jquery/1.6.2/jquery.min.js"></script>
         <script src="/js/jquery.tablesorter.min.js"></script>
+        <script src="/js/tab_sync.js"></script>
     </head> 
 <?php
 require_once('session.php');
