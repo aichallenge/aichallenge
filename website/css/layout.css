@@ -61,7 +61,7 @@ body {
     overflow: hidden;
     background-image: url('images/ants.png');
     background-repeat: no-repeat;
-    background-position: bottom;
+    background-position: center 52px;
 }
 
 #header .left, #footer {
@@ -146,6 +146,9 @@ body {
 
 #menu {
     padding: 10px;
+    background-image: url('images/ants.png');
+    background-repeat: no-repeat;
+    background-position: center -58px;
 }
 
 #menu h1 {
