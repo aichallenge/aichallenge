@@ -18,7 +18,7 @@
 
 <h3>Website</h3>
 <ul>
-	<li><strong>Design:</strong> computerwiz_222 (Andrew Rossignol)</li>
+	<li><strong>Design:</strong> aarosig (Andrew Rossignol)</li>
 	<li>amstan (Alexandru Stan)</li>
 	<li>McLeopold (Scott Hamilton)</li>
 </ul>
