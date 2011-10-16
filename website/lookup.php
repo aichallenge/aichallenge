@@ -135,7 +135,6 @@ function get_user_row($user) {
     if ($memcache) {
         $user_row_by_id = $memcache->get('lookup:user_id');
         $user_row_by_name = $memcache->get('lookup:username');
-        $user_row_by_submission_id = $memcache->get('lookup:submission_id');
     }
     $user_row_by_id = NULL;
     if (!$user_row_by_id) {
@@ -152,17 +151,6 @@ function get_user_row($user) {
                 $memcache->set('lookup:username', $user_row_by_name);
             }
         }
-        $user_result = contest_query("select_submission_users");
-        if ($user_result) {
-            $user_row_by_submission_id = array();
-            while ($user_row = mysql_fetch_assoc($user_result)) {
-                $user_row_by_submission_id[$user_row['submission_id']] = $user_row;
-            }
-            if ($memcache) {
-                $memcache->set('lookup:submission_id', $user_row_by_submission_id);
-            }
-        }
-
     }
 
     // search by id, then name
@@ -176,6 +164,18 @@ function get_user_row($user) {
             return $user_row_by_name[$user];
         }
     }
+    return NULL;
+}
+
+function get_user_by_submission($submission_id) {
+    $user_result = contest_query("select_submission_users");
+    if ($user_result) {
+        $user_row_by_submission_id = array();
+        while ($user_row = mysql_fetch_assoc($user_result)) {
+            $user_row_by_submission_id[$user_row['submission_id']] = $user_row;
+        }
+    }
+
     if ($user_row_by_submission_id) {
         if (array_key_exists($user, $user_row_by_submission_id)) {
             return $user_row_by_submission_id[$user];

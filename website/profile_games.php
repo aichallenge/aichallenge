@@ -10,7 +10,7 @@ if ($user_id !== NULL) {
     $user_row = get_user_row($user_id);
     $title = "'s Recent Games";
 } elseif ($submission_id !== NULL) {
-    $user_row = get_user_row($submission_id);
+    $user_row = get_user_by_submission($submission_id);
     $title = "'s Games for Version ".$user_row['version'];
 }
 $user_id = $user_row['user_id'];
