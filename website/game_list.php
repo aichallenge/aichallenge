@@ -220,7 +220,6 @@ function create_game_list_table($page=0, $user_id=NULL, $submission_id=NULL, $ma
     $table .= '<th>Map</th><th>Viewer</th></tr></thead>';
     $table .= '<tbody>';
     $oddity = 'even';
-    $fields = $json["fields"];
     foreach ($rows as $row) {
         // find current user info
         if ($user_id) {
@@ -286,7 +285,7 @@ function create_game_list_table($page=0, $user_id=NULL, $submission_id=NULL, $ma
     }
     $table .= '</table>';
     if (!$top) {
-        $table .= '<div style="text-align:center">'.getPaginationString($json['page'], $json['page_count'], 10, $page_string)."</div>";
+        $table .= '<div style="text-align:center">'.getPaginationString($page, $page_count, $page_size, $page_string)."</div>";
     }
     
     return $table;
