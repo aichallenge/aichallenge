@@ -97,7 +97,7 @@ var visualize = function (i) {
 }
 
 function get_java_codebase() {
-    if (isset($_SERVER['HTTP_USER_AGENT']) {
+    if (isset($_SERVER['HTTP_USER_AGENT'])) {
     	$match = preg_match('/MSIE ([0-9]\.[0-9])/', $_SERVER['HTTP_USER_AGENT'], $reg);
     } else {
         $match = 0;
