@@ -65,7 +65,7 @@ public class VisualizerApplet extends Applet implements Runnable,
 		try {
 			Thread.interrupted();
 			final JSObject jsRoot = JSObject.getWindow(this);
-			webWrapper = new Visualizer(this, getWidth(), getHeight());
+			webWrapper = new Visualizer(this, getWidth(), getHeight(), false);
 			webWrapper.setJsRoot(jsRoot);
 			HTMLDocument document = webWrapper.getDomWindow().getDocument();
 			ScriptableObject options = webWrapper.construct("Options", null);
@@ -120,7 +120,7 @@ public class VisualizerApplet extends Applet implements Runnable,
 	}
 
 	@Override
-	public void setVisualizerPanel(Panel visualizerPanel) {
+	public void setVisualizerPanel(Panel visualizerPanel, boolean resizable) {
 		visualizerPanel.setSize(getWidth(), getHeight());
 		Thread.currentThread().isInterrupted();
 		add(visualizerPanel);

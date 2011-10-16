@@ -481,6 +481,16 @@ Visualizer.prototype.streamingStart = function() {
 };
 
 /**
+ * Makes the visualizer output video frames at a fixed rate
+ * 
+ * @param {Number}
+ *        fpt the number of frames per turn
+ */
+Visualizer.prototype.javaVideoOutput = function(fpt) {
+	this.director.fixedFpt = fpt;
+};
+
+/**
  * In this method the replay string that has been passed directly or downloaded is parsed into a
  * {@link Replay}. Afterwards an attempt is made to start the visualization ({@link Visualizer#tryStart}).
  * 
@@ -1270,12 +1280,15 @@ Visualizer.prototype.draw = function() {
 		ctx.fillStyle = '#fff';
 		ctx.fillText(hint, loc.x, loc.y + 10);
 	}
-	// we were able to draw a frame, the engine may send us the next turn
 	if (this.state.isStreaming) {
+		// we were able to draw a frame, the engine may send us the next turn
 		var vis = this;
 		window.setTimeout(function() {
 			if (vis.state.isStreaming) vis.streamingStart();
 		}, 0);
+	} else if (this.director.fixedFpt !== undefined) {
+		// store frame
+		video.captureFrame(this.director.time, this.director.duration);
 	}
 };
 

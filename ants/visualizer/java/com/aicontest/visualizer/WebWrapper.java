@@ -105,7 +105,7 @@ public class WebWrapper {
 			if (compilerEnv == null) {
 				compilerEnv = new CompilerEnvirons();
 				compilerEnv.initFromContext(cx);
-				compilerEnv.setOptimizationLevel(0);
+				compilerEnv.setOptimizationLevel(1);
 				compilerEnv.setGeneratingSource(false);
 			}
 			if (compilationErrorReporter == null) {
@@ -123,7 +123,7 @@ public class WebWrapper {
 			if (oldClassName != null) {
 				new File(oldClassName.replace('.', File.separatorChar) + ".class").delete();
 			}
-			System.out.println("Compiling " + file + " -> " + outFile);
+			System.out.println("Saving compiled " + file + " -> " + outFile);
 			outFile.getParentFile().mkdirs();
 			FileOutputStream fos = new FileOutputStream(outFile);
 			try {

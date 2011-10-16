@@ -1068,9 +1068,6 @@ CanvasElementGraph.prototype.draw = function() {
 
 	// hill razes
 	this.ctx.textAlign = 'center';
-	perPlayer = new Array(values[0].length);
-	for (i = 0; i < perPlayer.length; i++)
-		perPlayer[i] = 0;
 	hills = this.state.replay.meta['replaydata']['hills'];
 	for (k = 0; k < hills.length; k++) {
 		razed = hills[k][3] < this.state.replay.duration;
@@ -1078,7 +1075,6 @@ CanvasElementGraph.prototype.draw = function() {
 			x = 0.5 + scaleX * hills[k][3];
 			y = 0.5 + scaleY * (max - values[hills[k][3]][hills[k][2]]);
 			this.ctx.fillStyle = replay.htmlPlayerColors[hills[k][2]];
-			this.ctx.fillText(++perPlayer[hills[k][2]], x, y - 10);
 			this.ctx.beginPath();
 			this.ctx.moveTo(x, y);
 			this.ctx.lineTo(x - 4, y - 8);

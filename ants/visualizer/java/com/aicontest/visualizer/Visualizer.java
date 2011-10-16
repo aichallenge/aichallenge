@@ -40,7 +40,7 @@ public class Visualizer extends WebWrapper implements MouseInputListener,
 	private final IVisualizerUser app;
 	private JSObject jsRoot;
 
-	public Visualizer(IVisualizerUser app, int width, int height)
+	public Visualizer(IVisualizerUser app, int width, int height, boolean resizable)
 			throws InstantiationException, IllegalAccessException, IOException {
 		super(app.getJavaScriptPath());
 		this.app = app;
@@ -58,7 +58,7 @@ public class Visualizer extends WebWrapper implements MouseInputListener,
 		drawPanel.addMouseMotionListener(this);
 		drawPanel.addMouseListener(this);
 		drawPanel.addKeyListener(this);
-		app.setVisualizerPanel(drawPanel);
+		app.setVisualizerPanel(drawPanel, resizable);
 	}
 
 	public synchronized void paint(Graphics g) {

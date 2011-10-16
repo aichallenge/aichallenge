@@ -27,8 +27,9 @@ public interface IVisualizerUser {
 	 * 
 	 * @param visualizerPanel
 	 *            the panel
+	 * @param resizable 
 	 */
-	void setVisualizerPanel(Panel visualizerPanel);
+	void setVisualizerPanel(Panel visualizerPanel, boolean resizable);
 
 	/**
 	 * Enables or disables fullscreen mode.
