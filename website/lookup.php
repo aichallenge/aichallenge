@@ -178,7 +178,7 @@ function get_user_by_submission($submission_id) {
 
     if ($user_row_by_submission_id) {
         if (array_key_exists($submission_id, $user_row_by_submission_id)) {
-            return $user_row_by_submission_id[$user];
+            return $user_row_by_submission_id[$submission_id];
         }
     }
     return NULL;
