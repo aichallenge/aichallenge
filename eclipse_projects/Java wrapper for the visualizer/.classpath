@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
-	<classpathentry excluding="**/CVS/|build.xml|manifest" kind="src" path="visualizer/3rdparty/mozilla/js/rhino/src"/>
 	<classpathentry excluding="MANIFEST.MF" kind="src" path="visualizer/java"/>
+	<classpathentry excluding="**/.git|build.xml|manifest" kind="src" path="visualizer/rhino/src"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/Java plugin"/>
 	<classpathentry kind="output" path="visualizer/build/classes"/>

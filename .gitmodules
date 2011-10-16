@@ -10,9 +10,9 @@
 [submodule "manager/PHPSkills"]
 	path = manager/PHPSkills
 	url = git://github.com/moserware/PHPSkills.git
-[submodule "UglifyJS"]
-	path = UglifyJS
-	url = git://github.com/mishoo/UglifyJS.git
+[submodule "ants/visualizer/rhino"]
+	path = ants/visualizer/rhino
+	url = git://github.com/mozilla/rhino.git
 [submodule "ants/visualizer/UglifyJS"]
 	path = ants/visualizer/UglifyJS
 	url = git://github.com/mishoo/UglifyJS.git

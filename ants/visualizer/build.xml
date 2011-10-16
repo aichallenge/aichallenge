@@ -7,24 +7,14 @@
 		<property file="default.properties" />
 	</target>
 
-	<target name="check-rhino">
-		<condition property="rhino.available">
-			<available file="3rdparty/mozilla" />
-		</condition>
-	</target>
-
-	<target name="download-rhino" unless="rhino.available" depends="check-rhino">
-		<cvs cvsroot=":pserver:anonymous@cvs-mirror.mozilla.org:/cvsroot" package="mozilla/js/rhino/src" dest="3rdparty" date="${rhino.date}" failonerror="yes" />
-	</target>
-
-	<target name="compile-rhino" depends="load-properties,download-rhino">
+	<target name="compile-rhino" depends="load-properties">
 		<mkdir dir="${build.java}" />
 		<javac destdir="${build.java}" debug="${java.debug}" target="${java.target}" includeAntRuntime="false">
-			<src path="3rdparty/mozilla/js/rhino/src" />
+			<src path="rhino/src" />
 			<include name="**" />
 			<exclude name="org/mozilla/javascript/JavaAdapter.java" />
 		</javac>
-		<copy file="3rdparty/mozilla/js/rhino/src/org/mozilla/javascript/resources/Messages.properties" tofile="${build.java}/org/mozilla/javascript/resources/Messages.properties" />
+		<copy file="rhino/src/org/mozilla/javascript/resources/Messages.properties" tofile="${build.java}/org/mozilla/javascript/resources/Messages.properties" />
 	</target>
 
 	<target name="compile-visualizer" depends="compile-rhino">
