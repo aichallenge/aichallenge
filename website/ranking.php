@@ -135,7 +135,6 @@ function create_ranking_json($page=0, $org_id=NULL, $country_id=NULL, $language_
         for ($i = 0; $i < $field_count; $i++) {
             $field_names[] = mysql_field_name($results, $i);
         }
-        $json["fields"] = $field_names;
         if ($filtered) {
             $field_names[] = "filter_rank";
             $filter_rank = $page_size * ($page - 1);
@@ -155,9 +154,9 @@ function create_ranking_json($page=0, $org_id=NULL, $country_id=NULL, $language_
                 $rank_row_by_name = array_combine($field_names, $rank_row);
                 $rank_id_name = $rank_row_by_name[$rank_id_field];
                 $json["type_name"] = $rank_id_name;
-                $json["fields"] = $field_names;
                 $json["values"] = array();
             }
+            $json["fields"] = $field_names;
             $json["values"][] = $rank_row;
         }
     }
