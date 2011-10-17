@@ -177,7 +177,7 @@ class GameAPIClient:
                         data = json.loads(data)["hash"]
                         log.info("Server returned hash: %s" % data)
                         if hash == data:
-                            os.remove('last_game.json')
+                            os.remove('last_post.json')
                             break
                         elif i < retry-1:
                             log.warning('Waiting %s seconds...' % wait_time)
