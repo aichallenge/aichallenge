@@ -142,14 +142,14 @@ class GameAPIClient:
 
     def post_result(self, method, result):
         # save result in case of failure
-        with open('last_game.json', 'w') as f:
+        with open('last_post.json', 'w') as f:
             try:
-                f.write(json.dumps(result))
+                f.write(json.dumps([method, result]))
             except:
                 with open('bad_result', 'w') as br:
-                    pickle.dump(result, br)
+                    pickle.dump([method, result], br)
                 raise
-        # retry 10 times or until post is successful
+        # retry 100 times or until post is successful
         retry = 100
         wait_time = 2
         for i in range(retry):
@@ -633,19 +633,19 @@ def main(argv):
 
     # get tasks
     if opts.task:
-        if os.path.exists('last_game.json'):
-            log.warning("Last game result was not send successfully, resending....")
+        if os.path.exists('last_post.json'):
+            log.warning("Last result was not sent successfully, resending....")
             result = None
-            with open('last_game.json') as f:
+            with open('last_post.json') as f:
                 try:
-                    result = json.loads(f.read())
+                    method, result = json.loads(f.read())
                 except:
                     log.warning("Last game result file can't be read")
             if result != None:
-                if not worker.cloud.post_result('api_game_result', result):
+                if not worker.cloud.post_result(method, result):
                     return False
             else:
-                os.remove('last_game.json')
+                os.remove('last_post.json')
         if opts.num_tasks <= 0:
             try:
                 script_loc = os.path.realpath(os.path.dirname(__file__))
