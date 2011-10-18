@@ -39,12 +39,13 @@ public class EventExecutionUnit implements IExecutionUnit {
 		Scriptable scriptable = getThiz(cx, global);
 		Function func = getFunction(scriptable);
 		if (func != null) {
-			func.call(cx, global, scriptable, args == null ? Context.emptyArgs : args);
+			func.call(cx, global, scriptable, args == null ? Context.emptyArgs
+					: args);
 		}
 	}
 
-	public boolean matches(Object thiz, String function) {
-		return (this.thiz == thiz) && (property.equals(function));
+	public boolean matches(EventExecutionUnit sample) {
+		return (this.thiz == sample.thiz) && (property.equals(sample.property));
 	}
 
 	@Override

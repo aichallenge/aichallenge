@@ -28,6 +28,7 @@ public class Main implements IVisualizerUser, WindowListener {
 	private Frame frame;
 	private Visualizer visualizer;
 	private HTMLDocument document;
+	private VideoCapture videoCapture;
 
 	public static void main(String[] args) {
 		try {
@@ -140,7 +141,7 @@ public class Main implements IVisualizerUser, WindowListener {
 				document, options, Undefined.instance, Undefined.instance,
 				config });
 		if (video != null) {
-			VideoCapture videoCapture = new VideoCapture(visualizer, frame, video.getFormat());
+			videoCapture = new VideoCapture(visualizer, frame, video.getFormat());
 			ScriptableObject.defineProperty(visualizer.global, "video",
 					videoCapture, ScriptableObject.DONTENUM);
 			visualizer.invoke(vis, "javaVideoOutput",
@@ -232,7 +233,6 @@ public class Main implements IVisualizerUser, WindowListener {
 			fsWin.setVisible(true);
 			winGfxConf.getDevice().setFullScreenWindow(fsWin);
 		} else if (fsWin != null && !enable) {
-			Thread.interrupted();
 			fsWin.dispose();
 			winGfxConf.getDevice().setFullScreenWindow(null);
 			frame.add(visualizerPanel);
@@ -248,6 +248,9 @@ public class Main implements IVisualizerUser, WindowListener {
 	@Override
 	public void windowClosing(WindowEvent e) {
 		visualizer.exit();
+		if (videoCapture != null) {
+			videoCapture.quit();
+		}
 		e.getWindow().dispose();
 	}
 

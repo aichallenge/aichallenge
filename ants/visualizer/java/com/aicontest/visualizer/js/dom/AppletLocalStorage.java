@@ -14,7 +14,6 @@ public class AppletLocalStorage extends LocalStorage {
 
 	public AppletLocalStorage(Applet applet) {
 		try {
-			Thread.interrupted();
 			storage = ((JSObject) JSObject.getWindow(applet).getMember("localStorage"));
 		} catch (Exception e) {
 			System.err.println("localStorage not available:");

@@ -59,7 +59,7 @@ public class VideoCapture {
 		BufferedImage image = visualizer.canvas.getPixmap();
 		videoCompressorPool.compress(image, num++);
 		if (time == duration) {
-			videoCompressorPool.quit();
+			quit();
 			SwingUtilities.invokeLater(new Runnable() {
 				@Override
 				public void run() {
@@ -68,6 +68,10 @@ public class VideoCapture {
 				}
 			});
 		}
+	}
+
+	public void quit() {
+		videoCompressorPool.quit();
 	}
 }
 

@@ -15,7 +15,6 @@ import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
-import java.util.Iterator;
 
 import javax.swing.event.MouseInputListener;
 
@@ -29,7 +28,6 @@ import org.mozilla.javascript.ScriptableObject;
 import com.aicontest.visualizer.js.dom.DOMWindow;
 import com.aicontest.visualizer.js.dom.HTMLCanvasElement;
 import com.aicontest.visualizer.js.tasks.EventExecutionUnit;
-import com.aicontest.visualizer.js.tasks.IExecutionUnit;
 
 public class Visualizer extends WebWrapper implements MouseInputListener,
 		KeyListener, ComponentListener {
@@ -40,8 +38,9 @@ public class Visualizer extends WebWrapper implements MouseInputListener,
 	private final IVisualizerUser app;
 	private JSObject jsRoot;
 
-	public Visualizer(IVisualizerUser app, int width, int height, boolean resizable)
-			throws InstantiationException, IllegalAccessException, IOException {
+	public Visualizer(IVisualizerUser app, int width, int height,
+			boolean resizable) throws InstantiationException,
+			IllegalAccessException, IOException {
 		super(app.getJavaScriptPath());
 		this.app = app;
 		domWindow = new DOMWindow("Visualizer", this);
@@ -70,8 +69,6 @@ public class Visualizer extends WebWrapper implements MouseInputListener,
 	protected synchronized void postExecute() {
 		if ((canvas != null) && (canvas.getContext("2d").isDrawn())) {
 			BufferedImage pixmap = canvas.getPixmap();
-			offscreenGraphics.clearRect(0, 0, offscreen.getWidth(drawPanel),
-					offscreen.getHeight(drawPanel));
 			offscreenGraphics.drawImage(pixmap, 0, 0, null);
 			drawPanel.repaint();
 		}
@@ -83,7 +80,12 @@ public class Visualizer extends WebWrapper implements MouseInputListener,
 	}
 
 	public synchronized void canvasResized() {
-		if (canvas != null && canvas.getWidth() > 0 && canvas.getHeight() > 0 && (offscreen == null || offscreen.getWidth(drawPanel) != canvas.getWidth() ||offscreen.getHeight(drawPanel) != canvas.getHeight())) {
+		if (canvas != null
+				&& canvas.getWidth() > 0
+				&& canvas.getHeight() > 0
+				&& (offscreen == null
+						|| offscreen.getWidth(drawPanel) != canvas.getWidth() || offscreen
+						.getHeight(drawPanel) != canvas.getHeight())) {
 			offscreen = drawPanel.createImage(canvas.getWidth(),
 					canvas.getHeight());
 			if (offscreen != null) {
@@ -207,15 +209,7 @@ public class Visualizer extends WebWrapper implements MouseInputListener,
 	public void mouseMoved(MouseEvent e) {
 		EventExecutionUnit task = createEventObject(e, "mousemove");
 		if (task != null) {
-			Iterator<IExecutionUnit> it = immediateQueue.iterator();
-			while (it.hasNext()) {
-				IExecutionUnit eu = (IExecutionUnit) it.next();
-				if ((eu instanceof EventExecutionUnit)) {
-					EventExecutionUnit eeu = (EventExecutionUnit) eu;
-					if ((eeu != task) && (eeu.matches(canvas, "onmousemove")))
-						it.remove();
-				}
-			}
+			addCompressedEventTask(task);
 		}
 	}
 
@@ -229,7 +223,7 @@ public class Visualizer extends WebWrapper implements MouseInputListener,
 
 	@Override
 	public void componentResized(ComponentEvent e) {
-		addTask(new EventExecutionUnit(domWindow, "onresize",
+		addCompressedEventTask(new EventExecutionUnit(domWindow, "onresize",
 				ScriptRuntime.emptyArgs));
 	}
 

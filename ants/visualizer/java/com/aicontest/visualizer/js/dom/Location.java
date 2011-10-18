@@ -18,7 +18,6 @@ public class Location {
 	private JSObject getJSLocation() {
 		JSObject jsRoot = webWrapper.getJsRoot();
 		if (jsRoot != null) {
-			Thread.interrupted();
 			JSObject document = (JSObject) jsRoot.getMember("document");
 			return (JSObject) document.getMember("location");
 		}

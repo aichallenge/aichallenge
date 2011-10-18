@@ -63,7 +63,6 @@ public class VisualizerApplet extends Applet implements Runnable,
 
 	public void run() {
 		try {
-			Thread.interrupted();
 			final JSObject jsRoot = JSObject.getWindow(this);
 			webWrapper = new Visualizer(this, getWidth(), getHeight(), false);
 			webWrapper.setJsRoot(jsRoot);
