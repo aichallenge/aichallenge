@@ -14,3 +14,4 @@ all: $(CLASSES)
 
 clean:
 	-rm -Rf *.class
+	-rm -Rf *.jar
