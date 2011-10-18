@@ -179,3 +179,11 @@ body {
 #footer a {
 	color: #fff;
 }
+
+.toc {
+    float: right;
+    border: dotted 1px #eee;
+    padding: 1em;
+    margin: 1em;
+    margin-top: 0px;
+}
