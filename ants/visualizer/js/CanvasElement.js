@@ -406,16 +406,16 @@ CanvasElementFog.prototype.checkState = function() {
 CanvasElementFog.prototype.draw = function() {
 	var x, y, rowPixels, colPixels, x_idx, y_idx, rows, cols;
 	var x_i, y_i, x_f, y_f, fogRow;
-	var start = -1;
+	var start = null;
 	this.ctx.fillStyle = this.ptrn;
 	this.ctx.fillRect(0, 0, this.w, this.h);
 	if (this.fogMap) {
 		cols = this.fogMap[0].length;
 		colPixels = this.scale * cols;
-		x = (this.w < colPixels) ? (this.w - colPixels >> 1) + this.shiftX : 0;
+		x = (this.w < colPixels) ? ((this.w - colPixels) >> 1) + this.shiftX : 0;
 		rows = this.fogMap.length;
 		rowPixels = this.scale * rows;
-		y = (this.h < rowPixels) ? (this.h - rowPixels >> 1) + this.shiftY : 0;
+		y = (this.h < rowPixels) ? ((this.h - rowPixels) >> 1) + this.shiftY : 0;
 
 		x_idx = Math.floor(-x / this.scale);
 		y_idx = Math.floor(-y / this.scale);
@@ -426,18 +426,18 @@ CanvasElementFog.prototype.draw = function() {
 			x_i = Math.wrapAround(x_idx, cols);
 			for (x_f = x + x_idx * this.scale; x_f < this.w; x_f += this.scale) {
 				if (fogRow[x_i] === false) {
-					if (start === -1) {
+					if (start === null) {
 						start = x_f;
 					}
-				} else if (start !== -1) {
+				} else if (start !== null) {
 					this.ctx.clearRect(start, y_f, x_f - start, this.scale);
-					start = -1;
+					start = null;
 				}
 				x_i = (x_i + 1) % cols;
 			}
-			if (start !== -1) {
+			if (start !== null) {
 				this.ctx.clearRect(start, y_f, x_f - start, this.scale);
-				start = -1;
+				start = null;
 			}
 			y_i = (y_i + 1) % rows;
 		}
@@ -851,8 +851,8 @@ CanvasElementAntsMap.prototype.draw = function() {
 
 	// fog
 	if (this.state.fogPlayer !== undefined) {
-		dx = (this.fog.w < colPixels) ? 0.5 * (colPixels - this.fog.w) - this.fog.shiftX : 0;
-		dy = (this.fog.h < rowPixels) ? 0.5 * (rowPixels - this.fog.h) - this.fog.shiftY : 0;
+		dx = (this.fog.w < colPixels) ? ((colPixels - this.fog.w + 1) >> 1) - this.fog.shiftX : 0;
+		dy = (this.fog.h < rowPixels) ? ((rowPixels - this.fog.h + 1) >> 1) - this.fog.shiftY : 0;
 		this.drawWrapped(dx, dy, this.fog.w, this.fog.h, this.w, this.h, function(ctx, img, x, y) {
 			ctx.drawImage(img, x, y);
 		}, [ this.ctx, this.fog.canvas, dx, dy ]);

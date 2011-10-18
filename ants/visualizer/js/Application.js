@@ -1017,9 +1017,15 @@ Visualizer.prototype.setZoom = function(zoom) {
 	var oldScale = this.state.scale;
 	var effectiveZoom = Math.max(1, zoom);
 	this.state.config['zoom'] = effectiveZoom;
-	this.state.scale = Math.max(1, Math.min((this.shiftedMap.w - 20) / (this.state.replay.cols),
-			(this.shiftedMap.h - 20) / (this.state.replay.rows))) | 0;
-	this.state.scale = Math.min(ZOOM_SCALE, this.state.scale * effectiveZoom);
+	if (this.director.fixedFpt === undefined) {
+		this.state.scale = Math.max(1, Math.min((this.shiftedMap.w - 20) / this.state.replay.cols,
+				(this.shiftedMap.h - 20) / this.state.replay.rows)) | 0;
+		this.state.scale = Math.min(ZOOM_SCALE, this.state.scale * effectiveZoom);
+	} else {
+		this.state.scale = Math.max(1, Math.min(this.shiftedMap.w / this.state.replay.cols,
+				this.shiftedMap.h / this.state.replay.rows)) | 0;
+		this.state.scale = Math.pow(2, (Math.log(this.state.scale) / Math.LN2) | 0);
+	}
 	if (oldScale) {
 		this.state.shiftX = (this.state.shiftX * this.state.scale / oldScale) | 0;
 		this.state.shiftY = (this.state.shiftY * this.state.scale / oldScale) | 0;
@@ -1027,8 +1033,8 @@ Visualizer.prototype.setZoom = function(zoom) {
 	this.calculateMapCenter(this.state.scale);
 	this.map.setSize(this.state.scale * this.state.replay.cols, this.state.scale
 			* this.state.replay.rows);
-	this.map.x = ((this.shiftedMap.w - this.map.w) / 2 + this.shiftedMap.x) | 0;
-	this.map.y = ((this.shiftedMap.h - this.map.h) / 2 + this.shiftedMap.y) | 0;
+	this.map.x = (((this.shiftedMap.w - this.map.w) >> 1) + this.shiftedMap.x) | 0;
+	this.map.y = (((this.shiftedMap.h - this.map.h) >> 1) + this.shiftedMap.y) | 0;
 	this.antsMap.setSize(this.map.w, this.map.h);
 	this.fog.setSize(Math.min(this.map.w, this.shiftedMap.w), Math.min(this.map.h,
 			this.shiftedMap.h));
