@@ -122,7 +122,7 @@ EOT;
         
         $table .= "<tr class=\"$row_class\">";
         $table .= "  <td>".nice_version($version, $timestamp, $submission_id)."</td>";
-        $table .= "  <td>nice_datetime_span($timestamp)</td>";
+        $table .= "  <td>". nice_datetime_span($timestamp) ."</td>";
         $table .= "  <td class=\"$status_class\">$status</td>";
         $table .= "  <td>$skill</td>";
         $table .= "  <td>$games</td>";
