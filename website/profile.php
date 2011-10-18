@@ -212,7 +212,8 @@ EOT;
                     } else {
                         echo "Next game should be within ".$next_game_row["next_game_in_adjusted"]." minutes.";
                     }
-                    echo "<br />Page refreshed at ".date(DATE_ATOM).".";
+                    echo "<br />Page refreshed at ".
+                        nice_datetime("now") .".";
                     echo "</p>";
                 }
             } else {

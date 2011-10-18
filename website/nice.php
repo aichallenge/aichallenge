@@ -22,11 +22,20 @@ function nice_ago($datetime) {
     return nice_interval($now->diff($datetime))." ago";
 }
 
+function nice_datetime($datetime) {
+    if (is_string($datetime)) {
+        $datetime = new DateTime($datetime);
+    }
+    return no_wrap($datetime->format('j M')) ." ".
+        no_wrap($datetime->format('g:ia'));
+}
+
 function nice_datetime_span($datetime) {
     if (is_string($datetime)) {
         $datetime = new DateTime($datetime);
     }
-    return "<span title=\"".no_wrap(nice_ago($datetime))."\">".no_wrap($datetime->format('j M'))." ".no_wrap($datetime->format('g:ia'))."</span>";
+    return "<span title=\"". no_wrap(nice_ago($datetime)) ."\">".
+        nice_datetime($datetime)."</span>";
 }
 
 function nice_date($date) {
