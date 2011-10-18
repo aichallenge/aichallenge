@@ -198,7 +198,7 @@ if @min_players <= @max_players then
             ) s
             -- join to get total game count for last 24 hours
             left outer join (
-                select user_id, count(*) as game_count
+                select user_id, game_count
                 from tmp_games
                 group by user_id
             ) r
