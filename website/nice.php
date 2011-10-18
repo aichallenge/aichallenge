@@ -26,7 +26,7 @@ function nice_datetime($datetime) {
     if (is_string($datetime)) {
         $datetime = new DateTime($datetime);
     }
-    return no_wrap($datetime->format('j M')) ." ".
+    return no_wrap($datetime->format('M jS')) ." ".
         no_wrap($datetime->format('g:ia'));
 }
 
@@ -39,7 +39,7 @@ function nice_datetime_span($datetime) {
 }
 
 function nice_date($date) {
-    return date("M jS Y", strtotime($date));
+    return date("M jS", strtotime($date));
 }
 
 function nice_version($version, $date=NULL, $submission_id=NULL) {
