@@ -13,24 +13,12 @@
 <p>No programming experience necessary. You will use the tools that come with
   the starter package to watch two sample bots play against each other.
   <a href="using_the_tools.php">Read More &raquo;</a></p>
-<h3>Starting Your Own</h3>
-<p>No programming experience necessary. In this tutorial, you will start
-  your own entry. You will start by using the tools to watch the default
-  starter package strategy play against itself. You will then make an easy
-  change to the code to improve the strategy. Finally, you will learn how to
-  package up your modified strategy and submit it to the online tournament
-  using the contest website.
-  <a href="starting_your_own.php">Read More &raquo;</a></p>
-<h3>Climbing the Rankings</h3>
+<h3>Ants Tutorial</h3>
 <p>The default starter package uses a pretty dumb strategy. This guide walks
   you through a series of quick and easy changes that you can make to the Java
   starter package. Each time you make one of the changes, your bot should get
   smarter, and you'll notice your ranking start to rise.
-  <a href="simple_strategy_guide.php">Read More &raquo;</a></p>
-<h3>Advanced Strategy Guide</h3>
-<p>Are you aiming for the number one spot on the leaderboard? If so, you'll
-  find some inspiring ideas here to get you started.
-  <a href="advanced_strategy_guide.php">Read More &raquo;</a></p>
+  <a href="ants_tutorial.php">Read More &raquo;</a></p>
 <h3>Outside Resources</h3>
 <p>Have you written an article that you would like to share with the
   community? Consider writing a Wiki article or blog post revealing your
