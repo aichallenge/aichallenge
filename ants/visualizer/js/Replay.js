@@ -1126,6 +1126,9 @@ Replay.prototype.generateBotInput = function(player, min, max) {
 		if (param === 'food_rate') continue;
 		if (param === 'food_turn') continue;
 		if (param === 'food_start') continue;
+		if (param === 'engine_seed') continue;
+		if (param === 'winning_turn') continue;
+		if (param === 'ranking_turn') continue;
 		value = this.meta['replaydata'][param];
 		if (typeof value == 'number' && !isNaN(value) && isFinite(value)) {
 			botInput += param + ' ' + value + '\n';
