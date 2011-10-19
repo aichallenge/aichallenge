@@ -18,13 +18,13 @@ import javax.swing.SwingUtilities;
 
 public class VideoCapture {
 
-	private final Visualizer visualizer;
+	private final WebWrapper visualizer;
 	private final Frame frame;
 	private int num = 0;
 	private VideoCompressorPool videoCompressorPool;
 	private long start;
 
-	public VideoCapture(Visualizer visualizer, Frame frame, String format)
+	public VideoCapture(WebWrapper visualizer, Frame frame, String format)
 			throws IOException {
 		this.visualizer = visualizer;
 		this.frame = frame;

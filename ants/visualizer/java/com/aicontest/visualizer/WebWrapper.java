@@ -18,6 +18,9 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.locks.ReentrantLock;
 
+import javax.swing.JOptionPane;
+import javax.swing.UIManager;
+
 import org.mozilla.javascript.CompilerEnvirons;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ErrorReporter;
@@ -92,10 +95,27 @@ public class WebWrapper {
 				XMLHttpRequest.class);
 		global.put("XMLHttpRequest", global, xmlHttpRequest);
 		new Console(global, "console");
-		cx.evaluateString(global,
-				"alert = function(x) { java.lang.System.out.println(x) }",
-				"<web-wrapper>", 1, null);
 		jsonParser = new JsonParser(cx, global);
+		String[] names = { "alert", "prompt", "confirm" };
+		global.defineFunctionProperties(names, WebWrapper.class,
+				ScriptableObject.DONTENUM);
+	}
+
+	public static void alert(Object o) {
+		String message = o.toString();
+		JOptionPane.showMessageDialog(null, message);
+	}
+
+	public static boolean confirm(Object o) {
+		String message = o.toString();
+		return JOptionPane.showConfirmDialog(null, message,
+				UIManager.getString("OptionPane.titleText"),
+				JOptionPane.OK_CANCEL_OPTION) == JOptionPane.OK_OPTION;
+	}
+
+	public static String prompt(Object o, Object def) {
+		String message = o.toString();
+		return JOptionPane.showInputDialog(message, def.toString());
 	}
 
 	private Class<?> recompile(String file) throws IOException {
@@ -308,5 +328,11 @@ public class WebWrapper {
 
 	public ScriptableObject getGlobal() {
 		return global;
+	}
+
+	protected void runProgram() {
+		for (WebWrapper.Script script : scripts) {
+			script.run();
+		}
 	}
 }

@@ -14,10 +14,12 @@ import java.io.PrintStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 
+import org.mozilla.javascript.NativeArray;
 import org.mozilla.javascript.ScriptableObject;
 import org.mozilla.javascript.Undefined;
 
 import com.aicontest.visualizer.js.dom.HTMLDocument;
+import com.aicontest.visualizer.js.dom.XMLHttpRequest;
 
 public class Main implements IVisualizerUser, WindowListener {
 
@@ -39,6 +41,7 @@ public class Main implements IVisualizerUser, WindowListener {
 				String fileName = null;
 				VideoOptions video = null;
 				boolean moreOptions = true;
+				BotInputOptions botInput = null;
 				for (String arg : args) {
 					if (moreOptions && arg.startsWith("--")) {
 						try {
@@ -50,6 +53,9 @@ public class Main implements IVisualizerUser, WindowListener {
 							} else if (arg.startsWith("--video=")) {
 								String vidArgString = arg.substring(8);
 								video = new VideoOptions(vidArgString);
+							} else if (arg.startsWith("--botinput=")) {
+								String argString = arg.substring(11);
+								botInput = new BotInputOptions(argString);
 							} else if (arg.startsWith("--decorated=")) {
 								decorated = Boolean.parseBoolean(arg
 										.substring(12));
@@ -86,7 +92,7 @@ public class Main implements IVisualizerUser, WindowListener {
 					System.err.println("(The visualizer needs a file name.)");
 					System.exit(1);
 				}
-				new Main(fileName, video);
+				new Main(fileName, video, botInput);
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -103,13 +109,16 @@ public class Main implements IVisualizerUser, WindowListener {
 	private static void printHelp(PrintStream out) {
 		out.println("Syntax: <options> filename");
 		out.println("Options:");
-		out.println("               -h / --help : Prints this help.");
-		out.println("             --width=<int> : Set the display width in pixels.");
-		out.println("            --height=<int> : Set the display height in pixels.");
-		out.println("  --decorated=[true/false] : Enables or disable GUI elements around the visualizer.");
-		out.println("       --video=<fpt>,<fmt> : Enable video output mode at");
-		out.println("                             <fpt> frames per turn using");
-		out.println("                             <ext> as file extension.");
+		out.println("                  -h / --help : Prints this help.");
+		out.println("                --width=<int> : Set the display width in pixels.");
+		out.println("               --height=<int> : Set the display height in pixels.");
+		out.println("     --decorated=[true/false] : Enables or disable GUI elements around the visualizer.");
+		out.println("          --video=<fpt>,<fmt> : Enable video output mode at");
+		out.println("                                <fpt> frames per turn using");
+		out.println("                                <ext> as file extension.");
+		out.println("--botinput=<player>,<turn(s)> : Generate bot intput for a replay.");
+		out.println("                                <player> name of the bot");
+		out.println("                                <turn(s)> A single turn number or a range like 1-1000.");
 		out.println();
 		out.println("Video images will be numbered 00000000.<fmt> to 99999999.<fmt>.");
 		out.println("Example call that generates ten frames per turn without user interface:");
@@ -118,8 +127,8 @@ public class Main implements IVisualizerUser, WindowListener {
 		out.println("  ffmpeg -i %08d.png movie.mp4");
 	}
 
-	private ScriptableObject init(boolean resizable) throws InstantiationException,
-			IllegalAccessException, IOException {
+	private ScriptableObject init(boolean resizable)
+			throws InstantiationException, IllegalAccessException, IOException {
 		visualizer = new Visualizer(this, width, height, resizable);
 		document = visualizer.getDomWindow().getDocument();
 		ScriptableObject options = visualizer.construct("Options", null);
@@ -141,7 +150,8 @@ public class Main implements IVisualizerUser, WindowListener {
 				document, options, Undefined.instance, Undefined.instance,
 				config });
 		if (video != null) {
-			videoCapture = new VideoCapture(visualizer, frame, video.getFormat());
+			videoCapture = new VideoCapture(visualizer, frame,
+					video.getFormat());
 			ScriptableObject.defineProperty(visualizer.global, "video",
 					videoCapture, ScriptableObject.DONTENUM);
 			visualizer.invoke(vis, "javaVideoOutput",
@@ -150,7 +160,7 @@ public class Main implements IVisualizerUser, WindowListener {
 		return vis;
 	}
 
-	public Main(String replay, VideoOptions video)
+	public Main(String replay, VideoOptions video, BotInputOptions botInput)
 			throws InstantiationException, IllegalAccessException, IOException,
 			URISyntaxException {
 		if (replay.endsWith(".stream")) {
@@ -158,11 +168,19 @@ public class Main implements IVisualizerUser, WindowListener {
 				System.err
 						.println("Cannot record videos for logged streaming replays. Use a storage format replay instead.");
 				System.exit(1);
+			} else if (botInput != null) {
+				System.err
+						.println("Cannot create bot input from logged streaming replays. Use a storage format replay instead.");
+				System.exit(1);
 			} else {
 				startStream(new FileInputStream(replay));
 			}
 		} else {
-			startReplay(replay, video);
+			if (botInput != null) {
+				startBotInput(replay, botInput);
+			} else if (botInput == null || video != null) {
+				startReplay(replay, video);
+			}
 		}
 	}
 
@@ -177,6 +195,54 @@ public class Main implements IVisualizerUser, WindowListener {
 	private void startReplay(String replay, VideoOptions video)
 			throws URISyntaxException, InstantiationException,
 			IllegalAccessException, IOException {
+		URI uri = replayStringToUri(replay);
+		ScriptableObject options = init(video == null);
+		ScriptableObject vis = construct(options, Undefined.instance, video);
+		visualizer.invoke(vis, "loadReplayDataFromURI", new Object[] { uri });
+		visualizer.loop();
+	}
+
+	private void startBotInput(String replaySource, BotInputOptions botInput)
+			throws URISyntaxException, InstantiationException,
+			IllegalAccessException, IOException {
+		WebWrapper ww = new WebWrapper(getJavaScriptPath());
+		ww.loadProgram(getProgram());
+		ww.runProgram();
+		URI uri = replayStringToUri(replaySource);
+		XMLHttpRequest xhr = new XMLHttpRequest();
+		xhr.open("GET", uri.toString());
+		try {
+			xhr.send();
+		} catch (IOException e) {
+			System.err.println("Could not load " + replaySource + ": " + e);
+			System.exit(1);
+		}
+		String replayStr = xhr.getResponseText();
+		ScriptableObject replay = ww.construct("Replay",
+				new Object[] { replayStr });
+		ScriptableObject meta = (ScriptableObject) replay.get("meta", replay);
+		NativeArray playernames = (NativeArray) meta.get("playernames", meta);
+		int userIndex = playernames.indexOf(botInput.getPlayer());
+		if (userIndex == -1) {
+			System.err.println(botInput.getPlayer()
+					+ " does not exist in the replay");
+			System.exit(1);
+		} else if (botInput.getMin() < 1
+				|| botInput.getMax() > (Double) replay.get("duration", replay)
+				|| botInput.getMin() > botInput.getMax()) {
+			System.err.println("You requested turns " + botInput.getMin() + "-"
+					+ botInput.getMax() + ", but the range is 1-"
+					+ ((Double) replay.get("duration", replay)).intValue());
+		}
+		String result = (String) ww.invoke(
+				replay,
+				"generateBotInput",
+				new Object[] { userIndex, botInput.getMin() - 1,
+						botInput.getMax() - 1 });
+		System.out.print(result);
+	}
+
+	private URI replayStringToUri(String replay) throws URISyntaxException {
 		URI uri = null;
 		try {
 			uri = new URI(replay);
@@ -185,10 +251,7 @@ public class Main implements IVisualizerUser, WindowListener {
 		if (uri == null || uri.getScheme() == null) {
 			uri = new URI("file", replay, null);
 		}
-		ScriptableObject options = init(video == null);
-		ScriptableObject vis = construct(options, Undefined.instance, video);
-		visualizer.invoke(vis, "loadReplayDataFromURI", new Object[] { uri });
-		visualizer.loop();
+		return uri;
 	}
 
 	public Main() throws IOException, InstantiationException,

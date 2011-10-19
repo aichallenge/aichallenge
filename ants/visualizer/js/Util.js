@@ -67,7 +67,7 @@ Quirks = {
 	/**
 	 * True for browsers that correctly support the HTML canvas shadow effect.
 	 */
-	fullImageShadowSupport : !(window.navigator && window.navigator.userAgent
+	fullImageShadowSupport : !(typeof window !== 'undefined' && window.navigator && window.navigator.userAgent
 			.match(/\b(Firefox\/5\.|Chrome\/1[23]\.).*/))
 };
 

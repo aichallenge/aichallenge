@@ -49,9 +49,7 @@ public class Visualizer extends WebWrapper implements MouseInputListener,
 		Object document = Context.javaToJS(domWindow.getDocument(), global);
 		ScriptableObject.putProperty(global, "document", document);
 		loadProgram(app.getProgram());
-		for (WebWrapper.Script script : scripts) {
-			script.run();
-		}
+		runProgram();
 		drawPanel = new VisualizerPanel(this, width, height);
 		drawPanel.addComponentListener(this);
 		drawPanel.addMouseMotionListener(this);

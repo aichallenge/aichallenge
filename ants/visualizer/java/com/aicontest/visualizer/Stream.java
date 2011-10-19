@@ -41,7 +41,7 @@ public class Stream extends IdScriptableObject {
 	private int id;
 	private boolean initialized;
 
-	public Stream(ScriptableObject vis, Visualizer visualizer,
+	public Stream(ScriptableObject vis, WebWrapper visualizer,
 			InputStream inputStream, String name) {
 		activatePrototypeMap(MAX_ID);
 		ScriptableObject global = visualizer.getGlobal();

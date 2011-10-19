@@ -2,12 +2,21 @@ package com.aicontest.visualizer.js.dom;
 
 import java.applet.Applet;
 import java.awt.Container;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
+
+import javax.swing.JFileChooser;
+
+import netscape.javascript.JSObject;
 
 import org.mozilla.javascript.Function;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 import com.aicontest.visualizer.Visualizer;
+import com.aicontest.visualizer.WebWrapper;
 import com.aicontest.visualizer.js.tasks.DelayedExecutionUnit;
 import com.aicontest.visualizer.js.tasks.TimeoutExecutionUnit;
 
@@ -128,6 +137,36 @@ public class DOMWindow {
 
 	public boolean setFullscreen(boolean enable) {
 		return webWrapper.setFullscreen(enable);
+	}
+
+	public void saveText(String text, String fileNameProposal)
+			throws UnsupportedEncodingException {
+		if (webWrapper.getContainer() instanceof Applet) {
+			System.out.println(text);
+			JSObject jsRoot = webWrapper.getJsRoot();
+			JSObject window = (JSObject) jsRoot.getMember("window");
+			String dataUri = "data:text/plain;charset=utf-8,"
+					+ URLEncoder.encode(text, "UTF-8").replace("+", "%20");
+			Object[] params = new Object[] { dataUri, "_blank" };
+			window.call("open", params);
+		} else {
+			JFileChooser fc = new JFileChooser();
+			fc.setSelectedFile(new File(fileNameProposal));
+			if (fc.showSaveDialog(webWrapper.getContainer()) == JFileChooser.APPROVE_OPTION) {
+				File file = fc.getSelectedFile();
+				FileWriter fileWriter;
+				try {
+					fileWriter = new FileWriter(file);
+					try {
+						fileWriter.write(text);
+					} finally {
+						fileWriter.close();
+					}
+				} catch (Exception e) {
+					WebWrapper.alert("Error while saving: " + e);
+				}
+			}
+		}
 	}
 
 	public LocalStorage getLocalStorage() {

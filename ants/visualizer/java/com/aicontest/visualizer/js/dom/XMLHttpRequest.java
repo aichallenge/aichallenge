@@ -81,7 +81,7 @@ public class XMLHttpRequest {
 		conn.addRequestProperty(header, value);
 	}
 
-	public void send() throws Exception {
+	public void send() throws IOException {
 		InputStream is = conn.getInputStream();
 		if ("x-gzip".equals(conn.getContentEncoding())) {
 			is = new GZIPInputStream(is);

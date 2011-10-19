@@ -695,6 +695,9 @@ Visualizer.prototype.tryStart = function() {
 
 						dlg = new Delegate(this, this.modifySpeed, [ -1 ]);
 						bg.addButton(7, dlg);
+
+						dlg = new Delegate(this, this.generateBotInput);
+						bg.addButton(8, dlg, 'regenerates bot input from this replay');
 					}
 				}
 				// generate fog images
@@ -1467,11 +1470,88 @@ Visualizer.prototype.keyPressed = function(key) {
 		case 'C':
 			this.centerMap();
 			break;
+		case 'I':
+			this.generateBotInput();
+			break;
 		default:
 			return false;
 		}
 	}
 	return true;
+};
+
+/**
+ * This method will ask the user for some input to convert the replay into a bot input string for
+ * debugging.
+ */
+Visualizer.prototype.generateBotInput = function() {
+	var player, user_id, user_index, min, max, current, turns, valid, i;
+	var botInput, dataUri, gameId;
+	try {
+		if (!this.state.replay.hasDuration) return;
+		// pause the replay
+		this.director.stop();
+		// first we need to know the player
+		player = '';
+		user_id = this.state.options['user'];
+		if (user_id) {
+			user_index = this.state.replay.meta['user_ids'].indexOf(user_id, 0);
+			if (user_index !== -1) {
+				player = this.state.replay.meta['playernames'][user_index];
+			}
+		}
+		do {
+			player = prompt('Enter the player name for which you want to generate bot input.',
+					player);
+			valid = true;
+			if (player) {
+				user_index = this.state.replay.meta['playernames'].indexOf(player, 0);
+				valid = user_index !== -1;
+				if (valid) {
+					min = 1;
+					max = this.state.replay.duration;
+					current = 1 + (this.state.time | 0);
+					do {
+						turns = prompt(
+								'Enter a range of turns or a single turn number to be included in the output.\nThe largest valid range for this replay is '
+										+ min + '-' + max + '.', min + '-' + current);
+						valid = true;
+						if (turns) {
+							turns = turns.split('-');
+							valid = turns.length <= 2;
+							for (i = 0; i < turns.length; i++) {
+								valid = valid && /^[0-9]+$/.test(turns[i]);
+								valid = valid && !isNaN(turns[i] = parseInt(turns[i]));
+							}
+							valid = valid && turns[0] >= min;
+							valid = valid && turns[turns.length - 1] <= max;
+							if (valid) {
+								min = turns[0] - 1;
+								max = turns[turns.length - 1] - 1;
+								botInput = this.state.replay.generateBotInput(user_index, min, max);
+								if (window.saveText) {
+									// Java version
+									gameId = this.state.replay.meta['game_id']
+											|| this.state.options['game'] || 0;
+									window.saveText(botInput, gameId + '.bot' + user_index
+											+ '.input');
+								} else {
+									dataUri = 'data:text/plain;charset=utf-8,' + escape(botInput);
+									window.open(dataUri, '_blank');
+								}
+							} else {
+								alert('Invalid input.');
+							}
+						}
+					} while (!valid);
+				} else {
+					alert('Invalid user name.');
+				}
+			}
+		} while (!valid);
+	} catch (e) {
+		alert('Error while generating bot input: ' + e);
+	}
 };
 
 /**
