@@ -16,6 +16,11 @@
 	</natures>
 	<linkedResources>
 		<link>
+			<name>ants</name>
+			<type>2</type>
+			<locationURI>PARENT-2-PROJECT_LOC/ants</locationURI>
+		</link>
+		<link>
 			<name>integration_testing</name>
 			<type>2</type>
 			<locationURI>PARENT-2-PROJECT_LOC/integration_testing</locationURI>
@@ -26,19 +31,9 @@
 			<locationURI>PARENT-2-PROJECT_LOC/manager</locationURI>
 		</link>
 		<link>
-			<name>mapgen</name>
-			<type>2</type>
-			<locationURI>PARENT-2-PROJECT_LOC/ants/mapgen</locationURI>
-		</link>
-		<link>
 			<name>setup</name>
 			<type>2</type>
 			<locationURI>PARENT-2-PROJECT_LOC/setup</locationURI>
-		</link>
-		<link>
-			<name>submission_test</name>
-			<type>2</type>
-			<locationURI>PARENT-2-PROJECT_LOC/ants/submission_test</locationURI>
 		</link>
 		<link>
 			<name>website</name>
