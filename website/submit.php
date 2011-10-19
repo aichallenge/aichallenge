@@ -66,7 +66,7 @@ if($server_info["submissions_open"]) {
         <?php
     }
 } else {
-    echo "<p>Sorry, submissions are now closed. Good luck in the finals.</p>";
+    echo "<p>Sorry, submissions are closed.</p>";
 }
 ?>
 
