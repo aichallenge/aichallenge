@@ -19,6 +19,7 @@ class Ants
     public $attackradius2 = 0;
     public $spawnradius2 = 0;
     public $map;
+    public $vision = false;
     public $myAnts = array();
     public $enemyAnts = array();
     public $myHills = array();
@@ -151,6 +152,40 @@ class Ants
         }
     }
 
+    /**
+     * Determine if row/col location is visible to the bot
+     * Not sure if this is correct implementation, need somebody to recheck
+     *
+     * @param integer $row
+     * @param integer $col
+     */
+    public function visible($row, $col)
+    {
+        if (!$this->vision) {
+            for ($i = 0; $i < $this->rows; $i++) {
+                for ($k = 0; $k < $this->cols; $k++) {
+                    $this->vision[$i][$k] = false;
+                }
+            }
+
+            $max = floor(sqrt($this->viewradius2)/2);
+            $range = range(-$max, $max);
+            foreach ($this->myAnts as $ant) {
+                list ($aRow, $aCol) = $ant;
+
+                foreach ($range as $rRow) {
+                    foreach ($range as $rCol) {
+                        $vRow = $this->getAbsVal($aRow + $rRow, $this->rows);
+                        $vCol = $this->getAbsVal($aCol + $rCol, $this->cols);
+
+                        $this->vision[$vRow][$vCol] = true;
+                    }
+                }
+            }
+        }
+
+        return $this->vision[$row][$col];
+    }    
 
     public function passable($row, $col)
     {
@@ -222,6 +257,19 @@ class Ants
 
     }
 
+    protected function getAbsVal($val, $max)
+    {
+        if ($val < 0) {
+            return $val + $max;
+        }
+
+        if ($val > $max) {
+            return $val - $max;
+        }
+
+        return $val;
+    }
+    
 
     public static function run($bot)
     {
