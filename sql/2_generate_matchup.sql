@@ -149,9 +149,25 @@ if @min_players <= @max_players then
     );
     insert into tmp_games
         select user_id, sum(game_count) as game_count
-        from tmp_opponent
-        group by user_id;
-    
+        from (
+	        select gp.user_id, count(*) as game_count
+	        from game g
+	        inner join game_player gp
+	            on gp.game_id = g.game_id
+	        where g.timestamp > timestampadd(hour, -24, current_timestamp)
+	        group by gp.user_id
+	        union
+            select mp.user_id, count(*) as game_count
+            from matchup m
+            inner join matchup_player mp
+                on mp.matchup_id = m.matchup_id
+            where m.matchup_timestamp > timestampadd(hour, -24, current_timestamp)
+            and (m.worker_id >= 0 or m.worker_id is null)
+            and m.deleted = 0
+            group by mp.user_id
+        ) g
+        group by 1;
+        
     -- used to undo a matchup
     set @abort = 0;
     set @abort_reason = '';
