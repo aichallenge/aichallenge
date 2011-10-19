@@ -221,6 +221,8 @@ if @min_players <= @max_players then
         ) g
         group by 1;
      
+    select @avg_game_count := avg(game_count) * 1.618 from tmp_games;
+
     while @player_count < @players do
 
             set @pareto = (10 / pow(rand(), 0.7));
@@ -228,7 +230,7 @@ if @min_players <= @max_players then
             -- select list of opponents with match quality
             select s.user_id, s.submission_id, s.mu, s.sigma,
             sub.rank,
-            o.game_count, r.game_count, s.match_quality, @pareto
+            o.game_count as opponent_count, s.game_count, s.match_quality, @pareto
             from (
                 select @seq := @seq + 1 as seq, s.*
                 from (
@@ -238,16 +240,22 @@ if @min_players <= @max_players then
                         ,@match_quality := exp(sum(ln(
                             sqrt(@twiceBetaSq / (@twiceBetaSq + pow(p.sigma,2) + pow(s.sigma,2))) *
                             exp(-(pow(p.mu - s.mu, 2) / (2 * (@twiceBetaSq + pow(p.sigma,2) + pow(s.sigma,2)))))
-                        ))) as match_quality
+                        ))) as match_quality,
+                        t.game_count
                     from
                     submission p, -- current players in match
                     submission s  -- possible next players
+                    -- get game count for last 24 hours
+		    inner join tmp_games t
+                        on t.user_id = s.user_id
                     -- join with all players in current matchup to average match quality
                     where p.submission_id in (
                         select submission_id
                         from tmp_matchup_player
                         where matchup_id = @matchup_id
                     )
+                    -- exclude players with high 24 hour game count
+                    and t.game_count < @avg_game_count
                     -- exclude players currently in the matchup
                     and not exists (
                         select *
@@ -256,20 +264,13 @@ if @min_players <= @max_players then
                         and mp.user_id = s.user_id
                     )
                     and s.latest = 1 and s.status = 40
-                    group by s.user_id, s.submission_id, s.mu, s.sigma
+                    group by s.user_id, s.submission_id, s.mu, s.sigma, t.game_count
                     order by 5 desc
                 ) s,
                 (select @seq := 0) seq
             ) s
             inner join submission sub
                 on sub.submission_id = s.submission_id
-            -- join to get total game count for last 24 hours
-            left outer join (
-                select user_id, game_count
-                from tmp_games
-                group by user_id
-            ) r
-                on r.user_id = s.user_id
             -- join in user to user game counts to provide round-robin like logic
             left outer join (
                 select opponent_id, sum(game_count) as game_count
@@ -290,7 +291,7 @@ if @min_players <= @max_players then
             -- rank difference selected will also follow a pareto distribution 
             where s.seq < @pareto
             order by o.game_count,
-                r.game_count,
+                s.game_count,
                 s.match_quality desc;
             
             -- select list of opponents with match quality
