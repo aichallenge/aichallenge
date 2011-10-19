@@ -14,7 +14,7 @@ $page_render_start_time = microtime(true);
         <link rel="shortcut icon" href="favicon.ico" />
  
         <!-- CSS --> 
-        <link href="ai-contest.css" rel="stylesheet" type="text/css" />
+        <link href="aichallenge.css" rel="stylesheet" type="text/css" />
 
         <!-- JavaScript -->
         <script src="//ajax.googleapis.com/ajax/libs/jquery/1.6.2/jquery.min.js"></script>

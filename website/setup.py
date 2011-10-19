@@ -27,7 +27,7 @@ def replaceMarkdown():
             
 def concatCSS():
     css_order = ['font.css', 'reset.css', 'layout.css'] # these files go first
-    with open('ai-contest.css', 'w') as f:
+    with open('aichallenge.css', 'w') as f:
         css_files = css_order + list(set(os.listdir('css')) - set(css_order))
         for filename in css_files:
             print "Concatenating `%s` to the main css." % (filename)

@@ -194,7 +194,7 @@ if (count($errors) <= 0) {
                                   "account_confirmation.php",
                                   $activation_url);
     if (strlen($activation_url) < 5) {
-      $activation_url = "http://www.ai-contest.com/account_confirmation.php";
+      $activation_url = "http://aichallenge.org/account_confirmation.php";
     }
     $mail_content = "Welcome to the contest! Click the link below in order " .
       "to activate your account.\n\n" .
