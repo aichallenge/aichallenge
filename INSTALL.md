@@ -11,3 +11,11 @@
 
     * Leave blank for root mysql password (TODO: Fix this) if there's no mysql installed (change it later after install).
     * Website hostname option is used by the apache host setup, do not include port in there.
+
+### Worker
+* Install Ubuntu 11.04
+* Install git and a few of your favorite admin tools
+* Get a root prompt
+* Run `curl http://example.com/api_server_setup.php?api_create_key=yourkey|sh`
+* Worker takes about 25 minutes to install
+* Worker starts processing games when done
