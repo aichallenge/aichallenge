@@ -81,7 +81,7 @@ class Ants
             }
         }
 
-        $max = floor(sqrt($this->viewradius2)/2);
+        $max = floor(sqrt($this->viewradius2));
         for ($row = -$max; $row <= $max; $row++) {
             for ($col = -$max; $col <= $max; $col++) {
                 $this->viewOffsets2[] = array($row, $col);
@@ -268,7 +268,7 @@ class Ants
             return $val + $max;
         }
 
-        if ($val > $max) {
+        if ($val >= $max) {
             return $val - $max;
         }
 
