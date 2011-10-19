@@ -18,6 +18,8 @@ class Ants
     public $viewradius2 = 0;
     public $attackradius2 = 0;
     public $spawnradius2 = 0;
+    public $viewOffsets2 = array();
+
     public $map;
     public $vision = false;
     public $myAnts = array();
@@ -61,7 +63,7 @@ class Ants
         echo("go\n");
         flush();
     }
-    
+
     public function setup($data)
     {
         foreach ( $data as $line) {
@@ -76,6 +78,13 @@ class Ants
         for ( $row=0; $row < $this->rows; $row++) {
             for ( $col=0; $col < $this->cols; $col++) {
                 $this->map[$row][$col] = LAND;
+            }
+        }
+
+        $max = floor(sqrt($this->viewradius2)/2);
+        for ($row = -$max; $row <= $max; $row++) {
+            for ($col = -$max; $col <= $max; $col++) {
+                $this->viewOffsets2[] = array($row, $col);
             }
         }
     }
@@ -109,7 +118,7 @@ class Ants
             $this->map[$row][$col] = LAND;
         }
         $this->food = array();
-        
+
         $this->myHills = array();
         $this->enemyHills = array();
 
@@ -154,7 +163,6 @@ class Ants
 
     /**
      * Determine if row/col location is visible to the bot
-     * Not sure if this is correct implementation, need somebody to recheck
      *
      * @param integer $row
      * @param integer $col
@@ -168,24 +176,21 @@ class Ants
                 }
             }
 
-            $max = floor(sqrt($this->viewradius2)/2);
-            $range = range(-$max, $max);
             foreach ($this->myAnts as $ant) {
                 list ($aRow, $aCol) = $ant;
 
-                foreach ($range as $rRow) {
-                    foreach ($range as $rCol) {
-                        $vRow = $this->getAbsVal($aRow + $rRow, $this->rows);
-                        $vCol = $this->getAbsVal($aCol + $rCol, $this->cols);
+                foreach ($this->viewOffsets2 as $offset) {
+                    list ($oRow, $oCol) = $offset;
+                    $vRow = $this->getAbsVal($aRow + $oRow, $this->rows);
+                    $vCol = $this->getAbsVal($aCol + $oCol, $this->cols);
 
-                        $this->vision[$vRow][$vCol] = true;
-                    }
+                    $this->vision[$vRow][$vCol] = true;
                 }
             }
         }
 
         return $this->vision[$row][$col];
-    }    
+    }
 
     public function passable($row, $col)
     {
@@ -269,7 +274,7 @@ class Ants
 
         return $val;
     }
-    
+
 
     public static function run($bot)
     {
