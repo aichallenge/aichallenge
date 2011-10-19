@@ -23,7 +23,6 @@
     <ul>
       <li class="highlight"><a href="quickstart.php">Five Minute Quickstart Guide</a></li>
       <li><a href="rules.php">Contest Rules</a></li>
-      <li><a href="starting_your_own.php">Starting Your Own</a></li>
       <li><a href="using_the_tools.php">Using the Tools</a></li>
       <li><a href="ants_tutorial.php">Climbing the Rankings</a></li>
     </ul>
