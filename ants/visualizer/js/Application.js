@@ -1019,8 +1019,8 @@ Visualizer.prototype.setFullscreen = function(enable) {
 Visualizer.prototype.setZoom = function(zoom) {
 	var oldScale = this.state.scale;
 	var effectiveZoom = Math.max(1, zoom);
-	this.state.config['zoom'] = effectiveZoom;
 	if (this.director.fixedFpt === undefined) {
+		this.state.config['zoom'] = effectiveZoom;
 		this.state.scale = Math.max(1, Math.min((this.shiftedMap.w - 20) / this.state.replay.cols,
 				(this.shiftedMap.h - 20) / this.state.replay.rows)) | 0;
 		this.state.scale = Math.min(ZOOM_SCALE, this.state.scale * effectiveZoom);
@@ -1431,50 +1431,60 @@ Visualizer.prototype.mouseExited = function() {
  */
 Visualizer.prototype.keyPressed = function(key) {
 	var d = this.director;
-	switch (key) {
-	case Key.SPACE:
-		d.playStop();
-		break;
-	case Key.LEFT:
-		d.gotoTick(Math.ceil(this.state.time) - 1);
-		break;
-	case Key.RIGHT:
-		d.gotoTick(Math.floor(this.state.time) + 1);
-		break;
-	case Key.PGUP:
-		d.gotoTick(Math.ceil(this.state.time) - 10);
-		break;
-	case Key.PGDOWN:
-		d.gotoTick(Math.floor(this.state.time) + 10);
-		break;
-	case Key.HOME:
-		d.gotoTick(0);
-		break;
-	case Key.END:
-		d.gotoTick(d.duration);
-		break;
-	case Key.PLUS:
-	case Key.PLUS_OPERA:
-	case Key.PLUS_JAVA:
-		this.modifySpeed(+1);
-		break;
-	case Key.MINUS:
-	case Key.MINUS_JAVA:
-		this.modifySpeed(-1);
-		break;
-	default:
-		switch (String.fromCharCode(key)) {
-		case 'F':
-			this.setFullscreen(!this.state.config['fullscreen']);
+	var tryOthers = true;
+	if (this.state.options['embedded']) {
+		tryOthers = false;
+		switch (key) {
+		case Key.PGUP:
+			d.gotoTick(Math.ceil(this.state.time) - 10);
 			break;
-		case 'C':
-			this.centerMap();
+		case Key.PGDOWN:
+			d.gotoTick(Math.floor(this.state.time) + 10);
 			break;
-		case 'I':
-			this.generateBotInput();
+		case Key.HOME:
+			d.gotoTick(0);
+			break;
+		case Key.END:
+			d.gotoTick(d.duration);
 			break;
 		default:
-			return false;
+			tryOthers = true;
+		}
+	}
+	if (tryOthers) {
+		switch (key) {
+		case Key.SPACE:
+			d.playStop();
+			break;
+		case Key.LEFT:
+			d.gotoTick(Math.ceil(this.state.time) - 1);
+			break;
+		case Key.RIGHT:
+			d.gotoTick(Math.floor(this.state.time) + 1);
+			break;
+		case Key.PLUS:
+		case Key.PLUS_OPERA:
+		case Key.PLUS_JAVA:
+			this.modifySpeed(+1);
+			break;
+		case Key.MINUS:
+		case Key.MINUS_JAVA:
+			this.modifySpeed(-1);
+			break;
+		default:
+			switch (String.fromCharCode(key)) {
+			case 'F':
+				this.setFullscreen(!this.state.config['fullscreen']);
+				break;
+			case 'C':
+				this.centerMap();
+				break;
+			case 'I':
+				this.generateBotInput();
+				break;
+			default:
+				return false;
+			}
 		}
 	}
 	return true;
