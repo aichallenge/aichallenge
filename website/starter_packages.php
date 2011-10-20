@@ -14,6 +14,8 @@
   <a href="quickstart.php">Five Minute Quickstart Guide</a> to learn how to
   get your name up on the global leaderboard in less than five minutes.</p>
 
+<p><strong>Note: The tools come with the game engine written in python.  You will need to install a python interpreter to run the game engine regardless of which language you are programming in.</strong></p>
+
 <table border="1">
   <tr>
     <th>language</th>
