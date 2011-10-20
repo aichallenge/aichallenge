@@ -1157,7 +1157,7 @@ Visualizer.prototype.resize = function(forced) {
 				bg = this.btnMgr.groups['fog'];
 				bg.h = newSize.h - this.shiftedMap.y - 8;
 				bg = this.btnMgr.groups['playback'];
-				bg.w = newSize.w - 2 * 48;
+				bg.w = this.shiftedMap.x + this.shiftedMap.w - bg.x;
 			}
 			bg = this.btnMgr.groups['toolbar'];
 			bg.h = newSize.h - this.shiftedMap.y - 8;
@@ -1432,7 +1432,7 @@ Visualizer.prototype.mouseExited = function() {
 Visualizer.prototype.keyPressed = function(key) {
 	var d = this.director;
 	var tryOthers = true;
-	if (this.state.options['embedded']) {
+	if (!this.state.options['embedded']) {
 		tryOthers = false;
 		switch (key) {
 		case Key.PGUP:
