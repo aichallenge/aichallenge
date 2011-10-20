@@ -23,7 +23,9 @@ CREATE TABLE `game` (
   PRIMARY KEY (`game_id`),
   KEY `game_map_id_idx` (`map_id`,`game_id`),
   KEY `game_seed_map_idx` (`seed_id`,`map_id`,`game_id`),
-  KEY `game_timestamp_idx` (`worker_id`, `timestamp`)
+  KEY `game_worker_timestamp_idx` (`worker_id`, `timestamp`),
+  KEY `game_timestamp_idx` (`timestamp`),
+  KEY `game_map_id_timestamp_idx` (`map_id`, `timestamp`)
 );
 
 DROP TABLE IF EXISTS `game_player`;
@@ -46,8 +48,7 @@ CREATE TABLE `game_player` (
   PRIMARY KEY (`game_id`,`user_id`),
   UNIQUE KEY `game_player_idx` (`game_id`,`submission_id`),
   KEY `game_player_user_id_idx` (`user_id`, `game_id`),
-  KEY `game_player_submission_id_idx` (`submission_id`, `game_id`),
-  KEY `game_player_game_id_idx` (`game_id`, `user_id`, `player_id`)
+  KEY `game_player_submission_id_idx` (`submission_id`, `game_id`)
 );
 
 DROP TABLE IF EXISTS `language`;
@@ -161,7 +162,8 @@ CREATE TABLE `submission` (
   KEY `submission_id` (`submission_id`,`user_id`),
   KEY `user_id` (`user_id`,`submission_id`),
   KEY `latest` (`latest`,`user_id`),
-  KEY `mu_idx` (`mu`)
+  KEY `mu_idx` (`mu`),
+  KEY `submission_timestamp_idx` (`timestamp`)
 );
 
 DROP TABLE IF EXISTS `user`;
@@ -181,7 +183,8 @@ CREATE TABLE `user` (
   `shutdown_date` datetime DEFAULT NULL,
   PRIMARY KEY (`user_id`),
   UNIQUE KEY (`username`),
-  KEY `user_id` (`user_id`,`username`)
+  KEY `user_id` (`user_id`,`username`),
+  KEY `user_created_idx` (`created`)
 );
 
 DROP TABLE IF EXISTS `user_status_code`;
