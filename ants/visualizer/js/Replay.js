@@ -529,6 +529,12 @@ Replay.prototype.addMissingMetaData = function(swapIndex) {
 	if (!(this.meta['playerturns'] instanceof Array)) {
 		this.meta['playerturns'] = new Array(this.players);
 	}
+	// setup player colors
+	var cl;
+	var COLOR_MAP = COLOR_MAPS[this.players];
+	if (this.meta['challenge_rank']) {
+        cl = this.meta['challenge_rank'].slice().sort(function (a, b) { return a - b; });
+	}
 	for (i = 0; i < this.players; i++) {
 		if (!this.meta['playernames'][i]) {
 			this.meta['playernames'][i] = 'player ' + (i + 1);
@@ -537,6 +543,20 @@ Replay.prototype.addMissingMetaData = function(swapIndex) {
 			this.meta['playerturns'][i] = this.meta['replaydata']['scores'][i].length - 1;
 		}
 		if (!(this.meta['playercolors'][i] instanceof Array)) {
+            var color;
+            if (cl) {
+                var ci = cl.indexOf(this.meta['challenge_rank'][i]);
+                color = PLAYER_COLORS[COLOR_MAP[ci]];
+                cl[ci] = null;
+                
+            } else {
+                color = PLAYER_COLORS[COLOR_MAP[i]];
+            }
+            if (swapIndex !== undefined && i == swapIndex) {
+                color = PLAYER_COLORS[COLORS_MAPS[1][0]];
+            }
+            this.meta['playercolors'][i] = color = hsl_to_rgb(color);;
+            /*
 			if (swapIndex !== undefined && i == 0) {
 				this.meta['playercolors'][i] = PLAYER_COLORS[swapIndex];
 			} else if (swapIndex !== undefined && i == swapIndex) {
@@ -544,6 +564,7 @@ Replay.prototype.addMissingMetaData = function(swapIndex) {
 			} else {
 				this.meta['playercolors'][i] = PLAYER_COLORS[i];
 			}
+			*/
 		}
 	}
 	this.htmlPlayerColors = new Array(this.players);

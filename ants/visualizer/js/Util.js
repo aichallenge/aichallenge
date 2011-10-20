@@ -323,3 +323,42 @@ Delegate.prototype.invoke = function(args) {
 		this.func.apply(this.obj, this.args);
 	}
 };
+
+/**
+ * Converts a hsl color value to rgb.
+ *
+ * @param {Color} a list of 3 values representing hue, saturation and luminosity
+ * @returns {Color} a list of 3 values representing red, green and blue
+ */
+function hsl_to_rgb (C) {
+    var h = C[0];
+    var s = C[1]/100;
+    var l = C[2]/100;
+    var c = (1 - Math.abs(2 * l - 1)) * s;
+    var h2 = h / 60;
+    var x = c * (1 - Math.abs(h2 % 2 - 1));
+    var r, g, b;
+    switch (Math.floor(h2)) {
+    case 0: r = c; g = x; b = 0; break;
+    case 1: r = x; g = c; b = 0; break;
+    case 2: r = 0; g = c; b = x; break;
+    case 3: r = 0; g = x; b = c; break;
+    case 4: r = x; g = 0; b = c; break;
+    case 5: r = c; g = 0; b = x; break;
+    default: r = 0; g = 0; b = 0; break;
+    }
+    var m = l - 0.5 * c;
+    return [ Math.floor(0.999 + 255 * (r + m)),
+             Math.floor(0.999 + 255 * (g + m)),
+             Math.floor(0.999 + 255 * (b + m)) ]    
+};
+
+/**
+ * Converts a rgb color value to hexidecimal.
+ *
+ * @param {Color} a list of 3 values representing red, green and blue
+ * @returns {Color} the hexidecimal representation of a color
+ */
+function rgb_to_hex (C) {
+    return '#' + INT_TO_HEX[C[0]] + INT_TO_HEX[C[1]] + INT_TO_HEX[C[2]];
+};

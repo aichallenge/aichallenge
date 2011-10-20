@@ -3,17 +3,24 @@
   <head>
     <title></title>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+	<script type="text/javascript" src="js/Util.js"></script>
 	<script type="text/javascript" src="js/Const.js"></script>
 	<script type="text/javascript" >
+// Convert player colors from hsl to rgb
+for (i = 0, len = PLAYER_COLORS.length; i < len; ++i) {
+    PLAYER_COLORS[i] = hsl_to_rgb(PLAYER_COLORS[i]);
+}
+
 var cur = 0;
+var color_count = 10;
 
 function prev() {
-	cur = (cur + 25) % 26;
+	cur = (cur + color_count - 1) % color_count;
 	redraw();
 }
 
 function next() {
-	cur = (cur + 1) % 26;
+	cur = (cur + 1) % color_count;
 	redraw();
 }
 
@@ -30,7 +37,7 @@ function pad(num) {
 
 function redraw() {
 	var ctx = document.getElementById('canvas').getContext('2d');
-	ctx.fillStyle = '#073992';
+	ctx.fillStyle = rgb_to_hex(hsl_to_rgb([218, 91, 30]));
 	ctx.fillRect(0,  0,1080,40);
 	ctx.fillStyle = SAND_COLOR;
 	ctx.fillRect(0, 40,1080,40);
@@ -40,7 +47,7 @@ function redraw() {
 	ctx.fillRect(0,120,1080,40);
 	var out = document.getElementById('output');
 	out.innerHTML = 'var PLAYER_COLORS = [';
-	for (var i = 0; i < 26; i++) {
+	for (var i = 0; i < color_count; i++) {
 		if (i) out.innerHTML += ',';
 		out.innerHTML += (i % 4 === 0) ? '\n\t' : ' ';
 		out.innerHTML += '[ ' + pad(PLAYER_COLORS[i][0]) + ', ' + pad(PLAYER_COLORS[i][1]) + ', ' + pad(PLAYER_COLORS[i][2]) + ' ]';
