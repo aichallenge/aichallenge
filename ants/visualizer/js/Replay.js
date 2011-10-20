@@ -1100,10 +1100,9 @@ Replay.prototype.generateBotInput = function(player, min, max) {
 	var entityAppend = function(type, entityList) {
 		var k, entity;
 		entityList.sort(function(a, b) {
-			var pos = 0;
-			while (a[pos] == b[pos])
-				pos++;
-			return a[pos] - b[pos];
+			if (a[0] !== b[0]) return a[0] - b[0];
+			if (a[1] !== b[1]) return a[1] - b[1];
+			return a[2] - b[2];
 		});
 		for (k = 0; k < entityList.length; k++) {
 			entity = entityList[k];
