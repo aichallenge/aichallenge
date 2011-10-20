@@ -892,16 +892,17 @@ Visualizer.prototype.addPlayerButtons = function() {
 	var bg = this.btnMgr.addTextGroup('players', ButtonGroup.MODE_NORMAL, 2);
 	var vis = this;
 	var dlg = undefined;
-	var gameId = this.state.replay.meta['game_id'] || this.state.options['game'];
-	if (gameId !== undefined) {
+	var gameId = this.state.replay.meta['game_id'];
+	if (gameId === undefined) this.state.options['game'];
+	if (gameId === undefined) {
+		bg.addButton('Players:', '#000', undefined);
+	} else {
 		if (this.state.replay.meta['game_url']) {
 			dlg = new Delegate(this, function() {
 				window.location.href = this.state.replay.meta['game_url'].replace('~', gameId);
 			});
 		}
 		bg.addButton('Game #' + gameId + ':', '#000', dlg);
-	} else {
-		bg.addButton('Players:', '#000', undefined);
 	}
 	var buttonAdder = function(idx) {
 		var color = vis.state.replay.htmlPlayerColors[idx];
