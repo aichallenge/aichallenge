@@ -24,7 +24,7 @@ struct Square
         isVisible = 0;
         isHill = 0;
         isFood = 0;
-        ant = hillPlayer -1;
+        ant = hillPlayer = -1;
         deadAnts.clear();
     };
 };
