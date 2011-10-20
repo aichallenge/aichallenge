@@ -54,11 +54,11 @@ COLOR_MAPS = [[],
  * 
  * @const
  */
-PLAYER_COLORS = [ [ 350, 58, 50 ], [ 20, 63, 55 ],
-                  [ 45, 67, 60 ], [ 60, 71, 65 ],
-	              [ 110, 45, 45 ], [ 155, 50, 60 ],
-	              [ 200, 65, 50 ], [ 250, 40, 65 ],
-		          [ 300, 45, 55 ], [ 325, 4, 75 ],
+PLAYER_COLORS = [ [ 350, 80, 45 ], [ 20, 80, 55 ],
+                  [ 45, 80, 50 ], [ 60, 80, 70 ],
+	              [ 110, 80, 55 ], [ 155, 80, 70 ],
+	              [ 210, 80, 55 ], [ 250, 80, 65 ],
+		          [ 300, 80, 60 ], [ 325, 10, 70 ],
 		          
 		          [ 120, 95, 99 ] ];
 
@@ -67,13 +67,13 @@ PLAYER_COLORS = [ [ 350, 58, 50 ], [ 20, 63, 55 ],
  * 
  * @const
  */
-FOOD_COLOR = hsl_to_rgb([ 30, 25, 40 ]);
+FOOD_COLOR = hsl_to_rgb([ 30, 20, 30 ]);
 /**
  * color of land squares
  * 
  * @const
  */
-SAND_COLOR = rgb_to_hex(hsl_to_rgb([ 30, 25, 30 ]));
+SAND_COLOR = rgb_to_hex(hsl_to_rgb([ 30, 20, 12 ]));
 /**
  * maximum pixel size of map squares
  * 
