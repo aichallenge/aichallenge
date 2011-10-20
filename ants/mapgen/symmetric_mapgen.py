@@ -2,6 +2,7 @@
 
 import math
 import random
+import sys
 
 #functions
 def gcd(a, b):
@@ -21,14 +22,14 @@ class SymmetricMap():
     directions = {'N': (-1,0), 'S': (1,0), 'E': (0,1), 'W': (0,-1)}
 
     #game parameters
-    min_players = 4
+    min_players = 2
     max_players = 10
-    min_dim = 70
-    max_dim = 120
+    per_player_dim = (10, 50)
+    dim_bounds = (50, 150)
     min_start_distance = 30
 
-    min_land_proportion = 0.6
-    max_land_proportion = 0.9
+    min_land_proportion = 0.60
+    max_land_proportion = 0.98
 
     no_extra_walks = 30
 
@@ -63,21 +64,33 @@ class SymmetricMap():
     def pick_dimensions(self):
         while True:
             while True:
-                self.rows = random.randint(self.min_dim, self.max_dim)
-                self.cols = random.randint(self.min_dim, self.max_dim)
+                no_players = random.randint(self.min_players, self.max_players)
+                self.no_players = no_players
 
-                self.row_t = random.randint(3, self.rows-3)
-                self.col_t = random.randint(3, self.cols-3)
+                min_dim = max(self.per_player_dim[0] * no_players,
+                        self.dim_bounds[0])
+                max_dim = min(self.per_player_dim[1] * no_players,
+                        self.dim_bounds[1])
+                self.rows = random.randint(min_dim, max_dim)
+                # make maps generally wider than they are tall
+                min_cols = max(min_dim, int(self.rows * 0.80))
+                max_cols = min(max_dim, int(self.rows * 2))
+                self.cols = random.randint(min_cols, max_cols)
 
-                #makes sure no two players start in the same row or column
-                if self.rows/gcd(self.row_t, self.rows) == self.cols/gcd(self.col_t, self.cols):
+                if self.rows % no_players == 0 and self.cols % no_players == 0:
                     break
 
-            self.no_players = lcm(self.rows/gcd(self.row_t, self.rows),
-                                  self.cols/gcd(self.col_t, self.cols) )
+            row_p = random.randint(1, no_players-1)
+            while gcd(row_p, no_players) != 1:
+                row_p = random.randint(1, no_players-1)
+            self.row_t = (self.rows / no_players) * row_p
 
-            #forces a valid number of players all starting at a valid distance
-            if self.no_players >= self.min_players and self.no_players <= self.max_players and self.is_valid_start():
+            col_p = random.randint(1, no_players-1)
+            while gcd(col_p, no_players) != 1:
+                col_p = random.randint(1, no_players-1)
+            self.col_t = (self.cols / no_players) * col_p
+
+            if self.is_valid_start():
                 break
 
     #returns the distance between two squares
@@ -108,6 +121,13 @@ class SymmetricMap():
     def get_loc(self, loc, direction):
         dr, dc = self.directions[direction]
         return [(loc[0]+dr)%self.rows, (loc[1]+dc)%self.cols ]
+
+    #return the neighbors of the given location
+    def get_neighbors(self, loc):
+        n = []
+        for d in self.directions.values():
+            n.append(((loc[0]+d[0])%self.rows, (loc[1]+d[1])%self.cols))
+        return n
 
     #returns the new location after translating it by (rtranslate, ctranslate)
     def get_translate_loc(self, loc):
@@ -173,6 +193,21 @@ class SymmetricMap():
                 if self.map_data[c_loc[0]][c_loc[1]] == '%':
                     self.land_squares += self.no_players
                     self.fill_squares(c_loc, '.')
+
+                    #fill in isolated water
+                    wchecks = [s for s in self.get_neighbors(c_loc)
+                            if self.map_data[s[0]][s[1]] == '%']
+                    for check_sq in wchecks:
+                        is_puddle = True
+                        for cn in self.get_neighbors(check_sq):
+                            if self.map_data[cn[0]][cn[1]] == '%':
+                                is_puddle = False
+                                break
+                        if is_puddle:
+                            self.land_squares += self.no_players
+                            self.fill_squares(check_sq, '.')
+
+        print >>sys.stderr, "Land per:", self.land_squares / float(self.rows * self.cols)
 
 if __name__ == '__main__':
     example_map = SymmetricMap()
