@@ -893,7 +893,9 @@ Visualizer.prototype.addPlayerButtons = function() {
 	var vis = this;
 	var dlg = undefined;
 	var gameId = this.state.replay.meta['game_id'];
-	if (gameId === undefined) gameId = this.state.options['game'];
+	if (gameId === undefined && this.state.options['game']) {
+		gameId = this.state.options['game'];
+	}
 	if (gameId === undefined) {
 		bg.addButton('Players:', '#000', undefined);
 	} else {
