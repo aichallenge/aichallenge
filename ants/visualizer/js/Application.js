@@ -1134,13 +1134,12 @@ Visualizer.prototype.resize = function(forced) {
 				this.shiftedMap.y = y;
 				this.shiftedMap.setSize(newSize.w - LEFT_PANEL_W - RIGHT_PANEL_W, newSize.h - y
 						- BOTTOM_PANEL_H);
+				// playback buttons are center, unless they would exceed the right border of the map
 				var bg = this.btnMgr.groups['playback'];
 				w = 8 * 64;
-				if (w <= newSize.w) {
-					bg.x = ((newSize.w - w) / 2) | 0;
-				} else {
-					bg.x = 0;
-				}
+				bg.x = ((newSize.w - w) / 2) | 0;
+				bg.x = Math.min(bg.x, this.shiftedMap.x + this.shiftedMap.w - w);
+				bg.x = Math.max(bg.x, 0);
 				bg.y = this.shiftedMap.y + this.shiftedMap.h;
 				bg = this.btnMgr.groups['fog'];
 				bg.y = this.shiftedMap.y + 8;
