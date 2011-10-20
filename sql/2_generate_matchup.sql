@@ -168,7 +168,9 @@ if @min_players <= @max_players then
         ) g
         group by 1;
 
-    select @avg_game_count := avg(game_count) * 1.618 from tmp_games;
+    select avg(game_count) * 1.618
+    into @avg_game_count
+    from tmp_games;
         
     -- used to undo a matchup
     set @abort = 0;
