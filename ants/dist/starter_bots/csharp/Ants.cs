@@ -23,10 +23,10 @@ namespace Ants {
 		private const string END = "end";
 		
 		private GameState state;
-		
-		
-		public void playGame(Bot bot) {
-			
+
+
+		public void PlayGame(Bot bot) {
+
 			List<string> input = new List<string>();
 			
 			try {
@@ -34,14 +34,14 @@ namespace Ants {
 					string line = System.Console.In.ReadLine().Trim().ToLower();
 					
 					if (line.Equals(READY)) {
-						parseSetup(input);
-						finishTurn();
+						ParseSetup(input);
+						FinishTurn();
 						input.Clear();
 					} else if (line.Equals(GO)) {
-						state.startNewTurn();
-						parseUpdate(input);
-						bot.doTurn(state);
-						finishTurn();
+						state.StartNewTurn();
+						ParseUpdate(input);
+						bot.DoTurn(state);
+						FinishTurn();
 						input.Clear();
 					} else if (line.Equals(END)) {
 						break;	
@@ -62,7 +62,7 @@ namespace Ants {
 		}
 		
 		// parse initial input and setup starting game state
-		private void parseSetup(List<string> input) {
+		private void ParseSetup(List<string> input) {
 			int width = 0, height = 0;
 			int turntime = 0, loadtime = 0;
 			int viewradius2 = 0, attackradius2 = 0, spawnradius2 = 0;
@@ -98,7 +98,7 @@ namespace Ants {
 		}
 		
 		// parse engine input and update the game state
-		private void parseUpdate(List<string> input) {
+		private void ParseUpdate(List<string> input) {
 			// do some stuff first
 			
 			foreach (string line in input) {
@@ -111,21 +111,21 @@ namespace Ants {
 					int col = int.Parse(tokens[2]);
 					
 					if (tokens[0].Equals("a")) {
-						state.addAnt(row, col, int.Parse(tokens[3]));
+						state.AddAnt(row, col, int.Parse(tokens[3]));
 					} else if (tokens[0].Equals("f")) {
-						state.addFood(row, col);
+						state.AddFood(row, col);
 					} else if (tokens[0].Equals("r")) {
-						state.removeFood(row, col);
+						state.RemoveFood(row, col);
 					} else if (tokens[0].Equals("w")) {
-						state.addWater(row, col);
+						state.AddWater(row, col);
 					} else if (tokens[0].Equals("d")) {
-						state.deadAnt(row, col);
+						state.DeadAnt(row, col);
 					}
 				}
 			}
 		}
-		
-		private void finishTurn () {
+
+		private void FinishTurn () {
 			System.Console.Out.WriteLine(GO);
 		}
 		

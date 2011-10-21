@@ -2,34 +2,44 @@ using System;
 using System.Collections.Generic;
 
 namespace Ants {
-	
+
 	public class Location {
-		
-		public int row { get; private set; }
-		public int col { get; private set; }
-		
+		/// <summary>
+		/// Gets the row of this location.
+		/// </summary>
+		public int Row { get; private set; }
+
+		/// <summary>
+		/// Gets the column of this location.
+		/// </summary>
+		public int Col { get; private set; }
+
 		public Location (int row, int col) {
-			this.row = row;
-			this.col = col;
+			this.Row = row;
+			this.Col = col;
 		}
 		
 	}
 	
 	public class AntLoc : Location {
-		public int team { get; private set; }
-		
+
+		/// <summary>
+		/// Gets the team of this ant.
+		/// </summary>
+		public int Team { get; private set; }
+
 		public AntLoc (int row, int col, int team) : base (row, col) {
-			this.team = team;
+			this.Team = team;
 		}
 	}
 	
 	public class LocationComparer : IEqualityComparer<Location> {
 		public bool Equals(Location loc1, Location loc2) {
-			return (loc1.row == loc2.row && loc1.col == loc2.col);
+			return (loc1.Row == loc2.Row && loc1.Col == loc2.Col);
 		}
 	
 		public int GetHashCode(Location loc) {
-			return loc.row * int.MaxValue + loc.col;
+			return loc.Row * int.MaxValue + loc.Col;
 		}
 	}
 }
