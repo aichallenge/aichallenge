@@ -383,6 +383,8 @@ if @min_players <= @max_players then
     end while;
 
     if @abort = 1 then
+    
+        select "aborting" as status, @abort_reason as abort_reason;
 
         update tmp_matchup
         set worker_id = -1,
