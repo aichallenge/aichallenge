@@ -2,7 +2,6 @@
 // ini_set('error_reporting', E_ALL);
 // ini_set('display_errors', true);
 
-require_once('header.php');
 require_once('mysql_login.php');
 
 $user_id = $_GET["user"];
@@ -58,6 +57,8 @@ if (logged_in_with_valid_credentials() && current_user_id() == $user_id) {
 if (!$userresult) {
   echo "<p>Invalid User ID</p>";
 } else {
+$title="Profile for ".$username;
+require_once('header.php');
 echo "    <h2>Profile for $username</h2>";
 if ($logged_in) {
 echo <<< EOT

@@ -1,5 +1,6 @@
 <?php
 
+$title="Processing Registration";
 require_once 'header.php';
 require_once 'server_info.php';
 

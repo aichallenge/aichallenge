@@ -1,5 +1,6 @@
 <?php
 
+$title="Server Statistics";
 include 'header.php';
 require_once('mysql_login.php');
 

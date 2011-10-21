@@ -1,5 +1,6 @@
 <?php
 
+$title="Quickstart";
 require_once('header.php');
 
 ?>

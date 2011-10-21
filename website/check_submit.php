@@ -4,6 +4,7 @@ require_once('mysql_login.php');
 require_once('file_system_util.php');
 require_once('submission.php');
 
+$title="Upload Verification";
 include 'header.php';
 
 function ends_with($str, $sub) {

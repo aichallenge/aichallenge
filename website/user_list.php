@@ -1,4 +1,6 @@
 <?php
+
+$title="User List";
 include 'header.php';
 require_once('mysql_login.php');
 echo "<h2>User List</h2>";

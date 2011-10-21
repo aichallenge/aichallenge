@@ -1,4 +1,6 @@
 <?php
+
+$title="Current Rankings";
 include('header.php');
 require_once('ranking.php');
 //include_once 'rankings_widget.php';

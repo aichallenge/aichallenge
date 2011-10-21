@@ -1,5 +1,6 @@
 <?php
 
+$title="Map Statistics";
 include 'header.php';
 require_once('mysql_query.php');
 

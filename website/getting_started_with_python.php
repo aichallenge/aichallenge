@@ -1,5 +1,6 @@
 <?php
 
+$title="Getting Started with Python";
 require_once('header.php');
 
 ?>

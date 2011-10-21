@@ -1,5 +1,6 @@
 <?php
 
+$title="Ants Tutorial Step 1";
 require_once('header.php');
 
 ?>

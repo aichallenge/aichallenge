@@ -1,4 +1,9 @@
-<?php include 'header.php'; ?>
+<?php
+
+$title="Starter Packages";
+include 'header.php';
+
+?>
 
 <h2>Starter Packages</h2>
 <p>Here are the starter packages that we currently offer. Each starter package is a ZIP file which contains:</p>

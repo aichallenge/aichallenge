@@ -1,5 +1,6 @@
 <?php
 
+$title="Focus Battle Resolution";
 require_once('header.php');
 
 ?>

@@ -1,4 +1,6 @@
 <?php
+
+$title="All Games";
 require_once("header.php");
 require_once("game_list.php");
 
