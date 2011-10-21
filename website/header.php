@@ -5,9 +5,9 @@ $page_render_start_time = microtime(true);
 
 //Title mechanism, $title is declared on every page. CMS next year please.
 if(isset($title)) {
-  $title = "Google AI Challenge | ".$title;
+  $title = "AI Challenge | ".$title;
 } else {
-  $title = "Google AI Challenge";
+  $title = "AI Challenge";
 }
 
 ?>

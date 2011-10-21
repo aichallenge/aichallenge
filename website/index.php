@@ -1,4 +1,7 @@
 <?php
+
+$title = "Homepage";
+
 include('header.php');
 require_once('memcache.php');
 
