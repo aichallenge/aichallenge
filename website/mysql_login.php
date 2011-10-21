@@ -81,4 +81,27 @@ function check_credentials($username, $password) {
     }
 }
 
+function check_reset_credentials($username, $reset) {
+  $query = "
+        SELECT *
+        FROM user u
+        WHERE
+            username='$username' AND
+            activated = 1
+    ";
+  $result = mysql_query($query);
+    if( $user = mysql_fetch_assoc( $result ) ) {
+        if (crypt($password, $user['reset']) == $user['reset']) {
+            $_SESSION['username']   = $user['username'];
+            $_SESSION['admin']      = $user['admin'];
+            $_SESSION['user_id']    = $user['user_id'];
+            return true;
+        } else {
+            return false;
+        }
+    } else {
+        return false;
+    }
+}
+
 ?>

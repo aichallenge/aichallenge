@@ -334,7 +334,13 @@ $contest_sql = array(
           left outer join organization o on o.org_id = u.org_id
           left outer join country c on c.country_id = u.country_id
         where
-          u.user_id = %s"
+          u.user_id = %s",
+    "insert_password_reset" => "update user
+        set reset = %s
+        where user_id = %s;",
+    "clear_password_reset" => "update user
+        set reset = NULL
+        where user_id = %s"
 );
 
 ?>

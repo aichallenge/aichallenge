@@ -171,6 +171,7 @@ CREATE TABLE `user` (
   `user_id` int(11) NOT NULL AUTO_INCREMENT,
   `username` varchar(128) NOT NULL,
   `password` varchar(256) NOT NULL,
+  `reset` varchar(256) NOT NULL,
   `email` varchar(256) NOT NULL,
   `status_id` int(11) NOT NULL,
   `activation_code` varchar(256) NOT NULL DEFAULT '',
