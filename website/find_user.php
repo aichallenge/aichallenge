@@ -30,7 +30,7 @@ include "header.php";
 
 if ($num_found > 0) {
     echo <<<EOT
-<h2>Users</h2>
+<h2>Users with "$username"</h2>
 <ul>
 EOT;
     while ($row = mysql_fetch_assoc($result)) {

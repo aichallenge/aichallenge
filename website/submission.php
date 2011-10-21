@@ -1,5 +1,7 @@
 <?php
 
+require_once('memcache.php');
+
 /*
  * Submission Statuses
  * 10: Created: entry record created in database.
@@ -14,10 +16,14 @@
  */
 
 function create_new_submission_for_current_user() {
-  if (current_user_id() == -1) {
-    return FALSE;
-  }
-  return contest_query("insert_new_submission", current_user_id());
+    global $memcache;
+    if ($memcache) {
+        $memcache->delete("lookup:submission_id");
+    }
+    if (current_user_id() == -1) {
+        return FALSE;
+    }
+    return contest_query("insert_new_submission", current_user_id());
 }
 
 function current_submission_id() {

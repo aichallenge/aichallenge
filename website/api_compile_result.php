@@ -19,6 +19,10 @@ if ($lang_result and mysql_num_rows($lang_result) > 0) {
     api_log("Creating new language: " . $compiledata->language);
     contest_query("insert_new_language", $compiledata->language);
     $lang_id = mysql_insert_id();
+    if ($memcache) {
+        $memcache->delete("lookup:language_id");
+        $memcache->delete("lookup:language_name");
+    }
 }
 api_log("Language ID: " . strval($lang_id));
 
