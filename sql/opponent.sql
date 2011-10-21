@@ -95,7 +95,7 @@ if @min_players <= @max_players then
         where priority > 0
         group by players
     ) p
-    inner join (
+    left outer join (
         select m.players, count(*) game_count, count(gp.user_id) user_count
         from game g
         inner join map m
