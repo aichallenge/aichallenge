@@ -10,7 +10,7 @@
 </ul>
 <p>Since each starter package contains a simple already-working entry, you can actually submit the ZIP file on the Upload Your Code page. See the<a href="quickstart.php">Five Minute Quickstart Guide</a> to learn how to get your name up on the global leaderboard in less than five minutes.</p>
 
-<p>Please note that some of these starter packages do not have the hills implemented yet. You can consider it as an exercise to implement these until these starter packages are updated.</p>
+<p>Please note that some of these starter packages do not have the hills implemented yet. We will need a volunteer to fix these.</p>
 
 <p><strong>Note: The tools come with the game engine written in python.  You will need to install a python interpreter to run the game engine regardless of which language you are programming in.</strong></p>
 
@@ -25,13 +25,13 @@
     <td><a href="starter_packages/c_starter_package.zip">C</a></td>
     <td>gcc (Ubuntu/Linaro 4.5.2-8ubuntu4) 4.5.2</td>
     <td>&nbsp;</td>
-    <td>&nbsp;</td>
+    <td><em>Hills not implemented yet</em></td>
   </tr>
   <tr>
     <td><a href="starter_packages/csharp_starter_package.zip">C&#35;</a></td>
     <td>Mono version 2.6.7 (Debian 2.6.7-5ubuntu3)</td>
     <td>&nbsp;</td>
-    <td>&nbsp;</td>
+    <td><em>Hills not implemented yet</em></td>
   </tr>
   <tr>
     <td><a href="starter_packages/cpp_starter_package.zip">C++</a></td>
@@ -43,7 +43,7 @@
     <td><a href="starter_packages/clojure_starter_package.zip">Clojure</a></td>
     <td>Clojure 1.3.0</td>
     <td>&nbsp;</td>
-    <td>&nbsp;</td>
+    <td><em>Hills not implemented yet</em></td>
   </tr>
   <tr>
     <td><a href="starter_packages/coffeescript_starter_package.zip">CoffeeScript</td>
@@ -59,7 +59,7 @@
   </tr>
   <tr>
     <td><a href="starter_packages/d_starter_package.zip">D</a></td>
-    <td><i>DMD 2.054 (x86_64) + Phobos</i></td>
+    <td><em>DMD 2.054 (x86_64) + Phobos</em></td>
     <td>&nbsp;</td>
     <td>&nbsp;</td>
   </tr>
@@ -67,25 +67,25 @@
     <td>Erlang</td>
     <td>Erlang R13B03 (erts-5.7.4)</td>
     <td>&nbsp;</td>
-    <td>&nbsp;</td>
+    <td><em>Supported, no starter package</em></td>
   </tr>
   <tr>
     <td><a href="starter_packages/go_starter_package.zip">Go</a></td>
     <td>6g version release.r60.1 9753+</td>
     <td>&nbsp;</td>
-    <td>&nbsp;</td>
+    <td><em>Hills not implemented yet</em></td>
   </tr>
   <tr>
     <td>Groovy</td>
     <td>Groovy compiler version 1.7.8</td>
     <td>&nbsp;</td>
-    <td><i>no official package yet</i></td>
+    <td><em>Supported, no starter package</em></td>
   </tr>
   <tr>
-    <td>Haskell</td>
+    <td><a href="starter_packages/haskell_starter_package.zip">Haskell</a></td>
     <td>GHC, version 6.12.3</td>
     <td>&nbsp;</td>
-    <td><i>no official package yet</i></td>
+    <td><em>Hills not implemented yet</em></td>
   </tr>
   <tr>
     <td><a href="starter_packages/java_starter_package.zip">Java</a></td>
@@ -97,31 +97,31 @@
     <td><a href="starter_packages/javascript_starter_package.zip">JavaScript</a></td>
     <td>Node v0.4.10</td>
     <td>&nbsp;</td>
-    <td>&nbsp;</td>
+    <td><em>Hills not implemented yet</em></td>
   </tr>
   <tr>
     <td><a href="starter_packages/lua_starter_package.zip">Lua</a></td>
     <td>LuaJIT 2.0.0-beta5</td>
     <td>&nbsp;</td>
-    <td>&nbsp;</td>
+    <td><em>Hills not implemented yet</em></td>
   </tr>
   <tr>
     <td><a href="starter_packages/ocaml_starter_package.zip">OCaml</a></td>
     <td>OCaml 3.11.2</td>
     <td>&nbsp;</td>
-    <td>&nbsp;</td>
+    <td><em>Hills not implemented yet</em></td>
   </tr>
   <tr>
     <td><a href="starter_packages/pascal_starter_package.zip">Pascal</a></td>
     <td>FreePascal version 2.4.0-2ubuntu3.1</td>
     <td>&nbsp;</td>
-    <td>Delphi mode is ON</td>
+    <td><em>Delphi mode is ON</em></td>
   </tr>
   <tr>
     <td><a href="starter_packages/perl_starter_package.zip">Perl</a></td>
     <td>Perl v5.10.1</td>
     <td>&nbsp;</td>
-    <td>&nbsp;</td>
+    <td><em>Hills not implemented yet</em></td>
   </tr>
   <tr>
     <td><a href="starter_packages/php_starter_package.zip">PHP</a></td>
@@ -136,7 +136,7 @@
     <td>&nbsp;</td>
   </tr>
   <tr>
-    <td><a href="starter_packages/python_starter_package.zip">Python</a></td>
+    <td><a href="starter_packages/python3_starter_package.zip">Python 3</a></td>
     <td>Python 3.2</td>
     <td>&nbsp;</td>
     <td>&nbsp;</td>
@@ -145,16 +145,16 @@
     <td><a href="starter_packages/ruby_starter_package.zip">Ruby</a></td>
     <td>ruby 1.9.2p0</td>
     <td>&nbsp;</td>
-    <td>&nbsp;</td>
+    <td><em>Hills not implemented yet</em></td>
   </tr>
   <tr>
     <td><a href="starter_packages/scala_starter_package.zip">Scala</a></td>
     <td>Scala version 2.9.0.1</td>
     <td>&nbsp;</td>
-    <td>&nbsp;</td>
+    <td><em>Hills not implemented yet</em></td>
   </tr>
   <tr>
-    <td>Visual Basic</td>
+    <td><a href="starter_packages/vb_starter_package.zip">Visual Basic</td>
     <td>Visual Basic.Net Compiler version 0.0.0.5917</td>
     <td>&nbsp;</td>
     <td>&nbsp;</td>
