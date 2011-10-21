@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace Ants {
 	
-	public class GameState {
+	public class GameState : IGameState {
 		
 		public int Width { get; private set; }
 		public int Height { get; private set; }
@@ -22,11 +22,11 @@ namespace Ants {
 		public int ViewRadius2 { get; private set; }
 		public int AttackRadius2 { get; private set; }
 		public int SpawnRadius2 { get; private set; }
-		
-		public List<AntLoc> MyAnts;
-		public List<AntLoc> EnemyAnts;
-		public List<Location> DeadTiles;
-		public List<Location> FoodTiles;
+
+		public List<AntLoc> MyAnts { get; private set; }
+		public List<AntLoc> EnemyAnts { get; private set; }
+		public List<Location> DeadTiles { get; private set; }
+		public List<Location> FoodTiles { get; private set; }
 		
 		private Tile[,] map;
 		
@@ -57,7 +57,7 @@ namespace Ants {
 			}
 		}
 
-
+		#region State mutators
 		public void StartNewTurn () {
 			// start timer
 			turnStart = DateTime.Now;
@@ -115,7 +115,7 @@ namespace Ants {
 			// but always add to the dead list
 			DeadTiles.Add(new Location(row, col));
 		}
-
+		#endregion
 
 		/// <summary>
 		/// Gets whether <paramref name="location"/> is passable or not.
