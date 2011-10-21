@@ -388,6 +388,9 @@ if @min_players <= @max_players then
         set worker_id = -1,
             error = 'abort matchup: ' + @abort_reason
         where matchup_id = @matchup_id;
+        
+        -- debug statement
+        select * from matchup m inner join matchup_player mp on mp.matchup_id = m.matchup_id where m.matchup_id = @matchup_id;
 
     else
 
