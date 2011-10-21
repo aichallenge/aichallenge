@@ -267,7 +267,7 @@ function create_ranking_table($page=0, $org_id=NULL, $country_id=NULL, $language
         $table .= "<td class=\"number\">$skill</td>";
         
         $table .= "<td class=\"number\"><span title=\"total games for current submission\">".$row["game_count"]."</span></td>";
-        $table .= "<td class=\"number\"><span title=\"games in last 24 hours\">".$row["game_rate"]."</span></td>";
+        $table .= "<td class=\"number\"><span title=\"number of games in past 24 hours\">".$row["game_rate"]."</span></td>";
         
         $table .= "</tr>";
     }
