@@ -372,8 +372,8 @@ if @min_players <= @max_players then
     -- Step 4: select the map
     select m.map_id, m.max_turns, m.players,
     count(gp.user_id) as user_count, count(*) as game_count, priority
-    from game g
-    inner join map m
+    from map m
+    left outer join game g
         on m.map_id = g.map_id
     left outer join game_player gp
         on g.game_id = gp.game_id
@@ -396,8 +396,8 @@ if @min_players <= @max_players then
     
     select m.map_id, m.max_turns
     into @map_id, @max_turns
-    from game g
-    inner join map m
+    from map m
+    left outer join game g
         on m.map_id = g.map_id
     left outer join game_player gp
         on g.game_id = gp.game_id
