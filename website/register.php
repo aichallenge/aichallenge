@@ -17,7 +17,7 @@ if($server_info["submissions_open"]) { ?>
             otherOrg.value = '';
         }
     }
-<!-- </script> -->
+</script>
 <h2>Create Your Account</h2>
 <?php if (count($errors) > 0) { ?>
 
