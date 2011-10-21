@@ -9,7 +9,7 @@ namespace Ants {
 		public override void DoTurn (IGameState state) {
 
 			// loop through all my ants and try to give them orders
-			foreach (AntLoc ant in state.MyAnts) {
+			foreach (Ant ant in state.MyAnts) {
 				
 				// try all the directions
 				foreach (Direction direction in Ants.Aim.Keys) {
