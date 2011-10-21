@@ -142,7 +142,7 @@ namespace Ants {
 		/// <param name="location">The starting location.</param>
 		/// <param name="direction">The direction to move.</param>
 		/// <returns>The new location, accounting for wrap around.</returns>
-		public Location GetDestination (Location location, char direction) {
+		public Location GetDestination (Location location, Direction direction) {
 			Location delta = Ants.Aim[direction];
 			
 			int row = (location.Row + delta.Row) % Height;
@@ -176,33 +176,33 @@ namespace Ants {
 		/// <param name="loc1">The location to start from.</param>
 		/// <param name="loc2">The location to determine directions towards.</param>
 		/// <returns>The 1 or 2 closest directions from <paramref name="loc1"/> to <paramref name="loc2"/></returns>
-		public ICollection<char> GetDirections (Location loc1, Location loc2) {
-			List<char> directions = new List<char>();
+		public ICollection<Direction> GetDirections (Location loc1, Location loc2) {
+			List<Direction> directions = new List<Direction>();
 			
 			if (loc1.Row < loc2.Row) {
 				if (loc2.Row - loc1.Row >= Height / 2)
-					directions.Add('n');
+					directions.Add(Direction.North);
 				if (loc2.Row - loc1.Row <= Height / 2)
-					directions.Add('s');
+					directions.Add(Direction.South);
 			}
 			if (loc2.Row < loc1.Row) {
 				if (loc1.Row - loc2.Row >= Height / 2)
-					directions.Add('s');
+					directions.Add(Direction.South);
 				if (loc1.Row - loc2.Row <= Height / 2)
-					directions.Add('n');
+					directions.Add(Direction.North);
 			}
 			
 			if (loc1.Col < loc2.Col) {
 				if (loc2.Col - loc1.Col >= Width / 2)
-					directions.Add('w');
+					directions.Add(Direction.West);
 				if (loc2.Col - loc1.Col <= Width / 2)
-					directions.Add('e');
+					directions.Add(Direction.East);
 			}
 			if (loc2.Col < loc1.Col) {
 				if (loc1.Col - loc2.Col >= Width / 2)
-					directions.Add('e');
+					directions.Add(Direction.East);
 				if (loc1.Col - loc2.Col <= Width / 2)
-					directions.Add('w');
+					directions.Add(Direction.West);
 			}
 			
 			return directions;

@@ -12,7 +12,7 @@ namespace Ants {
 			foreach (AntLoc ant in state.MyAnts) {
 				
 				// try all the directions
-				foreach (char direction in Ants.Aim.Keys) {
+				foreach (Direction direction in Ants.Aim.Keys) {
 
 					// GetDestination will wrap around the map properly
 					// and give us a new location
