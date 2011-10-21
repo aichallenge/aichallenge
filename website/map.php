@@ -16,6 +16,7 @@ if ($map_row !== NULL) {
 } else {
     $map = htmlentities($map);
     echo "<p>Map $map does not exist</p>";
+    require_once("header.php");
 }
 
 
