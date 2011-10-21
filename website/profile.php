@@ -56,6 +56,7 @@ if (logged_in_with_valid_credentials() && current_user_id() == $user_id) {
 }
 if (!$userresult) {
   echo "<p>Invalid User ID</p>";
+  require_once('header.php');
 } else {
 $title="Profile for ".$username;
 require_once('header.php');

@@ -15,8 +15,8 @@ if ($map_row !== NULL) {
     echo get_game_list_table(1, NULL, NULL, $map_row['map_id'], FALSE, 'map.php');
 } else {
     $map = htmlentities($map);
-    echo "<p>Map $map does not exist</p>";
     require_once("header.php");
+    echo "<p>Map $map does not exist</p>";
 }
 
 
