@@ -168,7 +168,7 @@ if @min_players <= @max_players then
         ) g
         group by 1;
 
-    select avg(game_count) * 1.618
+    select avg(game_count) * 1.1
     into @avg_game_count
     from tmp_games;
         
@@ -265,7 +265,7 @@ if @min_players <= @max_players then
 
 	    update matchup
 	    set worker_id = -1,
-	        error = 'abort matchup: ' + @abort_reason
+	        error = concat('abort matchup: ', @abort_reason)
 	    where matchup_id = @matchup_id;
 
 	else

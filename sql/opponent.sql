@@ -388,7 +388,7 @@ if @min_players <= @max_players then
 
         update tmp_matchup
         set worker_id = -1,
-            error = 'abort matchup: ' + @abort_reason
+            error = concat('abort matchup: ', @abort_reason)
         where matchup_id = @matchup_id;
         
         -- debug statement
