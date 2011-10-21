@@ -7,9 +7,9 @@ require_once('nice.php');
 echo "<h2>User List</h2>";
 
 $result = search_user_row();
-if ($result) {
+if (count($result) > 0) {
     echo "<ul>";
-    while ($row = mysql_fetch_assoc($result)) {
+    foreach ($result as $row) {
         $username = htmlentities($row['username'], ENT_COMPAT, "UTF-8");
         echo "<li>".nice_user($row['user_id'], $row['username'])."</li>";
     }
@@ -17,5 +17,6 @@ if ($result) {
 } else {
     echo "<p>No users found.</p>";
 }
-include 'footer.php';
+
+require_once('footer.php');
 ?>

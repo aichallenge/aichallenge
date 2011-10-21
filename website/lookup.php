@@ -1,6 +1,7 @@
 <?php
 
 require_once('mysql_login.php');
+require_once('memcache.php');
 
 function get_country_row($country) {
     global $memcache;
@@ -11,7 +12,6 @@ function get_country_row($country) {
         $country_row_by_name = $memcache->get('lookup:country_name');
         $country_row_by_code = $memcache->get('lookup:country_code');
     }
-    $country_row_by_id = NULL;
     if (!$country_row_by_id) {
         $country_result = contest_query("select_countries");
         if ($country_result) {
@@ -58,7 +58,6 @@ function get_language_row($language) {
         $language_row_by_id = $memcache->get('lookup:language_id');
         $language_row_by_name = $memcache->get('lookup:language_name');
     }
-    $language_row_by_id = NULL;
     if (!$language_row_by_id) {
         $language_result = contest_query("select_languages");
         if ($language_result) {
@@ -97,7 +96,6 @@ function get_org_row($org) {
         $org_row_by_id = $memcache->get('lookup:org_id');
         $org_row_by_name = $memcache->get('lookup:org_name');
     }
-    $org_row_by_id = NULL;
     if (!$org_row_by_id) {
         $org_result = contest_query("select_organizations");
         if ($org_result) {
@@ -136,7 +134,6 @@ function get_user_row($user) {
         $user_row_by_id = $memcache->get('lookup:user_id');
         $user_row_by_name = $memcache->get('lookup:username');
     }
-    $user_row_by_id = NULL;
     if (!$user_row_by_id) {
         $user_result = contest_query("select_users");
         if ($user_result) {
@@ -167,15 +164,67 @@ function get_user_row($user) {
     return NULL;
 }
 
-function get_user_by_submission($submission_id) {
-    $user_result = contest_query("select_submission_users");
-    if ($user_result) {
-        $user_row_by_submission_id = array();
-        while ($user_row = mysql_fetch_assoc($user_result)) {
-            $user_row_by_submission_id[$user_row['submission_id']] = $user_row;
+function search_user_row($search=NULL) {
+    global $memcache;
+
+    $user_row_by_id = NULL;
+    if ($memcache) {
+        $user_row_by_id = $memcache->get('lookup:user_id');
+        $user_row_by_name = $memcache->get('lookup:username');
+    }
+    if (!$user_row_by_id) {
+        $user_result = contest_query("select_users");
+        if ($user_result) {
+            $user_row_by_id = array();
+            $user_row_by_name = array();
+            while ($user_row = mysql_fetch_assoc($user_result)) {
+                $user_row_by_id[$user_row['user_id']] = $user_row;
+                $user_row_by_name[$user_row['username']] = $user_row;
+            }
+            if ($memcache) {
+                $memcache->set('lookup:user_id', $user_row_by_id);
+                $memcache->set('lookup:username', $user_row_by_name);
+            }
         }
     }
 
+    // search user name
+    $user_rows = array();
+    if ($user_row_by_name) {
+        if ($search === NULL) {
+            return array_values($user_row_by_name);
+        } elseif ($search) {
+            foreach ($user_row_by_name as $username => $user_row) {
+                if (stripos($username, $search) !== FALSE) {
+                    $user_rows[] = $user_row;
+                }
+            }
+        }
+    }
+    return $user_rows;
+}
+
+function get_user_by_submission($submission_id) {
+    global $memcache;
+
+    $user_row_by_submission_id = NULL;
+    if ($memcache) {
+        $user_row_by_submission_id = $memcache->get('lookup:submission_id');
+    }
+    if (!$user_row_by_submission_id) {
+        $user_result = contest_query("select_submission_users");
+        if ($user_result) {
+            $user_row_by_submission_id = array();
+            while ($user_row = mysql_fetch_assoc($user_result)) {
+                $user_row_by_submission_id[$user_row['submission_id']] = $user_row;
+            }
+            if ($memcache) {
+                $memcache->set('lookup:submission_id', $user_row_by_id);
+            }
+        }
+    }
+
+    // search by id
     if ($user_row_by_submission_id) {
         if (array_key_exists($submission_id, $user_row_by_submission_id)) {
             return $user_row_by_submission_id[$submission_id];
@@ -192,7 +241,6 @@ function get_map_row($map) {
         $map_row_by_id = $memcache->get('lookup:map_id');
         $map_row_by_name = $memcache->get('lookup:mapname');
     }
-    $map_row_by_id = NULL;
     if (!$map_row_by_id) {
         $map_result = contest_query("select_maps");
         if ($map_result) {

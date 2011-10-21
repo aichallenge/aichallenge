@@ -177,11 +177,14 @@ $contest_sql = array(
     "select_countries" => "select * from country",
     "select_languages" => "select * from language",
     "select_organizations" => "select * from organization",
-    "select_users" => "select * from user",
+    "select_users" => "select *
+        from user
+        order by username",
     "select_submission_users" => "select *
         from user u
         inner join submission s
-            on u.user_id = s.user_id",
+            on u.user_id = s.user_id
+        order by u.username",
     "select_maps" => "select * from map",
     "select_game_list_page_count" => "select count(*)
             from game g

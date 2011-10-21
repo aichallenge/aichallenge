@@ -9,6 +9,7 @@ if($server_info["submissions_open"]) {
 require_once 'mysql_login.php';
 require_once 'bad_words.php';
 require_once 'web_util.php';
+require_once('memcache.php');
 
 function check_valid_user_status_code($code) {
   $query = "SELECT * FROM user_status_code WHERE status_id = ".(int)$code;
@@ -30,6 +31,10 @@ function valid_username($s) {
 }
 
 function create_new_organization( $org_name ) {
+    if ($memcache) {
+        $memcache->delete('lookup:org_id');
+        $memcache->delete('lookup:org_name');
+    }
     $query = "SELECT org_id FROM organization WHERE name='".$org_name."'";
     $result = mysql_query($query);
     if ( mysql_num_rows($result) > 0 ) {
@@ -188,6 +193,10 @@ if (count($errors) <= 0) {
       INSERT INTO user (username,`password`,email,status_id,activation_code,org_id,bio,country_id,created,activated,admin)
       VALUES ('$username','" . mysql_real_escape_string(crypt($password1, '$6$rounds=54321$' . salt() . '$')) . "','$user_email',$user_status,'$confirmation_code',$user_org,'$bio',$country_id,CURRENT_TIMESTAMP,0,0)";
   if (mysql_query($query)) {
+    if ($memcache) {
+        $memcache->delete('lookup:user_id');
+        $memcache->delete('lookup:username');
+    }
     // Send confirmation mail to user.
     $mail_subject = "Google AI Challenge!";
     $activation_url = current_url();
