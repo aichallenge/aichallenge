@@ -198,7 +198,7 @@ if @min_players <= @max_players then
                     submission p, -- current players in match
                     submission s  -- possible next players
                     -- get game count for last 24 hours
-                    inner join tmp_games t
+                    left outer join tmp_games t
                         on t.user_id = s.user_id
                     -- join with all players in current matchup to average match quality
                     where p.submission_id in (
@@ -207,7 +207,7 @@ if @min_players <= @max_players then
                         where matchup_id = @matchup_id
                     )
                     -- exclude players with high 24 hour game count
-                    and t.game_count < @avg_game_count
+                    and (t.game_count is null or t.game_count < @avg_game_count)
                     -- exclude players currently in the matchup
                     and not exists (
                         select *
