@@ -23,8 +23,10 @@ namespace Ants {
 		public int AttackRadius2 { get; private set; }
 		public int SpawnRadius2 { get; private set; }
 
-		public List<AntLoc> MyAnts { get; private set; }
-		public List<AntLoc> EnemyAnts { get; private set; }
+		public List<Ant> MyAnts { get; private set; }
+		public List<AntHill> MyHills { get; private set; }
+		public List<Ant> EnemyAnts { get; private set; }
+		public List<AntHill> EnemyHills { get; private set; }
 		public List<Location> DeadTiles { get; private set; }
 		public List<Location> FoodTiles { get; private set; }
 
@@ -52,8 +54,10 @@ namespace Ants {
 			AttackRadius2 = attackradius2;
 			SpawnRadius2 = spawnradius2;
 			
-			MyAnts = new List<AntLoc>();
-			EnemyAnts = new List<AntLoc>();
+			MyAnts = new List<Ant>();
+			MyHills = new List<AntHill>();
+			EnemyAnts = new List<Ant>();
+			EnemyHills = new List<AntHill>();
 			DeadTiles = new List<Location>();
 			FoodTiles = new List<Location>();
 			
@@ -72,10 +76,14 @@ namespace Ants {
 			
 			// clear ant data
 			foreach (Location loc in MyAnts) map[loc.Row, loc.Col] = Tile.Land;
+			foreach (Location loc in MyHills) map[loc.Row, loc.Col] = Tile.Land;
 			foreach (Location loc in EnemyAnts) map[loc.Row, loc.Col] = Tile.Land;
+			foreach (Location loc in EnemyHills) map[loc.Row, loc.Col] = Tile.Land;
 			foreach (Location loc in DeadTiles) map[loc.Row, loc.Col] = Tile.Land;
 			
+			MyHills.Clear();
 			MyAnts.Clear();
+			EnemyHills.Clear();
 			EnemyAnts.Clear();
 			DeadTiles.Clear();
 			
@@ -87,7 +95,7 @@ namespace Ants {
 		public void AddAnt (int row, int col, int team) {
 			map[row, col] = Tile.Ant;
 			
-			AntLoc ant = new AntLoc(row, col, team);
+			Ant ant = new Ant(row, col, team);
 			if (team == 0) {
 				MyAnts.Add(ant);
 			} else {
@@ -122,6 +130,19 @@ namespace Ants {
 			
 			// but always add to the dead list
 			DeadTiles.Add(new Location(row, col));
+		}
+
+		public void AntHill (int row, int col, int team) {
+
+			if (map[row, col] == Tile.Land) {
+				map[row, col] = Tile.Hill;
+			}
+
+			AntHill hill = new AntHill (row, col, team);
+			if (team == 0)
+				MyHills.Add (hill);
+			else
+				EnemyHills.Add (hill);
 		}
 		#endregion
 

@@ -45,14 +45,24 @@ namespace Ants {
 		int SpawnRadius2 { get; }
 
 		/// <summary>
+		/// Gets a list of your currently visible hills.
+		/// </summary>
+		List<AntHill> MyHills { get; }
+
+		/// <summary>
 		/// Gets a list of your ants.
 		/// </summary>
-		List<AntLoc> MyAnts { get; }
+		List<Ant> MyAnts { get; }
 
 		/// <summary>
 		/// Gets a list of currently visible enemy ants.
 		/// </summary>
-		List<AntLoc> EnemyAnts { get; }
+		List<Ant> EnemyAnts { get; }
+
+		/// <summary>
+		/// Gets a list of currently visible enemy hills.
+		/// </summary>
+		List<AntHill> EnemyHills { get; }
 
 		/// <summary>
 		/// Gets a list of currently-visible locations where ants died last turn.

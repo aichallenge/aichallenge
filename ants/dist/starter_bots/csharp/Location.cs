@@ -46,25 +46,48 @@ namespace Ants {
 				return (this.Row * 397) ^ this.Col;
 			}
 		}
-
-		public static bool operator == (Location left, Location right) {
-			return Equals (left, right);
-		}
-
-		public static bool operator != (Location left, Location right) {
-			return !Equals (left, right);
-		}
 	}
-	
-	public class AntLoc : Location {
 
+	public class TeamLocation : Location, IEquatable<TeamLocation> {
 		/// <summary>
 		/// Gets the team of this ant.
 		/// </summary>
 		public int Team { get; private set; }
 
-		public AntLoc (int row, int col, int team) : base (row, col) {
+		public TeamLocation (int row, int col, int team) : base (row, col) {
 			this.Team = team;
+		}
+
+		public bool Equals(TeamLocation other) {
+			return base.Equals (other) && other.Team == Team;
+		}
+
+		public override int GetHashCode()
+		{
+			unchecked {
+				int result = this.Col;
+				result = (result * 397) ^ this.Row;
+				result = (result * 397) ^ this.Team;
+				return result;
+			}
+		}
+	}
+	
+	public class Ant : TeamLocation, IEquatable<Ant> {
+		public Ant (int row, int col, int team) : base (row, col, team) {
+		}
+
+		public bool Equals (Ant other) {
+			return base.Equals (other);
+		}
+	}
+
+	public class AntHill : TeamLocation, IEquatable<AntHill> {
+		public AntHill (int row, int col, int team) : base (row, col, team) {
+		}
+
+		public bool Equals (AntHill other) {
+			return base.Equals (other);
 		}
 	}
 }
