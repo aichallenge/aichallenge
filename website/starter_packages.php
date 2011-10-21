@@ -1,18 +1,16 @@
 <?php include 'header.php'; ?>
 
 <h2>Starter Packages</h2>
-<p>Here are the starter packages that we currently offer. Each starter
-  package is a ZIP file which contains:</p>
+<p>Here are the starter packages that we currently offer. Each starter package is a ZIP file which contains:</p>
 <ul>
   <li>A simple already-working entry to use as a starting point</li>
   <li>Tools that allow you to run your bot and watch it play graphically</li>
   <li>Some sample opponents that you can test your bot against</li>
   <li>One hundred randomly generated maps that you can use for testing</li>
 </ul>
-<p>Since each starter package contains a simple already-working entry, you
-  can actually submit the ZIP file on the Upload Your Code page. See the
-  <a href="quickstart.php">Five Minute Quickstart Guide</a> to learn how to
-  get your name up on the global leaderboard in less than five minutes.</p>
+<p>Since each starter package contains a simple already-working entry, you can actually submit the ZIP file on the Upload Your Code page. See the<a href="quickstart.php">Five Minute Quickstart Guide</a> to learn how to get your name up on the global leaderboard in less than five minutes.</p>
+
+<p>Please note that some of these starter packages do not have the hills implemented yet. You can consider it as an exercise to implement these until these starter packages are updated.</p>
 
 <p><strong>Note: The tools come with the game engine written in python.  You will need to install a python interpreter to run the game engine regardless of which language you are programming in.</strong></p>
 
@@ -24,10 +22,10 @@
     <th>info</th>
   </tr>
   <tr>
-    <td>C</td>
+    <td><a href="starter_packages/c_starter_package.zip">C</a></td>
     <td>gcc (Ubuntu/Linaro 4.5.2-8ubuntu4) 4.5.2</td>
     <td>&nbsp;</td>
-    <td><i>no official package yet</i></td>
+    <td>&nbsp;</td>
   </tr>
   <tr>
     <td><a href="starter_packages/csharp_starter_package.zip">C&#35;</a></td>
@@ -42,13 +40,13 @@
     <td>&nbsp;</td>
   </tr>
   <tr>
-    <td>Clojure</td>
+    <td><a href="starter_packages/clojure_starter_package.zip">Clojure</a></td>
     <td>Clojure 1.3.0</td>
     <td>&nbsp;</td>
     <td>&nbsp;</td>
   </tr>
   <tr>
-    <td>CoffeeScript</td>
+    <td><a href="starter_packages/coffeescript_starter_package.zip">CoffeeScript</td>
     <td>CoffeeScript version 1.1.2</td>
     <td>&nbsp;</td>
     <td>&nbsp;</td>
