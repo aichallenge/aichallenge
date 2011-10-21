@@ -273,8 +273,8 @@ if @min_players <= @max_players then
 	    -- Step 4: select the map
 	    select m.map_id, m.max_turns
 	    into @map_id, @max_turns
-	    from game g
-	    inner join map m
+	    from map m
+	    left outer join game g
 	        on m.map_id = g.map_id
 	    left outer join game_player gp
 	        on g.game_id = gp.game_id
@@ -291,7 +291,7 @@ if @min_players <= @max_players then
 	    ) t
 	    where m.priority > 0
 	        and m.players = @players
-	        and g.timestamp > timestampadd(hour, -24, current_timestamp)
+	        and (g.timestamp is null or g.timestamp > timestampadd(hour, -24, current_timestamp))
 	    group by m.map_id
 	    order by count(gp.user_id), count(*), priority, map_id desc
 	    limit 1;
