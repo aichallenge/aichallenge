@@ -3,7 +3,8 @@ using System.Collections.Generic;
 
 namespace Ants {
 
-	public class Location {
+	public class Location : IEquatable<Location> {
+
 		/// <summary>
 		/// Gets the row of this location.
 		/// </summary>
@@ -18,7 +19,41 @@ namespace Ants {
 			this.Row = row;
 			this.Col = col;
 		}
-		
+
+		public override bool Equals (object obj) {
+			if (ReferenceEquals (null, obj))
+				return false;
+			if (ReferenceEquals (this, obj))
+				return true;
+			if (obj.GetType() != typeof (Location))
+				return false;
+
+			return Equals ((Location) obj);
+		}
+
+		public bool Equals (Location other) {
+			if (ReferenceEquals (null, other))
+				return false;
+			if (ReferenceEquals (this, other))
+				return true;
+
+			return other.Row == this.Row && other.Col == this.Col;
+		}
+
+		public override int GetHashCode()
+		{
+			unchecked {
+				return (this.Row * 397) ^ this.Col;
+			}
+		}
+
+		public static bool operator == (Location left, Location right) {
+			return Equals (left, right);
+		}
+
+		public static bool operator != (Location left, Location right) {
+			return !Equals (left, right);
+		}
 	}
 	
 	public class AntLoc : Location {
@@ -30,16 +65,6 @@ namespace Ants {
 
 		public AntLoc (int row, int col, int team) : base (row, col) {
 			this.Team = team;
-		}
-	}
-	
-	public class LocationComparer : IEqualityComparer<Location> {
-		public bool Equals(Location loc1, Location loc2) {
-			return (loc1.Row == loc2.Row && loc1.Col == loc2.Col);
-		}
-	
-		public int GetHashCode(Location loc) {
-			return loc.Row * int.MaxValue + loc.Col;
 		}
 	}
 }
