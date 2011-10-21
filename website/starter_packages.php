@@ -36,7 +36,7 @@ include 'header.php';
     <td><a href="starter_packages/csharp_starter_package.zip">C&#35;</a></td>
     <td>Mono version 2.6.7 (Debian 2.6.7-5ubuntu3)</td>
     <td>&nbsp;</td>
-    <td><em>Hills not implemented yet</em></td>
+    <td>&nbsp;</td>
   </tr>
   <tr>
     <td><a href="starter_packages/cpp_starter_package.zip">C++</a></td>
