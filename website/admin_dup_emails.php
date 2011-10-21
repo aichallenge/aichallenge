@@ -2,7 +2,7 @@
 
 require_once('session.php');
 require_once('mysql_query.php');
-
+$title = "Duplicated E-Mails";
 include 'header.php';
 
 if (!logged_in_as_admin()) {

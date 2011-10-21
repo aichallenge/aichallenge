@@ -25,6 +25,7 @@ if ($num_found == 1) {
     die();
 }
 
+$title="User Search";
 include "header.php";
 
 if ($num_found > 0) {

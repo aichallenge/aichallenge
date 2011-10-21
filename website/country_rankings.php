@@ -1,4 +1,6 @@
 <?php
+
+$title="Country Rankings";
 include 'header.php';
 include_once 'country_rankings_widget.php';
 

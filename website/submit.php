@@ -11,6 +11,7 @@ if (!logged_in_with_valid_credentials()) {
 
 require_once('mysql_login.php');
 require_once('submission.php');
+$title="Upload Your Code";
 include 'header.php';
 ?>
 

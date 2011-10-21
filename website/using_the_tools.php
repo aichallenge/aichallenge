@@ -1,5 +1,6 @@
 <?php
 
+$title="Using the Tools";
 require_once('header.php');
 require_once('visualizer_widget.php');
 visualize_pre();

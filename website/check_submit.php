@@ -4,6 +4,7 @@ require_once('mysql_login.php');
 require_once('file_system_util.php');
 require_once('submission.php');
 
+$title="Upload Verification";
 include 'header.php';
 
 function ends_with($str, $sub) {
@@ -116,15 +117,15 @@ if (count($errors) == 0) {
 ?>
 
 <h1>Success!</h1>
-<p>Your entry was successfully uploaded to the contest server. Some time in the
-  next five minutes you should receive an email letting you know whether or not
-  we successfully compiled your code. If your code compiles successfully, then
+<p>Your entry was successfully uploaded to the contest server. Check
+  your profile in a few minutes to see if your code compiled successfully.
+  If your code compiled, then
   it will begin playing in a virtual tournament against other people's entries.
   Be sure to check the leaderboard in a while to see how your entry ranks!</p>
-<p>If your code does not compile successfully, then you will receive an email
-  with the list of errors. In this case, you should fix as many of the errors as
-  you can, and then resubmit your code.</p>
-  
+<p>If your code does not compile successfully, then you can see the compiler
+  errors on your profile.  Fix as many of the errors as
+  you can, and then resubmit your code!</p>
+
 <p>If your new submission doesn't show up on your profile page, under submissions, in about ten minutes, you can try resubmitting. We are working on fixing this.</p>
 
 <?php

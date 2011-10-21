@@ -1,4 +1,6 @@
 <?php
+
+$title="Submission Errors";
 include 'header.php';
 
 $error = $_GET["error"];

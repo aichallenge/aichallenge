@@ -1,4 +1,6 @@
 <?php
+
+$title="Maps";
 require_once("header.php");
 require_once("mysql_login.php");
 require_once("nice.php");

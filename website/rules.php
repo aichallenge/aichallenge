@@ -1,4 +1,9 @@
-<?php include 'header.php' ?>
+<?php
+
+$title="Rules";
+include 'header.php'
+
+?>
 
 <h2>Rules</h2>
 <ul>

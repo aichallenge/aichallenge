@@ -1,5 +1,6 @@
 <?php
 
+$title="Visualizer";
 include "header.php";
 
 include "visualizer_widget.php";

@@ -1,5 +1,6 @@
 <?php
 
+$title="Visualizer Test";
 require_once("header.php");
 require_once("visualizer_widget.php");
 

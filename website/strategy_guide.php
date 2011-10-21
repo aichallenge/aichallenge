@@ -1,5 +1,6 @@
 <?php
 
+$title="Strategy Guide";
 require_once('header.php');
 
 ?>

@@ -1,4 +1,9 @@
-<?php include 'header.php'; ?>
+<?php 
+
+$title="Credits";
+include 'header.php'; 
+
+?>
 
 <!--Note to commiters: Feel free to add yourself in here.-->
 

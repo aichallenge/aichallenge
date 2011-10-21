@@ -2,10 +2,18 @@
 <?php
 require_once('server_info.php');
 $page_render_start_time = microtime(true);
+
+//Title mechanism, $title is declared on every page. CMS next year please.
+if(isset($title)) {
+  $title = $title." | AI Challenge";
+} else {
+  $title = "AI Challenge";
+}
+
 ?>
 <html xmlns="http://www.w3.org/1999/xhtml">
     <head> 
-        <title>AI Challenge</title> 
+        <title><?php echo $title; ?></title> 
         <meta name="description" content="The AI Challenge (sponsored by Google) is an international programming contest started by the University of Waterloo Computer Science Club." /> 
         <meta name="keywords" content="" /> 
         

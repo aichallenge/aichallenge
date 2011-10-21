@@ -1,4 +1,9 @@
-<?php include 'header.php'; ?>
+<?php
+
+$title="Articles and Tutorials";
+include 'header.php';
+
+?>
 <h2>Articles &amp; Tutorials</h2>
 <p>This page contains tons of articles and tutorials designed to get you off
   the ground and creating your own bot in no time. It's easier than you think!

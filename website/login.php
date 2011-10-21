@@ -1,4 +1,9 @@
-<?php include 'header.php' ?>
+<?php
+
+$title="Login";
+include 'header.php'
+
+?>
 
 <h2>Login</h2>
 <form name="login_form" method="post" action="check_login.php">

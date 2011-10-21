@@ -1,6 +1,8 @@
 <?php
+
 require_once('session.php');
 require_once('mysql_login.php');
+$title = "Account Confirmed";
 require_once('header.php');
 
 function get_userid_from_confirmation_code($confirmation_code) {

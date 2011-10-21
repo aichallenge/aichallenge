@@ -1,4 +1,9 @@
-<?php include 'header.php'; ?>
+<?php 
+
+$title="Login Failed";
+include 'header.php';
+
+?>
 
 <h2>Login Failed</h2>
 <p>Your login attempt failed. There are a couple reasons why this might be.</p>
