@@ -6,7 +6,8 @@ md = markdown.Markdown(
                     'codehilite',
                     'toc',
                     'wikilinks',
-                    'latex']
+                    'latex',
+                    'github']
      )
 mdfile = open(sys.argv[1], 'r')
 mdtext = mdfile.read()
