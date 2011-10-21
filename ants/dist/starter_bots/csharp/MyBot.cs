@@ -4,23 +4,23 @@ using System.Collections.Generic;
 namespace Ants {
 
 	class MyBot : Bot {
-				
-		// doTurn is run once per turn
-		public override void doTurn (GameState state) {
-			
+
+		// DoTurn is run once per turn
+		public override void DoTurn (IGameState state) {
+
 			// loop through all my ants and try to give them orders
 			foreach (AntLoc ant in state.MyAnts) {
 				
 				// try all the directions
-				foreach (char direction in Ants.Aim.Keys) {
-					
-					// destination will wrap around the map properly
+				foreach (Direction direction in Ants.Aim.Keys) {
+
+					// GetDestination will wrap around the map properly
 					// and give us a new location
-					Location newLoc = state.destination(ant, direction);
-					
-					// passable returns true if the location is land
-					if (state.passable(newLoc)) {
-						issueOrder(ant, direction);
+					Location newLoc = state.GetDestination(ant, direction);
+
+					// GetIsPassable returns true if the location is land
+					if (state.GetIsPassable(newLoc)) {
+						IssueOrder(ant, direction);
 						// stop now, don't give 1 and multiple orders
 						break;
 					}
@@ -34,7 +34,7 @@ namespace Ants {
 		
 		
 		public static void Main (string[] args) {
-			new Ants().playGame(new MyBot());
+			new Ants().PlayGame(new MyBot());
 		}
 
 	}
