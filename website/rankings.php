@@ -25,7 +25,8 @@ $(function () {
         textExtraction: function (node) {
             node = $(node);
             if (node.attr("class") === "number") {
-                return parseFloat(node.text());
+        		var n = parseFloat(node.text());
+                return isNaN(n) ? 0.0 : n;
             } else if (node.attr("class") === "country") {
                 return node.children().children().attr("title");
             } else {
