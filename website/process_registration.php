@@ -101,12 +101,12 @@ if (strcmp($user_email, "donotsend") != 0) {
 
 // Check if the username is made up of the right kinds of characters
 if (!valid_username($username)) {
-  $errors[] = "Invalid username. Your username must be longer than 6 characters and composed only of the characters a-z, A-Z, 0-9, '-', '_', and '.'";
+  $errors[] = "Invalid username. Your username must be longer than 4 characters and composed only of the characters a-z, A-Z, 0-9, '-', '_', and '.'";
 }
 
 // Check that the username is between 6 and 16 characters long
-if (strlen($username) < 6 || strlen($username) > 16) {
-  $errors[] = "Your username must be between 6 and 16 characters long.";
+if (strlen($username) < 5 || strlen($username) > 16) {
+  $errors[] = "Your username must be between 5 and 16 characters long.";
 }
 
 // Check that the two passwords given match.
