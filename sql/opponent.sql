@@ -390,7 +390,7 @@ if @min_players <= @max_players then
     ) t
     where m.priority > 0
         and m.players = @players
-        and g.timestamp > timestampadd(hour, -24, current_timestamp)
+        and (g.timestamp is null or g.timestamp > timestampadd(hour, -24, current_timestamp))
     group by m.map_id
     order by count(gp.user_id), count(*), priority, map_id desc;
     
@@ -414,7 +414,7 @@ if @min_players <= @max_players then
     ) t
     where m.priority > 0
         and m.players = @players
-        and g.timestamp > timestampadd(hour, -24, current_timestamp)
+        and (g.timestamp is null or g.timestamp > timestampadd(hour, -24, current_timestamp))
     group by m.map_id
     order by count(gp.user_id), count(*), priority, map_id desc
     limit 1;
