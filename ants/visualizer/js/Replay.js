@@ -553,7 +553,7 @@ Replay.prototype.addMissingMetaData = function(swapIndex) {
                 color = PLAYER_COLORS[COLOR_MAP[i]];
             }
             if (swapIndex !== undefined && i == swapIndex) {
-                color = PLAYER_COLORS[COLOR_MAPS[1][0]];
+                color = PLAYER_COLORS[COLOR_MAPS[0][0]];
             }
             this.meta['playercolors'][i] = color = hsl_to_rgb(color);;
             /*

@@ -39,7 +39,7 @@ BOTTOM_PANEL_H = 64;
  * @const
  */
 COLOR_MAPS = [[ 10 ], // highlighted player
-              [ 1 ], // highlighted player
+              [ 1 ],
               [ 1, 6 ],
               [ 1, 3, 6 ],
               [ 1, 3, 6, 7 ],
