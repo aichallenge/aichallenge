@@ -6,7 +6,7 @@ sql = {
         update map set priority = priority + 1
             where priority >= 0
         """,
-    "insert_map_filenames": "insert into map (filename, players) values (%s, %s)",
+    "insert_map_filenames": "insert into map (filename, players, max_turns, timestamp) values (%s, %s, 1000, current_timestamp)",
 
     # used in delete_some_old_submissions.py
     "select_latest_submissions": "select submission_id from submission where latest = 1",
