@@ -268,7 +268,7 @@ function create_ranking_table($page=0, $org_id=NULL, $country_id=NULL, $language
         
         $games = $row["game_count"];
         $table .= "<td class=\"number\">$games</td>";
-        $game_rate = "<span title=\"average minutes between games\">".round($row["game_rate"], 0)."</span>";
+        $game_rate = "<span title=\"number of games in past 24 hours\">".round($row["game_rate"], 0)."</span>";
         $table .= "<td class=\"number\">$game_rate</td>";
         
         $table .= "</tr>";
