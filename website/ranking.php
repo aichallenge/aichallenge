@@ -224,7 +224,7 @@ function create_ranking_table($page=0, $org_id=NULL, $country_id=NULL, $language
   <th>Version</th>
   <th>Skill</th>
   <th>Games</th>
-  <th>Rate</th>
+  <th>Recent</th>
 </tr>
 </thead>';
     $table .= '<tbody>';
@@ -266,10 +266,8 @@ function create_ranking_table($page=0, $org_id=NULL, $country_id=NULL, $language
                             $row['skill_change'],$row['mu_change'],$row['sigma_change']);
         $table .= "<td class=\"number\">$skill</td>";
         
-        $games = $row["game_count"];
-        $table .= "<td class=\"number\">$games</td>";
-        $game_rate = "<span title=\"number of games in past 24 hours\">".round($row["game_rate"], 0)."</span>";
-        $table .= "<td class=\"number\">$game_rate</td>";
+        $table .= "<td class=\"number\"><span title=\"total games for current submission\">".$row["game_count"]."</span></td>";
+        $table .= "<td class=\"number\"><span title=\"number of games in past 24 hours\">".$row["game_rate"]."</span></td>";
         
         $table .= "</tr>";
     }
