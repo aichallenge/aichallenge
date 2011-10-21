@@ -32,6 +32,7 @@
       <li><a href="problem_description.php">Problem Description</a></li>
       <li><a href="specification.php">Game Specification</a></li>
       <li><a href="strategy_guide.php">Strategy Guide</a></li>
+      <li><a href="http://paste.aichallenge.org/">Share Maps & Replays)</a></li>
     </ul>
     <h1>Help</h1>
     <ul>
