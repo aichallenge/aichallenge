@@ -173,7 +173,7 @@ if (count($errors) <= 0) {
       $num_peers = $row['peers'];
       if ($num_peers == 0) {
         $peer_message = "You are the first person from your organization to sign up " .
-          "for the Google AI Challenge. We would really appreciate it if you would " .
+          "for the AI Challenge. We would really appreciate it if you would " .
           "encourage your friends to sign up for the Challenge as well. The more, " .
           "the merrier!\n\n";
       } else if (strcmp($org_name, "Other") == 0) {
@@ -183,7 +183,7 @@ if (count($errors) <= 0) {
               "your school or company.\n\n";
       } else {
         $peer_message = "" . $num_peers . " other people from " . $org_name .
-          " have already signed up for the Google AI Challenge. When you look " .
+          " have already signed up for the AI Challenge. When you look " .
           "at the rankings, you can see the global rankings, or " .
           "you can filter the list to only show other contestants from your organization!\n\n";
       }
@@ -198,7 +198,7 @@ if (count($errors) <= 0) {
         $memcache->delete('lookup:username');
     }
     // Send confirmation mail to user.
-    $mail_subject = "Google AI Challenge!";
+    $mail_subject = "AI Challenge!";
     $activation_url = current_url();
     $activation_url = str_replace("process_registration.php",
                                   "account_confirmation.php",

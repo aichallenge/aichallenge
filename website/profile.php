@@ -46,7 +46,8 @@ $bio = str_replace("\n","<br />",str_replace("\r","", htmlentities($userdata["bi
 if ($org_name == NULL) {
   $org_name = "None";
 }
-if (logged_in_with_valid_credentials() && current_user_id() == $user_id) {
+if (logged_in_with_valid_credentials() &&
+    (current_user_id() == $user_id || logged_in_as_admin())) {
     $logged_in = true;
     $sid = session_id();
     $update_key = sha1(
@@ -197,9 +198,7 @@ echo <<<EOT
 EOT;
 }
     echo "<p><strong>Rank:</strong> <span class=\"stats\">$rank</span> <strong>Skill:</strong> <span class=\"stats\">$skill</span></p>";
-    if ($user_id &&
-            logged_in_with_valid_credentials() &&
-            current_user_id() === $user_id) {
+    if ($logged_in) {
         $in_game_result = contest_query("select_in_game", $user_id);
         if ($in_game_result and mysql_num_rows($in_game_result) > 0) {
             echo "<p><strong>In Game:</strong> Playing in a game right now.</p>";
