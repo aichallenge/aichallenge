@@ -120,6 +120,8 @@ namespace Ants {
 						state.AddWater(row, col);
 					} else if (tokens[0].Equals("d")) {
 						state.DeadAnt(row, col);
+					} else if (tokens[0].Equals("h")) {
+						state.AntHill (row, col, int.Parse(tokens[3]));
 					}
 				}
 			}
