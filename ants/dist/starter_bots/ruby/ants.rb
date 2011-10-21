@@ -45,10 +45,10 @@ class Square
 	# Which column this square belongs to.
 	attr_accessor :col
 	
-	attr_accessor :water, :food, :ai
+	attr_accessor :water, :food, :hill, :ai
 	
-	def initialize water, food, ant, row, col, ai
-		@water, @food, @ant, @row, @col, @ai = water, food, ant, row, col, ai
+	def initialize water, food, hill, ant, row, col, ai
+		@water, @food, @hill, @ant, @row, @col, @ai = water, food, hill, ant, row, col, ai
 	end
 	
 	# Returns true if this square is not water. Square is passable if it's not water, it doesn't contain alive ants and it doesn't contain food.
@@ -57,7 +57,8 @@ class Square
 	def water?; @water; end
 	# Returns true if this square contains food.
 	def food?; @food; end
-	
+	# Returns owner number if this square is a hill, false if not
+	def hill?; @hill; end
 	# Returns true if this square has an alive ant.
 	def ant?; @ant and @ant.alive?; end;
 	
@@ -137,7 +138,7 @@ class AI
 		@stdout.puts 'go'
 		@stdout.flush
 		
-		@map=Array.new(@rows){|row| Array.new(@cols){|col| Square.new false, false, nil, row, col, self } }
+		@map=Array.new(@rows){|row| Array.new(@cols){|col| Square.new false, false, false, nil, row, col, self } }
 		@did_setup=true
 	end
 	
@@ -210,6 +211,7 @@ class AI
 			row.each do |square|
 				square.food=false
 				square.ant=nil
+				square.hill=false
 			end
 		end
 		
@@ -217,7 +219,7 @@ class AI
 		@enemy_ants=[]
 		
 		until((rd=@stdin.gets.strip)=='go')
-			_, type, row, col, owner = *rd.match(/(w|f|a|d) (\d+) (\d+)(?: (\d+)|)/)
+			_, type, row, col, owner = *rd.match(/(w|f|h|a|d) (\d+) (\d+)(?: (\d+)|)/)
 			row, col = row.to_i, col.to_i
 			owner = owner.to_i if owner
 			
@@ -226,6 +228,8 @@ class AI
 				@map[row][col].water=true
 			when 'f'
 				@map[row][col].food=true
+			when 'h'
+				@map[row][col].hill=owner
 			when 'a'
 				a=Ant.new true, owner, @map[row][col], self
 				@map[row][col].ant = a
