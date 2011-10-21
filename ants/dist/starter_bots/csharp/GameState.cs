@@ -27,6 +27,14 @@ namespace Ants {
 		public List<AntLoc> EnemyAnts { get; private set; }
 		public List<Location> DeadTiles { get; private set; }
 		public List<Location> FoodTiles { get; private set; }
+
+		public Tile this[Location location] {
+			get { return this.map[location.Row, location.Col]; }
+		}
+
+		public Tile this[int row, int col] {
+			get { return this.map[row, col]; }
+		}
 		
 		private Tile[,] map;
 		

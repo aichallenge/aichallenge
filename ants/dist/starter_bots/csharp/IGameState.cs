@@ -65,6 +65,16 @@ namespace Ants {
 		List<Location> FoodTiles { get; }
 
 		/// <summary>
+		/// Gets the <see cref="Tile"/> for the <paramref name="location"/>.
+		/// </summary>
+		Tile this [Location location] { get; }
+
+		/// <summary>
+		/// Gets the <see cref="Tile"/> for the <paramref name="row"/> and <paramref name="col"/>.
+		/// </summary>
+		Tile this [int row, int col] { get; }
+
+		/// <summary>
 		/// Gets whether <paramref name="location"/> is passable or not.
 		/// </summary>
 		/// <param name="location">The location to check.</param>
