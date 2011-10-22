@@ -9,6 +9,7 @@
 #include <vector>
 #include <queue>
 #include <stack>
+#include <stdint.h>
 
 #include "Timer.h"
 #include "Bug.h"
@@ -37,6 +38,7 @@ struct State
     double loadtime, turntime;
     std::vector<double> scores;
     bool gameover;
+    int64_t seed;
 
     std::vector<std::vector<Square> > grid;
     std::vector<Location> myAnts, enemyAnts, myHills, enemyHills, food;
