@@ -175,6 +175,31 @@ func (s *State) Loop(b Bot, BetweenTurnWork func()) os.Error {
 				s.Map.AddDestination(loc)
 				s.Map.AddLand(loc, s.ViewRadius2)
 			}
+		case "A":
+			if len(words) < 4 {
+				log.Panicf("Invalid command format (not enough parameters for ant): \"%s\"", line)
+			}
+			Row, _ := strconv.Atoi(words[1])
+			Col, _ := strconv.Atoi(words[2])
+			Ant, _ := strconv.Atoi(words[3])
+			loc := s.Map.FromRowCol(Row, Col)
+			s.Map.AddAnt(loc, Item(Ant).ToOccupied())
+
+			//if it turns out that you don't actually use the visible radius for anything,
+			//feel free to comment this out. It's needed for the image debugging, though.
+			if Item(Ant) == MY_ANT {
+				s.Map.AddDestination(loc)
+				s.Map.AddLand(loc, s.ViewRadius2)
+			}
+		case "h":
+			if len(words) < 4 {
+				log.Panicf("Invalid command format (not enough parameters for ant): \"%s\"", line)
+			}
+			Row, _ := strconv.Atoi(words[1])
+			Col, _ := strconv.Atoi(words[2])
+			Ant, _ := strconv.Atoi(words[3])
+			loc := s.Map.FromRowCol(Row, Col)
+			s.Map.AddHill(loc, Item(Ant).ToUnoccupied())
 		case "d":
 			if len(words) < 4 {
 				log.Panicf("Invalid command format (not enough parameters for dead ant): \"%s\"", line)
