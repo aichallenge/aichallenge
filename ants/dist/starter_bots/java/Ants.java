@@ -402,6 +402,5 @@ public class Ants {
         Order order = new Order(myAnt, direction);
         orders.add(order);
         System.out.println(order);
-        System.out.flush();
     }
 }
