@@ -236,6 +236,35 @@ namespace Ants {
 			
 			return directions;
 		}
+		
+		public bool GetIsVisible(Location loc)
+		{
+			List<Location> offsets = new List<Location>();
+			int squares = (int)Math.Floor(Math.Sqrt(this.ViewRadius2));
+			for (int r = -1 * squares; r <= squares; ++r)
+			{
+				for (int c = -1 * squares; c <= squares; ++c)
+				{
+					int square = r * r + c * c;
+					if (square < this.ViewRadius2)
+					{
+						offsets.Add(new Location(r, c));
+					}
+				}
+			}
+			foreach (Ant ant in this.MyAnts)
+			{
+				foreach (Location offset in offsets)
+				{
+					if ((ant.Col + offset.Col) == loc.Col &&
+						(ant.Row + offset.Row) == loc.Row)
+					{
+								 return true;
+					}
+				}
+			}
+			return false;
+		}
 
 	}
 }
