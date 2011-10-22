@@ -41,6 +41,7 @@ import org.mozilla.javascript.optimizer.Codegen;
 import com.aicontest.visualizer.js.dom.Console;
 import com.aicontest.visualizer.js.dom.HTMLCanvasElement;
 import com.aicontest.visualizer.js.dom.HTMLImageElement;
+import com.aicontest.visualizer.js.dom.Navigator;
 import com.aicontest.visualizer.js.dom.XMLHttpRequest;
 import com.aicontest.visualizer.js.tasks.DelayedExecutionUnit;
 import com.aicontest.visualizer.js.tasks.EventExecutionUnit;
@@ -95,6 +96,7 @@ public class WebWrapper {
 				XMLHttpRequest.class);
 		global.put("XMLHttpRequest", global, xmlHttpRequest);
 		new Console(global, "console");
+		new Navigator(global, "navigator");
 		jsonParser = new JsonParser(cx, global);
 		String[] names = { "alert", "prompt", "confirm" };
 		global.defineFunctionProperties(names, WebWrapper.class,
