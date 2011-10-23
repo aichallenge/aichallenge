@@ -198,17 +198,13 @@ if @min_players <= @max_players then
                             exp(-(pow(p.mu - s.mu, 2) / (2 * (@twiceBetaSq + pow(p.sigma,2) + pow(s.sigma,2)))))
                         ))) as match_quality
                     from
-                    submission p, -- current players in match
+                    matchup_player p, -- current players in match
                     submission s  -- possible next players
                     -- get game count for last 24 hours
                     inner join tmp_games t
                         on t.user_id = s.user_id
                     -- join with all players in current matchup to average match quality
-                    where p.submission_id in (
-                        select submission_id
-                        from matchup_player
-                        where matchup_id = @matchup_id
-                    )
+                    where p.matchup_id = @matchup_id
                     -- exclude players with high 24 hour game count
                     and t.game_count < @avg_game_count
                     -- exclude players currently in the matchup
