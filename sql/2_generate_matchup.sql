@@ -220,7 +220,7 @@ if @min_players <= @max_players then
                     )
                     and s.latest = 1 and s.status = 40
                     group by s.user_id, s.submission_id, s.mu, s.sigma
-                    order by 5 desc
+                    order by 6 desc
                 ) s,
                 (select @seq := 0) seq
             ) s
