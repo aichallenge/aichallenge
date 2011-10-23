@@ -295,7 +295,7 @@ class Worker:
                             os.chmod(dirpath, 0755)
                             for filename in filenames:
                                 filename = os.path.join(dirpath, filename)
-                                os.chmod(filename,stat.S_IMODE(os.stat(filename).st_mode) | stat.S_IRGRP | stat.S_IROTH)
+                                os.chmod(filename,stat.S_IMODE(os.stat(filename).st_mode) | stat.S_IRUSR | stat.S_IRGRP | stat.S_IROTH)
                         break
                 else:
                     return False
