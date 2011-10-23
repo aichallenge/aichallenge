@@ -17,6 +17,7 @@ require_once('memcache.php');
 
 function create_new_submission_for_current_user() {
     global $memcache;
+    
     if ($memcache) {
         $memcache->delete("lookup:submission_id");
     }
