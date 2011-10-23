@@ -281,10 +281,9 @@ $contest_sql = array(
             from submission
             where latest = 1 and status = 40
             and (max_game_id < (
-                select max_game_id
+                select max(max_game_id)
                 from submission
-                where latest = 1 and status = 40
-                    and user_id = %s
+                where user_id = %s
             ) or submission_id in (
                 select submission_id
                 from matchup_player mp
