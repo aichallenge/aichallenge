@@ -10,7 +10,7 @@ function send_email($recipient, $subject, $body) {
         $server_info["aws_secretkey"]);
     $msg = new SimpleEmailServiceMessage();
     $msg->setFrom($server_info["mailer_address"]);
-    if (isset($server_info["mailer_bounce_to"]) {
+    if (isset($server_info["mailer_bounce_to"])) {
         $bounce_address = $server_info["mailer_bounce_to"];
     } else {
         $bounce_address = $server_info["mailer_address"];
