@@ -439,6 +439,7 @@ class Worker:
         log.debug(options)
         options["map"] = self.get_test_map()
         options['capture_errors'] = True
+        options['capture_errors_max'] = 1010
         game = Ants(options)
         if submission_id in self.download_dirs:
             bot_dir = self.download_dirs[submission_id]
