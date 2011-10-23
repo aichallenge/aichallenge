@@ -29,35 +29,35 @@ if @min_players <= @max_players then
     set @twiceBetaSq = 2 * pow(@init_beta, 2);
 
     if the_user_id is null then
-    
-    -- Step 1: select the seed player
-    select s.user_id, s.submission_id, s.mu, s.sigma
-    into @seed_id, @submission_id, @mu, @sigma
-    from submission s
-    left outer join (
-        select seed_id, max(matchup_id) as max_matchup_id
-        from matchup
-        where (worker_id >= 0 or worker_id is null)
-            and deleted = 0
-        group by seed_id
-    ) m
-        on s.user_id = m.seed_id
-    where s.latest = 1 and s.status = 40
-    -- this selects the user that has least recently played in any game
-    -- and used them for the next seed player
-    -- from both the game and matchup tables
-    order by m.max_matchup_id asc,
-             s.max_game_id asc,
-             s.user_id asc
-    limit 1;
+	    
+	    -- Step 1: select the seed player
+	    select s.user_id, s.submission_id, s.mu, s.sigma
+	    into @seed_id, @submission_id, @mu, @sigma
+	    from submission s
+	    left outer join (
+	        select seed_id, max(matchup_id) as max_matchup_id
+	        from matchup
+	        where (worker_id >= 0 or worker_id is null)
+	            and deleted = 0
+	        group by seed_id
+	    ) m
+	        on s.user_id = m.seed_id
+	    where s.latest = 1 and s.status = 40
+	    -- this selects the user that has least recently played in any game
+	    -- and used them for the next seed player
+	    -- from both the game and matchup tables
+	    order by m.max_matchup_id asc,
+	             s.max_game_id asc,
+	             s.user_id asc
+	    limit 1;
     
     else
     
-    select s.user_id, s.submission_id, s.mu, s.sigma
-    into @seed_id, @submission_id, @mu, @sigma
-    from submission s
-    where s.user_id = the_user_id
-        and s.latest = 1 and s.status = 40;
+	    select s.user_id, s.submission_id, s.mu, s.sigma
+	    into @seed_id, @submission_id, @mu, @sigma
+	    from submission s
+	    where s.user_id = the_user_id
+	        and s.latest = 1 and s.status = 40;
         
     end if;
 
@@ -65,10 +65,12 @@ if @min_players <= @max_players then
     drop table if exists tmp_matchup;
     create table tmp_matchup
     select * from matchup;
+    create index tmp_matchup_matchup_id_idx on tmp_matchup (matchup_id);
     
     drop table if exists tmp_matchup_player;
     create table tmp_matchup_player
     select * from matchup_player;
+    create index tmp_matchup_player_matchup_user_id_idx on tmp_matchup_player (matchup_id, user_id);
     
     -- create matchup and add seed player
     -- worker_id of 0 prevents workers from pulling the task
@@ -253,29 +255,24 @@ if @min_players <= @max_players then
                             exp(-(pow(p.mu - s.mu, 2) / (2 * (@twiceBetaSq + pow(p.sigma,2) + pow(s.sigma,2)))))
                         ))) as match_quality
                     from
-                    submission p, -- current players in match
+                    tmp_matchup_player p, -- current players in match
                     submission s  -- possible next players
                     -- get game count for last 24 hours
                     inner join tmp_games t
                         on t.user_id = s.user_id
                     -- join with all players in current matchup to average match quality
-                    where p.submission_id in (
-                        select submission_id
-                        from tmp_matchup_player
-                        where matchup_id = @matchup_id
-                    )
+                    where p.matchup_id = @matchup_id
                     -- exclude players with high 24 hour game count
                     and t.game_count < @avg_game_count
                     -- exclude players currently in the matchup
-                    and not exists (
-                        select *
+                    and s.user_id not in (
+                        select mp.user_id
                         from tmp_matchup_player mp
                         where mp.matchup_id = @matchup_id
-                        and mp.user_id = s.user_id
                     )
                     and s.latest = 1 and s.status = 40
                     group by s.user_id, s.submission_id, s.mu, s.sigma, t.game_count
-                    order by 5 desc
+                    order by 6 desc
                 ) s,
                 (select @seq := 0) seq
             ) s
@@ -317,29 +314,24 @@ if @min_players <= @max_players then
                             exp(-(pow(p.mu - s.mu, 2) / (2 * (@twiceBetaSq + pow(p.sigma,2) + pow(s.sigma,2)))))
                         ))) as match_quality
                     from
-                    submission p, -- current players in match
+                    tmp_matchup_player p, -- current players in match
                     submission s  -- possible next players
                     -- get game count for last 24 hours
                     inner join tmp_games t
                         on t.user_id = s.user_id
                     -- join with all players in current matchup to average match quality
-                    where p.submission_id in (
-                        select submission_id
-                        from tmp_matchup_player
-                        where matchup_id = @matchup_id
-                    )
+                    where p.matchup_id = @matchup_id
                     -- exclude players with high 24 hour game count
                     and t.game_count < @avg_game_count
                     -- exclude players currently in the matchup
-                    and not exists (
-                        select *
+                    and s.user_id not in (
+                        select mp.user_id
                         from tmp_matchup_player mp
                         where mp.matchup_id = @matchup_id
-                        and mp.user_id = s.user_id
                     )
                     and s.latest = 1 and s.status = 40
                     group by s.user_id, s.submission_id, s.mu, s.sigma
-                    order by 5 desc
+                    order by 6 desc
                 ) s,
                 (select @seq := 0) seq
             ) s
