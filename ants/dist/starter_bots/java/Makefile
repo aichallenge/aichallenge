@@ -2,7 +2,7 @@ JAVAC=javac
 JAVAC_ARGS=
 
 SOURCES=MyBot.java
-CLASSES=$(SOURCES:%.java=%.class)
+CLASSES=*.class
 
 .PHONY: all clean
 
