@@ -147,7 +147,7 @@ def main(argv):
                           default="symmetric",
                           help="Food spawning method. (none, random, sections, symmetric)")
     game_group.add_option("--viewradius2", dest="viewradius2",
-                          default=55, type="int",
+                          default=77, type="int",
                           help="Vision radius of ants squared")
     game_group.add_option("--spawnradius2", dest="spawnradius2",
                           default=1, type="int",
