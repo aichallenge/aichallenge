@@ -176,8 +176,6 @@ class Ants(Game):
         # the engine may kill players before the game starts and this is needed to prevent errors
         self.orders = [[] for i in range(self.num_players)]
         
-        self.probable_rank = None
-        self.probably_turn = None
 
     def distance(self, a_loc, b_loc):
         """ Returns distance between x and y squared """
@@ -1379,19 +1377,7 @@ class Ants(Game):
         if self.is_rank_stabilized():
             self.cutoff = 'rank stabilized'
             return True
-              
-        # check if not ending a game earlier makes any difference
-        if self.probably_turn is None:
-            probable_winner = list(set(list(self.remaining_players())) & set(self.remaining_hills()))
-            if len(probable_winner) <= 1:
-                probable_score = self.score[:]
-                probable_score[probable_winner[0]] += sum([HILL_POINTS for hill in self.hills.values()
-                                                           if hill.killed_by == None
-                                                           and hill.owner != probable_winner[0]])            
-                # entering extended player period
-                self.probable_rank = [sorted(probable_score, reverse=True).index(x) for x in probable_score]
-                self.probably_turn = self.turn
-            
+
         return False
 
     def kill_player(self, player):
@@ -1425,11 +1411,6 @@ class Ants(Game):
         # check if a rule change lengthens games needlessly
         if self.cutoff is None:
             self.cutoff = 'turn limit reached'
-        if self.probable_rank is not None:
-            if self.probable_rank == self.ranking_bots:
-                self.cutoff += " extended same"
-            else:
-                self.cutoff += " extended different"
 
     def start_turn(self):
         """ Called by engine at the start of the turn """
@@ -1724,9 +1705,6 @@ class Ants(Game):
         replay['winning_turn'] = self.winning_turn
         replay['ranking_turn'] = self.ranking_turn
         replay['cutoff'] =  self.cutoff
-        if self.probable_rank is not None:
-            replay['probable_rank'] = self.probable_rank
-            replay['probable_turn'] = self.probably_turn
 
         return replay
 
