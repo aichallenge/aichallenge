@@ -29,7 +29,7 @@ TEX_MODE = re.compile(r'(?=(?<!\\)\\\[).(.+?)(?<!\\)\\\]',
 
 # $MATH$ mode which is the typical LaTeX math mode.
 MATH_MODE = re.compile(r'(?=(?<!\\)\$).(.+?)(?<!\\)\$',
-        re.MULTILINE | re.DOTALL)
+        re.MULTILINE)
 
 # %%PREAMBLE%% text that modifys the LaTeX preamble for the document
 PREAMBLE_MODE = re.compile(r'(?=(?<!\\)\$\$\$).(.+?)(?<!\\)\$\$\$',
