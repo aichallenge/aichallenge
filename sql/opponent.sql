@@ -234,9 +234,12 @@ if @min_players <= @max_players then
         ) g
         group by 1;
      
-    select avg(game_count) * 1.1
+    select avg(tg.game_count) * 1.1
     into @avg_game_count
-    from tmp_games;
+    from tmp_games tg
+    inner join submission s
+        on s.user_id = tg.user_id
+    where s.latest = 1 and s.status = 40;
     
     select @avg_game_count as avg_game_count;
         
