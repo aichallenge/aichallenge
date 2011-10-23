@@ -2,7 +2,7 @@ JAVAC=javac
 JAVAC_ARGS=
 
 SOURCES=MyBot.java
-CLASSES=*.class
+CLASSES=Ants.class Bot.class Aim.class Ilk.class Order.class Tile.class MyBot.class AbstractSystemInputParser.class AbstractSystemInputReader.class
 
 .PHONY: all clean
 
