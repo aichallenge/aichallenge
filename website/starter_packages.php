@@ -27,6 +27,12 @@ include 'header.php';
     <th>info</th>
   </tr>
   <tr>
+    <td><a href="starter_packages/ada_starter_package.zip">Ada</a></td>
+    <td>gcc GNAT (Ubuntu/Linaro 4.5.2-8ubuntu4) 4.5.2</td>
+    <td>&nbsp;</td>
+    <td>Beta state, Timers not implemented yet</td>
+  </tr>
+  <tr>
     <td><a href="starter_packages/c_starter_package.zip">C</a></td>
     <td>gcc (Ubuntu/Linaro 4.5.2-8ubuntu4) 4.5.2</td>
     <td>&nbsp;</td>
