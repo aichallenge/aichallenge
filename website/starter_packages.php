@@ -13,9 +13,11 @@ include 'header.php';
   <li>Some sample opponents that you can test your bot against</li>
   <li>One hundred randomly generated maps that you can use for testing</li>
 </ul>
-<p>Since each starter package contains a simple already-working entry, you can actually submit the ZIP file on the Upload Your Code page. See the<a href="quickstart.php">Five Minute Quickstart Guide</a> to learn how to get your name up on the global leaderboard in less than five minutes.</p>
+<p>Since each starter package contains a simple already-working entry, you can actually submit the ZIP file on the Upload Your Code page. See the <a href="quickstart.php">Five Minute Quickstart Guide</a> to learn how to get your name up on the global leaderboard in less than five minutes.</p>
 
 <p>Please note that some of these starter packages do not have the hills implemented yet. We will need a volunteer to fix these.</p>
+
+<p>You will need to download the tools in addition to the starter pack.  Choose <a href="/tools.zip">Windows</a> or <a href="/tools.tar.bz2">Linux / MacOS</a></p>
 
 <p><strong>Note: The tools come with the game engine written in python.  You will need to install a python interpreter to run the game engine regardless of which language you are programming in.</strong></p>
 
