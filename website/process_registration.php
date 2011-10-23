@@ -101,6 +101,11 @@ if (strcmp($user_email, "donotsend") != 0) {
   if ($result && mysql_num_rows($result) > 0) {
     $errors[] = "The email $user_email is already in use. You are only allowed to have one account! It is easy for us to tell if you have two accounts, and you will be disqualified if you have two accounts! If there is some problem with your existing account, get in touch with the contest organizers on irc.freenode.com channel #aichallenge and we will help you get up-and-running again!";
   }
+  $edomain = substr(strrchr($user_email, '@'), 1);
+  $mx_records = array();
+  if (!getmxrr($edomain, $mx_records)) {
+    $errors[] = "Could not find the email address entered. Please enter a valid email address.";
+  }
 }
 
 // Check if the username is made up of the right kinds of characters
