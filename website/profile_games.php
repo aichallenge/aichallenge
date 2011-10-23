@@ -13,6 +13,11 @@ if ($user_id !== NULL) {
     $user_row = get_user_by_submission($submission_id);
     $partial_title = "'s Games for Version ".$user_row['version'];
 }
+
+if (!isset($user_row)) {
+    die("No user or submission data found.");
+}
+
 $user_id = $user_row['user_id'];
 $username = htmlentities($user_row['username'], ENT_COMPAT, "UTF-8");
 
