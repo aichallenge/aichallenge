@@ -248,7 +248,7 @@ function create_ranking_table($page=0, $org_id=NULL, $country_id=NULL, $language
             }
             $table .= "<td class=\"number\">".nice_rank($row["rank"], $row["rank_change"], $filter_rank)."</td>";
         } else {
-            $table .= "<td class=\"number\"><span title=\"best submission's last rank\"&gt;(&gt;\")></span></td>";
+            $table .= "<td class=\"number\"><span title=\"best submission's last rank\">(&gt;\")&gt;</span></td>";
         }
 
         $table .= "<td class=\"username\">".nice_user($row["user_id"], $row["username"])."</td>";
