@@ -31,6 +31,8 @@ function valid_username($s) {
 }
 
 function create_new_organization( $org_name ) {
+    global $memcache;
+    
     if ($memcache) {
         $memcache->delete('lookup:org_id');
         $memcache->delete('lookup:org_name');
