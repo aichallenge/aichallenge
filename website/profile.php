@@ -207,7 +207,8 @@ EOT;
             if ($next_game_result) {
                 while ($next_game_row = mysql_fetch_assoc($next_game_result)) {
                     echo "<p><strong>Next Game:</strong> ".$next_game_row["players_ahead"]." players are ahead.<br />";
-                    echo "The current game rate is about ".$next_game_row["players_per_minute"]." players per minute.<br />";
+                    echo "The current player rate is about ".$next_game_row["players_per_minute"]." players per minute.<br />";
+                    echo "The current game rate is about ".$next_game_row["games_per_minute"]." games per minute.<br />";
                     if ($next_game_row["players_per_minute"] == 0) {
                         echo "Next game could take awhile...";
                     } else {
