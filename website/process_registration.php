@@ -26,6 +26,19 @@ function check_valid_organization($code) {
   return (boolean)mysql_num_rows($result);
 }
 
+function check_valid_country($id) {
+  if ($id == 999 || !filter_var($id, FILTER_VALIDATE_INT)) {
+    return False;
+  }
+  $query = "SELECT count(*) from country where country_id=". $id;
+  $result = mysql_query($query);
+  $row = mysql_fetch_assoc($result);
+  if ($row['count(*)'] > 0) {
+    return True;
+  }
+  return False;
+}
+
 function valid_username($s) {
   return strspn($s, "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_.-") == strlen($s);
 }
@@ -140,7 +153,7 @@ if (!check_valid_user_status_code($user_status)) {
 }
 
 // Check that the country code is not empty.
-if (strlen($country_id) <= 0) {
+if (!check_valid_country($country_id)) {
   $errors[] = "You did not select a valid country from the dropdown box.";
 }
 
