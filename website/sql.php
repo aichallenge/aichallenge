@@ -170,7 +170,7 @@ $contest_sql = array(
             on l.language_id = s.language_id
         left outer join country c
             on u.country_id = c.country_id
-        where s.latest = 1
+        where s.latest = 1 and status = 40 and rank is not null
         %s
         order by rank
         %s", // placeholders for optional where clause and limit
