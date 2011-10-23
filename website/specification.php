@@ -38,7 +38,7 @@ require_once('header.php');
 </div>
 
 <div id="Food-Harvesting">
-<!--<MarkdownReplacement with="competition-Cutoff-Rules.md">--><!--</MarkdownReplacement>-->
+<!--<MarkdownReplacement with="competition-Food-Harvesting.md">--><!--</MarkdownReplacement>-->
 </div>
 
 <div id="Ant-Spawning">
