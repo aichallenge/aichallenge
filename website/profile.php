@@ -198,7 +198,7 @@ echo <<<EOT
 EOT;
 }
     echo "<p><strong>Rank:</strong> <span class=\"stats\">$rank</span> <strong>Skill:</strong> <span class=\"stats\">$skill</span></p>";
-    if ($logged_in) {
+    if ($logged_in && ($user_id == current_user_id() or logged_in_as_admin())) {
         $in_game_result = contest_query("select_in_game", $user_id);
         if ($in_game_result and mysql_num_rows($in_game_result) > 0) {
             echo "<p><strong>In Game:</strong> Playing in a game right now.</p>";
