@@ -1,0 +1,5 @@
+This is an Ada Starter Bot for http://aichallenge.org/
+
+Most features should be working fine except for visibility (to be fixed in coming updates)
+
+The compilation has been tested with GCC 4.5.2 on Slackware 13.37 using the instructions in the included Makefile
