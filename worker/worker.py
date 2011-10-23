@@ -285,11 +285,13 @@ class Worker:
                         if exit_status != 0:
                             return False
                         # check for single directory only and move everything up
-                        if len(os.listdir('bot')) == 1:
-                            one_path = os.listdir('bot')[0]
+                        unpacked_listing = [p for p in os.listdir('bot')
+                                if p != "__MACOSX"]
+                        if len(unpacked_listing) == 1:
+                            one_path = os.path.join('bot', unpacked_listing[0])
                             if os.path.isdir(one_path):
-                                os.rename(os.path.join('bot',one_path), 'tmp')
-                                os.rmdir('bot')
+                                os.rename(one_path, 'tmp')
+                                shutil.rmtree('bot')
                                 os.rename('tmp', 'bot')
                         for dirpath, _, filenames in os.walk("."):
                             os.chmod(dirpath, 0755)
