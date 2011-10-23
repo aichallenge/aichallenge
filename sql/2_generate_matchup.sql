@@ -208,11 +208,10 @@ if @min_players <= @max_players then
                     -- exclude players with high 24 hour game count
                     and t.game_count < @avg_game_count
                     -- exclude players currently in the matchup
-                    and not exists (
-                        select *
+                    and s.user_id not in (
+                        select mp.user_id
                         from matchup_player mp
                         where mp.matchup_id = @matchup_id
-                        and mp.user_id = s.user_id
                     )
                     and s.latest = 1 and s.status = 40
                     group by s.user_id, s.submission_id, s.mu, s.sigma
