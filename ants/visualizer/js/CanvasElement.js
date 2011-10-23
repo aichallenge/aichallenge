@@ -407,9 +407,9 @@ CanvasElementFog.prototype.draw = function() {
 	var x, y, rowPixels, colPixels, x_idx, y_idx, rows, cols;
 	var x_i, y_i, x_f, y_f, fogRow;
 	var start = null;
-	this.ctx.fillStyle = this.ptrn;
-	this.ctx.fillRect(0, 0, this.w, this.h);
 	if (this.fogMap) {
+		this.ctx.fillStyle = this.ptrn;
+		this.ctx.fillRect(0, 0, this.w, this.h);
 		cols = this.fogMap[0].length;
 		colPixels = this.scale * cols;
 		x = (this.w < colPixels) ? ((this.w - colPixels) >> 1) + this.shiftX : 0;
@@ -441,6 +441,8 @@ CanvasElementFog.prototype.draw = function() {
 			}
 			y_i = (y_i + 1) % rows;
 		}
+	} else {
+		this.ctx.clearRect(0, 0, this.w, this.h);
 	}
 };
 

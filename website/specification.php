@@ -12,6 +12,7 @@ require_once('header.php');
 <li><a href="#Turns-and-Phases">Turns and Phases</a></li>
 <li><a href="#Scoring">Scoring</a></li>
 <li><a href="#Cutoff-Rules">Cutoff Rules</a></li>
+<li><a href="#Food-Harvesting">Food Harvesting</a></li>
 <li><a href="#Ant-Spawning">Ant Spawning</a></li>
 <li><a href="#Food-Spawning">Food Spawning</a></li>
 <li><a href="#Battle-Resolution">Battle Resolution</a></li>

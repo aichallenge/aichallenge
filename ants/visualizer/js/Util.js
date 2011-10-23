@@ -58,17 +58,144 @@ Math.dist_2 = function(x1, y1, x2, y2, w, h) {
 	return dx * dx + dy * dy;
 };
 
+var BrowserDetect = {
+	searchString: function (data) {
+		for (var i=0;i<data.length;i++)	{
+			var dataString = data[i].string;
+			var dataProp = data[i].prop;
+			this.versionSearchString = data[i].versionSearch || data[i].identity;
+			if (dataString) {
+				if (dataString.indexOf(data[i].subString) != -1)
+					return data[i].identity;
+			}
+			else if (dataProp)
+				return data[i].identity;
+		}
+	},
+	searchVersion: function (dataString) {
+		var index = dataString.indexOf(this.versionSearchString);
+		if (index == -1) return;
+		return parseFloat(dataString.substring(index+this.versionSearchString.length+1));
+	},
+	dataBrowser: [
+		{
+			string: navigator.userAgent,
+			subString: "Chrome",
+			identity: "Chrome"
+		},
+		{ 	string: navigator.userAgent,
+			subString: "OmniWeb",
+			versionSearch: "OmniWeb/",
+			identity: "OmniWeb"
+		},
+		{
+			string: navigator.vendor,
+			subString: "Apple",
+			identity: "Safari",
+			versionSearch: "Version"
+		},
+		{
+			prop: window.opera,
+			identity: "Opera",
+			versionSearch: "Version"
+		},
+		{
+			string: navigator.vendor,
+			subString: "iCab",
+			identity: "iCab"
+		},
+		{
+			string: navigator.vendor,
+			subString: "KDE",
+			identity: "Konqueror"
+		},
+		{
+			string: navigator.userAgent,
+			subString: "Firefox",
+			identity: "Firefox"
+		},
+		{
+			string: navigator.vendor,
+			subString: "Camino",
+			identity: "Camino"
+		},
+		{		// for newer Netscapes (6+)
+			string: navigator.userAgent,
+			subString: "Netscape",
+			identity: "Netscape"
+		},
+		{
+			string: navigator.userAgent,
+			subString: "MSIE",
+			identity: "Explorer",
+			versionSearch: "MSIE"
+		},
+		{
+			string: navigator.userAgent,
+			subString: "Gecko",
+			identity: "Mozilla",
+			versionSearch: "rv"
+		}
+	],
+	dataOS : [
+		{
+			string: navigator.platform,
+			subString: "Win",
+			identity: "Windows"
+		},
+		{
+			string: navigator.platform,
+			subString: "Mac",
+			identity: "Mac"
+		},
+		{
+			   string: navigator.userAgent,
+			   subString: "iPhone",
+			   identity: "iPhone/iPod"
+	    },
+		{
+			string: navigator.platform,
+			subString: "Linux",
+			identity: "Linux"
+		}
+	],
+	filterNotAny : function(list) {
+		var i;
+		var result = false;
+		for (i = 0; i < list.length; i++) {
+			result = result || this.filter(list[i][0], list[i][1], list[i][2]);
+			if (result) break;
+		}
+		return !result;
+	},
+	filter : function(browser, version, system) {
+		return (!(this.browser != browser || this.version != version || this.system != system));
+	},
+	init : function() {
+		this.browser = this.searchString(this.dataBrowser) || "unknown";
+		this.version = this.searchVersion(navigator.userAgent) || this.searchVersion(navigator.appVersion) || "unknown";
+		this.system  = this.searchString(this.dataOS) || "unknown";
+	}
+};
+BrowserDetect.init();
+
 /**
  * A set of browser quirks, that can be queried to take alternate code paths.
  * 
  * @namespace
  */
-Quirks = {
+var Quirks = {
 	/**
 	 * True for browsers that correctly support the HTML canvas shadow effect.
 	 */
-	fullImageShadowSupport : !(typeof window !== 'undefined' && window.navigator && window.navigator.userAgent
-			.match(/\b(Firefox\/5\.|Chrome\/1[23]\.).*/))
+	fullImageShadowSupport : BrowserDetect.filterNotAny([
+		// shadow applies blur in shadow color to image
+		['Firefox', 5], 
+		// new rendering engine cuts off parts of images
+		['Firefox', 7, 'Windows'],
+		// no shadow blur support
+		['Chrome', 12], ['Chrome', 13]
+	])
 };
 
 /**
@@ -76,7 +203,7 @@ Quirks = {
  * 
  * @namespace
  */
-Key = {
+var Key = {
 	LEFT : 37,
 	RIGHT : 39,
 	SPACE : 32,
@@ -96,7 +223,7 @@ Key = {
  * 
  * @namespace
  */
-Html = {
+var Html = {
 	/**
 	 * Creates a table HTML element.
 	 * 
@@ -187,7 +314,7 @@ Html = {
  * 
  * @namespace
  */
-Shape = {
+var Shape = {
 	/**
 	 * Draws the rounded rectangles used by buttons. Drawing attributes must be set before calling
 	 * this function.

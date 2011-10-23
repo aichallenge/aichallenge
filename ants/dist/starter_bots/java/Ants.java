@@ -328,9 +328,6 @@ public class Ants {
      * Clears game state information about my ants locations.
      */
     public void clearMyAnts() {
-        for (Tile myAnt : myAnts) {
-            map[myAnt.getRow()][myAnt.getCol()] = Ilk.LAND;
-        }
         myAnts.clear();
     }
     
@@ -338,9 +335,6 @@ public class Ants {
      * Clears game state information about enemy ants locations.
      */
     public void clearEnemyAnts() {
-        for (Tile enemyAnt : enemyAnts) {
-            map[enemyAnt.getRow()][enemyAnt.getCol()] = Ilk.LAND;
-        }
         enemyAnts.clear();
     }
     
@@ -356,6 +350,19 @@ public class Ants {
      */
     public void clearEnemyHills() {
         enemyHills.clear();
+    }
+
+    /**
+     * Clears game map state information
+     */
+    public void clearMap() {
+        for (int row = 0; row < rows; row++) {
+            for (int col = 0; col < cols; col++) {
+                if (map[row][col] != Ilk.WATER) {
+                    map[row][col] = Ilk.LAND;
+                }
+            }
+        }
     }
     
     /**
@@ -402,6 +409,5 @@ public class Ants {
         Order order = new Order(myAnt, direction);
         orders.add(order);
         System.out.println(order);
-        System.out.flush();
     }
 }
