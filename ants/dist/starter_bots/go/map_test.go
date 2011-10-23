@@ -45,12 +45,17 @@ func TestMap(t *testing.T) {
 	}
 
 	m.AddAnt(n, MY_ANT)
-	m.AddAnt(s, MY_ANT)
+	m.AddAnt(s, ANT_1)
+	m.AddAnt(w, MY_HILL)
+	m.AddAnt(e, MY_OCCUPIED_HILL)
+	m.AddHill(m.FromRowCol(0, 0), HILL_1)
+	m.AddHill(m.FromRowCol(1, 0), HILL_1)
+	m.AddAnt(m.FromRowCol(1, 0), ANT_1)
 
-	if m.String() != `. . a 
-. . . 
+	if m.String() != `1 . b 
+B . . 
 . . a 
-. . . 
+A 0 . 
 ` {
 		t.Errorf("map put ants in wrong place, got `%s`", m)
 	}

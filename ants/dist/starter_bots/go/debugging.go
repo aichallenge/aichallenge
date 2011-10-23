@@ -78,23 +78,23 @@ func (o Item) Color() image.NRGBAColor {
 		return image.NRGBAColor{0x69, 0x33, 0x05, 0xff}
 	case MY_ANT:
 		return image.NRGBAColor{0xf0, 0x00, 0x00, 0xff}
-	case PLAYER1:
+	case ANT_1:
 		return image.NRGBAColor{0xf0, 0xf0, 0x00, 0xff}
-	case PLAYER2:
+	case ANT_2:
 		return image.NRGBAColor{0x00, 0xf0, 0x00, 0xff}
-	case PLAYER3:
+	case ANT_3:
 		return image.NRGBAColor{0x00, 0x00, 0xf0, 0xff}
-	case PLAYER4:
+	case ANT_4:
 		return image.NRGBAColor{0xf0, 0x00, 0xf0, 0xff}
-	case PLAYER5:
+	case ANT_5:
 		return image.NRGBAColor{0xf0, 0xf0, 0xf0, 0xff}
-	case PLAYER6:
+	case ANT_6:
 		return image.NRGBAColor{0x80, 0x80, 0x00, 0xff}
-	case PLAYER7:
+	case ANT_7:
 		return image.NRGBAColor{0x00, 0x80, 0x80, 0xff}
-	case PLAYER8:
+	case ANT_8:
 		return image.NRGBAColor{0x80, 0x00, 0x80, 0xff}
-	case PLAYER9:
+	case ANT_9:
 		return image.NRGBAColor{0x80, 0x00, 0xf0, 0xff}
 	}
 	return image.NRGBAColor{0x00, 0x00, 0x00, 0xff}
