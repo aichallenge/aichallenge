@@ -595,6 +595,9 @@ class Ants(Game):
             except IndexError:
                 invalid.append((line,'out of bounds'))
                 continue
+            if loc[0] < 0 or loc[1] < 0:
+                invalid.append((line,'out of bounds'))
+                continue
             dest = self.destination(loc, AIM[direction])
             if self.map[dest[0]][dest[1]] in (FOOD, WATER):
                 ignored.append((line,'move blocked'))
