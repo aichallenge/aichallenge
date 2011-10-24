@@ -80,13 +80,13 @@ include 'header.php';
     <td><a href="starter_packages/go_starter_package.zip">Go</a></td>
     <td>6g version release.r60.1 9753+</td>
     <td>&nbsp;</td>
-    <td><em>Hills not implemented yet</em></td>
+    <td>&nbsp;</td>
   </tr>
   <tr>
     <td>Groovy</td>
     <td>Groovy compiler version 1.7.8</td>
     <td>&nbsp;</td>
-    <td><em>Supported, no starter package</em></td>
+    <td><em>No starter package yet</em></td>
   </tr>
   <tr>
     <td><a href="starter_packages/haskell_starter_package.zip">Haskell</a></td>
@@ -152,7 +152,7 @@ include 'header.php';
     <td><a href="starter_packages/ruby_starter_package.zip">Ruby</a></td>
     <td>ruby 1.9.2p0</td>
     <td>&nbsp;</td>
-    <td><em>Hills not implemented yet</em></td>
+    <td>&nbsp;</td>
   </tr>
   <tr>
     <td><a href="starter_packages/scala_starter_package.zip">Scala</a></td>
