@@ -2,11 +2,19 @@
 // ini_set('error_reporting', E_ALL);
 // ini_set('display_errors', true);
 
+require_once('header.php');
 require_once('mysql_login.php');
 
-$user_id = $_GET["user"];
-if(!filter_var($user_id, FILTER_VALIDATE_INT)) {
-    $user_id = NULL;
+if (isset($_GET["user"]) {
+    $user_id = $_GET["user"];
+    if(!filter_var($user_id, FILTER_VALIDATE_INT)) {
+        $user_id = NULL;
+    }
+}
+
+if (!isset($user_id)) {
+    require_once('footer.php');
+    die();
 }
 
 require_once('profile_submissions_widget.php');
@@ -57,10 +65,8 @@ if (logged_in_with_valid_credentials() &&
 }
 if (!$userresult) {
   echo "<p>Invalid User ID</p>";
-  require_once('header.php');
 } else {
 $title="Profile for ".$username;
-require_once('header.php');
 echo "    <h2>Profile for $username</h2>";
 if ($logged_in) {
 echo <<< EOT
