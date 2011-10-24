@@ -41,6 +41,16 @@ tools/: ../../../ants
 	cd ../../visualizer; ant jar html-visualizer
 	cp ../../visualizer/build/deploy/visualizer.jar tools/
 	unzip ../../visualizer/build/html_visualizer.zip -d tools/visualizer
+	
+	#Include VERSION file
+	echo "This tools package was published on `date`." >> tools/VERSION
+	echo >> tools/VERSION
+	
+	echo "Last change in the ants/ folder was:" >> tools/VERSION
+	git log -n 1 ../../|grep -v Author >> tools/VERSION
+	echo >> tools/VERSION
+	
+	echo "Check https://github.com/aichallenge/aichallenge/ants/ for new versions." >> tools/VERSION
 
 clean:
 	-rm -Rf tools/
