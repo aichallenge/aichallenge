@@ -2,6 +2,9 @@
     ServerAdmin webmaster@localhost
     ServerName {web_hostname}
     ServerAlias www.{web_hostname}
+    
+    # Forums redirect
+    Redirect 301 /forum/ /forums/
 
     # Fix replay URLs so they are of the form
     #   /game/#
