@@ -64,6 +64,14 @@ function create_new_organization( $org_name ) {
 // By default, send account confirmation emails.
 $send_email = 1;
 
+$errors = array();
+// Check that required information was sent
+if (!isset($_POST['username'], $_POST['password1'], $_POST['password2'],
+        $_POST['user_email'], $_POST['user_status'],  $_POST['user_country'],
+        $_POST['user_organization'], $_POST['bio'])) {
+    die("Missing required information to create profile");
+}
+
 // Gather the information entered by the user on the signup page.
 $username = mysql_real_escape_string(stripslashes($_POST['username']));
 $password1 = mysql_real_escape_string(stripslashes($_POST['password1']));
@@ -74,7 +82,6 @@ $user_org = mysql_real_escape_string(stripslashes($_POST['user_organization']));
 $bio = mysql_real_escape_string(stripslashes($_POST['bio']));
 $country_id = mysql_real_escape_string(stripslashes($_POST['user_country']));
 
-$errors = array();
 // Uncomment the following line to disable account creation
 //$errors[] = "Accounts can not be created at this time. Come back later, " .
 //      "once the contest opens.";
