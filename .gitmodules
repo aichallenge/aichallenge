@@ -6,7 +6,7 @@
 	url = https://github.com/flagcapper/GoogleAI-Ants-Starter-Pack.git
 [submodule "ants/dist/starter_bots/haskell"]
 	path = ants/dist/starter_bots/haskell
-	url = https://github.com/qacek/ants-haskell.git
+	url = git://github.com/tensai-cirno/ants-haskell.git
 [submodule "manager/PHPSkills"]
 	path = manager/PHPSkills
 	url = git://github.com/moserware/PHPSkills.git

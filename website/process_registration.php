@@ -26,6 +26,19 @@ function check_valid_organization($code) {
   return (boolean)mysql_num_rows($result);
 }
 
+function check_valid_country($id) {
+  if ($id == 999 || !filter_var($id, FILTER_VALIDATE_INT)) {
+    return False;
+  }
+  $query = "SELECT count(*) from country where country_id=". $id;
+  $result = mysql_query($query);
+  $row = mysql_fetch_assoc($result);
+  if ($row['count(*)'] > 0) {
+    return True;
+  }
+  return False;
+}
+
 function valid_username($s) {
   return strspn($s, "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_.-") == strlen($s);
 }
@@ -51,6 +64,14 @@ function create_new_organization( $org_name ) {
 // By default, send account confirmation emails.
 $send_email = 1;
 
+$errors = array();
+// Check that required information was sent
+if (!isset($_POST['username'], $_POST['password1'], $_POST['password2'],
+        $_POST['user_email'], $_POST['user_status'],  $_POST['user_country'],
+        $_POST['user_organization'], $_POST['bio'])) {
+    die("Missing required information to create profile");
+}
+
 // Gather the information entered by the user on the signup page.
 $username = mysql_real_escape_string(stripslashes($_POST['username']));
 $password1 = mysql_real_escape_string(stripslashes($_POST['password1']));
@@ -61,7 +82,6 @@ $user_org = mysql_real_escape_string(stripslashes($_POST['user_organization']));
 $bio = mysql_real_escape_string(stripslashes($_POST['bio']));
 $country_id = mysql_real_escape_string(stripslashes($_POST['user_country']));
 
-$errors = array();
 // Uncomment the following line to disable account creation
 //$errors[] = "Accounts can not be created at this time. Come back later, " .
 //      "once the contest opens.";
@@ -102,7 +122,8 @@ if (strcmp($user_email, "donotsend") != 0) {
     $errors[] = "The email $user_email is already in use. You are only allowed to have one account! It is easy for us to tell if you have two accounts, and you will be disqualified if you have two accounts! If there is some problem with your existing account, get in touch with the contest organizers on irc.freenode.com channel #aichallenge and we will help you get up-and-running again!";
   }
   $edomain = substr(strrchr($user_email, '@'), 1);
-  if (strcmp(gethostbyname($edomain), $edomain) == 0) {
+  $mx_records = array();
+  if (!getmxrr($edomain, $mx_records)) {
     $errors[] = "Could not find the email address entered. Please enter a valid email address.";
   }
 }
@@ -139,7 +160,7 @@ if (!check_valid_user_status_code($user_status)) {
 }
 
 // Check that the country code is not empty.
-if (strlen($country_id) <= 0) {
+if (!check_valid_country($country_id)) {
   $errors[] = "You did not select a valid country from the dropdown box.";
 }
 

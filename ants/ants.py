@@ -1368,7 +1368,10 @@ class Ants(Game):
             A game is over when there are no players remaining, or a single
               winner remaining.
         """
-        if len(self.remaining_players()) <= 1:
+        if len(self.remaining_players()) < 1:
+            self.cutoff = 'extermination'
+            return True
+        if len(self.remaining_players()) == 1:
             self.cutoff = 'lone survivor'
             return True
         if self.cutoff_turns >= self.cutoff_turn:

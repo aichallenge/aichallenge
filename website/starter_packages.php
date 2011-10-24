@@ -13,9 +13,11 @@ include 'header.php';
   <li>Some sample opponents that you can test your bot against</li>
   <li>One hundred randomly generated maps that you can use for testing</li>
 </ul>
-<p>Since each starter package contains a simple already-working entry, you can actually submit the ZIP file on the Upload Your Code page. See the<a href="quickstart.php">Five Minute Quickstart Guide</a> to learn how to get your name up on the global leaderboard in less than five minutes.</p>
+<p>Since each starter package contains a simple already-working entry, you can actually submit the ZIP file on the Upload Your Code page. See the <a href="quickstart.php">Five Minute Quickstart Guide</a> to learn how to get your name up on the global leaderboard in less than five minutes.</p>
 
 <p>Please note that some of these starter packages do not have the hills implemented yet. We will need a volunteer to fix these.</p>
+
+<p>You will need to download the tools in addition to the starter pack.  Choose <a href="/tools.zip">Windows</a> or <a href="/tools.tar.bz2">Linux / MacOS</a></p>
 
 <p><strong>Note: The tools come with the game engine written in python.  You will need to install a python interpreter to run the game engine regardless of which language you are programming in.</strong></p>
 
@@ -78,19 +80,19 @@ include 'header.php';
     <td><a href="starter_packages/go_starter_package.zip">Go</a></td>
     <td>6g version release.r60.1 9753+</td>
     <td>&nbsp;</td>
-    <td><em>Hills not implemented yet</em></td>
+    <td>&nbsp;</td>
   </tr>
   <tr>
     <td>Groovy</td>
     <td>Groovy compiler version 1.7.8</td>
     <td>&nbsp;</td>
-    <td><em>Supported, no starter package</em></td>
+    <td><em>No starter package yet</em></td>
   </tr>
   <tr>
     <td><a href="starter_packages/haskell_starter_package.zip">Haskell</a></td>
     <td>GHC, version 6.12.3</td>
     <td>&nbsp;</td>
-    <td><em>Hills not implemented yet</em></td>
+    <td>&nbsp;</td>
   </tr>
   <tr>
     <td><a href="starter_packages/java_starter_package.zip">Java</a></td>
@@ -150,7 +152,7 @@ include 'header.php';
     <td><a href="starter_packages/ruby_starter_package.zip">Ruby</a></td>
     <td>ruby 1.9.2p0</td>
     <td>&nbsp;</td>
-    <td><em>Hills not implemented yet</em></td>
+    <td>&nbsp;</td>
   </tr>
   <tr>
     <td><a href="starter_packages/scala_starter_package.zip">Scala</a></td>

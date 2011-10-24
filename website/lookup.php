@@ -219,7 +219,8 @@ function get_user_by_submission($submission_id) {
                 $user_row_by_submission_id[$user_row['submission_id']] = $user_row;
             }
             if ($memcache) {
-                $memcache->set('lookup:submission_id', $user_row_by_id);
+                $memcache->set('lookup:submission_id',
+                    $user_row_by_submission_id);
             }
         }
     }
