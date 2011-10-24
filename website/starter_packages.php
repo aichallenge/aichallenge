@@ -92,7 +92,7 @@ include 'header.php';
     <td><a href="starter_packages/haskell_starter_package.zip">Haskell</a></td>
     <td>GHC, version 6.12.3</td>
     <td>&nbsp;</td>
-    <td><em>Hills not implemented yet</em></td>
+    <td>&nbsp;</td>
   </tr>
   <tr>
     <td><a href="starter_packages/java_starter_package.zip">Java</a></td>
