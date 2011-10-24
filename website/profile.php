@@ -5,7 +5,7 @@
 require_once('header.php');
 require_once('mysql_login.php');
 
-if (isset($_GET["user"]) {
+if (isset($_GET["user"])) {
     $user_id = $_GET["user"];
     if(!filter_var($user_id, FILTER_VALIDATE_INT)) {
         $user_id = NULL;
