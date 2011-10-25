@@ -29,7 +29,7 @@ public class Ants {
 
     private final boolean visible[][];
 
-    private final Set<Tile> vision_offsets;
+    private final Set<Tile> visionOffsets;
 
     private long turnStartTime;
 
@@ -78,13 +78,13 @@ public class Ants {
             Arrays.fill(row, false);
         }
         // calc vision offsets
-        vision_offsets = new HashSet<Tile>();
+        visionOffsets = new HashSet<Tile>();
         int mx = (int)Math.sqrt(viewRadius2);
         for (int row = -mx; row <= mx; ++row) {
             for (int col = -mx; col <= mx; ++col) {
                 int d = row * row + col * col;
                 if (d <= viewRadius2) {
-                    vision_offsets.add(new Tile(row, col));
+                    visionOffsets.add(new Tile(row, col));
                 }
             }
         }
@@ -447,7 +447,7 @@ public class Ants {
      */
     public void setVision() {
         for (Tile antLoc : myAnts) {
-            for (Tile locOffset : vision_offsets) {
+            for (Tile locOffset : visionOffsets) {
                 Tile newLoc = getTile(antLoc, locOffset);
                 visible[newLoc.getRow()][newLoc.getCol()] = true;
             }
