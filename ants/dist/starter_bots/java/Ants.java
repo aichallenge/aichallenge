@@ -419,12 +419,13 @@ public class Ants {
     }
 
     /**
-     * Clears game map state information
+     * Clears game state information about dead ants locations.
      */
-    public void clearMap() {
+    public void clearDeadAnts() {
+        //currently we do not have list of dead ants, so iterate over all map
         for (int row = 0; row < rows; row++) {
             for (int col = 0; col < cols; col++) {
-                if (map[row][col] != Ilk.WATER) {
+                if (map[row][col] == Ilk.DEAD) {
                     map[row][col] = Ilk.LAND;
                 }
             }
