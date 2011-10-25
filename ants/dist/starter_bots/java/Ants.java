@@ -234,6 +234,14 @@ public class Ants {
         return new Tile(row, col);
     }
 
+    /**
+     * Returns location with the specified offset from the specified location.
+     * 
+     * @param tile location on the game map
+     * @param offset offset to look up
+     * 
+     * @return location with <code>offset</code> from <cod>tile</code>
+     */
     public Tile getTile(Tile tile, Tile offset) {
         int row = (tile.getRow() + offset.getRow()) % rows;
         if (row < 0) {
@@ -300,9 +308,8 @@ public class Ants {
         return orders;
     }
 
-
     /**
-     * Returns if a location is visible this turn
+     * Returns true if a location is visible this turn
      *
      * @param tile location on the game map
      *
@@ -435,6 +442,9 @@ public class Ants {
         }
     }
 
+    /**
+     * Calculates visible information
+     */
     public void setVision() {
         for (Tile antLoc : myAnts) {
             for (Tile locOffset : vision_offsets) {
