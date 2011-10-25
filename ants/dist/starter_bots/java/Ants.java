@@ -27,6 +27,10 @@ public class Ants {
     
     private final int spawnRadius2;
     
+    private final boolean visible[][];
+    
+    private final Set<Tile> visionOffsets;
+    
     private long turnStartTime;
     
     private final Ilk map[][];
@@ -68,6 +72,18 @@ public class Ants {
         map = new Ilk[rows][cols];
         for (Ilk[] row : map) {
             Arrays.fill(row, Ilk.LAND);
+        }
+        visible = new boolean[rows][cols];
+        // calc vision offsets
+        visionOffsets = new HashSet<Tile>();
+        int mx = (int)Math.sqrt(viewRadius2);
+        for (int row = -mx; row <= mx; ++row) {
+            for (int col = -mx; col <= mx; ++col) {
+                int d = row * row + col * col;
+                if (d <= viewRadius2) {
+                    visionOffsets.add(new Tile(row, col));
+                }
+            }
         }
     }
     
@@ -216,6 +232,26 @@ public class Ants {
     }
     
     /**
+     * Returns location with the specified offset from the specified location.
+     * 
+     * @param tile location on the game map
+     * @param offset offset to look up
+     * 
+     * @return location with <code>offset</code> from <cod>tile</code>
+     */
+    public Tile getTile(Tile tile, Tile offset) {
+        int row = (tile.getRow() + offset.getRow()) % rows;
+        if (row < 0) {
+            row += rows;
+        }
+        int col = (tile.getCol() + offset.getCol()) % cols;
+        if (col < 0) {
+            col += cols;
+        }
+        return new Tile(row, col);
+    }
+    
+    /**
      * Returns a set containing all my ants locations.
      * 
      * @return a set containing all my ants locations
@@ -267,6 +303,17 @@ public class Ants {
      */
     public Set<Order> getOrders() {
         return orders;
+    }
+    
+    /**
+     * Returns true if a location is visible this turn
+     *
+     * @param tile location on the game map
+     *
+     * @return true if the location is visible
+     */
+    public boolean isVisible(Tile tile) {
+        return visible[tile.getRow()][tile.getCol()];
     }
     
     /**
@@ -339,6 +386,13 @@ public class Ants {
     }
     
     /**
+     * Clears game state information about food locations.
+     */
+    public void clearFood() {
+        foodTiles.clear();
+    }
+    
+    /**
      * Clears game state information about my hills locations.
      */
     public void clearMyHills() {
@@ -361,6 +415,29 @@ public class Ants {
                 if (map[row][col] != Ilk.WATER) {
                     map[row][col] = Ilk.LAND;
                 }
+            }
+        }
+    }
+    
+    /**
+     * Clears visible information
+     */
+    public void clearVision() {
+        for (int row = 0; row < rows; row++) {
+            for (int col = 0; col < cols; col++) {
+                visible[row][col] = false;
+            }
+        }
+    }
+    
+    /**
+     * Calculates visible information
+     */
+    public void calcVision() {
+        for (Tile antLoc : myAnts) {
+            for (Tile locOffset : visionOffsets) {
+                Tile newLoc = getTile(antLoc, locOffset);
+                visible[newLoc.getRow()][newLoc.getCol()] = true;
             }
         }
     }
