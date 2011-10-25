@@ -9,44 +9,44 @@ import java.util.Set;
  */
 public class Ants {
     /** Maximum map size. */
-    public static final int MAX_MAP_SIZE = 256 * 2;
-
+    public static final int MAX_MAP_SIZE = 256;
+    
     private final int loadTime;
-
+    
     private final int turnTime;
-
+    
     private final int rows;
-
+    
     private final int cols;
-
+    
     private final int turns;
-
+    
     private final int viewRadius2;
-
+    
     private final int attackRadius2;
-
+    
     private final int spawnRadius2;
-
+    
     private final boolean visible[][];
-
-    private final Set<Tile> vision_offsets;
-
+    
+    private final Set<Tile> visionOffsets;
+    
     private long turnStartTime;
-
+    
     private final Ilk map[][];
-
+    
     private final Set<Tile> myAnts = new HashSet<Tile>();
-
+    
     private final Set<Tile> enemyAnts = new HashSet<Tile>();
-
+    
     private final Set<Tile> myHills = new HashSet<Tile>();
-
+    
     private final Set<Tile> enemyHills = new HashSet<Tile>();
-
+    
     private final Set<Tile> foodTiles = new HashSet<Tile>();
-
+    
     private final Set<Order> orders = new HashSet<Order>();
-
+    
     /**
      * Creates new {@link Ants} object.
      * 
@@ -74,22 +74,19 @@ public class Ants {
             Arrays.fill(row, Ilk.LAND);
         }
         visible = new boolean[rows][cols];
-        for (boolean[] row : visible) {
-            Arrays.fill(row, false);
-        }
         // calc vision offsets
-        vision_offsets = new HashSet<Tile>();
+        visionOffsets = new HashSet<Tile>();
         int mx = (int)Math.sqrt(viewRadius2);
         for (int row = -mx; row <= mx; ++row) {
             for (int col = -mx; col <= mx; ++col) {
                 int d = row * row + col * col;
                 if (d <= viewRadius2) {
-                    vision_offsets.add(new Tile(row, col));
+                    visionOffsets.add(new Tile(row, col));
                 }
             }
         }
     }
-
+    
     /**
      * Returns timeout for initializing and setting up the bot on turn 0.
      * 
@@ -98,7 +95,7 @@ public class Ants {
     public int getLoadTime() {
         return loadTime;
     }
-
+    
     /**
      * Returns timeout for a single game turn, starting with turn 1.
      * 
@@ -107,7 +104,7 @@ public class Ants {
     public int getTurnTime() {
         return turnTime;
     }
-
+    
     /**
      * Returns game map height.
      * 
@@ -116,7 +113,7 @@ public class Ants {
     public int getRows() {
         return rows;
     }
-
+    
     /**
      * Returns game map width.
      * 
@@ -125,7 +122,7 @@ public class Ants {
     public int getCols() {
         return cols;
     }
-
+    
     /**
      * Returns maximum number of turns the game will be played.
      * 
@@ -134,7 +131,7 @@ public class Ants {
     public int getTurns() {
         return turns;
     }
-
+    
     /**
      * Returns squared view radius of each ant.
      * 
@@ -143,7 +140,7 @@ public class Ants {
     public int getViewRadius2() {
         return viewRadius2;
     }
-
+    
     /**
      * Returns squared attack radius of each ant.
      * 
@@ -152,7 +149,7 @@ public class Ants {
     public int getAttackRadius2() {
         return attackRadius2;
     }
-
+    
     /**
      * Returns squared spawn radius of each ant.
      * 
@@ -161,7 +158,7 @@ public class Ants {
     public int getSpawnRadius2() {
         return spawnRadius2;
     }
-
+    
     /**
      * Sets turn start time.
      * 
@@ -170,7 +167,7 @@ public class Ants {
     public void setTurnStartTime(long turnStartTime) {
         this.turnStartTime = turnStartTime;
     }
-
+    
     /**
      * Returns how much time the bot has still has to take its turn before timing out.
      * 
@@ -179,7 +176,7 @@ public class Ants {
     public int getTimeRemaining() {
         return turnTime - (int)(System.currentTimeMillis() - turnStartTime);
     }
-
+    
     /**
      * Returns ilk at the specified location.
      * 
@@ -190,7 +187,7 @@ public class Ants {
     public Ilk getIlk(Tile tile) {
         return map[tile.getRow()][tile.getCol()];
     }
-
+    
     /**
      * Sets ilk at the specified location.
      * 
@@ -200,7 +197,7 @@ public class Ants {
     public void setIlk(Tile tile, Ilk ilk) {
         map[tile.getRow()][tile.getCol()] = ilk;
     }
-
+    
     /**
      * Returns ilk at the location in the specified direction from the specified location.
      * 
@@ -213,7 +210,7 @@ public class Ants {
         Tile newTile = getTile(tile, direction);
         return map[newTile.getRow()][newTile.getCol()];
     }
-
+    
     /**
      * Returns location in the specified direction from the specified location.
      * 
@@ -233,7 +230,15 @@ public class Ants {
         }
         return new Tile(row, col);
     }
-
+    
+    /**
+     * Returns location with the specified offset from the specified location.
+     * 
+     * @param tile location on the game map
+     * @param offset offset to look up
+     * 
+     * @return location with <code>offset</code> from <cod>tile</code>
+     */
     public Tile getTile(Tile tile, Tile offset) {
         int row = (tile.getRow() + offset.getRow()) % rows;
         if (row < 0) {
@@ -245,7 +250,7 @@ public class Ants {
         }
         return new Tile(row, col);
     }
-
+    
     /**
      * Returns a set containing all my ants locations.
      * 
@@ -254,7 +259,7 @@ public class Ants {
     public Set<Tile> getMyAnts() {
         return myAnts;
     }
-
+    
     /**
      * Returns a set containing all enemy ants locations.
      * 
@@ -263,7 +268,7 @@ public class Ants {
     public Set<Tile> getEnemyAnts() {
         return enemyAnts;
     }
-
+    
     /**
      * Returns a set containing all my hills locations.
      * 
@@ -272,7 +277,7 @@ public class Ants {
     public Set<Tile> getMyHills() {
         return myHills;
     }
-
+    
     /**
      * Returns a set containing all enemy hills locations.
      * 
@@ -281,7 +286,7 @@ public class Ants {
     public Set<Tile> getEnemyHills() {
         return enemyHills;
     }
-
+    
     /**
      * Returns a set containing all food locations.
      * 
@@ -290,7 +295,7 @@ public class Ants {
     public Set<Tile> getFoodTiles() {
         return foodTiles;
     }
-
+    
     /**
      * Returns all orders sent so far.
      * 
@@ -299,10 +304,9 @@ public class Ants {
     public Set<Order> getOrders() {
         return orders;
     }
-
-
+    
     /**
-     * Returns if a location is visible this turn
+     * Returns true if a location is visible this turn
      *
      * @param tile location on the game map
      *
@@ -311,7 +315,7 @@ public class Ants {
     public boolean isVisible(Tile tile) {
         return visible[tile.getRow()][tile.getCol()];
     }
-
+    
     /**
      * Calculates distance between two locations on the game map.
      * 
@@ -327,7 +331,7 @@ public class Ants {
         colDelta = Math.min(colDelta, cols - colDelta);
         return rowDelta * rowDelta + colDelta * colDelta;
     }
-
+    
     /**
      * Returns one or two orthogonal directions from one location to the another.
      * 
@@ -366,44 +370,35 @@ public class Ants {
         }
         return directions;
     }
-
+    
     /**
      * Clears game state information about my ants locations.
      */
     public void clearMyAnts() {
-        for (Tile myAnt : myAnts) {
-            map[myAnt.getRow()][myAnt.getCol()] = Ilk.LAND;
-        }
         myAnts.clear();
     }
-
+    
     /**
      * Clears game state information about enemy ants locations.
      */
     public void clearEnemyAnts() {
-        for (Tile enemyAnt : enemyAnts) {
-            map[enemyAnt.getRow()][enemyAnt.getCol()] = Ilk.LAND;
-        }
         enemyAnts.clear();
     }
-
+    
     /**
      * Clears game state information about food locations.
      */
     public void clearFood() {
-        for (Tile food : foodTiles) {
-            map[food.getRow()][food.getCol()] = Ilk.LAND;
-        }
         foodTiles.clear();
     }
-
+    
     /**
      * Clears game state information about my hills locations.
      */
     public void clearMyHills() {
         myHills.clear();
     }
-
+    
     /**
      * Clears game state information about enemy hills locations.
      */
@@ -423,27 +418,30 @@ public class Ants {
             }
         }
     }
-
+    
     /**
      * Clears visible information
      */
     public void clearVision() {
-        for (int row = 0; row < rows; ++row) {
-            for (int col = 0; col < cols; ++col) {
+        for (int row = 0; row < rows; row++) {
+            for (int col = 0; col < cols; col++) {
                 visible[row][col] = false;
             }
         }
     }
-
-    public void setVision() {
+    
+    /**
+     * Calculates visible information
+     */
+    public void calcVision() {
         for (Tile antLoc : myAnts) {
-            for (Tile locOffset : vision_offsets) {
+            for (Tile locOffset : visionOffsets) {
                 Tile newLoc = getTile(antLoc, locOffset);
                 visible[newLoc.getRow()][newLoc.getCol()] = true;
             }
         }
     }
-
+    
     /**
      * Updates game state information about new ants and food locations.
      * 
@@ -464,7 +462,7 @@ public class Ants {
             break;
         }
     }
-
+    
     /**
      * Updates game state information about hills locations.
      *
@@ -477,7 +475,7 @@ public class Ants {
         else
             myHills.add(tile);
     }
-
+    
     /**
      * Issues an order by sending it to the system output.
      * 
@@ -488,6 +486,5 @@ public class Ants {
         Order order = new Order(myAnt, direction);
         orders.add(order);
         System.out.println(order);
-        System.out.flush();
     }
 }

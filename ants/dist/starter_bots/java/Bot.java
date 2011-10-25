@@ -44,6 +44,7 @@ public abstract class Bot extends AbstractSystemInputParser {
         ants.clearEnemyHills();
         ants.clearFood();
         ants.getOrders().clear();
+        ants.clearMap();
         ants.clearVision();
     }
     
@@ -92,6 +93,6 @@ public abstract class Bot extends AbstractSystemInputParser {
      */
     @Override
     public void afterUpdate() {
-        ants.setVision();
+        ants.calcVision();
     }
 }
