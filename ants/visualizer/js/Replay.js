@@ -530,16 +530,21 @@ Replay.prototype.addMissingMetaData = function(highlightPlayer) {
 		this.meta['playerturns'] = new Array(this.players);
 	}
 	// setup player colors
-	var cl;
+	var rank;
+    var rank_sorted;
 	if (this.meta['challenge_rank']) {
-        cl = this.meta['challenge_rank'].slice().sort(function (a, b) { return a - b; });
+        rank = this.meta['challenge_rank'].slice();
 	}
 	if (highlightPlayer !== undefined) {
 		var COLOR_MAP = COLOR_MAPS[this.players-1];
-        cl.splice(highlightPlayer, 1);
+        rank.splice(highlightPlayer, 1);
 	} else {
 		var COLOR_MAP = COLOR_MAPS[this.players];
 	}
+    if (rank) {
+        rank_sorted = rank.slice().sort(function (a, b) { return a - b; });
+    }
+    var adjust = 0;
 	for (i = 0; i < this.players; i++) {
 		if (!this.meta['playernames'][i]) {
 			this.meta['playernames'][i] = 'player ' + (i + 1);
@@ -549,13 +554,14 @@ Replay.prototype.addMissingMetaData = function(highlightPlayer) {
 		}
 		if (!(this.meta['playercolors'][i] instanceof Array)) {
             var color;
-            if (highlightPlayer !== undefined && i == highlightPlayer) {
-                color = COLOR_MAPS[0];
+            if (highlightPlayer !== undefined && i === highlightPlayer) {
+                color = PLAYER_COLORS[COLOR_MAPS[0]];
+                adjust = 1;
             } else {
-                if (cl) {
-                    var ci = cl.indexOf(this.meta['challenge_rank'][i]);
-                    color = PLAYER_COLORS[COLOR_MAP[ci]];
-                    cl[ci] = null;
+                if (rank) {
+                    var rank_i = rank_sorted.indexOf(rank[i - adjust]);
+                    color = PLAYER_COLORS[COLOR_MAP[rank_i]];
+                    rank_sorted[rank_i] = null;
                     
                 } else {
                     color = PLAYER_COLORS[COLOR_MAP[i]];
