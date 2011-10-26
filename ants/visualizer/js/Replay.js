@@ -549,7 +549,7 @@ Replay.prototype.addMissingMetaData = function(highlightPlayer) {
 		}
 		if (!(this.meta['playercolors'][i] instanceof Array)) {
             var color;
-            if (highlightPlayer !== undefined && i = highlightPlayer) {
+            if (highlightPlayer !== undefined && i == highlightPlayer) {
                 if (cl) {
                     var ci = cl.indexOf(this.meta['challenge_rank'][i]);
                     color = PLAYER_COLORS[COLOR_MAP[ci]];
