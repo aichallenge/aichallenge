@@ -29,7 +29,7 @@ public class Ants {
 
     private final boolean visible[][];
 
-    private final Set<Tile> vision_offsets;
+    private final Set<Tile> visionOffsets;
 
     private long turnStartTime;
 
@@ -78,13 +78,13 @@ public class Ants {
             Arrays.fill(row, false);
         }
         // calc vision offsets
-        vision_offsets = new HashSet<Tile>();
+        visionOffsets = new HashSet<Tile>();
         int mx = (int)Math.sqrt(viewRadius2);
         for (int row = -mx; row <= mx; ++row) {
             for (int col = -mx; col <= mx; ++col) {
                 int d = row * row + col * col;
                 if (d <= viewRadius2) {
-                    vision_offsets.add(new Tile(row, col));
+                    visionOffsets.add(new Tile(row, col));
                 }
             }
         }
@@ -234,6 +234,14 @@ public class Ants {
         return new Tile(row, col);
     }
 
+    /**
+     * Returns location with the specified offset from the specified location.
+     * 
+     * @param tile location on the game map
+     * @param offset offset to look up
+     * 
+     * @return location with <code>offset</code> from <cod>tile</code>
+     */
     public Tile getTile(Tile tile, Tile offset) {
         int row = (tile.getRow() + offset.getRow()) % rows;
         if (row < 0) {
@@ -300,9 +308,8 @@ public class Ants {
         return orders;
     }
 
-
     /**
-     * Returns if a location is visible this turn
+     * Returns true if a location is visible this turn
      *
      * @param tile location on the game map
      *
@@ -412,12 +419,13 @@ public class Ants {
     }
 
     /**
-     * Clears game map state information
+     * Clears game state information about dead ants locations.
      */
-    public void clearMap() {
+    public void clearDeadAnts() {
+        //currently we do not have list of dead ants, so iterate over all map
         for (int row = 0; row < rows; row++) {
             for (int col = 0; col < cols; col++) {
-                if (map[row][col] != Ilk.WATER) {
+                if (map[row][col] == Ilk.DEAD) {
                     map[row][col] = Ilk.LAND;
                 }
             }
@@ -435,9 +443,12 @@ public class Ants {
         }
     }
 
+    /**
+     * Calculates visible information
+     */
     public void setVision() {
         for (Tile antLoc : myAnts) {
-            for (Tile locOffset : vision_offsets) {
+            for (Tile locOffset : visionOffsets) {
                 Tile newLoc = getTile(antLoc, locOffset);
                 visible[newLoc.getRow()][newLoc.getCol()] = true;
             }
@@ -488,6 +499,5 @@ public class Ants {
         Order order = new Order(myAnt, direction);
         orders.add(order);
         System.out.println(order);
-        System.out.flush();
     }
 }
