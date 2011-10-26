@@ -558,9 +558,6 @@ Replay.prototype.addMissingMetaData = function(highlightPlayer) {
             } else {
                 color = PLAYER_COLORS[COLOR_MAP[i]];
             }
-            if (highlightPlayer !== undefined && i == highlightPlayer) {
-                color = PLAYER_COLORS[COLOR_MAPS[0][0]];
-            }
             this.meta['playercolors'][i] = color = hsl_to_rgb(color);;
             /*
 			if (highlightPlayer !== undefined && i == 0) {
