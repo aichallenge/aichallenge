@@ -366,14 +366,19 @@ TextButton.extend(Button);
  * @see Button#draw
  */
 TextButton.prototype.drawInternal = function(ctx) {
-	ctx.shadowColor = SAND_COLOR;
-	ctx.shadowOffsetX = 0;
-	ctx.shadowOffsetY = 0;
-	ctx.shadowBlur = 2;
 	ctx.textAlign = 'left';
 	ctx.textBaseline = 'bottom';
 	ctx.font = FONT;
+
+	ctx.strokeStyle = '#000';
+	ctx.lineWidth = 1;
+	ctx.strokeText(this.text, 4, 25);
+
 	ctx.fillStyle = this.color;
+	ctx.shadowColor = this.color;
+	ctx.shadowOffsetX = 0;
+	ctx.shadowOffsetY = 0;
+	ctx.shadowBlur = 0.5;
 	ctx.fillText(this.text, 4, 25);
 };
 

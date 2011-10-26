@@ -930,7 +930,7 @@ CanvasElementShiftedMap.prototype.draw = function() {
 	// map border if moved
 	if (this.shiftX !== 0 || this.shiftY !== 0) {
 		this.ctx.strokeStyle = '#000';
-		this.ctx.lineWidth = 2;
+		this.ctx.lineWidth = 0.5;
 		this.ctx.beginPath();
 		for (x = dx; x <= this.w; x += this.antsMap.w) {
 			this.ctx.moveTo(x, 0);
@@ -1035,8 +1035,8 @@ CanvasElementGraph.prototype.draw = function() {
 	var w = this.w - 1;
 	var h = this.h - 1;
 	var replay = this.state.replay;
-	var values = this.getStats(this.stats).values;
-	this.ctx.fillStyle = '#fff';
+	var values = this.getStats(this.stats).values.map(function(a) { return a.map(Math.sqrt); });
+	this.ctx.fillStyle = SAND_COLOR;
 	this.ctx.fillRect(0, 0, this.w, this.h);
 	this.ctx.font = '10px Arial,Sans';
 
@@ -1099,8 +1099,6 @@ CanvasElementGraph.prototype.draw = function() {
 	}
 	if (!this.state.isStreaming && replay.meta['status']) {
 		for (i = values[0].length - 1; i >= 0; i--) {
-			this.ctx.fillStyle = replay.htmlPlayerColors[i];
-			this.ctx.strokeStyle = replay.htmlPlayerColors[i];
 			k = replay.meta['playerturns'][i];
 			this.ctx.beginPath();
 			x = 0.5 + k * scaleX;
@@ -1109,6 +1107,8 @@ CanvasElementGraph.prototype.draw = function() {
 			txt = this.statusToGlyph(i);
 			tw = this.ctx.measureText(txt).width;
 			tx = Math.min(x, w - tw);
+			this.ctx.fillStyle = replay.htmlPlayerColors[i];
+			this.ctx.strokeStyle = replay.htmlPlayerColors[i];
 			if (y < 30) {
 				y = ((y + 12) | 0) + 0.5;
 				this.ctx.lineTo(x, y - 8);
@@ -1139,7 +1139,7 @@ CanvasElementGraph.prototype.getStats = function(name) {
 	var values = this.state.replay[name];
 	var bonus;
 	if (name === 'counts') {
-		bonus = this.state.replay['sores'];
+		bonus = this.state.replay['scores'];
 	} else {
 		bonus = new Array(values.length);
 		if (name === 'scores' && this.turn === this.state.replay.duration) {
@@ -1196,9 +1196,9 @@ CanvasElementStats.MAX_HEIGHT = CanvasElementStats.MIN_HEIGHT + 70;
  */
 CanvasElementStats.prototype.setSize = function(width, height) {
 	CanvasElement.prototype.setSize.call(this, width, height);
-	this.graph.x = this.x + 4;
+	this.graph.x = this.x;
 	this.graph.y = this.y + 32;
-	this.graph.setSize(width - 8, Math.max(0, height - 36));
+	this.graph.setSize(width - 4, Math.max(0, height - 32));
 	this.showGraph = this.graph.h > 0;
 };
 
@@ -1229,34 +1229,36 @@ CanvasElementStats.prototype.checkState = function() {
 CanvasElementStats.prototype.draw = function(resized) {
 	var stats, text, x;
 	if (resized) {
-		this.ctx.fillStyle = '#fff';
-		this.ctx.fillRect(0, 0, this.w, this.h);
+		this.ctx.fillStyle = BACK_COLOR;
+		// this.ctx.fillRect(0, 0, this.w, this.h);
 
 		// outlines
-		this.ctx.strokeStyle = '#444';
+		this.ctx.strokeStyle = STAT_COLOR;
 		this.ctx.lineWidth = 2;
 		Shape.roundedRect(this.ctx, 0, 0, this.w, this.h, 1, 5);
 		if (this.showGraph) {
 			this.ctx.moveTo(0, 29);
 			this.ctx.lineTo(this.w, 29);
 		}
+		this.ctx.fill();
 		this.ctx.stroke();
 
 		// text
 		this.ctx.font = FONT;
 		this.ctx.textAlign = 'left';
 		this.ctx.textBaseline = 'middle';
-		this.ctx.fillStyle = '#888';
+		this.ctx.fillStyle = TEXT_COLOR;
 		this.ctx.fillText(this.caption, 4, 14);
 	}
 
 	// draw scores
 	stats = this.getStats(this.graph.stats, this.turn);
-	this.drawColorBar(95, 2, this.w - 99, 26, stats, this.bonusText);
+	this.drawColorBar(95, 2, this.w - 97, 26, stats, this.bonusText);
 
 	// graph
 	if (this.showGraph) {
-		this.ctx.drawImage(this.graph.canvas, 4, 32);
+		this.ctx.fillStyle = TEXT_GRAPH_COLOR;
+		this.ctx.drawImage(this.graph.canvas, 2, 30);
 		// time indicator
 		x = 4.5 + (this.graph.w - 1) * this.time / this.graph.duration;
 		this.ctx.lineWidth = 1;
@@ -1266,7 +1268,7 @@ CanvasElementStats.prototype.draw = function(resized) {
 		this.ctx.stroke();
 		text = this.caption + ' | ';
 		if (this.turn === this.graph.duration && !this.state.isStreaming) {
-			text += 'end';
+			text += 'end / ' + this.graph.duration;
 		} else {
 			text += 'turn ' + (this.turn + 1) + '/' + this.graph.duration;
 		}
@@ -1331,6 +1333,8 @@ CanvasElementStats.prototype.drawColorBar = function(x, y, w, h, stats, bonusTex
 		for (k = 0; k < list.length; k++) {
 			kIdx = state.order[list[k]];
 			ctx.fillStyle = state.replay.htmlPlayerColors[kIdx];
+			ctx.strokeStyle = STAT_COLOR;
+			ctx.lineWidth = 0.5;
 			if (div) {
 				wBarRaw = Math.abs(values[kIdx]) * pixels / div;
 			} else {
@@ -1343,21 +1347,26 @@ CanvasElementStats.prototype.drawColorBar = function(x, y, w, h, stats, bonusTex
 				if (arrow) {
 					ctx.beginPath();
 					if (values[kIdx] >= 0) {
-						ctx.moveTo(xOffset, y + 2);
+						ctx.moveTo(xOffset, y);
 						ctx.lineTo(xOffset + wBar, y + h / 2);
-						ctx.lineTo(xOffset, y + h - 2);
+						ctx.lineTo(xOffset, y + h);
+						ctx.closePath();
 					} else {
-						ctx.moveTo(xOffset + wBar, y + 2);
+						ctx.moveTo(xOffset + wBar, y);
 						ctx.lineTo(xOffset, y + h / 2);
-						ctx.lineTo(xOffset + wBar, y + h - 2);
+						ctx.lineTo(xOffset + wBar, y + h);
+						ctx.closePath();
 					}
 					ctx.fill();
+					ctx.stroke();
 				} else {
-					ctx.fillRect(xOffset, y + 2, wBar, h - 4);
+					ctx.fillRect(xOffset, y, wBar, h);
 				}
 				ctx.textBaseline = 'middle';
 				ctx.font = 'bold 16px Monospace';
-				ctx.fillStyle = 'rgba(0,0,0,0.5)';
+				ctx.fillStyle = '#fff';
+				ctx.strokeStyle = '#000';
+				ctx.lineWidth = 1;
 				text = values[kIdx];
 				if (label) {
 					text = String.fromCharCode(0x3b1 + k) + ' ' + text;
@@ -1369,9 +1378,11 @@ CanvasElementStats.prototype.drawColorBar = function(x, y, w, h, stats, bonusTex
 				if (textWidth <= wBar) {
 					if (values[kIdx] >= 0) {
 						ctx.textAlign = 'left';
+						ctx.strokeText(text, xOffset + 2, y + h / 2);
 						ctx.fillText(text, xOffset + 2, y + h / 2);
 					} else {
 						ctx.textAlign = 'right';
+						ctx.strokeText(text, xOffset + wBarRaw - 2, y + h / 2);
 						ctx.fillText(text, xOffset + wBarRaw - 2, y + h / 2);
 					}
 				}
@@ -1381,7 +1392,7 @@ CanvasElementStats.prototype.drawColorBar = function(x, y, w, h, stats, bonusTex
 		ctx.restore();
 	};
 	this.ctx.save();
-	this.ctx.fillStyle = '#fff';
+	this.ctx.fillStyle = BACK_COLOR;
 	this.ctx.beginPath();
 	this.ctx.rect(x, y, w, h);
 	this.ctx.fill();
@@ -1396,7 +1407,7 @@ CanvasElementStats.prototype.drawColorBar = function(x, y, w, h, stats, bonusTex
 		}
 		boniList[i] = i;
 	}
-	wUsable = showBoni ? w - 6 : w;
+	wUsable = showBoni ? w : w;
 	// sum up absolutes of all values to determine width
 	for (i = 0; i < stats.values.length; i++) {
 		idx = this.state.order[i];
@@ -1418,10 +1429,10 @@ CanvasElementStats.prototype.drawColorBar = function(x, y, w, h, stats, bonusTex
 	// show positive scores
 	drawPart(this.ctx, wUsable, sum, positives, stats.values, this.state, false, this.label);
 	this.ctx.lineWidth = 2;
-	this.ctx.strokeStyle = '#000';
+	this.ctx.strokeStyle = STAT_COLOR;
 	this.ctx.beginPath();
 	if (showBoni) {
-		xOffset = Math.ceil(xOffset) + 3;
+		xOffset = Math.ceil(xOffset) + 1;
 		this.ctx.moveTo(xOffset, y);
 		this.ctx.lineTo(xOffset, y + h);
 	}
@@ -1430,14 +1441,16 @@ CanvasElementStats.prototype.drawColorBar = function(x, y, w, h, stats, bonusTex
 		this.ctx.lineTo(xNegSep, y + h - 2);
 	}
 	this.ctx.stroke();
-	this.ctx.fillStyle = '#000';
+	this.ctx.fillStyle = TEXT_COLOR;
+	this.ctx.strokeStyle = '#fff';
 	this.ctx.font = 'bold 12px Monospace';
 	this.ctx.textBaseline = 'top';
 	// draw boni
 	if (showBoni) {
-		xOffset += 3;
+		xOffset += 1;
 		drawPart(this.ctx, wUsable, sum, boniList, boni, this.state, true, this.label);
 		this.ctx.textAlign = 'right';
+		this.ctx.strokeText(bonusText, x + w - 2, y);
 		this.ctx.fillText(bonusText, x + w - 2, y);
 	}
 	this.ctx.restore();

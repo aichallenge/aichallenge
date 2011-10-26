@@ -38,7 +38,7 @@ BOTTOM_PANEL_H = 64;
  *
  * @const
  */
-COLOR_MAPS = [[ 10 ], // highlighted player
+COLOR_MAPS = [  10, // highlighted player
               [ 1 ],
               [ 1, 6 ],
               [ 1, 3, 6 ],
@@ -60,7 +60,7 @@ PLAYER_COLORS = [ [ 350, 85, 45 ], [ 20, 80, 55 ],
 	              [ 210, 80, 55 ], [ 265, 80, 45 ],
 		          [ 300, 60, 60 ], [ 345, 25, 75 ],
 
-		          [ 320, 0, 20 ] ];
+		          [ 320, 99, 99 ] ];
 
 /**
  * color of food items
@@ -74,6 +74,30 @@ FOOD_COLOR = hsl_to_rgb([ 50, 20, 50 ]);
  * @const
  */
 SAND_COLOR = rgb_to_hex(hsl_to_rgb([ 30, 35, 35 ]));
+/**
+ * color of text in player stats
+ * 
+ * @const
+ */
+STAT_COLOR = rgb_to_hex(hsl_to_rgb([ 0, 0, 10 ]));
+/**
+ * color of text in stat titles
+ * 
+ * @const
+ */
+TEXT_COLOR = rgb_to_hex(hsl_to_rgb([ 0, 0, 10 ]));
+/**
+ * color of text on graph title
+ * 
+ * @const
+ */
+TEXT_GRAPH_COLOR = rgb_to_hex(hsl_to_rgb([ 0, 0, 90 ]));
+/**
+ * color of background for top stats bars
+ * 
+ * @const
+ */
+BACK_COLOR = rgb_to_hex(hsl_to_rgb([ 30, 30, 100 ]));
 /**
  * maximum pixel size of map squares
  * 
