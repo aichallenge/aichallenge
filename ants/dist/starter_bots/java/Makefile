@@ -10,7 +10,7 @@ JAR=MyBot.jar
 all: $(CLASSES) $(JAR)
 
 $(JAR): $(CLASSES)
-	jar cvfm $(JAR) Manifest.txt $(CLASSES)
+	jar cvfm $(JAR) Manifest.txt *.class
 
 %.class: %.java
 	$(JAVAC) $(JAVAC_ARGS) $<
