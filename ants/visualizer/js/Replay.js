@@ -550,6 +550,8 @@ Replay.prototype.addMissingMetaData = function(highlightPlayer) {
 		if (!(this.meta['playercolors'][i] instanceof Array)) {
             var color;
             if (highlightPlayer !== undefined && i == highlightPlayer) {
+                color = COLOR_MAPS[0];
+            } else {
                 if (cl) {
                     var ci = cl.indexOf(this.meta['challenge_rank'][i]);
                     color = PLAYER_COLORS[COLOR_MAP[ci]];
@@ -558,8 +560,6 @@ Replay.prototype.addMissingMetaData = function(highlightPlayer) {
                 } else {
                     color = PLAYER_COLORS[COLOR_MAP[i]];
                 }
-            } else {
-                color = COLOR_MAPS[0];
             }
             this.meta['playercolors'][i] = color = hsl_to_rgb(color);;
 		}
