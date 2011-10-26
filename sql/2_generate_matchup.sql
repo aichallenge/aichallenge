@@ -179,7 +179,7 @@ if @min_players <= @max_players then
         ) g
         group by 1;
 
-    select avg(tg.game_count) * 1.1
+    select avg(tg.game_count) * 1.1 + 1
     into @avg_game_count
     from tmp_games tg
     inner join submission s
