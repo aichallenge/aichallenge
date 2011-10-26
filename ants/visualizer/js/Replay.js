@@ -531,15 +531,14 @@ Replay.prototype.addMissingMetaData = function(highlightPlayer) {
 	}
 	// setup player colors
 	var cl;
-	if (highlightPlayer !== undefined) {
-		// splice in highlight color
-		var COLOR_MAP = COLOR_MAPS[this.players-1];
-		COLOR_MAP.splice(highlightPlayer, 0, COLOR_MAPS[0]);
-	} else {
-		var COLOR_MAP = COLOR_MAPS[this.players];
-	}
 	if (this.meta['challenge_rank']) {
         cl = this.meta['challenge_rank'].slice().sort(function (a, b) { return a - b; });
+	}
+	if (highlightPlayer !== undefined) {
+		var COLOR_MAP = COLOR_MAPS[this.players-1];
+        cl.splice(highlightPlayer, 1);
+	} else {
+		var COLOR_MAP = COLOR_MAPS[this.players];
 	}
 	for (i = 0; i < this.players; i++) {
 		if (!this.meta['playernames'][i]) {
@@ -550,24 +549,19 @@ Replay.prototype.addMissingMetaData = function(highlightPlayer) {
 		}
 		if (!(this.meta['playercolors'][i] instanceof Array)) {
             var color;
-            if (cl) {
-                var ci = cl.indexOf(this.meta['challenge_rank'][i]);
-                color = PLAYER_COLORS[COLOR_MAP[ci]];
-                cl[ci] = null;
-                
+            if (highlightPlayer !== undefined && i = highlightPlayer) {
+                if (cl) {
+                    var ci = cl.indexOf(this.meta['challenge_rank'][i]);
+                    color = PLAYER_COLORS[COLOR_MAP[ci]];
+                    cl[ci] = null;
+                    
+                } else {
+                    color = PLAYER_COLORS[COLOR_MAP[i]];
+                }
             } else {
-                color = PLAYER_COLORS[COLOR_MAP[i]];
+                color = COLOR_MAPS[0];
             }
             this.meta['playercolors'][i] = color = hsl_to_rgb(color);;
-            /*
-			if (highlightPlayer !== undefined && i == 0) {
-				this.meta['playercolors'][i] = PLAYER_COLORS[highlightPlayer];
-			} else if (highlightPlayer !== undefined && i == highlightPlayer) {
-				this.meta['playercolors'][i] = PLAYER_COLORS[0];
-			} else {
-				this.meta['playercolors'][i] = PLAYER_COLORS[i];
-			}
-			*/
 		}
 	}
 	this.htmlPlayerColors = new Array(this.players);
