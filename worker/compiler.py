@@ -542,7 +542,7 @@ def get_run_lang(submission_dir):
                     if line[0] == '#':
                         return line[1:-1]
 
-def compile_anything(bot_dir, timelimit=600):
+def compile_anything(bot_dir, timelimit=600, max_error_len = 3072):
     """Autodetect the language of an entry and compile it."""
     detected_language, errors = detect_language(bot_dir)
     if detected_language:
@@ -558,6 +558,26 @@ def compile_anything(bot_dir, timelimit=600):
                 f.write('#%s\n%s\n' % (name, run_cmd))
             return name, None
         else:
+            # limit length of reported errors
+            if len(errors) > 0 and sum(map(len, errors)) > max_error_len:
+                first_errors = []
+                cur_error = 0
+                length = len(errors[0])
+                while length < (max_error_len / 3): # take 1/3 from start
+                    first_errors.append(errors[cur_error])
+                    cur_error += 1
+                    length += len(errors[cur_error])
+                first_errors.append("...")
+                length += 3
+                end_errors = []
+                cur_error = -1
+                while length <= max_error_len:
+                    end_errors.append(errors[cur_error])
+                    cur_error -= 1
+                    length += len(errors[cur_error])
+                end_errors.reverse()
+                errors = first_errors + end_errors
+
             return detected_language.name, errors
     else:
         return "Unknown", errors
