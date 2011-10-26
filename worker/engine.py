@@ -66,6 +66,7 @@ def run_game(game, botcmds, options):
     error_logs = options.get('error_logs', [None]*len(botcmds))
 
     capture_errors = options.get('capture_errors', False)
+    capture_errors_max = options.get('capture_errors_max', 510)
 
     turns = int(options['turns'])
     loadtime = float(options['loadtime']) / 1000
@@ -82,7 +83,7 @@ def run_game(game, botcmds, options):
     bot_status = []
     bot_turns = []
     if capture_errors:
-        error_logs = [HeadTail(log) for log in error_logs]
+        error_logs = [HeadTail(log, capture_errors_max) for log in error_logs]
     try:
         # create bot sandboxes
         for b, bot in enumerate(botcmds):
