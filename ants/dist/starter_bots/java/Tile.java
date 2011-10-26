@@ -1,7 +1,7 @@
 /**
  * Represents a tile of the game map.
  */
-public class Tile {
+public class Tile implements Comparable<Tile> {
     private final int row;
     
     private final int col;
@@ -33,6 +33,14 @@ public class Tile {
      */
     public int getCol() {
         return col;
+    }
+    
+    /** 
+     * {@inheritDoc}
+     */
+    @Override
+    public int compareTo(Tile o) {
+        return hashCode() - o.hashCode();
     }
     
     /**

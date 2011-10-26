@@ -27,7 +27,7 @@ if(file_exists('server_message.html')) {
         $last_game_id = 0;
     }
     include 'visualizer_widget.php';
-    visualize_game($game_id=strval($last_game_id),false,550,550);
+    visualize_game($game_id=strval($last_game_id),false,700,700);
 ?>
 
 <p>Browse other <a href="games.php">recent games here</a>.</p>
