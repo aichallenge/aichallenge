@@ -6,6 +6,8 @@ exports.ants = {
 	'orders': [],
 	'ants': [],
 	'food': [],
+	'vision': false,
+	'visionOffsets': false,
 	'landTypes': {
 		'LAND': 0,
 		'DEAD': 1,
@@ -26,6 +28,7 @@ exports.ants = {
 		});
 	},
 	'processLine': function(line) {
+		this.vision = false;
 		line = line.trim().split(' ');
 
 		if (line[0] === 'ready') {
@@ -254,5 +257,52 @@ exports.ants = {
 			}
 		}
 		return d;
+	},
+	'visible': function(row, col) {
+		if (this.vision === false || !this.vision || this.vision.length === 0) {
+			this.vision = [];
+			if (this.visionOffsets === false) {
+				this.visionOffsets = [];
+				var mx = Math.floor(Math.sqrt(this.config.viewradius2));
+				for (var dRow = -mx; dRow < mx+1; ++dRow) {
+					for (var dCol = -mx; dCol < mx+1; ++dCol) {
+						var d = Math.pow(dRow, 2) + Math.pow(dCol, 2);
+						if (d <= this.config.viewradius2) {
+							this.visionOffsets.push([dRow, dCol]);
+						}
+					}
+				}
+			}
+			
+			for (var trow = 0; trow < this.config.rows; ++trow) {
+				for (var tcol = 0; tcol < this.config.cols; ++tcol) {
+					if (tcol === 0) {
+						this.vision[trow] = [];
+					}
+					this.vision[trow][tcol] = false;
+				}
+			}
+			var myAnts = this.myAnts();
+			for (var antI in myAnts) {
+				var ant = myAnts[antI];
+				for (var visionOffsetI in this.visionOffsets) {
+					var vo = this.visionOffsets[visionOffsetI];
+					var visionRow = ant.row + vo[0];
+					var visionCol = ant.col + vo[1];
+					if (visionRow < 0) {
+						visionRow = (this.config.rows-1) + visionRow;
+					} else if (visionRow >= this.config.rows) {
+						visionRow = visionRow - this.config.rows;
+					}
+					if (visionCol < 0) {
+						visionCol = (this.config.cols-1) + visionCol;
+					} else if (visionCol >= this.config.cols) {
+						visionCol = visionCol - this.config.cols;
+					}
+					this.vision[visionRow][visionCol] = true;
+				}
+			}
+		}
+		return this.vision[row][col];
 	}
 };
