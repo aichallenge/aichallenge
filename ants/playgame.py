@@ -17,7 +17,10 @@ except ImportError:
 from ants import Ants
 
 # get engine from worker dir
-sys.path.append("../worker")
+cmd_folder = os.path.dirname(os.path.abspath(__file__))
+if cmd_folder not in sys.path:
+    sys.path.insert(0, cmd_folder)
+sys.path.append(cmd_folder + "/../worker")
 from engine import run_game
 
 # make stderr red text
