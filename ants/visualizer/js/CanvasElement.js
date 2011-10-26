@@ -1364,9 +1364,8 @@ CanvasElementStats.prototype.drawColorBar = function(x, y, w, h, stats, bonusTex
 				}
 				ctx.textBaseline = 'middle';
 				ctx.font = 'bold 16px Monospace';
-				ctx.fillStyle = '#fff';
-				ctx.strokeStyle = '#000';
-				ctx.lineWidth = 1;
+				ctx.fillStyle = TEXT_COLOR; //'#fff';
+				ctx.lineWidth = 0.5;
 				text = values[kIdx];
 				if (label) {
 					text = String.fromCharCode(0x3b1 + k) + ' ' + text;
@@ -1378,11 +1377,9 @@ CanvasElementStats.prototype.drawColorBar = function(x, y, w, h, stats, bonusTex
 				if (textWidth <= wBar) {
 					if (values[kIdx] >= 0) {
 						ctx.textAlign = 'left';
-						ctx.strokeText(text, xOffset + 2, y + h / 2);
 						ctx.fillText(text, xOffset + 2, y + h / 2);
 					} else {
 						ctx.textAlign = 'right';
-						ctx.strokeText(text, xOffset + wBarRaw - 2, y + h / 2);
 						ctx.fillText(text, xOffset + wBarRaw - 2, y + h / 2);
 					}
 				}
