@@ -1,6 +1,6 @@
 <?php
-ini_set('error_reporting', E_ALL);
-ini_set('display_errors', true);
+// ini_set('error_reporting', E_ALL);
+// ini_set('display_errors', true);
 
 require_once('session.php');
 require_once('server_info.php');
@@ -37,7 +37,8 @@ include 'header.php';
   <li>Make sure that your code compiles okay on your own machine before
     submitting it. If it doesn't compile there, it won't compile in here
     either. Test your code before submitting it to avoid wasting our
-    precious precious CPU cycles.</li>
+    precious precious CPU cycles.  The tools come with a script called 'test_bot'
+    that will play the test game locally.</li>
   <li>We highly suggest using one of the premade starter packages as a starting
     point.</li>
   <li>Keep in mind the <a href="rules.php">rules</a>. We take
@@ -45,6 +46,7 @@ include 'header.php';
     contest will result in the immediate involvement of law enforcement
     officials. Our policy is to always prosecute.</li>
 </ul>
+<p><em>Note: Submitting a new bot will not change your order in the queue to play next.  A new bot will have its skill reset to 0.</em>
 
 <?php
 if($server_info["submissions_open"]) {

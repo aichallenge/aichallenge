@@ -125,8 +125,7 @@ if (count($errors) == 0) {
 <p>If your code does not compile successfully, then you can see the compiler
   errors on your profile.  Fix as many of the errors as
   you can, and then resubmit your code!</p>
-
-<p>If your new submission doesn't show up on your profile page, under submissions, in about ten minutes, you can try resubmitting. We are working on fixing this.</p>
+<p><em>Note: Submitting a new bot will not change your order in the queue to play next.  A new bot will have its skill reset to 0.</em>
 
 <?php
 } else {
