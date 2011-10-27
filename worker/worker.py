@@ -284,9 +284,12 @@ class Worker:
                                 % (file_name, exit_status))
                         if exit_status != 0:
                             return False
+                        # remove __MACOSX directory
+                        mac_path = os.path.join('bot', '__MACOSX')
+                        if os.path.exists(mac_path) and os.path.isdir(mac_path):
+                            shutil.rmtree(mac_path)
                         # check for single directory only and move everything up
-                        unpacked_listing = [p for p in os.listdir('bot')
-                                if p != "__MACOSX"]
+                        unpacked_listing = [p for p in os.listdir('bot')]
                         if len(unpacked_listing) == 1:
                             one_path = os.path.join('bot', unpacked_listing[0])
                             if os.path.isdir(one_path):

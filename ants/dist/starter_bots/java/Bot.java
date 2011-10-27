@@ -43,6 +43,7 @@ public abstract class Bot extends AbstractSystemInputParser {
         ants.clearMyHills();
         ants.clearEnemyHills();
         ants.clearFood();
+        ants.clearDeadAnts();
         ants.getOrders().clear();
         ants.clearVision();
     }
