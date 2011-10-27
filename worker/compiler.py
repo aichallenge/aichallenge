@@ -106,7 +106,9 @@ def _run_cmd(sandbox, cmd, timelimit):
     # flush stdout to keep stuff moving
     try:
         while (sandbox.is_alive and time.time() < timelimit):
-            out.append(sandbox.read_line((timelimit - time.time()) + 1))
+            out_ln = sandbox.read_line((timelimit - time.time()) + 1)
+            if out_ln:
+                out.append(out_ln)
     finally:
         sandbox.kill()
     # capture final output for error reporting
