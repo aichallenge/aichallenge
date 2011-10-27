@@ -164,7 +164,7 @@ def setup_base_chroot(options):
     if not os.path.exists(base_chroot_dir):
         os.makedirs(base_chroot_dir)
         run_cmd("debootstrap --variant=buildd --arch %s natty \
-                %s http://us.archive.ubuntu.com/ubuntu/" % (options.arch, base_chroot_dir,))
+                %s http://us-east-1.ec2.archive.ubuntu.com/ubuntu/" % (options.arch, base_chroot_dir,))
         with CD(TEMPLATE_DIR):
             run_cmd("cp chroot_configs/chroot.d/aic-base /etc/schroot/chroot.d/")
             run_cmd("cp chroot_configs/sources.list %s/etc/apt/"
