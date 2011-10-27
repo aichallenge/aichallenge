@@ -19,14 +19,14 @@ server_info = {{
         "spawnradius2": 1,
         "location": "{api_url}",
         "serial": 2,
-        "food_rate": (1,8),
-        "food_turn": (12,30),
+        "food_rate": (5,11),
+        "food_turn": (19,37),
         "food_start": (75,175),
-        "food_visible": (2,4),
+        "food_visible": (3,5),
         "food": "symmetric",
         "attack": "focus",
         "kill_points": 2,
         "cutoff_turn": 150,
-        "cutoff_percent": 0.66
+        "cutoff_percent": 0.85
     }}
 }}

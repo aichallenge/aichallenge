@@ -142,7 +142,7 @@ def main(argv):
                           help="Attack method to use for engine. (closest, focus, support, damage)")
     game_group.add_option("--kill_points", dest="kill_points",
                           default=2, type="int",
-                          help="Points awarded for killing an ant shared by all ants involved")
+                          help="Points awarded for killing a hill")
     game_group.add_option("--food", dest="food",
                           default="symmetric",
                           help="Food spawning method. (none, random, sections, symmetric)")
@@ -155,17 +155,17 @@ def main(argv):
     game_group.add_option("--attackradius2", dest="attackradius2",
                           default=5, type="int",
                           help="Attack radius of ants squared")
-    game_group.add_option("--food_rate", dest="food_rate", nargs=2, type="int", default=(2,8),
+    game_group.add_option("--food_rate", dest="food_rate", nargs=2, type="int", default=(5,11),
                           help="Numerator of food per turn per player rate")
-    game_group.add_option("--food_turn", dest="food_turn", nargs=2, type="int", default=(12,30),
+    game_group.add_option("--food_turn", dest="food_turn", nargs=2, type="int", default=(19,37),
                           help="Denominator of food per turn per player rate")
     game_group.add_option("--food_start", dest="food_start", nargs=2, type="int", default=(75,175),
                           help="One over percentage of land area filled with food at start")
-    game_group.add_option("--food_visible", dest="food_visible", nargs=2, type="int", default=(1,3),
+    game_group.add_option("--food_visible", dest="food_visible", nargs=2, type="int", default=(3,5),
                           help="Amount of food guaranteed to be visible to starting ants")
-    game_group.add_option("--cutoff_turn", dest="cutoff_turn", type="int", default=100,
+    game_group.add_option("--cutoff_turn", dest="cutoff_turn", type="int", default=150,
                           help="Number of turns cutoff percentage is maintained to end game early")
-    game_group.add_option("--cutoff_percent", dest="cutoff_percent", type="float", default=0.90,
+    game_group.add_option("--cutoff_percent", dest="cutoff_percent", type="float", default=0.85,
                           help="Number of turns cutoff percentage is maintained to end game early")
     game_group.add_option("--scenario", dest="scenario",
                           action='store_true', default=False)

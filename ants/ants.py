@@ -51,22 +51,22 @@ class Ants(Game):
         self.engine_seed = options.get('engine_seed', randint(-maxint-1, maxint))
         self.player_seed = options.get('player_seed', randint(-maxint-1, maxint))
         seed(self.engine_seed)
-        self.food_rate = options.get('food_rate', (2,8)) # total food
+        self.food_rate = options.get('food_rate', (5,11)) # total food
         if type(self.food_rate) in (list, tuple):
             self.food_rate = randrange(self.food_rate[0], self.food_rate[1]+1)
-        self.food_turn = options.get('food_turn', (12,30)) # per turn
+        self.food_turn = options.get('food_turn', (19,37)) # per turn
         if type(self.food_turn) in (list, tuple):
             self.food_turn = randrange(self.food_turn[0], self.food_turn[1]+1)
         self.food_start = options.get('food_start', (75,175)) # per land area
         if type(self.food_start) in (list, tuple):
             self.food_start = randrange(self.food_start[0], self.food_start[1]+1)
-        self.food_visible = options.get('food_visible', (1,3)) # in starting loc
+        self.food_visible = options.get('food_visible', (3,5)) # in starting loc
         if type(self.food_visible) in (list, tuple):
             self.food_visible = randrange(self.food_visible[0], self.food_visible[1]+1)
         self.food_extra = Fraction(0,1)
 
-        self.cutoff_percent = options.get('cutoff_percent', 0.90)
-        self.cutoff_turn = options.get('cutoff_turn', 100)
+        self.cutoff_percent = options.get('cutoff_percent', 0.85)
+        self.cutoff_turn = options.get('cutoff_turn', 150)
 
         self.do_attack = {
             'focus':   self.do_attack_focus,
