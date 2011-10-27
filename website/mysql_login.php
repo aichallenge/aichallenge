@@ -57,8 +57,10 @@ function contest_query() {
     }
 }
 
-
-function check_credentials($username, $password) {
+/*
+ * @modified 27 Oct 2011 bear@deepshiftlabs.com - checks cookies credentials if ($by_cookie).
+ */
+function check_credentials($username, $password, $by_cookie = false) {
   $query = "
         SELECT *
         FROM user u
@@ -68,7 +70,13 @@ function check_credentials($username, $password) {
     ";
   $result = mysql_query($query);
     if( $user = mysql_fetch_assoc( $result ) ) {
-        if (crypt($password, $user['password']) == $user['password']) {
+        $logged_in = false;
+        if ($by_cookie) {
+            $logged_in = ($password == md5($user['password']));
+        } else {
+            $logged_in = (crypt($password, $user['password']) == $user['password']);
+        }
+        if ($logged_in) {
             $_SESSION['username']   = $user['username'];
             $_SESSION['admin']      = $user['admin'];
             $_SESSION['user_id']    = $user['user_id'];
@@ -99,6 +107,24 @@ function check_reset_credentials($username, $reset) {
         } else {
             return false;
         }
+    } else {
+        return false;
+    }
+}
+/*
+ * Returns md5 hash of user password hash in DB, used as remember me cookie password
+ * @since 27 Oct 2011 bear@deepshiftlabs.com
+ */
+function get_dbpass_hash($username) {
+  $query = "
+        SELECT password
+        FROM user u
+        WHERE
+            username='$username'
+    ";
+  $result = mysql_query($query);
+    if( $user = mysql_fetch_assoc( $result ) ) {
+        return md5($user['password']);
     } else {
         return false;
     }

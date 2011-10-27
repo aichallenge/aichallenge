@@ -12,16 +12,16 @@ if(isset($title)) {
 
 ?>
 <html xmlns="http://www.w3.org/1999/xhtml">
-    <head> 
-        <title><?php echo $title; ?></title> 
-        <meta name="description" content="The AI Challenge (sponsored by Google) is an international programming contest started by the University of Waterloo Computer Science Club." /> 
-        <meta name="keywords" content="" /> 
-        
-        <!-- Global Tags --> 
-        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" /> 
+    <head>
+        <title><?php echo $title; ?></title>
+        <meta name="description" content="The AI Challenge (sponsored by Google) is an international programming contest started by the University of Waterloo Computer Science Club." />
+        <meta name="keywords" content="" />
+
+        <!-- Global Tags -->
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
         <link rel="shortcut icon" href="favicon.ico" />
- 
-        <!-- CSS --> 
+
+        <!-- CSS -->
         <link href="aichallenge.css" rel="stylesheet" type="text/css" />
 
         <!-- JavaScript -->
@@ -39,6 +39,9 @@ if (file_exists('server_head.html')) {
 <?php
 
 require_once('session.php');
+if (!logged_in_with_valid_credentials()) {
+    try_logging_by_cookie();
+}
 flush();
 ?>
     <body>
