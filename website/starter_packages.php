@@ -161,6 +161,12 @@ include 'header.php';
     <td><em>Hills not implemented yet</em></td>
   </tr>
   <tr>
+    <td><a href="starter_packages/tcl_starter_package.zip">Tcl</a></td>
+    <td>Tcl 8.5</td>
+    <td>&nbsp;</td>
+    <td><em></em></td>
+  </tr>
+  <tr>
     <td><a href="starter_packages/vb_starter_package.zip">Visual Basic</td>
     <td>Visual Basic.Net Compiler version 0.0.0.5917</td>
     <td>&nbsp;</td>
