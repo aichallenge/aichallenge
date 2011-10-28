@@ -120,7 +120,7 @@ proc setTile {row col type owner} {
     # If this tile is being set to a hill or an ant... Then check if there is already a hill or ant on this tile f̶r̶o̶m̶ ̶t̶h̶i̶s̶ ̶t̶u̶r̶n̶.
     if {  $type == "h"  ||  $type == "a"  } {
         
-        # Check if this tile exists in the Matrix.
+        # Check if this tile exists in the Tile dictionary.
         if { [dict exists $Tile $index] } {
         
             # Check if it is an ant or hill type.
@@ -133,7 +133,7 @@ proc setTile {row col type owner} {
         }
     }
     
-    # Nest the tile dict in the GameState dict.
+    # Nest the attributes dict in the Tile dict.
     dict set Tile $index $attributes
         
     return
