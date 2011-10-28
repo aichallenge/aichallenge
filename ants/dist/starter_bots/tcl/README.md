@@ -13,4 +13,4 @@ This is an AI Challenge starter bot written in Tcl. It requires tclsh 8.5.
 
 `helper.tcl` contains a few simple, helpful procedures.
 
-`MyBot.tcl` should consist of the bot's gameplay logic. Therein are three required procedures: initialize, doTurn, and endGame.
+`MyBot.tcl` consists of the bot's gameplay logic. Therein are three required procedures: initialize, doTurn, and endGame.
