@@ -53,7 +53,7 @@ proc isVisible {index} {
 }
 
 
-# Returns a list of tile indices that are visible to an ant located at the provided xy coordinate.
+# Returns a list of tile indices that are visible to an ant located at the given tile index.
 proc getVisibleIndices {index} {
     global Parameter
     
