@@ -3,6 +3,7 @@
 This is an AI Challenge starter bot written in Tcl. It requires tclsh 8.5.
 
 [Start Bot Guide on AI Challenge wiki](https://github.com/aichallenge/aichallenge/wiki/Ants-Starter-Pack-Guide)
+
 [Official Tcl website](http://tcl.tk)
 
 
