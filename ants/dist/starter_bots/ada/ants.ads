@@ -30,7 +30,7 @@ package Ants is
       Kind : Tile := Land;
       Owner : Player := -1; -- No owner
       Discovered : Boolean := False; -- Not yet discovered
-      Last_Bearing := North;
+      Last_Bearing : Bearing := North;
    end record;
 
    type Map_Dimension is new Natural;

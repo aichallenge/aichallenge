@@ -160,7 +160,7 @@ package body Ants is
          Game_Map_Pointer := new Map(0 .. State.rows, 0 .. State.cols);
 
          -- Initialize every square in the matrix to type Tile'Land.
-         Game_Map_Pointer.all := (others => (others => (Kind => LAND, Owner => -1, Discovered => False)));
+         Game_Map_Pointer.all := (others => (others => (Kind => LAND, Owner => -1, Discovered => False, Last_Bearing => North)));
       end if;
 
       Strategy.Move_Ants;
