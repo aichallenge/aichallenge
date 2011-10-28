@@ -355,8 +355,9 @@ languages = (
     Language("Ada", BOT, "mybot.adb",
         "./mybot",
         [BOT + ".ali"],
-        [(["*.adb"], TargetCompiler(comp_args["Ada"][0], targets["Ada"])),
-            (["*.ali"], ExternalCompiler(comp_args["Ada"][1]))]
+        [(["*.adb"], ExternalCompiler(comp_args["Ada"][0])),
+            (["*.ali"], ExternalCompiler(comp_args["Ada"][1])),
+            (["*.ali"], ExternalCompiler(comp_args["Ada"][2]))]
     ),
     Language("C", BOT, "MyBot.c",
         "./MyBot",
