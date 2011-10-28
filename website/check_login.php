@@ -22,6 +22,21 @@ function getRealIpAddr()
     return $ip;
 }
 
+/*
+ * Sets cookies for auto login. User should be already logged in.
+ * @since 27 Oct 2011 bear@deepshiftlabs.com
+ */
+function setRememberMeCookie()
+{
+    $days_to_be_logged_in = 5;
+    $time_to_store = time()+ 60*60*24*$days_to_be_logged_in;
+    $cookie_uid = get_cookie_uid($_SESSION['user_id']);
+    if ($cookie_uid) {
+        setcookie('uid', $cookie_uid, $time_to_store);
+    }
+}
+
+
 // Log this login attempt
 $username = mysql_real_escape_string(stripslashes($_POST['username']));
 $password = mysql_real_escape_string(stripslashes($_POST['password']));
@@ -34,14 +49,16 @@ $result = mysql_query($query);
 if (!$result) {
   echo "<p>Could not write to log: " . htmlentities(mysql_error(), ENT_COMPAT, "UTF-8") . "</p>";
 }
-
 if (check_credentials($username, $password)) {
-  	header("location:index.php");
+    if (isset($_POST['remember_me'])) {
+        setRememberMeCookie();
+    }
+    header("location:index.php");
 } else {
-	unset($_SESSION['username']);
-	unset($_SESSION['password']);
-	unset($_SESSION['admin']);
-	unset($_SESSION['user_id']);
+    unset($_SESSION['username']);
+    unset($_SESSION['password']);
+    unset($_SESSION['admin']);
+    unset($_SESSION['user_id']);
     header("location:login_failed.php");
 }
 
