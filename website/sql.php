@@ -339,7 +339,25 @@ $contest_sql = array(
         where user_id = %s;",
     "clear_password_reset" => "update user
         set reset = NULL
-        where user_id = %s"
+        where user_id = %s",
+    "select_user_cookies" => "select u.*, uc.cookie
+        from user_cookie uc
+        inner join user u
+        	on u.user_id = uc.user_id
+        where u.user_id = %s
+        and u.activated = 1
+        and uc.expires > current_timestamp();",
+    "insert_user_cookie" => "insert into user_cookie (user_id, cookie, expires)
+        values (%s, '%s', timestampadd(day, 5, current_timestamp()));",
+    "update_user_cookie" => "update user_cookie
+        set expires = timestampadd(day, 5, current_timestamp())
+        where user_id = %s
+        and cookie = '%s';",
+    "delete_user_cookie" => "delete from user_cookie
+        where user_id = %s
+        and cookie = '%s';",
+    "log_login" => "INSERT INTO login_attempt (timestamp,username,naive_ip, real_ip)
+        VALUES (CURRENT_TIMESTAMP,%s','%s','%s')"
 );
 
 ?>

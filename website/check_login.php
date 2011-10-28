@@ -22,36 +22,19 @@ function getRealIpAddr()
     return $ip;
 }
 
-/*
- * Sets cookies for auto login. User should be already logged in.
- * @since 27 Oct 2011 bear@deepshiftlabs.com
- */
-function setRememberMeCookie()
-{
-    $days_to_be_logged_in = 5;
-    $time_to_store = time()+ 60*60*24*$days_to_be_logged_in;
-    $cookie_uid = get_cookie_uid($_SESSION['user_id']);
-    if ($cookie_uid) {
-        setcookie('uid', $cookie_uid, $time_to_store);
-    }
-}
-
-
 // Log this login attempt
 $username = mysql_real_escape_string(stripslashes($_POST['username']));
 $password = mysql_real_escape_string(stripslashes($_POST['password']));
 $naive_ip = mysql_real_escape_string($_SERVER['REMOTE_ADDR']);
 $real_ip = mysql_real_escape_string(getRealIpAddr());
-$query = "INSERT INTO login_attempt (timestamp,username,naive_ip," .
-  "real_ip) VALUES (CURRENT_TIMESTAMP,'$username','$naive_ip'," .
-  "'$real_ip')";
-$result = mysql_query($query);
+
+$result = contest_query("log_login", $username, $naive_ip, real_ip);
 if (!$result) {
-  echo "<p>Could not write to log: " . htmlentities(mysql_error(), ENT_COMPAT, "UTF-8") . "</p>";
+  error_log("Could not write to log: " . mysql_error());
 }
 if (check_credentials($username, $password)) {
     if (isset($_POST['remember_me'])) {
-        setRememberMeCookie();
+        create_user_cookie();
     }
     header("location:index.php");
 } else {

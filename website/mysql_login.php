@@ -16,8 +16,13 @@ mysql_pconnect($db_host, $db_username, $db_password) or die('cannot connect: ' .
 mysql_select_db("$db_name")or die("cannot select DB");
 
 // salty function, used for passwords in crypt with SHA
-function salt($len=16) {
-    $pool = range('!', '~');
+function salt($len=16, $cookie=FALSE) {
+    if ($cookie) {
+        // set of characters that look nice in cookies, excluding -, . and _
+        $pool = array_merge(range('0','9'), range('a', 'z'), range('A','Z'));
+    } else {
+        $pool = range('!', '~');
+    }
     $high = count($pool) - 1;
     $tmp = '';
     for ($c = 0; $c < $len; $c++) {
@@ -44,16 +49,15 @@ function contest_query() {
         if (count($args) > 1) {
             $query_args = array_map('mysql_real_escape_string',
                                     array_slice($args, 1));
-            if (function_exists('api_log')) {
-                // api_log(vsprintf($contest_sql[$query_name], $query_args));
-            }
-            return mysql_query(vsprintf($contest_sql[$query_name], $query_args));
+            $query = vsprintf($contest_sql[$query_name], $query_args);
         } else {
-            if (function_exists('api_log')) {
-                // api_log("sql: ".$contest_sql[$query_name]);
-            }
-            return mysql_query($contest_sql[$query_name]);
+            $query = $contest_sql[$query_name];
         }
+        $result = mysql_query($query);
+        if (!$result) {
+            api_log("Contest Query Error: ".$query."\n".mysql_error());
+        }
+        return $result;
     }
 }
 
@@ -68,32 +72,6 @@ function check_credentials($username, $password) {
   $result = mysql_query($query);
     if( $user = mysql_fetch_assoc( $result ) ) {
         if (crypt($password, $user['password']) == $user['password']) {
-            $_SESSION['username']   = $user['username'];
-            $_SESSION['admin']      = $user['admin'];
-            $_SESSION['user_id']    = $user['user_id'];
-            return true;
-        } else {
-            return false;
-        }
-    } else {
-        return false;
-    }
-}
-/*
- * Checks if stored in cookie value is right, logs in user if so.
- * @since 28 Oct 2011 bear@deepshiftlabs.com
- */
-function check_credentials_cookie($user_id, $login_cookie) {
-  $query = "
-        SELECT *
-        FROM user u
-        WHERE
-            user_id='$user_id' AND
-            activated = 1
-    ";
-  $result = mysql_query($query);
-    if( $user = mysql_fetch_assoc($result) ) {
-        if ($login_cookie == $user['login_cookie']) {
             $_SESSION['username']   = $user['username'];
             $_SESSION['admin']      = $user['admin'];
             $_SESSION['user_id']    = $user['user_id'];
@@ -130,49 +108,53 @@ function check_reset_credentials($username, $reset) {
 }
 
 /*
- * Generates and stores cookie_value for user
- * @return string cookie_value if success, NULL otherwise
+ * Checks if stored in cookie value is right, logs in user if so.
+ * Updates database and browser with new expiration date
  * @since 28 Oct 2011 bear@deepshiftlabs.com
  */
-function create_cookie_value($user_id) {
-    $login_cookie = md5(salt(64));
-    $query = "UPDATE user SET login_cookie='" . $login_cookie . "' WHERE user_id = " . $user_id;
-    if (mysql_query($query)) {
-        return $login_cookie;
-    } else {
-        return NULL;
+function check_credentials_cookie($user_id, $login_cookie) {
+    // $login_cookie is not encrypted nor stored in the database
+    // $user_cookie['cookie'] is encrypted
+    $user_cookies = contest_query("select_user_cookies", $user_id);
+    while ($user = mysql_fetch_assoc($user_cookies)) {
+        if (crypt($login_cookie, $user['cookie']) == $user['cookie']) {
+            // found valid cookie, reset expire date
+            contest_query("update_user_cookie", $user_id, $user['cookie']);
+            setcookie('uid', $login_cookie, time()+60*60*24*5);        
+            // update session vars
+            $_SESSION['username']   = $user['username'];
+            $_SESSION['admin']      = $user['admin'];
+            $_SESSION['user_id']    = $user['user_id'];
+            $_SESSION['cookie']     = $user['cookie'];
+            return true;
+        }
     }
+    return false;
 }
 
 /*
- * Returns user's cookie uid as "user_id:cookie_value".
- * If cookie_value is not created yet, creates it. If creation fails, returns NULL
+ * Generates and stores cookie for user in database and browser
+ * @return string cookie_value if success, NULL otherwise
  * @since 28 Oct 2011 bear@deepshiftlabs.com
  */
-function get_cookie_uid($user_id) {
-  $login_cookie = NULL;
-  $query = "
-        SELECT login_cookie
-        FROM user u
-        WHERE
-            user_id = $user_id
-    ";
-    $result = mysql_query($query);
-    $user = mysql_fetch_assoc( $result );
-    if (!$user) {
-        return NULL;
+function create_user_cookie() {
+    if (isset($_SESSION['user_id'])) {
+        $user_id = $_SESSION['user_id'];
+        $login_cookie = $user_id . "-" . salt(32, true);
+        $encrytped_cookie = crypt($login_cookie, '$6$rounds=54321$' . salt() . '$');
+        if (contest_query("insert_user_cookie", $user_id, $encrytped_cookie)) {
+            setcookie('uid', $login_cookie, time()+60*60*24*5, '', '', false, true);
+            $_SESSION['cookie'] = $encrytped_cookie;
+            return $login_cookie;
+        } else {
+            return NULL;
+        }
     }
+}
 
-    if (!empty($user['login_cookie'])) {
-        $login_cookie = $user['login_cookie'];
-    } else {
-        $login_cookie = create_cookie_value($user_id);
-    }
-
-    if (!$login_cookie) {
-        return NULL;
-    } else {
-        return $user_id . ":" . $login_cookie;
+function delete_user_cookie() {
+    if (isset($_SESSION['user_id']) && isset($_SESSION['cookie'])) {
+        contest_query("delete_user_cookie", $_SESSION['user_id'], $_SESSION['cookie']);
     }
 }
 

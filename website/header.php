@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <?php
+
 require_once('server_info.php');
 $page_render_start_time = microtime(true);
 
@@ -39,9 +40,15 @@ if (file_exists('server_head.html')) {
 <?php
 
 require_once('session.php');
+
+// attempt cookie login if needed
 if (!logged_in_with_valid_credentials()) {
-    try_logging_by_cookie();
+    if (list($user_id, $user_cookie) = validate_user_cookie()) {
+        require_once('mysql_login.php');
+        check_credentials_cookie($user_id, $user_cookie);
+    }    
 }
+
 flush();
 ?>
     <body>

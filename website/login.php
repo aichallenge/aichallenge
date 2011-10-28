@@ -7,7 +7,7 @@ include 'header.php'
 
 <h2>Login</h2>
 <form name="login_form" method="post" action="check_login.php">
-  <table width="100%" border="0" cellpadding="3" cellspacing="5">
+  <table border="0" cellpadding="3" cellspacing="5">
   <tr>
     <td width="78">Username</td>
     <td width="6">:</td>
@@ -21,12 +21,16 @@ include 'header.php'
   <tr>
     <td>&nbsp;</td>
     <td>&nbsp;</td>
-    <td><input type="submit" name="Submit" value="Login"><input name="remember_me" type="checkbox" id="remember_me">Remember me</td>
+    <td><input name="remember_me" type="checkbox" id="remember_me"> Remember me</td>
   </tr>
   <tr>
     <td>&nbsp;</td>
     <td>&nbsp;</td>
-    <td><a href="register.php">Create an account</a></td>
+    <td><input type="submit" name="Submit" value="Login"></td>
+  </tr>
+
+  <tr>
+    <td colspan="3"><h3>-or-<br /><br /><a href="register.php">Create an account</a></h3></td>
   </tr>
   </table>
 </form>
