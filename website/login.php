@@ -21,7 +21,7 @@ include 'header.php'
   <tr>
     <td>&nbsp;</td>
     <td>&nbsp;</td>
-    <td><input type="submit" name="Submit" value="Login"></td>
+    <td><input type="submit" name="Submit" value="Login"><input name="remember_me" type="checkbox" id="remember_me">Remember me</td>
   </tr>
   <tr>
     <td>&nbsp;</td>
