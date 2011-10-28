@@ -32,15 +32,15 @@ proc inputLoop {} {
         
         # Decided what to do with this input.
         switch -glob -- $line {
-        			
+                    
             "ready" { # Initialize. 
-					  # This procedure should be defined elsewhere.                      
-	                  initialize
+                      # This procedure should be defined elsewhere.                      
+                      initialize
                       output "go"
                     }
                     
             "go"    { # Do turn. 
-					  # This procedure should be defined elsewhere.
+                      # This procedure should be defined elsewhere.
                       doTurn
                       
                       # End the turn.
@@ -51,12 +51,12 @@ proc inputLoop {} {
                     }
                     
             "end"   { # The game is over. 
-					  # This procedure should be defined elsewhere.
-            		  endGame
+                      # This procedure should be defined elsewhere.
+                      endGame
                     }
                     
             default { # Adjust game state. 
-					  processInput $line
+                      processInput $line
                     }
         }
     }
@@ -95,48 +95,48 @@ proc processInput {line} {
 
 
 proc unsetTile {index} {
-	global Tile
-	dict unset Tile $index
-	return
+    global Tile
+    dict unset Tile $index
+    return
 }
 
 
 # Define the tile at a row and column.
 # An existing row,col tile will be overwritten, unless an ant and a hill are in the same tile position, in which case it will be saved as a hill that is blocked.
 proc setTile {row col type owner} {
-	global Tile
+    global Tile
 
-	# Create a dict for this tile's attributes.
-	set attributes [dict create \
-		type  		$type		\
-		owner 		$owner		\
-		blocked		0			\
-		lastseen	0			\
-	]
-	
-	set index "$row $col"
-	
-	# Check if this is a blocked hill.
-	# If this tile is being set to a hill or an ant... Then check if there is already a hill or ant on this tile f̶r̶o̶m̶ ̶t̶h̶i̶s̶ ̶t̶u̶r̶n̶.
-	if {  $type == "h"  ||  $type == "a"  } {
-		
-		# Check if this tile exists in the Matrix.
-		if { [dict exists $Tile $index] } {
-		
-			# Check if it is an ant or hill type.
-			if {  [dict get $Tile $index type] == "a"  ||  [dict get $Tile $index type] == "h"  } {
-			
-				# This is a blocked hill! (ant+hill on the same tile)
-				dict set attributes type 		"h"
-				dict set attributes blocked 	1
-			}
-		}
-	}
-	
-	# Nest the tile dict in the GameState dict.
-	dict set Tile $index $attributes
-		
-	return
+    # Create a dict for this tile's attributes.
+    set attributes [dict create  \
+        type        $type        \
+        owner       $owner       \
+        blocked     0            \
+        lastseen    0            \
+    ]
+    
+    set index "$row $col"
+    
+    # Check if this is a blocked hill.
+    # If this tile is being set to a hill or an ant... Then check if there is already a hill or ant on this tile f̶r̶o̶m̶ ̶t̶h̶i̶s̶ ̶t̶u̶r̶n̶.
+    if {  $type == "h"  ||  $type == "a"  } {
+        
+        # Check if this tile exists in the Matrix.
+        if { [dict exists $Tile $index] } {
+        
+            # Check if it is an ant or hill type.
+            if {  [dict get $Tile $index type] == "a"  ||  [dict get $Tile $index type] == "h"  } {
+            
+                # This is a blocked hill! (ant+hill on the same tile)
+                dict set attributes type     "h"
+                dict set attributes blocked  1
+            }
+        }
+    }
+    
+    # Nest the tile dict in the GameState dict.
+    dict set Tile $index $attributes
+        
+    return
 }
 
 
@@ -149,64 +149,64 @@ proc setTile {row col type owner} {
 # blocked = 1, if the type is a hill with an ant on it. 0 otherwise.
 # l̶a̶s̶t̶s̶e̶e̶n̶ ̶=̶ ̶T̶h̶e̶ ̶n̶u̶m̶b̶e̶r̶ ̶o̶f̶ ̶t̶u̶r̶n̶s̶ ̶a̶g̶o̶ ̶t̶h̶i̶s̶ ̶t̶i̶l̶e̶ ̶w̶a̶s̶ ̶s̶e̶e̶n̶,̶ ̶0̶ ̶=̶ ̶t̶h̶i̶s̶ ̶t̶u̶r̶n̶.̶ ̶T̶h̶i̶s̶ ̶i̶s̶ ̶u̶s̶e̶d̶ ̶t̶o̶ ̶t̶r̶a̶c̶k̶ ̶w̶h̶e̶n̶ ̶a̶ ̶t̶i̶l̶e̶ ̶w̶a̶s̶ ̶l̶a̶s̶t̶ ̶s̶e̶e̶n̶ ̶t̶o̶ ̶a̶s̶s̶e̶s̶s̶ ̶h̶o̶w̶ ̶a̶c̶c̶u̶r̶a̶t̶e̶ ̶t̶h̶a̶t̶ ̶i̶n̶f̶o̶r̶m̶a̶t̶i̶o̶n̶ ̶i̶s̶ ̶l̶i̶k̶e̶l̶y̶ ̶t̶o̶ ̶b̶e̶.̶ ̶A̶ ̶f̶o̶o̶d̶ ̶t̶i̶l̶e̶ ̶s̶e̶e̶n̶ ̶t̶h̶i̶s̶ ̶t̶u̶r̶n̶ ̶i̶s̶ ̶d̶e̶f̶i̶n̶i̶t̶e̶l̶y̶ ̶t̶h̶e̶r̶e̶,̶ ̶b̶u̶t̶ ̶o̶n̶e̶ ̶s̶e̶e̶n̶ ̶f̶i̶v̶e̶ ̶t̶u̶r̶n̶s̶ ̶a̶g̶o̶ ̶m̶a̶y̶ ̶b̶e̶ ̶g̶o̶n̶e̶ ̶b̶y̶ ̶n̶o̶w̶.̶
 proc getTile {index args} {
-	global Tile
-	
-	# If an attribute is not provided, all attributes will be returned as a key-value list.
-	if { [dict exists $Tile $index {*}$args] } {
-		return [dict get $Tile $index {*}$args]
-	}
-	
-	return
+    global Tile
+    
+    # If an attribute is not provided, all attributes will be returned as a key-value list.
+    if { [dict exists $Tile $index {*}$args] } {
+        return [dict get $Tile $index {*}$args]
+    }
+    
+    return
 }
 
 
 # Returns a list of indices for all tiles that match the given key-value pairs provided.
 # An operator is optional to use something other than the default equals operator (==).
 # Example:
-#	getTiles {type h} {owner != 0}
+#    getTiles {type h} {owner != 0}
 proc getTiles {args} {
-	global Tile
+    global Tile
 
-	set indices [list]
-	
-	dict for {index attributes} $Tile {
-		set flag 0
+    set indices [list]
+    
+    dict for {index attributes} $Tile {
+        set flag 0
 
-		foreach comparison $args {
-			set key  	 [lindex $comparison 0]
-			set value	 [lindex $comparison end]
-			set operator "=="
-			
-			if { [llength $comparison] == 3 } {
-				set operator [lindex $comparison 1]
-			}
-			
-			set bool [expr \"[dict get $attributes $key]\" $operator \"$value\"]
-		
-			if $bool {
-				set flag 1
-				
-			} else {
-				set flag 0
-				break
-			}
-		}
-		
-		if { $flag == 1 } {
-			lappend indices $index
-		}
-	}
-	
-	return $indices
+        foreach comparison $args {
+            set key       [lindex $comparison 0]
+            set value     [lindex $comparison end]
+            set operator "=="
+            
+            if { [llength $comparison] == 3 } {
+                set operator [lindex $comparison 1]
+            }
+            
+            set bool [expr \"[dict get $attributes $key]\" $operator \"$value\"]
+        
+            if $bool {
+                set flag 1
+                
+            } else {
+                set flag 0
+                break
+            }
+        }
+        
+        if { $flag == 1 } {
+            lappend indices $index
+        }
+    }
+    
+    return $indices
 }
 
 
 # Unset any tile that isn't water.
 proc unsetNonWaterTiles {} {
 
-	foreach index [getTiles {type != w}] {
-		unsetTile $index
-	}
-	
-	return
+    foreach index [getTiles {type != w}] {
+        unsetTile $index
+    }
+    
+    return
 }
