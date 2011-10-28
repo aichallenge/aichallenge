@@ -11,18 +11,20 @@ function logged_in_with_valid_credentials() {
  * @since 27 Oct 2011 bear@deepshiftlabs.com
  */
 function try_logging_by_cookie() {
-    if (!isset($_COOKIE['aich_login']) || !isset($_COOKIE['aich_remme']) ) {
+    if (!isset($_COOKIE['uid']) || !trim($_COOKIE['uid'])) {
         return false;
     }
-    $username = trim($_COOKIE['aich_login']);
-    $remme_value = trim($_COOKIE['aich_remme']);
-    if (!$username || !$remme_value) {
+    $parts = explode(":",$_COOKIE['uid'], 2);
+    if (count($parts)<2 || !is_numeric($parts[0])) {
         return false;
     }
 
+    $user_id = $parts[0];
+    $login_cookie = $parts[1];
+
     global $server_info;
     require_once 'mysql_login.php';
-    return check_credentials($username, $remme_value, true);
+    return check_credentials_cookie($user_id, $login_cookie);
 }
 
 function logged_in_as_admin() {

@@ -23,16 +23,17 @@ function getRealIpAddr()
 }
 
 /*
- * Sets cookies for auto login
+ * Sets cookies for auto login. User should be already logged in.
  * @since 27 Oct 2011 bear@deepshiftlabs.com
  */
-function setRememberMeCookie($username)
+function setRememberMeCookie()
 {
     $days_to_be_logged_in = 5;
-    $remme_value = get_dbpass_hash($username);
     $time_to_store = time()+ 60*60*24*$days_to_be_logged_in;
-    setcookie('aich_login', $username, $time_to_store);
-    setcookie('aich_remme', $remme_value, $time_to_store);
+    $cookie_uid = get_cookie_uid($_SESSION['user_id']);
+    if ($cookie_uid) {
+        setcookie('uid', $cookie_uid, $time_to_store);
+    }
 }
 
 
@@ -50,7 +51,7 @@ if (!$result) {
 }
 if (check_credentials($username, $password)) {
     if (isset($_POST['remember_me'])) {
-        setRememberMeCookie($username);
+        setRememberMeCookie();
     }
     header("location:index.php");
 } else {

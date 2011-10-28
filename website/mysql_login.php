@@ -57,10 +57,7 @@ function contest_query() {
     }
 }
 
-/*
- * @modified 27 Oct 2011 bear@deepshiftlabs.com - checks cookies credentials if ($by_cookie).
- */
-function check_credentials($username, $password, $by_cookie = false) {
+function check_credentials($username, $password) {
   $query = "
         SELECT *
         FROM user u
@@ -70,13 +67,33 @@ function check_credentials($username, $password, $by_cookie = false) {
     ";
   $result = mysql_query($query);
     if( $user = mysql_fetch_assoc( $result ) ) {
-        $logged_in = false;
-        if ($by_cookie) {
-            $logged_in = ($password == md5($user['password']));
+        if (crypt($password, $user['password']) == $user['password']) {
+            $_SESSION['username']   = $user['username'];
+            $_SESSION['admin']      = $user['admin'];
+            $_SESSION['user_id']    = $user['user_id'];
+            return true;
         } else {
-            $logged_in = (crypt($password, $user['password']) == $user['password']);
+            return false;
         }
-        if ($logged_in) {
+    } else {
+        return false;
+    }
+}
+/*
+ * Checks if stored in cookie value is right, logs in user if so.
+ * @since 28 Oct 2011 bear@deepshiftlabs.com
+ */
+function check_credentials_cookie($user_id, $login_cookie) {
+  $query = "
+        SELECT *
+        FROM user u
+        WHERE
+            user_id='$user_id' AND
+            activated = 1
+    ";
+  $result = mysql_query($query);
+    if( $user = mysql_fetch_assoc($result) ) {
+        if ($login_cookie == $user['login_cookie']) {
             $_SESSION['username']   = $user['username'];
             $_SESSION['admin']      = $user['admin'];
             $_SESSION['user_id']    = $user['user_id'];
@@ -111,22 +128,51 @@ function check_reset_credentials($username, $reset) {
         return false;
     }
 }
+
 /*
- * Returns md5 hash of user password hash in DB, used as remember me cookie password
- * @since 27 Oct 2011 bear@deepshiftlabs.com
+ * Generates and stores cookie_value for user
+ * @return string cookie_value if success, NULL otherwise
+ * @since 28 Oct 2011 bear@deepshiftlabs.com
  */
-function get_dbpass_hash($username) {
+function create_cookie_value($user_id) {
+    $login_cookie = md5(salt(64));
+    $query = "UPDATE user SET login_cookie='" . $login_cookie . "' WHERE user_id = " . $user_id;
+    if (mysql_query($query)) {
+        return $login_cookie;
+    } else {
+        return NULL;
+    }
+}
+
+/*
+ * Returns user's cookie uid as "user_id:cookie_value".
+ * If cookie_value is not created yet, creates it. If creation fails, returns NULL
+ * @since 28 Oct 2011 bear@deepshiftlabs.com
+ */
+function get_cookie_uid($user_id) {
+  $login_cookie = NULL;
   $query = "
-        SELECT password
+        SELECT login_cookie
         FROM user u
         WHERE
-            username='$username'
+            user_id = $user_id
     ";
-  $result = mysql_query($query);
-    if( $user = mysql_fetch_assoc( $result ) ) {
-        return md5($user['password']);
+    $result = mysql_query($query);
+    $user = mysql_fetch_assoc( $result );
+    if (!$user) {
+        return NULL;
+    }
+
+    if (!empty($user['login_cookie'])) {
+        $login_cookie = $user['login_cookie'];
     } else {
-        return false;
+        $login_cookie = create_cookie_value($user_id);
+    }
+
+    if (!$login_cookie) {
+        return NULL;
+    } else {
+        return $user_id . ":" . $login_cookie;
     }
 }
 
