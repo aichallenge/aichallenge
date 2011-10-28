@@ -490,6 +490,11 @@ languages = (
         [],
         [(["*.ss"], ChmodCompiler("Scheme"))]
     ),
+    Language("Tcl", BOT +".tcl", "MyBot.tcl",
+        "tclsh MyBot.tcl",
+        [],
+        [(["*.tcl"], ChmodCompiler("Tcl"))]
+    ),
 )
 
 
