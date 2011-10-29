@@ -15,15 +15,19 @@ if(!filter_var($page, FILTER_VALIDATE_INT)) {
     $page = 1;
 }
 
-$query = "select u.username from user u where u.user_id = $user_id limit 1";
-$username = mysql_fetch_object(mysql_query($query))->username;
-
-$username = htmlentities($username, ENT_COMPAT, "UTF-8");
-
-$title=$username."'s Contest Submissions";
-include 'header.php';
-echo "<h2><a href=\"profile.php?user=$user_id\">$username</a>'s contest submissions</h2>";
-echo getSubmissionTableString($user_id, false, 25, "?user=$user_id&page=", $page);
+if ($user_id) {
+    $query = "select u.username from user u where u.user_id = $user_id limit 1";
+    $username = mysql_fetch_object(mysql_query($query))->username;
+    
+    $username = htmlentities($username, ENT_COMPAT, "UTF-8");
+    
+    $title=$username."'s Contest Submissions";
+    include 'header.php';
+    echo "<h2><a href=\"profile.php?user=$user_id\">$username</a>'s contest submissions</h2>";
+    echo getSubmissionTableString($user_id, false, 25, "?user=$user_id&page=", $page);
+} else {
+    echo "<p>User not found.</p>"
+}
 
 include 'footer.php';
 ?>
