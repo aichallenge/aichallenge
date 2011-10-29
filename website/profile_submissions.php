@@ -26,7 +26,7 @@ if ($user_id) {
     echo "<h2><a href=\"profile.php?user=$user_id\">$username</a>'s contest submissions</h2>";
     echo getSubmissionTableString($user_id, false, 25, "?user=$user_id&page=", $page);
 } else {
-    echo "<p>User not found.</p>"
+    echo "<p>User not found.</p>";
 }
 
 include 'footer.php';
