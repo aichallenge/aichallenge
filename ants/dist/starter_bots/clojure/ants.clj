@@ -13,7 +13,8 @@
                  :dead #{}
                  :enemies #{}
                  :ants #{}
-                 :food #{}})
+                 :food #{}
+                 :hill #{}})
 
 (def dir-sym {:north "N"
               :south "S"
@@ -39,7 +40,8 @@
 (def map-tiles {"f" :food 
                 "w" :water 
                 "a" :ant 
-                "d" :dead-ant})
+                "d" :dead-ant
+                "h" :hill})
 
 ;;****************************************************************
 ;; Implementation functions
@@ -79,7 +81,8 @@
           :ant (if (zero? player)
                  (update-in state [:ants] conj loc) 
                  (update-in state [:enemies] conj ant))
-          :food (update-in state [:food] conj loc))))
+          :food (update-in state [:food] conj loc)
+          :hill (update-in state [:hill] conj loc))))
 
 (defn- update-state [state msg]
   (cond
