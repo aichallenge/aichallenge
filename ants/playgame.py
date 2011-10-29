@@ -255,17 +255,21 @@ def main(argv):
         return -1
 
 def run_rounds(opts,args):
-    def get_cmd_wd(cmd):
+    def get_cmd_wd(cmd, exec_rel_cwd=False):
         ''' get the proper working directory from a command line '''
         new_cmd = []
         wd = None
-        for i, part in enumerate(reversed(cmd.split())):
+        for i, part in reversed(list(enumerate(cmd.split()))):
             if wd == None and os.path.exists(part):
-                wd = os.path.split(os.path.realpath(part))[0]
+                wd = os.path.dirname(os.path.realpath(part))
+                basename = os.path.basename(part)
                 if i == 0:
-                    new_cmd.insert(0, os.path.join(".", os.path.basename(part)))
+                    if exec_rel_cwd:
+                        new_cmd.insert(0, os.path.join(".", basename))
+                    else:
+                        new_cmd.insert(0, part)
                 else:
-                    new_cmd.insert(0, os.path.basename(part))
+                    new_cmd.insert(0, basename)
             else:
                 new_cmd.insert(0, part)
         return wd, ' '.join(new_cmd)
@@ -321,7 +325,7 @@ def run_rounds(opts,args):
             game_options['engine_seed'] = opts.engine_seed + round
         game = Ants(game_options)
         # initialize bots
-        bots = [get_cmd_wd(arg) for arg in args]
+        bots = [get_cmd_wd(arg, exec_rel_cwd=opts.secure_jail) for arg in args]
         bot_count = len(bots)
         # insure correct number of bots, or fill in remaining positions
         if game.num_players != len(bots):
