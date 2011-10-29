@@ -188,6 +188,15 @@ CREATE TABLE `user` (
   KEY `user_created_idx` (`created`)
 );
 
+DROP TABLE IF EXISTS `user_cookie`;
+CREATE TABLE `user_cookie` (
+  `user_id` int(11) NOT NULL,
+  `cookie` varchar(256) NOT NULL,
+  `expires` datetime NOT NULL,
+  `forgot` tinyint(1) NOT NULL DEFAULT '0',
+  PRIMARY KEY (`user_id`, `cookie`)
+);
+
 DROP TABLE IF EXISTS `user_status_code`;
 CREATE TABLE `user_status_code` (
   `status_id` int(11) NOT NULL,
