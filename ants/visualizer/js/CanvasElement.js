@@ -1035,7 +1035,10 @@ CanvasElementGraph.prototype.draw = function() {
 	var w = this.w - 1;
 	var h = this.h - 1;
 	var replay = this.state.replay;
-	var values = this.getStats(this.stats).values.map(function(a) { return a.map(Math.sqrt); });
+	var values = this.getStats(this.stats).values;
+	// Fixes the bug where the values would be scaled iteratively on every screen update in the live
+	// visualizer
+	var scaleFn = Math.sqrt;
 	this.ctx.fillStyle = SAND_COLOR;
 	this.ctx.fillRect(0, 0, this.w, this.h);
 	this.ctx.font = '10px Arial,Sans';
@@ -1045,8 +1048,8 @@ CanvasElementGraph.prototype.draw = function() {
 	max = -Infinity;
 	for (i = 0; i <= this.duration; i++) {
 		for (k = 0; k < values[i].length; k++) {
-			if (max < values[i][k]) {
-				max = values[i][k];
+			if (max < scaleFn(values[i][k])) {
+				max = scaleFn(values[i][k]);
 			}
 		}
 	}
@@ -1075,7 +1078,7 @@ CanvasElementGraph.prototype.draw = function() {
 		razed = hills[k][3] < this.state.replay.duration;
 		if (razed && values[hills[k][3]]) {
 			x = 0.5 + scaleX * hills[k][3];
-			y = 0.5 + scaleY * (max - values[hills[k][3]][hills[k][2]]);
+			y = 0.5 + scaleY * (max - scaleFn(values[hills[k][3]][hills[k][2]]));
 			this.ctx.fillStyle = replay.htmlPlayerColors[hills[k][2]];
 			this.ctx.beginPath();
 			this.ctx.moveTo(x, y);
@@ -1091,9 +1094,9 @@ CanvasElementGraph.prototype.draw = function() {
 	for (i = values[0].length - 1; i >= 0; i--) {
 		this.ctx.strokeStyle = replay.htmlPlayerColors[i];
 		this.ctx.beginPath();
-		this.ctx.moveTo(0.5, 0.5 + scaleY * (max - values[0][i]));
+		this.ctx.moveTo(0.5, 0.5 + scaleY * (max - scaleFn(values[0][i])));
 		for (k = 1; k <= this.duration; k++) {
-			this.ctx.lineTo(0.5 + scaleX * k, 0.5 + scaleY * (max - values[k][i]));
+			this.ctx.lineTo(0.5 + scaleX * k, 0.5 + scaleY * (max - scaleFn(values[k][i])));
 		}
 		this.ctx.stroke();
 	}
@@ -1102,7 +1105,7 @@ CanvasElementGraph.prototype.draw = function() {
 			k = replay.meta['playerturns'][i];
 			this.ctx.beginPath();
 			x = 0.5 + k * scaleX;
-			y = 0.5 + scaleY * (max - values[k][i]);
+			y = 0.5 + scaleY * (max - scaleFn(values[k][i]));
 			this.ctx.moveTo(x, y);
 			txt = this.statusToGlyph(i);
 			tw = this.ctx.measureText(txt).width;
@@ -1364,7 +1367,7 @@ CanvasElementStats.prototype.drawColorBar = function(x, y, w, h, stats, bonusTex
 				}
 				ctx.textBaseline = 'middle';
 				ctx.font = 'bold 16px Monospace';
-				ctx.fillStyle = TEXT_COLOR; //'#fff';
+				ctx.fillStyle = TEXT_COLOR; // '#fff';
 				ctx.lineWidth = 0.5;
 				text = values[kIdx];
 				if (label) {

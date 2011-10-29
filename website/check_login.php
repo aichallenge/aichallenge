@@ -27,21 +27,21 @@ $username = mysql_real_escape_string(stripslashes($_POST['username']));
 $password = mysql_real_escape_string(stripslashes($_POST['password']));
 $naive_ip = mysql_real_escape_string($_SERVER['REMOTE_ADDR']);
 $real_ip = mysql_real_escape_string(getRealIpAddr());
-$query = "INSERT INTO login_attempt (timestamp,username,naive_ip," .
-  "real_ip) VALUES (CURRENT_TIMESTAMP,'$username','$naive_ip'," .
-  "'$real_ip')";
-$result = mysql_query($query);
-if (!$result) {
-  echo "<p>Could not write to log: " . htmlentities(mysql_error(), ENT_COMPAT, "UTF-8") . "</p>";
-}
 
+$result = contest_query("log_login", $username, $naive_ip, real_ip);
+if (!$result) {
+  error_log("Could not write to log: " . mysql_error());
+}
 if (check_credentials($username, $password)) {
-  	header("location:index.php");
+    if (isset($_POST['remember_me'])) {
+        create_user_cookie();
+    }
+    header("location:index.php");
 } else {
-	unset($_SESSION['username']);
-	unset($_SESSION['password']);
-	unset($_SESSION['admin']);
-	unset($_SESSION['user_id']);
+    unset($_SESSION['username']);
+    unset($_SESSION['password']);
+    unset($_SESSION['admin']);
+    unset($_SESSION['user_id']);
     header("location:login_failed.php");
 }
 

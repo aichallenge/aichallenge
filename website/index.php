@@ -1,6 +1,6 @@
 <?php
 
-$title = "Homepage";
+$title = "Home";
 include('header.php');
 require_once('memcache.php');
 

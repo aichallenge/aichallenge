@@ -145,11 +145,6 @@ th.headerSortDown:after {
     content: "\00a0\21d3";
 }
 
-table {
-    width: 100%;
-    text-align: center;
-}
-
 /* Games */
 
 table.games {
@@ -183,10 +178,15 @@ table.games td.list span {
     white-space: nowrap;
 }
 
+table.games tr:hover {
+    background-color: #eee;
+}
+
 /* Ranking */
 
 table.ranking {
     width: 700px;
+    text-align: center;
 }
 
 table.ranking caption {
@@ -211,10 +211,7 @@ table.ranking td.org {
     max-width: 150px;
 }
 
-tr:hover {
-    background-color: #eee;
-}
-tr.even:hover {
+table.ranking tr:hover {
     background-color: #eee;
 }
 
