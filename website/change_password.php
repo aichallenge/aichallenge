@@ -1,12 +1,56 @@
 <?php
 
+// A function I copied from teh internets that claims to get a person's "real"
+// IP address. Not sure what that's all about, but let's log it anyways!
+function getRealIpAddr()
+{
+    if (!empty($_SERVER['HTTP_CLIENT_IP']))
+    {
+      $ip=$_SERVER['HTTP_CLIENT_IP'];
+    }
+    elseif (!empty($_SERVER['HTTP_X_FORWARDED_FOR']))
+    {
+      $ip=$_SERVER['HTTP_X_FORWARDED_FOR'];
+    }
+    else
+    {
+      $ip=$_SERVER['REMOTE_ADDR'];
+    }
+    return $ip;
+}
+
 $title = "Change Password";
 
 require_once('session.php');
+require_once('mysql_login.php');
 
 if (!logged_in_with_valid_credentials()) {
-    header('index.php');
-    die();
+    // check for forgotten password url
+    if (isset($_GET['user_id']) && isset($_GET['code'])) {
+        // Log this login attempt
+        $user_id = mysql_real_escape_string(stripslashes($_GET['user_id']));
+        $forgot_code = mysql_real_escape_string(stripslashes($_GET['code']));
+        $naive_ip = mysql_real_escape_string($_SERVER['REMOTE_ADDR']);
+        $real_ip = mysql_real_escape_string(getRealIpAddr());
+        
+        $result = contest_query("log_login", $user_id, $naive_ip, real_ip);
+        if (!$result) {
+          error_log("Could not write to log: " . mysql_error());
+        }
+        if (check_credentials_forgot($user_id, $forgot_code)) {
+            $_SESSION['forgotten'] = true;
+        } else {
+            unset($_SESSION['username']);
+            unset($_SESSION['password']);
+            unset($_SESSION['admin']);
+            unset($_SESSION['user_id']);            
+            header('index.php');
+            die();
+        }
+    } else {
+        header('index.php');
+        die();
+    }
 }
 
 require_once('header.php');
@@ -24,7 +68,7 @@ if (isset($_SESSION['change_password_error']) && $_SESSION['change_password_erro
   </tr>
 <?php
 }
-if (!isset($_SESSION['temp_access'])) {
+if (!isset($_SESSION['forgotten']) || $_SESSION['forgotten'] === false) {
 ?>
   <tr>
     <td>Old Password</td>

@@ -154,8 +154,8 @@ function delete_user_cookie() {
     }
 }
 
-function create_user_forgot_code ($user_email) {
-    $user_result = contest_query("select_user_by_email", $user_email);
+function create_user_forgot_code ($username) {
+    $user_result = contest_query("select_user_by_name", $username);
     if ($user_result) {
         $user_row = mysql_fetch_assoc($user_result);
         $user_id = $user_row['user_id'];

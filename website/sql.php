@@ -355,7 +355,7 @@ $contest_sql = array(
     "log_login" => "INSERT INTO login_attempt (timestamp,username,naive_ip, real_ip)
         VALUES (CURRENT_TIMESTAMP,'%s','%s','%s')",
     "insert_user_forgot_code" => "insert into user_cookie (user_id, cookie, expires, forgot)
-        values (%s, '%s', timestampadd(minute, 5, current_timestamp()), 1);",
+        values (%s, '%s', timestampadd(hour, 2, current_timestamp()), 1);",
     "select_user_forgot_code" => "select u.*, uc.cookie
         from user_cookie uc
         inner join user u
@@ -364,9 +364,9 @@ $contest_sql = array(
         and u.activated = 1
         and uc.forgot = 1
         and uc.expires > current_timestamp();",
-    "select_user_by_email" => "select user_id, username
+    "select_user_by_name" => "select user_id, username
         from user
-        where email = '%s'
+        where username = '%s'
         and activated = 1;",
     "change_password" => "update user
         set password = '%s'

@@ -28,7 +28,7 @@ $password = mysql_real_escape_string(stripslashes($_POST['password']));
 $naive_ip = mysql_real_escape_string($_SERVER['REMOTE_ADDR']);
 $real_ip = mysql_real_escape_string(getRealIpAddr());
 
-$result = contest_query("log_login", $username, $naive_ip, real_ip);
+$result = contest_query("log_login", $username, $naive_ip, $real_ip);
 if (!$result) {
   error_log("Could not write to log: " . mysql_error());
 }

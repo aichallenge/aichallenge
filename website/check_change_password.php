@@ -17,8 +17,12 @@ $confirm_password = mysql_real_escape_string(stripslashes($_POST['confirm_passwo
 if ($new_password != $confirm_password) {
     $_SESSION['change_password_error'] = "Passwords do not match.";
     header("location:change_password.php");
-} elseif (isset($_SESSION['temp_access']) || check_credentials(current_username(), $old_password)) {
-    contest_query("change_password", crypt($new_password, '$6$rounds=54321$' . salt() . '$'), current_user_id());
+} elseif ((isset($_SESSION['forgotten']) && $_SESSION['forgotten']) ||
+          check_credentials(current_username(), $old_password)) {
+    $_SESSION['forgotten'] = false;
+    contest_query("change_password",
+                  crypt($new_password, '$6$rounds=54321$' . salt() . '$'),
+                  current_user_id());
     if (isset($_POST['remember_me'])) {
         create_user_cookie();
     }

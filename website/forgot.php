@@ -12,16 +12,16 @@ include 'header.php'
 if (isset($_SESSION['forgot_error']) && $_SESSION['forgot_error']) {
 ?>
   <tr>
-    <th colspan="4" class="error">The email supplied was not found in our records.</th>
+    <th colspan="4" class="error">The user name supplied was not found in our records.</th>
   </tr>
 <?php
 }
 ?>
   <tr>
-    <td>Email</td>
+    <td>Username</td>
     <td>:</td>
-    <td><input name="user_email" type="text" id="user_email"></td>
-    <td>To get temporary access to your account, type in the full email address you used to register your AI Challenge account.</td>
+    <td><input name="username" type="text" id="username"></td>
+    <td>To get temporary access to your account, type the user name you used to register your AI Challenge account.</td>
   </tr>
   <tr>
     <td>&nbsp;</td>
