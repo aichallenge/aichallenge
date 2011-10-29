@@ -84,27 +84,23 @@ function check_credentials($username, $password) {
     }
 }
 
-function check_reset_credentials($username, $reset) {
-  $query = "
-        SELECT *
-        FROM user u
-        WHERE
-            username='$username' AND
-            activated = 1
-    ";
-  $result = mysql_query($query);
-    if( $user = mysql_fetch_assoc( $result ) ) {
-        if (crypt($password, $user['reset']) == $user['reset']) {
+function check_credentials_forgot($user_id, $forgot_code) {
+    // $login_cookie is not encrypted nor stored in the database
+    // $user_cookie['cookie'] is encrypted
+    $user_forgets = contest_query("select_user_forgot_code", $user_id);
+    while ($user = mysql_fetch_assoc($user_forgets)) {
+        if (crypt($forgot_code, $user['cookie']) == $user['cookie']) {
+            // found valid cookie, reset expire date
+            contest_query("delete_user_cookie", $user_id, $user['cookie']);     
+            // update session vars
             $_SESSION['username']   = $user['username'];
             $_SESSION['admin']      = $user['admin'];
             $_SESSION['user_id']    = $user['user_id'];
+            $_SESSION['cookie']     = $user['cookie'];
             return true;
-        } else {
-            return false;
         }
-    } else {
-        return false;
     }
+    return false;
 }
 
 /*
@@ -137,7 +133,7 @@ function check_credentials_cookie($user_id, $login_cookie) {
  * @return string cookie_value if success, NULL otherwise
  * @since 28 Oct 2011 bear@deepshiftlabs.com
  */
-function create_user_cookie() {
+function create_user_cookie($user_id) {
     if (isset($_SESSION['user_id'])) {
         $user_id = $_SESSION['user_id'];
         $login_cookie = $user_id . "-" . salt(32, true);
@@ -155,6 +151,22 @@ function create_user_cookie() {
 function delete_user_cookie() {
     if (isset($_SESSION['user_id']) && isset($_SESSION['cookie'])) {
         contest_query("delete_user_cookie", $_SESSION['user_id'], $_SESSION['cookie']);
+    }
+}
+
+function create_user_forgot_code ($user_email) {
+    $user_result = contest_query("select_user_by_email", $user_email);
+    if ($user_result) {
+        $user_row = mysql_fetch_assoc($user_result);
+        $user_id = $user_row['user_id'];
+        $username = $user_row['username'];
+        $login_code = $user_id . "-" . salt(32, true);
+        $encrypted_code = crypt($login_code, '$6$rounds=54321$' . salt() . '$');
+        if (contest_query("insert_user_forgot_code", $user_id, $encrypted_code)) {
+            return array($user_id, $username, $login_code);
+        } else {
+            return NULL;
+        }
     }
 }
 

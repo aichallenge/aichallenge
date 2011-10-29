@@ -334,30 +334,43 @@ $contest_sql = array(
           left outer join country c on c.country_id = u.country_id
         where
           u.user_id = %s",
-    "insert_password_reset" => "update user
-        set reset = %s
-        where user_id = %s;",
-    "clear_password_reset" => "update user
-        set reset = NULL
-        where user_id = %s",
     "select_user_cookies" => "select u.*, uc.cookie
         from user_cookie uc
         inner join user u
         	on u.user_id = uc.user_id
         where u.user_id = %s
         and u.activated = 1
+        and uc.forgot = 0
         and uc.expires > current_timestamp();",
-    "insert_user_cookie" => "insert into user_cookie (user_id, cookie, expires)
-        values (%s, '%s', timestampadd(day, 5, current_timestamp()));",
+    "insert_user_cookie" => "insert into user_cookie (user_id, cookie, expires, forgot)
+        values (%s, '%s', timestampadd(day, 5, current_timestamp()), 0);",
     "update_user_cookie" => "update user_cookie
         set expires = timestampadd(day, 5, current_timestamp())
         where user_id = %s
-        and cookie = '%s';",
+        and cookie = '%s'
+        and forgot = 0;",
     "delete_user_cookie" => "delete from user_cookie
         where user_id = %s
         and cookie = '%s';",
     "log_login" => "INSERT INTO login_attempt (timestamp,username,naive_ip, real_ip)
-        VALUES (CURRENT_TIMESTAMP,%s','%s','%s')"
+        VALUES (CURRENT_TIMESTAMP,'%s','%s','%s')",
+    "insert_user_forgot_code" => "insert into user_cookie (user_id, cookie, expires, forgot)
+        values (%s, '%s', timestampadd(minute, 5, current_timestamp()), 1);",
+    "select_user_forgot_code" => "select u.*, uc.cookie
+        from user_cookie uc
+        inner join user u
+            on u.user_id = uc.user_id
+        where u.user_id = %s
+        and u.activated = 1
+        and uc.forgot = 1
+        and uc.expires > current_timestamp();",
+    "select_user_by_email" => "select user_id, username
+        from user
+        where email = '%s'
+        and activated = 1;",
+    "change_password" => "update user
+        set password = '%s'
+        where user_id = %s;"
 );
 
 ?>

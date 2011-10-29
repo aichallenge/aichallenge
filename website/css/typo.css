@@ -233,6 +233,25 @@ td.number {
     text-align: right;
 }
 
+table.login caption {
+    text-align: left;
+    margin: 10px;
+}
+
+table.login {
+	margin: 0px 40px;
+}
+
+table.login th {
+    padding: 0px 5px;
+    font-size: 1.25em;
+}
+
+table.login td {
+	padding: 0px 5px;
+	vertical-align: top;
+}
+
 /* Misc */
 .small {
     font-size: 70%;

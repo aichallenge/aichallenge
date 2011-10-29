@@ -185,6 +185,9 @@ echo <<<EOT
       <a href="#" id="bio_ctxt" onclick="toggle_change_bio()">Edit</a>
     </span>
     </p>
+    <p>
+    	<a href="change_password.php">Change Password</a>
+    </p>
     </form>
 EOT;
   } else {
@@ -197,8 +200,11 @@ echo <<<EOT
       <textarea id="bio_edit" style="display: none" name="user_bio" cols="40" rows="3"></textarea>
     <input id="bio_submit" style="display: none" type="submit" value="Save" />
     <span style="font-size: smaller">
-      <a href="#" id="bio_ctxt" onclick="toggle_change_bio()">Edit</a>
+      <a href="#" id="bio_ctxt" onclick="toggle_change_bio()">Editt</a>
     </span>
+    </p>
+    <p>
+    	<a href="change_password.php">Change Password</a>
     </p>
     </form>
 EOT;

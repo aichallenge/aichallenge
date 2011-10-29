@@ -5,13 +5,13 @@ include 'header.php'
 
 ?>
 
-<h2>Login</h2>
 <form name="login_form" method="post" action="check_login.php">
-  <table border="0" cellpadding="3" cellspacing="5">
+  <table class="login">
+  <caption><h2>Login</h2></caption>
   <tr>
-    <td width="78">Username</td>
-    <td width="6">:</td>
-    <td width="294"><input name="username" type="text" id="username"></td>
+    <td>Username</td>
+    <td>:</td>
+    <td><input name="username" type="text" id="username"></td>
   </tr>
   <tr>
     <td>Password</td>
@@ -28,7 +28,9 @@ include 'header.php'
     <td>&nbsp;</td>
     <td><input type="submit" name="Submit" value="Login"></td>
   </tr>
-
+  <tr>
+    <th colspan="3"><a href="forgot.php">Can't access your account?</a></th>
+  </tr>
   <tr>
     <td colspan="3"><h3>-or-<br /><br /><a href="register.php">Create an account</a></h3></td>
   </tr>
