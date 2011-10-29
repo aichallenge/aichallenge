@@ -27,6 +27,9 @@ If successful you will be logged in and able to change your password.  This acce
 Cheers, the aichallenge.org staff.";        
         if ($send_email == 1 && strcmp($user_email, "donotsend") != 0) {
             $mail_accepted = send_email($user_email, $mail_subject, $mail_content);
+            if (!$mail_accepted) {
+                die("Sorry email sending failed. Please try back later");
+            }
             header("location:forgot_instructions.php");    
         } else {
             require_once('header.php');
