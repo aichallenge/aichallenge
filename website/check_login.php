@@ -34,7 +34,7 @@ if (!$result) {
 }
 if (check_credentials($username, $password)) {
     if (isset($_POST['remember_me'])) {
-        create_user_cookie();
+        create_user_cookie(current_user_id());
     }
     header("location:index.php");
 } else {
