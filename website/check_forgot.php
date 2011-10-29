@@ -25,7 +25,7 @@ http://aichallenge.org/change_password.php?user_id=$user_id&code=$forgot_code
 If successful you will be logged in and able to change your password.  This access is only granted for 2 hours from the time you initiated the request.
         
 Cheers, the aichallenge.org staff.";        
-        if ($send_email == 1 && strcmp($username, "donotsend") != 0) {
+        if ($send_email == 1 && strcmp($user_email, "donotsend") != 0) {
             $mail_accepted = send_email($user_email, $mail_subject, $mail_content);
             header("location:forgot_instructions.php");    
         } else {
