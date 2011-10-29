@@ -160,10 +160,11 @@ function create_user_forgot_code ($username) {
         $user_row = mysql_fetch_assoc($user_result);
         $user_id = $user_row['user_id'];
         $username = $user_row['username'];
+        $user_email = $user_row['email'];
         $login_code = $user_id . "-" . salt(32, true);
         $encrypted_code = crypt($login_code, '$6$rounds=54321$' . salt() . '$');
         if (contest_query("insert_user_forgot_code", $user_id, $encrypted_code)) {
-            return array($user_id, $username, $login_code);
+            return array($user_id, $username, $user_email, $login_code);
         } else {
             return NULL;
         }

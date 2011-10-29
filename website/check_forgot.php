@@ -13,7 +13,7 @@ if (strcmp($server_info["mailer_address"], "donotsend") == 0) {
 
 if (isset($_POST['username'])) {
     $username = mysql_real_escape_string(stripslashes($_POST['username']));
-    if (list($user_id, $username, $forgot_code) = create_user_forgot_code($username)) {
+    if (list($user_id, $username, $user_email, $forgot_code) = create_user_forgot_code($username)) {
         $forgot_code = urlencode($forgot_code);
         $mail_subject = "AI Challenge Temporary Access";
         $mail_content = "Hello $username,
@@ -26,7 +26,7 @@ If successful you will be logged in and able to change your password.  This acce
         
 Cheers, the aichallenge.org staff.";        
         if ($send_email == 1 && strcmp($username, "donotsend") != 0) {
-            $mail_accepted = send_email($username, $mail_subject, $mail_content);
+            $mail_accepted = send_email($user_email, $mail_subject, $mail_content);
             header("location:forgot_instructions.php");    
         } else {
             require_once('header.php');

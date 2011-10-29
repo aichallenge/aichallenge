@@ -364,7 +364,7 @@ $contest_sql = array(
         and u.activated = 1
         and uc.forgot = 1
         and uc.expires > current_timestamp();",
-    "select_user_by_name" => "select user_id, username
+    "select_user_by_name" => "select user_id, username, email
         from user
         where username = '%s'
         and activated = 1;",
