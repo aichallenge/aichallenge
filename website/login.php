@@ -29,7 +29,7 @@ include 'header.php'
     <td><input type="submit" name="Submit" value="Login"></td>
   </tr>
   <tr>
-    <th colspan="3"><a href="forgot.php">Forgotten your password?</a></th>
+    <th colspan="3"><a href="forgot.php">Forgot your password?</a></th>
   </tr>
   <tr>
     <td colspan="3"><h3>-or-<br /><br /><a href="register.php">Create an account</a></h3></td>
