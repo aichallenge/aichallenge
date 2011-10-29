@@ -10,9 +10,11 @@ if (isset($_GET['user'])) {
     }
 }
 
-$page = $_GET["page"];
-if(!filter_var($page, FILTER_VALIDATE_INT)) {
+if(!isset($_GET["page"]
+    || !filter_var($_GET["page"], FILTER_VALIDATE_INT)) {
     $page = 1;
+} else {
+    $page = $_GET["page"];
 }
 
 if ($user_id) {
