@@ -114,6 +114,11 @@ if (mysql_num_rows($result) > 0) {
   $errors[] = "The username $username is already in use. Please choose a different username.";
 }
 
+// Check that the email address is not blank.
+if (strlen($user_email) <= 0) {
+  $errors[] = "You must provide an email address. The email address that you specify will be used to activate your account.";
+}
+
 // Check if the email is already in use (except by an admin account or a donotsend account).
 if (strcmp($user_email, "donotsend") != 0) {
   $sql="select email from user where email = '$user_email' and admin = 0";
@@ -123,7 +128,7 @@ if (strcmp($user_email, "donotsend") != 0) {
   }
   $edomain = substr(strrchr($user_email, '@'), 1);
   $mx_records = array();
-  if (!getmxrr($edomain, $mx_records)) {
+  if (!getmxrr($edomain, $mx_records) && !gethostbyname($edomain)) {
     $errors[] = "Could not find the email address entered. Please enter a valid email address.";
   }
 }
@@ -147,11 +152,6 @@ if ($password1 != $password2) {
 // Check that the desired password is long enough.
 if (strlen($password1) < 5) {
   $errors[] = "Your password must be at least 5 characters long.";
-}
-
-// Check that the email address is not blank.
-if (strlen($user_email) <= 0) {
-  $errors[] = "You must provide an email address. The email address that you specify will be used to activate your account.";
 }
 
 // Check that the user status code is valid.
