@@ -2,9 +2,12 @@
 require_once('profile_submissions_widget.php');
 require_once('mysql_login.php');
 
-$user_id = $_GET["user"];
-if(!filter_var($user_id, FILTER_VALIDATE_INT)) {
-    $user_id = NULL;
+$user_id = NULL;
+if (isset($_GET['user'])) {
+    $user_id = $_GET["user"];
+    if(!filter_var($user_id, FILTER_VALIDATE_INT)) {
+        $user_id = NULL;
+    }
 }
 
 $page = $_GET["page"];
