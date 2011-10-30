@@ -8,7 +8,7 @@ require_once('server_info.php');
 
 <h1>Game Settings</h1>
 
-<p>These are the settings given to the engine specifying the various options for how the game will be played.</p>
+<p>These are the settings given to the engine specifying the various options for how the game will be played. Note the list here is generated directly from the main server, some of these options may be overidden dynamically before being given to the engine. In particular at this time the game turn limit ('turns' below) is adjusted on a per map basis.</p>
 
 <table>
   <?php foreach ($server_info['game_options'] as $option => $value): ?>
