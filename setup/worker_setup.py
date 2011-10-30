@@ -29,7 +29,7 @@ def install_utility_packages():
 
 def install_basic_languages():
     """ Install base set of submission languages,
-        currently C, C++, Java, Ada and Python """
+        currently C, C++, Java, and Python """
     pkg_list = ["gcc", "g++", "openjdk-6-jdk", "python-dev", "python3-dev",
                 "python-numpy", "python-scipy"]
     install_apt_packages(pkg_list)
