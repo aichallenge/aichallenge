@@ -222,9 +222,9 @@ function create_ranking_table($page=0, $org_id=NULL, $country_id=NULL, $language
   <th>Organization</th>
   <th>Language</th>
   <th>Version</th>
-  <th><span title=\"mu - 3 * sigma\">Skill</span></th>
-  <th><span title=\"total games for current submission\">Games</span></th>
-  <th><span title=\"number of games in past 24 hours\">Recent</span></th>
+  <th><span title="mu - 3 * sigma">Skill</span></th>
+  <th><span title="total games for current submission">Games</span></th>
+  <th><span title="number of games in past 24 hours">Recent</span></th>
 </tr>
 </thead>';
     $table .= '<tbody>';

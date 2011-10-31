@@ -153,20 +153,12 @@ $contest_sql = array(
             s.latest,
             s.timestamp,
             s.game_count,
-            -- timestampdiff(second, gmin.timestamp, gmax.timestamp)/60/s.game_count as wait_time,
-            recent.game_count as game_rate
+            (   select count(distinct game_id) as game_count
+                from opponents o
+                where user_id = u.user_id
+                group by o.user_id
+            ) as game_rate as game_rate
         from submission s
-        left outer join (select gp.submission_id, count(*) game_count
-            from game_player gp
-            inner join game g
-                on g.game_id = gp.game_id
-            where g.timestamp > timestampadd(minute, -1440, current_timestamp)
-            group by gp.submission_id) as recent
-            on s.submission_id = recent.submission_id
-        -- inner join game gmin
-        --     on gmin.game_id = s.min_game_id
-        -- inner join game gmax
-        --     on gmax.game_id = s.max_game_id
         inner join user u
             on s.user_id = u.user_id
         left outer join organization o
