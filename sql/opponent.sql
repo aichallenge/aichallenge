@@ -152,11 +152,6 @@ if @min_players <= @max_players then
     -- debug statement
     select @players;
 
-    -- Step 3: select opponents 1 at a time
-    set @cur_user_id = @seed_id;
-    set @last_user_id = -1;
-    set @player_count = 1;
-
     -- create a list of recent game matchups by user_id
     -- used to keep the matchups even across all users and pairings
     drop temporary table if exists tmp_opponent;
@@ -166,29 +161,6 @@ if @min_players <= @max_players then
         game_count int,
         primary key (user_id, opponent_id)
     );
-
-    insert into tmp_opponent
-        select user_id, opponent_id, sum(game_count) as game_count
-        from (
-            select user_id, opponent_id, count(*) as game_count
-            from opponents
-            group by user_id, opponent_id
-            union
-            select mp1.user_id as user_id,
-                mp2.user_id as opponent_id,
-                count(*) as game_count
-            from matchup_player mp1
-            inner join matchup m
-                on m.matchup_id = mp1.matchup_id
-            inner join matchup_player mp2
-                on mp2.matchup_id = m.matchup_id
-            where m.matchup_timestamp > timestampadd(hour, -24, current_timestamp)
-            and (m.worker_id >= 0 or m.worker_id is null)
-            and m.deleted = 0
-            and mp1.user_id != mp2.user_id
-            group by mp1.user_id, mp2.user_id
-        ) g
-        group by 1, 2;
 
     drop temporary table if exists tmp_games;
     create temporary table tmp_games (
@@ -217,6 +189,9 @@ if @min_players <= @max_players then
         ) g
         group by 1;
      
+    -- debug statement
+    select @players;
+    
     select avg(tg.game_count) * 1.1 + 1
     into @avg_game_count
     from tmp_games tg
@@ -225,13 +200,47 @@ if @min_players <= @max_players then
     where s.latest = 1 and s.status = 40;
     
     select @avg_game_count as avg_game_count;
-        
+
+
+    -- Step 3: select opponents 1 at a time
+    set @cur_user_id = @seed_id;
+    set @last_user_id = -1;
+    set @player_count = 1;
+    
     -- used to undo a matchup
     set @abort = 0;
     set @abort_reason = '';
+    set @last_user_id = @seed_id;
 
     while @player_count < @players and @abort = 0 do
 
+	    insert into tmp_opponent
+	        select user_id, opponent_id, sum(game_count) as game_count
+	        from (
+	            select user_id, opponent_id, count(*) as game_count
+	            from opponents
+	            where user_id = @cur_user_id
+	            group by user_id, opponent_id
+	            union
+	            select mp1.user_id as user_id,
+	                mp2.user_id as opponent_id,
+	                count(*) as game_count
+	            from matchup_player mp1
+	            inner join matchup m
+	                on m.matchup_id = mp1.matchup_id
+	            inner join matchup_player mp2
+	                on mp2.matchup_id = m.matchup_id
+	            where m.matchup_timestamp > timestampadd(hour, -24, current_timestamp)
+	            and (m.worker_id >= 0 or m.worker_id is null)
+	            and m.deleted = 0
+	            and mp1.user_id != mp2.user_id
+	            and mp1.user_id = @cur_user_id
+	            group by mp1.user_id, mp2.user_id
+	        ) g
+	        group by 1, 2;
+        
+	        set @last_user_id = -1;
+	        
             set @pareto = (10 / pow(rand(), 0.7));
             -- debug statement
             -- select list of opponents with match quality
@@ -264,7 +273,7 @@ if @min_players <= @max_players then
                         from tmp_matchup_player mp
                         where mp.matchup_id = @matchup_id
                     )
-                    and s.latest = 1 and s.status in (40, 100)
+                    and s.latest = 1
                     group by s.user_id, s.submission_id, s.mu, s.sigma, t.game_count
                     order by 6 desc
                 ) s,
@@ -276,11 +285,6 @@ if @min_players <= @max_players then
             left outer join (
                 select opponent_id, sum(game_count) as game_count
                 from tmp_opponent
-                where user_id in (
-                    select user_id
-                    from tmp_matchup_player mp
-                    where mp.matchup_id = @matchup_id
-                )
                 group by opponent_id
             ) o
                 on o.opponent_id = s.user_id
@@ -333,11 +337,6 @@ if @min_players <= @max_players then
             left outer join (
                 select opponent_id, sum(game_count) as game_count
                 from tmp_opponent
-                where user_id in (
-                    select user_id
-                    from tmp_matchup_player mp
-                    where mp.matchup_id = @matchup_id
-                )
                 group by opponent_id
             ) o
                 on o.opponent_id = s.user_id
