@@ -19,7 +19,11 @@ function nice_ago($datetime) {
         $datetime = new DateTime($datetime);
     }
     $now = new DateTime();
-    return nice_interval($now->diff($datetime))." ago";
+    if ($now > $datetime ) {
+        return nice_interval($now->diff($datetime))." ago";
+    } else {
+        return "in ".nice_interval($now->diff($datetime));
+    }
 }
 
 function nice_datetime($datetime) {

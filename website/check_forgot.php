@@ -5,6 +5,8 @@ require_once('mysql_login.php');
 
 // By default, send account confirmation emails.
 $send_email = 1;
+$debug = 0;
+
 if (strcmp($server_info["mailer_address"], "donotsend") == 0) {
     $send_email = 0;
 } else {
@@ -32,11 +34,16 @@ Cheers, the aichallenge.org staff.";
             }
             header("location:forgot_instructions.php");    
         } else {
-            require_once('header.php');
-            echo "<h3>".$mail_subject."</h3>";
-            echo "<pre>".$mail_content."</pre>";
-            $mail_accepted = true;
-            require_once('footer.php');
+            if ($debug == 1) {
+                require_once('header.php');
+                echo "<h3>".$mail_subject."</h3>";
+                echo "<pre>".$mail_content."</pre>";
+                $mail_accepted = true;
+                require_once('footer.php');
+            } else {
+                $_SESSION['forgot_error'] = false;
+                header("location:forgot.php");
+            }
         }
         $_SESSION['forgot_error'] = false;
     } else {

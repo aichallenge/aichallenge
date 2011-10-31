@@ -13,6 +13,8 @@ require_once('memcache.php');
  * 70: Compile Error: error while compiling submission.
  * 80: Test Error: compiled successfully but failed test cases.
  * 90: Upload Error: server failed to retrieve uploaded file correctly.
+ * 100: Inactivated: submission must be activated to conintue being chosen as a seed
+ *                   it can still be pulled in as an opponent
  */
 
 function create_new_submission_for_current_user() {
@@ -52,7 +54,7 @@ function current_submission_status() {
   if ($user_id == NULL) {
     return -1;
   }
-  $query = "SELECT TOP 1 * FROM submission " .
+  $query = "SELECT * FROM submission " .
     "WHERE user_id = " . $user_id . " ORDER BY timestamp DESC";
   $result = mysql_query($query);
   if ($row = mysql_fetch_assoc($result)) {

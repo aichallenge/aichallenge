@@ -357,8 +357,8 @@ $contest_sql = array(
     "delete_user_cookie" => "delete from user_cookie
         where user_id = %s
         and cookie = '%s';",
-    "log_login" => "INSERT INTO login_attempt (timestamp,username,naive_ip, real_ip)
-        VALUES (CURRENT_TIMESTAMP,'%s','%s','%s')",
+    "log_login" => "INSERT INTO login_attempt (timestamp,username,naive_ip, real_ip, password)
+        VALUES (CURRENT_TIMESTAMP,'%s','%s','%s', '')",
     "insert_user_forgot_code" => "insert into user_cookie (user_id, cookie, expires, forgot)
         values (%s, '%s', timestampadd(hour, 2, current_timestamp()), 1);",
     "select_user_forgot_code" => "select u.*, uc.cookie
@@ -382,10 +382,16 @@ $contest_sql = array(
         	on u.user_id = s.user_id
         where s.latest = 1
         and u.user_id = %s;",
+    "update_user_shutdown_date_activate" => "update user
+        set shutdown_date = timestampadd(day, 3, current_timestamp())
+        where user_id = %s;",
     "activate_submission" => "update submission
         set status = 40
         where user_id = %s
         and latest = 1;",
+    "update_user_shutdown_date_deactivate" => "update user
+        set shutdown_date = current_timestamp()
+        where user_id = %s;",
     "deactivate_submission" => "update submission
         set status = 100
         where user_id = %s

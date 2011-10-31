@@ -187,3 +187,11 @@ body {
     margin: 1em;
     margin-top: 0px;
 }
+
+.profile {
+	float: left;
+}
+
+.rank {
+	float: right;
+}
