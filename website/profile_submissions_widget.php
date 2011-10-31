@@ -12,6 +12,7 @@ $status_msg = array(10 => "Created: entry record created in database",
                     70 => "Compile Error: error while compiling submission",
                     80 => "Test Error: compiled, but failed test cases",
                     90 => "Upload Error: server failed to retrieve uploaded file correctly",
+                    100 =>"Deactivated: not in queue to play game",
                     0  => "Unknown Error");
 
 /*
@@ -102,7 +103,7 @@ EOT;
     $table .= "<table class=\"submissions\"><thead><tr><th>Version</th><th>Submission Time</th><th>Status</th><th>Skill</th><th>Games</th><th>Game Rate</th><th>Language</th></tr></thead><tbody>";
     for ($i = 1; $row = mysql_fetch_assoc($submission_results); $i += 1) {
         $status = $row["status"];
-        $status_class = ($status == 40 ? "success": (($status == 30 || $status > 40)? "fail" : "inprogress"));
+        $status_class = (($status == 40 || $status == 100) ? "success": (($status == 30 || ($status > 40 || $status < 100))? "fail" : "inprogress"));
         if (isset($status_msg[$status])) {
             $status = $status_msg[$status];
         } else {
