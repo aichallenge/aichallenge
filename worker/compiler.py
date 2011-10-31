@@ -315,6 +315,8 @@ comp_args = {
     "VB"            : [["vbnc", "-out:%s.exe" % BOT]],
     "C++"         : [["g++", "-O3", "-funroll-loops", "-c"],
                              ["g++", "-O2", "-lm", "-o", BOT]],
+    "C++11"         : [["g++", "-O3", "-std=c++0x", "-c"],
+                             ["g++", "-O2", "-lm", "-std=c++0x", "-o", BOT]],
     "D"             : [["dmd", "-O", "-inline", "-release", "-noboundscheck", "-of" + BOT]],
     "Go"            : [["6g", "-o", "_go_.6"],
                              ["6l", "-o", BOT, "_go_.6"]],
@@ -376,6 +378,7 @@ languages = (
         [(["*.vb"],
             ExternalCompiler(comp_args["VB"][0], out_files=['MyBot.exe']))]
     ),
+    # These two C++ variants should be combined after the ants contest
     Language("C++", BOT, "MyBot.cc",
         "./MyBot",
         ["*.o", BOT],
@@ -383,6 +386,15 @@ languages = (
             (["*.c", "*.cpp", "*.cc"],
                 TargetCompiler(comp_args["C++"][0], targets["C++"])),
             (["*.o"], ExternalCompiler(comp_args["C++"][1]))
+        ]
+    ),
+    Language("C++11", BOT "MyBot.cpp",
+        "./MyBot",
+        ["*.o", BOT],
+        [
+            (["*.c", "*.cpp", "*.cc"],
+                TargetCompiler(comp_args["C++11"][0], targets["C++"])),
+            (["*.o"], ExternalCompiler(comp_args["C++11"][1]))
         ]
     ),
     Language("Clojure", BOT +".clj", "MyBot.clj",
