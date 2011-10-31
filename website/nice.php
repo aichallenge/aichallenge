@@ -138,7 +138,7 @@ function nice_game($game_id, $turns, $winning_turn, $ranking_turn, $end_reason,
     if ($user_id) {
         $query_string .= "&user=$user_id";
     }
-    return "<a href=\"visualizer.php?game=$game_id$query_string\">$turns&nbsp;$end_reason&nbsp;&raquo;</a><br />
+    return "<a href=\"visualizer.php?game=$game_id$query_string\">$turns&nbsp;turns, $end_reason&nbsp;&raquo;</a><br />
     <span title=\"Turn the winner last took the lead\">
     	<a href=\"visualizer.php?game=$game_id$query_string&turn=$winning_turn\">Won&nbsp;at&nbsp;$winning_turn&nbsp;&raquo;</a>
     </span>";
