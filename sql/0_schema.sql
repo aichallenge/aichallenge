@@ -112,10 +112,11 @@ CREATE TABLE `matchup_player` (
 
 DROP TABLE IF EXISTS `opponents`;
 CREATE TABLE `opponents` (
+  `game_id` int(11) NOT NULL,
   `user_id` int(11) NOT NULL,
   `opponent_id` int(11) NOT NULL,
-  `game_count` int(11) NOT NULL,
-  PRIMARY KEY (`user_id`, `opponent_id`)
+  `timestamp` datetime NOT NULL,
+  PRIMARY KEY (`game_id`, `user_id`, `opponent_id`)
 );
 
 DROP TABLE IF EXISTS `organization`;
@@ -182,6 +183,7 @@ CREATE TABLE `user` (
   `activated` tinyint(1) NOT NULL,
   `admin` tinyint(1) NOT NULL,
   `shutdown_date` datetime DEFAULT NULL,
+  `max_game_id` int(11) NULL,
   PRIMARY KEY (`user_id`),
   UNIQUE KEY (`username`),
   KEY `user_id` (`user_id`,`username`),

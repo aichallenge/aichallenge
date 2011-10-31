@@ -32,6 +32,8 @@ if @min_players <= @max_players then
     select s.user_id, s.submission_id, s.mu, s.sigma
     into @seed_id, @submission_id, @mu, @sigma
     from submission s
+    inner join user u
+        on u.user_id = s.user_id
     left outer join (
         select seed_id, max(matchup_id) as max_matchup_id
         from matchup
@@ -40,20 +42,12 @@ if @min_players <= @max_players then
         group by seed_id
     ) m
         on s.user_id = m.seed_id
-    left outer join (
-        select u.user_id, max(gp.game_id) as max_game_id
-        from user u
-        inner join game_player gp
-            on gp.user_id = u.user_id
-        group by u.user_id
-    ) g
-        on s.user_id = g.user_id
     where s.latest = 1 and s.status = 40
     -- this selects the user that has least recently played in any game
     -- and used them for the next seed player
     -- from both the game and matchup tables
     order by m.max_matchup_id asc,
-             g.max_game_id asc,
+             u.max_game_id asc,
              s.user_id asc
     limit 1;
 
