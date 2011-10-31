@@ -156,8 +156,7 @@ $contest_sql = array(
             (   select count(distinct game_id) as game_count
                 from opponents o
                 where user_id = u.user_id
-                group by o.user_id
-            ) as game_rate as game_rate
+            ) as game_rate
         from submission s
         inner join user u
             on s.user_id = u.user_id
