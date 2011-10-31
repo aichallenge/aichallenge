@@ -17,6 +17,11 @@ $contest_sql = array(
                                           latest = 1
                                       where worker_id = %s
                                       and submission_id = %s;",
+    "update_user_shutdown_date" => "update user
+                                    inner join submission s
+                                        on s.user_id = user.user_id
+                                        and s.submission_id = %s
+                                    set shutdown_date = timestampadd(day, 3, current_timestamp());",
     "update_submission_latest" => "update submission
                                      set latest = 0
                                      where user_id = (
@@ -370,7 +375,21 @@ $contest_sql = array(
         and activated = 1;",
     "change_password" => "update user
         set password = '%s'
-        where user_id = %s;"
+        where user_id = %s;",
+    "select_submission_status" => "select s.submission_id, s.latest, s.status, u.shutdown_date
+        from submission s
+        inner join user u
+        	on u.user_id = s.user_id
+        where s.latest = 1
+        and u.user_id = %s;",
+    "activate_submission" => "update submission
+        set status = 40
+        where user_id = %s
+        and latest = 1;",
+    "deactivate_submission" => "update submission
+        set status = 100
+        where user_id = %s
+        and latest = 1;"
 );
 
 ?>
