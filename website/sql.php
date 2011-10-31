@@ -232,6 +232,7 @@ $contest_sql = array(
                g.game_length, g.winning_turn, g.ranking_turn, g.cutoff,
                gp.user_id, gp.submission_id, u.username, s.version,
                gp.player_id, gp.game_rank, gp.status,
+               gp.rank_before, gp.rank_after,
                gp.mu_after - 3 * gp.sigma_after as skill,
                gp.mu_after as mu, gp.sigma_after as sigma,
                (gp.mu_after - 3 * gp.sigma_after) - (gp.mu_before - 3 * gp.sigma_before) as skill_change,

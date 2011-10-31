@@ -275,7 +275,7 @@ echo "</div>";
                     echo "<p>Your current submission will be deactivated on ".$status_row['shutdown_date']." (".
                          nice_ago($status_row['shutdown_date']).")</p>";
                 }
-                echo "<p><em>Inactive submissions will not be choosen as a seed player for a new matchup, but may still be pick as an opponent in a game.</em><p>";
+                echo "<p><em>Inactive submissions will not be chosen as a seed player for a new matchup, but may still be chosen as an opponent in a game.</em><p>";
                 echo "</form>";
                 echo "</div>";
             }
