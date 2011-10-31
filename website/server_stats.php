@@ -29,7 +29,7 @@ $result = mysql_query($query);
 $row = mysql_fetch_row($result);
 $submissions = $row[0];
 
-$query = "select count(*) from submission where timestamp > (now() - interval 24 hour) and status = 40";
+$query = "select count(*) from submission where timestamp > (now() - interval 24 hour) and status in (40, 100)";
 $result = mysql_query($query);
 $row = mysql_fetch_row($result);
 $submissions_successful = $row[0];

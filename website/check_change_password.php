@@ -29,7 +29,7 @@ if ($new_password != $confirm_password) {
                   crypt($new_password, '$6$rounds=54321$' . salt() . '$'),
                   current_user_id());
     if (isset($_POST['remember_me'])) {
-        create_user_cookie();
+        create_user_cookie(current_user_id());
     }
     header("location:index.php");
     $_SESSION['change_password_error'] = false;

@@ -17,6 +17,11 @@ $contest_sql = array(
                                           latest = 1
                                       where worker_id = %s
                                       and submission_id = %s;",
+    "update_user_shutdown_date" => "update user
+                                    inner join submission s
+                                        on s.user_id = user.user_id
+                                        and s.submission_id = %s
+                                    set shutdown_date = timestampadd(day, 3, current_timestamp());",
     "update_submission_latest" => "update submission
                                      set latest = 0
                                      where user_id = (
@@ -146,22 +151,13 @@ $contest_sql = array(
             s.mu - s.sigma * 3 as skill,
             s.mu_change - s.sigma_change * 3 as skill_change,
             s.latest,
-            timediff(now(), s.timestamp) as age,
+            s.timestamp,
             s.game_count,
-            -- timestampdiff(second, gmin.timestamp, gmax.timestamp)/60/s.game_count as wait_time,
-            recent.game_count as game_rate
+            (   select count(distinct game_id) as game_count
+                from opponents o
+                where user_id = u.user_id
+            ) as game_rate
         from submission s
-        left outer join (select gp.submission_id, count(*) game_count
-            from game_player gp
-            inner join game g
-                on g.game_id = gp.game_id
-            where g.timestamp > timestampadd(minute, -1440, current_timestamp)
-            group by gp.submission_id) as recent
-            on s.submission_id = recent.submission_id
-        -- inner join game gmin
-        --     on gmin.game_id = s.min_game_id
-        -- inner join game gmax
-        --     on gmax.game_id = s.max_game_id
         inner join user u
             on s.user_id = u.user_id
         left outer join organization o
@@ -170,7 +166,7 @@ $contest_sql = array(
             on l.language_id = s.language_id
         left outer join country c
             on u.country_id = c.country_id
-        where s.latest = 1 and status = 40 and rank is not null
+        where s.latest = 1 and status in (40, 100) and rank is not null
         %s
         order by rank
         %s", // placeholders for optional where clause and limit
@@ -227,6 +223,7 @@ $contest_sql = array(
                g.game_length, g.winning_turn, g.ranking_turn, g.cutoff,
                gp.user_id, gp.submission_id, u.username, s.version,
                gp.player_id, gp.game_rank, gp.status,
+               gp.rank_before, gp.rank_after,
                gp.mu_after - 3 * gp.sigma_after as skill,
                gp.mu_after as mu, gp.sigma_after as sigma,
                (gp.mu_after - 3 * gp.sigma_after) - (gp.mu_before - 3 * gp.sigma_before) as skill_change,
@@ -329,7 +326,7 @@ $contest_sql = array(
           user u
           left outer join submission s
             on s.user_id = u.user_id
-            and s.latest = 1 and s.status = 40
+            and s.latest = 1 and s.status in (40, 100)
           left outer join organization o on o.org_id = u.org_id
           left outer join country c on c.country_id = u.country_id
         where
@@ -352,8 +349,8 @@ $contest_sql = array(
     "delete_user_cookie" => "delete from user_cookie
         where user_id = %s
         and cookie = '%s';",
-    "log_login" => "INSERT INTO login_attempt (timestamp,username,naive_ip, real_ip)
-        VALUES (CURRENT_TIMESTAMP,'%s','%s','%s')",
+    "log_login" => "INSERT INTO login_attempt (timestamp,username,naive_ip, real_ip, password)
+        VALUES (CURRENT_TIMESTAMP,'%s','%s','%s', '')",
     "insert_user_forgot_code" => "insert into user_cookie (user_id, cookie, expires, forgot)
         values (%s, '%s', timestampadd(hour, 2, current_timestamp()), 1);",
     "select_user_forgot_code" => "select u.*, uc.cookie
@@ -370,7 +367,27 @@ $contest_sql = array(
         and activated = 1;",
     "change_password" => "update user
         set password = '%s'
-        where user_id = %s;"
+        where user_id = %s;",
+    "select_submission_status" => "select s.submission_id, s.latest, s.status, u.shutdown_date
+        from submission s
+        inner join user u
+        	on u.user_id = s.user_id
+        where s.latest = 1
+        and u.user_id = %s;",
+    "update_user_shutdown_date_activate" => "update user
+        set shutdown_date = timestampadd(day, 3, current_timestamp())
+        where user_id = %s;",
+    "activate_submission" => "update submission
+        set status = 40
+        where user_id = %s
+        and latest = 1;",
+    "update_user_shutdown_date_deactivate" => "update user
+        set shutdown_date = current_timestamp()
+        where user_id = %s;",
+    "deactivate_submission" => "update submission
+        set status = 100
+        where user_id = %s
+        and latest = 1;"
 );
 
 ?>

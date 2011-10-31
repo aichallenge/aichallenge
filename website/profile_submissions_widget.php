@@ -12,6 +12,7 @@ $status_msg = array(10 => "Created: entry record created in database",
                     70 => "Compile Error: error while compiling submission",
                     80 => "Test Error: compiled, but failed test cases",
                     90 => "Upload Error: server failed to retrieve uploaded file correctly",
+                    100 =>"Deactivated: not in queue to play game",
                     0  => "Unknown Error");
 
 /*
@@ -99,10 +100,19 @@ EOT;
     if (!$viewmore) {
         $table .= getPaginationString($page, ceil($rowcount/$viewresults), $viewresults, $viewlink);
     }
-    $table .= "<table class=\"submissions\"><thead><tr><th>Version</th><th>Submission Time</th><th>Status</th><th>Skill</th><th>Games</th><th>Game Rate</th><th>Language</th></tr></thead><tbody>";
+    $table .= "<table class=\"submissions\">
+    <thead><tr>
+    	<th>Version</th>
+    	<th>Submission Time</th>
+    	<th>Status</th>
+    	<th>Skill</th>
+    	<th>Games</th>
+    	<th><span title=\"average minutes between games\">Game Rate</span></th>
+    	<th>Language</th>
+    </tr></thead><tbody>";
     for ($i = 1; $row = mysql_fetch_assoc($submission_results); $i += 1) {
         $status = $row["status"];
-        $status_class = ($status == 40 ? "success": (($status == 30 || $status > 40)? "fail" : "inprogress"));
+        $status_class = (($status == 40 || $status == 100) ? "success": (($status == 30 || ($status > 40 || $status < 100))? "fail" : "inprogress"));
         if (isset($status_msg[$status])) {
             $status = $status_msg[$status];
         } else {
@@ -118,7 +128,7 @@ EOT;
         $errors = $row["errors"];
         $skill = $status_class == "success" ? nice_skill($row['skill'], $row['mu'], $row['sigma']) : "-"; // trueskill formula
         $games = $row["game_count"];
-        $game_rate = "<span title=\"average minutes between games\">".($row['game_rate'] == NULL ? "" : round($row["game_rate"],0))."</span>";
+        $game_rate = "".($row['game_rate'] == NULL ? "" : round($row["game_rate"],0));
         
         $table .= "<tr class=\"$row_class\">";
         $table .= "  <td>".nice_version($version, $timestamp, $submission_id)."</td>";

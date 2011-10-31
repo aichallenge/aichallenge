@@ -4,6 +4,7 @@
 
 require_once('header.php');
 require_once('mysql_login.php');
+require_once('nice.php');
 
 if (isset($_GET["user"])) {
     $user_id = $_GET["user"];
@@ -67,7 +68,13 @@ if (!$userresult) {
   echo "<p>Invalid User ID</p>";
 } else {
 $title="Profile for ".$username;
+
 echo "    <h2>Profile for $username</h2>";
+
+/*
+ * Top Profile Info section ====================================================
+ */
+echo "<div class=\"profile\">";
 if ($logged_in) {
 echo <<< EOT
     <script>
@@ -200,7 +207,7 @@ echo <<<EOT
       <textarea id="bio_edit" style="display: none" name="user_bio" cols="40" rows="3"></textarea>
     <input id="bio_submit" style="display: none" type="submit" value="Save" />
     <span style="font-size: smaller">
-      <a href="#" id="bio_ctxt" onclick="toggle_change_bio()">Editt</a>
+      <a href="#" id="bio_ctxt" onclick="toggle_change_bio()">Edit</a>
     </span>
     </p>
     <p>
@@ -209,6 +216,12 @@ echo <<<EOT
     </form>
 EOT;
 }
+echo "</div>";
+
+/*
+ * Rank, Skill and Next Game section ====================================================
+ */
+    echo "<div class=\"rank\">";
     echo "<p><strong>Rank:</strong> <span class=\"stats\">$rank</span> <strong>Skill:</strong> <span class=\"stats\">$skill</span></p>";
     if ($logged_in && ($user_id == current_user_id() or logged_in_as_admin())) {
         $in_game_result = contest_query("select_in_game", $user_id);
@@ -235,10 +248,40 @@ EOT;
             }
         }
     }
+    echo "</div>"; 
 
     echo "<h3><span>Latest Games</span><div class=\"divider\" /></h3>";
     echo get_user_game_list($user_id, 0, True, 'profile_games.php');
     echo "<p></p>";
+
+/*
+ * Submission activation / deactivation section
+ */
+    if (logged_in_with_valid_credentials() && (logged_in_as_admin() || current_user_id() == $user_id)) {
+        $status_result = contest_query("select_submission_status", $user_id);
+        if ($status_row = mysql_fetch_assoc($status_result)) {
+            if ($status_row['status'] == 100 || $status_row['status'] == 40) {
+                echo "<div class=\"activate\">";
+                echo "<form method=\"post\" action=\"update_submission.php\">";
+                if ($status_row['status'] == 100) {
+                    echo "<p>Your current submission was deactivated on ".$status_row['shutdown_date']." (".
+                         nice_ago($status_row['shutdown_date']).")</p>";
+                }                
+                echo "<input type=\"hidden\" name=\"update_key\" value=\"$update_key\" />
+                      <input type=\"submit\" name=\"activate\" value=\"Activate\" />";
+
+                if ($status_row['status'] == 40) {
+                    echo "<input type=\"submit\" name=\"deactivate\" value=\"Deactivate\" />";
+                    echo "<p>Your current submission will be deactivated on ".$status_row['shutdown_date']." (".
+                         nice_ago($status_row['shutdown_date']).")</p>";
+                }
+                echo "<p><em>Inactive submissions will not be chosen as a seed player for a new matchup, but may still be chosen as an opponent in a game.</em><p>";
+                echo "</form>";
+                echo "</div>";
+            }
+        }
+    }       
+    
     echo "<h3><span>Recent Submissions</span><div class=\"divider\" /></h3>";
     echo getSubmissionTableString($user_id, true, 10, "profile_submissions.php?user=$user_id&page=1");
 

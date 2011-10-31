@@ -76,7 +76,7 @@ function get_query_results($page=0, $user_id=NULL, $submission_id=NULL, $map_id=
 
     $user_fields = array("user_id", "submission_id", "username", "version",
                          "player_id", "game_rank", "status", "skill", "mu", "sigma",
-                         "skill_change", "mu_change", "sigma_change");
+                         "skill_change", "mu_change", "sigma_change", "rank_before");
     
     $page_count_query = "select_game_list_page_count";
     $list_query = "select_game_list";
@@ -247,7 +247,7 @@ function create_game_list_table($page=0, $user_id=NULL, $submission_id=NULL, $ma
         $time = new DateTime($row["timestamp"]);
         // $time = "<span title=\"".no_wrap(nice_interval($now->diff($time))." ago")."\">".no_wrap($time->format('j M G:i'))."</span>";
         $time = nice_datetime_span($time);
-        $table .= "<td>$time</td>";
+        $table .= "<td class=\"time\">$time</td>";
 
         if ($user_id) {
             $table .= "<td class=\"number\">".nice_version($user_version, NULL, $user_submission_id)."</td>";
@@ -257,7 +257,7 @@ function create_game_list_table($page=0, $user_id=NULL, $submission_id=NULL, $ma
         // TODO: consider linking the submission id instead
         $opponents = "";
         for ($i = 0; $i < $row['players']; $i++) {
-            $opponents .= nice_opponent($row["user_id"][$i], $row["username"][$i], $row["game_rank"][$i] + 1, $row["user_id"][$i] == $user_id);
+            $opponents .= nice_opponent($row["user_id"][$i], $row["username"][$i], $row["game_rank"][$i] + 1, $row['rank_before'][$i], $row["user_id"][$i] == $user_id);
         }
         $table .= "<td class=\"list\">$opponents</td>";
 
@@ -269,10 +269,10 @@ function create_game_list_table($page=0, $user_id=NULL, $submission_id=NULL, $ma
         }
 
         $map = nice_map($row['map_name']);
-        $table .= "<td>$map</td>";
+        $table .= "<td class=\"map\">$map</td>";
 
         $game = nice_game($row['game_id'], $row['game_length'], $row['winning_turn'], $row['ranking_turn'], $row['cutoff'], $user_id);
-        $table .= "<td>$game</td>";
+        $table .= "<td class=\"game\">$game</td>";
 
         $table .= "</tr>";
     }

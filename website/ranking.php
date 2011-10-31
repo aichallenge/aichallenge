@@ -222,9 +222,9 @@ function create_ranking_table($page=0, $org_id=NULL, $country_id=NULL, $language
   <th>Organization</th>
   <th>Language</th>
   <th>Version</th>
-  <th>Skill</th>
-  <th>Games</th>
-  <th>Recent</th>
+  <th><span title="mu - 3 * sigma">Skill</span></th>
+  <th><span title="total games for current submission">Games</span></th>
+  <th><span title="number of games in past 24 hours">Recent</span></th>
 </tr>
 </thead>';
     $table .= '<tbody>';
@@ -260,14 +260,15 @@ function create_ranking_table($page=0, $org_id=NULL, $country_id=NULL, $language
         $table .= "<td>".nice_language($row["language_id"], $row["programming_language"])."</td>";
 
         $version = $row["version"];
-        $table .= "<td class=\"number\">$version</td>";
+        $age = nice_ago($row["timestamp"]);
+        $table .= "<td class=\"number\"><span title=\"$age\">$version</span></td>";
 
         $skill = nice_skill($row['skill'],$row['mu'],$row['sigma'],
                             $row['skill_change'],$row['mu_change'],$row['sigma_change']);
         $table .= "<td class=\"number\">$skill</td>";
         
-        $table .= "<td class=\"number\"><span title=\"total games for current submission\">".$row["game_count"]."</span></td>";
-        $table .= "<td class=\"number\"><span title=\"number of games in past 24 hours\">".$row["game_rate"]."</span></td>";
+        $table .= "<td class=\"number\">".$row["game_count"]."</td>";
+        $table .= "<td class=\"number\">".$row["game_rate"]."</td>";
         
         $table .= "</tr>";
     }

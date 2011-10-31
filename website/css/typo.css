@@ -145,6 +145,10 @@ th.headerSortDown:after {
     content: "\00a0\21d3";
 }
 
+table.submissions {
+	width: 100%;
+}
+
 /* Games */
 
 table.games {
@@ -160,7 +164,6 @@ table.games a {
 }
 
 table.games td {
-    max-width: 85px;
     padding: 1px 5px;
     overflow: hidden;
 }
@@ -170,12 +173,29 @@ table.games td.list {
     text-align: left;
 }
 
+table.games td.time {
+	width: 90px;
+}
+
+table.games td.map {
+	width: 90px;
+}
+
+table.games td.game {
+	width: 120px;
+}
+
 table.games td.list span {
-    width: 85px;
+    width: 140px;
     margin: 0px 2px;
     display: inline-block;
     overflow: hidden;
     white-space: nowrap;
+}
+
+table.games td.list span em {
+	font-style: italic;
+	color: #aaa;
 }
 
 table.games tr:hover {
