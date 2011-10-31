@@ -10,7 +10,12 @@ if (!logged_in_with_valid_credentials()) {
 require_once('mysql_login.php');
 
 // Log this login attempt
-$old_password = mysql_real_escape_string(stripslashes($_POST['old_password']));
+if (isset($_POST['old_password'])) {
+    $old_password = $_POST['old_password'];
+} else {
+    $old_password = NULL;
+}
+$old_password = mysql_real_escape_string(stripslashes($old_password));
 $new_password = mysql_real_escape_string(stripslashes($_POST['new_password']));
 $confirm_password = mysql_real_escape_string(stripslashes($_POST['confirm_password']));
 

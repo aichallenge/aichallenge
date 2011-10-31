@@ -31,6 +31,7 @@
       <li class="highlight"><a href="starter_packages.php">Starter Packages</a></li>
       <li><a href="problem_description.php">Problem Description</a></li>
       <li><a href="specification.php">Game Specification</a></li>
+      <li><a href="game_settings.php">Game Settings</a></li>
       <li><a href="strategy_guide.php">Strategy Guide</a></li>
       <li><a href="http://paste.aichallenge.org/">Share Maps & Replays</a></li>
     </ul>
