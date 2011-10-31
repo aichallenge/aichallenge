@@ -190,8 +190,10 @@ body {
 
 .profile {
 	float: left;
+	width: 49%;
 }
 
 .rank {
 	float: right;
+    width: 49%;
 }
