@@ -260,7 +260,8 @@ function create_ranking_table($page=0, $org_id=NULL, $country_id=NULL, $language
         $table .= "<td>".nice_language($row["language_id"], $row["programming_language"])."</td>";
 
         $version = $row["version"];
-        $table .= "<td class=\"number\">$version</td>";
+        $age = nice_ago($row["timestamp"]);
+        $table .= "<td class=\"number\"><span title=\"$age\">$version</span></td>";
 
         $skill = nice_skill($row['skill'],$row['mu'],$row['sigma'],
                             $row['skill_change'],$row['mu_change'],$row['sigma_change']);

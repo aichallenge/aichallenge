@@ -151,7 +151,7 @@ $contest_sql = array(
             s.mu - s.sigma * 3 as skill,
             s.mu_change - s.sigma_change * 3 as skill_change,
             s.latest,
-            timediff(now(), s.timestamp) as age,
+            s.timestamp,
             s.game_count,
             -- timestampdiff(second, gmin.timestamp, gmax.timestamp)/60/s.game_count as wait_time,
             recent.game_count as game_rate
