@@ -117,7 +117,9 @@ CREATE TABLE `opponents` (
   `opponent_id` int(11) NOT NULL,
   `timestamp` datetime NOT NULL,
   PRIMARY KEY (`game_id`, `user_id`, `opponent_id`),
-  KEY `opponents_timestamp_idx` (`timestamp`)
+  KEY `opponents_timestamp_idx` (`timestamp`),
+  KEY `opponents_user_game_idx` (`user_id`, `game_id`),
+  KEY `opponents_user_opponent_idx` (`user_id`, `opponent_id`)
 );
 
 DROP TABLE IF EXISTS `organization`;

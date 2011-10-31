@@ -17,7 +17,7 @@ left outer join matchup m
     on m.matchup_id = mp.matchup_id
         and (m.worker_id > 0 or m.worker_id is null)
         and m.deleted = 0
-where s.status = 40 and s.latest = 1
+where s.status in (40, 100) and s.latest = 1
     and m.matchup_id is null;
 
 -- skip entire process if less players are available than the smallest map
@@ -59,7 +59,7 @@ if @min_players <= @max_players then
         into @seed_id, @submission_id, @mu, @sigma
         from submission s
         where s.user_id = the_user_id
-            and s.latest = 1 and s.status = 40;
+            and s.latest = 1 and s.status in (40, 100);
         
     end if;
 
@@ -264,7 +264,7 @@ if @min_players <= @max_players then
                         from tmp_matchup_player mp
                         where mp.matchup_id = @matchup_id
                     )
-                    and s.latest = 1 and s.status = 40
+                    and s.latest = 1 and s.status in (40, 100)
                     group by s.user_id, s.submission_id, s.mu, s.sigma, t.game_count
                     order by 6 desc
                 ) s,
@@ -323,7 +323,7 @@ if @min_players <= @max_players then
                         from tmp_matchup_player mp
                         where mp.matchup_id = @matchup_id
                     )
-                    and s.latest = 1 and s.status = 40
+                    and s.latest = 1 and s.status in (40, 100)
                     group by s.user_id, s.submission_id, s.mu, s.sigma
                     order by 6 desc
                 ) s,
