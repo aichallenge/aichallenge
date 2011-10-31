@@ -153,7 +153,7 @@ if @min_players <= @max_players then
     -- Step 3: select opponents 1 at a time
     set @cur_user_id = @seed_id;
     set @last_user_id = -1;
-    set @player_count = -1;
+    set @player_count = 1;
     
     -- used to undo a matchup
     set @abort = 0;
