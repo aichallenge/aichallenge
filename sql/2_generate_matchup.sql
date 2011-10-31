@@ -117,7 +117,6 @@ if @min_players <= @max_players then
         from (
             select user_id, opponent_id, count(*) as game_count
             from opponents
-            where user_id = 527
             group by user_id, opponent_id
             union
             select mp1.user_id as user_id,
