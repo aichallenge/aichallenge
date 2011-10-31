@@ -174,7 +174,7 @@ table.games td.list {
 }
 
 table.games td.time {
-	width: 85px;
+	width: 90px;
 }
 
 table.games td.map {
@@ -186,7 +186,7 @@ table.games td.game {
 }
 
 table.games td.list span {
-    width: 95px;
+    width: 140px;
     margin: 0px 2px;
     display: inline-block;
     overflow: hidden;
