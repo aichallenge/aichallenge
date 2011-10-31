@@ -3,6 +3,14 @@ delimiter $$
 create procedure generate_matchup()
 begin
 
+-- deactivate submissions
+update submission
+inner join user u
+    on u.user_id = submission.user_id
+set status = 100
+where status = 40 and latest = 1
+and u.shutdown_date < current_timestamp();
+	
 -- get min and max players for matchmaking
 select min(players) into @min_players from map;
 
