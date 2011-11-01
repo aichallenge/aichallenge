@@ -388,7 +388,7 @@ languages = (
             (["*.o"], ExternalCompiler(comp_args["C++"][1]))
         ]
     ),
-    Language("C++11", BOT "MyBot.cpp",
+    Language("C++11", BOT, "MyBot.cpp",
         "./MyBot",
         ["*.o", BOT],
         [
