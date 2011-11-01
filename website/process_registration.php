@@ -128,7 +128,7 @@ if (strcmp($user_email, "donotsend") != 0) {
   }
   $edomain = substr(strrchr($user_email, '@'), 1);
   $mx_records = array();
-  if (!getmxrr($edomain, $mx_records) && !gethostbyname($edomain)) {
+  if (!getmxrr($edomain, $mx_records) && (strcmp(gethostbyname($edomain), $edomain) == 0)) {
     $errors[] = "Could not find the email address entered. Please enter a valid email address.";
   }
 }
