@@ -337,12 +337,14 @@ def get_moves(game, bots, bot_nums, time_limit, turn):
     bot_moves = [[] for b in bots]
     error_lines = [[] for b in bots]
     statuses = [None for b in bots]
-    start_time = time.time()
 
     # resume all bots
     for bot in bots:
         if bot.is_alive:
             bot.resume()
+
+    # don't start timing until the bots are started
+    start_time = time.time()
 
     # loop until received all bots send moves or are dead
     #   or when time is up
