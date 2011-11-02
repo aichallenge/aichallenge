@@ -241,7 +241,7 @@ if @min_players <= @max_players then
         
 	        set @last_user_id = -1;
 	        
-            set @pareto = (10 / pow(rand(), 0.7));
+            set @pareto = (5 / pow(rand(), 0.65));
             -- debug statement
             -- select list of opponents with match quality
             select s.user_id, s.submission_id, s.mu, s.sigma,
@@ -266,7 +266,9 @@ if @min_players <= @max_players then
                     -- join with all players in current matchup to average match quality
                     where p.matchup_id = @matchup_id
                     -- exclude players with high 24 hour game count
-                    and t.game_count < @avg_game_count
+                    -- disabled as this fights against bot deactivation
+                    -- and t.game_count < @avg_game_count
+
                     -- exclude players currently in the matchup
                     and s.user_id not in (
                         select mp.user_id
@@ -290,7 +292,7 @@ if @min_players <= @max_players then
                 on o.opponent_id = s.user_id
             -- pareto distribution
             -- the size of the pool of available players will follow a pareto distribution
-            -- where the minimum is 10 and 80% of the values will be <= 30
+            -- where the minimum is 5 and 80% of the values will be <= 18
             -- due to the least played ordering, after a submission is established
             -- it will tend to pull from the lowest match quality, so the opponent
             -- rank difference selected will also follow a pareto distribution 
@@ -320,7 +322,9 @@ if @min_players <= @max_players then
                     -- join with all players in current matchup to average match quality
                     where p.matchup_id = @matchup_id
                     -- exclude players with high 24 hour game count
-                    and t.game_count < @avg_game_count
+                    -- disabled as this fights against bot deactivation
+                    -- and t.game_count < @avg_game_count
+
                     -- exclude players currently in the matchup
                     and s.user_id not in (
                         select mp.user_id
