@@ -191,22 +191,42 @@ if @min_players <= @max_players then
      
     -- debug statement
     select @players;
-    
-    select avg(tg.game_count) * 1.1 + 1
-    into @avg_game_count
+
+    -- get the total number of users
+    select count(*)
+    into @user_count
     from tmp_games tg
     inner join submission s
         on s.user_id = tg.user_id
-    where s.latest = 1 and s.status = 40;
-    
-    select @avg_game_count as avg_game_count;
+    where s.latest = 1;
+
+    select @user_count as user_count;
+
+    -- set the limit on number of games played for a player to be considered
+    set @seq = 0;
+    select game_count
+    into @game_limit
+    from (
+        select game_count, @seq := @seq + 1 as seq
+        from (
+            select tg.game_count
+            from tmp_games tg
+            inner join submission s
+                on s.user_id = tg.user_id
+            where s.latest = 1
+            order by tg.game_count desc
+        ) gc
+    ) gcs
+    where seq = floor(@user_count / 10) + 1;
+
+    select @game_limit as game_limit;
 
 
     -- Step 3: select opponents 1 at a time
     set @cur_user_id = @seed_id;
     set @last_user_id = -1;
     set @player_count = 1;
-    
+
     -- used to undo a matchup
     set @abort = 0;
     set @abort_reason = '';
@@ -266,8 +286,7 @@ if @min_players <= @max_players then
                     -- join with all players in current matchup to average match quality
                     where p.matchup_id = @matchup_id
                     -- exclude players with high 24 hour game count
-                    -- disabled as this fights against bot deactivation
-                    -- and t.game_count < @avg_game_count
+                    and t.game_count < @game_limit
 
                     -- exclude players currently in the matchup
                     and s.user_id not in (
@@ -322,8 +341,7 @@ if @min_players <= @max_players then
                     -- join with all players in current matchup to average match quality
                     where p.matchup_id = @matchup_id
                     -- exclude players with high 24 hour game count
-                    -- disabled as this fights against bot deactivation
-                    -- and t.game_count < @avg_game_count
+                    and t.game_count < @game_limit
 
                     -- exclude players currently in the matchup
                     and s.user_id not in (
