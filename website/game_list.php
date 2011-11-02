@@ -257,7 +257,10 @@ function create_game_list_table($page=0, $user_id=NULL, $submission_id=NULL, $ma
         // TODO: consider linking the submission id instead
         $opponents = "";
         for ($i = 0; $i < $row['players']; $i++) {
-            $opponents .= nice_opponent($row["user_id"][$i], $row["username"][$i], $row["game_rank"][$i] + 1, $row['rank_before'][$i], $row["user_id"][$i] == $user_id);
+            $opponents .= nice_opponent($row["user_id"][$i], $row["username"][$i], $row["game_rank"][$i] + 1, $row['rank_before'][$i],
+                $row['skill'][$i], $row['mu'][$i], $row['sigma'][$i],
+                $row['skill_change'][$i], $row['mu_change'][$i], $row['sigma_change'][$i],
+                $row["user_id"][$i] == $user_id);
         }
         $table .= "<td class=\"list\">$opponents</td>";
 

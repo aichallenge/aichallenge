@@ -124,11 +124,24 @@ function nice_language($language_id, $programming_language) {
     return "<a href=\"language_profile.php?language=$programming_language_link\">$programming_language</a>";
 }
 
-function nice_opponent($user_id, $username, $game_rank, $rank_before, $user=False) {
-    if ($user) {
-        return "<span><em>#$rank_before-</em><strong>".nice_ordinal($game_rank)."</strong>-".nice_user($user_id, $username)."</span>";
+function skill_hint($skill, $mu, $sigma,
+        $skill_change=NULL, $mu_change=NULL, $sigma_change=NULL) {
+    if ($skill_change == NULL) {
+        $skill_hint = sprintf("mu=%0.2f sigma=%0.2f", $mu, $sigma);
     } else {
-        return "<span><em>#$rank_before-</em>".nice_ordinal($game_rank)."-".nice_user($user_id, $username)."</span>";
+        $skill_hint = sprintf("mu=%0.2f(%+0.2f) sigma=%0.2f(%+0.2f) skill=%0.2f(%+0.2f)", $mu, $mu_change, $sigma, $sigma_change, $skill, $skill_change);
+    }
+    return $skill_hint;
+}
+
+function nice_opponent($user_id, $username, $game_rank, $rank_before,
+        $skill, $mu, $sigma, $skill_change, $mu_change, $sigma_change,
+        $user=False) {
+    $skill_hint = skill_hint($skill, $mu, $sigma, $skill_change, $mu_change, $sigma_change);
+    if ($user) {
+        return "<span><em title='$skill_hint'>#$rank_before-</em><strong>".nice_ordinal($game_rank)."</strong>-".nice_user($user_id, $username)."</span>";
+    } else {
+        return "<span><em title='$skill_hint'>#$rank_before-</em>".nice_ordinal($game_rank)."-".nice_user($user_id, $username)."</span>";
     }
 }
 
@@ -150,11 +163,8 @@ function nice_game($game_id, $turns, $winning_turn, $ranking_turn, $end_reason,
 }
 
 function nice_skill($skill, $mu, $sigma, $skill_change=NULL, $mu_change=NULL, $sigma_change=NULL) {
-    if ($skill_change == NULL) {
-        $skill_hint = sprintf("mu=%0.2f sigma=%0.2f", $mu, $sigma);
-    } else {
-        $skill_hint = sprintf("mu=%0.2f(%+0.2f) sigma=%0.2f(%+0.2f) skill=%0.2f(%+0.2f)", $mu, $mu_change, $sigma, $sigma_change, $skill, $skill_change);
-    }
+    $skill_hint = skill_hint($skill, $mu, $sigma,
+        $skill_change, $mu_change, $sigma_change);
     $skill_change = nice_change_marker($skill_change, 0.1);
     $skill = number_format($skill, 2);
     return "<span title=\"$skill_hint\">$skill&nbsp;$skill_change</span>";
