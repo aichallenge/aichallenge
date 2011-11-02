@@ -33,6 +33,8 @@ object Parser {
     ("w (\\d+ \\d+)".r, (game: GameInProgress, values: Seq[Int]) => game including Water(tileFrom(values))) ::
     ("f (\\d+ \\d+)".r, (game: GameInProgress, values: Seq[Int]) => game including Food(tileFrom(values))) ::
     ("d (\\d+ \\d+ \\d+)".r, (game: GameInProgress, values: Seq[Int]) => game including Corpse(tileFrom(values))) ::
+    ("h (\\d+ \\d+) 0".r, (game: GameInProgress, values: Seq[Int]) => game including MyHill(tileFrom(values))) ::
+    ("h (\\d+ \\d+ \\d+)".r, (game: GameInProgress, values: Seq[Int]) => game including EnemyHill(tileFrom(values))) ::
     ("turn (\\d+)".r, (game: GameInProgress, values: Seq[Int]) => game.copy(turn = values(0))) ::
     ("loadtime (\\d+)".r, (game: GameInProgress, values: Seq[Int]) => game.copy(parameters = game.parameters.copy(loadTime = values(0)))) ::
     ("turntime (\\d+)".r, (game: GameInProgress, values: Seq[Int]) => game.copy(parameters = game.parameters.copy(turnTime = values(0)))) ::
