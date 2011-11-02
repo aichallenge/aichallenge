@@ -91,7 +91,7 @@ if (!isset($_SESSION['forgotten']) || $_SESSION['forgotten'] === false) {
   <tr>
     <td>&nbsp;</td>
     <td>&nbsp;</td>
-    <td><input name="remember_me" type="checkbox" id="remember_me"> Remember me</td>
+    <td><label><input name="remember_me" type="checkbox" id="remember_me"> Remember me</label></td>
   </tr>
   <tr>
     <td>&nbsp;</td>
