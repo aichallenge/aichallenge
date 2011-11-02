@@ -164,7 +164,7 @@ include 'header.php';
     <td><a href="starter_packages/scala_starter_package.zip">Scala</a></td>
     <td>Scala version 2.9.0.1</td>
     <td>&nbsp;</td>
-    <td><em>Hills not implemented yet</em></td>
+    <td>&nbsp;</td>
   </tr>
   <tr>
     <td><a href="starter_packages/tcl_starter_package.zip">Tcl</a></td>
