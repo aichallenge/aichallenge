@@ -11,7 +11,7 @@ if ($game_id !== FALSE and $game_id !== NULL) {
     require_once('session.php');
     if ($user_id &&
             logged_in_with_valid_credentials() &&
-            current_user_id() === $user_id) {
+            (logged_in_as_admin() || current_user_id() === $user_id)) {
         require_once('mysql_login.php');
         $game_errors = contest_query('select_game_errors',
                                      $game_id,
