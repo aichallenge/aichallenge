@@ -19,6 +19,7 @@ require_once('header.php');
 <ol>
 <li><a href="specification_battle.php">Focus Battle Resolution</a></li>
 </ol>
+<li><a href="#Hill-Razing">Battle Resolution</a></li>
 <li><a href="#Bot-Input">Bot Input</a></li>
 <li><a href="#Bot-Output">Bot Output</a></li>
 <li><a href="#Map-Format">Map Format</a></li>
@@ -51,6 +52,10 @@ require_once('header.php');
 
 <div id="Battle-Resolution">
 <!--<MarkdownReplacement with="competition-Battle-Resolution.md">--><!--</MarkdownReplacement>-->
+</div>
+
+<div id="Hill-Razing">
+<!--<MarkdownReplacement with="competition-Hill-Razing.md">--><!--</MarkdownReplacement>-->
 </div>
 
 <div id="Bot-Input">
