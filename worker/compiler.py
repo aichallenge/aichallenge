@@ -328,7 +328,7 @@ comp_args = {
                              ["jar", "cfe", BOT + ".jar", BOT]],
     # If we ever upgrade to GHC 7, we will need to add -rtsopts to this command
     # in order for the maximum heap size RTS flag to work on the executable.
-    "Haskell" : [["ghc", "--make", BOT + ".hs", "-O", "-v0"]],
+    "Haskell" : [["ghc", "--make", BOT + ".hs", "-O2", "-v0"]],
     "Java"        : [["javac", "-J-Xmx%sm" % (MEMORY_LIMIT)],
                              ["jar", "cfe", BOT + ".jar", BOT]],
     "Lisp"      : [['sbcl', '--dynamic-space-size', str(MEMORY_LIMIT), '--script', BOT + '.lisp']],
