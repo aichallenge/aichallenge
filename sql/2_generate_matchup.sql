@@ -165,7 +165,7 @@ if @min_players <= @max_players then
             order by tg.game_count desc
         ) gc
     ) gcs
-    where seq = floor(@user_count / 10) + 1;
+    where seq = floor(@user_count * 0.125) + 1;
 
     -- Step 3: select opponents 1 at a time
     set @cur_user_id = @seed_id;
@@ -229,7 +229,7 @@ if @min_players <= @max_players then
                     -- join with all players in current matchup to average match quality
                     where p.matchup_id = @matchup_id
                     -- exclude players with high 24 hour game count
-                    and t.game_count < @game_limit
+                    and t.game_count <= @game_limit
 
                     -- exclude players currently in the matchup
                     and s.user_id not in (
