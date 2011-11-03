@@ -303,7 +303,7 @@ class TargetCompiler(Compiler):
 
 PYTHON_EXT_COMPILER = '''"from distutils.core import setup
 from distutils.extension import read_setup_file
-setup(ext_modules = read_setup_file('Setup_exts'), script_args = ['-q', 'build_ext', '-i'])"'''
+setup(ext_modules = read_setup_file('setup_exts'), script_args = ['-q', 'build_ext', '-i'])"'''
 
 comp_args = {
     # lang : ([list of compilation arguments], ...)
@@ -487,13 +487,13 @@ languages = (
         "python MyBot.py",
         ["*.pyc"],
         [(["*.py"], ChmodCompiler("Python")),
-        (["Setup_exts"], ErrorFilterCompiler(comp_args["Python"][0], separate=True, filter_stderr='-Wstrict-prototypes'))]
+        (["setup_exts"], ErrorFilterCompiler(comp_args["Python"][0], separate=True, filter_stderr='-Wstrict-prototypes'))]
     ),
     Language("Python3", BOT +".py3", "MyBot.py3",
         "python3 MyBot.py3",
         ["*.pyc"],
         [(["*.py3"], ChmodCompiler("Python3")),
-        (["Setup_exts"], ErrorFilterCompiler(comp_args["Python3"][0], separate=True, filter_stderr='-Wstrict-prototypes'))]
+        (["setup_exts"], ErrorFilterCompiler(comp_args["Python3"][0], separate=True, filter_stderr='-Wstrict-prototypes'))]
     ),
     Language("Ruby", BOT +".rb", "MyBot.rb",
         "ruby MyBot.rb",
