@@ -195,9 +195,7 @@ if @min_players <= @max_players then
     -- get the total number of users
     select count(*)
     into @user_count
-    from tmp_games tg
-    inner join submission s
-        on s.user_id = tg.user_id
+    from submission s
     where s.latest = 1;
 
     select @user_count as user_count;
