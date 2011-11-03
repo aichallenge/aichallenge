@@ -306,9 +306,9 @@ comp_args = {
     #                If the compilation should output each source file to
     #                its own object file, don't include the -o flags here,
     #                and use the TargetCompiler in the languages dict.
-    "Ada"           : [["gcc", "-O3", "-funroll-loops", "-c"],
-                             ["gnatbind", BOT + ".ali"],
-                             ["gnatlink", BOT + ".ali", "-o", BOT]],
+    "Ada"           : [["gcc-4.4", "-O3", "-funroll-loops", "-c"],
+                             ["gnatbind"],
+                             ["gnatlink", "-o", BOT]],
     "C"             : [["gcc", "-O3", "-funroll-loops", "-c"],
                              ["gcc", "-O2", "-lm", "-o", BOT]],
     "C#"            : [["gmcs", "-warn:0", "-out:%s.exe" % BOT]],
@@ -355,11 +355,11 @@ languages = (
     # If a source glob is "" it means the source is part of the compiler
     #   arguments.
     Language("Ada", BOT, "mybot.adb",
-        "./mybot",
-        [BOT + ".ali"],
+        "./MyBot",
+        ["*.ali"],
         [(["*.adb"], ExternalCompiler(comp_args["Ada"][0])),
-            (["*.ali"], ExternalCompiler(comp_args["Ada"][1])),
-            (["*.ali"], ExternalCompiler(comp_args["Ada"][2]))]
+            (["mybot.ali"], ExternalCompiler(comp_args["Ada"][1])),
+            (["mybot.ali"], ExternalCompiler(comp_args["Ada"][2]))]
     ),
     Language("C", BOT, "MyBot.c",
         "./MyBot",
