@@ -217,7 +217,7 @@ if @min_players <= @max_players then
                         ,@match_quality := exp(sum(ln(
                             sqrt(@twiceBetaSq / (@twiceBetaSq + pow(p.sigma,2) + pow(s.sigma,2))) *
                             exp(-(pow(p.mu - s.mu, 2) / (2 * (@twiceBetaSq + pow(p.sigma,2) + pow(s.sigma,2)))))
-                        ))) as match_quality
+                        )) / (@player_count + 1)) as match_quality
                     from
                     matchup_player p, -- current players in match
                     submission s  -- possible next players
