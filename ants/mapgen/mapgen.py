@@ -547,6 +547,9 @@ def main(argv):
     parser.add_option("--max_block_size", dest="max_block_size",
                       type="int", default=4,
                       help="Maximum block size to be used")
+    parser.add_option("--seed", dest="seed",
+                      type="int", default=None,
+                      help="Seed to initialize the random number generator.")
 
     (opts,_) = parser.parse_args(argv)
 
@@ -578,6 +581,8 @@ def main(argv):
                 or (opts.rotational_symmetry < 0 or opts.rotational_symmetry > 5):
                 print "Invalid rotational symmetry type for the number of players"
                 return
+    
+    random.seed(opts.seed)
 
     #creates the map
     grid = Grid()
