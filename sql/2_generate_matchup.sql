@@ -243,7 +243,7 @@ if @min_players <= @max_players then
                         )
                         and s.latest = 1 and s.status in (40, 100)
                         group by s.user_id, s.submission_id, s.mu, s.sigma
-                    ) s order by mod_quality;
+                    ) s order by mod_quality desc
                 ) s,
                 (select @seq := 0) seq
             ) s
