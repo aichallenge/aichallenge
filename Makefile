@@ -2,7 +2,7 @@ CC=gcc
 CFLAGS=-O3 -funroll-loops -c
 LDFLAGS=-O2 -lm
 SOURCES=MyBot.c YourCode.c ants.c
-OBJECTS=$(SOURCES:.c=.o)
+OBJECTS=$(addsuffix .o, $(basename ${SOURCES}))
 EXECUTABLE=MyBot
 
 all: $(OBJECTS) $(EXECUTABLE)
