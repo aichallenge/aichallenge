@@ -211,33 +211,39 @@ if @min_players <= @max_players then
             from (
                 select @seq := @seq + 1 as seq, s.*
                 from (
-                    -- list of all submission sorted by match quality
-                    select s.user_id, s.submission_id, s.mu, s.sigma, t.game_count
-                        -- trueskill match quality for 2 players
-                        ,@match_quality := exp(sum(ln(
-                            sqrt(@twiceBetaSq / (@twiceBetaSq + pow(p.sigma,2) + pow(s.sigma,2))) *
-                            exp(-(pow(p.mu - s.mu, 2) / (2 * (@twiceBetaSq + pow(p.sigma,2) + pow(s.sigma,2)))))
-                        )) / (@player_count + 1)) as match_quality
-                    from
-                    matchup_player p, -- current players in match
-                    submission s  -- possible next players
-                    -- get game count for last 24 hours
-                    inner join tmp_games t
-                        on t.user_id = s.user_id
-                    -- join with all players in current matchup to average match quality
-                    where p.matchup_id = @matchup_id
-                    -- exclude players with high 24 hour game count
-                    and t.game_count <= @game_limit
+                    -- list of all submissions sorted by match quality modified
+                    -- by exponentially weighting against number of games
+                    select s.*,
+                        (s.match_quality *
+                            greatest(2 - pow(1.0001, pow(s.game_count, 2.6)),
+                                0.001)) as mod_quality
+                    from (
+                        select s.user_id, s.submission_id, s.mu, s.sigma, t.game_count
+                            -- trueskill match quality for 2 players
+                            ,@match_quality := exp(sum(ln(
+                                sqrt(@twiceBetaSq / (@twiceBetaSq + pow(p.sigma,2) + pow(s.sigma,2))) *
+                                exp(-(pow(p.mu - s.mu, 2) / (2 * (@twiceBetaSq + pow(p.sigma,2) + pow(s.sigma,2)))))
+                            )) / (@player_count + 1)) as match_quality
+                        from
+                        matchup_player p, -- current players in match
+                        submission s  -- possible next players
+                        -- get game count for last 24 hours
+                        inner join tmp_games t
+                            on t.user_id = s.user_id
+                        -- join with all players in current matchup to average match quality
+                        where p.matchup_id = @matchup_id
+                        -- exclude players with high 24 hour game count
+                        and t.game_count <= @game_limit
 
-                    -- exclude players currently in the matchup
-                    and s.user_id not in (
-                        select mp.user_id
-                        from matchup_player mp
-                        where mp.matchup_id = @matchup_id
-                    )
-                    and s.latest = 1 and s.status in (40, 100)
-                    group by s.user_id, s.submission_id, s.mu, s.sigma
-                    order by 6 desc
+                        -- exclude players currently in the matchup
+                        and s.user_id not in (
+                            select mp.user_id
+                            from matchup_player mp
+                            where mp.matchup_id = @matchup_id
+                        )
+                        and s.latest = 1 and s.status in (40, 100)
+                        group by s.user_id, s.submission_id, s.mu, s.sigma
+                    ) s order by mod_quality;
                 ) s,
                 (select @seq := 0) seq
             ) s
