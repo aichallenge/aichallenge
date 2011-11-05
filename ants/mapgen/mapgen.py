@@ -507,6 +507,43 @@ class Grid():
             for c in range(self.cols):
                 o_loc = self.get_translate_loc([r,c], t_loc)
                 self.squares[r][c] = old_map[o_loc[0]][o_loc[1]]
+    
+    #randomly fill the map with ants, used for the cave mapgen
+    def add_land_randomly(self,percent=0.49):
+        for r in range(self.rows):
+            for c in range(self.cols):
+                if random.random() < percent:
+                    self.add_land((r,c))
+    
+    #Apply a cellular automaton
+    def smooth_land(self):
+        diag_directions = {'NW': (-1,-1), 'SW': (1,-1), 'NE': (-1,1), 'SW': (1,-1)}
+        diag_directions.update(directions)
+        def diag_get_loc( loc, direction):
+            dr, dc = diag_directions[direction]
+            return [(loc[0]+dr)%self.rows, (loc[1]+dc)%self.cols ]
+        
+        old_map = [ ['%' for c in range(self.cols)] for r in range(self.rows) ]
+        for r in range(self.rows):
+            for c in range(self.cols):
+                old_map[r][c] = self.squares[r][c]
+        
+        for r in range(self.rows):
+            for c in range(self.cols):
+                neighbour_waters = 0
+                
+                for d in diag_directions:
+                    neighbour_loc=diag_get_loc((r,c),d)
+                    if old_map[neighbour_loc[0]][neighbour_loc[1]]=="%":
+                        neighbour_waters += 1
+                
+                if neighbour_waters < 4:
+                    self.add_land((r,c))
+                
+                if neighbour_waters > 4:
+                    #make water
+                    if self.squares[r][c] == '.':
+                        self.squares[r][c] = '%'
 
 def main(argv):
     usage ="""Usage: %prog [options]\n"""
@@ -547,6 +584,7 @@ def main(argv):
     parser.add_option("--max_block_size", dest="max_block_size",
                       type="int", default=4,
                       help="Maximum block size to be used")
+    
     parser.add_option("--seed", dest="seed",
                       type="int", default=None,
                       help="Seed to initialize the random number generator.")
@@ -626,11 +664,17 @@ def main(argv):
             return
 
     grid.generate_basis_information()
-    grid.add_land_with_recursive_backtracking()
-    grid.add_extra_land_blocks()
-    grid.add_extra_land_locs()
-    grid.make_symmetric()
-    grid.add_extra_hills()
+    
+    grid.add_land_randomly()
+    grid.smooth_land()
+    
+    #grid.add_land_with_recursive_backtracking()
+    #grid.add_extra_land_blocks()
+    #grid.add_extra_land_locs()
+    #grid.add_extra_hills()
+    
+    #grid.make_symmetric()
+    
     grid.translate() #this will make it (even) harder to determine some symmetries
 
     grid.print_grid()
