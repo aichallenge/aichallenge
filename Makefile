@@ -1,19 +1,19 @@
 CC=gcc
 CFLAGS=-O3 -funroll-loops -c
-LDFLAGS=-O2 -lm
+LDFLAGS=-O2
+LDLIBS=-lm
 SOURCES=MyBot.c YourCode.c ants.c
-OBJECTS=$(addsuffix .o, $(basename ${SOURCES}))
+HEADERS=ants.h
+OBJECTS=$(SOURCES:.c=.o)
 EXECUTABLE=MyBot
 
-all: $(OBJECTS) $(EXECUTABLE)
+all: $(EXECUTABLE)
 
 $(EXECUTABLE): $(OBJECTS)
-	$(CC) $(LDFLAGS) $(OBJECTS) -o $@
 
-.c.o:
-	$(CC) $(CFLAGS) $< -o $@
+$(OBJECTS): %.o: %.c $(HEADERS)
 
 clean:
-	rm -f ${EXECUTABLE} ${OBJECTS} *.d
+	rm -f $(EXECUTABLE) $(OBJECTS)
 
 .PHONY: all clean
