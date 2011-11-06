@@ -121,7 +121,7 @@ int main(int argc, char *argv[]) {
             if (i >= initial_buffer) {
                 initial_buffer *= 2;
                 data = realloc(data, initial_buffer);
-				ins_data = data + i;
+                ins_data = data + i;
                 memset(ins_data, 0, initial_buffer - i);
             }
 
