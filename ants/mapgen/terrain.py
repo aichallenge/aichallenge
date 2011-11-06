@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 import random
-from point import *
+from util import *
 
 directions = {'N': Point(-1,0), 'S': Point(1,0), 'E': Point(0,1), 'W': Point(0,-1)}
 diag_directions = {'NW': Point(-1,-1), 'SW': Point(1,-1), 'NE': Point(-1,1), 'SW': Point(1,-1)}
@@ -40,7 +40,7 @@ class Terrain(object):
         for point in self.size.upto():
             neighbour_water=[d for d in diag_directions.values() if oldmap[point+d]==WATER]
             
-            if len(neighbour_water)<4:
+            if len(neighbour_water)<3:
                 self[point]=LAND
             if len(neighbour_water)>4:
                 self[point]=WATER

@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import collections
+import random
 
 class Point(collections.namedtuple('Point', ['x', 'y'])):
     def upto(self):
@@ -22,3 +23,20 @@ class Point(collections.namedtuple('Point', ['x', 'y'])):
     
     def __mul__(self,number):
         return Point(self.x*number,self.y*number)
+    
+    @staticmethod
+    def random(size):
+        """Returns a random point inside the size"""
+        return Point(random.randint(0,size.x),random.randint(0,size.y))
+
+class Range(collections.namedtuple('Range', ['min','max'])):
+    def __contains__(self,what):
+        return what>=self.min and what<=self.max
+    
+    def randint(self):
+        """Picks a randint inside the range and remembers it, next time being called it returns the same"""
+        try:
+            return self.value
+        except AttributeError:
+            self.value=random.randint(self.min,self.max)
+            return self.value
