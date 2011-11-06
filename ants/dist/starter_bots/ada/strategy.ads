@@ -9,7 +9,7 @@
 with Ants;
 
 package Strategy is
-   -- This procedure "Move_Ants" gets called back to carry out one move.
+   -- This procedure "Move_Ants" gets called back to carry out one set of moves.
    -- Your AI logic goes in here. Make use of the functions in the Ants
    -- package to help your code decide which moves to make. For available
    -- helper methods, see the package specification "ants.ads"
