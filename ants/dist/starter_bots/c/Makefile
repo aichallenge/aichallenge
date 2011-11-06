@@ -4,7 +4,7 @@ LDFLAGS=-O2
 LDLIBS=-lm
 SOURCES=MyBot.c YourCode.c ants.c
 HEADERS=ants.h
-OBJECTS=$(SOURCES:.c=.o)
+OBJECTS=$(addsuffix .o, $(basename ${SOURCES}))
 EXECUTABLE=MyBot
 
 all: $(EXECUTABLE)
