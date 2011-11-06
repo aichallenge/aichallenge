@@ -118,10 +118,11 @@ int main(int argc, char *argv[]) {
         while (1 > 0) {
             ++i;
 
-            if (i > initial_buffer) {
+            if (i >= initial_buffer) {
                 initial_buffer *= 2;
                 data = realloc(data, initial_buffer);
-                memset(ins_data, 0, initial_buffer/2);
+				ins_data = data + i;
+                memset(ins_data, 0, initial_buffer - i);
             }
 
             *ins_data = getchar();
