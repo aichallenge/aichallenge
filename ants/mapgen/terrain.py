@@ -1,34 +1,14 @@
 #!/usr/bin/env python
 
-import collections
+import random
+from point import *
 
-directions = {'N': (-1,0), 'S': (1,0), 'E': (0,1), 'W': (0,-1)}
-diag_directions = {'NW': (-1,-1), 'SW': (1,-1), 'NE': (-1,1), 'SW': (1,-1)}
+directions = {'N': Point(-1,0), 'S': Point(1,0), 'E': Point(0,1), 'W': Point(0,-1)}
+diag_directions = {'NW': Point(-1,-1), 'SW': Point(1,-1), 'NE': Point(-1,1), 'SW': Point(1,-1)}
 diag_directions.update(directions)
 
 WATER = "%"
 LAND = "."
-
-class Point(collections.namedtuple('Point', ['x', 'y'])):
-    def upto(self):
-        """Iterates over all points from origin to Point"""
-        for y in xrange(self.y):
-            for x in xrange(self.x):
-                yield Point(x,y)
-    
-    def normalize(self,size):
-        """Returns a normalized point from a toroid(with a given size)
-        Point(-9,-9).normalize(Point(10,10)) => Point(1,1)"""
-        return Point(self.x%size.x,self.y%size.y)
-    
-    def __add__(self,other):
-        return Point(self.x+other.x,self.y+other.y)
-    
-    def __sub__(self,other):
-        return Point(self.x-other.x,self.y-other.y)
-    
-    def __mul__(self,number):
-        return Point(self.x*number,self.y*number)
 
 class Terrain(object):
     """Terrain class contains only map size and terrain data.
@@ -47,6 +27,30 @@ class Terrain(object):
         """Sets a point in the terrain"""
         point=point.normalize(self.size)
         self.terrain[point.y][point.x]=value
+    
+    def add_water_randomly(self,percent=0.49):
+        for point in self.size.upto():
+            if random.random() < percent:
+                self[point]=WATER
+    
+    def smooth(self):
+        """Apply a cellular automaton to smoothen the walls"""
+        oldmap=self.copy()
+        
+        for point in self.size.upto():
+            neighbour_water=[d for d in diag_directions.values() if oldmap[point+d]==WATER]
+            
+            if len(neighbour_water)<4:
+                self[point]=LAND
+            if len(neighbour_water)>4:
+                self[point]=WATER
+        
+    def copy(self):
+        """Makes a copy of this map"""
+        newterrain=Terrain(self.size)
+        for point in self.size.upto():
+            newterrain[point]=self[point]
+        return newterrain
     
     def render(self):
         string ="rows %s\n" % self.size.y
