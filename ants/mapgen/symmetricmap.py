@@ -10,21 +10,27 @@ class SymmetryException(Exception):
         return "This symmetry type only supports %s." % self.msg
 
 class SymmetricMap(Map):
-    def __init__(self, size, num_players, symmetry_type):
+    def __init__(self, size, num_players, symmetry_type, translation_factor=Point(1,3)):
         Map.__init__(self, size, num_players)
         
         #setup symmetry
         if symmetry_type not in symmetry_types:
             raise Exception("Unknown symmetry type %s" % symmetry_type)
         self.symmetry_vector=self.__getattribute__("vector_"+symmetry_type)
-        #test the symmetry
-        assert(len(self.symmetry_vector(Point(0,0)))>0)
         
         #setup translational symmetry
         if symmetry_type=="translational":
             if (size.x%num_players!=0) or (size.y%num_players!=0):
                 raise SymmetryException("map size divisible to the number of players")
-            self.translation=Point(size.x/num_players*1,size.y/num_players*3)
+            self.translation=Point(size.x/num_players*translation_factor.x,size.y/num_players*translation_factor.y)
+        
+        #test the symmetry
+        assert(len(self.symmetry_vector(Point(0,0)))>0)
+    
+    def __setitem__(self,point,value):
+        """Sets a point in the terrain, applies to all other points that are symmetric"""
+        for symmetric_point in self.symmetry_vector(point):
+            Terrain.__setitem__(self, symmetric_point, value)
     
     #vector functions given a Point will return a list of all the points that are symmetric including themselves
     def symmetry_vector(self,origin):
@@ -69,18 +75,18 @@ class SymmetricMap(Map):
         return points
     
     def vector_translational(self,origin):
-        points=[]
-        for playerid in xrange(len(self.players)):
-            points.append(origin+self.translation*playerid)
+        return [(origin+self.translation*playerid).normalize(self.size)
+                for playerid in xrange(len(self.players))]
     
 #Generate symmetry types based on the function names
 symmetry_types=set(function[len("vector_"):] for function in dir(SymmetricMap) if function.startswith("vector_"))
 
 if __name__=="__main__":
     #Present all the types of symmetry
-    map_size=Point(10,10)
-    num_players=8
-    player_one=Point(3,4)
+    map_size=Point(20,20)
+    num_players=4
+    player_one=Point(2,6)
+    water_spot=Point(1,1)
     
     for symmetry in symmetry_types:
         print symmetry
@@ -88,6 +94,7 @@ if __name__=="__main__":
         
         try:
             map=SymmetricMap(map_size,num_players,symmetry)
+            map[water_spot]=WATER
             for player,location in enumerate(map.symmetry_vector(player_one)):
                 map.players[player].add(location)
             print map

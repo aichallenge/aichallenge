@@ -28,7 +28,7 @@ class Point(collections.namedtuple('Point', ['x', 'y'])):
         return Point(self.x-other.x,self.y-other.y)
     
     def __mul__(self,number):
-        return Point(self.x*number.x,self.y*number)
+        return Point(self.x*number,self.y*number)
 
 class Terrain(object):
     """Terrain class contains only map size and terrain data.
