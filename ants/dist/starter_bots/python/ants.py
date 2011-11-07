@@ -234,8 +234,10 @@ class Ants():
                         d = d_row**2 + d_col**2
                         if d <= self.viewradius2:
                             self.vision_offsets_2.append((
-                                d_row%self.rows-self.rows,
-                                d_col%self.cols-self.cols
+                                # Create all negative offsets so vision will
+                                # wrap around the edges properly
+                                (d_row % self.rows) - self.rows,
+                                (d_col % self.cols) - self.cols
                             ))
             # set all spaces as not visible
             # loop through ants and set all squares around ant as visible
@@ -243,7 +245,7 @@ class Ants():
             for ant in self.my_ants():
                 a_row, a_col = ant
                 for v_row, v_col in self.vision_offsets_2:
-                    self.vision[(a_row+v_row) % self.rows][(a_col+v_col) % self.cols] = True
+                    self.vision[a_row + v_row][a_col + v_col] = True
         row, col = loc
         return self.vision[row][col]
     
