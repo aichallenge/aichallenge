@@ -6,18 +6,13 @@ include 'header.php';
 ?>
 
 <h2>Starter Packages</h2>
-<p>Here are the starter packages that we currently offer. Each starter package is a ZIP file which contains:</p>
-<ul>
-  <li>A simple already-working entry to use as a starting point</li>
-  <li>Tools that allow you to run your bot and watch it play graphically</li>
-  <li>Some sample opponents that you can test your bot against</li>
-  <li>One hundred randomly generated maps that you can use for testing</li>
-</ul>
+<p>Here are the starter packages that we currently offer. Each starter package is a ZIP file which contains a simple already-working entry to use as a starting point</p>
+
 <p>Since each starter package contains a simple already-working entry, you can actually submit the ZIP file on the Upload Your Code page. See the <a href="quickstart.php">Five Minute Quickstart Guide</a> to learn how to get your name up on the global leaderboard in less than five minutes.</p>
 
 <p>Please note that some of these starter packages do not have the hills implemented yet. We will need a volunteer to fix these.</p>
 
-<p>You will need to download the tools in addition to the starter pack.  Choose <a href="/tools.zip">Windows</a> or <a href="/tools.tar.bz2">Linux / MacOS</a></p>
+<p>You will also probably want to download the tools in addition to the starter pack. The tools include the engine, visualizer and maps so you can run your bot in games on your own machine for testing and development. Choose <a href="/tools.zip">Windows</a> or <a href="/tools.tar.bz2">Linux / MacOS</a></p>
 
 <p><strong>Note: The tools come with the game engine written in python.  You will need to install a python interpreter to run the game engine regardless of which language you are programming in.</strong></p>
 
