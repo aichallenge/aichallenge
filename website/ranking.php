@@ -211,7 +211,7 @@ function create_ranking_table($page=0, $org_id=NULL, $country_id=NULL, $language
     }
     $table = '<table class="ranking">';
     if ($page !== 0) {
-        $table .= '<caption>'.getPaginationString($page, $page_count, $page_size, $page_string)."</caption>";
+        $table .= '<caption>'.getPaginationString($page, $page_count, $page_size, $page_string, '/rankings.php')."</caption>";
     }
     // produce header
     $table .= '<thead>
