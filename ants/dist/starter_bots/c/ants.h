@@ -35,16 +35,24 @@ struct food {
     int col;
 };
 
+struct hill {
+    int row;
+    int col;
+    char player;
+};
+
 struct game_state {
     struct my_ant *my_ants;
     struct basic_ant *enemy_ants;
     struct food *food;
     struct basic_ant *dead_ants;
+    struct hill *hill;
     
     int my_count;
     int enemy_count;
     int food_count;
     int dead_count;
+    int hill_count;
 
     int my_ant_index;
 };
