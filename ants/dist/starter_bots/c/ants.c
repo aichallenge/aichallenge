@@ -77,6 +77,7 @@ void _init_game(struct game_info *game_info, struct game_state *game_state) {
     int enemy_count = 0;
     int food_count = 0;
     int dead_count = 0;
+    int hill_count = 0;
     int i, j;
 
     for (i = 0; i < map_len; ++i) {
@@ -88,6 +89,8 @@ void _init_game(struct game_info *game_info, struct game_state *game_state) {
             ++food_count;
         else if (current == 'a')
             ++my_count;
+        else if (current >= '0' && current <= '9')
+            ++hill_count;
         else if (current > 64 && current < 91)
             ++dead_count;
         else
@@ -111,6 +114,8 @@ void _init_game(struct game_info *game_info, struct game_state *game_state) {
         free(game_state->food);
     if (game_state->dead_ants != 0)
         free(game_state->dead_ants);
+    if (game_state->hill != 0)
+        free(game_state->hill);
 
     game_state->my_ants = malloc(my_count*sizeof(struct my_ant));
 
@@ -123,6 +128,11 @@ void _init_game(struct game_info *game_info, struct game_state *game_state) {
         game_state->dead_ants = malloc(dead_count*sizeof(struct basic_ant));
     else
         game_state->dead_ants = 0;
+
+    if (hill_count > 0)
+        game_state->hill = malloc(hill_count*sizeof(struct hill));
+    else
+        game_state->hill = 0;
 
     game_state->food = malloc(food_count*sizeof(struct food));
 
@@ -141,6 +151,13 @@ void _init_game(struct game_info *game_info, struct game_state *game_state) {
                 game_state->food[food_count].row = i;
                 game_state->food[food_count].col = j;
             }
+	    else if (current <= '0' && current >= '9') {
+                --hill_count;
+
+		game_state->hill[hill_count].row = i;
+		game_state->hill[hill_count].col = j;
+		game_state->hill[hill_count].player = current - '0';
+	    }
             else if (current == 'a') {
                 --my_count;
 
@@ -193,6 +210,7 @@ void _init_game(struct game_info *game_info, struct game_state *game_state) {
 //    a   = Your Ant
 // [b..z] = Enemy Ants
 // [A..Z] = Dead Ants   (disappear after one turn)
+// [0..9] = hills
 //    *   = Food
 //    ?   = Unknown     (not used in latest engine version, unknowns are assumed to be land)
 
@@ -253,6 +271,9 @@ void _init_map(char *data, struct game_info *game_info) {
                 break;
             case 'f':
                 game_info->map[offset] = '*';
+		break;
+	    case 'h':
+		game_info->map[offset] = var3;
                 break;
         }
 
