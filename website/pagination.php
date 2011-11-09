@@ -3,7 +3,7 @@ function getPaginationString($page = 1, $lastpage, $perpage = 50, $pagestring = 
 {
     //other vars
     if ($targetpage === NULL) {
-	$targetpage = $_SERVER['PHP_SELF'];
+        $targetpage = $_SERVER['PHP_SELF'];
     }
     $adjacents = 2;
     $prev = $page - 1;
