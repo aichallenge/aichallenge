@@ -89,7 +89,7 @@ void _init_game(struct game_info *game_info, struct game_state *game_state) {
             ++food_count;
         else if (current == 'a')
             ++my_count;
-        else if (current >= '0' && current <= '9')
+        else if (isdigit(current))
             ++hill_count;
         else if (current > 64 && current < 91)
             ++dead_count;
@@ -104,16 +104,20 @@ void _init_game(struct game_info *game_info, struct game_state *game_state) {
     game_state->enemy_count = enemy_count;
     game_state->food_count = food_count;
     game_state->dead_count = dead_count;
+    game_state->hill_count = hill_count;
 
     if (game_state->my_ants != 0)
         my_old = game_state->my_ants;
 
     if (game_state->enemy_ants != 0)
         free(game_state->enemy_ants);
+
     if (game_state->food != 0)
         free(game_state->food);
+
     if (game_state->dead_ants != 0)
         free(game_state->dead_ants);
+
     if (game_state->hill != 0)
         free(game_state->hill);
 
@@ -134,9 +138,11 @@ void _init_game(struct game_info *game_info, struct game_state *game_state) {
     else
         game_state->hill = 0;
 
-    game_state->food = malloc(food_count*sizeof(struct food));
+    if (food_count > 0)
+        game_state->food = malloc(food_count*sizeof(struct food));
+    else
+        game_state->food = 0;
 
-    
     int my_count_start = my_count;
 
     for (i = 0; i < game_info->rows; ++i) {
@@ -151,7 +157,7 @@ void _init_game(struct game_info *game_info, struct game_state *game_state) {
                 game_state->food[food_count].row = i;
                 game_state->food[food_count].col = j;
             }
-	    else if (current <= '0' && current >= '9') {
+	    else if (isdigit(current)) {
                 --hill_count;
 
 		game_state->hill[hill_count].row = i;
