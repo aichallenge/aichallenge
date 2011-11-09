@@ -59,10 +59,19 @@ class Game
 
   # The main game loop
   run: (bot) ->
+    partialline = ""
     process.stdin.resume()
     process.stdin.setEncoding('utf8')
     process.stdin.on 'data', (chunk) =>
       lines = chunk.split("\n")
+      # Append possible partial line
+      lines[0] = partialline + lines[0]
+      partialline = ""
+      # If the last line is complete, there should be an
+      # empy string at the end of the array
+      if lines[lines.length-1] != ""
+        partialline = lines[lines.length-1]
+        lines = lines[0...lines.length-1]
       for line in lines
         state = @parse line.trim()
         switch state
