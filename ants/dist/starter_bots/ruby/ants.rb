@@ -264,7 +264,7 @@ class AI
 			ant, direction = a, b
 			@stdout.puts "o #{ant.row} #{ant.col} #{direction.to_s.upcase}"
 		else # assume three-argument form: row, col, direction
-			col, row, direction = a, b, c
+			row, col, direction = a, b, c
 			@stdout.puts "o #{row} #{col} #{direction.to_s.upcase}"
 		end
 	end
