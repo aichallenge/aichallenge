@@ -29,10 +29,10 @@ exports.ants = {
 			partialline = "";
 			// Complete lines will leave an empty
 			// string at the end, if that is not the case
-		        // buffer this line until the next chunk
+			// buffer this line until the next chunk
 			if (lines[lines.length - 1] !== "") {
-			    partialline = lines[lines.length - 1];
-			    lines = lines.slice(0, lines.length - 1);
+				partialline = lines[lines.length - 1];
+				lines.splice(lines.length - 1, 1);
 			}
 			for (var i = 0, len = lines.length; i < len; ++i) {
 				thisoutside.processLine(lines[i]);
