@@ -32,9 +32,6 @@ class SymmetricMap(Map):
         for symmetric_point in self.symmetry_vector(point):
             Terrain.__setitem__(self, symmetric_point, value)
     
-    def add_water_randomly(self,percent=0.49):
-        Terrain.add_water_randomly(self,percent/len(self.players))
-    
     #vector functions given a Point will return a list of all the points that are symmetric including themselves
     def symmetry_vector(self,origin):
         """To be overridden later"""
@@ -89,6 +86,7 @@ if __name__=="__main__":
     map_size=Point(20,20)
     num_players=2
     player_one=Point(2,6)
+    water=Point(1,1)
     
     for symmetry in symmetry_types:
         print symmetry
@@ -96,8 +94,7 @@ if __name__=="__main__":
         
         try:
             map=SymmetricMap(map_size,num_players,symmetry)
-            map.add_water_randomly()
-            map.smooth()
+            map[water]=WATER
             for player,location in enumerate(map.symmetry_vector(player_one)):
                 map.players[player].add(location)
             print map

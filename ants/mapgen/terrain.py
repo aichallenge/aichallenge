@@ -28,23 +28,6 @@ class Terrain(object):
         point=point.normalize(self.size)
         self.terrain[point.y][point.x]=value
     
-    def add_water_randomly(self,percent=0.49):
-        for point in self.size.upto():
-            if random.random() < percent:
-                self[point]=WATER
-    
-    def smooth(self):
-        """Apply a cellular automaton to smoothen the walls"""
-        oldmap=self.copy()
-        
-        for point in self.size.upto():
-            neighbour_water=[d for d in diag_directions.values() if oldmap[point+d]==WATER]
-            
-            if len(neighbour_water)<3:
-                self[point]=LAND
-            if len(neighbour_water)>4:
-                self[point]=WATER
-        
     def copy(self):
         """Makes a copy of this map"""
         newterrain=Terrain(self.size)
