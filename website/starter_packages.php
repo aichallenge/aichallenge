@@ -120,6 +120,12 @@ include 'header.php';
     <td><em>Hills not implemented yet</em></td>
   </tr>
   <tr>
+    <td><a href="starter_packages/octave_starter_package.zip">Octave</a></td>
+    <td>Octave 3.2.4-8</td>
+    <td>&nbsp;</td>
+    <td><em>Dead ants not implemented</em></td>
+  </tr>
+  <tr>
     <td><a href="starter_packages/pascal_starter_package.zip">Pascal</a></td>
     <td>FreePascal version 2.4.0-2ubuntu3.1</td>
     <td>&nbsp;</td>
