@@ -54,7 +54,7 @@ void do_turn(struct game_state *Game, struct game_info *Info) {
         if (COL != Info->cols - 1)
             obj_east = Info->map[offset + RIGHT];
         else
-            obj_east = Info->map[offset - Info->cols - 1];
+            obj_east = Info->map[offset - Info->cols + 1];
 
         if (ROW != 0)
             obj_north = Info->map[offset + UP];
