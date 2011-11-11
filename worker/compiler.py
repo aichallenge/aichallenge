@@ -466,6 +466,11 @@ languages = (
         [BOT + ".native"],
         [([""], ExternalCompiler(comp_args["OCaml"][0]))]
     ),
+    Language("Octave", BOT + ".m", "MyBot.m", 
+        "octave -qf MyBot.m",
+        [],
+        [(["*.m"], ChmodCompiler("Octave"))]
+    ),
     Language("Pascal", BOT, BOT + ".pas",
         "./" + BOT,
         [BOT, "*.o", "*.ppu"],
