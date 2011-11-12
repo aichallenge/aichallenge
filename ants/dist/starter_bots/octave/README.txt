@@ -15,5 +15,9 @@ Below is a fairly crude description of what each source file is used for:
 
 REMARK: All the locations are stored 0-based in the state structure. In order to index the the state.grid you'll obviously have to add 1 to the row and column that are stored elsewhere (you can see examples of this in the code)
 
-For some ideas on improving your bot from here, check out the tutorial and strategy idea pages on the contests website.
+For some ideas on improving your bot from here, check out the tutorial and strategy idea pages on the contest website.
+
+Author:
+Pedro Osório - 2011
+mebm.pedrosorio in the google mail 
 
