@@ -19,11 +19,21 @@ exports.ants = {
 	},
 	'start': function(botInput) {
 		this.bot = botInput;
+		var partialline = "";
 		process.stdin.resume();
 		process.stdin.setEncoding('utf8');
 		var thisoutside = this;
 		process.stdin.on('data', function(chunk) {
 			var lines = chunk.split("\n");
+			lines[0] = partialline + lines[0];
+			partialline = "";
+			// Complete lines will leave an empty
+			// string at the end, if that is not the case
+			// buffer this line until the next chunk
+			if (lines[lines.length - 1] !== "") {
+				partialline = lines[lines.length - 1];
+				lines.splice(lines.length - 1, 1);
+			}
 			for (var i = 0, len = lines.length; i < len; ++i) {
 				thisoutside.processLine(lines[i]);
 			}
