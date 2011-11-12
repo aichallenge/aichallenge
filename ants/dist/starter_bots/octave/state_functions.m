@@ -216,6 +216,8 @@ function [state] = stateInput(state)
             state.gameover = 1;
             break;
         elseif strcmp(inputType,'turn')
+                %start counting the time the bot uses on this turn (use variable=toc to measure it)
+                tic;
                 state.turn = scanf('%d',1);
                 break;                
         else
@@ -299,9 +301,6 @@ function [state] = stateInput(state)
             elseif strcmp(inputType,'scores') %scores of each player when game is over
                 state.scores = scanf('%lf',state.noPlayers);
             elseif strcmp(inputType,'go') %end of input for this turn
-                if ~state.gameover
-                    tic;
-                end
                 break;
             else
                 fgetl(stdin);
