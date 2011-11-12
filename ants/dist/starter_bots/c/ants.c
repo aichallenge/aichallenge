@@ -20,7 +20,7 @@ void _init_ants(char *data, struct game_info *game_info) {
 
         int num_value = atoi(value);
 
-	    switch (*data) {
+        switch (*data) {
             case 'l':
                 game_info->loadtime = num_value;
                 break;
@@ -39,7 +39,7 @@ void _init_ants(char *data, struct game_info *game_info) {
             case 'c':
                 game_info->cols = num_value;
                 break;
-                        
+
             case 'v':
                 game_info->viewradius_sq = num_value;
                 break;
@@ -47,7 +47,7 @@ void _init_ants(char *data, struct game_info *game_info) {
             case 'a':
                 game_info->attackradius_sq = num_value;
                 break;
-                    
+
             case 's':
                 if (*(data + 1) == 'p')
                     game_info->spawnradius_sq = num_value;
@@ -58,10 +58,10 @@ void _init_ants(char *data, struct game_info *game_info) {
         }
 
         data = value;
-        
+
         while (*++data != '\0');
         ++data;
-        
+
         if (strcmp(data, "ready") == 0)
             break;
     }
@@ -77,6 +77,7 @@ void _init_game(struct game_info *game_info, struct game_state *game_state) {
     int enemy_count = 0;
     int food_count = 0;
     int dead_count = 0;
+    int hill_count = 0;
     int i, j;
 
     for (i = 0; i < map_len; ++i) {
@@ -88,8 +89,18 @@ void _init_game(struct game_info *game_info, struct game_state *game_state) {
             ++food_count;
         else if (current == 'a')
             ++my_count;
-        else if (current > 64 && current < 91)
+        else if (current == 'A') {
+            ++my_count;
+            ++hill_count;
+        }
+        else if (isdigit(current))
+            ++hill_count;
+        else if (current & 0x80)
             ++dead_count;
+        else if (isupper(current)){
+            ++hill_count;
+            ++enemy_count;
+        }
         else
             ++enemy_count;
     }
@@ -101,16 +112,22 @@ void _init_game(struct game_info *game_info, struct game_state *game_state) {
     game_state->enemy_count = enemy_count;
     game_state->food_count = food_count;
     game_state->dead_count = dead_count;
+    game_state->hill_count = hill_count;
 
     if (game_state->my_ants != 0)
         my_old = game_state->my_ants;
 
     if (game_state->enemy_ants != 0)
         free(game_state->enemy_ants);
+
     if (game_state->food != 0)
         free(game_state->food);
+
     if (game_state->dead_ants != 0)
         free(game_state->dead_ants);
+
+    if (game_state->hill != 0)
+        free(game_state->hill);
 
     game_state->my_ants = malloc(my_count*sizeof(struct my_ant));
 
@@ -124,24 +141,43 @@ void _init_game(struct game_info *game_info, struct game_state *game_state) {
     else
         game_state->dead_ants = 0;
 
-    game_state->food = malloc(food_count*sizeof(struct food));
+    if (hill_count > 0)
+        game_state->hill = malloc(hill_count*sizeof(struct hill));
+    else
+        game_state->hill = 0;
 
-    
+    if (food_count > 0)
+        game_state->food = malloc(food_count*sizeof(struct food));
+    else
+        game_state->food = 0;
+
     int my_count_start = my_count;
 
     for (i = 0; i < game_info->rows; ++i) {
         for (j = 0; j < game_info->cols; ++j) {
             char current = game_info->map[game_info->cols*i + j];
             if (current == '?' || current == '.' || current == '%')
-                 continue;
+                continue;
 
             if (current == '*') {
                 --food_count;
 
                 game_state->food[food_count].row = i;
                 game_state->food[food_count].col = j;
-            }
-            else if (current == 'a') {
+            } else if (isdigit(current)) {
+                --hill_count;
+
+                game_state->hill[hill_count].row = i;
+                game_state->hill[hill_count].col = j;
+                game_state->hill[hill_count].player = current - '0';
+            } else if (current == 'a' || current == 'A') {
+                if (isupper(current)) {
+                    --hill_count;
+
+                    game_state->hill[hill_count].row = i;
+                    game_state->hill[hill_count].col = j;
+                    game_state->hill[hill_count].player = current - 'A';
+                }
                 --my_count;
 
                 int keep_id = -1;
@@ -158,25 +194,37 @@ void _init_game(struct game_info *game_info, struct game_state *game_state) {
 
                 game_state->my_ants[my_count].row = i;
                 game_state->my_ants[my_count].col = j;
-                
+
                 if (keep_id == -1)
                     game_state->my_ants[my_count].id = ++game_state->my_ant_index;
                 else
                     game_state->my_ants[my_count].id = keep_id;
-            }
-            else if (current > 64 && current < 91) {
+            } else if (current & 0x80) {
                 --dead_count;
 
                 game_state->dead_ants[dead_count].row = i;
                 game_state->dead_ants[dead_count].col = j;
-                game_state->dead_ants[dead_count].player = current;
-            }
-            else {
+                game_state->dead_ants[dead_count].player = (current & (~0x80));
+                
+                game_info->map[game_info->cols*i + j] = '!';
+            } else if (isupper(current)) {
+                --hill_count;
+
+                game_state->hill[hill_count].row = i;
+                game_state->hill[hill_count].col = j;
+                game_state->hill[hill_count].player = current - 'A';
                 --enemy_count;
 
                 game_state->enemy_ants[enemy_count].row = i;
                 game_state->enemy_ants[enemy_count].col = j;
-                game_state->enemy_ants[enemy_count].player = current;
+                game_state->enemy_ants[enemy_count].player = current - 'A';
+
+            } else {
+                --enemy_count;
+
+                game_state->enemy_ants[enemy_count].row = i;
+                game_state->enemy_ants[enemy_count].col = j;
+                game_state->enemy_ants[enemy_count].player = current - 'a';
             } 
         }
     }
@@ -192,8 +240,10 @@ void _init_game(struct game_info *game_info, struct game_state *game_state) {
 //    .   = Land        (territory that you can walk on)
 //    a   = Your Ant
 // [b..z] = Enemy Ants
-// [A..Z] = Dead Ants   (disappear after one turn)
+//    !   = Dead Ants   (disappear after one turn)
 //    *   = Food
+// [A..Z] = hill + ant
+// [0..9] = hill
 //    ?   = Unknown     (not used in latest engine version, unknowns are assumed to be land)
 
 
@@ -242,20 +292,29 @@ void _init_map(char *data, struct game_info *game_info) {
         int offset = row*game_info->cols + col;
 
         switch (*data) {
+
             case 'w':
                 game_info->map[offset] = '%';
                 break;
             case 'a':
-                game_info->map[offset] = var3 + 49;
+                if (isdigit(game_info->map[offset]))
+                    game_info->map[offset] = var3 - '0' + 'A';
+                else
+                   game_info->map[offset] = var3 - '0' + 'a';
                 break;
             case 'd':
-                game_info->map[offset] = var3 + 27;
+                game_info->map[offset] = (((unsigned char) (var3 - '0')) + 0x80);
                 break;
             case 'f':
                 game_info->map[offset] = '*';
                 break;
-        }
+            case 'h':
+                game_info->map[offset] = var3;
+                break;
+            default: 
+                break;
 
+        }
         data = tmp_ptr + 1;
     }
 }

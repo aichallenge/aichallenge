@@ -102,6 +102,7 @@ int main(int argc, char *argv[]) {
     Game.enemy_ants = 0;
     Game.food = 0;
     Game.dead_ants = 0;
+    Game.hill = 0;
 
     while (42) {
         int initial_buffer = 100000;
