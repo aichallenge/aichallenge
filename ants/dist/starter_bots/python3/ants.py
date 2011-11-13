@@ -85,7 +85,7 @@ class Ants():
     def update(self, data):
         'parse engine input and update the game state'
         # start timer
-        self.turn_start_time = time.clock()
+        self.turn_start_time = time.time()
         
         # reset vision
         self.vision = None
