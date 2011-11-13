@@ -1,5 +1,8 @@
 # this file gathers all sql into one place for ease of changing the database
 sql = {
+    # used in worker_ssh
+    "select_workers" : "select worker_id, ip_address from worker",
+    
     # used in add_maps_to_database.py
     "select_map_filenames": "select filename from map",
     "update_map_priorities": """
