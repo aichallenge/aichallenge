@@ -4,26 +4,16 @@ from symmetricmap import *
 import random
 
 def mapgen(mapsizex, mapsizey, carver, symmetry, players, hills, seed):
-    mapsize=Point(mapsizex, mapsizey)
-    
     random.seed(seed)
     
-    map=SymmetricMap(mapsize,players,symmetry,Point.random(Point(100,100)))
+    map=SymmetricMap(size=Point(mapsizex, mapsizey),num_players=players,symmetry=symmetry)
     
     #Decide where to place the hills
     for hillid in xrange(hills):
-        player0hill=Point.random(mapsize)
+        player0hill=map.size.random_upto()
         for playerid,location in enumerate(map.symmetry_vector(player0hill)):
             map.players[playerid].add(location)
 
-    #Carve the map
-    map.add_water_randomly(0.59)
-    map.smooth()
-    map.smooth()
-    map.smooth()
-    map.smooth()
-    map.smooth()
-    
     print map
 
 if __name__=="__main__":

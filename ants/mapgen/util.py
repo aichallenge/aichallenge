@@ -24,10 +24,9 @@ class Point(collections.namedtuple('Point', ['x', 'y'])):
     def __mul__(self,number):
         return Point(self.x*number,self.y*number)
     
-    @staticmethod
-    def random(size):
-        """Returns a random point inside the size"""
-        return Point(random.randint(0,size.x),random.randint(0,size.y))
+    def random_upto(self):
+        """Returns a random point less than self"""
+        return Point(random.randint(0,self.x),random.randint(0,self.y))
 
 class Range(collections.namedtuple('Range', ['min','max'])):
     def __contains__(self,what):
