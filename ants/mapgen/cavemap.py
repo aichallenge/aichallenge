@@ -1,17 +1,33 @@
 #!/usr/bin/env python
 
+import random
 from symmetricmap import *
 
 class Cavemap(SymmetricMap):
-    def __init__(self, size, num_players, symmetry_type, translation_factor=Point(1,3)):
-        SymmetricMap.__init__(self, size, num_players, symmetry_type, translation_factor)
+    def __init__(self, **kwargs):
+        SymmetricMap.__init__(self, **kwargs)
     
     def add_water_randomly(self,percent=0.49):
         for point in self.size.upto():
+            self[point]=LAND
             if random.random() < percent:
                 self[point]=WATER
     
-    def smooth(self, times=10):
+    def random_walk(self,start,cover=0.5):
+        total_squares=self.size.x*self.size.y
+        squares_water=0
+        symmetric_locations=len(self.symmetry_vector(Point(0,0)))
+        
+        location=start
+        
+        while(squares_water<total_squares*cover):
+            if self[location]==LAND:
+                self[location]=WATER
+                squares_water+=symmetric_locations
+            
+            location+=random.choice(directions.values())
+    
+    def smooth(self, times=1):
         """Apply a cellular automaton to smoothen the walls"""
         for time in xrange(times):
             oldmap=self.copy()
@@ -19,20 +35,20 @@ class Cavemap(SymmetricMap):
             for point in self.size.upto():
                 neighbour_water=[d for d in diag_directions.values() if oldmap[point+d]==WATER]
                 
-                if len(neighbour_water)<3:
+                if len(neighbour_water)<4:
                     self[point]=LAND
                 if len(neighbour_water)>4:
                     self[point]=WATER
 
 if __name__=="__main__":
-    import random
-    #random.seed(2)
+    #random.seed(4)
     
-    map=Cavemap(Point(40,40),4,"translational")
-    map.add_water_randomly(0.5/4)
-    map.smooth()
+    map=Cavemap(size=Point(100,100),num_players=4,symmetry="translational")    
     
     for player,location in enumerate(map.symmetry_vector(Point(1,1))):
         map.players[player].add(location)
+    
+    map.random_walk(map.size.random_upto())
+    map.smooth(10)
     
     print map
