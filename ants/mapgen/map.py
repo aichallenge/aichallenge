@@ -5,11 +5,11 @@ import collections
 from terrain import *
 
 class Map(Terrain):
-    def __init__(self, size, num_players):
-        Terrain.__init__(self,size)
+    def __init__(self, **kwargs):
+        Terrain.__init__(self, **kwargs)
         
         #A list of players, each player being a set of hills
-        self.players=[set() for player in xrange(num_players)]
+        self.players=[set() for player in xrange(kwargs["num_players"])]
 
     def render(self):
         string ="rows %s\n" % self.size.y
@@ -31,4 +31,4 @@ class Map(Terrain):
         return string[:-1]
 
 if __name__=="__main__":
-    print Map(Point(10,10),3)
+    print Map(size=Point(10,10),num_players=3)

@@ -14,9 +14,9 @@ class Terrain(object):
     """Terrain class contains only map size and terrain data.
     It does not concern itself with players and symmetries"""
     
-    def __init__(self, size):
-        self.size=size
-        self.terrain=[[LAND for x in xrange(size.x)] for y in xrange(size.y)]
+    def __init__(self, **kwargs):
+        self.size=kwargs["size"]
+        self.terrain=[[LAND for x in xrange(self.size.x)] for y in xrange(self.size.y)]
         
     def __getitem__(self,point):
         """Gets a point in the terrain"""
@@ -30,7 +30,7 @@ class Terrain(object):
     
     def copy(self):
         """Makes a copy of this map"""
-        newterrain=Terrain(self.size)
+        newterrain=Terrain(size=self.size)
         for point in self.size.upto():
             newterrain[point]=self[point]
         return newterrain
@@ -51,6 +51,6 @@ class Terrain(object):
         return self.render()
 
 if __name__=="__main__":
-    terrain=Terrain(Point(10,10))
+    terrain=Terrain(size=Point(10,10))
     terrain[Point(-1,-1)]=WATER
     print terrain

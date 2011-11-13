@@ -10,19 +10,26 @@ class SymmetryException(Exception):
         return "This symmetry type only supports %s." % self.msg
 
 class SymmetricMap(Map):
-    def __init__(self, size, num_players, symmetry_type, translation_factor=Point(1,3)):
-        Map.__init__(self, size, num_players)
+    def __init__(self, **kwargs):
+        Map.__init__(self, **kwargs)
         
         #setup symmetry
+        symmetry_type=kwargs["symmetry"]
         if symmetry_type not in symmetry_types:
             raise Exception("Unknown symmetry type %s" % symmetry_type)
         self.symmetry_vector=self.__getattribute__("vector_"+symmetry_type)
         
         #setup translational symmetry
+        num_players=kwargs["num_players"]
+        try:
+            self.translation_factor=kwargs["translation_factor"]
+        except KeyError:
+            self.translation_factor=Point(num_players-1,num_players+1)
+            
         if symmetry_type=="translational":
-            if (size.x%num_players!=0) or (size.y%num_players!=0):
+            if (self.size.x%num_players!=0) or (self.size.y%num_players!=0):
                 raise SymmetryException("map size divisible to the number of players")
-            self.translation=Point(size.x/num_players*translation_factor.x,size.y/num_players*translation_factor.y)
+            self.translation=Point(self.size.x/num_players*self.translation_factor.x,self.size.y/num_players*self.translation_factor.y)
         
         #test the symmetry
         assert(len(self.symmetry_vector(Point(0,0)))>0)
@@ -82,23 +89,23 @@ class SymmetricMap(Map):
 symmetry_types=set(function[len("vector_"):] for function in dir(SymmetricMap) if function.startswith("vector_"))
 
 if __name__=="__main__":
-    #Present all the types of symmetry
-    map_size=Point(20,20)
-    num_players=2
-    player_one=Point(2,6)
-    water=Point(1,1)
-    
     for symmetry in symmetry_types:
+        #title
         print symmetry
         print "="*len(symmetry)
         
         try:
-            map=SymmetricMap(map_size,num_players,symmetry)
-            map[water]=WATER
-            for player,location in enumerate(map.symmetry_vector(player_one)):
+            map=SymmetricMap(size=Point(20,20),num_players=2,symmetry=symmetry)
+            
+            #add a water spot
+            map[Point(1,1)]=WATER
+            
+            #add player hives
+            for player,location in enumerate(map.symmetry_vector(Point(2,6))):
                 map.players[player].add(location)
             print map
         except SymmetryException as e:
             print e
         
+        #newline
         print
