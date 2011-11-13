@@ -129,7 +129,8 @@ if (is_readable($PAIRCUT_FILE)) {
 </table>
 
 <h2 style="margin-top:1em">Games per minute per server</h2>
-
+<?php if($games_per_server.length==0) echo "<p>Workers are offline.</p>"; else { ?>
+<p></p>
 <table class="bigstats">
   <tr>
   <?php foreach ($games_per_server as $server): ?>
@@ -150,5 +151,6 @@ if (is_readable($PAIRCUT_FILE)) {
   <?php endforeach ?>
   </tr>
 </table>
+<?php } ?>
 
 <?php include 'footer.php'; ?>
