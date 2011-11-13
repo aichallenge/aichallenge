@@ -269,7 +269,7 @@ $contest_sql = array(
                Round(per_minute.players, 1) as players_per_minute,
                Round(per_minute.games, 1) as games_per_minute,
                @time_used as time_used,
-               Greatest(Round((Greatest((ahead.players / active_players) * avg_players, 1) * ahead.players) / per_minute.games - @time_used, 1), 0) as next_game_in
+               Greatest(Round((Greatest((ahead.players / active_players) * avg_players, 1) * ahead.players) / per_minute.games - @time_used), 0) as next_game_in
         from
         (
             select count(*) as players
