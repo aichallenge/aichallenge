@@ -269,9 +269,7 @@ $contest_sql = array(
                Round(per_minute.players, 1) as players_per_minute,
                Round(per_minute.games, 1) as games_per_minute,
                @time_used as time_used,
-               -- average per game and per player guesses
-               Round((ahead.players / per_minute.players + ahead.players / per_minute.games) / 2, 1) as next_game_in,
-               Round((ahead.players / per_minute.players + ahead.players / per_minute.games) / 2 - @time_used, 1) as next_game_in_adjusted
+               Greatest(Round((Greatest((ahead.players / active_players) * avg_players, 1) * ahead.players) / per_minute.games - @time_used, 1), 0) as next_game_in
         from
         (
             select count(*) as players
@@ -292,12 +290,19 @@ $contest_sql = array(
             )
         ) ahead,
         (
-            select count(distinct g.game_id)/30 as games, count(*)/30 as players
+            select count(distinct g.game_id)/60 as games,
+                count(*)/60 as players,
+                count(*)/count(distinct g.game_id) as avg_players
             from game g
             inner join game_player gp
                 on g.game_id = gp.game_id
-                and g.timestamp > timestampadd(minute, -30, current_timestamp)
+                and g.timestamp > timestampadd(minute, -60, current_timestamp)
         ) per_minute,
+        (
+            select count(*) as active_players
+            from submission
+            where latest = 1
+        ) active,
         (select @time_used := ifnull((select avg(timestampdiff(second, matchup_timestamp, current_timestamp)/60)
                                from matchup
                                where deleted = 0

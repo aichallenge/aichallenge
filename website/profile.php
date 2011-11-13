@@ -236,8 +236,11 @@ echo "</div>";
                     echo "The current game rate is about ".$next_game_row["games_per_minute"]." games per minute.<br />";
                     if ($next_game_row["players_per_minute"] == 0) {
                         echo "Next game could take awhile...";
+                    }
+                    else if ($next_game_row["next_game_in"] <= 0) {
+                        echo "Next game should be any time now.";
                     } else {
-                        echo "Next game should be within ".$next_game_row["next_game_in_adjusted"]." minutes.";
+                        echo "Next game should be within ".$next_game_row["next_game_in"]." minutes.";
                     }
                     echo "<br />Page refreshed at ".
                         nice_datetime("now") .".";
