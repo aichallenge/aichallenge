@@ -73,6 +73,6 @@ if($server_info["submissions_open"]) {
 }
 ?>
 
-<p>If you are having trouble, there are tons of ways to <a href="forums/">get help on the forums!</a></p>
+<p>If you are having trouble, there are tons of ways to <a href="http://forums.aichallenge.org/">get help on the forums!</a></p>
 
 <?php include 'footer.php'; ?>

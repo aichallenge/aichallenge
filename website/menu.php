@@ -38,7 +38,7 @@
     <h1>Help</h1>
     <ul>
       <li><a href="faq.php">Frequently Asked Questions</a></li>
-      <li><a href="forums/">Forums</a></li>
+      <li><a href="http://forums.aichallenge.org/">Forums</a></li>
       <li><a href="irc://irc.freenode.org/aichallenge">IRC</a> <a href="http://webchat.freenode.net/?channels=aichallenge&uio=d4">(webclient)</a></li>
     </ul>
     <h1>User Search:</h1>
