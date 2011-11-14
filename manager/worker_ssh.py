@@ -27,7 +27,7 @@ def get_workers(limit=20):
     return cursor.fetchall()
 
 def ping(worker,count=4):
-    """returns packet loss percentage for a worker, 100 means offline"""
+    """Pings and returns false if 100% packet loss"""
     ip=worker[1]
     
     ping = subprocess.Popen(
@@ -40,10 +40,33 @@ def ping(worker,count=4):
     
     #if anything is wrong stdout will be blank, therefore failure
     if len(out)==0:
-        return 100
+        return False
     
     #search for packet loss and return the percentage
-    return int(re.search("(\d*)\% packet loss",out).group(1))
+    return int(re.search("(\d*)\% packet loss",out).group(1))!=100
+
+def sshping(worker):
+    """Opens a socket to the ssh port, tests if successful. Returns false on timeout(2.0s), connection refused, unknown hostname or no route to host."""
+    import socket
+    
+    try:
+        logging.debug("Getting ip of %r" % (worker,))
+        ip=socket.gethostbyname(worker[1])
+        logging.debug("IP of %r retrieved as %s!" % (worker,ip))
+        
+        logging.debug("Creating a new socket and connecting to %r..." % (worker,))
+        s = socket.create_connection((ip, 22),2.0)
+        logging.debug("Connected to %r!" % (worker,))
+        
+        logging.debug("Closing connection to %r." % (worker,))
+        s.close()
+    except socket.error as e:
+        logging.debug("%r has a socket.error(%s)" % (worker,e))
+        return False
+    except socket.gaierror as e:
+        logging.debug("%r has a socket.gaierror(%s)" % (worker,e))
+        return False
+    return True
 
 def aliveworkers(workers):
     """returns a list of workers that are alive, packetloss<100"""
@@ -56,7 +79,7 @@ def aliveworkers(workers):
     def threadcode(worker):
         worker=worker[:]
         logging.info("Pinging %r" % (worker,))
-        results[worker]=ping(worker)!=100
+        results[worker]=sshping(worker)
         logging.info ("Worker %r is %s." % (worker, ["down","up"][results[worker]]))
     
     for i,worker in enumerate(workers):
@@ -123,7 +146,10 @@ if __name__ == "__main__":
                 raise Exception("Worker %s not found. Try reloading the alive worker list. Alive workers: %r" % (e.args[0], allworkers))
             except ValueError:
                 #interpret hostid as an ip
-                host=("unknownid", hostid)
+                host=(hostid, hostid)
+                for workerid,workerhostname in allworkers.items():
+                    if hostid==workerhostname:
+                        host=(workerid,workerhostname)
             hosts.append(host)
         
         logging.info("Will connect to %s" % hosts)
