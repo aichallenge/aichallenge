@@ -77,6 +77,15 @@ def install_clojure(download_base):
         run_cmd("cp clojure-1.3.0/clojure-1.3.0.jar /usr/share/java/clojure.jar")
         run_cmd("chmod a+r /usr/share/java/clojure.jar")
 
+def install_dart(download_base):
+    """ Install the Dart language """
+    if os.path.exists("/usr/bin/frogsh"):
+        return
+    with CD("/root"):
+        run_cmd("curl '%s/dart.tgz' | tar xz" % (download_base,))
+        os.rename("dart-frogsh-r1499", "/usr/share/dart")
+        os.symlink("/usr/share/dart/frogsh", "/usr/bin/frogsh")
+
 def install_groovy(download_base):
     """ Install the Groovy language """
     if os.path.exists("/usr/bin/groovy"):
@@ -114,6 +123,7 @@ def install_all_languages(options):
     install_extra_distribution_languages()
 
     install_clojure(download_base)
+    install_dart(download_base)
     install_dmd(download_base)
     install_golang(download_base)
     install_groovy(download_base)
