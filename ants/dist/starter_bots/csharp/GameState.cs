@@ -15,7 +15,7 @@ namespace Ants {
 		public int TimeRemaining {
 			get {
 				TimeSpan timeSpent = DateTime.Now - turnStart;
-				return TurnTime - timeSpent.Milliseconds;
+				return TurnTime - (int)timeSpent.TotalMilliseconds;
 			}
 		}
 
