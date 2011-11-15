@@ -418,6 +418,11 @@ languages = (
         ["*.o", BOT],
         [(["*.d"], ExternalCompiler(comp_args["D"][0]))]
     ),
+    Language("Dart", BOT +".dart", "MyBot.dart",
+        "frogsh MyBot.dart",
+        [],
+        [(["*.dart"], ChmodCompiler("Dart"))]
+    ),
     Language("Erlang", "my_bot.beam", "my_bot.erl",
         "erl -hms"+ str(MEMORY_LIMIT) +"m -smp disable -noshell -s my_bot start -s init stop",
         ["*.beam"],
