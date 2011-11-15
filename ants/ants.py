@@ -5,7 +5,6 @@ from collections import deque, defaultdict
 
 from fractions import Fraction
 import operator
-import string
 from game import Game
 from copy import deepcopy
 try:
@@ -449,15 +448,15 @@ class Ants(Game):
 
         # next list all transient objects
         for update in updates:
-            type, row, col = update[0:3]
+            ilk, row, col = update[0:3]
 
             # only include updates to squares which are visible
             # and the current players dead ants
-            if v[row][col] or (type == 'd' and update[-1] == player):
+            if v[row][col] or (ilk == 'd' and update[-1] == player):
                 visible_updates.append(update)
 
                 # switch player perspective of player numbers
-                if type in ['a', 'd', 'h']:
+                if ilk in ['a', 'd', 'h']:
                     # an ant can appear in a bots vision and die the same turn
                     # in this case the ant has not been assigned a number yet
                     #   assign the enemy the next index
@@ -479,7 +478,7 @@ class Ants(Game):
         # hills not razed
         changes.extend(sorted(
             [['h', hill.loc[0], hill.loc[1], hill.owner]
-             for loc, hill in self.hills.items()
+             for _, hill in self.hills.items()
              if hill.killed_by is None]
         ))
 
@@ -738,7 +737,9 @@ class Ants(Game):
         hill.end_turn = self.turn
         hill.killed_by = killed_by
         self.score[killed_by] += HILL_POINTS
-        self.score[hill.owner] += RAZE_POINTS
+        if not hill.raze_points:
+            hill.raze_points = True
+            self.score[hill.owner] += RAZE_POINTS
         # reset cutoff_turns
         self.cutoff_turns = 0
 
@@ -1389,6 +1390,11 @@ class Ants(Game):
     def kill_player(self, player):
         """ Used by engine to signal that a player is out of the game """
         self.killed[player] = True
+        # remove player's points for hills
+        for hill in self.hills.values():
+            if hill.owner == player and not hill.raze_points:
+                hill.raze_points = True
+                self.score[player] += RAZE_POINTS
 
     def start_game(self):
         """ Called by engine at the start of the game """
@@ -1692,7 +1698,7 @@ class Ants(Game):
             replay['ants'].append(ant_data)
 
         replay['hills'] = []
-        for loc, hill in self.hills.items():
+        for hill in self.hills.values():
             # mimic food data
             hill_data = [hill.loc[0], hill.loc[1], hill.owner]
             if not hill.end_turn:
@@ -1744,6 +1750,7 @@ class Hill:
         self.owner = owner
         self.end_turn = None
         self.killed_by = None
+        self.raze_points = False
 
         # used to order hills for spawn points
         # hills are chosen by the least recently spawned first
