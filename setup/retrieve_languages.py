@@ -23,6 +23,7 @@ sources = [
         "nodejs.deb"),
     ("http://www.scala-lang.org/downloads/distrib/files/scala-2.9.0.1.tgz",
         "scala.tgz"),
+    ("https://github.com/downloads/aichallenge/aichallenge/dart-frogsh-r1499.tgz", "dart.tgz"),
 ]
 
 if len(sys.argv) < 2:
