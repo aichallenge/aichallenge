@@ -84,7 +84,7 @@ def install_dart(download_base):
     with CD("/root"):
         run_cmd("curl '%s/dart.tgz' | tar xz" % (download_base,))
         os.rename("dart-frogsh-r1499", "/usr/share/dart")
-        os.symlink("/usr/share/dart/frogsh", "/usr/bin/frogsh")
+        os.symlink("/usr/share/dart/frog/frogsh", "/usr/bin/frogsh")
 
 def install_groovy(download_base):
     """ Install the Groovy language """
