@@ -6,7 +6,7 @@ import sys
 import urllib2
 import urlparse
 
-from install_tools import CD, run_cmd
+from install_tools import CD, run_cmd, CmdError
 
 sources = [
     ("http://repo1.maven.org/maven2/org/clojure/clojure/1.3.0/clojure-1.3.0.zip",
@@ -15,11 +15,11 @@ sources = [
         "coffeescript.tgz"),
     ("http://ftp.digitalmars.com/dmd_2.054-0_amd64.deb",
         "dmd.deb"),
-    ("https://launchpad.net/~gophers/+archive/go/+files/golang_60.1-0%7E9753%7Enatty1_amd64.deb",
+    ("https://github.com/downloads/aichallenge/aichallenge/golang_60.1-9753~natty1_amd64.deb",
         "golang.deb"),
     ("http://dist.groovy.codehaus.org/distributions/installers/deb/groovy_1.7.8-1_all.deb",
         "groovy.deb"),
-    ("https://launchpad.net/~jerome-etienne/+archive/neoip/+files/nodejs_0.4.10%7Enatty1%7Eppa201107202043_amd64.deb",
+    ("https://github.com/downloads/aichallenge/aichallenge/nodejs_0.4.10~natty1~ppa201107202043_amd64.deb",
         "nodejs.deb"),
     ("http://www.scala-lang.org/downloads/distrib/files/scala-2.9.0.1.tgz",
         "scala.tgz"),
@@ -38,5 +38,7 @@ if not os.path.isdir(out_dir):
 with CD(out_dir):
     print "Downloading files to %s" % (out_dir,)
     for url, filename in sources:
-        run_cmd("wget -U NewName/1.0 '%s' -O %s" % (url, filename))
-
+        try:
+            run_cmd("wget -U NewName/1.0 '%s' -O %s" % (url, filename))
+        except CmdError, exc:
+            print >>sys.stderr, str(exc)
