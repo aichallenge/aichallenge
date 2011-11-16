@@ -388,6 +388,37 @@ def get_moves(game, bots, bot_nums, time_limit, turn):
         if bot.is_alive:
             bot.pause()
 
+    # check for any final output from bots
+    for b, bot in enumerate(bots):
+        if bot_finished[b]:
+            continue # already got bot moves
+        if not bot.is_alive:
+            error_lines[b].append(unicode('turn %4d bot %s crashed') % (turn, bot_nums[b]))
+            statuses[b] = 'crashed'
+            line = bot.read_error()
+            while line != None:
+                error_lines[b].append(line)
+                line = bot.read_error()
+            bot_finished[b] = True
+            game.kill_player(bot_nums[b])
+            continue # bot is dead
+
+        line = bot.read_line()
+        while line is not None and len(bot_moves[b]) < 40000:
+            line = line.strip()
+            if line.lower() == 'go':
+                bot_finished[b] = True
+                # bot finished sending data for this turn
+                break
+            bot_moves[b].append(line)
+            lines_read += 1
+            line = bot.read_line()
+
+        line = bot.read_error()
+        while line is not None and len(error_lines[b]) < 1000:
+            error_lines[b].append(line)
+            line = bot.read_error()
+
     # kill timed out bots
     for b, finished in enumerate(bot_finished):
         if not finished:
