@@ -1411,12 +1411,19 @@ class Ants(Game):
     def finish_game(self):
         """ Called by engine at the end of the game """
         # lone survivor gets bonus of killing all other hills
+        # owners of hills should lose points
         players = self.remaining_players()
         if len(players) == 1:
-            self.bonus[players[0]] += sum([HILL_POINTS for hill in self.hills.values()
-                                           if hill.killed_by == None
-                                           and hill.owner != players[0]])
-            self.score[players[0]] += self.bonus[players[0]]
+            for hill in self.hills.values():
+                if hill.owner != players[0]:
+                    if hill.killed_by == None:
+                        self.bonus[players[0]] += HILL_POINTS
+                        hill.killed_by = players[0]
+                    if not hill.raze_points:
+                        self.bonus[hill.owner] += RAZE_POINTS
+                        hill.raze_points = True
+            for player in range(self.num_players):
+                self.score[player] += self.bonus[player]
 
         self.calc_significant_turns()
         
