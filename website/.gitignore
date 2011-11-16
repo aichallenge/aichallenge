@@ -1,16 +1,17 @@
 server_info.php
 *.log
-aicontest.tgz
-worker-src.tgz
 server_message.html
+server_head.html
 aichallenge.css
+latex.cache
 
 ants/
 maps/
 visualizer/
 aichallenge.wiki/
-forums/
-phpMyAdmin/
+langs
+forums
+phpMyAdmin
 
 google*.html
 
