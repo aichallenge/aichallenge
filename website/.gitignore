@@ -1,17 +1,20 @@
-server_info.php
 *.log
+latex.cache
+
+aichallenge.wiki/
+server_info.php
 server_message.html
 server_head.html
 aichallenge.css
-latex.cache
 
+tools.tar.bz2
+tools.zip
 ants/
 maps/
 visualizer/
-aichallenge.wiki/
+
 langs
 forums
 phpMyAdmin
 
 google*.html
-
