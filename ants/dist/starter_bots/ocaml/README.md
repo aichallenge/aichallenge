@@ -3,19 +3,19 @@
 NOTE - Anthills were added after most of this material was written, and it
 has not been updated.
 
-See the section after "Google AI Challenge Blurb" for information
+See the section after "AI Challenge Blurb" for information
 specific to this OCaml starter package.
 
 
-## Google AI Challenge Blurb
+## AI Challenge Blurb
 
 The files in this package are part of a starter package from the
-Google AI Challenge. The Google AI Challenge is an Artificial
+AI Challenge. The AI Challenge is an Artificial
 Intelligence programming contest. You can get more information by
 visiting [www.ai-contest.com](http://www.ai-contest.com/).
 
 The entire contents of this starter package are released under the
-Apache license as is all code related to the Google AI Challenge. See
+Apache license as is all code related to the AI Challenge. See
 [http://github.com/aichallenge/aichallenge](http://github.com/aichallenge/aichallenge) for more details.
 
 There are a bunch of tutorials on the [ai-contest.com](http://ai-contest.com/)
@@ -53,7 +53,7 @@ checking many tiles.
 
 Build with
 
-   ocamlbuild MyBot.native
+   ocamlbuild -lib unix MyBot.native
 
 in the source directory.
 
