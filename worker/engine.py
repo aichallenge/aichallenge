@@ -411,7 +411,6 @@ def get_moves(game, bots, bot_nums, time_limit, turn):
                 # bot finished sending data for this turn
                 break
             bot_moves[b].append(line)
-            lines_read += 1
             line = bot.read_line()
 
         line = bot.read_error()
