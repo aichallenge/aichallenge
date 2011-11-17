@@ -37,7 +37,7 @@ def install_basic_languages():
 def install_extra_distribution_languages():
     """ Install all extra languages that are part of the Ubuntu distribution
         and don't require any special installation steps """
-    pkg_list = ["ruby1.9.1", "php5-cli", "perl", "ocaml", "luajit", "ghc",
+    pkg_list = ["ruby1.9.1", "php5-cli", "perl", "ocaml", "luajit", "liblua5.1-socket-dev", "ghc",
             "common-lisp-controller", "sbcl", "mono-2.0-devel", "mono-vbnc",
             "erlang-base", "fp-compiler", "gnat", "tcl8.5", "octave3.2" ]
     install_apt_packages(pkg_list)
