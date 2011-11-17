@@ -2,6 +2,12 @@
 
 #import("lib/node/node.dart");
 
+// Write to stderr because stdin and stdout are in use.
+
+void log(String msg) {
+  console.error(msg);
+}
+
 interface Bot {
   void onReady();
   void onTurn();
@@ -132,7 +138,8 @@ class Ants {
 
 	void processLine(String inLine) {
 		this.vision = false;
-		List<Strings> line = inLine.trim().split(' ');
+		String trimmed = inLine.trim();
+		List<String> line = trimmed.split(' ');
 
 		if (line[0] === 'ready') {
 			Tile land = new Tile(LAND);
@@ -318,9 +325,9 @@ class Ants {
 				this.map[row][col].type === DEAD);
 	}
 
-	int destination(int row, int col, String direction) {
-		var rowd = 0;
-		var cold = 0;
+	List<int> destination(int row, int col, String direction) {
+		int rowd = 0;
+		int cold = 0;
 		if (direction === 'N') {
 			rowd = -1;
 		} else if (direction === 'E') {
@@ -330,8 +337,8 @@ class Ants {
 		} else if (direction === 'W') {
 			cold = -1;
 		}
-		var newrow = row + rowd;
-		var newcol = col + cold;
+		int newrow = row + rowd;
+		int newcol = col + cold;
 		if (newrow < 0) {
 			newrow = this.config.rows-1;
 		} else if (newrow > this.config.rows-1) {
