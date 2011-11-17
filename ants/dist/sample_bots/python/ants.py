@@ -18,7 +18,7 @@ UNSEEN = -5
 HILL = -6
 
 PLAYER_ANT = 'abcdefghij'
-HILL_ANT = string = 'ABCDEFGHI'
+HILL_ANT = string = 'ABCDEFGHIJ'
 PLAYER_HILL = string = '0123456789'
 MAP_OBJECT = '?%*.!'
 MAP_RENDER = PLAYER_ANT + HILL_ANT + PLAYER_HILL + MAP_OBJECT
@@ -74,7 +74,7 @@ class Ants():
                     self.attackradius2 = int(tokens[1])
                 elif key == 'spawnradius2':
                     self.spawnradius2 = int(tokens[1])
-        self.map = [[UNSEEN for col in range(self.width)]
+        self.map = [[LAND for col in range(self.width)]
                     for row in range(self.height)]
 
     def update(self, data):
@@ -109,8 +109,6 @@ class Ants():
                         self.food_list.append((row, col))
                     elif tokens[0] == 'w':
                         self.map[row][col] = WATER
-                    elif tokens[0] == 'l':
-                        self.map[row][col] = LAND
                     elif tokens[0] == 'd':
                         # food could spawn on a spot where an ant just died
                         # don't overwrite the space unless it is land
