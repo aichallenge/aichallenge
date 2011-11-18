@@ -246,7 +246,7 @@ $contest_sql = array(
          order by g.game_id desc, gp.game_rank",
     "select_game_errors" => "select gp.user_id, gp.errors, gp.status, u.username
         from game_player gp
-        inner join user u on u.user_id == gp.user_id
+        inner join user u on u.user_id = gp.user_id
         where gp.game_id = %s
         and gp.user_id = %s
         and (gp.status = 'timeout'
