@@ -18,7 +18,7 @@ if ($game_id !== FALSE and $game_id !== NULL) {
                                      $user_id);
         if ($game_errors) {
             $error_msg = "<ul>";
-            $row = mysql_fetch_assoc($game_errors)
+            $row = mysql_fetch_assoc($game_errors);
             $username = $row["username"];
             $status = $row["status"];
             $error_msg .= "<li><p>$username - $status</p><pre class=\"error\">";
