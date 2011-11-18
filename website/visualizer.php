@@ -17,21 +17,16 @@ if ($game_id !== FALSE and $game_id !== NULL) {
                                      $game_id,
                                      $user_id);
         if ($game_errors) {
-        	$error_msg = "<ul>";
-        	while ($row = mysql_fetch_assoc($game_errors)) {
-        		// TODO: turn off for all users for contest
-        		// also make the query user specific
-        		if (TRUE or $row["user_id"] == current_user_id()) {
-        			$username = current_username();
-        			$status = $row["status"];
-        			$error_msg .= "<li><p>$username - $status</p><pre class=\"error\">";
-                    $error_msg .= str_replace('\n', "\n", $row["errors"])."\n";
-        			$error_msg .= "</pre></li>";
-        		}
-        	}
-        	$error_msg .= "</ul>";
-        	echo $error_msg;
-        }	
+            $error_msg = "<ul>";
+            $row = mysql_fetch_assoc($game_errors)
+            $username = $row["username"];
+            $status = $row["status"];
+            $error_msg .= "<li><p>$username - $status</p><pre class=\"error\">";
+            $error_msg .= str_replace('\n', "\n", $row["errors"])."\n";
+            $error_msg .= "</pre></li>";
+            $error_msg .= "</ul>";
+            echo $error_msg;
+        }
     }
     
 } else {
