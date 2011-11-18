@@ -16,9 +16,9 @@ if ($game_id !== FALSE and $game_id !== NULL) {
         $game_errors = contest_query('select_game_errors',
                                      $game_id,
                                      $user_id);
-        if ($game_errors) {
+        $row = mysql_fetch_assoc($game_errors);
+        if ($row) {
             $error_msg = "<ul>";
-            $row = mysql_fetch_assoc($game_errors);
             $username = $row["username"];
             $status = $row["status"];
             $error_msg .= "<li><p>$username - $status</p><pre class=\"error\">";
