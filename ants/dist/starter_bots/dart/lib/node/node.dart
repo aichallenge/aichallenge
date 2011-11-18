@@ -67,6 +67,7 @@ class process native "process" {
   // TODO(nweiz): add Stream type information
   static ReadableStream stdin;
   static WriteableStream stdout;
+  static String version;
 
   static void exit([int code = 0]) native;
   static String cwd() native;
@@ -74,6 +75,8 @@ class process native "process" {
 
 class ReadableStream native "ReadableStream" {
   void resume() native;
+  void setEncoding(String encoding) native;
+  void on(String event, Function listener) native;
 }
 
 class WriteableStream native "WriteableStream" {
