@@ -13,10 +13,17 @@ class Map(Terrain):
     
     def add_hill(self,player,location):
         """Adds a hill to the map, and clears the immediate area"""
+        location=location.normalize(self.size)
+        
+        #check if there's already a hill there
+        if location in self.hills():
+            raise Exception("Already a hill at %s" % (location,))
+        
+        #Actually add the hill
         self.players[player].add(location)
         
         #clear an area
-        clearsize=Point(5,4)
+        clearsize=Point(3,3)
         offset=clearsize*0.5
         for point in clearsize.upto():
             point=(point-offset)+location

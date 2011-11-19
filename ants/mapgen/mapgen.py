@@ -1,18 +1,20 @@
 #!/usr/bin/env python
 
 from symmetricmap import *
+from cavemap import *
 import random
 
 def mapgen(mapsizex, mapsizey, carver, symmetry, players, hills, seed):
     random.seed(seed)
     
-    map=SymmetricMap(size=Point(mapsizex, mapsizey),num_players=players,symmetry=symmetry)
+    map=Cavemap(size=Point(mapsizex, mapsizey),num_players=players,symmetry=symmetry)
     
     #Decide where to place the hills
     for hillid in xrange(hills):
         player0hill=map.size.random_upto()
-        for playerid,location in enumerate(map.symmetry_vector(player0hill)):
-            map.players[playerid].add(location)
+        map.add_hill(player0hill)
+    
+    map.generate()
 
     print map
 
@@ -21,8 +23,8 @@ if __name__=="__main__":
     
     parser = optparse.OptionParser(usage="""Usage: %prog [options]\n""")
     
-    parser.add_option("--cols", dest="mapsizex", type="int", default=24, help="Number of cols, aka x")
-    parser.add_option("--rows", dest="mapsizey", type="int", default=20, help="Number of rows, aka y")
+    parser.add_option("--cols", dest="mapsizex", type="int", default=60, help="Number of cols, aka x")
+    parser.add_option("--rows", dest="mapsizey", type="int", default=60, help="Number of rows, aka y")
     parser.add_option("--carver", dest="carver", type="str", default=0, help="Carver type")
     parser.add_option("--symmetry", dest="symmetry", type="str", default="translational", help="Symmetry types (%s)" % ', '.join(symmetry_types))
     

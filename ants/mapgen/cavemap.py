@@ -41,6 +41,14 @@ class Cavemap(SymmetricMap):
                     self[point]=LAND
                 if len(neighbour_water)>4:
                     self[point]=WATER
+    
+    def generate(self,**kwargs):
+        self.random_walk(list(self.hills())[0])
+        
+        try:
+            self.smooth(kwargs["smooth"])
+        except KeyError:
+            self.smooth(4)
 
 if __name__=="__main__":
     #random.seed(6)
@@ -51,8 +59,6 @@ if __name__=="__main__":
     map=Cavemap(size=size,num_players=4,symmetry="translational")
     
     map.add_hill(playerone)
-    
-    map.random_walk(playerone)
-    map.smooth(4)
+    map.generate()
     
     print map
