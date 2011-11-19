@@ -77,6 +77,7 @@ class ReadableStream native "ReadableStream" {
   void resume() native;
   void setEncoding(String encoding) native;
   void on(String event, Function listener) native;
+  void destroy() native;
 }
 
 class WriteableStream native "WriteableStream" {
