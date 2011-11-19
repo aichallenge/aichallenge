@@ -5,6 +5,7 @@ from symmetricmap import *
 
 class Cavemap(SymmetricMap):
     def __init__(self, **kwargs):
+        kwargs["defaultterrain"]=WATER
         SymmetricMap.__init__(self, **kwargs)
     
     def add_water_randomly(self,percent=0.49):
@@ -19,10 +20,11 @@ class Cavemap(SymmetricMap):
         symmetric_locations=len(self.symmetry_vector(Point(0,0)))
         
         location=start
+        end_reached=False
         
-        while(squares_water<total_squares*cover):
-            if self[location]==LAND:
-                self[location]=WATER
+        while squares_water<total_squares*cover:
+            if self[location]==WATER:
+                self[location]=LAND
                 squares_water+=symmetric_locations
             
             location+=random.choice(directions.values())
@@ -41,14 +43,16 @@ class Cavemap(SymmetricMap):
                     self[point]=WATER
 
 if __name__=="__main__":
-    #random.seed(4)
+    #random.seed(6)
     
-    map=Cavemap(size=Point(100,100),num_players=4,symmetry="translational")    
+    size=Point(60,60)
+    playerone=size.random_upto()*(0.5/3)+size*(0.5/3)
     
-    for player,location in enumerate(map.symmetry_vector(Point(1,1))):
-        map.players[player].add(location)
+    map=Cavemap(size=size,num_players=4,symmetry="translational")
     
-    map.random_walk(map.size.random_upto())
-    map.smooth(10)
+    map.add_hill(playerone)
+    
+    map.random_walk(playerone)
+    map.smooth(4)
     
     print map

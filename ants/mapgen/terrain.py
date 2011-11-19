@@ -16,7 +16,12 @@ class Terrain(object):
     
     def __init__(self, **kwargs):
         self.size=kwargs["size"]
-        self.terrain=[[LAND for x in xrange(self.size.x)] for y in xrange(self.size.y)]
+        
+        try:
+            defaultterrain=kwargs["defaultterrain"]
+        except KeyError:
+            defaultterrain=LAND
+        self.terrain=[[defaultterrain for x in xrange(self.size.x)] for y in xrange(self.size.y)]
         
     def __getitem__(self,point):
         """Gets a point in the terrain"""

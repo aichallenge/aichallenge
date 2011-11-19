@@ -39,6 +39,11 @@ class SymmetricMap(Map):
         for symmetric_point in self.symmetry_vector(point):
             Terrain.__setitem__(self, symmetric_point, value)
     
+    def add_hill(self,location):
+        """Adds a hill at specified location, adds enemy hills to all other symmetric locations too."""
+        for player_id,location in enumerate(self.symmetry_vector(location)):
+            Map.add_hill(self, player_id, location)
+    
     #vector functions given a Point will return a list of all the points that are symmetric including themselves
     def symmetry_vector(self,origin):
         """To be overridden later"""
@@ -116,9 +121,9 @@ if __name__=="__main__":
             #add a water spot
             map[Point(1,1)]=WATER
             
-            #add player hives
-            for player,location in enumerate(map.symmetry_vector(Point(2,6))):
-                map.players[player].add(location)
+            #add player hills
+            map.add_hill(Point(2,6))
+            
             print map
         except SymmetryException as e:
             print e
