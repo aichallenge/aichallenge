@@ -44,21 +44,19 @@ class SymmetricMap(Map):
         """To be overridden later"""
         pass
     
-    def vector_horizontal_reflection(self,origin):
+    def vector_horizontal(self,origin):
         if len(self.players)!=2:
             raise SymmetryException("2 players")
         return [origin,Point(origin.x, self.size.y-origin.y-1)]
     
-    def vector_diagonal_reflection(self,origin):
+    def vector_diagonal(self,origin):
         if len(self.players)!=2:
             raise SymmetryException("2 players")
         if self.size.x!=self.size.y:
             raise SymmetryException("square maps")
-        
-        #return [origin,Point(self.size.x-origin.y-1, self.size.y-origin.x-1)]
         return [origin,Point(self.size.x-origin.y-1, self.size.y-origin.x-1)]
     
-    def vector_rotational(self,origin):
+    def vector_point(self,origin):
         if len(self.players) not in [2,4,8]:
             raise SymmetryException("2, 4 or 8 players")
         
@@ -81,6 +79,24 @@ class SymmetricMap(Map):
         
         return points
     
+        
+    def vector_rotational(self,origin):
+        if len(self.players) not in [2,4]:
+            raise SymmetryException("2 or 4 players")
+        
+        points = [origin]
+        
+        if len(self.players)>=2:
+            points.append(Point(self.size.x-origin.x-1, self.size.y-origin.y-1)) #vertical/horizontal(point) reflection
+        
+        if len(self.players)>=4:
+            if self.size.x!=self.size.y:
+                raise SymmetryException("square maps")
+            points.append(Point(self.size.x-origin.y-1, origin.x))
+            points.append(Point(origin.y, self.size.y-origin.x-1))
+        
+        return points
+    
     def vector_translational(self,origin):
         return [(origin+self.translation*playerid).normalize(self.size)
                 for playerid in xrange(len(self.players))]
@@ -95,7 +111,7 @@ if __name__=="__main__":
         print "="*len(symmetry)
         
         try:
-            map=SymmetricMap(size=Point(20,20),num_players=2,symmetry=symmetry)
+            map=SymmetricMap(size=Point(20,20),num_players=4,symmetry=symmetry)
             
             #add a water spot
             map[Point(1,1)]=WATER
