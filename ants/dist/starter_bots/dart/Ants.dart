@@ -51,38 +51,60 @@ class Tile {
   Tile(int this.type);
 }
 
+class Point implements Hashable {
+  final int row;
+  final int col;
+  Point(int this.row, int this.col);
+  bool operator== (Object other) {
+    if (other is Point) {
+      Point o = other;
+      return row == o.row && col == o.col;
+    }
+    return false;
+  }
+  
+  int hashCode() {
+    int hash = row ^ col;
+    return hash;
+  }
+  
+  int compare(Point other) {
+    if (row != other.row) {
+      return row - other.row;
+    }
+    return col - other.col;
+  }
+  
+  String toString() => "($row, $col)";
+}
+
 class Ant extends Tile {
-  int row;
-  int col;
+  Point pos;
   int owner;
-  Ant(this.row, this.col, this.owner) : super(Ants.ANT);
+  Ant(this.pos, this.owner) : super(Ants.ANT);
 }
 
 class Food extends Tile {
-  int row;
-  int col;
-  Food(int this.row, int this.col) : super(Ants.FOOD);
+  Point pos;
+  Food(Point this.pos) : super(Ants.FOOD);
 }
 
 class Dead extends Tile {
-  int row;
-  int col;
+  Point pos;
   int owner;
-  Dead(int this.row, int this.col, this.owner) : super(Ants.DEAD);
+  Dead(Point this.pos, this.owner) : super(Ants.DEAD);
 }
 
 class Hill {
-  int row;
-  int col;
+  Point pos;
   int owner;
-  Hill(int this.row, int this.col, int this.owner);
+  Hill(Point this.pos, int this.owner);
 }
 
 class Order {
-  int row;
-  int col;
+  Point pos;
   String direction;
-  Order(int this.row, int this.col, String this.direction);
+  Order(Point this.pos, String this.direction);
 }
 
 class Ants {
@@ -95,8 +117,8 @@ class Ants {
 	List<Food> food;
 	List<Hill> hills;
 	List<Dead> dead;
-	bool vision;
-	bool visionOffsets;
+	List<List<bool>> vision;
+	List<Point> visionOffsets;
 
   // landtypes	
 	final static int LAND = 0;
@@ -107,12 +129,20 @@ class Ants {
 	
 	Ants() {
 	  currentTurn = -1;
-	  vision = false;
-	  visionOffsets = false;
+	  vision = null;
+	  visionOffsets = null;
 	  config = new Config();
 	  map = new List<List<Tile>>();
 	  orders = new List<Order>();
 	  ants = new List<Ants>();
+	}
+	
+	int get rows() {
+	  return config.rows;
+	}
+	
+	int get cols() {
+	  return config.cols;
 	}
 	
 	void start(Bot botInput) {
@@ -137,7 +167,7 @@ class Ants {
 	}
 
 	void processLine(String inLine) {
-		this.vision = false;
+		this.vision = null;
 		String trimmed = inLine.trim();
 		List<String> line = trimmed.split(' ');
 
@@ -159,6 +189,8 @@ class Ants {
 			return;
 		} else if(line[0] === 'end') {
 			this.bot.onEnd();
+			// tells node not to wait for any more input from stdin.
+			process.stdin.destroy();
 			return;
 		}
 		
@@ -200,7 +232,7 @@ class Ants {
 				} else if (line[0] === 'f') {
   				int row = parseInt(line[1]);
   				int col = parseInt(line[2]);
-  				Food food = new Food(row, col);
+  				Food food = new Food(new Point(row, col));
 					this.map[row][col] = food;
 					this.food.addLast(food);
 				} else {
@@ -208,14 +240,14 @@ class Ants {
     				int row = parseInt(line[1]);
     				int col = parseInt(line[2]);
   					int owner = parseInt(line[3]);
-  					Ant ant = new Ant(row, col, owner);
+  					Ant ant = new Ant(new Point(row, col), owner);
 						this.map[row][col] = ant;
 						this.ants.addLast(ant);
 					} else if (line[0] === 'd') {
     				int row = parseInt(line[1]);
     				int col = parseInt(line[2]);
   					int owner = parseInt(line[3]);
-  					Dead dead = new Dead(row, col, owner);
+  					Dead dead = new Dead(new Point(row, col), owner);
 						if (this.map[row][col].type !== LAND) {
 							this.map[row][col] = dead;
 						}
@@ -224,28 +256,28 @@ class Ants {
     				int row = parseInt(line[1]);
     				int col = parseInt(line[2]);
   					int owner = parseInt(line[3]);
-						this.hills.addLast(new Hill(row, col, owner));
+						this.hills.addLast(new Hill(new Point(row, col), owner));
 					}
 				}
 			}
 		}
 	}
 
-	void issueOrder(int row, int col, String direction) {
-		this.orders.addLast(new Order(row, col, direction));
+	void issueOrder(Point point, String direction) {
+		this.orders.addLast(new Order(point, direction));
 	}
 	
 	void finishTurn() {
 		for (int i = 0, len = this.orders.length; i < len; ++i) {
 			Order order = this.orders[i];
-			fs.writeSync(process.stdout.fd, 'o '+order.row+' '+order.col+' '+order.direction+'\n');
+			fs.writeSync(process.stdout.fd, 'o '+order.pos.row+' '+order.pos.col+' '+order.direction+'\n');
 		}
 		this.orders = new List<Order>();
 		fs.writeSync(process.stdout.fd,'go\n');
 		process.stdout.flush();
 	}
 	
-	Tile tileInDirection(int row, int col, String direction) {
+	Tile tileInDirection(Point pos, String direction) {
 		int rowd = 0;
 		int cold = 0;
 		if (direction === 'N') {
@@ -257,8 +289,8 @@ class Ants {
 		} else if (direction === 'W') {
 			cold = -1;
 		}
-		int newrow = row + rowd;
-		int newcol = col + cold;
+		int newrow = pos.row + rowd;
+		int newcol = pos.col + cold;
 		if (newrow < 0) {
 			newrow = this.config.rows-1;
 		} else if (newrow > this.config.rows-1) {
@@ -273,10 +305,9 @@ class Ants {
 	}
 	
 	List<Hill> myHills() {
-		List<Hill> result = new List<Hill>();
-		for (int i = 0, len = this.hills.length; i < len; ++i) {
-			Hill hill = this.hills[i];
-			if (hill.owner === 0) {
+		List<Hill> result = [];
+		for (Hill hill in hills) {
+			if (hill.owner == 0) {
 				result.addLast(hill);
 			}
 		}
@@ -284,10 +315,9 @@ class Ants {
 	}
 	
 	List<Hill> enemyHills() {
-		List<Hill> result = new List<Hill>();
-		for (int i = 0, len = this.hills.length; i < len; ++i) {
-			Hill hill = this.hills[i];
-			if (hill.owner !== 0) {
+		List<Hill> result = [];
+		for (Hill hill in hills) {
+			if (hill.owner != 0) {
 				result.addLast(hill);
 			}
 		}
@@ -295,10 +325,9 @@ class Ants {
 	}
 	
 	List<Ant> myAnts() {
-		List<Ant> result = new List<Ant>();
-		for (int i = 0, len = this.ants.length; i < len; ++i) {
-			Ant ant = this.ants[i];
-			if (ant.owner === 0) {
+		List<Ant> result = [];
+		for (Ant ant in ants) {
+			if (ant.owner == 0) {
 				result.addLast(ant);
 			}
 		}
@@ -307,25 +336,24 @@ class Ants {
 	
 	List<Ant> enemyAnts() {
 		List<Ant> result = [];
-		for (int i = 0, len = this.ants.length; i < len; ++i) {
-			Ant ant = this.ants[i];
-			if (ant.owner !== 0) {
+		for (Ant ant in ants) {
+			if (ant.owner != 0) {
 				result.addLast(ant);
 			}
 		}
 		return result;
 	}
 	
-	bool passable(int row, int col) {
-		return (this.map[row][col].type !== WATER);
+	bool passable(Point pos) {
+		return (this.map[pos.row][pos.col].type !== WATER);
 	}
 	
-	bool unoccupied(int row, int col) {
-		return (this.map[row][col].type === LAND ||
-				this.map[row][col].type === DEAD);
+	bool unoccupied(Point pos) {
+		return (this.map[pos.row][pos.col].type === LAND ||
+				this.map[pos.row][pos.col].type === DEAD);
 	}
 
-	List<int> destination(int row, int col, String direction) {
+	Point destination(Point pos, String direction) {
 		int rowd = 0;
 		int cold = 0;
 		if (direction === 'N') {
@@ -337,8 +365,8 @@ class Ants {
 		} else if (direction === 'W') {
 			cold = -1;
 		}
-		int newrow = row + rowd;
-		int newcol = col + cold;
+		int newrow = pos.row + rowd;
+		int newcol = pos.col + cold;
 		if (newrow < 0) {
 			newrow = this.config.rows-1;
 		} else if (newrow > this.config.rows-1) {
@@ -349,67 +377,88 @@ class Ants {
 		} else if (newcol > this.config.cols-1) {
 			newcol = 0;
 		}
-		return [newrow, newcol];
+		return new Point(newrow, newcol);
 	}
 
-	double distance(int fromRow, int fromCol, int toRow, int toCol) {
-		var dr = Math.min(Math.abs(fromRow - toRow), this.config.rows - Math.abs(fromRow - toRow));
-		var dc = Math.min(Math.abs(fromCol - toCol), this.config.cols - Math.abs(fromCol - toCol));
-		return Math.sqrt((dr * dr) + (dc * dc));
+  // Return the Torroidal Manhattan distance between two points.
+	int distance(Point from, Point to) {
+	  int drow = (from.row - to.row).abs();
+	  int dcol = (from.col - to.col).abs();
+		int dr = Math.min(drow, this.config.rows - drow);
+		int dc = Math.min(dcol, this.config.cols - dcol);
+		return dr + dc;
 	}
 	
-	List<String> direction(int fromRow, int fromCol, int toRow, int toCol) {
+  // Return the Torroidal linear distance squared between two points.
+	int distance2(Point from, Point to) {
+	  int drow = (from.row - to.row).abs();
+	  int dcol = (from.col - to.col).abs();
+		int dr = Math.min(drow, this.config.rows - drow);
+		int dc = Math.min(dcol, this.config.cols - dcol);
+		return dr*dr + dc*dc;
+	}
+	
+	// Linear Torridial distance
+	double distanceL(Point from, Point to) {
+	  int d2 = distance2(from, to);
+	  return Math.sqrt(d2);
+	}
+	
+	List<String> direction(Point from, Point to) {
 		List<String> d = new List<String>();
-		fromRow = fromRow % this.config.rows;
-		toRow = toRow % this.config.rows;
-		fromCol = fromCol % this.config.cols;
-		toCol = toCol % this.config.cols;
+		int fromRow = from.row % this.config.rows;
+		int toRow = to.row % this.config.rows;
+		int fromCol = from.col % this.config.cols;
+		int toCol = to.col % this.config.cols;
 
+    int halfRows = this.config.rows ~/ 2;
+    int halfCols = this.config.cols ~/ 2;
+    
 		if (fromRow < toRow) {
-			if (toRow - fromRow >= this.config.rows/2) {
+			if (toRow - fromRow >= halfRows) {
 				d.addLast('N');
 			}
-			if (toRow - fromRow <= this.config.rows/2) {
+			if (toRow - fromRow <= halfRows) {
 				d.addLast('S');
 			}
 		} else if (toRow < fromRow) {
-			if (fromRow - toRow >= this.config.rows/2) {
+			if (fromRow - toRow >= halfRows) {
 				d.addLast('S');
 			}
-			if (fromRow - toRow <= this.config.rows/2) {
+			if (fromRow - toRow <= halfRows) {
 				d.addLast('N');
 			}
 		}
 
 		if (fromCol < toCol) {
-			if (toCol - fromCol >= this.config.cols/2) {
+			if (toCol - fromCol >= halfCols) {
 				d.addLast('W');
 			}
-			if (toCol - fromCol <= this.config.cols/2) {
+			if (toCol - fromCol <= halfCols) {
 				d.addLast('E');
 			}
 		} else if (toCol < fromCol) {
-			if (fromCol - toCol >= this.config.cols/2) {
+			if (fromCol - toCol >= halfCols) {
 				d.addLast('E');
 			}
-			if (fromCol - toCol <= this.config.cols/2) {
+			if (fromCol - toCol <= halfCols) {
 				d.addLast('W');
 			}
 		}
 		return d;
 	}
 	
-	var visible(int row, int col) {
-		if (this.vision === false || !this.vision || this.vision.length === 0) {
+	bool visible(Point pos) {
+		if (this.vision == null || this.vision.length === 0) {
 			this.vision = [];
-			if (this.visionOffsets === false) {
+			if (this.visionOffsets == null) {
 				this.visionOffsets = [];
-				var mx = Math.floor(Math.sqrt(this.config.viewradius2));
+				var mx = Math.sqrt(this.config.viewradius2).floor();
 				for (var dRow = -mx; dRow < mx+1; ++dRow) {
 					for (var dCol = -mx; dCol < mx+1; ++dCol) {
-						var d = Math.pow(dRow, 2) + Math.pow(dCol, 2);
+						var d = dRow*dRow + dCol*dCol;
 						if (d <= this.config.viewradius2) {
-							this.visionOffsets.addLast([dRow, dCol]);
+							this.visionOffsets.addLast(new Point(dRow, dCol));
 						}
 					}
 				}
@@ -424,12 +473,11 @@ class Ants {
 				}
 			}
 			var myAnts = this.myAnts();
-			for (int antI = 0; antI < myAnts.length; antI++) {
-				var ant = myAnts[antI];
-				for (int visionOffsetI= 0; visionOffsetI < this.visionOffsets.length; visionOffsetI++) {
-					var vo = this.visionOffsets[visionOffsetI];
-					var visionRow = ant.row + vo[0];
-					var visionCol = ant.col + vo[1];
+			for (var ant in myAnts) {
+				for (var vo in visionOffsets) {
+				  Point antPos = ant.pos;
+					var visionRow = antPos.row + vo.row;
+					var visionCol = antPos.col + vo.col;
 					if (visionRow < 0) {
 						visionRow = (this.config.rows-1) + visionRow;
 					} else if (visionRow >= this.config.rows) {
@@ -444,7 +492,7 @@ class Ants {
 				}
 			}
 		}
-		return this.vision[row][col];
+		return this.vision[pos.row][pos.col];
 	}
 }
 
