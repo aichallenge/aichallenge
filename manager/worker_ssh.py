@@ -6,6 +6,7 @@ import subprocess
 import re
 import threading
 import logging
+import signal
 
 import MySQLdb
 from server_info import server_info
@@ -13,8 +14,10 @@ from sql import sql
 
 ALIVE_WORKERS_CACHE="/tmp/aliveworkers"
 WORKER_KEY="~/workerkey"
+#SSH_COMMAND="ssh -oBatchMode=yes -i %s -l ubuntu %%s" % WORKER_KEY
+SSH_COMMAND="ssh -oBatchMode=yes %s"
 
-logging.basicConfig(level=logging.INFO, format="~~worker_ssh~~(%(levelname)s): %(message)s")
+logging.basicConfig(level=logging.DEBUG, format="~~worker_ssh~~(%(levelname)s): %(message)s")
 
 def get_workers(limit=20):
     """get the list of workers, last $limit workers"""
@@ -45,7 +48,7 @@ def ping(worker,count=4):
     #search for packet loss and return the percentage
     return int(re.search("(\d*)\% packet loss",out).group(1))!=100
 
-def sshping(worker):
+def tcpping(worker):
     """Opens a socket to the ssh port, tests if successful. Returns false on timeout(2.0s), connection refused, unknown hostname or no route to host."""
     import socket
     
@@ -68,6 +71,33 @@ def sshping(worker):
         return False
     return True
 
+def runcmd(cmd, timeout):
+    """Runs a command with a timeout"""
+    process = subprocess.Popen(cmd, shell=True)
+    
+    def target():
+        process.communicate()
+    
+    thread = threading.Thread(target=target)
+    thread.start()
+    
+    thread.join(timeout)
+    if thread.is_alive():
+        logging.debug("Timeout reached for %s" % cmd)
+        process.kill()
+        process.wait()
+        thread.join()
+    
+    return process.returncode
+
+def sshping(worker):
+    """Tries to connect via ssh to host, returns true only if publickey was accepted(false if a ssh server was found but asked for password). Warning, it hangs if there's no ssh server at the other end, use tcpping first."""
+    host=worker[1]
+    command=(SSH_COMMAND + " exit") % host
+    
+    status = runcmd(command, timeout=2)
+    return status==0
+
 def aliveworkers(workers):
     """returns a list of workers that are alive, packetloss<100"""
     
@@ -79,6 +109,8 @@ def aliveworkers(workers):
     def threadcode(worker):
         worker=worker[:]
         logging.info("Pinging %r" % (worker,))
+        #results[worker]=tcpping(worker)
+        #if results[worker]==True:
         results[worker]=sshping(worker)
         logging.info ("Worker %r is %s." % (worker, ["down","up"][results[worker]]))
     
@@ -105,7 +137,7 @@ def loadaliveworkers(filename=ALIVE_WORKERS_CACHE):
 def ssh(host):
     logging.info("Connecting to %s:" % (host,))
     host=host[1]
-    subprocess.call("ssh -i %s -l ubuntu %s" % (WORKER_KEY, host), shell=True)
+    subprocess.call(SSH_COMMAND % host, shell=True)
 
 if __name__ == "__main__":
     import getopt
@@ -117,6 +149,7 @@ if __name__ == "__main__":
         #regenerate alive worker list
         logging.info("Regenerating alive worker list.")
         workers=get_workers()
+        workers=[(1,"hypertriangle.com"),(1,"hypert2riangle.com"),(10,"4.2.2.1")]
         logging.info("Worker list from the database: %s" % (workers,))
         workers=aliveworkers(workers)
         open(ALIVE_WORKERS_CACHE,"w").write(repr(workers))
