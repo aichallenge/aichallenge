@@ -137,7 +137,7 @@ if __name__ == "__main__":
         #list
         workers=loadaliveworkers()
         print "Workers that are online:"
-        for worker in workers.items():
+        for worker in sorted(workers.items()):
             print "\t%d - %s" % (worker)
         if len(workers)==0:
             print "\tAll workers are offline."
