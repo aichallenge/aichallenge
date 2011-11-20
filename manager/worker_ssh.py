@@ -6,7 +6,6 @@ import subprocess
 import re
 import threading
 import logging
-import signal
 
 import MySQLdb
 from server_info import server_info
@@ -14,19 +13,20 @@ from sql import sql
 
 ALIVE_WORKERS_CACHE="/tmp/aliveworkers"
 WORKER_KEY="~/workerkey"
-#SSH_COMMAND="ssh -oBatchMode=yes -i %s -l ubuntu %%s" % WORKER_KEY
-SSH_COMMAND="ssh -oBatchMode=yes %s"
+SSH_COMMAND="ssh -i %s -l ubuntu %%s" % WORKER_KEY
 
-logging.basicConfig(level=logging.DEBUG, format="~~worker_ssh~~(%(levelname)s): %(message)s")
+logging.basicConfig(level=logging.INFO, format="~~worker_ssh~~(%(levelname)s): %(message)s")
 
-def get_workers(limit=20):
+DEVNULL=open("/dev/null","w")
+
+def get_workers():
     """get the list of workers, last $limit workers"""
     connection = MySQLdb.connect(host = server_info["db_host"],
                                  user = server_info["db_username"],
                                  passwd = server_info["db_password"],
                                  db = server_info["db_name"])
     cursor = connection.cursor()
-    cursor.execute(sql["select_workers"], (limit,))
+    cursor.execute(sql["select_workers"])
     return cursor.fetchall()
 
 def ping(worker,count=4):
@@ -71,31 +71,11 @@ def tcpping(worker):
         return False
     return True
 
-def runcmd(cmd, timeout):
-    """Runs a command with a timeout"""
-    process = subprocess.Popen(cmd, shell=True)
-    
-    def target():
-        process.communicate()
-    
-    thread = threading.Thread(target=target)
-    thread.start()
-    
-    thread.join(timeout)
-    if thread.is_alive():
-        logging.debug("Timeout reached for %s" % cmd)
-        process.kill()
-        process.wait()
-        thread.join()
-    
-    return process.returncode
-
 def sshping(worker):
-    """Tries to connect via ssh to host, returns true only if publickey was accepted(false if a ssh server was found but asked for password). Warning, it hangs if there's no ssh server at the other end, use tcpping first."""
+    """Tries to connect via ssh to host, returns true only if publickey was accepted(false if a ssh server was found but asked for password)."""
     host=worker[1]
-    command=(SSH_COMMAND + " exit") % host
-    
-    status = runcmd(command, timeout=2)
+    command=(SSH_COMMAND + " -oBatchMode=yes -oStrictHostKeyChecking=no -oConnectTimeout=5 -oUserKnownHostsFile=/dev/null exit") % host
+    status = subprocess.call(command, shell=True, stdout=DEVNULL, stderr=DEVNULL)
     return status==0
 
 def aliveworkers(workers):
@@ -149,7 +129,6 @@ if __name__ == "__main__":
         #regenerate alive worker list
         logging.info("Regenerating alive worker list.")
         workers=get_workers()
-        workers=[(1,"hypertriangle.com"),(1,"hypert2riangle.com"),(10,"4.2.2.1")]
         logging.info("Worker list from the database: %s" % (workers,))
         workers=aliveworkers(workers)
         open(ALIVE_WORKERS_CACHE,"w").write(repr(workers))
