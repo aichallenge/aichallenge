@@ -175,6 +175,6 @@ if __name__ == "__main__":
         print
         print "-r to generate a new alive worker list in %s" % ALIVE_WORKERS_CACHE
         print "-l prints the alive worker list"
-        print "-a connects to all workers sequencially"
+        print "-a connects to all workers sequentially"
         print "If worker_ids are given it will load the active worker list and connect to them."
         print "If ips are given it will just connect to them."
