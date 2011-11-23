@@ -10,7 +10,7 @@ class MyBot implements Bot {
   }
   
   void onTurn() {
-    List<Ants> myAnts = ants.myAnts();
+    List<Ant> myAnts = ants.myAnts();
 		var directions = ['N', 'E', 'S', 'W'];
 		for (Ant ant in myAnts) {
 			Point antLoc = ant.pos;
