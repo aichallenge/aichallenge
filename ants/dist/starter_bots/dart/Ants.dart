@@ -28,7 +28,8 @@ class Config {
   int food_turn;
   int food_start;
   
-  void set(String key, String value) {
+  // Renamed to from 'set' to work around http://code.google.com/p/dart/issues/detail?id=561
+  void update(String key, String value) {
     switch(key) {
       case 'rows': rows = parseInt(value); break;
       case 'cols': cols = parseInt(value); break;
@@ -113,7 +114,7 @@ class Ants {
 	Config config;
 	List<List<Tile>> map;
 	List<Order> orders;
-	List<Ants> ants;
+	List<Ant> ants;
 	List<Food> food;
 	List<Hill> hills;
 	List<Dead> dead;
@@ -121,11 +122,11 @@ class Ants {
 	List<Point> visionOffsets;
 
   // landtypes	
-	final static int LAND = 0;
-	final static int DEAD = 1;
-	final static int ANT = 2;
-	final static int WATER = 3;
-	final static int FOOD = 4;
+	static final int LAND = 0;
+	static final int DEAD = 1;
+	static int ANT = 2;
+	static int WATER = 3;
+	static int FOOD = 4;
 	
 	Ants() {
 	  currentTurn = -1;
@@ -134,7 +135,7 @@ class Ants {
 	  config = new Config();
 	  map = new List<List<Tile>>();
 	  orders = new List<Order>();
-	  ants = new List<Ants>();
+	  ants = new List<Ant>();
 	}
 	
 	int get rows() {
@@ -217,13 +218,13 @@ class Ants {
   				}
 				}
 				this.hills = new List<Hill>();
-				this.ants = new List<Ants>();
+				this.ants = new List<Ant>();
 				this.food = new List<Food>();
 				this.dead = new List<Dead>();
 			}
 		} else {
 			if (this.currentTurn === 0 && line[0] !== 'ready') {
-			  this.config.set(line[0], line[1]);
+			  this.config.update(line[0], line[1]);
 			} else {
 				if (line[0] === 'w') {
   				int row = parseInt(line[1]);
@@ -494,6 +495,7 @@ class Ants {
 		}
 		return this.vision[pos.row][pos.col];
 	}
+
 }
 
 int parseInt(String s) {
