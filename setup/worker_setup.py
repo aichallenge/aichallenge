@@ -94,6 +94,15 @@ def install_groovy(download_base):
         run_cmd("curl '%s/groovy.deb' > groovy.deb" % (download_base,))
         run_cmd("dpkg -i groovy.deb")
 
+def install_pypy(download_base):
+    """ Install pypy """
+    if os.path.exists("/usr/bin/pypy"):
+        return
+    with CD("/root"):
+        run_cmd("curl '%s/pypy.tar.bz2' | tar xj" % (download_base,))
+        os.rename("pypy-1.7", "/usr/share/pypy-1.7")
+        os.symlink("/usr/share/pypy-1.7/bin/pypy", "/usr/bin/pypy")
+
 def install_scala(download_base):
     """ Install the Scala language """
     if os.path.exists("/usr/bin/scala"):
@@ -129,6 +138,7 @@ def install_all_languages(options):
     install_groovy(download_base)
     install_nodejs(download_base)
     install_coffeescript(download_base) # must come after nodejs
+    install_pypy(download_base)
     install_scala(download_base)
 
 def install_jailguard(options):

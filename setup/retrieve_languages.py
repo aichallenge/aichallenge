@@ -24,6 +24,7 @@ sources = [
     ("http://www.scala-lang.org/downloads/distrib/files/scala-2.9.0.1.tgz",
         "scala.tgz"),
     ("https://github.com/downloads/aichallenge/aichallenge/dart-frogsh-r1499.tgz", "dart.tgz"),
+    ("https://bitbucket.org/pypy/pypy/downloads/pypy-1.7-linux64.tar.bz2", "pypy.tar.bz2"),
 ]
 
 if len(sys.argv) < 2:

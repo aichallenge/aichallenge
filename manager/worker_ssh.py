@@ -13,17 +13,20 @@ from sql import sql
 
 ALIVE_WORKERS_CACHE="/tmp/aliveworkers"
 WORKER_KEY="~/workerkey"
+SSH_COMMAND="ssh -i %s -l ubuntu %%s" % WORKER_KEY
 
 logging.basicConfig(level=logging.INFO, format="~~worker_ssh~~(%(levelname)s): %(message)s")
 
-def get_workers(limit=20):
+DEVNULL=open("/dev/null","w")
+
+def get_workers():
     """get the list of workers, last $limit workers"""
     connection = MySQLdb.connect(host = server_info["db_host"],
                                  user = server_info["db_username"],
                                  passwd = server_info["db_password"],
                                  db = server_info["db_name"])
     cursor = connection.cursor()
-    cursor.execute(sql["select_workers"], (limit,))
+    cursor.execute(sql["select_workers"])
     return cursor.fetchall()
 
 def ping(worker,count=4):
@@ -45,7 +48,7 @@ def ping(worker,count=4):
     #search for packet loss and return the percentage
     return int(re.search("(\d*)\% packet loss",out).group(1))!=100
 
-def sshping(worker):
+def tcpping(worker):
     """Opens a socket to the ssh port, tests if successful. Returns false on timeout(2.0s), connection refused, unknown hostname or no route to host."""
     import socket
     
@@ -68,6 +71,13 @@ def sshping(worker):
         return False
     return True
 
+def sshping(worker):
+    """Tries to connect via ssh to host, returns true only if publickey was accepted(false if a ssh server was found but asked for password)."""
+    host=worker[1]
+    command=(SSH_COMMAND + " -oBatchMode=yes -oStrictHostKeyChecking=no -oConnectTimeout=5 -oUserKnownHostsFile=/dev/null exit") % host
+    status = subprocess.call(command, shell=True, stdout=DEVNULL, stderr=DEVNULL)
+    return status==0
+
 def aliveworkers(workers):
     """returns a list of workers that are alive, packetloss<100"""
     
@@ -79,6 +89,8 @@ def aliveworkers(workers):
     def threadcode(worker):
         worker=worker[:]
         logging.info("Pinging %r" % (worker,))
+        #results[worker]=tcpping(worker)
+        #if results[worker]==True:
         results[worker]=sshping(worker)
         logging.info ("Worker %r is %s." % (worker, ["down","up"][results[worker]]))
     
@@ -105,7 +117,7 @@ def loadaliveworkers(filename=ALIVE_WORKERS_CACHE):
 def ssh(host):
     logging.info("Connecting to %s:" % (host,))
     host=host[1]
-    subprocess.call("ssh -i %s -l ubuntu %s" % (WORKER_KEY, host), shell=True)
+    subprocess.call(SSH_COMMAND % host, shell=True)
 
 if __name__ == "__main__":
     import getopt
@@ -124,8 +136,8 @@ if __name__ == "__main__":
     if "-l" in optlist.keys():
         #list
         workers=loadaliveworkers()
-        print "Workers that are online:"
-        for worker in workers.items():
+        print "Workers that are online(%s):" % len(workers)
+        for worker in sorted(workers.items()):
             print "\t%d - %s" % (worker)
         if len(workers)==0:
             print "\tAll workers are offline."
@@ -163,6 +175,6 @@ if __name__ == "__main__":
         print
         print "-r to generate a new alive worker list in %s" % ALIVE_WORKERS_CACHE
         print "-l prints the alive worker list"
-        print "-a connects to all workers sequencially"
+        print "-a connects to all workers sequentially"
         print "If worker_ids are given it will load the active worker list and connect to them."
         print "If ips are given it will just connect to them."

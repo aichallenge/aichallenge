@@ -505,6 +505,11 @@ languages = (
         [(["*.py3"], ChmodCompiler("Python3")),
         (["setup_exts"], ErrorFilterCompiler(comp_args["Python3"][0], separate=True, filter_stderr='-Wstrict-prototypes'))]
     ),
+    Language("PyPy", BOT +".pypy", "MyBot.pypy",
+        "pypy MyBot.pypy",
+        ["*.pyc"],
+        [(["*.py"], ChmodCompiler("Python"))]
+    ),
     Language("Ruby", BOT +".rb", "MyBot.rb",
         "ruby MyBot.rb",
         [],

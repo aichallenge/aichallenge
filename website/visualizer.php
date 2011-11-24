@@ -11,27 +11,22 @@ if ($game_id !== FALSE and $game_id !== NULL) {
     require_once('session.php');
     if ($user_id &&
             logged_in_with_valid_credentials() &&
-            (logged_in_as_admin() || current_user_id() === $user_id)) {
+            (logged_in_as_admin() || current_user_id() == $user_id)) {
         require_once('mysql_login.php');
         $game_errors = contest_query('select_game_errors',
                                      $game_id,
                                      $user_id);
-        if ($game_errors) {
-        	$error_msg = "<ul>";
-        	while ($row = mysql_fetch_assoc($game_errors)) {
-        		// TODO: turn off for all users for contest
-        		// also make the query user specific
-        		if (TRUE or $row["user_id"] == current_user_id()) {
-        			$username = current_username();
-        			$status = $row["status"];
-        			$error_msg .= "<li><p>$username - $status</p><pre class=\"error\">";
-                    $error_msg .= str_replace('\n', "\n", $row["errors"])."\n";
-        			$error_msg .= "</pre></li>";
-        		}
-        	}
-        	$error_msg .= "</ul>";
-        	echo $error_msg;
-        }	
+        $row = mysql_fetch_assoc($game_errors);
+        if ($row) {
+            $error_msg = "<ul>";
+            $username = $row["username"];
+            $status = $row["status"];
+            $error_msg .= "<li><p>$username - $status</p><pre class=\"error\">";
+            $error_msg .= str_replace('\n', "\n", $row["errors"])."\n";
+            $error_msg .= "</pre></li>";
+            $error_msg .= "</ul>";
+            echo $error_msg;
+        }
     }
     
 } else {
