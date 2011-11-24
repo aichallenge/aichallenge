@@ -136,7 +136,7 @@ if __name__ == "__main__":
     if "-l" in optlist.keys():
         #list
         workers=loadaliveworkers()
-        print "Workers that are online:"
+        print "Workers that are online(%s):" % len(workers)
         for worker in sorted(workers.items()):
             print "\t%d - %s" % (worker)
         if len(workers)==0:
