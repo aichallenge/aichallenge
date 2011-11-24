@@ -17,9 +17,6 @@ Path get path() native;
 Http get http() native;
 Readline get readline() native;
 
-var createSandbox() native
-  "return {'require': require, 'process': process, 'console': console};";
-
 typedef void RequestListener(ServerRequest request, ServerResponse response);
 
 class Http native "Http" {
