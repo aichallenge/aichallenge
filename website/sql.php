@@ -255,12 +255,12 @@ $contest_sql = array(
     ",
     "select_worker_stats" => "select game.worker_id,
            count(*)/15 as gpm,
-           ifnull(errors/15,0) as epm
+           ifnull(errors/30,0) as epm
         from game
         left outer join (
             select worker_id, count(*) as errors
             from matchup
-            where matchup_timestamp > timestampadd(minute, -15, current_timestamp)
+            where matchup_timestamp > timestampadd(minute, -30, current_timestamp)
             group by worker_id
         ) m
             on game.worker_id = -m.worker_id
