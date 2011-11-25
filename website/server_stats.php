@@ -134,7 +134,7 @@ if (is_readable($PAIRCUT_FILE)) {
 <table class="bigstats">
   <tr>
   <?php foreach ($games_per_server as $server): ?>
-    <td><?php echo number_format($server['gpm'],1)?></td>
+    <td><?php echo number_format($server['gpm'],2)?></td>
   <?php endforeach ?>
   </tr>
   <tr>
