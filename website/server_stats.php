@@ -145,9 +145,11 @@ if (is_readable($PAIRCUT_FILE)) {
 <?php if(count($games_per_server)==0) echo "<p>Workers are offline.</p>"; else { ?>
 <p></p>
 <table class="bigstats">
-  <tr style="font-size: 30px">
+  <tr>
   <?php foreach ($games_per_server as $server): ?>
-    <td><?php echo number_format($server['mpg'],1)?></td>
+    <td style="font-size: 30px">
+      <?php echo number_format($server['mpg'],1)?>
+    </td>
   <?php endforeach ?>
   </tr>
   <tr>
