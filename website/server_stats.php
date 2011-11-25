@@ -53,7 +53,20 @@ foreach(array(5,60,1444) as $minutes){
 
 $games_per_server = array();
 
-$q = contest_query("select_worker_stats");
+$sql = "select game.worker_id,
+           30/count(*) as mpg,
+           ifnull(errors/30,0) as epm
+        from game
+        left outer join (
+            select worker_id, count(*) as errors
+            from matchup
+            where matchup_timestamp > timestampadd(minute, -30, current_timestamp)
+            group by worker_id
+        ) m
+            on game.worker_id = -m.worker_id
+        where timestamp > timestampadd(minute, -30, current_timestamp)
+        group by game.worker_id";
+$q = mysql_fetch_row(mysql_query($sql));
 if ($q) {
     while ($r = mysql_fetch_assoc($q)) {
         $games_per_server[] = $r;
@@ -128,13 +141,13 @@ if (is_readable($PAIRCUT_FILE)) {
   </tr>
 </table>
 
-<h2 style="margin-top:1em">Games per minute per server</h2>
+<h2 style="margin-top:1em">Minutes per game per server</h2>
 <?php if(count($games_per_server)==0) echo "<p>Workers are offline.</p>"; else { ?>
 <p></p>
 <table class="bigstats">
-  <tr>
+  <tr style="font-size: 30px">
   <?php foreach ($games_per_server as $server): ?>
-    <td><?php echo number_format($server['gpm'],2)?></td>
+    <td><?php echo number_format($server['mpg'],1)?></td>
   <?php endforeach ?>
   </tr>
   <tr>
