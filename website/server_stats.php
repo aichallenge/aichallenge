@@ -66,7 +66,7 @@ $sql = "select game.worker_id,
             on game.worker_id = -m.worker_id
         where timestamp > timestampadd(minute, -30, current_timestamp)
         group by game.worker_id";
-$q = mysql_fetch_row(mysql_query($sql));
+$q = mysql_query($sql);
 if ($q) {
     while ($r = mysql_fetch_assoc($q)) {
         $games_per_server[] = $r;
