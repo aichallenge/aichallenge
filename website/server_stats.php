@@ -145,7 +145,7 @@ if (is_readable($PAIRCUT_FILE)) {
   <tr>
   <?php foreach ($games_per_server as $server): ?>
     <th style="color:#ccc">
-      <?php echo number_format($server['epm'],1)?> EPM <br />
+      <?php echo number_format($server['epm'],2)?> EPM <br />
       <?php echo number_format($server['epm'] / $server['gpm'] * 100,1)?>%
     </th>
   <?php endforeach ?>
