@@ -15,6 +15,7 @@ from math import sqrt
 #import Image, ImageDraw, ImageChops
 from itertools import combinations
 from collections import defaultdict
+from optparse import OptionParser
 
 from map import *
 euclidean_distance = None
@@ -26,14 +27,16 @@ class CellMazeMap(Map):
         self.name = 'cell_maze'
         self.players = self.get_random_option(options.get('players', max(2, min(10, int((betavariate(2.5, 3.0) * 10) + 1)))))
         report('players {0}'.format(self.players))
-        self.area = self.get_random_option(options.get('area', self.players * randrange(400, 40000 / self.players)))
-        report('area {0}'.format(self.area))
+        self.area = self.get_random_option(options.get('area', self.players * randrange(900, 30000 // self.players)))
+        report('area {0}, {1} ({2:.1f}^2) per player'.format(self.area, self.area//self.players, sqrt(self.area/self.players)))
         self.cell_width = self.get_random_option(options.get('cell_width', min(paretovariate(2), 7.0)))
         report('cell width: {0}'.format(self.cell_width))
         self.cell_size = self.get_random_option(options.get('cell_size', int(min(paretovariate(2) + 4.0, 20.0) + int(self.cell_width) + 1)))
         report('cell size: {0}'.format(self.cell_size))
         self.openness = self.get_random_option(options.get('openness', betavariate(1.0, 3.0)))
         report('openness: {0}'.format(self.openness))
+        self.min_hill_dist = 36
+        self.max_hill_dist = 200
                                     
     def generate(self):
 
@@ -47,8 +50,6 @@ class CellMazeMap(Map):
             return d_x**2 + d_y**2
         
         def mid_point(loc1, loc2, size):
-            if loc1 == (31,24) and loc2 == (3,25):
-                pass
             row1, col1 = loc1
             row2, col2 = loc2
             rows, cols = size
@@ -414,7 +415,7 @@ class CellMazeMap(Map):
                 # join some cells together as one, fix data structures to match
                 #print('# fuse %s and %s' % (MAP_RENDER[cell1], MAP_RENDER[cell2]))
                 # fix water
-                for path in self.water.keys():
+                for path in list(self.water.keys()):
                     if cell2 in path:
                         #print('# fuse del water path %s' % (path,))
                         if cell1 in path:
@@ -591,7 +592,7 @@ class CellMazeMap(Map):
                                     #print('# maze trying %s - %s' % (carved1, carved2))
                                     if carved1 in extra_nodes[carved2]:
                                         triple = (uncarved, carved1, carved2)                                        
-                                        print('# maze joining %s to %s and %s' % triple)
+                                        log('# maze joining %s to %s and %s' % triple)
                                         for p in combinations(triple, 2):
                                             self.carved_paths.extend(carve(p))
                                         self.carved_paths.extend(carve((uncarved, carved1, carved2), inclusive=True))
@@ -671,7 +672,7 @@ class CellMazeMap(Map):
             # pick random grid size
             divs = [i for i in range(1,self.players+1) if self.players%i==0]
             row_sym = choice(divs)
-            col_sym = self.players/row_sym
+            col_sym = self.players//row_sym
             if row_sym > col_sym:
                 row_sym, col_sym = col_sym, row_sym
             grid = (row_sym, col_sym) 
@@ -727,23 +728,23 @@ class CellMazeMap(Map):
                     hill_avg = sum(hill_dists)/len(hill_dists)
                     hill_min = min(hill_dists)
                     hill_max = max(hill_dists)
-                    if hill_min > hill_avg * 0.5:
+                    if hill_min > hill_avg * 0.616:
                         min_dist = min(min_dist, hill_min)
                         max_dist = max(max_dist, hill_max)
-                        if hill_min < 24 or hill_max > 250:
+                        if hill_min < self.min_hill_dist or hill_max > self.max_hill_dist:
                             comps.remove(comp)
                     else:
                         comps.remove(comp)
                 else:
                     comps.remove(comp)
             if len(comps) == 0:
-                if max_dist < 24:
+                if max_dist < self.min_hill_dist:
                     if self.openness == 0:
                         # fail
                         sys.exit(1)
                     self.openness = max(0, self.openness - 0.01)
                     log('decreasing maze openness to {0}'.format(self.openness))
-                elif min_dist > 250:
+                elif min_dist > self.max_hill_dist:
                     if self.openness == 1:
                         # fail
                         sys.exit(1)
@@ -766,19 +767,32 @@ class CellMazeMap(Map):
         return errors
 
 def main():
-    new_map = CellMazeMap()
+    parser = OptionParser()
+    parser.add_option("-s", "--seed", dest="seed", type="int",
+                        help="random seed")
+    parser.add_option("-p", "--players", dest="players", type="int",
+                        help="number of players")
+    parser.add_option("-o", "--openness", dest="openness", type="float",
+                        help="openness of map (0.0 to 1.0)")
+    parser.add_option("-a", "--area", dest="area", type="int",
+                        help="area of map")
+    opts, _ = parser.parse_args(sys.argv)
+
+    options = {key: value for key, value in vars(opts).items() if value is not None}
+    new_map = CellMazeMap(options)
     
     # check that all land area is accessable
     reason = new_map.generate()
     if not reason:
         reason = new_map.allowable(check_sym=True, check_dist=True)
+    exit_code = 0
     if reason is not None:
         print('# ' + reason)
+        exit_code = 1
         
     #new_map.food_paths()
     new_map.toText()
+    sys.exit(exit_code)
 
 if __name__ == '__main__':
-    #import cProfile
-    #cProfile.run('main()')
     main()
