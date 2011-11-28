@@ -323,12 +323,12 @@ strong {
 
 .serverstats > li {
     display: inline;
-    width: 75px;
 }
 
 .serverstats li {
     list-style-type: none;
     text-align: center;
+    width: 76px;
 }
 
 .serverstats .worker_games {
