@@ -27,7 +27,8 @@
       (do-turn)
       (finish-turn)
       (loop '())]
-     [x (if (eof-object? x) map-data (loop (cons x map-data)))]
+     [(? eof-object?) (void)]
+     [x (loop (cons x map-data))]
      )))
 
 (main)
