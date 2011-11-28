@@ -336,7 +336,6 @@ comp_args = {
     "Pascal"    : [["fpc", "-Mdelphi", "-Si", "-O3", "-Xs", "-v0", "-o" + BOT]],
     "Python"    : [["python", "-c", PYTHON_EXT_COMPILER]],
     "Python3"   : [["python3", "-c", PYTHON_EXT_COMPILER]],
-    "Racket"    : [["racket"]],
     "Scala"     : [["scalac"]],
     }
 
