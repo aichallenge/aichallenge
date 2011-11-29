@@ -21,6 +21,8 @@ sources = [
         "groovy.deb"),
     ("https://github.com/downloads/aichallenge/aichallenge/nodejs_0.4.10~natty1~ppa201107202043_amd64.deb",
         "nodejs.deb"),
+    ("http://download.racket-lang.org/installers/5.2/racket/racket-5.2-bin-x86_64-linux-debian-lenny.sh", 
+        "racket.sh"),
     ("http://www.scala-lang.org/downloads/distrib/files/scala-2.9.0.1.tgz",
         "scala.tgz"),
     ("https://github.com/downloads/aichallenge/aichallenge/dart-frogsh-r1499.tgz", "dart.tgz"),
