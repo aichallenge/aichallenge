@@ -129,7 +129,7 @@ def install_racket(download_base):
     with CD("/root"):
         run_cmd("curl '%s/racket.sh' > racket.sh" % (download_base,))
         run_cmd('echo -e "\n4\n" | sh racket.sh')
-        os.symlink("/usr/share/racket/bin/racket", "/usr/bin/racket")
+        os.symlink("/usr/racket/bin/racket", "/usr/bin/racket")
 
 def install_packaged_languages():
     install_basic_languages()
