@@ -312,6 +312,37 @@ strong {
 	padding-bottom: 0px;
 }
 
+.serverstats {
+    margin-left: 0px;
+}
+
+.serverstats ol {
+    margin-left: 0px;
+    display: inline-block;
+}
+
+.serverstats > li {
+    display: inline;
+}
+
+.serverstats li {
+    list-style-type: none;
+    text-align: center;
+    width: 76px;
+}
+
+.serverstats .worker_games {
+    font-size: 30px;
+}
+
+.serverstats .worker_name {
+    color: #050;
+}
+
+.serverstats .worker_epm {
+    color: #ccc;
+}
+
 div.pagination span {
     margin: 0px 2px;
     padding: 2px 4px;

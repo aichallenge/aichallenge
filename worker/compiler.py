@@ -510,6 +510,11 @@ languages = (
         ["*.pyc"],
         [(["*.py"], ChmodCompiler("Python"))]
     ),
+    Language("Racket", BOT +".rkt", "MyBot.rkt",
+        "racket MyBot.rkt",
+        [],
+        [(["*.rkt"], ChmodCompiler("Racket"))]
+    ),
     Language("Ruby", BOT +".rb", "MyBot.rb",
         "ruby MyBot.rb",
         [],
