@@ -25,6 +25,7 @@ PLAYER_HILL = string = '0123456789'
 MAP_OBJECT = '?%*.!'
 MAP_RENDER = PLAYER_HILL + HILL_ANT + PLAYER_ANT + MAP_OBJECT
 ALLOWABLE = list(range(30)) + [LAND, FOOD, WATER]
+#MAP_RENDER = ["{0:02}".format(n) for n in range(100)] + [' ?', ' %', ' *', ' .', ' !']
 
 AIM = {'n': (-1, 0),
        'e': (0, 1),
@@ -106,10 +107,13 @@ class Map(object):
         d_row = min(abs(row1 - row2), rows - abs(row1 - row2))
         return d_row**2 + d_col**2
 
-    def get_distances(self, start_loc, end_locs, size):
+    def get_distances(self, start_loc, end_locs, size=None):
         'get a list of distances from 1 location to a bunch of others'
         end_locs = end_locs[:]
-        rows, cols = size
+        if size == None:
+            rows, cols = len(self.map), len(self.map[0])
+        else:
+            rows, cols = size
         visited = {}
         open_nodes = deque()
         open_nodes.append((start_loc, 0))
@@ -203,9 +207,14 @@ class Map(object):
             # switch to closed list
             closed_list[node.loc] = node
             # check if found distination
-            if node.loc == loc2:
-                # build path
-                return build_path(node)
+            if block > 1:
+                for d_loc in block_offsets:
+                    if loc2 == self.dest_offset(node.loc, d_loc, size):
+                        return build_path
+            else:
+                if node.loc == loc2:
+                    # build path
+                    return build_path(node)
             # expand node
             for d in AIM:
                 loc = self.destination(node.loc, d, size)
@@ -462,76 +471,87 @@ class Map(object):
         player_hills = defaultdict(list) # list of hills for each player
         for row, squares in enumerate(self.map):
             for col, square in enumerate(squares):
-                if square >= 0:
+                if 0 <= square < 10:
                     player_hills[square].append((row, col))
-        # list of
-        #     list of tuples containing
-        #         location, aim, and enemy map dict
-        orientations = [[(player_hills[0][0], 0,
-            dict([(i, i, ) for i in range(self.players)]))]]
-        for player in range(1, self.players):
-            if len(player_hills[player]) != len(player_hills[0]):
+        if len(player_hills) > 0:
+            # list of
+            #     list of tuples containing
+            #         location, aim, and enemy map dict
+            orientations = [[(player_hills[0][0], 0,
+                dict([(i, i, ) for i in range(self.players)]))]]
+            for player in range(1, self.players):
+                if len(player_hills[player]) != len(player_hills[0]):
+                    raise Exception("Invalid map",
+                                    "This map is not symmetric.  Player 0 has {0} hills while player {1} has {2} hills."
+                                    .format(len(player_hills[0]), player, len(player_hills[player])))
+                new_orientations = []
+                for player_hill in player_hills[player]:
+                    for aim in range(8):
+                    # check if map looks similar given the orientation
+                        enemy_map = self.map_similar(player_hills[0][0], player_hill, aim, player)
+                        if enemy_map != None:
+                            # produce combinations of orientation sets
+                            for hill_aims in orientations:
+                                new_hill_aims = deepcopy(hill_aims)
+                                new_hill_aims.append((player_hill, aim, enemy_map))
+                                new_orientations.append(new_hill_aims)
+                orientations = new_orientations
+                if len(orientations) == 0:
+                    raise Exception("Invalid map",
+                                    "This map is not symmetric. Player {0} does not have an orientation that matches player 0"
+                                    .format(player))
+            # ensure types of hill aims in orientations are symmetric
+            # place food set and double check symmetry
+            valid_orientations = []
+            for hill_aims in orientations:
+                fix = []
+                for loc, aim, enemy_map in hill_aims:
+                    row, col = self.dest_offset(loc, self.offset_aim((1,2), aim), size)
+                    fix.append(((row, col), self.map[row][col]))
+                    self.map[row][col] = FOOD
+                for loc, aim, enemy_map in hill_aims:
+                    if self.map_similar(hill_aims[0][0], loc, aim, enemy_map[0]) is None:
+                        break
+                else:
+                    valid_orientations.append(hill_aims)
+                for (row, col), ilk in reversed(fix):
+                    self.map[row][col] = ilk
+            if len(valid_orientations) == 0:
                 raise Exception("Invalid map",
-                                "This map is not symmetric.  Player 0 has {0} hills while player {1} has {2} hills."
-                                .format(len(player_hills[0]), player, len(player_hills[player])))
-            new_orientations = []
-            for player_hill in player_hills[player]:
-                for aim in range(8):
-                # check if map looks similar given the orientation
-                    enemy_map = self.map_similar(player_hills[0][0], player_hill, aim, player)
-                    if enemy_map != None:
-                        # produce combinations of orientation sets
-                        for hill_aims in orientations:
-                            new_hill_aims = deepcopy(hill_aims)
-                            new_hill_aims.append((player_hill, aim, enemy_map))
-                            new_orientations.append(new_hill_aims)
-            orientations = new_orientations
-            if len(orientations) == 0:
-                raise Exception("Invalid map",
-                                "This map is not symmetric. Player {0} does not have an orientation that matches player 0"
-                                .format(player))
-        # ensure types of hill aims in orientations are symmetric
-        # place food set and double check symmetry
-        valid_orientations = []
-        for hill_aims in orientations:
-            fix = []
-            for loc, aim, enemy_map in hill_aims:
-                row, col = self.dest_offset(loc, self.offset_aim((1,2), aim), size)
-                fix.append(((row, col), self.map[row][col]))
-                self.map[row][col] = FOOD
-            for loc, aim, enemy_map in hill_aims:
-                if self.map_similar(hill_aims[0][0], loc, aim, enemy_map[0]) is None:
-                    break
-            else:
-                valid_orientations.append(hill_aims)
-            for (row, col), ilk in reversed(fix):
-                self.map[row][col] = ilk
-        if len(valid_orientations) == 0:
+                                "There are no valid orientation sets")
+            return valid_orientations
+        else:
             raise Exception("Invalid map",
-                            "There are no valid orientation sets")
-        return valid_orientations
-                
+                            "There are no player hills")
+            
     def allowable(self, check_sym=True, check_dist=True):
-        # Maps are limited to at most 200x200 squares
+        # Maps are limited to at most 200 squares for either dimension
         size = (len(self.map), len(self.map[0]))
         if size[0] > 200 or size[1] > 200:
             return "Map is too large"
-                
+        
         # Maps are limited to 10 players
+        players = set()
         for row, squares in enumerate(self.map):
             for col, square in enumerate(squares):
                 if square not in ALLOWABLE:
                     return "Maps are limited to 10 players and must contain the following characters: A-Ja-j0-9.*%"
-                
+                elif square >= 0:
+                    players.add(square % 10)
+        
+        # Maps are limited in area by number of players
+        if size[0] * size[1] > max(25000, 5000 * len(players)):
+            return "Map area is too large for player count"                
+        
         # Maps must be symmetric
         if check_sym:
             try:
                 self.get_map_symmetry()
             except Exception as e:
-                raise
-                return "Map is not symmetric" + str(e)
+                return "Map is not symmetric: " + str(e[1])
         
-        # Hills must be between 24 and 250 steps away from other hills (details still being worked on)
+        # Hills must be between 20 and 150 steps away from other hills
+        # Hills must be more than 5 distance apart
         if check_dist:
             hills = {}
             for row, squares in enumerate(self.map):
@@ -544,13 +564,15 @@ class Map(object):
                             if hill_owner != owner:
                                 # check distance
                                 hill_dist = len(self.get_path(loc, hill_loc, size))
+                                hill_range = self.euclidean_distance2(loc, hill_loc, size)
                                 if hill_dist is None:
                                     return "Map has hills without a path between them"
-                                elif hill_dist < 24:
+                                elif hill_dist < 20:
                                     return "Map has hills too close"
-                                elif hill_dist > 250:
+                                elif hill_dist > 150:
                                     return "Map has hills too far apart"
-                            
+                                elif hill_range <= 25:
+                                    return "Map has hills within attack range"      
 
         # Maps must not contain islands
         # all squares must be accessible from all other squares
