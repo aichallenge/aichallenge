@@ -24,7 +24,7 @@
 (define players-regexp "players ([0-9]+)")
 (define score-regexp "score ([0-9 ]+)")
 (define turn-regexp "turn ([0-9]+)")
-(define type-regexp "([wfhad]) ([0-9]+) ([0-9]+)([ 0-9]?)")
+(define type-regexp "(w|f|h|a|d) ([0-9]+) ([0-9]+)[ ]?([0-9]?)")
 
 (define get-value-from-string
   (lambda (str regexp)
@@ -73,10 +73,10 @@
   (not (ant:alive self)))
 
 (define-method (ant:mine? (self <ant>))
-  (eq? (ant:owner self) 'mine))
+  (ant:owner self))
 
 (define-method (ant:enemy? (self <ant>))
-  (eq? (ant:owner self) 'enemy))
+  (not (ant:owner self)))
 
 (define-method (ant:row (self <ant>))
   (square:row (ant:square self)))
@@ -101,7 +101,7 @@
 (define-method (square:land? (self <square>))
   (not (square:water self)))
 
-(define-method (square:water (self <square>))
+(define-method (square:water? (self <square>))
   (square:water self))
 
 (define-method (square:food? (self <square>))
@@ -180,14 +180,19 @@
 (define-method (ai:run (self <ai>) . func)
   (if (not (ai:did-setup self))
       (ai:setup self))
-  (let lp ()
-    (unless (ai:read-turn self)
-	    (let ([stdout (ai:stdout self)])
-	      (or (null? func) ((car func) self))
-	      (format stdout "~a~%" "go")
-	      (force-output stdout)
-	      (lp))
-	)))
+  (let ([f (if (not (null? func)) 
+	       (lambda () 
+		 ((car func) self))
+	       (lambda () #t)
+	       )])
+    (let lp ()
+      (unless (ai:read-turn self)
+	      (let ([stdout (ai:stdout self)])
+		(f)
+		(format stdout "~a~%" "go")
+		(force-output stdout)
+		(lp))
+	))))
 
 (define-method (ai:read-intro (self <ai>))
   (let* ([stdin (ai:stdin self)]
@@ -260,7 +265,7 @@
 				       #:alive #t #:ai self)]
 			    )
 		       (set! (square:ant square) ant)
-		       (if (eq? owner 0)
+		       (if (= owner 0)
 			   (push (ai:my-ants self) ant)
 			   (push (ai:enemy-ants self) ant))
 		       ))

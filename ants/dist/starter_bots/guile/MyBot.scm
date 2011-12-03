@@ -10,13 +10,17 @@
 	  ;; your turn code here
 	  
 	  (for-each (lambda (ant)
-		      (for-each (lambda (dir)
-				  (if (square:land? 
-				       (square:neighbor (ant:square ant) dir))
-				      (ant:order ant dir)
-				      ));; end (lambda (dir
-				'(N E S W)) ;; end for-each
-		      );; end (lambda (ant
+		      (call/cc (lambda (break)
+				 (for-each 
+				  (lambda (dir)
+				    (if (square:land? 
+					 (square:neighbor (ant:square ant) dir))
+					(begin
+					  (ant:order ant dir)
+					  (break))
+					));; end (lambda (dir
+				  '(N E S W)) ;; end for-each
+				 )));; end (lambda (ant
 		    (ai:my-ants ai)
 		    ) ;; end for-each
 	  ));; end ai:run
