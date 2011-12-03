@@ -141,7 +141,7 @@ Public Class Ants
     End Sub
 
     Public Function TimeRemaining() As Integer
-        Return 1000 - CInt(DateTime.Now.Subtract(Me.TurnStartTime).TotalMilliseconds)
+        Return TurnTime - CInt(DateTime.Now.Subtract(Me.TurnStartTime).TotalMilliseconds)
     End Function
 
     Public Sub IssueOrder(ByVal loc As Location, ByVal dir As Direction)
