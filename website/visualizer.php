@@ -13,9 +13,14 @@ if ($game_id !== FALSE and $game_id !== NULL) {
             logged_in_with_valid_credentials() &&
             (logged_in_as_admin() || current_user_id() == $user_id)) {
         require_once('mysql_login.php');
-        $game_errors = contest_query('select_game_errors',
-                                     $game_id,
-                                     $user_id);
+    	if (logged_in_as_admin()) {
+    		$game_errors = contest_query('select_game_all_errors', $game_id);
+    		
+    	} else {
+	        $game_errors = contest_query('select_game_errors',
+	                                     $game_id,
+	                                     $user_id);
+    	}
         $row = mysql_fetch_assoc($game_errors);
         if ($row) {
             $error_msg = "<ul>";
