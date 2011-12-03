@@ -1,53 +1,55 @@
 #!/usr/bin/python
 from __future__ import print_function
-import sys
-
-def log(msg):
-    msg = '# ' + str(msg) + '\n'
-    sys.stderr.write(msg)
-
-def report(msg):
-    msg = '# ' + str(msg) + '\n'
-    sys.stdout.write(msg)
     
-from random import randrange, random, choice, seed, paretovariate, betavariate
+from random import randrange, random, choice, paretovariate, betavariate, shuffle, sample
 from math import sqrt, ceil
-#import Image, ImageDraw, ImageChops
-from itertools import combinations
-from collections import defaultdict
 from optparse import OptionParser
-from operator import mul
 from copy import deepcopy
-from functools import partial
+from itertools import combinations
 
 from map import *
 euclidean_distance = None
 
 class CellMazeMap(Map):
     def __init__(self, options={}):
-        report("map generation parameters:")
+        options['name'] = 'cell maze'
         super(CellMazeMap, self).__init__(options)
-        report('random seed {0}'.format(self.random_seed))
-        self.name = 'cell_maze'
         self.players = options.get('players', max(2, min(10, int((betavariate(2.5, 3.0) * 10) + 1))))
-        report('players {0}'.format(self.players))
         self.area = options.get('area', randrange(900 * self.players, min(25000, 5000 * self.players)))
-        report('area {0}, {1} ({2:.1f}^2) per player'.format(self.area, self.area//self.players, sqrt(self.area/self.players)))
         self.cell_width = options.get('cell_width', min(paretovariate(2), 7.0))
-        report('cell width: {0}'.format(self.cell_width))
-        self.cell_size = options.get('cell_size', min(paretovariate(2) + max(5.0, self.cell_width * 2), 20.0))
-        report('cell size: {0}'.format(self.cell_size))
+        self.cell_size = options.get('cell_size', min(paretovariate(2) + max(5.0 + self.cell_width, self.cell_width * 2), 20.0))
         self.openness = options.get('openness', betavariate(1.0, 3.0))
-        report('openness: {0}'.format(self.openness))
         self.aspect_ratio = options.get('aspect_ratio', None)
-        self.min_hill_dist = 20
-        self.max_hill_dist = 150
         self.grid = options.get('grid', None)
+        self.maze_type = options.get('maze_type', choice(['prims','backtrack','growing']))
         self.v_sym = options.get('v_sym', None)
         self.v_step = options.get('v_step', None)
         self.h_sym = options.get('h_sym', None)
         self.h_step = options.get('h_step', None)
-        self.maze_type = options.get('maze_type', None)
+        self.hills = options.get('hills', None)
+        self.grandularity = options.get('grandularity', 1)
+
+        self.report('players {0}'.format(self.players))
+        self.report('area {0}, {1} ({2:.1f}^2) per player'.format(self.area, self.area//self.players, sqrt(self.area/self.players)))
+        self.report('cell width: {0}'.format(self.cell_width))
+        self.report('cell size: {0}'.format(self.cell_size))
+        self.report('openness: {0}'.format(self.openness))
+        if self.grid is not None:
+            self.report('grid: {0}'.format(self.grid))
+        self.report('maze type {0}'.format(self.maze_type))
+        if self.v_sym is not None:
+            self.report('vertical symmetry: {0}'.format(self.v_sym))
+        if self.v_step is not None:
+            self.report('vertical shear step: {0}'.format(self.v_step))
+        if self.h_sym is not None:
+            self.report('horizontal symmetry: {0}'.format(self.h_sym))
+        if self.h_step is not None:
+            self.report('horizontal shear step: {0}'.format(self.h_step))
+        if self.hills is not None:
+            self.report('hills per player: {0}'.format(self.hills))
+            
+        self.min_hill_dist = 20
+        self.max_hill_dist = 150
                                     
     def generate(self):
         
@@ -85,24 +87,24 @@ class CellMazeMap(Map):
             size = (rows - rows % col_sym, cols - cols % row_sym)
             if grid[0] * size[0] > 200:
                 rows = 200 // row_sym
-                cols = self.area // (rows * row_sym)
+                cols = self.area // (rows * row_sym * col_sym)
                 size = (rows - rows % col_sym, cols - cols % row_sym)
             elif grid[1] * size[1] > 200:
                 cols = 200 // col_sym
-                rows = self.area // (cols * col_sym)
+                rows = self.area // (cols * col_sym * row_sym)
                 size = (rows - rows % col_sym, cols - cols % row_sym)
             
             return size, grid
 
-        def random_points(size, spacing, count=1000, grandularity=1):
+        def random_points(size, spacing, grandularity=1, count=1000):
             spacing_2 = int(ceil(spacing ** 2))
             spacing = int(ceil(spacing))
             # ensure each random point is on a unique row and col
             rows, cols = size
             # matrix of available spots left
             # range is from 1 to keep points from touching on mirror lines
-            matrix = {row: list(range(1,cols,grandularity))
-                      for row in range(1,rows,grandularity)}
+            matrix = {row: list(range(0,cols,grandularity))
+                      for row in range(0,rows,grandularity)}
             
             # offsets for removing points
             offsets = []
@@ -137,7 +139,7 @@ class CellMazeMap(Map):
             def copy(value, size, step):
                 return size+value
             def mirror(value, size, step):
-                return size*2-value-1
+                return size * 2 - value - 1
             def flip(value, size, step):
                 return size-value-1
             def shear(value, size, step):
@@ -178,7 +180,7 @@ class CellMazeMap(Map):
             def extend(funcs, points, size, count=2, step=0, shear=1):
                 # shear is used for a MxN grid where shearing occurs in both directions
                 point_func, trans_funcs, increase_func = funcs
-                report(extend_report[funcs])
+                self.report(extend_report[funcs])
                 #rows, cols = size
                 new_points = []
                 for sym_points in points:
@@ -232,7 +234,7 @@ class CellMazeMap(Map):
                     else:
                         step = 0
                 if step > 0:
-                    report("vert shear step: {0}".format(step))                
+                    self.report("vert shear step: {0}".format(step))                
                 if v_sym in (vert_mirror, vert_rotate):
                     points, size = extend(v_sym, points, size)
                     if row_sym//2 > 1:
@@ -276,7 +278,7 @@ class CellMazeMap(Map):
                         else:
                             step = 0
                 if step > 0:
-                    report("horz shear step: {0}".format(step))                
+                    self.report("horz shear step: {0}".format(step))                
                 if h_sym in (horz_mirror, horz_rotate):
                     points, size = extend(h_sym, points, size)
                     if col_sym//2 > 1:
@@ -294,7 +296,7 @@ class CellMazeMap(Map):
             #  or must have water tuple with just these neighbors
             new_neighbor = defaultdict(list)
             for path in sorted(paths):
-                if len(path) == 2:
+                if len(path) == 2 and path[0] != path[1]:
                     new_neighbor[path[0]].append(path[1])
                     new_neighbor[path[1]].append(path[0])
             return new_neighbor
@@ -305,37 +307,52 @@ class CellMazeMap(Map):
             # key is tuple of nearest starts (locations)
             # value is list of locations
             paths = {}
+#            mirror_points = {}
             
             # for each square, find closest starting points
             for row in range(rows):
                 for col in range(cols):
                     distances = {}
                     #for loc in points.keys():
-                    for sym_points in points:
+                    for comp, sym_points in enumerate(points):
                         for point in sym_points:
-                            distances[point] = distance((row, col), point, size)
+                            distances[(point, comp)] = distance((row, col), point, size)
                     cutoff = min(distances.values()) + self.cell_width
-                    closest = [point for point, d in distances.items()
+                    closest = [point_comp for point_comp, d in distances.items()
                                if d <= cutoff]
-                    #comps = set([points[point] for point in closest])
-                    comps = tuple(sorted(
-                                set([[comp for comp, sym_points in enumerate(points)
-                                      if point in sym_points][0]
-                                     for point in closest])
-                            ))
+                    comps = tuple(sorted(set([comp for point, comp in closest])))
                     if len(closest) > 1:
                         if len(comps) > 1:
                             self.map[row][col] = WATER
                             # find all starting points that contributed to the water wall,
                             # add to water wall dict
-                        if comps not in paths:
-                            paths[comps] = []
-                        paths[comps].append((row, col))
+#                        else:
+#                            if distance(closest[0][0], closest[1][0], size) > self.cell_width:
+#                                comps = (comps[0], comps[0])
+#                                # store unique points in path structure so we can later check if traversable
+#                                if comps not in mirror_points:
+#                                    mirror_points[comps] = []
+#                                if closest not in mirror_points[comps]:
+#                                    mirror_points[comps].append(closest)
+                    if comps not in paths:
+                        paths[comps] = []
+                    paths[comps].append((row, col))
+
+                    
+#            # close small gaps in mirrored/rotated paths between same comps
+#            for path, closests in mirror_points.items():
+#                for closest in closests:
+#                    if not self.get_path(closest[0][0], closest[1][0], size, 3):
+#                        for row, col in paths[path]:
+#                            self.map[row][col] = FOOD
+#                        del paths[path]
+#                        break
+                        
             return paths
 
         def fuse_cells(paths, cell1, cell2):
             paths = deepcopy(paths)
-            log("fuse {0} and {1}".format(cell1, cell2))
+            self.log("fuse {0} and {1}".format(cell1, cell2))
             # join some cells together as one, fix data structures to match
             for path in list(paths.keys()):
                 if cell2 in path:
@@ -392,7 +409,7 @@ class CellMazeMap(Map):
                             else:
                                 # find 3 cells that can be fused
                                 for triple in list(paths.keys()):
-                                    if len(triple) == 3 and path[0] in triple and path[1] in triple:
+                                    if len(set(triple)) == 3 and path[0] in triple and path[1] in triple:
                                         path3 = [n for n in triple if n not in path][0]
                                         paths = fuse_cells(paths, path3, path[0])
                                         paths = fuse_cells(paths, path3, path[1])
@@ -403,6 +420,7 @@ class CellMazeMap(Map):
                 else:
                     # did not break due to fusing cells, stop outer loop
                     restart_path_check = False
+            
             return paths, neighbors, narrow_paths
                                 
         def carve(paths, path, ilk=LAND, inclusive=False):
@@ -412,8 +430,9 @@ class CellMazeMap(Map):
             elif type(path) != list:
                 path = [tuple(sorted(path))]
             for p in path:
-                for row, col in paths[p]:
-                    self.map[row][col] = ilk
+                if p in paths:
+                    for row, col in paths[p]:
+                        self.map[row][col] = ilk
             return path
 
         def mark_sections(sections):
@@ -423,13 +442,13 @@ class CellMazeMap(Map):
                         self.map[loc[0]][loc[1]] = i
                           
         def ensure_connected(paths, carved_paths, carve):
-            caved_paths = deepcopy(carved_paths)
+            carved_paths = deepcopy(carved_paths)
             # I'm too lazy to search for disconnected nodes and fuse cells for proper 3x3 block traversal
             # blow up random walls until valid
-            sections = self.section(0)
+            sections = self.section(1)
             neighbor = build_neighbors(paths.keys()) # includes removed neighbors
             if len(sections) > 1:
-                log('connecting maze, sections: {0}'.format(len(sections)))
+                self.log('connecting maze, sections: {0}'.format(len(sections)))
                 # look for largest blocks of squares first, since this will make it easiest to traverse
                 for path in (path for l, path in
                              sorted((-len(locs), path) for path, locs in paths.items()
@@ -438,11 +457,11 @@ class CellMazeMap(Map):
                     carve(path, LAND)
                     new_sections = self.section(0)
                     if len(new_sections) < len(sections):
-                        log('maze connected, sections: {0}'.format(len(new_sections)))
+                        self.log('maze connected, sections: {0}'.format(len(new_sections)))
                         #print('# found %s: %s' % (path, self.water[path]))
                         block_sections = [s for s in self.section(1) if len(s[0]) > 9]
                         if len(block_sections) > len(new_sections):
-                            log('opening connection, sections: {0}'.format(len(block_sections)))
+                            self.log('opening connection, sections: {0}'.format(len(block_sections)))
                             # carved path not wide enough
                             for third in neighbor.keys():
                                 # find start c that connects to both a and b
@@ -465,23 +484,23 @@ class CellMazeMap(Map):
                                         if p not in carved_paths:
                                             carve(p, WATER)
                             else:
-                                log('failed to connect wide path')
+                                self.log('failed to connect wide path')
                         # connection successful, fix data structures
                         carved_paths.append(path)
                         if len(new_sections) == 1:
                             break
                         else:
                             sections = new_sections
-                            log('connecting maze, sections: {0}'.format(len(sections)))
+                            self.log('connecting maze, sections: {0}'.format(len(sections)))
                             continue
                     # next statement only runs if connection not found
                     carve(path, WATER)
                 else:
-                    log('failed to connect')
+                    self.log('failed to connect')
             return carved_paths
                     
-        def growing_tree(nodes, carve):
-            visited = set()
+        def growing_tree(nodes, carve, visited=[]):
+            visited = set(visited)
             carved_paths = []
             
             def prims(cells):
@@ -493,15 +512,11 @@ class CellMazeMap(Map):
             maze_type_report = {prims: 'prims',
                                recursivebacktracker: 'backtrack',
                                oldest: 'growing'}
+            maze_type = [f for f, t in maze_type_report.items() if t == self.maze_type][0]
             
-            if self.maze_type is None:
-                maze_type = choice((prims, recursivebacktracker, oldest))
-            else:
-                maze_type = [f for f, t in maze_type_report.items() if t == self.maze_type][0]
-            report('maze type {0}'.format(maze_type_report[maze_type]))
-            
-            cells = [choice(list(nodes.keys()))]
-            #print('# maze starting at %s' % cells[0])
+            unvisited = [node for node in nodes.keys() if node not in visited]
+            next_cell = choice(unvisited)
+            cells = [next_cell]
             visited.add(cells[0])
             while len(cells) > 0:
                 index = maze_type(cells)
@@ -517,7 +532,7 @@ class CellMazeMap(Map):
                     cells.pop(index)
             return carved_paths
         
-        def set_openness(points, braids, carved_paths, openness, carve):
+        def set_openness(points, braids, carved_paths, openness, carve, open_braids=[]):
             def carve_braid(open_paths, braids):
                 carved_neighbors = build_neighbors(open_paths)            
                 braid = sorted(braids,
@@ -527,51 +542,64 @@ class CellMazeMap(Map):
                 return braid
 
             # open initial set of braids
-            log("set openness to {0} on {1} braids".format(self.openness, len(braids)))
+            self.log("set openness to {0} on {1} braids".format(self.openness, len(braids)))
             open_braid_count = int(len(braids) * openness)
             closed_braids = braids[:]
-            open_braids = []
             for _ in range(open_braid_count):
                 braid = carve_braid(carved_paths+open_braids, closed_braids)
                 open_braids.append(braid)
                 closed_braids.remove(braid)
                 
             # adjust braids until hill distances are within proper ranges
-            min_count = max_count = valid_count = 0
+            min_count = max_count = valid_first_count = 0
             valid_hills = []
-            while valid_count == 0:
-                min_count = max_count = valid_count = 0
+            adjusted = False
+            while valid_first_count == 0:
+                min_count = max_count = valid_first_count = 0
                 valid_hills = []
                 for i, s_points in enumerate(points):
                     hill_dists = [dist for _, dist in self.get_distances(s_points[0], s_points[1:])]
-                    if min(hill_dists) < self.min_hill_dist:
+                    if len(hill_dists) == 0:
+                        if len(closed_braids) > 0:
+                            braid = closed_braids.pop()
+                            carve(braid, WATER)
+                            continue
+                        else:
+                            raise Exception("MapException", "Map closed off")
+                    elif min(hill_dists) < self.min_hill_dist:
                         min_count += 1
                     elif max(hill_dists) > self.max_hill_dist:
                         max_count += 1
                     else:
-                        valid_count += 1
-                        valid_hills.append((i, hill_dists))
-                if valid_count == 0:
+                        if min_count > 0 or stdev(hill_dists) < 2.0*max(hill_dists)/self.players:
+                            valid_first_count += 1
+                        else:
+                            self.log(stdev(hill_dists))
+                            max_count += 1
+                        valid_hills.append((i, hill_dists, stdev(hill_dists)))
+                if valid_first_count == 0:
+                    adjusted = True
                     if min_count > max_count:
                         # reduce openness, close 1 braid
                         if len(open_braids) == 0:
-                            self.toText(sys.stderr)
                             raise Exception("Openness", "Map too open")
                         braid = open_braids.pop()
                         carve(braid, WATER)
                         closed_braids.append(braid)
-                        log("decrease openness")
-                    else:
+                        self.log("decrease openness")
+                    elif max_count > min_count:
                         # increase openness, open 1 braid
                         if len(closed_braids) == 0:
-                            self.toText(sys.stderr)
                             raise Exception("Openness", "Map too closed")
                         braid = carve_braid(carved_paths+open_braids, closed_braids)
                         open_braids.append(braid)
                         closed_braids.remove(braid)
-                        log("increase openness")
+                        self.log("increase openness")
+                    else:
+                        raise Exception("Openness", "Map too weird")
                     self.openness = 1.0 * len(open_braids) / len(braids)
-            log("adjust openness to {0}".format(self.openness))
+            if adjusted:
+                self.log("adjust openness to {0}".format(self.openness))
             return open_braids, valid_hills
                     
         def make_euclidean_distance(size):
@@ -595,20 +623,79 @@ class CellMazeMap(Map):
                         fd.write(TILE[(r//tile_size[0] + c//tile_size[1])%len(TILE)])
                 fd.write('\n')
             fd.write('\n')
+
+        def stdev(values):
+            avg = 1.0*sum(values)/len(values)
+            return sqrt(sum([pow(d - avg, 2) for d in values])/len(values))
+
+        def mark_points(points):
+            # add point markers for debugging
+            for comp, sym_p in enumerate(points):
+                for _, (row, col) in enumerate(sym_p):
+                    self.map[row][col] = comp % 30
+
+        def cavern(nodes, all_nodes, carve, carve2, cavern_count=7):
+            closed = []
+            visited = []
+            carved_paths = []
+            caves = list(all_nodes.keys())
+            while len(caves) > 0 and cavern_count > 0:
+                # pick random cell
+                cave = choice(caves)
+                caves.remove(cave)
+                if len(all_nodes[cave]) == 0:
+                    continue
+                #caves = []
+                # find surrounding cells
+                juxs = []
+                for jux in all_nodes[cave]:
+                    if jux not in closed:
+                        carved_paths.extend(carve((cave, jux)))
+                        closed.append(jux)
+                        juxs.append(jux)
+                if len(juxs) > 0:
+                    # clean out cavern walls
+                    carve((cave,))
+                    for path in combinations(juxs, 2):
+                        carved_paths.extend(carve(tuple(sorted(path))))
+                        carve(tuple(sorted([cave, path[0], path[1]])))
+                    # find paths out of cavern
+                    doors = []
+                    closed.append(cave)
+                    for jux in juxs:
+                        carve((jux,))
+                        for jux2 in nodes[jux]:
+                            if jux2 not in closed:
+                                #closed.append(jux2)
+                                if jux2 in caves:
+                                    caves.remove(jux2)
+                                doors.append(tuple(sorted((jux, jux2))))
+                    # open doorways to cavern
+                    shuffle(doors)
+                    for _ in range(len(juxs)//4 + 1):
+                        if len(doors) > 0:
+                            door = doors.pop()
+                            carved_paths.extend(carve2(door))
+                    # add cavern cells to visited list for maze carving
+                    if len(juxs) > 0:
+                        visited.append(cave)
+                        visited.extend(juxs)
+                    cavern_count -= 1
+            return carved_paths, visited
             
         def cell_maze():
             # actual maze code
             tile_size, grid = pick_size(self.grid, self.aspect_ratio)
-            points = random_points(tile_size, self.cell_size)
+            points = random_points(tile_size, self.cell_size, self.grandularity)
             sym_points, sym_size = make_symmetric(points, tile_size, self.players, grid, self.v_sym, self.v_step, self.h_sym, self.h_step)
         
-            report("final parameters")
-            report('area: {0}'.format(sym_size[0] * sym_size[1]))
-            report('grid size: {0}'.format(grid))
-            report('tile size: {0} {1}'.format(tile_size, 1.0 * tile_size[1] / tile_size[0]))
-            report('map size: {0} {1}'.format((sym_size[0], sym_size[1]),
+            self.report("final parameters")
+            self.report('area: {0}'.format(sym_size[0] * sym_size[1]))
+            self.report('grid size: {0}'.format(grid))
+            self.report('tile size: {0} {1}'.format(tile_size, 1.0 * tile_size[1] / tile_size[0]))
+            self.report('map size: {0} {1}'.format((sym_size[0], sym_size[1]),
                                               1.0 * sym_size[1] / sym_size[0]))
-            log("point count: {0}".format(len(points)))
+            self.log("point count: {0}".format(len(points)))
             
             rows, cols = sym_size
             self.map = [[LAND]* cols for _ in range(rows)]
@@ -617,41 +704,47 @@ class CellMazeMap(Map):
             neighbors = build_neighbors(paths.keys())
             paths, neighbors, narrow_paths = remove_narrow_paths(paths, neighbors, sym_points, sym_size)
     
-            carved_paths = growing_tree(neighbors, lambda path: carve(paths, path))
+            carved_paths = []
+#            carved_paths, visited = cavern(neighbors,
+#                                           build_neighbors(paths.keys()),
+#                                           lambda path: carve(paths, path, LAND),
+#                                           lambda path: carve(paths, path, LAND))        
+            carved_paths.extend(growing_tree(neighbors, lambda path: carve(paths, path)))            
             carved_paths = ensure_connected(paths, carved_paths, lambda path, ilk: carve(paths, path, ilk))        
 
             braids = [path for path in paths.keys() if len(path) == 2 and path not in narrow_paths + carved_paths]
-            braid_paths, valid_hills = set_openness(sym_points, braids, carved_paths, self.openness, lambda path, ilk: carve(paths, path, ilk))
-
-            def stdev(values):
-                avg = 1.0*sum(values)/len(values)
-                return sqrt(sum([pow(d - avg, 2) for d in values])/len(values))
+            mirror_braids = sorted([path for path in paths.keys() if len(path) == 2 and path[0] == path[1]], key=lambda path: len(paths[path]))
+            braid_paths, valid_hills = set_openness(sym_points, braids, carved_paths, self.openness, lambda path, ilk: carve(paths, path, ilk), mirror_braids)
+            carved_paths.extend(braid_paths)
                 
-            valid_hills.sort(key=lambda valid_hill: stdev(valid_hill[1]), reverse=True)
-            comp, _ = valid_hills.pop()
+            valid_hills.sort(key=lambda valid_hill: (valid_hill[2], -max(valid_hill[1])))
+            comp, hill_dists, _ = valid_hills.pop(0)
             first_hills = sym_points[comp]
+            self.log("first hill stdev: {0}".format(stdev(hill_dists)))
             for player, (row, col) in enumerate(first_hills):
                 self.map[row][col] = player
-            try:
-                map_sym = choice(self.get_map_symmetry())
-            except:
-                self.toText(sys.stderr)
-                sys.exit(1)
+            map_sym = choice(self.get_map_symmetry())
             all_hills = first_hills[:]
             
+            hill_count = None if self.hills is None else self.hills - 1
             while len(valid_hills) > 0:
-                if random() < 0.5:
+                if (hill_count is None and random() < 0.5) or hill_count > 0:
                     comp = randrange(0, len(valid_hills))
-                    comp, _ = valid_hills.pop(comp)
+                    comp, hill_dists, _ = valid_hills.pop(comp)
                     hills = sym_points[comp]
+                    hill_dists = list(self.get_distances(hills[0], all_hills, sym_size))
+                    if max([dist for _, dist in hill_dists]) > self.max_hill_dist:
+                        # a potiential hill is too far away from other hills
+                        continue
                     enemies = set([self.map[row][col] for (row, col), dist in
-                                   (self.get_distances(hills[0], all_hills, sym_size))
-                                   if dist < self.min_hill_dist])
+                                   hill_dists if dist < self.min_hill_dist])
                     #log(sym_points)
                     if len(enemies) > 1:
                         # a potential hill is within min distance to 2 enemies
                         continue
                     all_hills.extend(hills)
+                    if hill_count is not None:
+                        hill_count -= 1
                     for player, (row, col) in enumerate(hills):
                         if player == 0:
                             if len(enemies) == 1:
@@ -670,13 +763,115 @@ class CellMazeMap(Map):
                     break
             self.fill_small_areas()
             self.make_wider()
-        
-        def mark_points(points):
-            # add point markers for debugging
-            for comp, sym_p in enumerate(points):
-                for c, (row, col) in enumerate(sym_p):
-                    self.map[row][col] = comp % 100
 
+        def caverns():
+            #self.cell_width = max(self.cell_width, 4)
+            #self.cell_size += max(self.cell_size, 9.0)
+            # actual maze code
+            tile_size, grid = pick_size(self.grid, self.aspect_ratio)
+            points = random_points(tile_size, self.cell_size)
+            sym_points, sym_size = make_symmetric(points, tile_size, self.players, grid, self.v_sym, self.v_step, self.h_sym, self.h_step)
+        
+            self.report("final parameters")
+            self.report('area: {0}'.format(sym_size[0] * sym_size[1]))
+            self.report('grid size: {0}'.format(grid))
+            self.report('tile size: {0} {1}'.format(tile_size, 1.0 * tile_size[1] / tile_size[0]))
+            self.report('map size: {0} {1}'.format((sym_size[0], sym_size[1]),
+                                              1.0 * sym_size[1] / sym_size[0]))
+            self.log("point count: {0}".format(len(points)))
+            
+            rows, cols = sym_size
+            self.map = [[LAND]* cols for _ in range(rows)]
+    
+            paths = build_paths(sym_points, sym_size, make_euclidean_distance(sym_size))
+            for path in paths.keys():
+                if len(path) == 1:
+                    carve(paths, path, WATER)
+                else:
+                    carve(paths, path, LAND)
+                    
+#            if len(self.section(1)) > 1:
+#                sys.exit()
+            neighbors = build_neighbors(paths.keys())
+            while True:
+                n = choice(list(neighbors.keys()))
+                nw = neighbors[n][:]
+                if len(nw) < 4:
+                    continue
+                ns = randrange(1,len(nw)-1)
+                nl = nw[:ns]
+                nr = nw[ns:]
+                for path in combinations(nl,2):
+                    if path in paths:
+                        carve(paths, path, WATER)
+                for path in combinations(nr,2):
+                    if path in paths:
+                        carve(paths, path, WATER)
+                carve(paths, (n,), LAND)
+                break
+                    
+            mark_points(sym_points)
+            self.toText()
+            return
+                    
+            paths, neighbors, narrow_paths = remove_narrow_paths(paths, neighbors, sym_points, sym_size)
+    
+            carved_paths = growing_tree(neighbors, lambda path: carve(paths, path))
+            carved_paths = ensure_connected(paths, carved_paths, lambda path, ilk: carve(paths, path, ilk))        
+
+            braids = [path for path in paths.keys() if len(path) == 2 and path not in narrow_paths + carved_paths]
+            mirror_braids = sorted([path for path in paths.keys() if len(path) == 2 and path[0] == path[1]], key=lambda path: len(paths[path]))
+            braid_paths, valid_hills = set_openness(sym_points, braids, carved_paths, self.openness, lambda path, ilk: carve(paths, path, ilk), mirror_braids)
+            carved_paths.extend(braid_paths)
+
+                
+            valid_hills.sort(key=lambda valid_hill: (valid_hill[2], -max(valid_hill[1])))
+            comp, hill_dists, _ = valid_hills.pop(0)
+            first_hills = sym_points[comp]
+            self.log("first hill stdev: {0}".format(stdev(hill_dists)))
+            for player, (row, col) in enumerate(first_hills):
+                self.map[row][col] = player
+            map_sym = choice(self.get_map_symmetry())
+            all_hills = first_hills[:]
+            
+            hill_count = None if self.hills is None else self.hills - 1
+            while len(valid_hills) > 0:
+                if (hill_count is None and random() < 0.5) or hill_count > 0:
+                    comp = randrange(0, len(valid_hills))
+                    comp, hill_dists, _ = valid_hills.pop(comp)
+                    hills = sym_points[comp]
+                    hill_dists = list(self.get_distances(hills[0], all_hills, sym_size))
+                    if max([dist for _, dist in hill_dists]) > self.max_hill_dist:
+                        # a potiential hill is too far away from other hills
+                        continue
+                    enemies = set([self.map[row][col] for (row, col), dist in
+                                   hill_dists if dist < self.min_hill_dist])
+                    #log(sym_points)
+                    if len(enemies) > 1:
+                        # a potential hill is within min distance to 2 enemies
+                        continue
+                    all_hills.extend(hills)
+                    if hill_count is not None:
+                        hill_count -= 1
+                    for player, (row, col) in enumerate(hills):
+                        if player == 0:
+                            if len(enemies) == 1:
+                                next_player = list(enemies)[0]
+                            else:
+                                next_player = randrange(0, self.players)
+                            self.map[row][col] = next_player
+                            # find offset to self
+                            first_hill = first_hills[next_player]
+                            hill_offset = (first_hill[0] - row, first_hill[1] - col)
+                        else:
+                            p_row, p_col = self.dest_offset((row, col), self.offset_aim(hill_offset, map_sym[player][1]), sym_size)
+                            next_player = self.map[p_row][p_col]
+                            self.map[row][col] = next_player
+                else:
+                    break
+            self.fill_small_areas()
+            self.make_wider()
+                    
         cell_maze()
         
 def main():
@@ -710,13 +905,17 @@ def main():
     parser.add_option("-m", "--maze", dest="maze_type",
                       choices=["backtrack", "prims", "growing"],
                       help="maze type for carving passages")
+    parser.add_option("--hills", dest="hills", type="int",
+                      help="hills per player")
+    parser.add_option("--grandularity", dest="grandularity", type="int",
+                      help="align random points on a grid")
     
     opts, _ = parser.parse_args(sys.argv)
 
     options = {key: value for key, value in vars(opts).items() if value is not None}
     new_map = CellMazeMap(options)
     
-    # check that all land area is accessable
+    # check that all land area is accessible
     reason = new_map.generate()
     if not reason:
         reason = new_map.allowable(check_sym=True, check_dist=True)
@@ -724,10 +923,10 @@ def main():
     if reason is not None:
         print('# ' + reason)
         exit_code = 1
+        sys.exit(exit_code)
         
-    #new_map.food_paths()
     new_map.toText()
-    sys.exit(exit_code)
+    new_map.toFile()
 
 if __name__ == '__main__':
     main()

@@ -10,6 +10,7 @@ except ImportError:
 from copy import deepcopy
 import heapq
 from collections import defaultdict
+import os
 
 MY_ANT = 0
 ANTS = 0
@@ -35,13 +36,25 @@ AIM = {'n': (-1, 0),
 class Map(object):
     def __init__(self, options={}):
         super(Map, self).__init__()
-        self.name = "blank"
+        self.name = options.get('name', 'blank')
         self.map = [[]]
+        self.reports = []
+
+        self.report('map type: {0}'.format(self.name))
         self.random_seed = options.get('seed', None)
         if self.random_seed == None:
             self.random_seed = randint(-maxint-1, maxint)
         seed(self.random_seed)
-
+        self.report('random seed: {0}'.format(self.random_seed))
+        
+    def log(self, msg):
+        msg = '# ' + str(msg) + '\n'
+        sys.stderr.write(msg)
+    
+    def report(self, msg):
+        msg = '# ' + str(msg) + '\n'
+        self.reports.append(msg)
+    
     def generate(self):
         raise Exception("Not Implemented")
 
@@ -74,14 +87,23 @@ class Map(object):
             for c in row:
                 if c >= ANTS:
                     players.add(c)
-        fd.write("# map_type {0}\n# random_seed {1}\nplayers {2}\nrows {3}\ncols {4}\n"
-                 .format(self.name,
-                         self.random_seed,
-                         len(players),
-                         len(self.map),
-                         len(self.map[0])))
+        for msg in self.reports:
+            fd.write(msg)
+        fd.write('players {0}\nrows {1}\ncols {2}\n'.format(len(players),
+                                                            len(self.map),
+                                                            len(self.map[0])))
         for r, row in enumerate(self.map):
             fd.write("m {0}\n".format(''.join([MAP_RENDER[c] for c in row])))
+
+    def toFile(self, filename=None):
+        if filename is None:
+            filename = self.name.replace(' ', '_') + '_p' + '{0:02}'.format(self.players) + '_'
+            filename += ('{0:02}'.format(max(map(lambda x: 0 if not x.isdigit() else int(x),
+                            [f[len(filename):len(filename)+2] for f in os.listdir('.')
+                             if f.startswith(filename)]+['0'])) + 1))
+            filename += '.map'
+        with open(filename, 'w') as mapfile:
+            self.toText(mapfile)
 
     def manhatten_distance(self, loc1, loc2, size):
         rows, cols = size
@@ -532,12 +554,15 @@ class Map(object):
         
         # Maps are limited to 10 players
         players = set()
+        hills = {}
         for row, squares in enumerate(self.map):
             for col, square in enumerate(squares):
                 if square not in ALLOWABLE:
                     return "Maps are limited to 10 players and must contain the following characters: A-Ja-j0-9.*%"
                 elif square >= 0:
                     players.add(square % 10)
+                    if square < 10:
+                        hills[(row, col)] = square
         
         # Maps are limited in area by number of players
         if size[0] * size[1] > max(25000, 5000 * len(players)):
@@ -552,27 +577,30 @@ class Map(object):
         
         # Hills must be between 20 and 150 steps away from other hills
         # Hills must be more than 5 distance apart
-        if check_dist:
-            hills = {}
-            for row, squares in enumerate(self.map):
-                for col, square in enumerate(squares):
-                    if square >= 0 and square < 20:
-                        owner = square % 10
-                        loc = (row, col)
-                        hills[loc] = owner
-                        for hill_loc, hill_owner in hills.items():
-                            if hill_owner != owner:
-                                # check distance
-                                hill_dist = len(self.get_path(loc, hill_loc, size))
-                                hill_range = self.euclidean_distance2(loc, hill_loc, size)
-                                if hill_dist is None:
-                                    return "Map has hills without a path between them"
-                                elif hill_dist < 20:
-                                    return "Map has hills too close"
-                                elif hill_dist > 150:
-                                    return "Map has hills too far apart"
-                                elif hill_range <= 25:
-                                    return "Map has hills within attack range"      
+        hill_min = False
+        hill_max = False
+        hill_range = False
+        self.report('hill distance ' + ' '.join(['{0[0]:>3},{0[1]:>3}'.format(loc) for loc in hills.keys()]))
+        for hill_loc in hills.keys():
+            hill_dists = {point: dist for point, dist in self.get_distances(hill_loc, hills.keys(), size)}
+            hill_msg = '      {0[0]:>3},{0[1]:>3} '.format(hill_loc)
+            for hill_loc2 in hills.keys():
+                if hill_loc != hill_loc2 and self.euclidean_distance2(hill_loc, hill_loc2, size) <= 25:
+                    hill_range = True
+                hill_msg += '{0:>7} '.format(hill_dists[hill_loc2])
+            self.report(hill_msg)
+            if min([dist for point, dist in hill_dists.items() if self.map[point[0]][point[1]] != self.map[hill_loc[0]][hill_loc[1]] ]) < 20:
+                hill_min = True
+            if max(hill_dists.values()) > 150:
+                hill_max = True
+        if hill_min and hill_max:
+            return "Map has hills too close and too far"
+        elif hill_min:
+            return "Map has hills too close"
+        elif hill_max:
+            return "Map has hills too far"
+        elif hill_range:
+            return "Map has hills within attack range"    
 
         # Maps must not contain islands
         # all squares must be accessible from all other squares
