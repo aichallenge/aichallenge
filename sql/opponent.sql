@@ -196,7 +196,7 @@ if @min_players <= @max_players then
     select count(*)
     into @user_count
     from submission s
-    where s.latest = 1;
+    where s.latest = 1 and s.status = 40;
 
     select @user_count as user_count;
 
@@ -211,7 +211,7 @@ if @min_players <= @max_players then
             from tmp_games tg
             inner join submission s
                 on s.user_id = tg.user_id
-            where s.latest = 1 and status = 40
+            where s.latest = 1 and s.status = 40
             order by tg.game_count desc
         ) gc
     ) gcs
