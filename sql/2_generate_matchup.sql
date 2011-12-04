@@ -163,7 +163,7 @@ if @min_players <= @max_players then
             order by tg.game_count desc
         ) gc
     ) gcs
-    where seq = floor(@user_count * 0.125) + 1;
+    where seq = floor(@user_count * 0.05) + 1;
 
     -- Step 3: select opponents 1 at a time
     set @cur_user_id = @seed_id;

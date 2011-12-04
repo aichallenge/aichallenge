@@ -215,7 +215,7 @@ if @min_players <= @max_players then
             order by tg.game_count desc
         ) gc
     ) gcs
-    where seq = floor(@user_count * 0.125) + 1;
+    where seq = floor(@user_count * 0.05) + 1;
 
     select @game_limit as game_limit;
 
