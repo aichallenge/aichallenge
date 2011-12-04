@@ -193,6 +193,7 @@ var Quirks = {
 		['Firefox', 5], 
 		// new rendering engine cuts off parts of images
 		['Firefox', 7, 'Windows'],
+		['Firefox', 8, 'Windows'],
 		// no shadow blur support
 		['Chrome', 12], ['Chrome', 13]
 	])
