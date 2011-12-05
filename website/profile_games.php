@@ -3,6 +3,9 @@
 require_once('game_list.php');
 require_once('lookup.php');
 
+$title=$username.$partial_title;
+require_once('header.php');
+
 $user_id = get_type_or_else('user', NULL);
 $submission_id = get_type_or_else('submission', NULL);
 
@@ -22,9 +25,6 @@ $user_id = $user_row['user_id'];
 $username = htmlentities($user_row['username'], ENT_COMPAT, "UTF-8");
 
 $page = get_type_or_else("page", FILTER_VALIDATE_INT, 1);
-
-$title=$username.$partial_title;
-require_once('header.php');
 
 echo "<h2><a href=\"profile.php?user=$user_id\">$username</a>$partial_title</h2>";
 

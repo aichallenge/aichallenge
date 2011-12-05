@@ -143,28 +143,25 @@ if (is_readable($PAIRCUT_FILE)) {
 
 <h2 style="margin-top:1em">Minutes per game per server</h2>
 <?php if(count($games_per_server)==0) echo "<p>Workers are offline.</p>"; else { ?>
-<p></p>
-<table class="bigstats">
-  <tr>
+
+<ul class="serverstats">
   <?php foreach ($games_per_server as $server): ?>
-    <td style="font-size: 30px">
-      <?php echo number_format($server['mpg'],1)?>
-    </td>
+    <li>
+      <ol>
+        <li class="worker_games">
+          <?php echo number_format($server['mpg'],1)?>
+        </li>
+        <li class="worker_name">
+          Server #<?php echo htmlentities($server['worker_id'], ENT_COMPAT, "UTF-8")?>
+        </li>
+        <li class="worker_epm">
+          <?php echo number_format($server['epm'],2) ?> EPM
+        </li>
+      </ol>
+    </li>
   <?php endforeach ?>
-  </tr>
-  <tr>
-  <?php foreach ($games_per_server as $server): ?>
-    <th>Server #<?php echo htmlentities($server['worker_id'], ENT_COMPAT, "UTF-8")?></th>
-  <?php endforeach ?>
-  </tr>
-  <tr>
-  <?php foreach ($games_per_server as $server): ?>
-    <th style="color:#ccc">
-      <?php echo number_format($server['epm'],2)?> EPM <br />
-    </th>
-  <?php endforeach ?>
-  </tr>
-</table>
+</ul>
+
 <?php } ?>
 
 <?php include 'footer.php'; ?>

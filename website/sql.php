@@ -253,6 +253,11 @@ $contest_sql = array(
             or gp.status = 'crashed'
             or gp.status = 'invalid')
     ",
+    "select_game_all_errors" => "select gp.user_id, gp.errors, gp.status, u.username
+        from game_player gp
+        inner join user u on u.user_id = gp.user_id
+        where gp.game_id = %s
+    ",
     "select_worker_stats" => "select game.worker_id,
            count(*)/15 as gpm,
            ifnull(errors/30,0) as epm

@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+
 from random import randrange, choice, shuffle, randint, seed, random
 from math import sqrt
 from collections import deque, defaultdict
@@ -66,6 +67,7 @@ class Ants(Game):
 
         self.cutoff_percent = options.get('cutoff_percent', 0.85)
         self.cutoff_turn = options.get('cutoff_turn', 150)
+        self.hill_kill = False # used to stall cutoff counter
 
         self.do_attack = {
             'focus':   self.do_attack_focus,
@@ -781,6 +783,11 @@ class Ants(Game):
             self.killed_ants.append(ant)
             ant.killed = True
             ant.die_turn = self.turn
+            # check for hill kills to stall cutoff counter
+            if (loc in self.hills and
+                    self.hills[loc].owner != self.cutoff_bot and
+                    self.hills[loc].killed_by is None):
+                self.hill_kill = True
             return self.current_ants.pop(loc)
         except KeyError:
             if not ignore_error:
@@ -1438,6 +1445,7 @@ class Ants(Game):
         self.revealed_water = [[] for _ in range(self.num_players)]
         self.removed_food = [[] for _ in range(self.num_players)]
         self.orders = [[] for _ in range(self.num_players)]
+        self.hill_kill = False # used to stall cutoff counter
 
     def finish_turn(self):
         """ Called by engine at the end of the turn """
@@ -1491,7 +1499,8 @@ class Ants(Game):
         for owner, count in pop_count.items():
             if (count >= pop_total * self.cutoff_percent):
                 if self.cutoff_bot == owner:
-                    self.cutoff_turns += 1
+                    if not self.hill_kill:
+                        self.cutoff_turns += 1
                 else:
                     self.cutoff_bot = owner
                     self.cutoff_turns = 1

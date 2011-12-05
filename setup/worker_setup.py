@@ -122,6 +122,15 @@ def install_dmd(download_base):
         run_cmd("curl '%s/dmd.deb' > dmd.deb" % (download_base,))
         run_cmd("dpkg -i dmd.deb")
 
+def install_racket(download_base):
+    """ Install the Racket language"""
+    if os.path.exists("/usr/bin/racket"):
+        return
+    with CD("/root"):
+        run_cmd("curl '%s/racket.sh' > racket.sh" % (download_base,))
+        run_cmd('echo -e "\n4\n" | sh racket.sh')
+        os.symlink("/usr/racket/bin/racket", "/usr/bin/racket")
+
 def install_packaged_languages():
     install_basic_languages()
     install_extra_distribution_languages()
@@ -139,6 +148,7 @@ def install_all_languages(options):
     install_nodejs(download_base)
     install_coffeescript(download_base) # must come after nodejs
     install_pypy(download_base)
+    install_racket(download_base)
     install_scala(download_base)
 
 def install_jailguard(options):

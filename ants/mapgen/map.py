@@ -10,6 +10,8 @@ except ImportError:
 from copy import deepcopy
 import heapq
 from collections import defaultdict
+import os
+from optparse import OptionParser
 
 MY_ANT = 0
 ANTS = 0
@@ -25,6 +27,7 @@ PLAYER_HILL = string = '0123456789'
 MAP_OBJECT = '?%*.!'
 MAP_RENDER = PLAYER_HILL + HILL_ANT + PLAYER_ANT + MAP_OBJECT
 ALLOWABLE = list(range(30)) + [LAND, FOOD, WATER]
+#MAP_RENDER = ["{0:02}".format(n) for n in range(100)] + [' ?', ' %', ' *', ' .', ' !']
 
 AIM = {'n': (-1, 0),
        'e': (0, 1),
@@ -34,13 +37,25 @@ AIM = {'n': (-1, 0),
 class Map(object):
     def __init__(self, options={}):
         super(Map, self).__init__()
-        self.name = "blank"
+        self.name = options.get('name', 'blank')
         self.map = [[]]
+        self.reports = []
+
+        self.report('map type: {0}'.format(self.name))
         self.random_seed = options.get('seed', None)
         if self.random_seed == None:
             self.random_seed = randint(-maxint-1, maxint)
         seed(self.random_seed)
-
+        self.report('random seed: {0}'.format(self.random_seed))
+        
+    def log(self, msg):
+        msg = '# ' + str(msg) + '\n'
+        sys.stderr.write(msg)
+    
+    def report(self, msg):
+        msg = '# ' + str(msg) + '\n'
+        self.reports.append(msg)
+    
     def generate(self):
         raise Exception("Not Implemented")
 
@@ -73,14 +88,23 @@ class Map(object):
             for c in row:
                 if c >= ANTS:
                     players.add(c)
-        fd.write("# map_type {0}\n# random_seed {1}\nplayers {2}\nrows {3}\ncols {4}\n"
-                 .format(self.name,
-                         self.random_seed,
-                         len(players),
-                         len(self.map),
-                         len(self.map[0])))
+        for msg in self.reports:
+            fd.write(msg)
+        fd.write('players {0}\nrows {1}\ncols {2}\n'.format(len(players),
+                                                            len(self.map),
+                                                            len(self.map[0])))
         for r, row in enumerate(self.map):
             fd.write("m {0}\n".format(''.join([MAP_RENDER[c] for c in row])))
+
+    def toFile(self, filename=None):
+        if filename is None:
+            filename = self.name.replace(' ', '_') + '_p' + '{0:02}'.format(self.players) + '_'
+            filename += ('{0:02}'.format(max(map(lambda x: 0 if not x.isdigit() else int(x),
+                            [f[len(filename):len(filename)+2] for f in os.listdir('.')
+                             if f.startswith(filename)]+['0'])) + 1))
+            filename += '.map'
+        with open(filename, 'w') as mapfile:
+            self.toText(mapfile)
 
     def manhatten_distance(self, loc1, loc2, size):
         rows, cols = size
@@ -106,10 +130,13 @@ class Map(object):
         d_row = min(abs(row1 - row2), rows - abs(row1 - row2))
         return d_row**2 + d_col**2
 
-    def get_distances(self, start_loc, end_locs, size):
+    def get_distances(self, start_loc, end_locs, size=None):
         'get a list of distances from 1 location to a bunch of others'
         end_locs = end_locs[:]
-        rows, cols = size
+        if size == None:
+            rows, cols = len(self.map), len(self.map[0])
+        else:
+            rows, cols = size
         visited = {}
         open_nodes = deque()
         open_nodes.append((start_loc, 0))
@@ -203,9 +230,14 @@ class Map(object):
             # switch to closed list
             closed_list[node.loc] = node
             # check if found distination
-            if node.loc == loc2:
-                # build path
-                return build_path(node)
+            if block > 1:
+                for d_loc in block_offsets:
+                    if loc2 == self.dest_offset(node.loc, d_loc, size):
+                        return build_path
+            else:
+                if node.loc == loc2:
+                    # build path
+                    return build_path(node)
             # expand node
             for d in AIM:
                 loc = self.destination(node.loc, d, size)
@@ -462,95 +494,114 @@ class Map(object):
         player_hills = defaultdict(list) # list of hills for each player
         for row, squares in enumerate(self.map):
             for col, square in enumerate(squares):
-                if square >= 0:
+                if 0 <= square < 10:
                     player_hills[square].append((row, col))
-        # list of
-        #     list of tuples containing
-        #         location, aim, and enemy map dict
-        orientations = [[(player_hills[0][0], 0,
-            dict([(i, i, ) for i in range(self.players)]))]]
-        for player in range(1, self.players):
-            if len(player_hills[player]) != len(player_hills[0]):
+        if len(player_hills) > 0:
+            # list of
+            #     list of tuples containing
+            #         location, aim, and enemy map dict
+            orientations = [[(player_hills[0][0], 0,
+                dict([(i, i, ) for i in range(self.players)]))]]
+            for player in range(1, self.players):
+                if len(player_hills[player]) != len(player_hills[0]):
+                    raise Exception("Invalid map",
+                                    "This map is not symmetric.  Player 0 has {0} hills while player {1} has {2} hills."
+                                    .format(len(player_hills[0]), player, len(player_hills[player])))
+                new_orientations = []
+                for player_hill in player_hills[player]:
+                    for aim in range(8):
+                    # check if map looks similar given the orientation
+                        enemy_map = self.map_similar(player_hills[0][0], player_hill, aim, player)
+                        if enemy_map != None:
+                            # produce combinations of orientation sets
+                            for hill_aims in orientations:
+                                new_hill_aims = deepcopy(hill_aims)
+                                new_hill_aims.append((player_hill, aim, enemy_map))
+                                new_orientations.append(new_hill_aims)
+                orientations = new_orientations
+                if len(orientations) == 0:
+                    raise Exception("Invalid map",
+                                    "This map is not symmetric. Player {0} does not have an orientation that matches player 0"
+                                    .format(player))
+            # ensure types of hill aims in orientations are symmetric
+            # place food set and double check symmetry
+            valid_orientations = []
+            for hill_aims in orientations:
+                fix = []
+                for loc, aim, enemy_map in hill_aims:
+                    row, col = self.dest_offset(loc, self.offset_aim((1,2), aim), size)
+                    fix.append(((row, col), self.map[row][col]))
+                    self.map[row][col] = FOOD
+                for loc, aim, enemy_map in hill_aims:
+                    if self.map_similar(hill_aims[0][0], loc, aim, enemy_map[0]) is None:
+                        break
+                else:
+                    valid_orientations.append(hill_aims)
+                for (row, col), ilk in reversed(fix):
+                    self.map[row][col] = ilk
+            if len(valid_orientations) == 0:
                 raise Exception("Invalid map",
-                                "This map is not symmetric.  Player 0 has {0} hills while player {1} has {2} hills."
-                                .format(len(player_hills[0]), player, len(player_hills[player])))
-            new_orientations = []
-            for player_hill in player_hills[player]:
-                for aim in range(8):
-                # check if map looks similar given the orientation
-                    enemy_map = self.map_similar(player_hills[0][0], player_hill, aim, player)
-                    if enemy_map != None:
-                        # produce combinations of orientation sets
-                        for hill_aims in orientations:
-                            new_hill_aims = deepcopy(hill_aims)
-                            new_hill_aims.append((player_hill, aim, enemy_map))
-                            new_orientations.append(new_hill_aims)
-            orientations = new_orientations
-            if len(orientations) == 0:
-                raise Exception("Invalid map",
-                                "This map is not symmetric. Player {0} does not have an orientation that matches player 0"
-                                .format(player))
-        # ensure types of hill aims in orientations are symmetric
-        # place food set and double check symmetry
-        valid_orientations = []
-        for hill_aims in orientations:
-            fix = []
-            for loc, aim, enemy_map in hill_aims:
-                row, col = self.dest_offset(loc, self.offset_aim((1,2), aim), size)
-                fix.append(((row, col), self.map[row][col]))
-                self.map[row][col] = FOOD
-            for loc, aim, enemy_map in hill_aims:
-                if self.map_similar(hill_aims[0][0], loc, aim, enemy_map[0]) is None:
-                    break
-            else:
-                valid_orientations.append(hill_aims)
-            for (row, col), ilk in reversed(fix):
-                self.map[row][col] = ilk
-        if len(valid_orientations) == 0:
+                                "There are no valid orientation sets")
+            return valid_orientations
+        else:
             raise Exception("Invalid map",
-                            "There are no valid orientation sets")
-        return valid_orientations
-                
+                            "There are no player hills")
+            
     def allowable(self, check_sym=True, check_dist=True):
-        # Maps are limited to at most 200x200 squares
+        # Maps are limited to at most 200 squares for either dimension
         size = (len(self.map), len(self.map[0]))
         if size[0] > 200 or size[1] > 200:
             return "Map is too large"
-                
+        
         # Maps are limited to 10 players
+        players = set()
+        hills = {}
         for row, squares in enumerate(self.map):
             for col, square in enumerate(squares):
                 if square not in ALLOWABLE:
                     return "Maps are limited to 10 players and must contain the following characters: A-Ja-j0-9.*%"
-                
+                elif square >= 0:
+                    players.add(square % 10)
+                    if square < 10:
+                        hills[(row, col)] = square
+        
+        # Maps are limited in area by number of players
+        if size[0] * size[1] > max(25000, 5000 * len(players)):
+            return "Map area is too large for player count"                
+        
         # Maps must be symmetric
         if check_sym:
             try:
                 self.get_map_symmetry()
             except Exception as e:
-                raise
-                return "Map is not symmetric" + str(e)
+                return "Map is not symmetric: " + str(e)
         
-        # Hills must be between 24 and 250 steps away from other hills (details still being worked on)
-        if check_dist:
-            hills = {}
-            for row, squares in enumerate(self.map):
-                for col, square in enumerate(squares):
-                    if square >= 0 and square < 20:
-                        owner = square % 10
-                        loc = (row, col)
-                        hills[loc] = owner
-                        for hill_loc, hill_owner in hills.items():
-                            if hill_owner != owner:
-                                # check distance
-                                hill_dist = len(self.get_path(loc, hill_loc, size))
-                                if hill_dist is None:
-                                    return "Map has hills without a path between them"
-                                elif hill_dist < 24:
-                                    return "Map has hills too close"
-                                elif hill_dist > 250:
-                                    return "Map has hills too far apart"
-                            
+        # Hills must be between 20 and 150 steps away from other hills
+        # Hills must be more than 5 distance apart
+        hill_min = False
+        hill_max = False
+        hill_range = False
+        self.report('hill distance ' + ' '.join(['{0[0]:>3},{0[1]:>3}'.format(loc) for loc in hills.keys()]))
+        for hill_loc in hills.keys():
+            hill_dists = {point: dist for point, dist in self.get_distances(hill_loc, hills.keys(), size)}
+            hill_msg = '      {0[0]:>3},{0[1]:>3} '.format(hill_loc)
+            for hill_loc2 in hills.keys():
+                if hill_loc != hill_loc2 and self.euclidean_distance2(hill_loc, hill_loc2, size) <= 25:
+                    hill_range = True
+                hill_msg += '{0:>7} '.format(hill_dists[hill_loc2])
+            self.report(hill_msg)
+            if min([dist for point, dist in hill_dists.items() if self.map[point[0]][point[1]] != self.map[hill_loc[0]][hill_loc[1]] ]) < 20:
+                hill_min = True
+            if max(hill_dists.values()) > 150:
+                hill_max = True
+        if hill_min and hill_max:
+            return "Map has hills too close and too far"
+        elif hill_min:
+            return "Map has hills too close"
+        elif hill_max:
+            return "Map has hills too far"
+        elif hill_range:
+            return "Map has hills within attack range"    
 
         # Maps must not contain islands
         # all squares must be accessible from all other squares
@@ -587,3 +638,142 @@ class Map(object):
                     ants[(row, col)] = self.map[row][col]
 
         return None
+    
+    def fromFile(self, fd):
+        """ Parse the map_text into a more friendly data structure """
+        ant_list = None
+        hill_list = []
+        hill_count = defaultdict(int)
+        width = height = None
+        water = []
+        food = []
+        ants = defaultdict(list)
+        hills = defaultdict(list)
+        row = 0
+        score = None
+        hive = None
+        num_players = None
+    
+        #for line in map_text.split('\n'):
+        for line in fd:
+            line = line.strip()
+    
+            # ignore blank lines and comments
+            if not line or line[0] == '#':
+                continue
+    
+            key, value = line.split(' ', 1)
+            key = key.lower()
+            if key == 'cols':
+                width = int(value)
+            elif key == 'rows':
+                height = int(value)
+            elif key == 'players':
+                num_players = int(value)
+                if num_players < 2 or num_players > 10:
+                    raise Exception("map",
+                                    "player count must be between 2 and 10")
+            elif key == 'm':
+                if ant_list is None:
+                    if num_players is None:
+                        raise Exception("map",
+                                        "players count expected before map lines")
+                    ant_list = [chr(97 + i) for i in range(num_players)]
+                    hill_list = list(map(str, range(num_players)))
+                    hill_ant = [chr(65 + i) for i in range(num_players)]
+                if len(value) != width:
+                    raise Exception("map",
+                                    "Incorrect number of cols in row %s. "
+                                    "Got %s, expected %s."
+                                    %(row, len(value), width))
+                for col, c in enumerate(value):
+                    if c in ant_list:
+                        ants[ant_list.index(c)].append((row,col))
+                    elif c in hill_list:
+                        hills[hill_list.index(c)].append((row,col))
+                        hill_count[hill_list.index(c)] += 1
+                    elif c in hill_ant:
+                        ants[hill_ant.index(c)].append((row,col))
+                        hills[hill_ant.index(c)].append((row,col))
+                        hill_count[hill_ant.index(c)] += 1
+                    elif c == MAP_OBJECT[FOOD]:
+                        food.append((row,col))
+                    elif c == MAP_OBJECT[WATER]:
+                        water.append((row,col))
+                    elif c != MAP_OBJECT[LAND]:
+                        raise Exception("map",
+                                        "Invalid character in map: %s" % c)
+                row += 1
+    
+        if height != row:
+            raise Exception("map",
+                            "Incorrect number of rows.  Expected %s, got %s"
+                            % (height, row))
+    
+        # look for ants without hills to invalidate map for a game
+        for hill, count in hill_count.items():
+            if count == 0:
+                raise Exception("map",
+                                "Player %s has no starting hills"
+                                % hill)
+                        
+        map_data = {
+                        'size':        (height, width),
+                        'num_players': num_players,
+                        'hills':       hills,
+                        'ants':        ants,
+                        'food':        food,
+                        'water':       water
+                    }  
+        
+        # initialize size
+        self.height, self.width = map_data['size']
+        self.land_area = self.height*self.width - len(map_data['water'])
+
+        # initialize map
+        # this matrix does not track hills, just ants
+        self.map = [[LAND]*self.width for _ in range(self.height)]
+
+        # initialize water
+        for row, col in map_data['water']:
+            self.map[row][col] = WATER
+
+        # for new games
+        # ants are ignored and 1 ant is created per hill
+        # food is ignored
+        # for scenarios, the map file is followed exactly
+
+        # initialize hills
+        for owner, locs in map_data['hills'].items():
+            for loc in locs:
+                self.map[loc[0]][loc[1]] = owner
+        self.players = num_players
+    
+def main():
+    parser = OptionParser()
+    parser.add_option("-f", "--filename", dest="filename",
+                        help="filename to check for allowable map")
+    parser.add_option("-n", "--name", dest="name",
+                      help="name of map file to create")
+    
+    opts, _ = parser.parse_args(sys.argv)
+    new_map = Map()
+    if opts.filename:
+        with open(opts.filename) as f:
+            new_map.fromFile(f)
+    else:
+        new_map.fromFile(sys.stdin)
+    errors = new_map.allowable()
+    if errors:
+        print(errors)
+    else:
+        if opts.name:
+            new_map.name = opts.name
+            new_map.toFile()
+        else:
+            new_map.toText()
+        
+    #options = {key: value for key, value in vars(opts).items() if value is not None}
+
+if __name__ == '__main__':
+    main()

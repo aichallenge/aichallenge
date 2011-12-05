@@ -162,6 +162,12 @@ include 'header.php';
     <td>&nbsp;</td>
   </tr>
   <tr>
+    <td><a href="starter_packages/racket_starter_package.zip">Racket</a></td>
+    <td>Racket v5.2</td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+  </tr>
+  <tr>
     <td><a href="starter_packages/ruby_starter_package.zip">Ruby</a></td>
     <td>ruby 1.9.2p0</td>
     <td>&nbsp;</td>

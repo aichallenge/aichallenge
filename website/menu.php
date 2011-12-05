@@ -41,7 +41,7 @@
       <li><a href="http://forums.aichallenge.org/">Forums</a></li>
       <li><a href="irc://irc.freenode.org/aichallenge">IRC</a> <a href="http://webchat.freenode.net/?channels=aichallenge&uio=d4">(webclient)</a></li>
     </ul>
-    <h1>Pasts Contests</h1>
+    <h1>Past Contests</h1>
     <ul>
       <li><a href="http://tron.aichallenge.org/">Tron (Winter 2010)</a></li>
       <li><a href="http://planetwars.aichallenge.org/">Planet Wars (Fall 2010)</a></li>
