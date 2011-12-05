@@ -11,6 +11,7 @@ from copy import deepcopy
 import heapq
 from collections import defaultdict
 import os
+from optparse import OptionParser
 
 MY_ANT = 0
 ANTS = 0
@@ -573,7 +574,7 @@ class Map(object):
             try:
                 self.get_map_symmetry()
             except Exception as e:
-                return "Map is not symmetric: " + str(e[1])
+                return "Map is not symmetric: " + str(e)
         
         # Hills must be between 20 and 150 steps away from other hills
         # Hills must be more than 5 distance apart
@@ -637,3 +638,142 @@ class Map(object):
                     ants[(row, col)] = self.map[row][col]
 
         return None
+    
+    def fromFile(self, fd):
+        """ Parse the map_text into a more friendly data structure """
+        ant_list = None
+        hill_list = []
+        hill_count = defaultdict(int)
+        width = height = None
+        water = []
+        food = []
+        ants = defaultdict(list)
+        hills = defaultdict(list)
+        row = 0
+        score = None
+        hive = None
+        num_players = None
+    
+        #for line in map_text.split('\n'):
+        for line in fd:
+            line = line.strip()
+    
+            # ignore blank lines and comments
+            if not line or line[0] == '#':
+                continue
+    
+            key, value = line.split(' ', 1)
+            key = key.lower()
+            if key == 'cols':
+                width = int(value)
+            elif key == 'rows':
+                height = int(value)
+            elif key == 'players':
+                num_players = int(value)
+                if num_players < 2 or num_players > 10:
+                    raise Exception("map",
+                                    "player count must be between 2 and 10")
+            elif key == 'm':
+                if ant_list is None:
+                    if num_players is None:
+                        raise Exception("map",
+                                        "players count expected before map lines")
+                    ant_list = [chr(97 + i) for i in range(num_players)]
+                    hill_list = list(map(str, range(num_players)))
+                    hill_ant = [chr(65 + i) for i in range(num_players)]
+                if len(value) != width:
+                    raise Exception("map",
+                                    "Incorrect number of cols in row %s. "
+                                    "Got %s, expected %s."
+                                    %(row, len(value), width))
+                for col, c in enumerate(value):
+                    if c in ant_list:
+                        ants[ant_list.index(c)].append((row,col))
+                    elif c in hill_list:
+                        hills[hill_list.index(c)].append((row,col))
+                        hill_count[hill_list.index(c)] += 1
+                    elif c in hill_ant:
+                        ants[hill_ant.index(c)].append((row,col))
+                        hills[hill_ant.index(c)].append((row,col))
+                        hill_count[hill_ant.index(c)] += 1
+                    elif c == MAP_OBJECT[FOOD]:
+                        food.append((row,col))
+                    elif c == MAP_OBJECT[WATER]:
+                        water.append((row,col))
+                    elif c != MAP_OBJECT[LAND]:
+                        raise Exception("map",
+                                        "Invalid character in map: %s" % c)
+                row += 1
+    
+        if height != row:
+            raise Exception("map",
+                            "Incorrect number of rows.  Expected %s, got %s"
+                            % (height, row))
+    
+        # look for ants without hills to invalidate map for a game
+        for hill, count in hill_count.items():
+            if count == 0:
+                raise Exception("map",
+                                "Player %s has no starting hills"
+                                % hill)
+                        
+        map_data = {
+                        'size':        (height, width),
+                        'num_players': num_players,
+                        'hills':       hills,
+                        'ants':        ants,
+                        'food':        food,
+                        'water':       water
+                    }  
+        
+        # initialize size
+        self.height, self.width = map_data['size']
+        self.land_area = self.height*self.width - len(map_data['water'])
+
+        # initialize map
+        # this matrix does not track hills, just ants
+        self.map = [[LAND]*self.width for _ in range(self.height)]
+
+        # initialize water
+        for row, col in map_data['water']:
+            self.map[row][col] = WATER
+
+        # for new games
+        # ants are ignored and 1 ant is created per hill
+        # food is ignored
+        # for scenarios, the map file is followed exactly
+
+        # initialize hills
+        for owner, locs in map_data['hills'].items():
+            for loc in locs:
+                self.map[loc[0]][loc[1]] = owner
+        self.players = num_players
+    
+def main():
+    parser = OptionParser()
+    parser.add_option("-f", "--filename", dest="filename",
+                        help="filename to check for allowable map")
+    parser.add_option("-n", "--name", dest="name",
+                      help="name of map file to create")
+    
+    opts, _ = parser.parse_args(sys.argv)
+    new_map = Map()
+    if opts.filename:
+        with open(opts.filename) as f:
+            new_map.fromFile(f)
+    else:
+        new_map.fromFile(sys.stdin)
+    errors = new_map.allowable()
+    if errors:
+        print(errors)
+    else:
+        if opts.name:
+            new_map.name = opts.name
+            new_map.toFile()
+        else:
+            new_map.toText()
+        
+    #options = {key: value for key, value in vars(opts).items() if value is not None}
+
+if __name__ == '__main__':
+    main()

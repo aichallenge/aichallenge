@@ -764,6 +764,20 @@ class CellMazeMap(Map):
             self.fill_small_areas()
             self.make_wider()
 
+        def add_border(size):
+            rows, cols = size
+            self.map[0] = [WATER] * cols
+            self.map[-1] = [WATER] * cols
+            for row in range(rows):
+                self.map[row][0] = WATER
+                self.map[row][-1] = WATER
+                
+        def corner_hills(size):
+            self.map[3][3] = 0
+            self.map[3][-4] = 1
+            self.map[-4][-4] = 2
+            self.map[-4][3] = 3
+                
         def caverns():
             #self.cell_width = max(self.cell_width, 4)
             #self.cell_size += max(self.cell_size, 9.0)
@@ -921,6 +935,7 @@ def main():
         reason = new_map.allowable(check_sym=True, check_dist=True)
     exit_code = 0
     if reason is not None:
+        new_map.toText(sys.stderr)
         print('# ' + reason)
         exit_code = 1
         sys.exit(exit_code)
