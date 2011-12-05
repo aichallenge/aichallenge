@@ -785,7 +785,7 @@ class Ants(Game):
             ant.die_turn = self.turn
             # check for hill kills to stall cutoff counter
             if (loc in self.hills and
-                    self.hills[loc].owner is not self.cutoff_bot and
+                    self.hills[loc].owner != self.cutoff_bot and
                     self.hills[loc].killed_by is None):
                 self.hill_kill = True
             return self.current_ants.pop(loc)
