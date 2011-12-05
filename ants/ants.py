@@ -1,6 +1,4 @@
 #!/usr/bin/env python
-import logging
-log = logging.info 
 
 from random import randrange, choice, shuffle, randint, seed, random
 from math import sqrt
