@@ -315,7 +315,7 @@ comp_args = {
                              ["gnatlink", "-o", BOT]],
     "C"             : [["gcc", "-O3", "-funroll-loops", "-c"],
                              ["gcc", "-O2", "-lm", "-o", BOT]],
-    "C#"            : [["gmcs", "-warn:0", "--optimize=all", "-out:%s.exe" % BOT]],
+    "C#"            : [["gmcs", "-warn:0", "-optimize+", "-out:%s.exe" % BOT]],
     "VB"            : [["vbnc", "-out:%s.exe" % BOT]],
     "C++"         : [["g++", "-O3", "-funroll-loops", "-c"],
                              ["g++", "-O2", "-lm", "-o", BOT]],
