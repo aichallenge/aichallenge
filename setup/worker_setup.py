@@ -200,7 +200,8 @@ def setup_base_chroot(options):
             with open("chroot_configs/sources.list.template", "r") as sl_file:
                 sources_template = sl_file.read()
             sources_contents = sources_template.format(src_url=options.src_url)
-            with open("%s/etc/apt/sources.list", "w") as sources_file:
+            chroot_filename = "%s/etc/apt/sources.list" % (base_chroot_dir,)
+            with open(chroot_filename, "w") as sources_file:
                 sources_file.write(sources_contents)
             run_cmd("cp -r chroot_configs/ai-jail /etc/schroot/ai-jail")
         deb_archives = "/var/cache/apt/archives/"
