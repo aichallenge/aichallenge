@@ -49,6 +49,7 @@ def main():
             --api-key %s --install-cronjob --start" % (sys.argv[1], sys.argv[2])
     if len(sys.argv) > 3:
         setup_cmd += " --src_url " + sys.argv[3]
+    run_cmd(setup_cmd)
 
 if __name__=="__main__":
     main()
