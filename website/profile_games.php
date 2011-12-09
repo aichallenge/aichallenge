@@ -3,9 +3,6 @@
 require_once('game_list.php');
 require_once('lookup.php');
 
-$title=$username.$partial_title;
-require_once('header.php');
-
 $user_id = get_type_or_else('user', NULL);
 $submission_id = get_type_or_else('submission', NULL);
 
@@ -23,6 +20,9 @@ if (!isset($user_row)) {
 
 $user_id = $user_row['user_id'];
 $username = htmlentities($user_row['username'], ENT_COMPAT, "UTF-8");
+
+$title=$username.$partial_title;
+require_once('header.php');
 
 $page = get_type_or_else("page", FILTER_VALIDATE_INT, 1);
 

@@ -45,7 +45,7 @@ $contest_sql = array(
                               where deleted = 0
                               and (worker_id is null
                               or (worker_id > 0
-                                  and matchup_timestamp < (NOW() - INTERVAL 20 MINUTE)))
+                                  and matchup_timestamp < (NOW() - INTERVAL 40 MINUTE)))
                               order by matchup_id asc
                               limit 1;",
     "select_matchup_confirm" => "select worker_id, map_id from matchup
