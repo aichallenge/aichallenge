@@ -48,7 +48,7 @@ def main():
     setup_cmd = "./worker_setup.py -y --username contest --api-url %s \
             --api-key %s --install-cronjob --start" % (sys.argv[1], sys.argv[2])
     if len(sys.argv) > 3:
-        setup_cmd += " --src_url " + sys.argv[3]
+        setup_cmd += " " + " ".join(sys.argv[3:])
     run_cmd(setup_cmd)
 
 if __name__=="__main__":

@@ -30,5 +30,5 @@ $api_url = "http://".$_SERVER['SERVER_NAME'] . dirname($_SERVER['SCRIPT_NAME']);
 ?>
 
 curl '<?php echo $api_url?>worker_init.py' > /root/worker_init.py
-python /root/worker_init.py <?php echo $api_url.' '.$new_key ?>
+python /root/worker_init.py <?php echo $api_url.' '.$new_key ?> $@
 
