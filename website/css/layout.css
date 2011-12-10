@@ -170,13 +170,13 @@ body {
     list-style-type: circle;
 }
 
-#sponsor-bar {
+#sponsor_bar {
     text-align: center;
     font-size: 0.9em;
     padding: 5px 5px 5px 10px;
 }
 
-#sponsor-bar p {
+#sponsor_bar p {
     text-align: center;
 }
 
