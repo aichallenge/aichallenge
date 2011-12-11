@@ -66,18 +66,18 @@ $sql = "select game.worker_id,
         ) m
             on game.worker_id = -m.worker_id
         left outer join (
-            select game.game_id, user_id
-            from game_player
-            inner join game on game.game_id = game_player.game_id
+            select game_id, user_id
+            from game_player,
+            (select game_id as min_game_id from game where timestamp > timestampadd(minute, -30, current_timestamp) order by game_id asc limit 1) min_query
             where status in ('timeout', 'crashed')
-                and timestamp > timestampadd(minute, -30, current_timestamp)
+                and game_id > min_game_id
         ) pe
             on game.game_id = pe.game_id
         left outer join (
-            select game.game_id, count(*) as player_count
-            from game_player
-            inner join game on game.game_id = game_player.game_id
-            where timestamp > timestampadd(minute, -30, current_timestamp)
+            select game_id, count(*) as player_count
+            from game_player,
+            (select game_id as min_game_id from game where timestamp > timestampadd(minute, -30, current_timestamp) order by game_id asc limit 1) min_query
+            where game_id > min_game_id
             group by game_id
         ) pc
             on game.game_id = pc.game_id
