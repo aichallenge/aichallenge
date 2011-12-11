@@ -172,7 +172,7 @@ if (is_readable($PAIRCUT_FILE)) {
           Server #<?php echo htmlentities($server['worker_id'], ENT_COMPAT, "UTF-8")?>
         </li>
         <li class="worker_perr">
-          <?php echo number_format($server['perr'] * 100, 1) ?>% Bot Fail
+          <?php echo number_format($server['perr'] * 100, 1) ?>% fail
         </li>
         <?php if($server['epm'] != 0) { ?>
         <li class="worker_epm">
