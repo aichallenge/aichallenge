@@ -37,8 +37,10 @@ if @min_players <= @max_players then
     set @twiceBetaSq = 2 * pow(@init_beta, 2);
 
     -- Step 1: select the seed player
-    select s.user_id, s.submission_id, s.mu, s.sigma
-    into @seed_id, @submission_id, @mu, @sigma
+    -- create matchup and add seed player
+    -- worker_id of 0 prevents workers from pulling the task
+    insert matchup (seed_id, worker_id)
+    select s.user_id, 0
     from submission s
     inner join user u
         on u.user_id = s.user_id
@@ -59,11 +61,15 @@ if @min_players <= @max_players then
              s.user_id asc
     limit 1;
 
-    -- create matchup and add seed player
-    -- worker_id of 0 prevents workers from pulling the task
-    insert into matchup (seed_id, worker_id)
-    values (@seed_id, 0);
     set @matchup_id = last_insert_id();
+
+    select s.user_id, s.submission_id, s.mu, s.sigma
+    into @seed_id, @submission_id, @mu, @sigma
+    from matchup m
+    inner join submission s
+        on m.seed_id = s.user_id
+    where s.latest = 1
+        and m.matchup_id = @matchup_id;
 
     insert into matchup_player (matchup_id, user_id, submission_id, player_id, mu, sigma)
     values (@matchup_id, @seed_id, @submission_id, -1, @mu, @sigma);
