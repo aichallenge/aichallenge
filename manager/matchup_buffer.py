@@ -5,8 +5,8 @@ import time
 import MySQLdb
 from server_info import server_info
 
-DEFAULT_BUFFER = 10
-MAX_FILL = 50
+DEFAULT_BUFFER = 20
+MAX_FILL = 60
 
 def log(msg):
     timestamp = time.asctime()
