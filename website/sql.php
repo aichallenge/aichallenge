@@ -304,7 +304,7 @@ $contest_sql = array(
         from matchup_player as m_p
             inner join matchup on matchup.matchup_id = m_p.matchup_id
         where user_id = %s
-        and m_p.deleted = 0 and (worker_id > 0 or worker_id is null);",
+        and m_p.deleted = 0 and worker_id > 0;",
     "select_profile_user" => "select
           u.username,
           u.created,

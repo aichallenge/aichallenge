@@ -37,8 +37,10 @@ if @min_players <= @max_players then
     set @twiceBetaSq = 2 * pow(@init_beta, 2);
 
     -- Step 1: select the seed player
-    select s.user_id, s.submission_id, s.mu, s.sigma
-    into @seed_id, @submission_id, @mu, @sigma
+    -- create matchup and add seed player
+    -- worker_id of 0 prevents workers from pulling the task
+    insert matchup (seed_id, worker_id)
+    select s.user_id, 0
     from submission s
     inner join user u
         on u.user_id = s.user_id
@@ -59,11 +61,15 @@ if @min_players <= @max_players then
              s.user_id asc
     limit 1;
 
-    -- create matchup and add seed player
-    -- worker_id of 0 prevents workers from pulling the task
-    insert into matchup (seed_id, worker_id)
-    values (@seed_id, 0);
     set @matchup_id = last_insert_id();
+
+    select s.user_id, s.submission_id, s.mu, s.sigma
+    into @seed_id, @submission_id, @mu, @sigma
+    from matchup m
+    inner join submission s
+        on m.seed_id = s.user_id
+    where s.latest = 1
+        and m.matchup_id = @matchup_id;
 
     insert into matchup_player (matchup_id, user_id, submission_id, player_id, mu, sigma)
     values (@matchup_id, @seed_id, @submission_id, -1, @mu, @sigma);
@@ -142,29 +148,6 @@ if @min_players <= @max_players then
         ) g
         group by 1;
 
-    -- get the total number of users
-    select count(*)
-    into @user_count
-    from submission s
-    where s.latest = 1 and s.status = 40;
-
-    -- set the limit on number of games played for a player to be considered
-    set @seq = 0;
-    select game_count
-    into @game_limit
-    from (
-        select game_count, @seq := @seq + 1 as seq
-        from (
-            select tg.game_count
-            from tmp_games tg
-            inner join submission s
-                on s.user_id = tg.user_id
-            where s.latest = 1 and s.status = 40
-            order by tg.game_count desc
-        ) gc
-    ) gcs
-    where seq = floor(@user_count * 0.05) + 1;
-
     -- Step 3: select opponents 1 at a time
     set @cur_user_id = @seed_id;
     set @last_user_id = -1;
@@ -232,8 +215,6 @@ if @min_players <= @max_players then
                             on t.user_id = s.user_id
                         -- join with all players in current matchup to average match quality
                         where p.matchup_id = @matchup_id
-                        -- exclude players with high 24 hour game count
-                        and t.game_count <= @game_limit
 
                         -- exclude players currently in the matchup
                         and s.user_id not in (

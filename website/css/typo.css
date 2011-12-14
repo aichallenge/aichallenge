@@ -339,8 +339,12 @@ strong {
     color: #050;
 }
 
-.serverstats .worker_epm {
+.serverstats .worker_perr {
     color: #ccc;
+}
+
+.serverstats .worker_epm {
+    color: #c00;
 }
 
 div.pagination span {
