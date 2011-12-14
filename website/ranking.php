@@ -55,13 +55,13 @@ function get_last_game_id($type=NULL, $id=NULL) {
 
 function cache_key($page=0, $org_id=NULL, $country_id=NULL, $language_id=NULL, $format='json') {
     $cache_length = 120;    
-    if ($org_id) {
+    if ($org_id !== NULL) {
         $key = get_last_game_id('o',$org_id)."r:o:" . strval($org_id);
         $cache_length = 1440;
-    } elseif ($country_id) {
+    } elseif ($country_id !== NULL) {
         $key = get_last_game_id('c',$country_id)."r:c:" . strval($country_id);
         $cache_length = 600;
-    } elseif ($language_id) {
+    } elseif ($language_id !== NULL) {
         $key = get_last_game_id('l',$language_id)."r:l:" . strval($language_id);
     } else {
         $key = get_last_game_id()."r:a:";
