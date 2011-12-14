@@ -25,11 +25,11 @@ def main():
     fill_size = buf_size
     full = False
     while True:
-        cursor.execute("select count(*) from matchup where worker_id = NULL")
+        cursor.execute("select count(*) from matchup where worker_id is NULL")
         cur_buffer = cursor.fetchone()[0]
         if cur_buffer >= buf_size:
             log("Buffer full with %d matches in buffer" % (cur_buffer,))
-            sleep(10)
+            time.sleep(10)
             if full:
                 fill_size = max(buf_size, fill_size * 0.9)
             full = True
