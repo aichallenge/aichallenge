@@ -194,11 +194,15 @@ def setup_base_chroot(options):
     if not os.path.exists(base_chroot_dir):
         os.makedirs(base_chroot_dir)
         run_cmd("debootstrap --variant=buildd --arch %s natty \
-                %s http://us-east-1.ec2.archive.ubuntu.com/ubuntu/" % (options.arch, base_chroot_dir,))
+                %s %s" % (options.arch, base_chroot_dir, options.os_url))
         with CD(TEMPLATE_DIR):
             run_cmd("cp chroot_configs/chroot.d/aic-base /etc/schroot/chroot.d/")
-            run_cmd("cp chroot_configs/sources.list %s/etc/apt/"
-                    % (base_chroot_dir,))
+            with open("chroot_configs/sources.list.template", "r") as sl_file:
+                sources_template = sl_file.read()
+            sources_contents = sources_template.format(src_url=options.src_url)
+            chroot_filename = "%s/etc/apt/sources.list" % (base_chroot_dir,)
+            with open(chroot_filename, "w") as sources_file:
+                sources_file.write(sources_contents)
             run_cmd("cp -r chroot_configs/ai-jail /etc/schroot/ai-jail")
         deb_archives = "/var/cache/apt/archives/"
         run_cmd("cp {0}*.deb {1}{0}".format(deb_archives, base_chroot_dir))
@@ -364,6 +368,8 @@ def get_options(argv):
         "create_jails": True,
         "api_url":  "http://"+ '.'.join(getfqdn().split('.')[1:]) +"/",
         "api_key": "",
+        "src_url": "mirror://mirrors.ubuntu.com/mirrors.txt",
+        "os_url": "http://us.archive.ubuntu.com/ubuntu/",
         "install_cronjob": False,
         "run_worker": False,
         "interactive": True,
@@ -407,6 +413,10 @@ def get_options(argv):
             help="Api key used when communicating with the main server")
     parser.add_option("-b", "--api-url", action="store", dest="api_url",
             help="Base url for queries to the main server")
+    parser.add_option("--src-url", action="store", dest="src_url",
+            help="Source url for chroot apt use")
+    parser.add_option("--os-url", action="store", dest="os_url",
+            help="Base OS url for chroot install")
     parser.add_option("--install-cronjob", action="store_true",
             dest="install_cronjob",
             help="Install cron script to start worker running after reboot")

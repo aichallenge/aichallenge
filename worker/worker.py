@@ -610,13 +610,8 @@ def main(argv):
     # if the worker is not run in task mode, it will not clean up the download
     #    dir, so that debugging can be done on what had been downloaded/unzipped
 
-    # print hash values for submission, must be downloaded
-    if opts.submission_id != 0 and opts.hash:
-        worker.check_hash(opts.submission_id)
-        return
-
     # download and compile
-    if opts.submission_id != 0 and opts.download and opts.compile:
+    if opts.submission_id != 0 and opts.compile:
         worker.compile(opts.submission_id)
         return
 

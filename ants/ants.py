@@ -134,7 +134,7 @@ class Ants(Game):
         for owner, locs in map_data['hills'].items():
             for loc in locs:
                 hill = self.add_hill(loc, owner)
-                if not self.scenario:
+                if not self.scenario or len(map_data['ants']) == 0:
                     self.add_ant(hill)
 
         if self.scenario:
@@ -145,7 +145,10 @@ class Ants(Game):
             # initialize food
             for food in map_data['food']:
                 self.add_food(food)
-
+            self.original_map = []
+            for map_row in self.map:
+                self.original_map.append(map_row[:])
+                
         # initialize scores
         # points start at # of hills to prevent negative scores
         self.score = [len(map_data['hills'][0])]*self.num_players
@@ -502,15 +505,19 @@ class Ants(Game):
 
         return changes
 
-    def get_map_output(self, player=None):
+    def get_map_output(self, player=None, replay=False):
         """ Render the map from the perspective of the given player.
 
             If player is None, then no squares are hidden and player ids
               are not reordered.
         """
         result = []
-        for row in self.get_perspective(player):
-            result.append(''.join([MAP_RENDER[col] for col in row]))
+        if replay and self.scenario:
+            for row in self.original_map:
+                result.append(''.join([MAP_RENDER[col] for col in row]))
+        else:
+            for row in self.get_perspective(player):
+                result.append(''.join([MAP_RENDER[col] for col in row]))
         return result
 
     def nearby_ants(self, loc, max_dist, exclude=None):
@@ -1412,7 +1419,8 @@ class Ants(Game):
                                  - self.food_visible * self.num_players)
             else:
                 starting_food = 0
-            self.do_food_visible(self.food_visible * self.num_players)
+            if self.food_visible > 0:
+                self.do_food_visible(self.food_visible * self.num_players)
             self.do_food(starting_food)
 
     def finish_game(self):
@@ -1684,7 +1692,7 @@ class Ants(Game):
         replay['map'] = {}
         replay['map']['rows'] = self.height
         replay['map']['cols'] = self.width
-        replay['map']['data'] = self.get_map_output()
+        replay['map']['data'] = self.get_map_output(replay=True)
 
         # food and ants combined
         replay['food'] = []

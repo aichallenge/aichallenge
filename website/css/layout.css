@@ -170,6 +170,16 @@ body {
     list-style-type: circle;
 }
 
+#sponsor_bar {
+    text-align: center;
+    font-size: 0.9em;
+    padding: 5px 5px 5px 10px;
+}
+
+#sponsor_bar p {
+    text-align: center;
+}
+
 #footer {
     padding: 15px;
     color: #fff;

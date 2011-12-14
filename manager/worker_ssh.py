@@ -89,20 +89,23 @@ def aliveworkers(workers):
     def threadcode(worker):
         worker=worker[:]
         logging.info("Pinging %r" % (worker,))
-        #results[worker]=tcpping(worker)
-        #if results[worker]==True:
         results[worker]=sshping(worker)
-        logging.info ("Worker %r is %s." % (worker, ["down","up"][results[worker]]))
+        logging.info("Worker %r is %s." % (worker, ["down","up"][results[worker]]))
     
-    for i,worker in enumerate(workers):
-        threads.append(threading.Thread())
-        threads[i].run=lambda: threadcode(worker)
-        threads[i].start()
-        threads[i].join(0.1)
     
-    #wait for threads to finish
-    for thread in threads:
-        thread.join()
+    try:
+        for i,worker in enumerate(workers):
+            threads.append(threading.Thread())
+            threads[i].run=lambda: threadcode(worker)
+            threads[i].start()
+            threads[i].join(0.1)
+        
+        #wait for threads to finish
+        for thread in threads:
+            thread.join()
+    except KeyboardInterrupt:
+        logging.info("KeyboardInterrupt! Saving alive workers cache.")
+        pass
     
     aliveworkers=[worker for worker,result in results.items() if result==True]
     return aliveworkers

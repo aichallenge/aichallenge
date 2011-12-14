@@ -38,15 +38,18 @@ def get_contest_files(download_url):
 
 def main():
     if len(sys.argv) < 3:
-        print "usage: %s api_base_url worker_api_key"
+        print "usage: %s api_base_url worker_api_key [source_url]"
         print WARNING
         sys.exit(1)
     setup_contest_user()
     os.chdir("/home/contest")
     get_contest_files(sys.argv[1])
     os.chdir("aichallenge/setup")
-    run_cmd("./worker_setup.py -y --username contest --api-url %s --api-key %s \
-            --install-cronjob --start" % (sys.argv[1], sys.argv[2]))
+    setup_cmd = "./worker_setup.py -y --username contest --api-url %s \
+            --api-key %s --install-cronjob --start" % (sys.argv[1], sys.argv[2])
+    if len(sys.argv) > 3:
+        setup_cmd += " " + " ".join(sys.argv[3:])
+    run_cmd(setup_cmd)
 
 if __name__=="__main__":
     main()
