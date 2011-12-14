@@ -5,8 +5,8 @@ import time
 import MySQLdb
 from server_info import server_info
 
-DEFAULT_BUFFER = 20
-MAX_FILL = 60
+DEFAULT_BUFFER = 30
+MAX_FILL = 100
 
 def log(msg):
     timestamp = time.asctime()
@@ -38,7 +38,10 @@ def main():
                 fill_size = min(MAX_FILL, fill_size * 1.5)
             full = False
             add = int(fill_size) - cur_buffer
-            log("Adding %d matches to buffer" % (add,))
+            if cur_buffer == 0:
+                log("WARNING: Found empty buffer")
+            log("Adding %d matches to buffer already having %d" % (
+                add, cur_buffer))
             for i in range(add):
                 cursor.execute("call generate_matchup")
                 cursor.nextset()
