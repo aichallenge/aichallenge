@@ -25,6 +25,7 @@
       <li><a href="ants_tutorial.php">Ants Tutorial</a></li>
       <li><a href="rules.php">Contest Rules</a></li>
       <li><a href="using_the_tools.php">Using the Tools</a></li>
+      <li><a href="faq.php">Frequently Asked Questions</a></li>
     </ul>
     <h1>Ants</h1>
     <ul>
@@ -35,11 +36,11 @@
       <li><a href="strategy_guide.php">Strategy Guide</a></li>
       <li><a href="http://paste.aichallenge.org/">Share Maps & Replays</a></li>
     </ul>
-    <h1>Help</h1>
+    <h1>Community</h1>
     <ul>
-      <li><a href="faq.php">Frequently Asked Questions</a></li>
       <li><a href="http://forums.aichallenge.org/">Forums</a></li>
       <li><a href="irc://irc.freenode.org/aichallenge">IRC</a> <a href="http://webchat.freenode.net/?channels=aichallenge&uio=d4">(webclient)</a></li>
+      <li><a href="http://github.com/aichallenge/aichallenge">Github Repository</a></li>
     </ul>
     <h1>Past Contests</h1>
     <ul>

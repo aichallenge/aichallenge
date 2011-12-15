@@ -3,7 +3,7 @@ AI Challenge Source Code Repository
 
 *Codename: Epsilon*
 
-This code will provide the basis for the next contest (Winter 2011).
+This code provides the basis for the Fall 2011 [AI Challenge](http://aichallenge.org/).
 Epsilon is supposed to implement the ants game.
 
 Folder Contents
