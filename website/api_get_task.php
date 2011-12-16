@@ -44,7 +44,7 @@ while ((!$match_result or mysql_num_rows($match_result) == 0)
                                      $match_row["matchup_id"],
                                      $match_worker);
         // Check that we actually got the lock
-        if (!$lock_result or mysql_affected_rows($lock_result) < 1) {
+        if (!$lock_result or mysql_affected_rows() < 1) {
             $match_result = null;
             continue;
         }
