@@ -137,6 +137,11 @@ if (array_key_exists('error', $gamedata)) {
         }
     }
 
+    $mysqli = new MySQLI($db_host, $db_username, $db_password, $db_name);
+    $mysqli->multi_query("call update_rankings($game_id);");
+    while ($mysqli->more_results() && $mysqli->next_result());
+    $mysqli->close();
+
     if (!contest_query("delete_matchup_player", $gamedata->matchup_id)) {
         api_log(sprintf("Error deleting players for matchup %s",
                         $gamedata->matchup_id)."\n".mysql_error());
@@ -149,10 +154,6 @@ if (array_key_exists('error', $gamedata)) {
         api_log(sprintf("Error updating submision trueskill for game %s",
                         $game_id)."\n".mysql_error());
     }
-    $mysqli = new MySQLI($db_host, $db_username, $db_password, $db_name);
-    $mysqli->multi_query("call update_rankings($game_id);");
-    while ($mysqli->more_results() && $mysqli->next_result());
-    $mysqli->close();
 
     // update game data with meta data
     $gamedata->playernames = array();
