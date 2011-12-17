@@ -362,3 +362,34 @@ pre.error {
     overflow: auto;
     background-color: #e0e0e0;
 }
+
+.countdown {
+	position: absolute;
+	top: 0;
+	left: 0;
+    text-align: center;
+    padding: 5px;
+}
+
+.countdown_section {
+	display: inline-block;
+	font-size: 1em;
+	border: solid 1px #000;
+	background-color: rgba(255, 255, 255, 0.35);
+	width: 50px;
+	text_align: center;
+	padding: 3px;
+	margin: 3px;
+	color: #fff;
+	border-radius: 7px;
+}
+
+.countdown_amount {
+	font-size: 2em;
+}
+
+.countdown_descr {
+	color: #fff;
+	font-size: 1.5em;
+	width: 100%;
+}

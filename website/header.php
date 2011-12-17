@@ -28,6 +28,7 @@ if(isset($title)) {
         <!-- JavaScript -->
         <script src="//ajax.googleapis.com/ajax/libs/jquery/1.6.2/jquery.min.js"></script>
         <script src="/js/jquery.tablesorter.min.js"></script>
+        <script src="/js/jquery.countdown.min.js"></script>
         <script src="/js/tab_sync.js"></script>
 <?php
 
@@ -64,6 +65,17 @@ flush();
                     <div id="triangle"></div>
                 </div>
             </div>
+<?php
+if ($server_info["show_countdown"]) { 
+?>
+        	<div class="countdown" id="countdown">Timer Goes Here</div>
+			<script>
+				$('#countdown').countdown({until: new Date('<?php $now = new DateTime('2011-12-19'); echo $now->format("M j, Y H:i:s O"); ?>'),
+					                       description: '<br />until submission deadline'});
+			</script>
+<?php 
+}
+?>
             <div class="columns">
                 <div class="left">
                     <div id="content">
