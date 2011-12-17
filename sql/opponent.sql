@@ -37,13 +37,14 @@ if @min_players <= @max_players then
         inner join user u
             on u.user_id = s.user_id
         left outer join (
-            select seed_id, max(matchup_id) as max_matchup_id
-            from matchup
+            select user_id, max(mp.matchup_id) as max_matchup_id
+            from matchup_player mp
+            inner join matchup m on mp.matchup_id = m.matchup_id
             where (worker_id >= 0 or worker_id is null)
-                and deleted = 0
-            group by seed_id
+                and m.deleted = 0
+            group by user_id
         ) m
-            on s.user_id = m.seed_id
+            on s.user_id = m.user_id
         where s.latest = 1 and s.status = 40
         -- this selects the user that has least recently played in any game
         -- and used them for the next seed player
