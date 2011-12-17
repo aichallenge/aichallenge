@@ -368,7 +368,7 @@ pre.error {
 	top: 0;
 	left: 0;
     text-align: center;
-    padding: 5px;
+    margin: 5px;
 }
 
 .countdown_section {
