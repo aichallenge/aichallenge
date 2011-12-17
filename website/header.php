@@ -71,7 +71,7 @@ if ($server_info["show_countdown"]) {
         	<div class="countdown" id="countdown">Timer Goes Here</div>
 			<script>
 				$('#countdown').countdown({until: new Date('<?php $now = new DateTime($server_info['deadline']); echo $now->format("M j, Y H:i:s O"); ?>'),
-					                       description: '<br />until submission deadline'});
+					                       description: 'until submission deadline'});
 			</script>
 <?php 
 }

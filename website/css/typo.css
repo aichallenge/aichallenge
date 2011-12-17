@@ -371,6 +371,10 @@ pre.error {
     margin: 5px;
 }
 
+.countdown_row {
+	float: left;
+}
+
 .countdown_section {
 	display: inline-block;
 	font-size: 1em;
@@ -389,7 +393,9 @@ pre.error {
 }
 
 .countdown_descr {
+	clear: both;
 	color: #fff;
 	font-size: 1.5em;
-	width: 100%;
+	text-align: center;
+	width: 250px;
 }
