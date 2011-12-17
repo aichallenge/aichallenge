@@ -3,6 +3,19 @@ delimiter $$
 create procedure opponent(in the_user_id int)
 begin
 
+-- set the pairing cutoff
+select number
+into @pairing_cutoff
+from settings
+where name = 'pairing_cutoff';
+
+if @pairing_cutoff is null then
+    select max(rank) + 1
+    into @pairing_cutoff
+    from submission
+    where status in (40, 100) and latest = 1;
+end if;
+
 -- get min and max players for matchmaking
 select min(players) into @min_players from map;
 
@@ -18,7 +31,10 @@ left outer join matchup m
         and (m.worker_id > 0 or m.worker_id is null)
         and m.deleted = 0
 where s.status in (40, 100) and s.latest = 1
+    and s.rank <= @pairing_cutoff
     and m.matchup_id is null;
+
+select @pairing_cutoff, @max_players;
 
 -- skip entire process if less players are available than the smallest map
 if @min_players <= @max_players then
@@ -29,7 +45,7 @@ if @min_players <= @max_players then
     set @twiceBetaSq = 2 * pow(@init_beta, 2);
 
     if the_user_id is null then
-        
+
         -- Step 1: select the seed player
         select s.user_id, s.submission_id, s.mu, s.sigma
         into @seed_id, @submission_id, @mu, @sigma
@@ -45,7 +61,7 @@ if @min_players <= @max_players then
             group by user_id
         ) m
             on s.user_id = m.user_id
-        where s.latest = 1 and s.status = 40
+        where s.latest = 1 and s.status = 40 and s.rank <= @pairing_cutoff
         -- this selects the user that has least recently played in any game
         -- and used them for the next seed player
         -- from both the game and matchup tables
@@ -53,15 +69,15 @@ if @min_players <= @max_players then
                  u.max_game_id asc,
                  s.user_id asc
         limit 1;
-    
+
     else
-    
+
         select s.user_id, s.submission_id, s.mu, s.sigma
         into @seed_id, @submission_id, @mu, @sigma
         from submission s
         where s.user_id = the_user_id
             and s.latest = 1 and s.status in (40, 100);
-        
+
     end if;
 
     -- debug statement
@@ -69,12 +85,12 @@ if @min_players <= @max_players then
     create table tmp_matchup
     select * from matchup;
     create index tmp_matchup_matchup_id_idx on tmp_matchup (matchup_id);
-    
+
     drop table if exists tmp_matchup_player;
     create table tmp_matchup_player
     select * from matchup_player;
     create index tmp_matchup_player_matchup_user_id_idx on tmp_matchup_player (matchup_id, user_id);
-    
+
     -- create matchup and add seed player
     -- worker_id of 0 prevents workers from pulling the task
     set @matchup_id = 0;
@@ -269,7 +285,8 @@ if @min_players <= @max_players then
                             from tmp_matchup_player mp
                             where mp.matchup_id = @matchup_id
                         )
-                        and s.latest = 1
+                        and s.latest = 1 and s.status in (40, 100)
+                        and s.rank <= @pairing_cutoff
                         group by s.user_id, s.submission_id, s.mu, s.sigma, t.game_count
                     ) s order by mod_quality desc
                 ) s,
@@ -330,6 +347,7 @@ if @min_players <= @max_players then
                             where mp.matchup_id = @matchup_id
                         )
                         and s.latest = 1 and s.status in (40, 100)
+                        and s.rank <= @pairing_cutoff
                         group by s.user_id, s.submission_id, s.mu, s.sigma
                     ) s order by mod_quality desc
                 ) s,

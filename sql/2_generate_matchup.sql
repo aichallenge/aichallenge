@@ -10,7 +10,20 @@ inner join user u
 set status = 100
 where status = 40 and latest = 1
 and u.shutdown_date < current_timestamp();
-	
+
+-- set the pairing cutoff
+select number
+into @pairing_cutoff
+from settings
+where name = 'pairing_cutoff';
+
+if @pairing_cutoff is null then
+    select max(rank) + 1
+    into @pairing_cutoff
+    from submission
+    where status in (40, 100) and latest = 1;
+end if;
+
 -- get min and max players for matchmaking
 select min(players) into @min_players from map;
 
@@ -26,6 +39,7 @@ left outer join matchup m
         and (m.worker_id > 0 or m.worker_id is null)
         and m.deleted = 0
 where s.status = 40 and s.latest = 1
+    and s.rank <= @pairing_cutoff
     and m.matchup_id is null;
 
 -- skip entire process if less players are available than the smallest map
@@ -53,7 +67,7 @@ if @min_players <= @max_players then
         group by user_id
     ) m
         on s.user_id = m.user_id
-    where s.latest = 1 and s.status = 40
+    where s.latest = 1 and s.status = 40 and s.rank <= @pairing_cutoff
     -- this selects the user that has least recently played in any game
     -- and used them for the next seed player
     -- from both the game and matchup tables
@@ -108,7 +122,7 @@ if @min_players <= @max_players then
     order by floor(user_count / (map_count / total_map_count)),
         floor(game_count / (map_count / total_map_count))
     limit 1;
-    
+
     -- debug statement
     -- select @players;
 
@@ -153,7 +167,7 @@ if @min_players <= @max_players then
     set @cur_user_id = @seed_id;
     set @last_user_id = -1;
     set @player_count = 1;
-    
+
     -- used to undo a matchup
     set @abort = 0;
     set @abort_reason = '';
@@ -185,7 +199,7 @@ if @min_players <= @max_players then
 	            group by mp1.user_id, mp2.user_id
 	        ) g
 	        group by 1, 2;
-        
+
             -- used to detect not finding an opponent
             set @last_user_id = -1;
 
@@ -224,6 +238,7 @@ if @min_players <= @max_players then
                             where mp.matchup_id = @matchup_id
                         )
                         and s.latest = 1 and s.status in (40, 100)
+                        and s.rank <= @pairing_cutoff
                         group by s.user_id, s.submission_id, s.mu, s.sigma
                     ) s order by mod_quality desc
                 ) s,
@@ -242,12 +257,12 @@ if @min_players <= @max_players then
             -- due to the least played ordering, after a submission is established
             -- it will tend to pull from the lowest match quality, so the opponent
             -- rank difference selected will also follow a pareto distribution 
-            where s.seq < (5 / pow(rand(), 0.65)) 
+            where s.seq < (5 / pow(rand(), 0.65))
             order by o.game_count,
                 s.game_count,
                 s.match_quality desc
             limit 1;
-                
+
             -- debug statement
             -- select @last_user_id as user_id, @last_submission_id as submission_id, @last_mu as mu, @last_sigma as sigma;
 
