@@ -90,12 +90,13 @@ if ($q) {
     }
 }
 
-$PAIRCUT_FILE = "/home/contest/pairing_cutoff";
-if (is_readable($PAIRCUT_FILE)) {
-    $pfc = file($PAIRCUT_FILE);
-    $pair_cutoff = $pfc[0];
-} else {
-    $pair_cutoff = "None";
+$pair_cutoff = "None";
+$q = mysql_query("select number from settings where name = 'pairing_cutoff'");
+if ($q) {
+    $r = mysql_fetch_assoc($q);
+    if ($r) {
+        $pair_cutoff = $r["number"];
+    }
 }
 
 ?>
