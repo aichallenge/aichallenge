@@ -4,6 +4,7 @@ create procedure opponent(in the_user_id int)
 begin
 
 -- set the pairing cutoff
+set @pairing_cutoff = null;
 select number
 into @pairing_cutoff
 from settings

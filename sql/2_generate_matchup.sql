@@ -12,6 +12,7 @@ where status = 40 and latest = 1
 and u.shutdown_date < current_timestamp();
 
 -- set the pairing cutoff
+set @pairing_cutoff = null;
 select number
 into @pairing_cutoff
 from settings
