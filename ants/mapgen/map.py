@@ -569,6 +569,10 @@ class Map(object):
         if size[0] * size[1] > max(25000, 5000 * len(players)):
             return "Map area is too large for player count"                
         
+        # Maps are limited in area by number of hills
+        if size[0] * size[1] > 500 * len(hills):
+            return "Map has too many hills for its size"
+        
         # Maps must be symmetric
         if check_sym:
             try:
@@ -608,34 +612,21 @@ class Map(object):
         # fill small areas can fix this
         areas = self.section(0)
         if len(areas) > 1:
-            area_visited, area_seen = areas[0]
+            area_visited, _ = areas[0]
             for loc in area_visited:
                 if self.map[loc[0]][loc[1]] == LAND:
                     self.map[loc[0]][loc[1]] = UNSEEN                
             return "Map not 100% accessible"
-        land_area = len(areas[0][0])
 
-        # Maps must be mostly traversable by a 3x3 block
-        # 66% of the map must not be blockable
-        # or must be accessable by a 3x3 block
-        areas = self.section(1)
-        area_visited, area_seen = areas[0]
-        if 1.0 * (len(area_seen) + len(area_visited)) / land_area < 0.66:
-            for loc in area_visited:
-                if self.map[loc[0]][loc[1]] == LAND:
-                    self.map[loc[0]][loc[1]] = UNSEEN
-            return "Map is too blockable: %s" % str(1.0 * (len(area_seen) + len(area_visited)) / land_area)
-
-        # all starting ants must be in the largest area
-        ants = {}
-        rows = len(self.map)
-        cols = len(self.map[0])
-        for row in range(rows):
-            for col in range(cols):
-                if self.map[row][col] >= ANTS:
-                    if (row, col) not in area_seen and (row, col) not in area_visited:
-                        return "Starting ants not in unblockable area"
-                    ants[(row, col)] = self.map[row][col]
+        # find section with first hill
+        first_hill_loc = list(hills.keys())[0]
+        area_visited = area_seen = None
+        for area_visited, area_seen in areas:
+            if first_hill_loc in area_seen or first_hill_loc in area_visited:
+                break
+        for hill_loc in hills.keys():
+            if hill_loc not in area_seen or hill_loc not in area_visited:
+                return "Starting hills not in same unblockable area"
 
         return None
     
