@@ -941,7 +941,7 @@ def main():
         sys.exit(exit_code)
         
     new_map.toText()
-    new_map.toFile()
+    #new_map.toFile()
 
 if __name__ == '__main__':
     main()
