@@ -164,6 +164,10 @@ if @min_players <= @max_players then
         ) g
         group by 1;
 
+    select min(game_count)
+    into @min_games
+    from tmp_games;
+
     -- Step 3: select opponents 1 at a time
     set @cur_user_id = @seed_id;
     set @last_user_id = -1;
@@ -214,8 +218,9 @@ if @min_players <= @max_players then
                     -- by exponentially weighting against number of games
                     select s.*,
                         (s.match_quality *
-                            greatest(2 - pow(1.0001, pow(s.game_count, 2.6)),
-                                0.001)) as mod_quality
+                            greatest(2 - pow(1.0001,
+                                pow(s.game_count - @min_games, 2.6)), 0.001)
+                        ) as mod_quality
                     from (
                         select s.user_id, s.submission_id, s.mu, s.sigma, t.game_count
                             -- trueskill match quality for 2 players
