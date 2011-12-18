@@ -757,6 +757,7 @@ def main():
     errors = new_map.allowable()
     if errors:
         print(errors)
+        sys.exit(1)
     else:
         if opts.name:
             new_map.name = opts.name
