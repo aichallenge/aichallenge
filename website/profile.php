@@ -260,7 +260,9 @@ echo "</div>";
 /*
  * Submission activation / deactivation section
  */
-    if (logged_in_with_valid_credentials() && (logged_in_as_admin() || current_user_id() == $user_id)) {
+    if ($server_info["submissions_open"]
+            && logged_in_with_valid_credentials()
+            && (logged_in_as_admin() || current_user_id() == $user_id)) {
         $status_result = contest_query("select_submission_status", $user_id);
         if ($status_row = mysql_fetch_assoc($status_result)) {
             if ($status_row['status'] == 100 || $status_row['status'] == 40) {
