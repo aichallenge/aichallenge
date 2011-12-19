@@ -160,7 +160,8 @@ if (array_key_exists('error', $gamedata)) {
                         $gamedata->matchup_id)."\n".mysql_error());
     }
 
-    $result = contest_query("check_submission_trueskill_update");
+    $result = contest_query("check_submission_trueskill_update",
+        $gamedata->matchup_id);
     if ($result) {
         $check_row = mysql_fetch_assoc($result);
         if ($check_row and $check_row["count(*)"] > 0) {
