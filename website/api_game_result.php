@@ -147,7 +147,7 @@ if (array_key_exists('error', $gamedata)) {
         $tries += 1;
         $sleep_time *= 2;
         $result = contest_query("check_game_player_insert", $game_id);
-        if (!result) {
+        if (!$result) {
             sleep($sleep_time);
             continue;
         }
@@ -181,7 +181,7 @@ if (array_key_exists('error', $gamedata)) {
     // wait for skill update to finish
     $correct = False;
     $sleep_time = 1;
-    while (!correct) {
+    while (!$correct) {
 	    $result = $mysqli->query("select count(*) as missing_count from submission s inner join game_player gp on s.submission_id = gp.submission_id and game_id = %s where s.mu != gp.mu_after;");
 	    if ($result) {
 		    while ($row = $result->fetch_assoc()) {
