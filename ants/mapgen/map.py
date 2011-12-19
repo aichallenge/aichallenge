@@ -552,7 +552,7 @@ class Map(object):
         size = (len(self.map), len(self.map[0]))
         if size[0] > 200 or size[1] > 200:
             return "Map is too large"
-        
+
         # Maps are limited to 10 players
         players = set()
         hills = {}
@@ -564,18 +564,20 @@ class Map(object):
                     players.add(square % 10)
                     if square < 10:
                         hills[(row, col)] = square
-        
+
         # Maps are limited in area by number of players
         if size[0] * size[1] > max(25000, 5000 * len(players)):
-            return "Map area is too large for player count"                
-        
+            return "Map area is too large for player count"
+        if size[0] * size[1] < 900 * len(players):
+            return "Map area is too small for player count"
+
         # Maps must be symmetric
         if check_sym:
             try:
                 self.get_map_symmetry()
             except Exception as e:
                 return "Map is not symmetric: " + str(e)
-        
+
         # Hills must be between 20 and 150 steps away from other hills
         # Hills must be more than 5 distance apart
         hill_min = False
@@ -601,7 +603,7 @@ class Map(object):
         elif hill_max:
             return "Map has hills too far"
         elif hill_range:
-            return "Map has hills within attack range"    
+            return "Map has hills within attack range"
 
         # Maps must not contain islands
         # all squares must be accessible from all other squares
@@ -611,7 +613,7 @@ class Map(object):
             area_visited, area_seen = areas[0]
             for loc in area_visited:
                 if self.map[loc[0]][loc[1]] == LAND:
-                    self.map[loc[0]][loc[1]] = UNSEEN                
+                    self.map[loc[0]][loc[1]] = UNSEEN
             return "Map not 100% accessible"
         land_area = len(areas[0][0])
 
@@ -638,7 +640,7 @@ class Map(object):
                     ants[(row, col)] = self.map[row][col]
 
         return None
-    
+
     def fromFile(self, fd):
         """ Parse the map_text into a more friendly data structure """
         ant_list = None
@@ -748,14 +750,16 @@ class Map(object):
             for loc in locs:
                 self.map[loc[0]][loc[1]] = owner
         self.players = num_players
-    
+
 def main():
     parser = OptionParser()
     parser.add_option("-f", "--filename", dest="filename",
                         help="filename to check for allowable map")
     parser.add_option("-n", "--name", dest="name",
                       help="name of map file to create")
-    
+    parser.add_option("-q", "--quiet", action="store_true", default=False,
+                      help="Do not output map data to console")
+
     opts, _ = parser.parse_args(sys.argv)
     new_map = Map()
     if opts.filename:
@@ -771,8 +775,9 @@ def main():
             new_map.name = opts.name
             new_map.toFile()
         else:
-            new_map.toText()
-        
+            if not opts.quiet:
+                new_map.toText()
+
     #options = {key: value for key, value in vars(opts).items() if value is not None}
 
 if __name__ == '__main__':
