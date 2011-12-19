@@ -152,6 +152,32 @@ if (array_key_exists('error', $gamedata)) {
     }
 
     $mysqli = new MySQLI($db_host, $db_username, $db_password, $db_name);
+    
+    // wait for skill update to finish
+    $correct = False;
+    $sleep_time = 1;
+    while (!correct) {
+	    $result = $mysqli->query("select count(*) as missing_count from submission s inner join game_player gp on s.submission_id = gp.submission_id and game_id = %s where s.mu != gp.mu_after;");
+	    if ($result) {
+		    while ($row = $result->fetch_assoc()) {
+		    	if ($row['missing_count'] == 0) {
+		    		$correct = True;
+		    	}
+		    }
+	    	$result.close();
+	    	if (!$correct) {
+	    		sleep($sleep_time);
+	    		$sleep_time *= 2;
+	    	    if ($sleep_time > 10) {
+	    			api_log(sprintf("Failed to update submission skills for game %d after waiting", $game_id));
+	    			die();
+	    		}
+	    	}
+	    } else {
+	    	api_log("Wait for submission update query failed")
+	    }
+    }
+    
     $mysqli->multi_query("call update_rankings($game_id);");
     while ($mysqli->more_results() && $mysqli->next_result());
     $mysqli->close();
