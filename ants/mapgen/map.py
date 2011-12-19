@@ -621,6 +621,7 @@ class Map(object):
             return "Map not 100% accessible"
 
         # find section with first hill
+        areas = self.section(1)
         first_hill_loc = list(hills.keys())[0]
         area_visited = area_seen = None
         for area_visited, area_seen in areas:
