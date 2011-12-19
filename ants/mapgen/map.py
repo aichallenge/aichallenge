@@ -626,8 +626,11 @@ class Map(object):
         for area_visited, area_seen in areas:
             if first_hill_loc in area_seen or first_hill_loc in area_visited:
                 break
+        else:
+            return "Could not find first hill area"
+
         for hill_loc in hills.keys():
-            if hill_loc not in area_seen or hill_loc not in area_visited:
+            if hill_loc not in area_seen and hill_loc not in area_visited:
                 return "Starting hills not in same unblockable area"
 
         return None
@@ -760,6 +763,8 @@ def main():
         new_map.fromFile(sys.stdin)
     errors = new_map.allowable()
     if errors:
+        if opts.filename:
+            print(opts.filename)
         print(errors)
         sys.exit(1)
     else:
