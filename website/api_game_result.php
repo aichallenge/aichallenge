@@ -185,7 +185,7 @@ if (array_key_exists('error', $gamedata)) {
         $result = $mysqli->query(sprintf(
             "select count(*) as missing_count from submission s inner join game_player gp on s.submission_id = gp.submission_id and game_id = %s where s.mu != gp.mu_after;",
             $game_id
-        );
+        ));
 	    if ($result) {
 		    while ($row = $result->fetch_assoc()) {
 		    	if ($row['missing_count'] == 0) {
