@@ -192,7 +192,7 @@ if (array_key_exists('error', $gamedata)) {
 		    		$correct = True;
 		    	}
 		    }
-	    	$result.close();
+	    	$result->close();
 	    	if (!$correct) {
 	    		sleep($sleep_time);
 	    		$sleep_time *= 2;
