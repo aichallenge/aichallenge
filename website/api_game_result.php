@@ -157,6 +157,7 @@ if (array_key_exists('error', $gamedata)) {
                 api_log(sprintf(
                     "Found correct player number for game %d on try %d",
                     $game_id, $tries));
+            }
             break;
         }
         api_log(sprintf(
@@ -194,7 +195,7 @@ if (array_key_exists('error', $gamedata)) {
 	    		$sleep_time *= 2;
 	    	    if ($sleep_time > 10) {
 	    			api_log(sprintf("Failed to update submission skills for game %d after waiting", $game_id));
-	    			die();
+	    			break;
 	    		}
 	    	}
 	    } else {
