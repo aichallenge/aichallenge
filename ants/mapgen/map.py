@@ -571,6 +571,10 @@ class Map(object):
         if size[0] * size[1] < 900 * len(players):
             return "Map area is too small for player count"
 
+        # Maps are limited in area by number of hills
+        if size[0] * size[1] < 500 * len(hills):
+            return "Map has too many hills for its size"
+
         # Maps must be symmetric
         if check_sym:
             try:
