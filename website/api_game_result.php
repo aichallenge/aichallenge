@@ -78,6 +78,10 @@ if (array_key_exists('error', $gamedata)) {
         game_result_error("Error updating failed matchup ".$gamedata->matchup_id);
     }
 } else {
+    if (!mysql_query("START TRANSACTION;")) {
+        api_log("Failed to start mysql transaction for game insert");
+        die();
+    }
     // move matchup data to game table
     if (!contest_query("insert_game_data",
                        $gamedata->replaydata->turns,
@@ -137,6 +141,11 @@ if (array_key_exists('error', $gamedata)) {
         }
     }
 
+    if (!mysql_query("COMMIT;")) {
+        api_log("Game insert transaction commit failed");
+        die();
+    }
+
     $mysqli = new MySQLI($db_host, $db_username, $db_password, $db_name);
     $mysqli->multi_query("call update_rankings($game_id);");
     while ($mysqli->more_results() && $mysqli->next_result());
@@ -149,6 +158,16 @@ if (array_key_exists('error', $gamedata)) {
     if (!contest_query("delete_matchup", $gamedata->matchup_id)) {
         api_log(sprintf("Error deleting matchup %s",
                         $gamedata->matchup_id)."\n".mysql_error());
+    }
+
+    $result = contest_query("check_submission_trueskill_update");
+    if ($result) {
+        $check_row = mysql_fetch_assoc($result);
+        if ($check_row and $check_row["count(*)"] > 0) {
+            api_log(sprintf("Failed to update %d submissions skill information for game %d", $check_row["count(*)"], $gamedata->matchup_id));
+        }
+    } else {
+        api_log("Check submission update query failed");
     }
 
     // update game data with meta data

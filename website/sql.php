@@ -104,6 +104,13 @@ $contest_sql = array(
             sigma_after = %s
         where game_id = %s and
               submission_id = %s",
+    "check_submission_trueskill_update" => "
+        select count(*)
+        from submission s
+        inner join game_player gp
+            on s.submission_id = gp.submission_id
+            and game_id = %s
+        where s.mu != gp.mu_after;",
     "update_submission_trueskill" => "
         update submission s
         inner join game_player gp
