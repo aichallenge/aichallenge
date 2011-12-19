@@ -150,10 +150,6 @@ if (array_key_exists('error', $gamedata)) {
         api_log(sprintf("Error deleting matchup %s",
                         $gamedata->matchup_id)."\n".mysql_error());
     }
-    if (!contest_query("update_submission_trueskill", $game_id)) {
-        api_log(sprintf("Error updating submision trueskill for game %s",
-                        $game_id)."\n".mysql_error());
-    }
 
     // update game data with meta data
     $gamedata->playernames = array();

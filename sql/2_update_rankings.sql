@@ -17,6 +17,15 @@ delimiter $$
 create procedure update_rankings(in new_game_id int)
 begin
 
+update submission s
+inner join game_player gp
+    on s.submission_id = gp.submission_id
+set s.mu = gp.mu_after,
+    s.mu_change = gp.mu_after - gp.mu_before,
+    s.sigma = gp.sigma_after,
+    s.sigma_change = gp.sigma_after - gp.sigma_before
+where game_id = new_game_id;
+
 -- reorder all active submmissions
 update submission
 inner join (
