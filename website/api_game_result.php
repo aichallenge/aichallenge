@@ -141,9 +141,9 @@ if (array_key_exists('error', $gamedata)) {
         }
     }
 
-    if (!contest_query("update_submission_trueskill", $gamedata->matchup_id)) {
+    if (!contest_query("update_submission_trueskill", $gameid)) {
         api_log(sprintf("Error updating submission trueskill from game",
-            $gamedata->matchup_id));
+            $gameid));
     }
 
     if (!mysql_query("COMMIT;")) {
