@@ -231,7 +231,9 @@ if (array_key_exists('error', $gamedata)) {
             if ($high_rank <= 10) {
                 $memcache->set('l:splash', $game_id);
             }
-            $memcache->set('l:all', $game_id);
+            if ($game_id % 10 == 0) {  // limit ranking refreshes for finals
+            	$memcache->set('l:all', $game_id);
+            }
             $memcache->set('l:m:'.$map_id, $game_id);
             // record last game id for user, submission, country, org and language
             foreach ($gamedata->user_ids as $user_id) {
