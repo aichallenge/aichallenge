@@ -141,6 +141,11 @@ if (array_key_exists('error', $gamedata)) {
         }
     }
 
+    if (!contest_query("update_submission_trueskill", $gamedata->matchup_id)) {
+        api_log(sprintf("Error updating submission trueskill from game",
+            $gamedata->matchup_id));
+    }
+
     if (!mysql_query("COMMIT;")) {
         api_log("Game insert transaction commit failed");
         die();
