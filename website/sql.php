@@ -104,6 +104,10 @@ $contest_sql = array(
             sigma_after = %s
         where game_id = %s and
               submission_id = %s",
+    "check_game_player_insert" => "
+        select count(*) as player_count
+        from game_player
+        where game_id = %s",
     "check_submission_trueskill_update" => "
         select count(*)
         from submission s
