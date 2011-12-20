@@ -78,6 +78,22 @@ if (array_key_exists('error', $gamedata)) {
         game_result_error("Error updating failed matchup ".$gamedata->matchup_id);
     }
 } else {
+    $start_time = time();
+    $check_time = $start_time;
+    while (!$memcache->add("lock:game_insert", 1, false, 120)) {
+        if (time() - $check_time > 30) {
+            $check_time = time();
+            api_log(sprintf(
+                "Matchup %d still waiting after %d seconds for insert lock",
+                $gamedata->matchup_id, $check_time - $start_time));
+        }
+        sleep(rand(1, 5));
+    }
+    if (time() - $start_time > 15) {
+        api_log(sprintf("Matchup %d took %d seconds to aquire insert lock",
+            $gamedata->matchup_id, time() - $start_time));
+    }
+
     if (!mysql_query("START TRANSACTION;")) {
         api_log("Failed to start mysql transaction for game insert");
         die();
@@ -229,6 +245,10 @@ if (array_key_exists('error', $gamedata)) {
     } else {
         api_log("Check submission update query failed");
     }
+
+    $memcache->delete("lock:game_insert");
+    api_log(sprintf("Took %d seconds to insert game %d", time() - $start_time,
+        $game_id));
 
     // update game data with meta data
     $gamedata->playernames = array();
