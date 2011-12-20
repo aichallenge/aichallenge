@@ -740,7 +740,7 @@ Visualizer.prototype.tryStart = function() {
 			 * @returns {Boolean} True, if the browser should handle the event.
 			 */
 			document.onkeydown = function(event) {
-				if (!(event.shiftKey || event.ctrlKey || event.altKey || event.metaKey)) {
+				if (!(event.shiftKey || event.ctrlKey || event.altKey || event.metaKey || document.activeElement.tagName == "INPUT")) {
 					if (Visualizer.focused.keyPressed(event.keyCode)) {
 						if (event.preventDefault)
 							event.preventDefault();
