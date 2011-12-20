@@ -286,16 +286,16 @@ $contest_sql = array(
     "select_next_game_in" => "select ahead.players as players_ahead,
                Round(per_minute.players, 1) as players_per_minute,
                Round(per_minute.games, 1) as games_per_minute,
-               Greatest(Round((Greatest((ahead.players / active_players) * avg_players, 1) * ahead.players) / per_minute.games), 0) as next_game_in
+               Greatest(Round(ahead.players / per_minute.games), 0) as next_game_in
         from
         (
             select count(*) as players
             from submission
             where latest = 1 and status = 40
             and max_game_id < (
-                select max(max_game_id)
+                select max_game_id
                 from submission
-                where user_id = %s
+                where latest = 1 and user_id = %s
             )
         ) ahead,
         (
@@ -306,12 +306,7 @@ $contest_sql = array(
             inner join game_player gp
                 on g.game_id = gp.game_id
                 and g.timestamp > timestampadd(minute, -60, current_timestamp)
-        ) per_minute,
-        (
-            select count(*) as active_players
-            from submission
-            where latest = 1
-        ) active;",
+        ) per_minute;",
     "select_in_game" => "select *
         from matchup_player as m_p
             inner join matchup on matchup.matchup_id = m_p.matchup_id
