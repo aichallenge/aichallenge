@@ -80,7 +80,7 @@ if @min_players <= @max_players then
         -- this selects the user that has least recently played in any game
         -- and used them for the next seed player
         -- from both the game and matchup tables
-        order by s.game_count desc,
+        order by s.game_count,
                  m.max_matchup_id asc,
                  u.max_game_id asc,
                  s.user_id asc
