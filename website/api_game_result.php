@@ -157,31 +157,6 @@ if (array_key_exists('error', $gamedata)) {
         }
     }
 
-    $sleep_time = 1;
-    $tries = 0;
-    while ($tries < 5) {
-        $tries += 1;
-        $sleep_time *= 2;
-        $result = contest_query("check_game_player_insert", $game_id);
-        if (!$result) {
-            sleep($sleep_time);
-            continue;
-        }
-        $qr = mysql_fetch_assoc($result);
-        if ($qr and $qr["player_count"] == sizeof($players)) {
-            if ($tries > 1) {
-                api_log(sprintf(
-                    "Found correct player number for game %d on try %d",
-                    $game_id, $tries));
-            }
-            break;
-        }
-        api_log(sprintf(
-            "ERROR: Didn't find right number of players for game %d on try %d",
-            $game_id, $tries));
-        sleep($sleep_time);
-    }
-
     if (!contest_query("update_submission_trueskill", $game_id)) {
         api_log(sprintf("Error updating submission trueskill from game",
             $gameid));
@@ -233,17 +208,6 @@ if (array_key_exists('error', $gamedata)) {
     if (!contest_query("delete_matchup", $gamedata->matchup_id)) {
         api_log(sprintf("Error deleting matchup %s",
                         $gamedata->matchup_id)."\n".mysql_error());
-    }
-
-    $result = contest_query("check_submission_trueskill_update",
-        $gamedata->matchup_id);
-    if ($result) {
-        $check_row = mysql_fetch_assoc($result);
-        if ($check_row and $check_row["count(*)"] > 0) {
-            api_log(sprintf("Failed to update %d submissions skill information for game %d", $check_row["count(*)"], $gamedata->matchup_id));
-        }
-    } else {
-        api_log("Check submission update query failed");
     }
 
     $memcache->delete("lock:game_insert");
