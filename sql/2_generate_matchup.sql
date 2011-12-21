@@ -161,8 +161,7 @@ if @min_players <= @max_players then
             from matchup m
             inner join matchup_player mp
                 on mp.matchup_id = m.matchup_id
-            where m.matchup_timestamp > timestampadd(hour, -24, current_timestamp)
-            and (m.worker_id >= 0 or m.worker_id is null)
+            where (m.worker_id >= 0 or m.worker_id is null)
             and m.deleted = 0
             group by mp.user_id
             union
