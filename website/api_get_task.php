@@ -25,6 +25,8 @@ if ($compile_result) {
 }
 
 // look for match
+$start_time = time();
+$check_time = $start_time;
 $matchup_tries = 0;
 $match_result = null;
 $match_row = null;
@@ -49,11 +51,18 @@ while ((!$match_result or mysql_num_rows($match_result) == 0)
             continue;
         }
     } else {
-        $mysqli = new MySQLI($db_host, $db_username, $db_password, $db_name);
-        $mysqli->multi_query('call generate_matchup;');
-        while ($mysqli->more_results() && $mysqli->next_result());
-        $mysqli->close();
+        sleep(rand(1, 5));
+        if (time() - $check_time > 30) {
+            $check_time = time();
+            api_log(sprintf(
+                "Worker %d still waiting for a matchup after %d seconds",
+                $worker["worker_id"], $check_time - $start_time));
+        }
     }
+}
+if (time() - $start_time > 20) {
+    api_log(sprintf("Worker %d got a match after %d seconds",
+        $worker["worker_id"], time() - $start_time));
 }
 
 if ($match_row) {
