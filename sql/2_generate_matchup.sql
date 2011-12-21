@@ -60,58 +60,29 @@ if @min_players <= @max_players then
     from submission
     where latest = 1;
     
-    if @min_game_count < 10 then
-    
-        insert matchup (seed_id, worker_id)
-        select s.user_id, 0
-        from submission s
-        inner join user u
-            on u.user_id = s.user_id
-        left outer join (
-            select user_id, max(mp.matchup_id) as max_matchup_id, count(*) as matchup_count
-            from matchup_player mp
-            inner join matchup m on mp.matchup_id = m.matchup_id
-            where (worker_id >= 0 or worker_id is null)
-                and m.deleted = 0
-            group by user_id
-        ) m
-            on s.user_id = m.user_id
-        where s.latest = 1 and s.status = 40 and s.rank <= @pairing_cutoff
-        -- this selects the user that has least recently played in any game
-        -- and used them for the next seed player
-        -- from both the game and matchup tables
-        order by s.game_count + ifnull(m.matchup_count, 0),
-                 m.max_matchup_id asc,
-                 u.max_game_id asc,
-                 s.user_id asc
-        limit 1;        
-    
-    else
-    
-        insert matchup (seed_id, worker_id)
-        select s.user_id, 0
-        from submission s
-        inner join user u
-            on u.user_id = s.user_id
-        left outer join (
-            select user_id, max(mp.matchup_id) as max_matchup_id
-            from matchup_player mp
-            inner join matchup m on mp.matchup_id = m.matchup_id
-            where (worker_id >= 0 or worker_id is null)
-                and m.deleted = 0
-            group by user_id
-        ) m
-            on s.user_id = m.user_id
-        where s.latest = 1 and s.status = 40 and s.rank <= @pairing_cutoff
-        -- this selects the user that has least recently played in any game
-        -- and used them for the next seed player
-        -- from both the game and matchup tables
-        order by m.max_matchup_id asc,
-                 u.max_game_id asc,
-                 s.user_id asc
-        limit 1;
-
-    end if;
+    insert matchup (seed_id, worker_id)
+    select s.user_id, 0
+    from submission s
+    inner join user u
+        on u.user_id = s.user_id
+    left outer join (
+        select user_id, max(mp.matchup_id) as max_matchup_id, count(*) as matchup_count
+        from matchup_player mp
+        inner join matchup m on mp.matchup_id = m.matchup_id
+        where (worker_id >= 0 or worker_id is null)
+            and m.deleted = 0
+        group by user_id
+    ) m
+        on s.user_id = m.user_id
+    where s.latest = 1 and s.status = 40 and s.rank <= @pairing_cutoff
+    -- this selects the user that has least recently played in any game
+    -- and used them for the next seed player
+    -- from both the game and matchup tables
+    order by s.game_count + ifnull(m.matchup_count, 0),
+             m.max_matchup_id asc,
+             u.max_game_id asc,
+             s.user_id asc
+    limit 1;        
 
     set @matchup_id = last_insert_id();
 
