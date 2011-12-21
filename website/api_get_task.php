@@ -31,7 +31,7 @@ $matchup_tries = 0;
 $match_result = null;
 $match_row = null;
 while ((!$match_result or mysql_num_rows($match_result) == 0)
-        and $matchup_tries < 10) {
+        and $matchup_tries < 600) {
     $matchup_tries += 1;
     $match_result = contest_query("select_next_matchup");
 
