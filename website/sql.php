@@ -290,8 +290,11 @@ $contest_sql = array(
         from
         (
             select count(*) as players
-            from submission
-            where latest = 1 and status = 40
+            from submission,
+            (select number as pairing_cutoff
+                from settings where name = 'pairing_cutoff'
+            ) pc
+            where latest = 1 and status = 40 and rank < pairing_cutoff
             and game_count <= (
             	select game_count
             	from submission
@@ -307,6 +310,8 @@ $contest_sql = array(
                 on g.game_id = gp.game_id
                 and g.timestamp > timestampadd(minute, -60, current_timestamp)
         ) per_minute;",
+    "select_pairing_cutoff" => "select number as pairing_cutoff
+        from settings where name = 'pairing_cutoff';",
     "select_in_game" => "select *
         from matchup_player as m_p
             inner join matchup on matchup.matchup_id = m_p.matchup_id
