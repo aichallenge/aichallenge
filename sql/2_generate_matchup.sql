@@ -171,9 +171,12 @@ if @min_players <= @max_players then
         ) g
         group by 1;
 
-    select min(game_count)
+    select min(g.game_count)
     into @min_games
-    from tmp_games;
+    from tmp_games g
+    inner join submission s
+        on s.user_id = g.user_id
+    where s.latest = 1 and s.status = 40 and s.rank <= @pairing_cutoff;
 
     -- Step 3: select opponents 1 at a time
     set @cur_user_id = @seed_id;
