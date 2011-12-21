@@ -292,10 +292,10 @@ $contest_sql = array(
             select count(*) as players
             from submission
             where latest = 1 and status = 40
-            and max_game_id < (
-                select max_game_id
-                from submission
-                where latest = 1 and user_id = %s
+            and game_count <= (
+            	select game_count
+            	from submission
+            	where latest = 1 and user_id = %s
             )
         ) ahead,
         (
