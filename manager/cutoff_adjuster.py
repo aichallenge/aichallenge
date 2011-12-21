@@ -61,7 +61,7 @@ def main():
         initial_cutoff = cursor.fetchone()[0]
         log("No cutoff found, effective starting cutoff %d", initial_cutoff)
         if args.commit:
-            #cursor.execute(INITIAL_INSERT % (initial_cutoff,))
+            cursor.execute(INITIAL_INSERT % (initial_cutoff,))
             pass
     current_cutoff = initial_cutoff
 
@@ -69,7 +69,7 @@ def main():
     total_time = target_time - start_time
     total_time = total_time.total_seconds()
     log("Changing cutoff by %d in %d minutes", cutoff_diff, total_time / 60)
-    while current_cutoff < target_cutoff:
+    while current_cutoff > target_cutoff:
         now = datetime.now()
         to_go = target_time - now
         to_go = to_go.total_seconds()
