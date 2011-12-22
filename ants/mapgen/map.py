@@ -566,7 +566,7 @@ class Map(object):
                         hills[(row, col)] = square
 
         # Maps are limited in area by number of players
-        if size[0] * size[1] > max(25000, 5000 * len(players)):
+        if size[0] * size[1] > min(25000, 5000 * len(players)):
             return "Map area is too large for player count"
         if size[0] * size[1] < 900 * len(players):
             return "Map area is too small for player count"
