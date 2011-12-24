@@ -18,7 +18,10 @@ class Ants
     public $viewradius2 = 0;
     public $attackradius2 = 0;
     public $spawnradius2 = 0;
+    public $viewOffsets2 = array();
+
     public $map;
+    public $vision = false;
     public $myAnts = array();
     public $enemyAnts = array();
     public $myHills = array();
@@ -60,7 +63,7 @@ class Ants
         echo("go\n");
         flush();
     }
-    
+
     public function setup($data)
     {
         foreach ( $data as $line) {
@@ -75,6 +78,13 @@ class Ants
         for ( $row=0; $row < $this->rows; $row++) {
             for ( $col=0; $col < $this->cols; $col++) {
                 $this->map[$row][$col] = LAND;
+            }
+        }
+
+        $max = floor(sqrt($this->viewradius2));
+        for ($row = -$max; $row <= $max; $row++) {
+            for ($col = -$max; $col <= $max; $col++) {
+                $this->viewOffsets2[] = array($row, $col);
             }
         }
     }
@@ -108,7 +118,7 @@ class Ants
             $this->map[$row][$col] = LAND;
         }
         $this->food = array();
-        
+
         $this->myHills = array();
         $this->enemyHills = array();
 
@@ -151,6 +161,36 @@ class Ants
         }
     }
 
+    /**
+     * Determine if row/col location is visible to the bot
+     *
+     * @param integer $row
+     * @param integer $col
+     */
+    public function visible($row, $col)
+    {
+        if (!$this->vision) {
+            for ($i = 0; $i < $this->rows; $i++) {
+                for ($k = 0; $k < $this->cols; $k++) {
+                    $this->vision[$i][$k] = false;
+                }
+            }
+
+            foreach ($this->myAnts as $ant) {
+                list ($aRow, $aCol) = $ant;
+
+                foreach ($this->viewOffsets2 as $offset) {
+                    list ($oRow, $oCol) = $offset;
+                    $vRow = $this->getAbsVal($aRow + $oRow, $this->rows);
+                    $vCol = $this->getAbsVal($aCol + $oCol, $this->cols);
+
+                    $this->vision[$vRow][$vCol] = true;
+                }
+            }
+        }
+
+        return $this->vision[$row][$col];
+    }
 
     public function passable($row, $col)
     {
@@ -220,6 +260,19 @@ class Ants
         }
         return $d;
 
+    }
+
+    protected function getAbsVal($val, $max)
+    {
+        if ($val < 0) {
+            return $val + $max;
+        }
+
+        if ($val >= $max) {
+            return $val - $max;
+        }
+
+        return $val;
     }
 
 
