@@ -100,6 +100,7 @@ if @min_players <= @max_players then
         select players, count(*) as map_count
         from map
         where priority > 0
+            and players <= @max_players
         group by players
     ) p
     left outer join (
