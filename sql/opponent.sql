@@ -10,13 +10,6 @@ into @pairing_cutoff
 from settings
 where name = 'pairing_cutoff';
 
-if @pairing_cutoff is null then
-    select max(rank) + 1
-    into @pairing_cutoff
-    from submission
-    where status in (40, 100) and latest = 1;
-end if;
-
 -- get min and max players for matchmaking
 select min(players) into @min_players from map;
 
@@ -32,7 +25,7 @@ left outer join matchup m
         and (m.worker_id > 0 or m.worker_id is null)
         and m.deleted = 0
 where s.status in (40, 100) and s.latest = 1
-    and s.rank <= @pairing_cutoff
+    and (@pairing_cutoff is null or s.rank <= @pairing_cutoff)
     and m.matchup_id is null;
 
 select @pairing_cutoff, @max_players;
@@ -62,7 +55,7 @@ if @min_players <= @max_players then
             group by user_id
         ) m
             on s.user_id = m.user_id
-        where s.latest = 1 and s.status = 40 and s.rank <= @pairing_cutoff
+        where s.latest = 1 and s.status = 40 and (@pairing_cutoff is null or s.rank <= @pairing_cutoff)
         -- this selects the user that has least recently played in any game
         -- and used them for the next seed player
         -- from both the game and matchup tables
@@ -212,7 +205,7 @@ if @min_players <= @max_players then
     from tmp_games g
     inner join submission s
         on s.user_id = g.user_id
-    where s.latest = 1 and s.status = 40 and s.rank <= @pairing_cutoff;
+    where s.latest = 1 and s.status = 40 and (@pairing_cutoff is null or s.rank <= @pairing_cutoff);
 
     select @min_games;
 
@@ -256,6 +249,7 @@ if @min_players <= @max_players then
 	        set @last_user_id = -1;
 	        
             set @pareto = (5 / pow(rand(), 0.65));
+            select @pareto;
             -- debug statement
             -- select list of opponents with match quality
             select s.user_id, s.mu, s.sigma, sub.rank,
@@ -293,7 +287,7 @@ if @min_players <= @max_players then
                             where mp.matchup_id = @matchup_id
                         )
                         and s.latest = 1 and s.status in (40, 100)
-                        and s.rank <= @pairing_cutoff
+                        and (@pairing_cutoff is null or s.rank <= @pairing_cutoff)
                         group by s.user_id, s.submission_id, s.mu, s.sigma, t.game_count
                     ) s order by mod_quality desc
                 ) s,
@@ -355,7 +349,7 @@ if @min_players <= @max_players then
                             where mp.matchup_id = @matchup_id
                         )
                         and s.latest = 1 and s.status in (40, 100)
-                        and s.rank <= @pairing_cutoff
+                        and (@pairing_cutoff is null or s.rank <= @pairing_cutoff)
                         group by s.user_id, s.submission_id, s.mu, s.sigma
                     ) s order by mod_quality desc
                 ) s,

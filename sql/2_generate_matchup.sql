@@ -18,13 +18,6 @@ into @pairing_cutoff
 from settings
 where name = 'pairing_cutoff';
 
-if @pairing_cutoff is null then
-    select max(rank) + 1
-    into @pairing_cutoff
-    from submission
-    where status in (40, 100) and latest = 1;
-end if;
-
 -- get min and max players for matchmaking
 select min(players) into @min_players from map;
 
@@ -40,7 +33,7 @@ left outer join matchup m
         and (m.worker_id > 0 or m.worker_id is null)
         and m.deleted = 0
 where s.status = 40 and s.latest = 1
-    and s.rank <= @pairing_cutoff
+    and (@pairing_cutoff is null or s.rank <= @pairing_cutoff)
     and m.matchup_id is null;
 
 -- skip entire process if less players are available than the smallest map
@@ -74,7 +67,7 @@ if @min_players <= @max_players then
         group by user_id
     ) m
         on s.user_id = m.user_id
-    where s.latest = 1 and s.status = 40 and s.rank <= @pairing_cutoff
+    where s.latest = 1 and s.status = 40 and (@pairing_cutoff is null or s.rank <= @pairing_cutoff)
     -- this selects the user that has least recently played in any game
     -- and used them for the next seed player
     -- from both the game and matchup tables
@@ -175,7 +168,7 @@ if @min_players <= @max_players then
     from tmp_games g
     inner join submission s
         on s.user_id = g.user_id
-    where s.latest = 1 and s.status = 40 and s.rank <= @pairing_cutoff;
+    where s.latest = 1 and s.status = 40 and (@pairing_cutoff is null or s.rank <= @pairing_cutoff);
 
     -- Step 3: select opponents 1 at a time
     set @cur_user_id = @seed_id;
@@ -253,7 +246,7 @@ if @min_players <= @max_players then
                             where mp.matchup_id = @matchup_id
                         )
                         and s.latest = 1 and s.status in (40, 100)
-                        and s.rank <= @pairing_cutoff
+                        and (@pairing_cutoff is null or s.rank <= @pairing_cutoff)
                         group by s.user_id, s.submission_id, s.mu, s.sigma
                     ) s order by mod_quality desc
                 ) s,
