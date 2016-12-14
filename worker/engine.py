@@ -404,6 +404,7 @@ def get_moves(game, bots, bot_nums, time_limit, turn):
             continue # bot is dead
 
         line = bot.read_line()
+	lines_read = 0;
         while line is not None and len(bot_moves[b]) < 40000:
             line = line.strip()
             if line.lower() == 'go':
