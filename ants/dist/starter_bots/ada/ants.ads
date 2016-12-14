@@ -135,6 +135,16 @@ package Ants is
    -- last 'go' was received from the game engine.
    --   function Time_Remaining return Milliseconds;
 
+   -- Update the square we are moving into with information about the
+   -- direction we came from to get there.
+   procedure Remember_Bearing_Taken (P : Map_Position; B: Bearing);
+
+   -- Get the bearing which was last used to visit this square
+   function Get_Current_Bearing (P: Map_Position) return Bearing;
+
+   -- Get the map coordinates of a position plus a bearing
+   function Add_Bearing (P : Map_Position; B : Bearing) return Map_Position;
+
 private
 
    -- Bot input cache

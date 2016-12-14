@@ -37,10 +37,20 @@ package body Strategy is
    -- for you to then call Ants.Issue_Order to request the move to occur.
    procedure Process_Ant (C : Ants.List_Of_Map_Positions.Cursor) is
       My_Position : Ants.Map_Position := Ants.List_Of_Map_Positions.Element (Position => C);
-      Sq : Ants.Square := Ants.Examine_Square (My_Position, Bearings (Next_Bearing_Index));
+      My_Current_Bearing : Ants.Bearing := Ants.Get_Current_Bearing (My_Position);
+      Sq : Ants.Square;
       Dont_Crash : Natural := 0; -- Break out of the loop after trying all 4 bearings without
         -- any success. Should never occur anyway.
    begin
+      -- Find out which way we were going the last time
+      for I in Bearing_Index'Range loop
+         if Bearings(I) = My_Current_Bearing then
+            Next_Bearing_Index := I;
+            exit;
+         end if;
+      end loop;
+
+      Sq := Ants.Examine_Square (My_Position, Bearings (Next_Bearing_Index));
       -- Starter bot logic as described here:
       -- https://github.com/aichallenge/aichallenge/wiki/Ants-Starter-Pack-Guide
       -- (Attempt to go in the following directions in this order: N, E, S, W)
@@ -55,6 +65,9 @@ package body Strategy is
          Next_Bearing_Index := Next_Bearing_Index + 1;
          Sq := Ants.Examine_Square (My_Position, Bearings (Next_Bearing_Index));
       end loop;
+
+      -- Tell the square we're moving to which bearing we took to get there
+      Ants.Remember_Bearing_Taken (Ants.Add_Bearing (My_Position, Bearings (Next_Bearing_Index)), Bearings (Next_Bearing_Index));
 
       Ants.Issue_Order (My_Position, Bearings (Next_Bearing_Index));
 

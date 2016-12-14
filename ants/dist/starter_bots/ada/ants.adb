@@ -221,6 +221,48 @@ package body Ants is
       end if;
    end Examine_Square;
 
+   procedure Remember_Bearing_Taken (P : Map_Position; B: Bearing) is
+   begin
+      Game_Map_Pointer.all (P.Row, P.Column).Last_Bearing := B;
+   end Remember_Bearing_Taken;
+
+   function Get_Current_Bearing (P: Map_Position) return Bearing is
+   begin
+      return Game_Map_Pointer.all (P.Row, P.Column).Last_Bearing;
+   end Get_Current_Bearing;
+
+   function Add_Bearing (P : Map_Position; B : Bearing) return Map_Position is
+      New_Position : Map_Position := P;
+   begin
+      if B = Ants.North then
+         if P.Row = 0 then
+            New_Position.Row := State.rows - 1;
+         else
+            New_Position.Row := P.Row - 1;
+         end if;
+      elsif B = Ants.East then
+         if P.Column = State.cols - 1 then
+            New_Position.Column := 0;
+         else
+            New_Position.Column := P.Column + 1;
+         end if;
+      elsif B = Ants.South then
+         if P.Row = State.rows - 1 then
+            New_Position.Row := 0;
+         else
+            New_Position.Row := P.Row + 1;
+         end if;
+      else -- Ants.West
+         if P.Column = 0 then
+            New_Position.Column := State.cols - 1;
+         else
+            New_Position.Column := P.Column - 1;
+         end if;
+      end if;
+
+      return New_Position;
+   end;
+
    function My_Hills return List_Of_Map_Positions.Vector is
       V : List_Of_Map_Positions.Vector;
    begin
