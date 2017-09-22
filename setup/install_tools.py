@@ -116,7 +116,7 @@ def check_ubuntu_version():
     else:
         print "Installing on an %s non-Ubuntu host." % (arch)
     
-    if version!="natty":
-        raise Exception("This contest framework was designed to work on Ubuntu Natty(11.04) only.")
+    #if version!="natty":
+    #    raise Exception("This contest framework was designed to work on Ubuntu Natty(11.04) only.")
     
     return version, arch

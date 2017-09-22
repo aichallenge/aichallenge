@@ -30,19 +30,19 @@ def install_utility_packages():
 def install_basic_languages():
     """ Install base set of submission languages,
         currently C, C++, Java, and Python """
-    pkg_list = ["gcc", "g++", "openjdk-6-jdk", "python-dev", "python3-dev",
+    pkg_list = ["gcc", "g++", "default-jdk", "python-dev", "python3-dev",
                 "python-numpy", "python-scipy"]
     install_apt_packages(pkg_list)
 
 def install_extra_distribution_languages():
     """ Install all extra languages that are part of the Ubuntu distribution
-        and don't require any special installation steps """
-    pkg_list = ["ruby1.9.1", "php5-cli", "perl", "ocaml", "luajit", "liblua5.1-socket-dev", "ghc",
-            "common-lisp-controller", "sbcl", "mono-2.0-devel", "mono-vbnc",
-            "erlang-base", "fp-compiler", "gnat", "tcl8.5", "octave3.2" ]
+        and don't require any special installation steps -"liblua5.1-socket-dev""""
+    pkg_list = ["ruby", "php-cli", "perl", "ocaml", "luajit", "lua-socket-dev", "ghc",
+            "common-lisp-controller", "sbcl", "mono-devel", "mono-vbnc",
+            "erlang-base", "fp-compiler", "gnat", "tcl", "octave" ]
     install_apt_packages(pkg_list)
-    if not os.path.exists("/usr/bin/ruby"):
-        os.symlink("/usr/bin/ruby1.9.1", "/usr/bin/ruby")
+    """if not os.path.exists("/usr/bin/ruby"):
+        os.symlink("/usr/bin/ruby1.9.1", "/usr/bin/ruby")"""
 
 def install_golang(download_base):
     """ Install golang """

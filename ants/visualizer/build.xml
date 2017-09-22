@@ -120,7 +120,7 @@
 		<concat fixlastline="yes" destfile="${build.js}/visualizer-min.tmp">
 			<filelist files="${js.files}" />
 		</concat>
-		<exec executable="node" failonerror="yes">
+		<exec executable="nodejs" failonerror="yes">
 			<env key="NODE_PATH" value="UglifyJS" />
 			<arg line="UglifyJS/bin/uglifyjs --no-copyright --lift-vars --mangle-toplevel --unsafe ${js.pretty.arg} --reserved-names 'Visualizer,Options,loadReplayData,loadReplayDataFromURI' --overwrite ${build.js}/visualizer-min.tmp" />
 		</exec>
