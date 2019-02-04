@@ -87,22 +87,32 @@ def setup_database(opts):
         run_cmd("echo 'quit' | mysql -u %s %s %s" % (opts.database_user,
             password_opt, opts.database_name))
     except CmdError:
-        run_cmd("systemctl stop mysql")
-        run_cmd("sudo mysqld_safe --skip-grant-tables &")
-        with MySQLdb.connect(host="127.0.0.1", user="root",
-                passwd=opts.database_root_password) as cursor:
-            cursor.execute(SETUP_SQL["creation"] % (opts.database_name,))
-            if opts.database_user != "root":
-                if opts.database_password:
-                    cursor.execute(SETUP_SQL["user_grant_passwd"]
-                        % (opts.database_user, opts.database_password))
-                else:
-                    cursor.execute(SETUP_SQL["user_grant_nopasswd"]
-                        % (opts.database_user,))
-                cursor.execute(SETUP_SQL["database_perms"]
-                        % (opts.database_name, opts.database_user))
-        run_cmd("systemctl stop mysql")
-        run_cmd("systemctl start mysql")
+        run_cmd("echo 'quit' | echo '%s' | sudo mysql -u root", 
+            (SETUP_SQL["creation"] % (opts.database_name,)))
+
+        if opts.database_user != "root":
+            if opts.database_password:
+                run_cmd("echo 'quit' | echo '%s' | sudo mysql -u root", 
+                    (SETUP_SQL["user_grant_passwd"] % (opts.database_user, opts.database_password)))
+            else:
+                run_cmd("echo 'quit' | echo '%s' | sudo mysql -u root", 
+                    (SETUP_SQL["user_grant_nopasswd"] % (opts.database_user,)))
+            
+            run_cmd("echo 'quit' | echo '%s' | sudo mysql -u root", 
+                (SETUP_SQL["database_perms"] % (opts.database_name, opts.database_user)))
+
+        # with MySQLdb.connect(host="127.0.0.1", user="root",
+        #         passwd=opts.database_root_password) as cursor:
+        #     cursor.execute(SETUP_SQL["creation"] % (opts.database_name,))
+        #     if opts.database_user != "root":
+        #         if opts.database_password:
+        #             cursor.execute(SETUP_SQL["user_grant_passwd"]
+        #                 % (opts.database_user, opts.database_password))
+        #         else:
+        #             cursor.execute(SETUP_SQL["user_grant_nopasswd"]
+        #                 % (opts.database_user,))
+        #         cursor.execute(SETUP_SQL["database_perms"]
+        #                 % (opts.database_name, opts.database_user))
         password_opt = ""
         if opts.database_password:
             password_opt = "-p'%s'" % (opts.database_password,)
