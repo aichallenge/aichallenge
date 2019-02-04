@@ -31,17 +31,6 @@
 
 	<!-- JAR generation -->
 
-	<target name="check-jaropt">
-		<condition property="jaropt.available">
-			<available file="3rdparty/cmc/jaropt.jar" />
-		</condition>
-	</target>
-
-	<target name="download-jaropt" unless="jaropt.available" depends="check-jaropt">
-		<mkdir dir="3rdparty/cmc" />
-		<get src="http://www.fightingquaker.com/jaropt/jaropt.jar" dest="3rdparty/cmc/jaropt.jar" usetimestamp="true" />
-	</target>
-
 	<target name="check-jar" depends="load-properties">
 		<uptodate property="jar.uptodate" targetfile="${jar.file}">
 			<srcfiles dir="${build.java}" />
@@ -49,7 +38,7 @@
 		</uptodate>
 	</target>
 
-	<target name="jar" depends="compile-rhino,compile-visualizer,compile-js,download-jaropt,check-jar" unless="jar.uptodate" description="creates the visualizer jar file for use as an applet and as an offline viewer">
+	<target name="jar" depends="compile-rhino,compile-visualizer,compile-js,check-jar" unless="jar.uptodate" description="creates the visualizer jar file for use as an applet and as an offline viewer">
 		<mkdir dir="${build.deploy}" />
 		<jar jarfile="${jar.file}" update="no" compress="${jar.compression}" level="9" manifest="${src.java}/MANIFEST.MF">
 			<fileset dir="${src.data}">
@@ -61,15 +50,6 @@
 				<exclude name="org/mozilla/javascript/annotations/**" />
 			</fileset>
 		</jar>
-		<taskdef name="JarOpt" classname="org.cmc.jaroptimizer.JarOptTask" classpath="${java.home}/lib/plugin.jar;3rdparty/cmc/jaropt.jar" />
-		<JarOpt src="${jar.file}" dst="${build.deploy}/min.jar" examinedynamicdependencies="false">
-			<includePattern>com.aicontest.visualizer.Main</includePattern>
-			<includePattern>com.aicontest.visualizer.VisualizerApplet</includePattern>
-			<includePattern>org.mozilla.javascript.gen.*</includePattern>
-			<includePattern>org.mozilla.javascript.jdk15.VMBridge_jdk15</includePattern>
-			<includePattern>org.mozilla.javascript.regexp.RegExpImpl</includePattern>
-		</JarOpt>
-		<move file="${build.deploy}/min.jar" tofile="${jar.file}" />
 	</target>
 
 	<!-- HTML visualizer -->
