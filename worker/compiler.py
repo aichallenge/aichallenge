@@ -310,39 +310,10 @@ comp_args = {
     #                If the compilation should output each source file to
     #                its own object file, don't include the -o flags here,
     #                and use the TargetCompiler in the languages dict.
-    "Ada"           : [["gcc-4.4", "-O3", "-funroll-loops", "-c"],
-                             ["gnatbind"],
-                             ["gnatlink", "-o", BOT]],
-    "C"             : [["gcc", "-O3", "-funroll-loops", "-c"],
-                             ["gcc", "-O2", "-lm", "-o", BOT]],
-    "C#"            : [["gmcs", "-warn:0", "-optimize+", "-out:%s.exe" % BOT]],
-    "VB"            : [["vbnc", "-out:%s.exe" % BOT]],
-    "C++"         : [["g++", "-O3", "-funroll-loops", "-c"],
-                             ["g++", "-O2", "-lm", "-o", BOT]],
-    "C++11"         : [["g++", "-O3", "-std=c++0x", "-c"],
-                             ["g++", "-O2", "-lm", "-std=c++0x", "-o", BOT]],
-    "D"             : [["dmd", "-O", "-inline", "-release", "-noboundscheck", "-of" + BOT]],
-    "Go"            : [["6g", "-o", "_go_.6"],
-                             ["6l", "-o", BOT, "_go_.6"]],
-    "Groovy"    : [["groovyc"],
-                             ["jar", "cfe", BOT + ".jar", BOT]],
-    # If we ever upgrade to GHC 7, we will need to add -rtsopts to this command
-    # in order for the maximum heap size RTS flag to work on the executable.
-    "Haskell" : [["ghc", "--make", BOT + ".hs", "-O", "-v0"]],
     "Java"        : [["javac", "-J-Xmx%sm" % (MEMORY_LIMIT)],
                              ["jar", "cfe", BOT + ".jar", BOT]],
-    "Lisp"      : [['sbcl', '--dynamic-space-size', str(MEMORY_LIMIT), '--script', BOT + '.lisp']],
-    "OCaml"     : [["ocamlbuild -lib unix", BOT + ".native"]],
-    "Pascal"    : [["fpc", "-Mdelphi", "-Si", "-O3", "-Xs", "-v0", "-o" + BOT]],
     "Python"    : [["python", "-c", PYTHON_EXT_COMPILER]],
     "Python3"   : [["python3", "-c", PYTHON_EXT_COMPILER]],
-    "Scala"     : [["scalac"]],
-    }
-
-targets = {
-    # lang : { old_ext : new_ext, ... }
-    "C"     : { ".c" : ".o" },
-    "C++" : { ".c" : ".o", ".cpp" : ".o", ".cc" : ".o" },
     }
 
 Language = collections.namedtuple("Language",
@@ -360,91 +331,6 @@ languages = (
     # The compilers are run in the order given.
     # If a source glob is "" it means the source is part of the compiler
     #   arguments.
-    Language("Ada", BOT, "mybot.adb",
-        "./MyBot",
-        ["*.ali"],
-        [(["*.adb"], ExternalCompiler(comp_args["Ada"][0])),
-            (["mybot.ali"], ExternalCompiler(comp_args["Ada"][1])),
-            (["mybot.ali"], ExternalCompiler(comp_args["Ada"][2]))]
-    ),
-    Language("C", BOT, "MyBot.c",
-        "./MyBot",
-        ["*.o", BOT],
-        [(["*.c"], TargetCompiler(comp_args["C"][0], targets["C"])),
-            (["*.o"], ExternalCompiler(comp_args["C"][1]))]
-    ),
-    Language("C#", BOT +".exe", "MyBot.cs",
-        "mono MyBot.exe",
-        [BOT + ".exe"],
-        [(["*.cs"], ExternalCompiler(comp_args["C#"][0]))]
-    ),
-    Language("VB", BOT +".exe", "MyBot.vb",
-        "mono MyBot.exe",
-        [BOT + ".exe"],
-        [(["*.vb"],
-            ExternalCompiler(comp_args["VB"][0], out_files=['MyBot.exe']))]
-    ),
-    # These two C++ variants should be combined after the ants contest
-    Language("C++", BOT, "MyBot.cc",
-        "./MyBot",
-        ["*.o", BOT],
-        [
-            (["*.c", "*.cpp", "*.cc"],
-                TargetCompiler(comp_args["C++"][0], targets["C++"])),
-            (["*.o"], ExternalCompiler(comp_args["C++"][1]))
-        ]
-    ),
-    Language("C++11", BOT, "MyBot.cpp",
-        "./MyBot",
-        ["*.o", BOT],
-        [
-            (["*.c", "*.cpp", "*.cc"],
-                TargetCompiler(comp_args["C++11"][0], targets["C++"])),
-            (["*.o"], ExternalCompiler(comp_args["C++11"][1]))
-        ]
-    ),
-    Language("Clojure", BOT +".clj", "MyBot.clj",
-		"java -Xmx%sm -cp /usr/share/java/clojure.jar:. clojure.main MyBot.clj" % (MEMORY_LIMIT,),
-        [],
-        [(["*.clj"], ChmodCompiler("Clojure"))]
-    ),
-    Language("CoffeeScript", BOT +".coffee", "MyBot.coffee",
-        "coffee MyBot.coffee",
-        [],
-        [(["*.coffee"], ChmodCompiler("CoffeeScript"))]
-    ),
-    Language("D", BOT, "MyBot.d",
-        "./MyBot",
-        ["*.o", BOT],
-        [(["*.d"], ExternalCompiler(comp_args["D"][0]))]
-    ),
-    Language("Dart", BOT +".dart", "MyBot.dart",
-        "frogsh MyBot.dart",
-        [],
-        [(["*.dart"], ChmodCompiler("Dart"))]
-    ),
-    Language("Erlang", "my_bot.beam", "my_bot.erl",
-        "erl -hms"+ str(MEMORY_LIMIT) +"m -smp disable -noshell -s my_bot start -s init stop",
-        ["*.beam"],
-        [(["*.erl"], ExternalCompiler(["erlc"], out_ext=".beam"))]
-    ),
-    Language("Go", BOT, "MyBot.go",
-        "./MyBot",
-        ["*.8", "*.6", BOT],
-        [(["*.go"], ExternalCompiler(comp_args["Go"][0], out_files=['_go_.6'])),
-            ([""], ExternalCompiler(comp_args["Go"][1], out_files=['_go_.6']))]
-    ),
-    Language("Groovy", BOT +".jar", "MyBot.groovy",
-        "java -Xmx" + str(MEMORY_LIMIT) + "m -cp MyBot.jar:/usr/share/groovy/embeddable/groovy-all-1.7.5.jar MyBot",
-        ["*.class, *.jar"],
-        [(["*.groovy"], ExternalCompiler(comp_args["Groovy"][0])),
-        (["*.class"], ExternalCompiler(comp_args["Groovy"][1]))]
-    ),
-    Language("Haskell", BOT, "MyBot.hs",
-        "./MyBot +RTS -M" + str(MEMORY_LIMIT) + "m",
-        [BOT],
-        [([""], ExternalCompiler(comp_args["Haskell"][0]))]
-    ),
     Language("Java", BOT +".jar", "MyBot.java",
         "java -Xmx" + str(MEMORY_LIMIT) + "m -jar MyBot.jar",
         ["*.class", "*.jar"],
@@ -455,43 +341,6 @@ languages = (
         "node MyBot.js",
         [],
         [(["*.js"], ChmodCompiler("Javascript"))]
-    ),
-    Language("Lisp", BOT, "MyBot.lisp",
-        "./MyBot --dynamic-space-size " + str(MEMORY_LIMIT),
-        [BOT],
-        [([""], ExternalCompiler(comp_args["Lisp"][0]))]
-    ),
-    Language("Lua", BOT +".lua", "MyBot.lua",
-        "luajit-2.0.0-beta5 MyBot.lua",
-        [],
-        [(["*.lua"], ChmodCompiler("Lua"))]
-    ),
-    Language("OCaml", BOT +".native", "MyBot.ml",
-        "./MyBot.native",
-        [BOT + ".native"],
-        [([""], ExternalCompiler(comp_args["OCaml"][0]))]
-    ),
-    Language("Octave", BOT + ".m", "MyBot.m", 
-        "octave -qf MyBot.m",
-        [],
-        [(["*.m"], ChmodCompiler("Octave"))]
-    ),
-    Language("Pascal", BOT, BOT + ".pas",
-        "./" + BOT,
-        [BOT, "*.o", "*.ppu"],
-        [([BOT + ".pas"], ErrorFilterCompiler(comp_args["Pascal"][0], 
-           stdout_is_error=True, skip_stdout=2,
-           filter_stderr='^/usr/bin/ld: warning: link.res contains output sections; did you forget -T\?$'))]
-    ),
-    Language("Perl", BOT +".pl", "MyBot.pl",
-        "perl MyBot.pl",
-        [],
-        [(["*.pl"], ChmodCompiler("Perl"))]
-    ),
-    Language("PHP", BOT +".php", "MyBot.php",
-        "php MyBot.php",
-        [],
-        [(["*.php"], ChmodCompiler("PHP"))]
     ),
     Language("Python", BOT +".py", "MyBot.py",
         "python MyBot.py",
@@ -504,37 +353,7 @@ languages = (
         ["*.pyc"],
         [(["*.py3"], ChmodCompiler("Python3")),
         (["setup_exts"], ErrorFilterCompiler(comp_args["Python3"][0], separate=True, filter_stderr='-Wstrict-prototypes'))]
-    ),
-    Language("PyPy", BOT +".pypy", "MyBot.pypy",
-        "pypy MyBot.pypy",
-        ["*.pyc"],
-        [(["*.py"], ChmodCompiler("Python"))]
-    ),
-    Language("Racket", BOT +".rkt", "MyBot.rkt",
-        "racket MyBot.rkt",
-        [],
-        [(["*.rkt"], ChmodCompiler("Racket"))]
-    ),
-    Language("Ruby", BOT +".rb", "MyBot.rb",
-        "ruby MyBot.rb",
-        [],
-        [(["*.rb"], ChmodCompiler("Ruby"))]
-    ),
-    Language("Scala", BOT +".scala", "MyBot.scala",
-        'scala -J-Xmx'+ str(MEMORY_LIMIT) +'m -howtorun:object MyBot',
-        ["*.scala, *.jar"],
-        [(["*.scala"], ExternalCompiler(comp_args["Scala"][0]))]
-    ),
-    Language("Scheme", BOT +".ss", "MyBot.ss",
-        "./MyBot",
-        [],
-        [(["*.ss"], ChmodCompiler("Scheme"))]
-    ),
-    Language("Tcl", BOT +".tcl", "MyBot.tcl",
-        "tclsh8.5 MyBot.tcl",
-        [],
-        [(["*.tcl"], ChmodCompiler("Tcl"))]
-    ),
+    )
 )
 
 

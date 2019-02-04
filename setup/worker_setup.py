@@ -29,26 +29,10 @@ def install_utility_packages():
 
 def install_basic_languages():
     """ Install base set of submission languages,
-        currently C, C++, Java, and Python """
-    pkg_list = ["gcc", "g++", "openjdk-6-jdk", "python-dev", "python3-dev",
+        currently Java, and Python """
+    pkg_list = ["openjdk-6-jdk", "python-dev", "python3-dev",
                 "python-numpy", "python-scipy"]
     install_apt_packages(pkg_list)
-
-def install_extra_distribution_languages():
-    """ Install all extra languages that are part of the Ubuntu distribution
-        and don't require any special installation steps """
-    pkg_list = ["ruby1.9.1", "php5-cli", "perl", "ocaml", "luajit", "liblua5.1-socket-dev", "ghc",
-            "common-lisp-controller", "sbcl", "mono-2.0-devel", "mono-vbnc",
-            "erlang-base", "fp-compiler", "gnat", "tcl8.5", "octave3.2" ]
-    install_apt_packages(pkg_list)
-    if not os.path.exists("/usr/bin/ruby"):
-        os.symlink("/usr/bin/ruby1.9.1", "/usr/bin/ruby")
-
-def install_golang(download_base):
-    """ Install golang """
-    with CD("/root"):
-        run_cmd("curl '%s/golang.deb' > golang.deb" % (download_base,))
-        run_cmd("dpkg -i golang.deb")
 
 def install_nodejs(download_base):
     """ Install node.js """
@@ -56,81 +40,6 @@ def install_nodejs(download_base):
     with CD("/root"):
         run_cmd("curl '%s/nodejs.deb' > nodejs.deb" % (download_base,))
         run_cmd("dpkg -i nodejs.deb")
-
-def install_coffeescript(download_base):
-    """ Install coffeescript """
-    if os.path.exists("/usr/local/bin/coffee"):
-        return
-    with CD("/root"):
-        run_cmd("curl '%s/coffeescript.tgz' > coffeescript.tgz" % (download_base,))
-        run_cmd("tar xzf coffeescript.tgz")
-        with CD("jashkenas-coffee-script-1a652a9"):
-            run_cmd("bin/cake install")
-
-def install_clojure(download_base):
-    """ Install the Clojure language """
-    if os.path.exists("/usr/share/java/clojure.jar"):
-        return
-    with CD("/root"):
-        run_cmd("curl '%s/clojure.zip' > clojure.zip" % (download_base,))
-        run_cmd("unzip clojure.zip")
-        run_cmd("cp clojure-1.3.0/clojure-1.3.0.jar /usr/share/java/clojure.jar")
-        run_cmd("chmod a+r /usr/share/java/clojure.jar")
-
-def install_dart(download_base):
-    """ Install the Dart language """
-    if os.path.exists("/usr/bin/frogsh"):
-        return
-    with CD("/root"):
-        run_cmd("curl '%s/dart.tgz' | tar xz" % (download_base,))
-        os.rename("dart-frogsh-r1499", "/usr/share/dart")
-        os.symlink("/usr/share/dart/frog/frogsh", "/usr/bin/frogsh")
-
-def install_groovy(download_base):
-    """ Install the Groovy language """
-    if os.path.exists("/usr/bin/groovy"):
-        return
-    with CD("/root"):
-        run_cmd("curl '%s/groovy.deb' > groovy.deb" % (download_base,))
-        run_cmd("dpkg -i groovy.deb")
-
-def install_pypy(download_base):
-    """ Install pypy """
-    if os.path.exists("/usr/bin/pypy"):
-        return
-    with CD("/root"):
-        run_cmd("curl '%s/pypy.tar.bz2' | tar xj" % (download_base,))
-        os.rename("pypy-1.7", "/usr/share/pypy-1.7")
-        os.symlink("/usr/share/pypy-1.7/bin/pypy", "/usr/bin/pypy")
-
-def install_scala(download_base):
-    """ Install the Scala language """
-    if os.path.exists("/usr/bin/scala"):
-        return
-    with CD("/root"):
-        run_cmd("curl '%s/scala.tgz' | tar xz" % (download_base,))
-        os.rename("scala-2.9.0.1", "/usr/share/scala")
-        os.symlink("/usr/share/scala/bin/scala", "/usr/bin/scala")
-        os.symlink("/usr/share/scala/bin/scalac", "/usr/bin/scalac")
-
-def install_dmd(download_base):
-    """ Install the D language """
-    if os.path.exists("/usr/bin/dmd"):
-        return
-    install_apt_packages("gcc-multilib")
-    with CD("/root"):
-        run_cmd("curl '%s/dmd.deb' > dmd.deb" % (download_base,))
-        run_cmd("dpkg -i dmd.deb")
-
-def install_racket(download_base):
-    """ Install the Racket language"""
-    if os.path.exists("/usr/bin/racket"):
-        return
-    with CD("/root"):
-        run_cmd("curl '%s/racket.sh' > racket.sh" % (download_base,))
-        run_cmd('echo -e "\n4\n" | sh racket.sh')
-        os.symlink("/usr/racket/bin/racket", "/usr/bin/racket")
-
 def install_packaged_languages():
     install_basic_languages()
     install_extra_distribution_languages()
@@ -138,18 +47,8 @@ def install_packaged_languages():
 def install_all_languages(options):
     download_base = options.api_url +"langs"
     install_basic_languages()
-    install_extra_distribution_languages()
 
-    install_clojure(download_base)
-    install_dart(download_base)
-    install_dmd(download_base)
-    install_golang(download_base)
-    install_groovy(download_base)
     install_nodejs(download_base)
-    install_coffeescript(download_base) # must come after nodejs
-    install_pypy(download_base)
-    install_racket(download_base)
-    install_scala(download_base)
 
 def install_jailguard(options):
     worker_dir = os.path.join(options.local_repo, "worker")

@@ -1,9 +1,0 @@
-project MyBot is
-
-   package Compiler is
-      for Default_Switches ("ada") use ("-g", "-O2");
-   end Compiler;
-
-   for Main use ("mybot.adb");
-
-end MyBot;

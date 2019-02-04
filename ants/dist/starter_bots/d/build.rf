@@ -1,8 +1,0 @@
--g
--od"bin"
--of"bin/MyBot"
-
--I""
-
-"MyBot.d"
-"ants.d"

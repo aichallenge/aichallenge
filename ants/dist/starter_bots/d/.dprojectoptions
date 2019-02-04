@@ -1,7 +1,0 @@
-[compileoptions]
-buildtype = EXECUTABLE
-out = bin
-outname = MyBot
-buildtool = $DEEBUILDER.COMPILEREXEPATH @build.rf
-extraOptions = -g\n-od$DEEBUILDER.OUTPUTPATH\n-of$DEEBUILDER.OUTPUTEXE\n$DEEBUILDER.SRCLIBS.-I\n$DEEBUILDER.SRCFOLDERS.-I\n$DEEBUILDER.SRCMODULES
-

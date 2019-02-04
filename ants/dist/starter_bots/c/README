@@ -1,5 +1,0 @@
-A C starter pack created by flagcapper. If given any unexpected input, it will crash. Compile using the makefile or with:
-
-gcc *.c -o MyBot -lm
-
-UPDATE: Hills have been added using code contributed from mpolitzer
