@@ -3,8 +3,6 @@ import glob
 import re
 import os
 
-
-
 def replaceMarkdown():
     competition="Ants"
     seewikiregex=re.compile(r'(<!--<MarkdownReplacement with="([^\n>]*.md)">-->.*?<!--</MarkdownReplacement>-->)',re.DOTALL)
@@ -24,23 +22,8 @@ def replaceMarkdown():
             open(page,"w").write(pagecontent)
         except IOError:
             print "Ignoring `%s` because of errors" % (page)
-            
-def concatCSS():
-    css_order = ['font.css', 'reset.css', 'layout.css'] # these files go first
-    with open('aichallenge.css', 'w') as f:
-        css_files = css_order + list(set(os.listdir('css')) - set(css_order))
-        for filename in css_files:
-            print "Concatenating `%s` to the main css." % (filename)
-            if filename.endswith('.css'):
-                with open(os.path.join('css', filename), 'r') as fin:
-                    f.write('\n/* begin %s %s */\n' % (filename, '='*(70-len(filename))))
-                    f.write(fin.read())
-                    f.write('\n/* end %s %s */\n' % (filename, '='*(72-len(filename))))
-
-
 
 def setup():
-    concatCSS()
     replaceMarkdown()
 
 if __name__=="__main__":

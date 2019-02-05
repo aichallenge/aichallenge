@@ -1,3 +1,4 @@
+<?php require_once('session.php'); ?>
 <!DOCTYPE html>
 <?php
 
@@ -23,7 +24,12 @@ if(isset($title)) {
         <link rel="shortcut icon" href="favicon.ico" />
 
         <!-- CSS -->
-        <link href="aichallenge.css" rel="stylesheet" type="text/css" />
+        <link href="/css/font.css" rel="stylesheet" type="text/css" />
+        <link href="/css/reset.css" rel="stylesheet" type="text/css" />
+        <link href="/css/layout.css" rel="stylesheet" type="text/css" />
+        <link href="/css/pygments_style.css" rel="stylesheet" type="text/css" />
+        <link href="/css/tab_sync.css" rel="stylesheet" type="text/css" />
+        <link href="/css/typo.css" rel="stylesheet" type="text/css" />
 
         <!-- JavaScript -->
         <script src="//ajax.googleapis.com/ajax/libs/jquery/1.6.2/jquery.min.js"></script>
@@ -39,8 +45,6 @@ if (file_exists('server_head.html')) {
 ?>
     </head>
 <?php
-
-require_once('session.php');
 
 // attempt cookie login if needed
 if (!logged_in_with_valid_credentials()) {
