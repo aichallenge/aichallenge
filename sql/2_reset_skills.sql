@@ -15,15 +15,15 @@ begin
 
     -- reset submissions
     update submission
-    set rank = null,
-        rank_change = null,
-        mu = 50.0,
-        sigma = 16.6667,
-        mu_change = null,
-        sigma_change = null,
-        min_game_id = null,
-        max_game_id = null,
-        game_count = 0;
+    set `rank` = null,
+        `rank_change` = null,
+        `mu` = 50.0,
+        `sigma` = 16.6667,
+        `mu_change` = null,
+        `sigma_change` = null,
+        `min_game_id` = null,
+        `max_game_id` = null,
+        `game_count` = 0;
 
     -- delete current matchups, even those in progress
     delete from matchup

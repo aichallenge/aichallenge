@@ -25,7 +25,7 @@ inner join (
            @skill := mu - sigma * 3 as skill,
            @seq := (@seq + 1) as seq,
            if(@skill = @last_skill, @last_rank, @seq) as new_rank,
-           rank - if(@skill = @last_skill, @last_rank, @seq) as new_rank_change,
+           `rank` - if(@skill = @last_skill, @last_rank, @seq) as new_rank_change,
            if(@skill = @last_skill, @last_rank, @last_rank := @seq) next_rank,
            @last_skill := @skill
     from (
@@ -40,7 +40,7 @@ inner join (
     (select @last_rank := 0) lr 
 ) s2
     on submission.submission_id = s2.submission_id
-set rank = s2.new_rank,
+set `rank` = s2.new_rank,
     rank_change = rank_change + s2.new_rank_change
 where submission.latest = 1;
 
