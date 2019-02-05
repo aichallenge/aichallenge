@@ -1,0 +1,48 @@
+version: "3"
+services:
+  php-apache:
+    build:
+      context: ./website
+    ports:
+      - 80:80
+    volumes:
+      - ./website:/var/www/html
+    links:
+      - mysql
+    environment:
+      WEBSITE_HOSTNAME: localhost
+      DATABASE_USER: contest
+      DATABASE_PASSWORD: contest
+      DATABASE_NAME: aichallenge
+      REPO_DIR: repo
+      UPLOAD_DIR: uploads
+      MAPS_DIR: maps
+      REPLAY_DIR: replays
+      LOG_DIR: logs
+      API_URL: api_url
+
+  mysql:
+    image: mysql
+    command: --default-authentication-plugin=mysql_native_password
+    restart: always
+    ports:
+      - "3306:3306"
+    volumes:
+      - ./sql/:/docker-entrypoint-initdb.d
+    environment:
+      MYSQL_DATABASE: aichallenge
+      MYSQL_ROOT_PASSWORD: example
+      MYSQL_USER: contest
+      MYSQL_PASSWORD: contest
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    links:
+      - mysql
+    environment:
+      PMA_HOST: mysql
+      PMA_PORT: 3306
+    ports:
+      - "8080:80"
+    volumes:
+      - /sessions
