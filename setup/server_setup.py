@@ -86,9 +86,9 @@ def setup_website(opts):
         if not os.path.exists("aichallenge.wiki"):
             run_cmd("git clone git://github.com/aichallenge/aichallenge.wiki.git")
             run_cmd("python setup.py")
-    with CD(os.path.join(opts.local_repo, "ants/dist/starter_bots")):
-        run_cmd("make")
-        run_cmd("make install")
+    # with CD(os.path.join(opts.local_repo, "ants/dist/starter_bots")):
+    #     run_cmd("make")
+    #     run_cmd("make install")
     if not os.path.exists(os.path.join(website_root, "worker-src.tgz")):
         create_worker_archive.main(website_root)
     visualizer_path = os.path.join(opts.local_repo, "ants/visualizer")

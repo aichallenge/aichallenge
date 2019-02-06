@@ -1,13 +1,17 @@
 #!/usr/bin/env python
 import sys
 import markdown
+
+from mdx_github import MarkdownGithub
+from mdx_latex import MarkdownLatex
+
 md = markdown.Markdown(
         extensions=['extra',
                     'codehilite',
                     'toc',
                     'wikilinks',
-                    'latex',
-                    'github']
+                    MarkdownLatex(),
+                    MarkdownGithub()]
      )
 mdfile = open(sys.argv[1], 'r')
 mdtext = mdfile.read()

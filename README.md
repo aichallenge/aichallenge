@@ -9,6 +9,11 @@ Epsilon is supposed to implement the ants game.
 
 - [ ] Support opponent.sql
 
+## Setup
+
+1. First run `python setup.py` in the root folder. This will create the starter bots in `ants/dist/starter_bots` and copy them to `website/starter_packages/` where the user can later download them.
+   It will then download the wiki files, which are parsed and put into the php files.
+
 ## Folder Contents
 
 - `ants/` - Everything related to ants: engine, starter packages, maps/mapgen, visualizer
