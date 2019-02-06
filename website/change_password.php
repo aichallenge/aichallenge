@@ -28,14 +28,14 @@ if (!logged_in_with_valid_credentials()) {
     // check for forgotten password url
     if (isset($_GET['user_id']) && isset($_GET['code'])) {
         // Log this login attempt
-        $user_id = mysql_real_escape_string(stripslashes($_GET['user_id']));
-        $forgot_code = mysql_real_escape_string(stripslashes($_GET['code']));
-        $naive_ip = mysql_real_escape_string($_SERVER['REMOTE_ADDR']);
-        $real_ip = mysql_real_escape_string(getRealIpAddr());
+        $user_id = mysqli_real_escape_string($mysqli, stripslashes($_GET['user_id']));
+        $forgot_code = mysqli_real_escape_string($mysqli, stripslashes($_GET['code']));
+        $naive_ip = mysqli_real_escape_string($mysqli, $_SERVER['REMOTE_ADDR']);
+        $real_ip = mysqli_real_escape_string($mysqli, getRealIpAddr());
         
         $result = contest_query("log_login", $user_id, $naive_ip, $real_ip);
         if (!$result) {
-          error_log("Could not write to log: " . mysql_error());
+          error_log("Could not write to log: " . mysqli_error());
         }
         if (check_credentials_forgot($user_id, $forgot_code)) {
             $_SESSION['forgotten'] = true;

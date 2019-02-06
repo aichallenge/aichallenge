@@ -21,15 +21,15 @@ if($game_id == 0){
     INNER JOIN submission s2 ON g.player_two = s2.submission_id
     INNER JOIN user u2 ON s2.user_id = u2.user_id
     WHERE g.game_id = $game_id";
-    $result = mysql_query($query);
-    if(!$result || mysql_num_rows($result) == 0){
+    $result = mysqli_query($mysqli, $query);
+    if(!$result || mysqli_num_rows($result) == 0){
       $query = str_replace("FROM games g", "FROM games_archive g", $query);
-      $result = mysql_query($query);
+      $result = mysqli_query($mysqli, $query);
     }
     if(!$result){
       echo "Could not query the database.\n";
     }else{
-      $row = mysql_fetch_assoc($result);
+      $row = mysqli_fetch_assoc($result);
       if($playback_string = get_playback($game_id)){
         $row['playback_string'] = $playback_string;
         $row['using_compression'] = true;
@@ -48,8 +48,8 @@ if($game_id == 0){
 
 function get_playback($game_id){
   $sql = "SELECT * from playback where game_id = $game_id";
-  $q = mysql_query($sql);
-  $result = mysql_fetch_assoc($q);
+  $q = mysqli_query($mysqli, $sql);
+  $result = mysqli_fetch_assoc($q);
   if($result['playback_string']!=''){
     return gzuncompress($result['playback_string']);
   }
@@ -65,10 +65,10 @@ function get_error_message($game_id){
     'UNPARSEABLE_ORDER' => 'issued an order that could not be parsed',
     );
   
-  $sql = "SELECT e.*, u.username from error e inner join submission s ON e.submission_id = s.submission_id inner join user u on u.user_id = s.user_id where game_id = '".mysql_real_escape_string($game_id)."'";
-  $q = mysql_query($sql);
+  $sql = "SELECT e.*, u.username from error e inner join submission s ON e.submission_id = s.submission_id inner join user u on u.user_id = s.user_id where game_id = '".mysqli_real_escape_string($mysqli, $game_id)."'";
+  $q = mysqli_query($mysqli, $sql);
   $out = array();
-  while($result = mysql_fetch_assoc($q)){
+  while($result = mysqli_fetch_assoc($q)){
     if($result){
       $nice_error = $error_types[$result['error']];
       if($nice_error==''){

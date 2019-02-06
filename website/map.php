@@ -13,7 +13,7 @@ if ($map_row !== NULL) {
     require_once("header.php");
     echo "<a href=\"map/".$map_row['filename']."\">".$map_row['filename']."</a> (download link)";
     visualize_map($map_row['filename']);    
-    echo get_game_list_table($page, NULL, NULL, $map_row['map_id'], FALSE, 'map.php');
+    echo get_game_list_table($mysqli, $page, NULL, NULL, $map_row['map_id'], FALSE, 'map.php');
 } else {
     $map = htmlentities($map);
     require_once("header.php");

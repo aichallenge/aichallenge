@@ -70,7 +70,7 @@ if (array_key_exists('user_organization', $_POST)) {
 }
 
 if (array_key_exists('user_bio', $_POST)) {
-  $bio = mysql_real_escape_string(stripslashes($_POST['user_bio']));
+  $bio = mysqli_real_escape_string($mysqli, stripslashes($_POST['user_bio']));
   if (contains_bad_word($bio)) {
     die("Your bio contains a bad word. Keep it professional.");
   }

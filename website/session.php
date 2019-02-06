@@ -38,9 +38,9 @@ function current_user_id() {
   }
 }
 
-function activate_user($user_id) {
+function activate_user($mysqli, $user_id) {
   $query = "UPDATE user SET activated = 1 WHERE user_id = '$user_id'";
-  return mysql_query($query);
+  return mysqli_query($mysqli, $query);
 }
 
 $errors = array();

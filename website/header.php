@@ -50,7 +50,7 @@ if (file_exists('server_head.html')) {
 if (!logged_in_with_valid_credentials()) {
     if (list($header_user_id, $header_user_cookie) = validate_user_cookie()) {
         require_once('mysql_login.php');
-        check_credentials_cookie($header_user_id, $header_user_cookie);
+        check_credentials_cookie($mysqli, $header_user_id, $header_user_cookie);
     }    
 }
 

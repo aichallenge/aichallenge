@@ -15,21 +15,21 @@ if (isset($_POST['old_password'])) {
 } else {
     $old_password = NULL;
 }
-$old_password = mysql_real_escape_string(stripslashes($old_password));
-$new_password = mysql_real_escape_string(stripslashes($_POST['new_password']));
-$confirm_password = mysql_real_escape_string(stripslashes($_POST['confirm_password']));
+$old_password = mysqli_real_escape_string($mysqli, stripslashes($old_password));
+$new_password = mysqli_real_escape_string($mysqli, stripslashes($_POST['new_password']));
+$confirm_password = mysqli_real_escape_string($mysqli, stripslashes($_POST['confirm_password']));
 
 if ($new_password != $confirm_password) {
     $_SESSION['change_password_error'] = "Passwords do not match.";
     header("location:change_password.php");
 } elseif ((isset($_SESSION['forgotten']) && $_SESSION['forgotten']) ||
-          check_credentials(current_username(), $old_password)) {
+          check_credentials($mysqli, current_username(), $old_password)) {
     $_SESSION['forgotten'] = false;
-    contest_query("change_password",
+    contest_query($mysqli, "change_password",
                   crypt($new_password, '$6$rounds=54321$' . salt() . '$'),
                   current_user_id());
     if (isset($_POST['remember_me'])) {
-        create_user_cookie(current_user_id());
+        create_user_cookie($mysqli, current_user_id());
     }
     header("location:index.php");
     $_SESSION['change_password_error'] = false;

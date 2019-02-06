@@ -29,9 +29,9 @@ where
     username = '$username'
 EOT;
 
-    $user_country_data = mysql_query($user_query);
+    $user_country_data = mysqli_query($mysqli, $user_query);
     if ($user_country_data) {
-        list ($user_country_id) = mysql_fetch_row($user_country_data);
+        list ($user_country_id) = mysqli_fetch_row($user_country_data);
     } else {
         $user_country_id = -1;
     }
@@ -56,7 +56,7 @@ where
 group by u.country_id
 order by num_leaders desc
 EOT;
-    $rankings_results = mysql_query($rankings_query);
+    $rankings_results = mysqli_query($mysqli, $rankings_query);
 
     // If query fails
     if (!$rankings_results) {
@@ -75,7 +75,7 @@ $table .= <<<EOT
 </thead>
 <tbody>
 EOT;
-    for ($i = 1; $row = mysql_fetch_assoc($rankings_results); $i += 1) {
+    for ($i = 1; $row = mysqli_fetch_assoc($rankings_results); $i += 1) {
         $num_leaders = $row["num_leaders"];
         $country_id = $row["country_id"];
         $country_name = $row["country_name"];

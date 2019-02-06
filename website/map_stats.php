@@ -5,18 +5,18 @@ include 'header.php';
 require_once('mysql_query.php');
 
 $query = "SELECT map_id, count(1), MAX(game_id) FROM games GROUP BY map_id";
-$result = mysql_query($query);
+$result = mysqli_query($mysqli, $query);
 $played = array();
 $latest = array();
-while ($row = mysql_fetch_assoc($result)) {
+while ($row = mysqli_fetch_assoc($result)) {
     $played[$row['map_id']] = $row['count(1)'];
     $latest[$row['map_id']] = $row['MAX(game_id)'];
 }
 
 $query = "SELECT map_id, count(1) FROM game WHERE draw = 1 GROUP BY map_id";
-$result = mysql_query($query);
+$result = mysqli_query($mysqli, $query);
 $draws = array();
-while ($row = mysql_fetch_assoc($result)) {
+while ($row = mysqli_fetch_assoc($result)) {
     $draws[$row['map_id']] = $row['count(1)'];
 }
 
@@ -25,9 +25,9 @@ $query = "SELECT submission_id FROM ranking
     WHERE leaderboard_id = (SELECT MAX(leaderboard_id) FROM leaderboard
         WHERE complete = 1)
     ORDER BY rank LIMIT 100";
-$result = mysql_query($query);
+$result = mysqli_query($mysqli, $query);
 $top_players = "";
-while ($row = mysql_fetch_assoc($result)) {
+while ($row = mysqli_fetch_assoc($result)) {
     $top_players .= ",".$row['submission_id'];
 }
 $top_players = substr($top_players, 1);
@@ -35,9 +35,9 @@ $top_players = substr($top_players, 1);
 $query = "SELECT map_id, count(1) FROM game
     WHERE player_one in ($top_players) AND player_two in ($top_players)
     GROUP BY map_id";
-$result = mysql_query($query);
+$result = mysqli_query($mysqli, $query);
 $top_played = array();
-while ($row = mysql_fetch_assoc($result))
+while ($row = mysqli_fetch_assoc($result))
 {
     $top_played[$row['map_id']] = $row['count(1)'];
 }
@@ -46,16 +46,16 @@ $query = "SELECT map_id, count(1) FROM game
     WHERE player_one in ($top_players) AND player_two in ($top_players)
         AND draw = 1
     GROUP BY map_id";
-$result = mysql_query($query);
+$result = mysqli_query($mysqli, $query);
 $top_draws = array();
-while ($row = mysql_fetch_assoc($result)) {
+while ($row = mysqli_fetch_assoc($result)) {
     $top_draws[$row['map_id']] = $row['count(1)'];
 }
 
 $query = "SELECT * FROM map";
-$result = mysql_query($query);
+$result = mysqli_query($mysqli, $query);
 $map_info = array();
-while ($row = mysql_fetch_assoc($result)) {
+while ($row = mysqli_fetch_assoc($result)) {
     $map_info[$row['map_id']." "] = $row;
 }
 foreach ($map_info as $map_id => $info) {

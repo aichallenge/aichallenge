@@ -11,28 +11,28 @@ require_once 'bad_words.php';
 require_once 'web_util.php';
 require_once('memcache.php');
 
-function check_valid_user_status_code($code) {
+function check_valid_user_status_code($mysqli, $code) {
   $query = "SELECT * FROM user_status_code WHERE status_id = ".(int)$code;
-  $result = mysql_query($query);
-  return (boolean)mysql_num_rows($result);
+  $result = mysqli_query($mysqli, $query);
+  return (boolean)mysqli_num_rows($result);
 }
 
-function check_valid_organization($code) {
+function check_valid_organization($mysqli, $code) {
   if ($code == 999) {
     return False;
   }
   $query = "SELECT * FROM organization WHERE org_id=".(int)$code;
-  $result = mysql_query($query);
-  return (boolean)mysql_num_rows($result);
+  $result = mysqli_query($mysqli, $query);
+  return (boolean)mysqli_num_rows($result);
 }
 
-function check_valid_country($id) {
+function check_valid_country($mysqli, $id) {
   if ($id == 999 || !filter_var($id, FILTER_VALIDATE_INT)) {
     return False;
   }
   $query = "SELECT count(*) from country where country_id=". $id;
-  $result = mysql_query($query);
-  $row = mysql_fetch_assoc($result);
+  $result = mysqli_query($mysqli, $query);
+  $row = mysqli_fetch_assoc($result);
   if ($row['count(*)'] > 0) {
     return True;
   }
@@ -73,14 +73,14 @@ if (!isset($_POST['username'], $_POST['password1'], $_POST['password2'],
 }
 
 // Gather the information entered by the user on the signup page.
-$username = mysql_real_escape_string(stripslashes($_POST['username']));
-$password1 = mysql_real_escape_string(stripslashes($_POST['password1']));
-$password2 = mysql_real_escape_string(stripslashes($_POST['password2']));
-$user_email = mysql_real_escape_string(stripslashes($_POST['user_email']));
-$user_status = mysql_real_escape_string(stripslashes($_POST['user_status']));
-$user_org = mysql_real_escape_string(stripslashes($_POST['user_organization']));
-$bio = mysql_real_escape_string(stripslashes($_POST['bio']));
-$country_id = mysql_real_escape_string(stripslashes($_POST['user_country']));
+$username = mysqli_real_escape_string($mysqli, stripslashes($_POST['username']));
+$password1 = mysqli_real_escape_string($mysqli, stripslashes($_POST['password1']));
+$password2 = mysqli_real_escape_string($mysqli, stripslashes($_POST['password2']));
+$user_email = mysqli_real_escape_string($mysqli, stripslashes($_POST['user_email']));
+$user_status = mysqli_real_escape_string($mysqli, stripslashes($_POST['user_status']));
+$user_org = mysqli_real_escape_string($mysqli, stripslashes($_POST['user_organization']));
+$bio = mysqli_real_escape_string($mysqli, stripslashes($_POST['bio']));
+$country_id = mysqli_real_escape_string($mysqli, stripslashes($_POST['user_country']));
 
 // Uncomment the following line to disable account creation
 //$errors[] = "Accounts can not be created at this time. Come back later, " .
@@ -109,8 +109,8 @@ else
 
 // Check if the username already exists.
 $sql="SELECT * FROM user WHERE username='$username'";
-$result = mysql_query($sql);
-if (mysql_num_rows($result) > 0) {
+$result = mysqli_query($mysqli, $sql);
+if (mysqli_num_rows($result) > 0) {
   $errors[] = "The username $username is already in use. Please choose a different username.";
 }
 
@@ -122,15 +122,16 @@ if (strlen($user_email) <= 0) {
 // Check if the email is already in use (except by an admin account or a donotsend account).
 if (strcmp($user_email, "donotsend") != 0) {
   $sql="select email from user where email = '$user_email' and admin = 0";
-  $result = mysql_query($sql);
-  if ($result && mysql_num_rows($result) > 0) {
+  $result = mysqli_query($mysqli, $sql);
+  if ($result && mysqli_num_rows($result) > 0) {
     $errors[] = "The email $user_email is already in use. You are only allowed to have one account! It is easy for us to tell if you have two accounts, and you will be disqualified if you have two accounts! If there is some problem with your existing account, get in touch with the contest organizers on irc.freenode.com channel #aichallenge and we will help you get up-and-running again!";
   }
-  $edomain = substr(strrchr($user_email, '@'), 1);
-  $mx_records = array();
-  if (!getmxrr($edomain, $mx_records) && (strcmp(gethostbyname($edomain), $edomain) == 0)) {
-    $errors[] = "Could not find the email address entered. Please enter a valid email address.";
-  }
+  // TODO what to do here?
+  // $edomain = substr(strrchr($user_email, '@'), 1);
+  // $mx_records = array();
+  // if (!getmxrr($edomain, $mx_records) && (strcmp(gethostbyname($edomain), $edomain) == 0)) {
+  //   $errors[] = "Could not find the email address entered. Please enter a valid email address.";
+  // }
 }
 
 // Check if the username is made up of the right kinds of characters
@@ -155,12 +156,12 @@ if (strlen($password1) < 5) {
 }
 
 // Check that the user status code is valid.
-if (!check_valid_user_status_code($user_status)) {
+if (!check_valid_user_status_code($mysqli, $user_status)) {
   $errors[] = "The status you selected is invalid. Please contact the contest staff.";
 }
 
 // Check that the country code is not empty.
-if (!check_valid_country($country_id)) {
+if (!check_valid_country($mysqli, $country_id)) {
   $errors[] = "You did not select a valid country from the dropdown box.";
 }
 
@@ -171,10 +172,10 @@ if( $user_org == '-1') {
         //don't create empty organizations
         $user_org = '0';
     } else {
-        $user_org_other = mysql_real_escape_string(stripslashes($_POST['user_organization_other']));
+        $user_org_other = mysqli_real_escape_string($mysqli, stripslashes($_POST['user_organization_other']));
         $user_org = create_new_organization( $user_org_other );
     }
-} elseif (!check_valid_organization($user_org)) {
+} elseif (!check_valid_organization($mysqli, $user_org)) {
   $errors[] = "The organization you selected is invalid. Please contact the contest staff.";
 }
 
@@ -186,12 +187,12 @@ if (count($errors) <= 0) {
       FROM organization org
       LEFT OUTER JOIN user u ON u.org_id = org.org_id
       WHERE org.org_id = " . $user_org;
-  $result = mysql_query($query);
+  $result = mysqli_query($mysqli, $query);
   $peer_message = "";
   $org_name = "";
   $num_peers = "";
   if ($result) {
-    if ($row = mysql_fetch_assoc($result)) {
+    if ($row = mysqli_fetch_assoc($result)) {
       $org_name = $row['name'];
       $num_peers = $row['peers'];
       if ($num_peers == 0) {
@@ -214,8 +215,8 @@ if (count($errors) <= 0) {
   }
   $query = "
       INSERT INTO user (username,`password`,email,status_id,activation_code,org_id,bio,country_id,created,activated,admin)
-      VALUES ('$username','" . mysql_real_escape_string(crypt($password1, '$6$rounds=54321$' . salt() . '$')) . "','$user_email',$user_status,'$confirmation_code',$user_org,'$bio',$country_id,CURRENT_TIMESTAMP,0,0)";
-  if (mysql_query($query)) {
+      VALUES ('$username','" . mysqli_real_escape_string($mysqli, crypt($password1, '$6$rounds=54321$' . salt() . '$')) . "','$user_email',$user_status,'$confirmation_code',$user_org,'$bio',$country_id,CURRENT_TIMESTAMP,0,0)";
+  if (mysqli_query($mysqli, $query)) {
     if ($memcache) {
         $memcache->delete('lookup:user_id');
         $memcache->delete('lookup:username');
@@ -246,7 +247,7 @@ if (count($errors) <= 0) {
         "minutes.";
       $query = "DELETE FROM user WHERE username='$username' and " .
         "activation_code='" . $confirmation_code . "'";
-      mysql_query($query);
+      mysqli_query($mysqli, $query);
     } else {
       // Send notification mail to contest admin.
       //$mail_subject = "New Contest User";
@@ -270,7 +271,7 @@ if (count($errors) <= 0) {
     }
   } else {
     $errors[] = "Failed to communicate with the registration database. Try " .
-      "again in a few minutes. ($query : " . mysql_error() . ")";
+      "again in a few minutes. ($query : " . mysqli_error($mysqli) . ")";
   }
 }
 if (count($errors) > 0) {

@@ -70,7 +70,7 @@ function cache_key($page=0, $user_id=NULL, $submission_id=NULL, $map_id=NULL, $f
 
 
 // page 0 is all results, page 1 is the top N results
-function get_query_results($page=0, $user_id=NULL, $submission_id=NULL, $map_id=NULL, $top=FALSE) {
+function get_query_results($mysqli, $page=0, $user_id=NULL, $submission_id=NULL, $map_id=NULL, $top=FALSE) {
     global $page_size;
     global $top_results_size;
 
@@ -107,9 +107,9 @@ function get_query_results($page=0, $user_id=NULL, $submission_id=NULL, $map_id=
         $list_query = "select_map_game_list";
         $list_select_field = "1";
     }
-    $list_results = contest_query($page_count_query, $list_select_field, $list_id);
+    $list_results = contest_query($mysqli, $page_count_query, $list_select_field, $list_id);
     if ($list_results) {
-        while ($list_row = mysql_fetch_array($list_results, MYSQL_NUM)) {
+        while ($list_row = mysqli_fetch_array($list_results, MYSQLI_NUM)) {
             $row_count = $list_row[0];
             $page_count = ceil($row_count / $page_size);
         }
@@ -125,13 +125,13 @@ function get_query_results($page=0, $user_id=NULL, $submission_id=NULL, $map_id=
         $offset = ($page - 1) * $page_size;
         $limit = $page_size;
     }
-    $results = contest_query($list_query, $list_select_field, $list_id, $limit, $offset);
+    $results = contest_query($mysqli, $list_query, $list_select_field, $list_id, $limit, $offset);
     if ($results) {    
         // loop through results, turning multiple rows for the same game into arrays
         $rows = array();
         $last_game_id = -1;
         $cur_row = NULL;
-        while ($row = mysql_fetch_assoc($results)) {
+        while ($row = mysqli_fetch_assoc($results)) {
             // get list type name
             if ($list_type && !$list_name && $row[$list_select_field] == $list_id) {
                 $list_name = $row[$list_id_field];                
@@ -160,8 +160,8 @@ function get_query_results($page=0, $user_id=NULL, $submission_id=NULL, $map_id=
     }
 }
 
-function create_game_list_json($page=0, $user_id=NULL, $submission_id=NULL, $map_id=NULL) {    
-    list ($rows, $page_count, $list_type, $list_id, $list_name) = get_query_results($page, $user_id, $submission_id, $map_id);
+function create_game_list_json($mysqli, $page=0, $user_id=NULL, $submission_id=NULL, $map_id=NULL) {    
+    list ($rows, $page_count, $list_type, $list_id, $list_name) = get_query_results($mysqli, $page, $user_id, $submission_id, $map_id);
     
     if ($rows) {
         $json = array("fields" => array_keys($rows[0]),
@@ -187,11 +187,11 @@ function create_game_list_json($page=0, $user_id=NULL, $submission_id=NULL, $map
     return NULL;
 }
 
-function create_game_list_table($page=0, $user_id=NULL, $submission_id=NULL, $map_id=NULL, $top=FALSE, $targetpage=NULL) {
+function create_game_list_table($mysqli, $page=0, $user_id=NULL, $submission_id=NULL, $map_id=NULL, $top=FALSE, $targetpage=NULL) {
     global $page_size;
     
     // if cached copy does not exists, create html table
-    list ($rows, $page_count, $list_type, $list_id, $list_name) = get_query_results($page, $user_id, $submission_id, $map_id, $top);
+    list ($rows, $page_count, $list_type, $list_id, $list_name) = get_query_results($mysqli, $page, $user_id, $submission_id, $map_id, $top);
     
     if (!$rows) {
         return '<h4>There are no games at this time.  Please check back later.</h4>';
@@ -294,7 +294,7 @@ function create_game_list_table($page=0, $user_id=NULL, $submission_id=NULL, $ma
     return $table;
 }
 
-function get_game_list_json($page=0, $user_id=NULL, $submission_id=NULL, $map_id=NULL) {
+function get_game_list_json($mysqli, $page=0, $user_id=NULL, $submission_id=NULL, $map_id=NULL) {
     global $memcache;
     list ($cache_key, $cache_length) = cache_key($page, $user_id, $submission_id, $map_id, 'json');
     if ($memcache) {
@@ -303,14 +303,14 @@ function get_game_list_json($page=0, $user_id=NULL, $submission_id=NULL, $map_id
             return $json;
         }
     }
-    $json = create_game_list_json($page, $user_id, $submission_id, $map_id);
+    $json = create_game_list_json($mysqli, $page, $user_id, $submission_id, $map_id);
     if ($memcache) {
         $memcache->set($cache_key, $json_result, MEMCACHE_COMPRESSED, $cache_length);
     }
     return $json;
 }
 
-function get_game_list_table($page=0, $user_id=NULL, $submission_id=NULL, $map_id=NULL, $top=FALSE, $targetpage=NULL) {
+function get_game_list_table($mysqli, $page=0, $user_id=NULL, $submission_id=NULL, $map_id=NULL, $top=FALSE, $targetpage=NULL) {
     global $memcache;
     $format = 'html';
     if ($top) {
@@ -324,23 +324,23 @@ function get_game_list_table($page=0, $user_id=NULL, $submission_id=NULL, $map_i
             return $table;
         }
     }
-    $table = create_game_list_table($page, $user_id, $submission_id, $map_id, $top, $targetpage);
+    $table = create_game_list_table($mysqli, $page, $user_id, $submission_id, $map_id, $top, $targetpage);
     if ($memcache) {
         $memcache->set($cache_key, $table, MEMCACHE_COMPRESSED, $cache_length);
     }
     return $table;
 }
 
-function get_user_game_list($user_id, $page=1, $top=FALSE, $targetpage=NULL) {
-    return get_game_list_table($page, $user_id, NULL, NULL, $top, $targetpage);
+function get_user_game_list($mysqli, $user_id, $page=1, $top=FALSE, $targetpage=NULL) {
+    return get_game_list_table($mysqli, $page, $user_id, NULL, NULL, $top, $targetpage);
 }
 
-function get_submission_game_list($submission_id, $page=1, $top=FALSE, $targetpage=NULL) {
-    return get_game_list_table($page, NULL, $submission_id, NULL, $top, $targetpage);
+function get_submission_game_list($mysqli, $submission_id, $page=1, $top=FALSE, $targetpage=NULL) {
+    return get_game_list_table($mysqli, $page, NULL, $submission_id, NULL, $top, $targetpage);
 }
 
-function get_map_game_list($map_id, $page=1, $top=FALSE, $targetpage=NULL) {
-    return get_game_list_table($page, NULL, NULL, $map_id, $top, $targetpage);
+function get_map_game_list($mysqli, $map_id, $page=1, $top=FALSE, $targetpage=NULL) {
+    return get_game_list_table($mysqli, $page, NULL, NULL, $map_id, $top, $targetpage);
 }
 
 ?>

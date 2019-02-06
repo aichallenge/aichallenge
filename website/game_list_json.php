@@ -11,6 +11,6 @@ $submission_id = get_type_or_else("submission_id", FILTER_VALIDATE_INT);
 $map_id = get_type_or_else("map_id", FILTER_VALIDATE_INT);
 $page = get_type_or_else("page", FILTER_VALIDATE_INT, 0);
 
-echo get_game_list_json($page, $user_id, $submission_id, $map_id);
+echo get_game_list_json($mysqli, $page, $user_id, $submission_id, $map_id);
 
 ?>

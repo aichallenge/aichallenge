@@ -3,7 +3,7 @@
 require_once("mysql_login.php");
 require_once("lookup.php");
 
-$username = mysql_real_escape_string(stripslashes($_GET['username']));
+$username = mysqli_real_escape_string($mysqli, stripslashes($_GET['username']));
 if (!isset($username) || !$username) {
     $users = NULL;
 } else {

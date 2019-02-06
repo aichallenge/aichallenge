@@ -28,7 +28,7 @@ $page = get_type_or_else("page", FILTER_VALIDATE_INT, 1);
 
 echo "<h2><a href=\"profile.php?user=$user_id\">$username</a>$partial_title</h2>";
 
-echo get_game_list_table($page, ($submission_id ? NULL : $user_id), $submission_id);
+echo get_game_list_table($mysqli, $page, ($submission_id ? NULL : $user_id), $submission_id);
 
 echo '
 <script>

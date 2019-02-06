@@ -14,7 +14,7 @@ if (strcmp($server_info["mailer_address"], "donotsend") == 0) {
 }
 
 if (isset($_POST['username'])) {
-    $username = mysql_real_escape_string(stripslashes($_POST['username']));
+    $username = mysqli_real_escape_string($mysqli, stripslashes($_POST['username']));
     if (list($user_id, $username, $user_email, $forgot_code) = create_user_forgot_code($username)) {
         $forgot_code = urlencode($forgot_code);
         $mail_subject = "AI Challenge Temporary Access";

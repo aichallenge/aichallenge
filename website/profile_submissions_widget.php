@@ -23,7 +23,7 @@ $status_msg = array(10 => "Created: entry record created in database",
  * if viewmore is false, it uses pagination with viewresults rows per page
  *
  */
-function getSubmissionTableString($user_id, $viewmore = true, $viewresults = 10, $viewlink, $page=0)
+function getSubmissionTableString($mysqli, $user_id, $viewmore = true, $viewresults = 10, $viewlink, $page=0)
 {
     global $status_msg;
 
@@ -48,9 +48,9 @@ from
     where user_id = $user_id
 EOT;
 
-    $rowcount_data = mysql_query($rowcount_query);
+    $rowcount_data = mysqli_query($mysqli, $rowcount_query);
     if ($rowcount_data) {
-        list($rowcount) = mysql_fetch_row($rowcount_data);
+        list($rowcount) = mysqli_fetch_row($rowcount_data);
     } else {
         $rowcount = 0;
     }
@@ -88,7 +88,7 @@ EOT;
         $submission_query .= " limit $viewresults OFFSET " . ($viewresults * ($page-1));
     }
 
-    $submission_results = mysql_query($submission_query);
+    $submission_results = mysqli_query($mysqli, $submission_query);
 
     // If query fails
     if (!$submission_results || $rowcount == 0) {
@@ -110,7 +110,7 @@ EOT;
     	<th><span title=\"average minutes between games\">Game Rate</span></th>
     	<th>Language</th>
     </tr></thead><tbody>";
-    for ($i = 1; $row = mysql_fetch_assoc($submission_results); $i += 1) {
+    for ($i = 1; $row = mysqli_fetch_assoc($submission_results); $i += 1) {
         $status = $row["status"];
         $status_class = (($status == 40 || $status == 100) ? "success": (($status == 30 || ($status > 40 || $status < 100))? "fail" : "inprogress"));
         if (isset($status_msg[$status])) {

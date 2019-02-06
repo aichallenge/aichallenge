@@ -12,13 +12,13 @@ $compiledata = json_decode($json_string);
 
 $lang_result = contest_query("select_submission_language_id",
                              $compiledata->language);
-if ($lang_result and mysql_num_rows($lang_result) > 0) {
-    $row = mysql_fetch_assoc($lang_result);
+if ($lang_result and mysqli_num_rows($lang_result) > 0) {
+    $row = mysqli_fetch_assoc($lang_result);
     $lang_id = $row["language_id"];
 } else {
     api_log("Creating new language: " . $compiledata->language);
     contest_query("insert_new_language", $compiledata->language);
-    $lang_id = mysql_insert_id();
+    $lang_id = mysqli_insert_id();
     if ($memcache) {
         $memcache->delete("lookup:language_id");
         $memcache->delete("lookup:language_name");
@@ -36,13 +36,13 @@ if ($compiledata->status_id == 40) {
         if (!contest_query("update_submission_latest",
                           $compiledata->submission_id,
                           $compiledata->submission_id)) {
-            api_log(sprintf("Error updating latest flag: %s", mysql_error()));
+            api_log(sprintf("Error updating latest flag: %s", mysqli_error()));
         }
         if (!contest_query("update_user_shutdown_date", $compiledata->submission_id)) {
-            api_log(sprintf("Error updating shutdown date: %s", mysql_error()));
+            api_log(sprintf("Error updating shutdown date: %s", mysqli_error()));
         }
     } else {
-        api_log(sprintf("Error updating successful compile: %s", mysql_error()));
+        api_log(sprintf("Error updating successful compile: %s", mysqli_error()));
     }
 } else {
     if (contest_query("update_submission_failure",
@@ -53,7 +53,7 @@ if ($compiledata->status_id == 40) {
         echo json_encode(array( "hash" => $json_hash ));
         api_log('worker '.$worker['worker_id'].' ('.$worker['ip_address'].') posted failed compile '.$compiledata->submission_id.":\n".$compiledata->errors);
     } else {
-        api_log(sprintf("Error updating errored compile: %s", mysql_error()));
+        api_log(sprintf("Error updating errored compile: %s", mysqli_error()));
     }
 }
 

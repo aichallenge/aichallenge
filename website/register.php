@@ -74,8 +74,8 @@ if($server_info["submissions_open"]) { ?>
       <select name="user_status">
 <?php
   $query = "SELECT * FROM user_status_code";
-  $result = mysql_query($query);
-  while ($row = mysql_fetch_assoc($result)) {
+  $result = mysqli_query($mysqli, $query);
+  while ($row = mysqli_fetch_assoc($result)) {
     $status_id = $row['status_id'];
     $status_name = $row['name'];
     if ( isset( $_POST['user_status'] ) && $_POST['user_status'] == $status_id ) $selected = ' selected="selected"';
@@ -102,8 +102,8 @@ if($server_info["submissions_open"]) { ?>
 
     );
   $query = "SELECT * FROM organization WHERE org_id > 1 ORDER BY name";
-  $result = mysql_query($query);
-  while ($row = mysql_fetch_assoc($result)) {
+  $result = mysqli_query($mysqli, $query);
+  while ($row = mysqli_fetch_assoc($result)) {
       $organizations []= $row;
   }
 
@@ -139,8 +139,8 @@ if($server_info["submissions_open"]) { ?>
       <option value="">&nbsp;</option>
 <?php
   $query = "SELECT * FROM country ORDER BY country_id";
-  $result = mysql_query($query);
-  while ($row = mysql_fetch_assoc($result)) {
+  $result = mysqli_query($mysqli, $query);
+  while ($row = mysqli_fetch_assoc($result)) {
     $country_id = $row['country_id'];
     $country_name = $row['name'];
     echo "<option value=$country_id>$country_name</option>";

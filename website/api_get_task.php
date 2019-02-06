@@ -7,7 +7,7 @@ header("Content-type: application/json");
 $compile_result = contest_query("select_next_compile",
                                 $worker["worker_id"]);
 if ($compile_result) {
-    while ($row = mysql_fetch_assoc($compile_result)) {
+    while ($row = mysqli_fetch_assoc($compile_result)) {
         if (contest_query("update_submission_compiling",
                           $worker["worker_id"],
                           $row["submission_id"])) {
@@ -17,11 +17,11 @@ if ($compile_result) {
             api_log('worker '.$worker['worker_id'].' ('.$worker['ip_address'].') requesting task, sending compile: '.$row["submission_id"]);
             die();
         } else {
-            api_log(sprintf("Error updating submission for compile task: %s", mysql_error()));
+            api_log(sprintf("Error updating submission for compile task: %s", mysqli_error()));
         }
     }
 } else {
-    api_log(sprintf("Error selecting next compile: %s", mysql_error()));
+    api_log(sprintf("Error selecting next compile: %s", mysqli_error()));
 }
 
 // look for match
@@ -30,13 +30,13 @@ $check_time = $start_time;
 $matchup_tries = 0;
 $match_result = null;
 $match_row = null;
-while ((!$match_result or mysql_num_rows($match_result) == 0)
+while ((!$match_result or mysqli_num_rows($match_result) == 0)
         and $matchup_tries < 600) {
     $matchup_tries += 1;
     $match_result = contest_query("select_next_matchup");
 
-    if ($match_result and mysql_num_rows($match_result) != 0) {
-        $match_row = mysql_fetch_assoc($match_result);
+    if ($match_result and mysqli_num_rows($match_result) != 0) {
+        $match_row = mysqli_fetch_assoc($match_result);
         $match_worker = $match_row["worker_id"];
         if ($match_worker === null) {
             $match_worker = "null";
@@ -46,7 +46,7 @@ while ((!$match_result or mysql_num_rows($match_result) == 0)
                                      $match_row["matchup_id"],
                                      $match_worker);
         // Check that we actually got the lock
-        if (!$lock_result or mysql_affected_rows() < 1) {
+        if (!$lock_result or mysqli_affected_rows() < 1) {
             $match_result = null;
             continue;
         }
@@ -77,19 +77,19 @@ if ($match_row) {
     $player_result = contest_query("select_matchup_players",
                                    $json["matchup_id"]);
     if ($player_result) {
-        while ($player_row = mysql_fetch_assoc($player_result)) {
+        while ($player_row = mysqli_fetch_assoc($player_result)) {
             $json["submissions"][] = $player_row["submission_id"];
         }
         echo json_encode($json);
         api_log('worker '.$worker['worker_id'].' ('.$worker['ip_address'].') requesting task, sending matchup: '.$json["matchup_id"]);
         die();
     } else {
-        api_log(sprintf("Error selecting matchup players: %s", mysql_error()));
+        api_log(sprintf("Error selecting matchup players: %s", mysqli_error()));
     }
 } else {
-    api_log(sprintf("Error selecting next match: %s", mysql_error()));
+    api_log(sprintf("Error selecting next match: %s", mysqli_error()));
 }
 
 // nothing to do
-echo json_encode(array( "task" => mysql_error(), "timestamp" => date(DATE_ATOM) ));
+echo json_encode(array( "task" => mysqli_error(), "timestamp" => date(DATE_ATOM) ));
 ?>

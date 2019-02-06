@@ -16,7 +16,7 @@ if (!$lang_row) {
     echo "<h2><span>$language_name's User Rankings</span><div class=\"divider\" /></h2>";
 
     $page = get_type_or_else("page", FILTER_VALIDATE_INT, 1);
-    echo get_language_ranking($lang_row['language_id'], $page);
+    echo get_language_ranking($mysqli, $lang_row['language_id'], $page);
 }
 
 include 'footer.php';

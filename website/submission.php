@@ -17,7 +17,7 @@ require_once('memcache.php');
  *                   it can still be pulled in as an opponent
  */
 
-function create_new_submission_for_current_user() {
+function create_new_submission_for_current_user($mysqli) {
     global $memcache;
     
     if ($memcache) {
@@ -26,38 +26,38 @@ function create_new_submission_for_current_user() {
     if (current_user_id() == -1) {
         return FALSE;
     }
-    return contest_query("insert_new_submission", current_user_id());
+    return contest_query($mysqli, "insert_new_submission", current_user_id());
 }
 
-function current_submission_id() {
+function current_submission_id($mysqli) {
   $user_id = current_user_id();
   if ($user_id == NULL) {
     return -1;
   }
   $query = "SELECT * FROM submission " .
     "WHERE user_id = " . $user_id . " ORDER BY timestamp DESC LIMIT 1";
-  $result = mysql_query($query);
+  $result = mysqli_query($mysqli, $query);
   if (!$result) {
     print $query . "\n";
-    print mysql_error() . "\n";
+    print mysqli_error($mysqli) . "\n";
     return -1;
   }
-  if ($row = mysql_fetch_assoc($result)) {
+  if ($row = mysqli_fetch_assoc($result)) {
     return $row['submission_id'];
   } else {
     return -1;
   }
 }
 
-function current_submission_status() {
+function current_submission_status($mysqli) {
   $user_id = current_user_id();
   if ($user_id == NULL) {
     return -1;
   }
   $query = "SELECT * FROM submission " .
     "WHERE user_id = " . $user_id . " ORDER BY timestamp DESC";
-  $result = mysql_query($query);
-  if ($row = mysql_fetch_assoc($result)) {
+  $result = mysqli_query($mysqli, $query);
+  if ($row = mysqli_fetch_assoc($result)) {
     return $row['status'];
   } else {
     return -1;
@@ -69,15 +69,15 @@ function current_submission_status() {
  * either successfully entered the contest or is still in the process of
  * entering.
  */
-function has_recent_submission() {
+function has_recent_submission($mysqli) {
   $user_id = current_user_id();
   if ($user_id == NULL) {
     return FALSE;
   }
   $query = "SELECT COUNT(*) FROM submission WHERE user_id = '".$user_id."' AND
     (status < 30 OR (status in (40, 100) AND timestamp >= (NOW() - INTERVAL 1 MINUTE)))";
-  $result = mysql_query($query);
-  if (!$row = mysql_fetch_row($result)) {
+  $result = mysqli_query($mysqli, $query);
+  if (!$row = mysqli_fetch_row($result)) {
     return FALSE;
   }
   if ($row[0] == 0) {
@@ -86,18 +86,18 @@ function has_recent_submission() {
   return TRUE;
 }
 
-function submission_status($submission_id) {
+function submission_status($mysqli, $submission_id) {
   $query = "SELECT * FROM submission " . "WHERE submission_id = " . $submission_id;
-  $result = mysql_query($query);
-  if ($row = mysql_fetch_assoc($result)) {
+  $result = mysqli_query($mysqli, $query);
+  if ($row = mysqli_fetch_assoc($result)) {
     return $row['status'];
   } else {
     return -1;
   }
 }
 
-function update_current_submission_status($new_status) {
-  $submission_id = current_submission_id();
+function update_current_submission_status($mysqli, $new_status) {
+  $submission_id = current_submission_id($mysqli);
   if ($submission_id < 0) {
     print "<p>submission_id = " . $submission_id . "</p>";
     return FALSE;
@@ -110,7 +110,7 @@ function update_current_submission_status($new_status) {
   $query = "UPDATE submission SET status = " . $new_status .
     " WHERE submission_id = " . $submission_id . " AND user_id = " . $user_id;
   //print "<p>query = " . $query . "</p>";
-  return mysql_query($query);
+  return mysqli_query($mysqli, $query);
 }
 
 function submission_directory($submission_id) {

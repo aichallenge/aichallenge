@@ -1,7 +1,7 @@
 <?php
 
 $server_info = array(
-    "db_host" => "localhost",
+    "db_host" => "mysql",
     "db_username" => $_ENV['DATABASE_USER'],
     "db_password" => $_ENV['DATABASE_PASSWORD'],
     "db_name" => $_ENV['DATABASE_NAME'],

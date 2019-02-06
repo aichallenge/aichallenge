@@ -55,8 +55,8 @@ if (!logged_in_with_valid_credentials()) {
   die();
 }
 
-$result = mysql_query("SELECT * FROM user WHERE user_id = ".current_user_id());
-$userdata = mysql_fetch_assoc($result);
+$result = mysqli_query($mysqli, "SELECT * FROM user WHERE user_id = ".current_user_id());
+$userdata = mysqli_fetch_assoc($result);
 $sid = session_id();
 $local_key = sha1($sid . $userdata['activation_code'] . $userdata['email']);
 if (!isset($_POST['submit_key']) || $local_key != $_POST['submit_key']) {
@@ -67,7 +67,7 @@ if(!$server_info["submissions_open"])
     $errors[] = "Nuh-uh. The contest is over. No more submissions.";
 
 if (count($errors) == 0) {
-  if (has_recent_submission()) {
+  if (has_recent_submission($mysqli)) {
     $errors[] = "Sorry your last submission was too recent.";
   } else {
     $errors = upload_errors($errors);
@@ -75,13 +75,13 @@ if (count($errors) == 0) {
 }
 
 if (count($errors) == 0) {
-  if (!create_new_submission_for_current_user()) {
-    $errors[] = "Problem while creating submission entry in database. ".mysql_error();
+  if (!create_new_submission_for_current_user($mysqli)) {
+    $errors[] = "Problem while creating submission entry in database. ".mysqli_error($mysqli);
   }
 }
 
 if (count($errors) == 0) {
-  $submission_id = current_submission_id();
+  $submission_id = current_submission_id($mysqli);
   $destination_folder = submission_directory($submission_id);
   $filename = basename($_FILES['uploadedfile']['name']);
   if (ends_with($filename, ".zip")) { $filename = "entry.zip"; }
@@ -94,18 +94,18 @@ if (count($errors) == 0) {
   $target_path = $destination_folder . '/' . $filename;
   delete_directory($destination_folder);
   if (!mkdir($destination_folder, 0775, true)) {
-      update_current_submission_status(90);
+      update_current_submission_status($mysqli, 90);
       $errors[] = "Problem while creating submission directory.";
   } else {
     if (!move_uploaded_file($_FILES['uploadedfile']['tmp_name'], $target_path)) {
-      update_current_submission_status(90);
+      update_current_submission_status($mysqli, 90);
       $errors[] = "Failed to move file from temporary to permanent " .
                   "location.";
-      update_current_submission_status(30);
+      update_current_submission_status($mysqli, 30);
     } else {
       chmod($destination_folder, 0775);
       chmod($target_path, 0664);
-      if (!update_current_submission_status(20)) {
+      if (!update_current_submission_status($mysqli, 20)) {
         $errors[] = "Failed to update the submission status in the " .
                     "database.";
       }

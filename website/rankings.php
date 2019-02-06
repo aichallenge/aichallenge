@@ -16,7 +16,7 @@ EOT;
 
 $page = get_type_or_else("page", FILTER_VALIDATE_INT, 1);
 
-echo get_ranking_table($page);
+echo get_ranking_table($mysqli, $page);
 
 echo '
 <script>

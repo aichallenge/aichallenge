@@ -32,8 +32,8 @@ function valid_worker($api_key,$ip_address) {
 		if (!$workers) {
 			$workers = array();
 			$sql = "select * from worker";
-			$result = mysql_query($sql);
-			while ($row = mysql_fetch_assoc($result)) {
+			$result = mysqli_query($mysqli, $sql);
+			while ($row = mysqli_fetch_assoc($result)) {
 				$workers[$row["api_key"]] = $row;
 			}
 			$memcache->set('workers', $workers);
@@ -45,12 +45,12 @@ function valid_worker($api_key,$ip_address) {
 		}
 	} else {
 		// fallback for no memcache
-		$sql = "SELECT * FROM worker WHERE api_key = '".mysql_real_escape_string($api_key)."';";
-	    $result = mysql_query($sql);
-	    if(!$result || mysql_num_rows($result) == 0){
+		$sql = "SELECT * FROM worker WHERE api_key = '".mysqli_real_escape_string($mysqli, $api_key)."';";
+	    $result = mysqli_query($sql);
+	    if(!$result || mysqli_num_rows($result) == 0){
 	        return false;
 	    }
-	    $worker = mysql_fetch_assoc($result);
+	    $worker = mysqli_fetch_assoc($result);
 	    if($ip_address!=$worker['ip_address']){
 	        return false;
 	    }

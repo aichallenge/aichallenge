@@ -18,7 +18,7 @@ function get_country_row($country) {
             $country_row_by_id = array();
             $country_row_by_name = array();
             $country_row_by_code = array();
-            while ($country_row = mysql_fetch_assoc($country_result)) {
+            while ($country_row = mysqli_fetch_assoc($country_result)) {
                 $country_row_by_id[$country_row['country_id']] = $country_row;
                 $country_row_by_name[$country_row['name']] = $country_row;
                 $country_row_by_code[$country_row['country_code']] = $country_row;
@@ -63,7 +63,7 @@ function get_language_row($language) {
         if ($language_result) {
             $language_row_by_id = array();
             $language_row_by_name = array();
-            while ($language_row = mysql_fetch_assoc($language_result)) {
+            while ($language_row = mysqli_fetch_assoc($language_result)) {
                 $language_row_by_id[$language_row['language_id']] = $language_row;
                 $language_row_by_name[$language_row['name']] = $language_row;
             }
@@ -101,7 +101,7 @@ function get_org_row($org) {
         if ($org_result) {
             $org_row_by_id = array();
             $org_row_by_name = array();
-            while ($org_row = mysql_fetch_assoc($org_result)) {
+            while ($org_row = mysqli_fetch_assoc($org_result)) {
                 $org_row_by_id[$org_row['org_id']] = $org_row;
                 $org_row_by_name[$org_row['name']] = $org_row;
             }
@@ -139,7 +139,7 @@ function get_user_row($user) {
         if ($user_result) {
             $user_row_by_id = array();
             $user_row_by_name = array();
-            while ($user_row = mysql_fetch_assoc($user_result)) {
+            while ($user_row = mysqli_fetch_assoc($user_result)) {
                 $user_row_by_id[$user_row['user_id']] = $user_row;
                 $user_row_by_name[$user_row['username']] = $user_row;
             }
@@ -177,7 +177,7 @@ function search_user_row($search=NULL) {
         if ($user_result) {
             $user_row_by_id = array();
             $user_row_by_name = array();
-            while ($user_row = mysql_fetch_assoc($user_result)) {
+            while ($user_row = mysqli_fetch_assoc($user_result)) {
                 $user_row_by_id[$user_row['user_id']] = $user_row;
                 $user_row_by_name[$user_row['username']] = $user_row;
             }
@@ -215,7 +215,7 @@ function get_user_by_submission($submission_id) {
         $user_result = contest_query("select_submission_users");
         if ($user_result) {
             $user_row_by_submission_id = array();
-            while ($user_row = mysql_fetch_assoc($user_result)) {
+            while ($user_row = mysqli_fetch_assoc($user_result)) {
                 $user_row_by_submission_id[$user_row['submission_id']] = $user_row;
             }
             if ($memcache) {
@@ -247,7 +247,7 @@ function get_map_row($map) {
         if ($map_result) {
             $map_row_by_id = array();
             $map_row_by_name = array();
-            while ($map_row = mysql_fetch_assoc($map_result)) {
+            while ($map_row = mysqli_fetch_assoc($map_result)) {
                 $map_row_by_id[$map_row['map_id']] = $map_row;
                 $map_row_by_name[$map_row['filename']] = $map_row;
             }

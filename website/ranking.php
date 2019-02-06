@@ -109,7 +109,7 @@ function create_ranking_json($page=0, $org_id=NULL, $country_id=NULL, $language_
     // get count of rows and pages
     $results = contest_query("select_rankings_page_count", $where);
     if ($results) {
-        while ($row = mysql_fetch_array($results, MYSQL_NUM)) {
+        while ($row = mysqli_fetch_array($results, MYSQL_NUM)) {
             $row_count = $row[0];
             $page_count = ceil($row_count / $page_size);
         }
@@ -129,11 +129,11 @@ function create_ranking_json($page=0, $org_id=NULL, $country_id=NULL, $language_
     if (!$results) {
         return json_encode($json);
     } else {
-        $field_count = mysql_num_fields($results);
-        $row_count = mysql_num_rows($results);
+        $field_count = mysqli_num_fields($results);
+        $row_count = mysqli_num_rows($results);
         $field_names = array();
         for ($i = 0; $i < $field_count; $i++) {
-            $field_names[] = mysql_field_name($results, $i);
+            $field_names[] = mysqli_field_name($results, $i);
         }
         if ($filtered) {
             $field_names[] = "filter_rank";
@@ -141,7 +141,7 @@ function create_ranking_json($page=0, $org_id=NULL, $country_id=NULL, $language_
         } else {
             $filter_rank = NULL;
         }   
-        while ($rank_row = mysql_fetch_array($results, MYSQL_NUM)) {
+        while ($rank_row = mysqli_fetch_array($results, MYSQL_NUM)) {
             if ($filtered) {
                 if ($row["rank"]) {
                     $filter_rank += 1;
@@ -165,7 +165,7 @@ function create_ranking_json($page=0, $org_id=NULL, $country_id=NULL, $language_
     return $json;
 }
 
-function create_ranking_table($page=0, $org_id=NULL, $country_id=NULL, $language_id=NULL) {
+function create_ranking_table($mysqli, $page=0, $org_id=NULL, $country_id=NULL, $language_id=NULL) {
     global $page_size;
 
     // setup query and querystring
@@ -195,9 +195,9 @@ function create_ranking_table($page=0, $org_id=NULL, $country_id=NULL, $language
         $limit = "limit ".$page_size." offset ".($page_size * ($page-1));
     }
     // get count of rows and pages
-    $results = contest_query("select_rankings_page_count", $where);
+    $results = contest_query($mysqli, "select_rankings_page_count", $where);
     if ($results) {
-        while ($row = mysql_fetch_array($results, MYSQL_NUM)) {
+        while ($row = mysqli_fetch_array($results, MYSQLI_NUM)) {
             $row_count = $row[0];
             $page_count = ceil($row_count / $page_size);
         }
@@ -205,7 +205,7 @@ function create_ranking_table($page=0, $org_id=NULL, $country_id=NULL, $language
         $page_count = 1000;
     }
     // get results
-    $results = contest_query("select_rankings", $where, $limit);
+    $results = contest_query($mysqli, "select_rankings", $where, $limit);
     if (!$results) {
         return '<h4>There are no rankings at this time.  Please check back later.</h4>';
     }
@@ -235,7 +235,7 @@ function create_ranking_table($page=0, $org_id=NULL, $country_id=NULL, $language
     } else {
         $filter_rank = NULL;
     }   
-    while ($row = mysql_fetch_assoc($results)) {
+    while ($row = mysqli_fetch_assoc($results)) {
         $oddity = $oddity == 'odd' ? 'even' : 'odd';  // quite odd?
         $user_class = current_username() == $row["username"] ? ' user' : '';
         $rank_class = $row["rank"] ? '' : ' old';
@@ -294,7 +294,7 @@ function get_ranking_json($page=0, $org_id=NULL, $country_id=NULL, $language_id=
     return $json;
 }
 
-function get_ranking_table($page=0, $org_id=NULL, $country_id=NULL, $language_id=NULL) {
+function get_ranking_table($mysqli, $page=0, $org_id=NULL, $country_id=NULL, $language_id=NULL) {
     global $memcache;
     list($cache_key, $cache_length) = cache_key($page, $org_id, $country_id, $language_id, 'html');
     if ($memcache) {
@@ -303,23 +303,23 @@ function get_ranking_table($page=0, $org_id=NULL, $country_id=NULL, $language_id
             return $table;
         }
     }
-    $table = create_ranking_table($page, $org_id, $country_id, $language_id);
+    $table = create_ranking_table($mysqli, $page, $org_id, $country_id, $language_id);
     if ($memcache) {
         $memcache->set($cache_key, $table, MEMCACHE_COMPRESSED, $cache_length);
     }    
     return $table;
 }
 
-function get_language_ranking($language_id, $page=1) {
-    return get_ranking_table($page, NULL, NULL, $language_id);
+function get_language_ranking($mysqli, $language_id, $page=1) {
+    return get_ranking_table($mysqli, $page, NULL, NULL, $language_id);
 }
 
-function get_country_ranking($country_id, $page=1) {
-    return get_ranking_table($page, NULL, $country_id);
+function get_country_ranking($mysqli, $country_id, $page=1) {
+    return get_ranking_table($mysqli, $page, NULL, $country_id);
 }
 
-function get_org_ranking($org_id, $page=1) {
-    return get_ranking_table($page, $org_id);
+function get_org_ranking($mysqli, $org_id, $page=1) {
+    return get_ranking_table($mysqli, $page, $org_id);
 }
 
 ?>

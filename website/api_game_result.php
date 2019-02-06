@@ -52,7 +52,7 @@ $confirm_result = contest_query("select_matchup_confirm",
 $confirm_worker_id = NULL;
 $map_id = NULL;
 if ($confirm_result) {
-    while ($confirm_row = mysql_fetch_assoc($confirm_result)) {
+    while ($confirm_row = mysqli_fetch_assoc($confirm_result)) {
         $confirm_worker_id = $confirm_row["worker_id"];
         $map_id = $confirm_row["map_id"];
     }
@@ -94,7 +94,7 @@ if (array_key_exists('error', $gamedata)) {
             $gamedata->matchup_id, time() - $start_time));
     }
 
-    if (!mysql_query("START TRANSACTION;")) {
+    if (!mysqli_query($mysqli, "START TRANSACTION;")) {
         api_log("Failed to start mysql transaction for game insert");
         die();
     }
@@ -108,11 +108,11 @@ if (array_key_exists('error', $gamedata)) {
                        $gamedata->matchup_id)) {
         api_log(sprintf("Error updating game table for matchup %s",
                         $gamedata->matchup_id));
-        api_log(mysql_error());
-        // mysql_query("ROLLBACK;");
+        api_log(mysqli_error());
+        // mysqli_query($mysqli, "ROLLBACK;");
         die();
     }
-    $game_id = mysql_insert_id();
+    $game_id = mysqli_insert_id();
     // calculate new trueskill values
     $skill_result = contest_query("select_matchup_players", $gamedata->matchup_id);
     if (!$skill_result) {
@@ -128,7 +128,7 @@ if (array_key_exists('error', $gamedata)) {
         $ratings = array();
         $players = array();
         $teams = array();
-        while ($player_row = mysql_fetch_assoc($skill_result)) {
+        while ($player_row = mysqli_fetch_assoc($skill_result)) {
             $player_id = $player_row['player_id'];
             $ratings[] = new Rating($player_row['mu'], $player_row['sigma']);
             $players[] = new Player($player_id + 1);
@@ -153,7 +153,7 @@ if (array_key_exists('error', $gamedata)) {
                            $gamedata->matchup_id,
                            $player_id)) {
             game_result_error(sprintf("Error updating game players for matchup %s",
-                            $gamedata->matchup_id)."\n".mysql_error());
+                            $gamedata->matchup_id)."\n".mysqli_error());
         }
     }
 
@@ -162,7 +162,7 @@ if (array_key_exists('error', $gamedata)) {
             $gameid));
     }
 
-    if (!mysql_query("COMMIT;")) {
+    if (!mysqli_query($mysqli, "COMMIT;")) {
         api_log("Game insert transaction commit failed");
         die();
     }
@@ -203,11 +203,11 @@ if (array_key_exists('error', $gamedata)) {
 
     if (!contest_query("delete_matchup_player", $gamedata->matchup_id)) {
         api_log(sprintf("Error deleting players for matchup %s",
-                        $gamedata->matchup_id)."\n".mysql_error());
+                        $gamedata->matchup_id)."\n".mysqli_error());
     }
     if (!contest_query("delete_matchup", $gamedata->matchup_id)) {
         api_log(sprintf("Error deleting matchup %s",
-                        $gamedata->matchup_id)."\n".mysql_error());
+                        $gamedata->matchup_id)."\n".mysqli_error());
     }
 
     $memcache->delete("lock:game_insert");
@@ -228,7 +228,7 @@ if (array_key_exists('error', $gamedata)) {
                             
     $high_rank = 99999;
     if ($result) {
-        while ($meta_row = mysql_fetch_assoc($result)) {
+        while ($meta_row = mysqli_fetch_assoc($result)) {
             $gamedata->playernames[] = $meta_row["username"];
             $gamedata->submission_ids[] = $meta_row["submission_id"];
             $gamedata->user_ids[] = $meta_row["user_id"];

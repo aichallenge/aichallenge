@@ -13,11 +13,11 @@ $query = "SELECT u1.* FROM user AS u1 JOIN (SELECT email FROM user
         GROUP BY email HAVING COUNT(*) > 1
     ) AS u2 ON u1.email = u2.email WHERE password != ''
     ORDER BY email, user_id";
-$result = mysql_query($query);
+$result = mysqli_query($mysqli, $query);
 if (!$result) {
     echo "Could not query database";
 } else {
-    $num_accounts = mysql_num_rows($result);
+    $num_accounts = mysqli_num_rows($result);
     echo <<< EOT
 <h3>Found $num_accounts accounts using duplicate email addresses</h3>
 <table class="leaderboard">
@@ -25,7 +25,7 @@ if (!$result) {
     <th>ID</th><th>User</th><th>Email</th><th>Activated</th</tr>
   </thead><tbody>
 EOT;
-    for ($i = 1; $row = mysql_fetch_assoc($result); $i += 1) {
+    for ($i = 1; $row = mysqli_fetch_assoc($result); $i += 1) {
         $tr_class = $i % 2 ? "even" : "odd";
         $user_id = $row['user_id'];
         $username = $row['username'];

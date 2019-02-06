@@ -18,7 +18,7 @@ if (!$country_row) {
     echo "<h2><span>$country_name's User Rankings</span><div class=\"divider\" /></h2>";
 
     $page = get_type_or_else("page", FILTER_VALIDATE_INT, 1);
-    echo get_country_ranking($country_row['country_id'], $page);
+    echo get_country_ranking($mysqli, $country_row['country_id'], $page);
 }
 
 include 'footer.php';
