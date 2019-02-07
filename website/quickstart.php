@@ -5,7 +5,7 @@ require_once('header.php');
 
 ?>
 
-<!--<MarkdownReplacement with="competition-Five-Minute-Quickstart-Guide.md">-->LOOOOOOOL GITHUB
+<!--<MarkdownReplacement with="competition-Five-Minute-Quickstart-Guide.md">-->
 <style>img.latex-inline { vertical-align: middle; }</style>
 <h1 id="ants-five-minute-quickstart-guide">Ants Five Minute Quickstart Guide</h1>
 <p>This five-minute quickstart guide will guide you through the steps to get your name on the global leaderboard in less than five minutes. There is also a Next Steps section to give you some idea which direction to go after you've completed this guide.</p>

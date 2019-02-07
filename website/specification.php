@@ -27,7 +27,7 @@ require_once('header.php');
 </ol>
 
 <div id="Turns-and-Phases">
-<!--<MarkdownReplacement with="competition-Turns-and-Phases.md">-->LOOOOOOOL GITHUB
+<!--<MarkdownReplacement with="competition-Turns-and-Phases.md">-->
 <style>img.latex-inline { vertical-align: middle; }</style>
 <h2 id="turns-and-phases">Turns and Phases</h2>
 <h3 id="setup">Setup</h3>
@@ -68,7 +68,7 @@ require_once('header.php');
 </div>
 
 <div id="Scoring">
-<!--<MarkdownReplacement with="competition-Scoring.md">-->LOOOOOOOL GITHUB
+<!--<MarkdownReplacement with="competition-Scoring.md">-->
 <style>img.latex-inline { vertical-align: middle; }</style>
 <h2 id="scoring">Scoring</h2>
 <p>The objective of the game is to get the highest score.  Points are awarded by attacking and defending hills.</p>
@@ -87,7 +87,7 @@ require_once('header.php');
 </div>
 
 <div id="Cutoff-Rules">
-<!--<MarkdownReplacement with="competition-Cutoff-Rules.md">-->LOOOOOOOL GITHUB
+<!--<MarkdownReplacement with="competition-Cutoff-Rules.md">-->
 <style>img.latex-inline { vertical-align: middle; }</style>
 <h2 id="cutoff-rules">Cutoff Rules</h2>
 <p>To ensure meaningful games are being played on the server, there are several rules in place to cut games short for various reasons.</p>
@@ -117,7 +117,7 @@ require_once('header.php');
 </div>
 
 <div id="Food-Harvesting">
-<!--<MarkdownReplacement with="competition-Food-Harvesting.md">-->LOOOOOOOL GITHUB
+<!--<MarkdownReplacement with="competition-Food-Harvesting.md">-->
 <style>img.latex-inline { vertical-align: middle; }</style>
 <h2 id="food-harvesting">Food Harvesting</h2>
 <p>Harvesting of food occurs each turn after the battle resolution process. If there are ants located within the spawn radius of a food location one of two things will occur:</p>
@@ -129,7 +129,7 @@ require_once('header.php');
 </div>
 
 <div id="Ant-Spawning">
-<!--<MarkdownReplacement with="competition-Ant-Spawning.md">-->LOOOOOOOL GITHUB
+<!--<MarkdownReplacement with="competition-Ant-Spawning.md">-->
 <style>img.latex-inline { vertical-align: middle; }</style>
 <h2 id="ant-spawning">Ant Spawning</h2>
 <p>As food is harvested, it is placed in the "hive".  Each food will spawn 1 ant.  Ants are only spawned at hills.</p>
@@ -145,7 +145,7 @@ require_once('header.php');
 </div>
 
 <div id="Food-Spawning">
-<!--<MarkdownReplacement with="competition-Food-Spawning.md">-->LOOOOOOOL GITHUB
+<!--<MarkdownReplacement with="competition-Food-Spawning.md">-->
 <style>img.latex-inline { vertical-align: middle; }</style>
 <h2 id="food-spawning">Food spawning</h2>
 <p>Food spawning is done symmetrically.  Every map is symmetric, meaning each bot's starting position looks like every other bots starting position.</p>
@@ -163,7 +163,7 @@ require_once('header.php');
 </div>
 
 <div id="Battle-Resolution">
-<!--<MarkdownReplacement with="competition-Battle-Resolution.md">-->LOOOOOOOL GITHUB
+<!--<MarkdownReplacement with="competition-Battle-Resolution.md">-->
 <style>img.latex-inline { vertical-align: middle; }</style>
 <h2 id="battle-resolution">Battle Resolution</h2>
 <div class="codehilite"><pre><span></span>    // how to check if an ant dies
@@ -199,7 +199,7 @@ require_once('header.php');
 </div>
 
 <div id="Hill-Razing">
-<!--<MarkdownReplacement with="competition-Hill-Razing.md">-->LOOOOOOOL GITHUB
+<!--<MarkdownReplacement with="competition-Hill-Razing.md">-->
 <style>img.latex-inline { vertical-align: middle; }</style>
 <h2 id="hill-razing">Hill Razing</h2>
 <p>The objective of the game is to raze your opponents hills and defend your own hill.</p>
@@ -212,12 +212,12 @@ require_once('header.php');
 </div>
 
 <div id="Bot-Input">
-<!--<MarkdownReplacement with="competition-Bot-Input.md">-->LOOOOOOOL GITHUB
+<!--<MarkdownReplacement with="competition-Bot-Input.md">-->
 <!--</MarkdownReplacement>-->
 </div>
 
 <div id="Bot-Output">
-<!--<MarkdownReplacement with="competition-Bot-Output.md">-->LOOOOOOOL GITHUB
+<!--<MarkdownReplacement with="competition-Bot-Output.md">-->
 <style>img.latex-inline { vertical-align: middle; }</style>
 <h2 id="bot-output">Bot Output</h2>
 <p>Once the bot has been passed the parameters at the start of the game and it has finished setting up, it is to indicate this to the engine by outputting "go" on its own line.</p>
@@ -279,7 +279,7 @@ go
 </div>
 
 <div id="Map-Format">
-<!--<MarkdownReplacement with="competition-Map-Format.md">-->LOOOOOOOL GITHUB
+<!--<MarkdownReplacement with="competition-Map-Format.md">-->
 <style>img.latex-inline { vertical-align: middle; }</style>
 <h2 id="map-format">Map Format</h2>
 <p>A map consists of a rectangular grid. Each square can contain land, water, food, a live ant, multiple dead ants or an ant hill.  Ants can also be on top of their own hill. The edges of the map are wrapped, meaning if you walk off the top of the map, you will appear at the bottom, or if you walk off the right, you will appear on the left, assuming water doesn't block your path.</p>
@@ -355,7 +355,7 @@ m ....................
 </div>
 
 <div id="Replay-Format">
-<!--<MarkdownReplacement with="competition-Replay-Format.md">-->LOOOOOOOL GITHUB
+<!--<MarkdownReplacement with="competition-Replay-Format.md">-->
 <style>img.latex-inline { vertical-align: middle; }</style>
 <h2 id="formats-in-use">Formats in use</h2>
 <p>There are two formats the engine can write. The first format is a streaming format that outputs data turn by turn. It is about ten times larger, but can be used to view games in progress (see 'Streaming format' below). The other format is used to store replays on the disk (see 'Storage format' below).</p>
@@ -425,7 +425,7 @@ Details of the format follow...</p>
 <!--</MarkdownReplacement>-->
 </div>
 
-<!--<MarkdownReplacement with="competition-Game-Specification.md">-->LOOOOOOOL GITHUB
+<!--<MarkdownReplacement with="competition-Game-Specification.md">-->
 <style>img.latex-inline { vertical-align: middle; }</style>
 <h2 id="miscellaneous">Miscellaneous</h2>
 <p>In order to ensure that people are able to see how well their bot performs relative to the other people who decide to participate in the contest, we encourage people not to share bot code that goes beyond the functionality of a starter bot until final submissions are closed.</p>

@@ -7,7 +7,7 @@ visualize_pre();
 
 ?>
 
-<!--<MarkdownReplacement with="competition-Problem-Description.md">-->LOOOOOOOL GITHUB
+<!--<MarkdownReplacement with="competition-Problem-Description.md">-->
 <style>img.latex-inline { vertical-align: middle; }</style>
 <h1 id="ants-problem-description">Ants Problem Description</h1>
 <p>Ants is a multi-player strategy game set on a plot of dirt with water for obstacles and food that randomly drops. Each player has one or more hills where ants will spawn.  The objective is for players to seek and destroy the most enemy ant hills while defending their own hills.  Players must also gather food to spawn more ants, however, if all of a player's hills are destroyed they can't spawn any more ants.</p>

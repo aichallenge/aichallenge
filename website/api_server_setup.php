@@ -20,7 +20,7 @@ if ($check_result && mysqli_num_rows($check_result) != 0){
   $insert_sql = "insert into worker SET api_key = '".mysqli_real_escape_string($mysqli, $new_key)."', ip_address = '".$ip."';";
   $success = mysqli_query($mysqli, $insert_sql);
   if(!$success){
-    echo("# ".mysqli_error());
+    echo("# ".mysqli_error($mysqli));
     die('#Failed to create worker key');
   }
 }

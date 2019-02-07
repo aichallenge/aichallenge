@@ -11,7 +11,7 @@ if(file_exists('server_message.html')) {
 
 ?>
 
-<!--<MarkdownReplacement with="competition.md">-->LOOOOOOOL GITHUB
+<!--<MarkdownReplacement with="competition.md">-->
 <style>img.latex-inline { vertical-align: middle; }</style>
 <h1 id="final-rankings">Final Rankings</h1>
 <p>Congratulations the ants contest winner, Mathis Lichtenberger. He is a second year computer science student at the University of Lubeck. His winning bot (<a href="http://xathis.com/posts/ai-challenge-2011-ants.html">post mortem</a>) is called <a href="/profile.php?user=4513">xathis</a>.</p>

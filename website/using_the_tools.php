@@ -7,7 +7,7 @@ visualize_pre();
 
 ?>
 
-<!--<MarkdownReplacement with="Using-the-Tools.md">-->LOOOOOOOL GITHUB
+<!--<MarkdownReplacement with="Using-the-Tools.md">-->
 <style>img.latex-inline { vertical-align: middle; }</style>
 <h1 id="using-the-tools">Using the Tools</h1>
 <p>So you completed the <a href="/quickstart.php">Ants Five Minute Quickstart Guide</a> , and you see your name on the leaderboard. Now what? In this guide, you will use the Ants game visualizer to watch two of the sample bots play against each other.</p>

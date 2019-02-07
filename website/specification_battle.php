@@ -5,7 +5,7 @@ require_once('header.php');
 
 ?>
 
-<!--<MarkdownReplacement with="competition-Focus-Battle-Resolution.md">-->LOOOOOOOL GITHUB
+<!--<MarkdownReplacement with="competition-Focus-Battle-Resolution.md">-->
 <!--</MarkdownReplacement>-->
 
 <?php

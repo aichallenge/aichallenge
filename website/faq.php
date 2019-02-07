@@ -4,7 +4,7 @@ $title="Frequently Asked Questions";
 include 'header.php';
 
 ?>
-<!--<MarkdownReplacement with="Frequently-Asked-Questions.md">-->LOOOOOOOL GITHUB
+<!--<MarkdownReplacement with="Frequently-Asked-Questions.md">-->
 <style>img.latex-inline { vertical-align: middle; }</style>
 <h3 id="i-am-stuck-andor-stuff-isnt-working-where-can-i-get-some-help-or-information">I am stuck and/or stuff isn't working. Where can I get some help or information?</h3>
 <p>We welcome your post on the <a href="http://forums.aichallenge.org/">forums</a>!</p>

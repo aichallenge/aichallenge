@@ -5,7 +5,7 @@ require_once('header.php');
 
 ?>
 
-<!--<MarkdownReplacement with="competition-Tutorial-Step-5.md">-->LOOOOOOOL GITHUB
+<!--<MarkdownReplacement with="competition-Tutorial-Step-5.md">-->
 <style>img.latex-inline { vertical-align: middle; }</style>
 <h2 id="step-5-attacking-the-enemy-hills">Step 5: Attacking the Enemy Hills</h2>
 <div class="toc">
