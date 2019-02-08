@@ -1,0 +1,11 @@
+\documentclass{article}
+\usepackage{amsmath}
+\usepackage{amsthm}
+\usepackage{amssymb}
+\usepackage{bm}
+\usepackage[usenames,dvipsnames]{color}
+\pagestyle{empty}
+
+\begin{document}
+$a$
+\end{document}

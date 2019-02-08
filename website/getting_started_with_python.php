@@ -5,8 +5,7 @@ require_once('header.php');
 
 ?>
 
-<!--<MarkdownReplacement with="competition-Getting-Started-with-Python.md">-->
-<style>img.latex-inline { vertical-align: middle; }</style>
+<!--<MarkdownReplacement with="competition-Getting-Started-with-Python.md">--><style>img.latex-inline { vertical-align: middle; }</style>
 <h2 id="getting-started-with-python">Getting Started with Python</h2>
 <ul>
 <li><a href="http://www.python.org/">Python Official Home Page</a></li>

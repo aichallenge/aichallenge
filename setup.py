@@ -2,32 +2,25 @@
 
 import os
 from subprocess import Popen, PIPE
+from install_tools import CD, run_cmd
 
-def run_cmd(cmd, capture_stdout=False):
-    """ Run a command in a shell """
-    print "Executing:", cmd
-    stdout_loc = PIPE if capture_stdout else None
-    proc = Popen(cmd, shell=True, stdout=stdout_loc)
-    output, error_out = proc.communicate()
-    status = proc.wait()
-    if status != 0:
-        raise CmdError(cmd, status)
-    return output
+import create_worker_archive
 
 if __name__ == "__main__":
     try:
-        os.chdir("ants/dist/starter_bots")
-        run_cmd("make")
-        run_cmd("make install")
-        os.chdir("../../..")
+        with CD("ants/dist/starter_bots"):
+            run_cmd("make")
+            run_cmd("make install")
 
         run_cmd("easy_install Markdown")
         run_cmd("easy_install Pygments")
-        os.chdir("website")
-        if not os.path.exists("aichallenge.wiki"):
-            run_cmd("git clone git://github.com/aichallenge/aichallenge.wiki.git")
-        run_cmd("python setup.py")
-        os.chdir("..")
+        with CD("website"):
+            if not os.path.exists("aichallenge.wiki"):
+                run_cmd("git clone git://github.com/aichallenge/aichallenge.wiki.git")
+            run_cmd("python setup.py")
+        
+            # if not os.path.exists("worker-src.tgz"):
+            create_worker_archive.main(".")
 
     except KeyboardInterrupt:
         print('Setup Aborted')

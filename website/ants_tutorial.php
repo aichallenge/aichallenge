@@ -5,8 +5,7 @@ require_once('header.php');
 
 ?>
 
-<!--<MarkdownReplacement with="competition-Tutorial.md">-->
-<style>img.latex-inline { vertical-align: middle; }</style>
+<!--<MarkdownReplacement with="competition-Tutorial.md">--><style>img.latex-inline { vertical-align: middle; }</style>
 <h2 id="ants-tutorial">Ants Tutorial</h2>
 <div class="toc">
 

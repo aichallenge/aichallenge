@@ -41,12 +41,15 @@ def main():
         print "usage: %s api_base_url worker_api_key [source_url]"
         print WARNING
         sys.exit(1)
+    hostname = sys.argv[1]
+    api_key = sys.argv[2]
+
     setup_contest_user()
     os.chdir("/home/contest")
-    get_contest_files(sys.argv[1])
+    get_contest_files(hostname)
     os.chdir("aichallenge/setup")
     setup_cmd = "./worker_setup.py -y --username contest --api-url %s \
-            --api-key %s --install-cronjob --start" % (sys.argv[1], sys.argv[2])
+            --api-key %s --install-cronjob --start" % (hostname, api_key)
     if len(sys.argv) > 3:
         setup_cmd += " " + " ".join(sys.argv[3:])
     run_cmd(setup_cmd)

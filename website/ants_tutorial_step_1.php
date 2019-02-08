@@ -5,8 +5,7 @@ require_once('header.php');
 
 ?>
 
-<!--<MarkdownReplacement with="competition-Tutorial-Step-1.md">-->
-<style>img.latex-inline { vertical-align: middle; }</style>
+<!--<MarkdownReplacement with="competition-Tutorial-Step-1.md">--><style>img.latex-inline { vertical-align: middle; }</style>
 <h2 id="step-1-avoiding-collisions">Step 1: Avoiding collisions</h2>
 <div class="toc">
 

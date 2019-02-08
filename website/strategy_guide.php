@@ -5,8 +5,7 @@ require_once('header.php');
 
 ?>
 
-<!--<MarkdownReplacement with="competition-Strategy-Guide.md">-->
-<style>img.latex-inline { vertical-align: middle; }</style>
+<!--<MarkdownReplacement with="competition-Strategy-Guide.md">--><style>img.latex-inline { vertical-align: middle; }</style>
 <h2 id="strategy-guide">Strategy Guide</h2>
 <p>This page is intended to give you a few ideas for climbing the ranks in the leaderboard. In order to minimize the size of examples, it is assumed that the edges are not wrapped for any of the examples.</p>
 <h2 id="pathfinding">Pathfinding</h2>

@@ -21,6 +21,14 @@ services:
       LOG_DIR: logs
       API_URL: api_url
 
+  # worker:
+  #   build:
+  #     context: ./worker
+  #   links:
+  #     - php-apache
+  #   environment:
+  #     API_HOSTNAME: php-apache
+
   mysql:
     image: mysql
     command: --default-authentication-plugin=mysql_native_password

@@ -89,8 +89,8 @@ def setup_website(opts):
     # with CD(os.path.join(opts.local_repo, "ants/dist/starter_bots")):
     #     run_cmd("make")
     #     run_cmd("make install")
-    if not os.path.exists(os.path.join(website_root, "worker-src.tgz")):
-        create_worker_archive.main(website_root)
+    # if not os.path.exists(os.path.join(website_root, "worker-src.tgz")):
+    #     create_worker_archive.main(website_root)
     visualizer_path = os.path.join(opts.local_repo, "ants/visualizer")
     plugin_path = "/usr/share/icedtea-web/plugin.jar"
     if not os.path.exists(os.path.join(website_root, "visualizer")):
