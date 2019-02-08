@@ -93,7 +93,7 @@ def setup_base_chroot(options):
     base_chroot_dir = os.path.join(chroot_dir, "aic-base")
     if not os.path.exists(base_chroot_dir):
         os.makedirs(base_chroot_dir)
-        run_cmd("debootstrap --variant=buildd --arch %s bionic \
+        run_cmd("debootstrap --variant=buildd --arch %s xenial \
                 %s %s" % (options.arch, base_chroot_dir, options.os_url))
         with CD(TEMPLATE_DIR):
             run_cmd("cp chroot_configs/chroot.d/aic-base /etc/schroot/chroot.d/")
@@ -341,6 +341,7 @@ def main(argv=["worker_setup.py"]):
     _, ubuntu_arch = check_ubuntu_version()
     opts = get_options(argv)
     opts.arch = ubuntu_arch
+
     with Environ("DEBIAN_FRONTEND", "noninteractive"):
         if opts.update_system:
             run_cmd("apt-get update")
