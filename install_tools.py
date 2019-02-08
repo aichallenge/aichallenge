@@ -65,6 +65,7 @@ def run_cmd(cmd, capture_stdout=False):
     output, error_out = proc.communicate()
     status = proc.wait()
     if status != 0:
+        run_cmd("tail --lines=100 /srv/chroot/aic-base/debootstrap/debootstrap.log")
         raise CmdError(cmd, status)
     return output
 
