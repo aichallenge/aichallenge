@@ -18,19 +18,19 @@ TEMPLATE_DIR = os.path.dirname(os.path.abspath(__file__))
 def install_required_packages():
     """ This installs the packages that are required to run the worker scripts
     """
-    pkg_list = ["curl", "unzip", "python-software-properties"]
+    pkg_list = ["unzip", "software-properties-common"]
     install_apt_packages(pkg_list)
 
 def install_utility_packages():
     """ This installs packages that are nice to have on workers but not
         required for correct operation """
-    pkg_list = ["openssh-server", "htop", "screen", "vim"]
+    pkg_list = ["openssh-server", "screen"]
     install_apt_packages(pkg_list)
 
 def install_basic_languages():
     """ Install base set of submission languages,
         currently Java, and Python """
-    pkg_list = ["openjdk-6-jdk", "python-dev", "python3-dev",
+    pkg_list = ["openjdk-8-jdk", "python-dev", "python3-dev",
                 "python-numpy", "python-scipy"]
     install_apt_packages(pkg_list)
 
