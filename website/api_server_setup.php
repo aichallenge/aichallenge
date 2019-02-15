@@ -9,7 +9,7 @@ if($_GET['api_create_key'] != $server_info["api_create_key"]){
 }
 
 $ip = $_SERVER['REMOTE_ADDR'];
-$check_sql = "select api_key from worker where ip_address = '".$ip."';";
+$check_sql = "SELECT api_key FROM worker WHERE ip_address = '".$ip."';";
 $check_result = mysqli_query($mysqli, $check_sql);
 if ($check_result && mysqli_num_rows($check_result) != 0){
   $row = mysqli_fetch_row($check_result);
@@ -17,7 +17,7 @@ if ($check_result && mysqli_num_rows($check_result) != 0){
 } else {
   $new_key = md5(uniqid(null,true).rand());
 
-  $insert_sql = "insert into worker SET api_key = '".mysqli_real_escape_string($mysqli, $new_key)."', ip_address = '".$ip."';";
+  $insert_sql = "INSERT INTO worker SET api_key = '".mysqli_real_escape_string($mysqli, $new_key)."', ip_address = '".$ip."';";
   $success = mysqli_query($mysqli, $insert_sql);
   if(!$success){
     echo("# ".mysqli_error($mysqli));

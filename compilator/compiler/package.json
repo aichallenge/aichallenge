@@ -1,0 +1,17 @@
+{
+  "name": "compiler",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "fs-readdir-recursive": "^1.1.0",
+    "glob": "^7.1.3",
+    "minimatch": "^3.0.4",
+    "yauzl": "^2.10.0"
+  }
+}

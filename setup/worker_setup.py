@@ -43,7 +43,6 @@ def install_nodejs(download_base):
 
 def install_packaged_languages():
     install_basic_languages()
-    install_extra_distribution_languages()
 
 def install_all_languages(options):
     download_base = options.api_url +"langs"

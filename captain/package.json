@@ -1,0 +1,16 @@
+{
+  "name": "worker_docker",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "dockerode": "^2.5.8",
+    "md5-file": "^4.0.0",
+    "node-fetch": "^2.3.0"
+  }
+}

@@ -9,8 +9,7 @@ import urlparse
 from install_tools import CD, run_cmd, CmdError
 
 sources = [
-    ("https://github.com/downloads/aichallenge/aichallenge/nodejs_0.4.10~natty1~ppa201107202043_amd64.deb",
-        "nodejs.deb")
+    ("https://deb.nodesource.com/setup_11.x", "nodejs.deb")
 ]
 
 if len(sys.argv) < 2:
