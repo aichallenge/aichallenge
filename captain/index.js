@@ -3,7 +3,6 @@ const fs = require("fs");
 const path = require("path");
 const fetch = require("node-fetch");
 const md5File = require("md5-file");
-const md5Hex = require("md5-hex");
 
 const socket = process.env.DOCKER_SOCKET || "/var/run/docker.sock";
 const stats = fs.statSync(socket);
@@ -18,6 +17,40 @@ const docker = new Docker({ socketPath: socket });
 //   console.log("!ALL: " + containers.length);
 //   containers.forEach(container => console.log(container.Image));
 // });
+
+// docker.createContainer(
+//   {
+//     Image: "aichallenge/sandbox:latest",
+//     AttachStdin: true,
+//     AttachStdout: true,
+//     AttachStderr: true,
+//     Tty: false,
+//     Cmd: []
+//   },
+//   function(err, container) {
+//     container.start(function(err) {
+//       container.exec(
+//         { Cmd: ["echo", "hello"], AttachStdin: true, AttachStdout: true },
+//         function(err, exec) {
+//           exec.start({ hijack: true, stdin: true }, function(err, stream) {
+//             // shasum can't finish until after its stdin has been closed, telling it that it has
+//             // read all the bytes it needs to sum. Without a socket upgrade, there is no way to
+//             // close the write-side of the stream without also closing the read-side!
+
+//             console.log("lol");
+//             // Fortunately, we have a regular TCP socket now, so when the readstream finishes and closes our
+//             // stream, it is still open for reading and we will still get our results :-)
+//             docker.modem.demuxStream(
+//               stream.output,
+//               process.stdout,
+//               process.stderr
+//             );
+//           });
+//         }
+//       );
+//     });
+//   }
+// );
 
 const websiteHost = "http://192.168.1.61";
 let apiKey = "apikey";
@@ -66,6 +99,19 @@ async function getSubmissionHash(submissionId) {
   }
 
   return await response.json();
+}
+
+async function getMap(mapName) {
+  const url = `http://${websiteHost}/map/${mapName}`;
+  console.log(`Fetching ${url}`);
+
+  const response = await fetch(url);
+
+  if (!response.ok) {
+    console.error(`Could not get map ${mapName}`);
+  }
+
+  return await response.text();
 }
 
 async function getSubmission(submissionId, downloadDir) {
@@ -138,5 +184,39 @@ async function getSubmission(submissionId, downloadDir) {
     // Report errors and abort if necessary
     // Get map
     // Run a game?
+    const gameTask = {
+      task: "game",
+      timestamp: new Date(),
+      matchup_id: 423,
+      map_filename: "maze/maze_p02_16.map",
+      max_turns: 200,
+      submissions: [],
+      game_options: {
+        turns: 1500,
+        loadtime: 3000,
+        turntime: 500,
+        viewradius2: 77,
+        attackradius2: 5,
+        spawnradius2: 1,
+        serial: 2,
+        food_rate: (5, 11),
+        food_turn: (19, 37),
+        food_start: (75, 175),
+        food_visible: (3, 5),
+        food: "symmetric",
+        attack: "focus",
+        kill_points: 2,
+        cutoff_turn: 150,
+        cutoff_percent: 0.85
+      }
+    };
+
+    const map = await getMap(map_filename);
+    // TODO cache map
+    const options = {
+      game_options: gameTask.game_options,
+      map,
+      turns: gameTask.max_turns
+    };
   }
 })();

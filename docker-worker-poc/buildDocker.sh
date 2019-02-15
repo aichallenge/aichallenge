@@ -1,0 +1,1 @@
+docker build -t 'aichallenge/sandbox:latest' - < Dockerfile
